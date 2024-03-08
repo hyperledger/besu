@@ -3,7 +3,7 @@ name: develop pre-release
 
 on:
   push:
-    -branches:
+    branches:
       - main
 env:
   GRADLE_OPTS: "-Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
