@@ -95,9 +95,11 @@ public class FlatDbStrategyProvider {
                       // if we do not have a db-supplied config for flatdb, derive it:
                       // default to partial if trie data exists, but the flat config does not,
                       // and default to the storage config otherwise
+
+                      // TODO: temporarily hard code ARCHIVE mode for testing
                       var flatDbModeVal =
                           existingTrieData
-                              ? FlatDbMode.PARTIAL.getVersion()
+                              ? FlatDbMode.ARCHIVE.getVersion()
                               : requestedFlatDbMode.getVersion();
                       // persist this config in the db
                       var setDbModeTx = composedWorldStateStorage.startTransaction();
