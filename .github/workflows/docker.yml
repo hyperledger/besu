@@ -9,6 +9,7 @@ env:
 jobs:
   hadolint:
     runs-on: ubuntu-22.04
+    environment: production
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -42,6 +43,7 @@ jobs:
           - ubuntu-22.04
           - [self-hosted, ARM64]
     runs-on: ${{ matrix.platform }}
+    environment: production
     steps:
       - name: Prepare
         id: prep
@@ -89,6 +91,7 @@ jobs:
   multiArch:
     needs: buildDocker
     runs-on: ubuntu-22.04
+    environment: production
     permissions:
       contents: read
       packages: write
@@ -113,6 +116,7 @@ jobs:
   amendNotes:
     needs: multiArch
     runs-on: ubuntu-22.04
+    environment: production
     permissions:
       contents: write
     steps:
