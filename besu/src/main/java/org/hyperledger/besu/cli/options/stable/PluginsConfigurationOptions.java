@@ -17,8 +17,9 @@ import picocli.CommandLine;
 public class PluginsConfigurationOptions implements CLIOptions<PluginConfiguration> {
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_OPTION_NAME},
-      description = "Comma-separated list of plugins.",
+      description = "Comma-separated list of plugin names",
       split = ",",
+      hidden = true,
       converter = PluginInfoConverter.class,
       arity = "0..*")
   private List<PluginInfo> plugins;
@@ -26,7 +27,9 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_STRICT_REGISTRATION_OPTION_NAME},
       defaultValue = "false",
-      description = "Enables strict registration of plugins.")
+      hidden = true,
+      description =
+          "If true, only listed plugins are registered; otherwise, all discoverable plugins are.")
   private boolean strictRegistration;
 
   public void validate(final Logger logger, final CommandLine commandLine) {
@@ -44,8 +47,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
 
   @Override
   public PluginConfiguration toDomainObject() {
-    return new PluginConfiguration(
-        plugins, strictRegistration, PluginConfiguration.defaultPluginsDir());
+    return new PluginConfiguration(plugins, strictRegistration);
   }
 
   @Override
@@ -68,7 +70,6 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_OPTION_NAME, new PluginInfoConverter());
 
-    return new PluginConfiguration(
-        plugins, strictRegistration, PluginConfiguration.defaultPluginsDir());
+    return new PluginConfiguration(plugins, strictRegistration);
   }
 }

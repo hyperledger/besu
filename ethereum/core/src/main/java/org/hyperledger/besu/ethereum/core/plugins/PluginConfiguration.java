@@ -12,6 +12,8 @@ import java.util.stream.Collectors;
  * Configuration for managing plugins, including their information, detection type, and directory.
  */
 public class PluginConfiguration {
+  private static final List<PluginInfo> DEFAULT_PLUGINS = null;
+  private static final boolean DEFAULT_IS_STRICT_REGISTRATION = false;
   private final List<PluginInfo> requestedPlugins;
   private final boolean strictRegistration;
   private final Path pluginsDir;
@@ -33,9 +35,30 @@ public class PluginConfiguration {
     this.pluginsDir = pluginsDir;
   }
 
+  /**
+   * Constructs a PluginConfiguration with specified plugins and registration type, using the
+   * default directory.
+   *
+   * @param requestedPlugins List of plugins for consideration or registration.
+   * @param strictRegistration If true, only listed plugins are registered; otherwise, all
+   *     discoverable plugins are.
+   */
+  public PluginConfiguration(
+      final List<PluginInfo> requestedPlugins, final boolean strictRegistration) {
+    this.requestedPlugins = requestedPlugins;
+    this.strictRegistration = strictRegistration;
+    this.pluginsDir = PluginConfiguration.defaultPluginsDir();
+  }
+
+  /**
+   * Constructs a PluginConfiguration with the specified plugins directory, defaulting to non-strict
+   * registration.
+   *
+   * @param pluginsDir The directory where plugins are located. Cannot be null.
+   */
   public PluginConfiguration(final Path pluginsDir) {
-    this.requestedPlugins = null;
-    this.strictRegistration = false;
+    this.requestedPlugins = DEFAULT_PLUGINS;
+    this.strictRegistration = DEFAULT_IS_STRICT_REGISTRATION;
     this.pluginsDir = requireNonNull(pluginsDir);
   }
 
