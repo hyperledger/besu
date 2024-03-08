@@ -31,8 +31,12 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.io.File;
 import java.io.IOException;
@@ -40,10 +44,16 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.Assumptions;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.api.extension.ExtensionContext;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.ArgumentsProvider;
+import org.junit.jupiter.params.provider.ArgumentsSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -59,15 +69,36 @@ public class FastDownloaderFactoryTest {
   @Mock private ProtocolContext protocolContext;
   @Mock private MetricsSystem metricsSystem;
   @Mock private EthContext ethContext;
-  @Mock private WorldStateStorage worldStateStorage;
   @Mock private SyncState syncState;
   @Mock private Clock clock;
   @Mock private Path dataDirectory;
   @Mock private PivotBlockSelector pivotBlockSelector;
+  private WorldStateKeyValueStorage worldStateKeyValueStorage;
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
 
-  @SuppressWarnings("unchecked")
-  @Test
-  public void shouldThrowIfSyncModeChangedWhileFastSyncIncomplete() {
+  static class FastDownloaderFactoryTestArguments implements ArgumentsProvider {
+    @Override
+    public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
+      return Stream.of(
+          Arguments.of(DataStorageFormat.BONSAI), Arguments.of(DataStorageFormat.FOREST));
+    }
+  }
+
+  public void setup(final DataStorageFormat dataStorageFormat) {
+    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
+      worldStateKeyValueStorage = mock(BonsaiWorldStateKeyValueStorage.class);
+    } else {
+      worldStateKeyValueStorage = mock(ForestWorldStateKeyValueStorage.class);
+    }
+    when(worldStateKeyValueStorage.getDataStorageFormat()).thenReturn(dataStorageFormat);
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+  }
+
+  @ParameterizedTest
+  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
+  public void shouldThrowIfSyncModeChangedWhileFastSyncIncomplete(
+      final DataStorageFormat dataStorageFormat) {
+    setup(dataStorageFormat);
     initDataDirectory(true);
 
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
@@ -81,15 +112,18 @@ public class FastDownloaderFactoryTest {
                     protocolContext,
                     metricsSystem,
                     ethContext,
-                    worldStateStorage,
+                    worldStateStorageCoordinator,
                     syncState,
                     clock))
         .isInstanceOf(IllegalStateException.class);
   }
 
   @SuppressWarnings({"unchecked", "rawtypes"})
-  @Test
-  public void shouldNotThrowIfSyncModeChangedWhileFastSyncComplete() {
+  @ParameterizedTest
+  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
+  public void shouldNotThrowIfSyncModeChangedWhileFastSyncComplete(
+      final DataStorageFormat dataStorageFormat) {
+    setup(dataStorageFormat);
     initDataDirectory(false);
 
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FULL);
@@ -102,15 +136,18 @@ public class FastDownloaderFactoryTest {
             protocolContext,
             metricsSystem,
             ethContext,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             syncState,
             clock);
     assertThat(result).isEmpty();
   }
 
   @SuppressWarnings("unchecked")
-  @Test
-  public void shouldNotThrowWhenFastSyncModeRequested() throws NoSuchFieldException {
+  @ParameterizedTest
+  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
+  public void shouldNotThrowWhenFastSyncModeRequested(final DataStorageFormat dataStorageFormat)
+      throws NoSuchFieldException {
+    setup(dataStorageFormat);
     initDataDirectory(false);
 
     final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
@@ -126,15 +163,19 @@ public class FastDownloaderFactoryTest {
         protocolContext,
         metricsSystem,
         ethContext,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         syncState,
         clock);
 
     verify(mutableBlockchain).getChainHeadBlockNumber();
   }
 
-  @Test
-  public void shouldClearWorldStateDuringFastSyncWhenStateQueDirectoryExists() throws IOException {
+  @ParameterizedTest
+  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
+  public void shouldClearWorldStateDuringFastSyncWhenStateQueDirectoryExists(
+      final DataStorageFormat dataStorageFormat) throws IOException {
+    Assumptions.assumeTrue(dataStorageFormat == DataStorageFormat.FOREST);
+    setup(dataStorageFormat);
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
     final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
     when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
@@ -156,16 +197,20 @@ public class FastDownloaderFactoryTest {
         protocolContext,
         metricsSystem,
         ethContext,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         syncState,
         clock);
 
-    verify(worldStateStorage).clear();
+    verify(worldStateKeyValueStorage).clear();
     assertThat(Files.exists(stateQueueDir)).isFalse();
   }
 
-  @Test
-  public void shouldCrashWhenStateQueueIsNotDirectory() throws IOException {
+  @ParameterizedTest
+  @ArgumentsSource(FastDownloaderFactoryTestArguments.class)
+  public void shouldCrashWhenStateQueueIsNotDirectory(final DataStorageFormat dataStorageFormat)
+      throws IOException {
+    Assumptions.assumeTrue(dataStorageFormat == DataStorageFormat.FOREST);
+    setup(dataStorageFormat);
     when(syncConfig.getSyncMode()).thenReturn(SyncMode.FAST);
     final MutableBlockchain mutableBlockchain = mock(MutableBlockchain.class);
     when(mutableBlockchain.getChainHeadBlockNumber()).thenReturn(0L);
@@ -188,7 +233,7 @@ public class FastDownloaderFactoryTest {
                     protocolContext,
                     metricsSystem,
                     ethContext,
-                    worldStateStorage,
+                    worldStateStorageCoordinator,
                     syncState,
                     clock))
         .isInstanceOf(IllegalStateException.class);

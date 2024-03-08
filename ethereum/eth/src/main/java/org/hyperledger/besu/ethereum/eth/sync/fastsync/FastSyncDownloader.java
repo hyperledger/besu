@@ -21,7 +21,8 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.TrailingPeerRequirements;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.StalledDownloadException;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 import org.hyperledger.besu.util.ExceptionUtils;
@@ -47,7 +48,7 @@ public class FastSyncDownloader<REQUEST> {
   @SuppressWarnings("PrivateStaticFinalLoggers")
   protected final Logger LOG = LoggerFactory.getLogger(getClass());
 
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final WorldStateDownloader worldStateDownloader;
   private final TaskCollection<REQUEST> taskCollection;
   private final Path fastSyncDataDirectory;
@@ -60,14 +61,14 @@ public class FastSyncDownloader<REQUEST> {
 
   public FastSyncDownloader(
       final FastSyncActions fastSyncActions,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final WorldStateDownloader worldStateDownloader,
       final FastSyncStateStorage fastSyncStateStorage,
       final TaskCollection<REQUEST> taskCollection,
       final Path fastSyncDataDirectory,
       final FastSyncState initialFastSyncState) {
     this.fastSyncActions = fastSyncActions;
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.worldStateDownloader = worldStateDownloader;
     this.fastSyncStateStorage = fastSyncStateStorage;
     this.taskCollection = taskCollection;
@@ -84,11 +85,15 @@ public class FastSyncDownloader<REQUEST> {
   }
 
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
-      LOG.info("Clearing bonsai flat account db");
-      worldStateStorage.clearFlatDatabase();
-      worldStateStorage.clearTrieLog();
-    }
+    worldStateStorageCoordinator.applyOnMatchingStrategy(
+        DataStorageFormat.BONSAI,
+        worldStateKeyValueStorage -> {
+          BonsaiWorldStateKeyValueStorage onBonsai =
+              (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage;
+          LOG.info("Clearing bonsai flat account db");
+          onBonsai.clearFlatDatabase();
+          onBonsai.clearTrieLog();
+        });
     LOG.debug("Start sync with initial sync state {}", fastSyncState);
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
   }

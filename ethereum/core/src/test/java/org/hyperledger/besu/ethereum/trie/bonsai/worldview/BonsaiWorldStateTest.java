@@ -45,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class BonsaiWorldStateTest {
   @Mock BonsaiWorldStateUpdateAccumulator bonsaiWorldStateUpdateAccumulator;
-  @Mock BonsaiWorldStateKeyValueStorage.BonsaiUpdater bonsaiUpdater;
+  @Mock BonsaiWorldStateKeyValueStorage.Updater bonsaiUpdater;
   @Mock Blockchain blockchain;
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage;
 
