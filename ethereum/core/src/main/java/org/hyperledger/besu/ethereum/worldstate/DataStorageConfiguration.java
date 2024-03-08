@@ -25,7 +25,7 @@ import org.immutables.value.Value;
 public interface DataStorageConfiguration {
 
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
-  boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = true;
+  boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = false;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
