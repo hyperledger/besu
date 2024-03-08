@@ -173,7 +173,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  public void shouldRegisterAllPluginsWhenDetectionTypeIsAll() {
+  public void shouldRegisterAllPluginsWhenNoPluginsOption() {
     final PluginConfiguration config = createConfigurationForAllPlugins();
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
@@ -186,7 +186,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  public void shouldRegisterOnlySpecifiedPluginWhenDetectionTypeIsExplicit() {
+  public void shouldRegisterOnlySpecifiedPluginWhenPluginsOptionIsSet() {
     final PluginConfiguration config = createConfigurationForSpecificPlugin("TestPicoCLIPlugin");
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
@@ -199,7 +199,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  public void shouldNotRegisterUnspecifiedPluginsWhenDetectionTypeIsExplicit() {
+  public void shouldNotRegisterUnspecifiedPluginsWhenWhenPluginsOptionIsSet() {
     final PluginConfiguration config = createConfigurationForSpecificPlugin("TestPicoCLIPlugin");
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
     contextImpl.registerPlugins(config);
@@ -223,12 +223,12 @@ public class BesuPluginContextImplTest {
   }
 
   private PluginConfiguration createConfigurationForAllPlugins() {
-    return new PluginConfiguration(null, false, DEFAULT_PLUGIN_DIRECTORY);
+    return new PluginConfiguration(null, DEFAULT_PLUGIN_DIRECTORY);
   }
 
   private PluginConfiguration createConfigurationForSpecificPlugin(final String pluginName) {
     return new PluginConfiguration(
-        List.of(new PluginInfo(pluginName)), true, DEFAULT_PLUGIN_DIRECTORY);
+        List.of(new PluginInfo(pluginName)), DEFAULT_PLUGIN_DIRECTORY);
   }
 
   private Optional<TestPicoCLIPlugin> findTestPlugin(

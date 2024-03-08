@@ -131,7 +131,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     state = Lifecycle.REGISTERING;
 
     detectedPlugins = detectPlugins(config);
-    if (config.isStrictRegistration()) {
+    if (!config.getRequestedPlugins().isEmpty()) {
       // Register only the plugins that were explicitly requested and validated
       requestedPlugins = config.getRequestedPlugins();
 
