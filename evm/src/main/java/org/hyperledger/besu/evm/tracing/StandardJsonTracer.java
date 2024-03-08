@@ -178,7 +178,7 @@ public class StandardJsonTracer implements OperationTracer {
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
     sb.append("\"pc\":").append(pc).append(",");
-    if (section > 0) {
+    if (messageFrame.getCode().getEofVersion() > 0) {
       sb.append("\"section\":").append(section).append(",");
     }
     sb.append("\"op\":").append(opcode).append(",");

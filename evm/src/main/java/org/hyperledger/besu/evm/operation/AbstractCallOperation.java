@@ -40,6 +40,12 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
+  static final Bytes LEGACY_SUCCESS_STACK_ITEM = BYTES_ONE;
+  static final Bytes LEGACY_FAILURE_STACK_ITEM = Bytes.EMPTY;
+  static final Bytes EOF1_SUCCESS_STACK_ITEM = Bytes.EMPTY;
+  static final Bytes EOF1_EXCEPTION_STACK_ITEM = BYTES_ONE;
+  static final Bytes EOF1_FAILURE_STACK_ITEM = Bytes.of(2);
+
   /**
    * Instantiates a new Abstract call operation.
    *
@@ -188,9 +194,11 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     if (value(frame).compareTo(balance) > 0 || frame.getDepth() >= 1024) {
       frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
+      // For the following, we either increment the gas or return zero so weo don't get double
+      // charged. If we return zero then the traces don't have the right per-opcode cost.
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(FAILURE_STACK_ITEM);
+      frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       return new OperationResult(cost, null);
     }
 
@@ -208,8 +216,12 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     // delegate calls to prior EOF versions are prohibited
     if (isDelegate() && frame.getCode().getEofVersion() > code.getEofVersion()) {
-      return new OperationResult(
-          cost, ExceptionalHaltReason.EOF_DELEGATE_CALL_VERSION_INCOMPATIBLE, 0);
+      // "Light failure" - Push failure and continue execution
+      frame.popStackItems(getStackItemsConsumed());
+      frame.pushStackItem(EOF1_EXCEPTION_STACK_ITEM);
+      // see note in stack depth check about incrementing cost
+      frame.incrementRemainingGas(cost);
+      return new OperationResult(cost, null, 1);
     }
 
     MessageFrame.builder()
@@ -226,6 +238,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         .isStatic(isStatic(frame))
         .completer(child -> complete(frame, child))
         .build();
+    // see note in stack depth check about incrementing cost
     frame.incrementRemainingGas(cost);
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
@@ -270,11 +283,23 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.incrementRemainingGas(gasRemaining);
 
     frame.popStackItems(getStackItemsConsumed());
-    if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      frame.pushStackItem(SUCCESS_STACK_ITEM);
+    Bytes resultItem;
+    if (frame.getCode().getEofVersion() == 1) {
+      if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+        resultItem = EOF1_SUCCESS_STACK_ITEM;
+      } else if (childFrame.getState() == MessageFrame.State.EXCEPTIONAL_HALT) {
+        resultItem = EOF1_EXCEPTION_STACK_ITEM;
+      } else {
+        resultItem = EOF1_FAILURE_STACK_ITEM;
+      }
     } else {
-      frame.pushStackItem(FAILURE_STACK_ITEM);
+      if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+        resultItem = LEGACY_SUCCESS_STACK_ITEM;
+      } else {
+        resultItem = LEGACY_FAILURE_STACK_ITEM;
+      }
     }
+    frame.pushStackItem(resultItem);
 
     final int currentPC = frame.getPC();
     frame.setPC(currentPC + 1);

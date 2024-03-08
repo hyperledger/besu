@@ -23,10 +23,6 @@ import static org.hyperledger.besu.evm.code.OpcodeInfo.V1_OPCODES;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 
-import java.util.Arrays;
-import java.util.BitSet;
-import javax.annotation.Nullable;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.DataLoadNOperation;
 import org.hyperledger.besu.evm.operation.DupNOperation;
@@ -43,6 +39,12 @@ import org.hyperledger.besu.evm.operation.ReturnOperation;
 import org.hyperledger.besu.evm.operation.RevertOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SwapNOperation;
+
+import java.util.Arrays;
+import java.util.BitSet;
+import javax.annotation.Nullable;
+
+import org.apache.tuweni.bytes.Bytes;
 
 /** Code V1 Validation */
 public final class CodeV1Validation {

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.operation.AbstractCallOperation.LEGACY_FAILURE_STACK_ITEM;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -170,7 +171,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final long inputSize = clampedToLong(frame.getStackItem(2));
     frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(FAILURE_STACK_ITEM);
+    frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
   }
 
   private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
@@ -234,13 +235,13 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         onSuccess(frame, createdAddress);
       } else {
         frame.setReturnData(childFrame.getOutputData());
-        frame.pushStackItem(FAILURE_STACK_ITEM);
+        frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
         onFailure(frame, childFrame.getExceptionalHaltReason());
       }
     } else {
       frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
       frame.setReturnData(childFrame.getOutputData());
-      frame.pushStackItem(FAILURE_STACK_ITEM);
+      frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       onInvalid(frame, (CodeInvalid) outputCode);
     }
 

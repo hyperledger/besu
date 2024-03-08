@@ -108,6 +108,7 @@ import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.operation.RetFOperation;
 import org.hyperledger.besu.evm.operation.ReturnContractOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
+import org.hyperledger.besu.evm.operation.ReturnDataLoadOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
 import org.hyperledger.besu.evm.operation.RevertOperation;
@@ -978,6 +979,7 @@ public class MainnetEVMs {
     registry.put(new ExtCallOperation(gasCalculator));
     registry.put(new ExtDelegateCallOperation(gasCalculator));
     registry.put(new ExtStaticCallOperation(gasCalculator));
+    registry.put(new ReturnDataLoadOperation(gasCalculator));
 
     // EIP-7480 EOF Data Section Access
     registry.put(new DataLoadOperation(gasCalculator));
