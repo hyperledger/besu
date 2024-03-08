@@ -25,25 +25,26 @@ import com.google.common.annotations.VisibleForTesting;
 import picocli.CommandLine;
 import picocli.CommandLine.IDefaultValueProvider;
 import picocli.CommandLine.IExecutionStrategy;
+import picocli.CommandLine.IParameterExceptionHandler;
 import picocli.CommandLine.ParameterException;
 import picocli.CommandLine.ParseResult;
 
 /** Custom Config option search and run handler. */
 public class ConfigOptionSearchAndRunHandler extends CommandLine.RunLast {
   private final IExecutionStrategy resultHandler;
-  private final CommandLine.IParameterExceptionHandler parameterExceptionHandler;
+  private final IParameterExceptionHandler parameterExceptionHandler;
   private final Map<String, String> environment;
 
   /**
    * Instantiates a new Config option search and run handler.
    *
    * @param resultHandler the result handler
-   * @param parameterExceptionHandler the parameterExceptionHandler
+   * @param parameterExceptionHandler the parameter exception handler
    * @param environment the environment variables map
    */
   public ConfigOptionSearchAndRunHandler(
       final IExecutionStrategy resultHandler,
-      final CommandLine.IParameterExceptionHandler parameterExceptionHandler,
+      final IParameterExceptionHandler parameterExceptionHandler,
       final Map<String, String> environment) {
     this.resultHandler = resultHandler;
     this.parameterExceptionHandler = parameterExceptionHandler;
