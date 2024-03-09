@@ -41,6 +41,7 @@ public abstract class AbstractGasLimitSpecification {
   }
 
   public static boolean isValidTargetGasLimit(final long targetGasLimit) {
-    return DEFAULT_MIN_GAS_LIMIT <= targetGasLimit && DEFAULT_MAX_GAS_LIMIT >= targetGasLimit;
+    return targetGasLimit
+        >= DEFAULT_MIN_GAS_LIMIT; // && targetGasLimit <= DEFAULT_MAX_GAS_LIMIT; will always be true
   }
 }

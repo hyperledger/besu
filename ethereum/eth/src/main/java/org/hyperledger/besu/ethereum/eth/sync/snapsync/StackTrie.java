@@ -71,6 +71,7 @@ public class StackTrie {
     this.elementsCount = new AtomicLong();
   }
 
+  @SuppressWarnings("NonApiType")
   public void addElement(
       final Bytes32 taskIdentifier, final List<Bytes> proofs, final TreeMap<Bytes32, Bytes> keys) {
     this.elementsCount.addAndGet(keys.size());
@@ -180,6 +181,7 @@ public class StackTrie {
     }
 
     @Value.Default
+    @SuppressWarnings("NonApiType")
     public TreeMap<Bytes32, Bytes> keys() {
       return new TreeMap<>();
     }

@@ -139,6 +139,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     return nbNodesSaved.get();
   }
 
+  @SuppressWarnings("NonApiType")
   public void addResponse(
       final WorldStateProofProvider worldStateProofProvider,
       final TreeMap<Bytes32, Bytes> accounts,
@@ -212,6 +213,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   }
 
   @VisibleForTesting
+  @SuppressWarnings("NonApiType")
   public TreeMap<Bytes32, Bytes> getAccounts() {
     return stackTrie.getElement(startKeyHash).keys();
   }

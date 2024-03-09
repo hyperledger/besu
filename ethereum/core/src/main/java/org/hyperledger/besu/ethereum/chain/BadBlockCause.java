@@ -17,20 +17,16 @@ package org.hyperledger.besu.ethereum.chain;
 
 import org.hyperledger.besu.ethereum.core.Block;
 
-import java.security.SecureRandom;
+import com.google.common.base.MoreObjects;
 
 public class BadBlockCause {
-  public enum BadBlockReason {
-    // Standard spec-related validation failures
-    SPEC_VALIDATION_FAILURE,
-    // When an unexpected exception occurs during block processing
-    EXCEPTIONAL_BLOCK_PROCESSING,
-    // This block is bad because it descends from a bad block
-    DESCENDS_FROM_BAD_BLOCK,
-  }
-
   private final BadBlockReason reason;
   private final String description;
+
+  private BadBlockCause(final BadBlockReason reason, final String description) {
+    this.reason = reason;
+    this.description = description;
+  }
 
   public static BadBlockCause fromBadAncestorBlock(final Block badAncestor) {
     final String description =
@@ -40,18 +36,6 @@ public class BadBlockCause {
 
   public static BadBlockCause fromValidationFailure(final String failureMessage) {
     return new BadBlockCause(BadBlockReason.SPEC_VALIDATION_FAILURE, failureMessage);
-  }
-
-  private BadBlockCause(BadBlockReason reason, String description) {
-    this.reason = reason;
-    this.description = description;
-  }
-
-  // method input parameters should fail, but they aren't
-  public String deleteMe(String a, String b) {
-    // This is a dummy method to test the rule
-    System.out.println(a);
-    return new SecureRandom().getAlgorithm();
   }
 
   public BadBlockReason getReason() {
@@ -64,6 +48,9 @@ public class BadBlockCause {
 
   @Override
   public String toString() {
-    return "BadBlockCause{" + "reason=" + reason + ", description='" + description + '\'' + '}';
+    return MoreObjects.toStringHelper(this)
+        .add("reason", reason)
+        .add("description", description)
+        .toString();
   }
 }

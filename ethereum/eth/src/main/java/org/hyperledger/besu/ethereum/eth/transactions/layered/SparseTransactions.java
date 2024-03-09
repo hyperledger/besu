@@ -403,6 +403,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   }
 
   @Override
+  @SuppressWarnings("NonApiType")
   protected void internalConsistencyCheck(
       final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     txsBySender.values().stream()

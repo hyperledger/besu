@@ -39,7 +39,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -93,7 +92,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final SnapSyncConfiguration snapSyncConfiguration) {
 
     // search incomplete nodes in the range
-    final AtomicInteger nbNodesSaved = new AtomicInteger();
+    // final AtomicInteger nbNodesSaved = new AtomicInteger(); //TODO: This variable is not used???
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
           updater.putAccountStorageTrieNode(accountHash, location, hash, value);
@@ -113,9 +112,10 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
-    return nbNodesSaved.get();
+    return 0; // are we supposed to return stackTrie.getElementsCount().get() ??
   }
 
+  @SuppressWarnings("NonApiType")
   public void addResponse(
       final SnapWorldDownloadState downloadState,
       final WorldStateProofProvider worldStateProofProvider,
@@ -193,6 +193,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     return storageRoot;
   }
 
+  @SuppressWarnings("NonApiType")
   public TreeMap<Bytes32, Bytes> getSlots() {
     return stackTrie.getElement(startKeyHash).keys();
   }

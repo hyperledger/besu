@@ -219,6 +219,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   }
 
   @Override
+  @SuppressWarnings("NonApiType")
   protected void internalConsistencyCheck(
       final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     super.internalConsistencyCheck(prevLayerTxsBySender);

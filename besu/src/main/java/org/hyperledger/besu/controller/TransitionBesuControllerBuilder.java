@@ -249,6 +249,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     return sync;
   }
 
+  @SuppressWarnings("UnusedVariable")
   private void initTransitionWatcher(
       final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {
 

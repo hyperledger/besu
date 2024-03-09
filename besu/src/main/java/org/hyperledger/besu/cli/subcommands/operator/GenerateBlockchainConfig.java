@@ -178,11 +178,9 @@ class GenerateBlockchainConfig implements Runnable {
 
       if (!SIGNATURE_ALGORITHM.get().isValidPublicKey(publicKey)) {
         throw new IllegalArgumentException(
-            new StringBuilder()
-                .append(publicKeyText)
-                .append(" is not a valid public key for elliptic curve ")
-                .append(SIGNATURE_ALGORITHM.get().getCurveName())
-                .toString());
+            publicKeyText
+                + " is not a valid public key for elliptic curve "
+                + SIGNATURE_ALGORITHM.get().getCurveName());
       }
 
       writeKeypair(publicKey, null);
@@ -297,10 +295,7 @@ class GenerateBlockchainConfig implements Runnable {
       SignatureAlgorithmFactory.setInstance(SignatureAlgorithmType.create(ecCurve.get()));
     } catch (IllegalArgumentException e) {
       throw new IllegalArgumentException(
-          new StringBuilder()
-              .append("Invalid parameter for ecCurve in genesis config: ")
-              .append(e.getMessage())
-              .toString());
+          "Invalid parameter for ecCurve in genesis config: " + e.getMessage());
     }
   }
 

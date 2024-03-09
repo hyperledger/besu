@@ -281,6 +281,7 @@ public class ProtocolScheduleBuilder {
     return referenceForkBlock;
   }
 
+  @SuppressWarnings("NonApiType")
   private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
       final MainnetProtocolSpecFactory specFactory) {
     return createMilestones(specFactory)

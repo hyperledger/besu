@@ -118,7 +118,7 @@ public class PeerInfo implements Comparable<PeerInfo> {
   }
 
   @Override
-  /** Returned string is sanitized since it contains user input */
+  // Returned string is sanitized since it contains user input
   public String toString() {
     final StringBuilder sb = new StringBuilder("PeerInfo{");
     sb.append("version=").append(version);

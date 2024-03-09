@@ -42,6 +42,7 @@ public class RangeManager {
 
   private RangeManager() {}
 
+  @SuppressWarnings("NonApiType")
   public static int getRangeCount(
       final Bytes32 min, final Bytes32 max, final TreeMap<Bytes32, Bytes> items) {
     if (min.equals(MIN_RANGE) && max.equals(MAX_RANGE)) {
@@ -117,6 +118,7 @@ public class RangeManager {
    * @param receivedKeys the last key received
    * @return begin of the new range
    */
+  @SuppressWarnings("NonApiType")
   public static Optional<Bytes32> findNewBeginElementInRange(
       final Bytes32 worldstateRootHash,
       final List<Bytes> proofs,

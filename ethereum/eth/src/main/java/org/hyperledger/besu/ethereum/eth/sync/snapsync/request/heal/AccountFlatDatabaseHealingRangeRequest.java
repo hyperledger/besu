@@ -129,6 +129,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
     return true;
   }
 
+  @SuppressWarnings("NonApiType")
   public void addLocalData(
       final WorldStateProofProvider worldStateProofProvider,
       final TreeMap<Bytes32, Bytes> accounts,

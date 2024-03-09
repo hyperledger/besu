@@ -568,6 +568,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
   protected abstract String internalLogStats();
 
+  @SuppressWarnings("NonApiType")
   boolean consistencyCheck(
       final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     final BinaryOperator<PendingTransaction> noMergeExpected =
@@ -605,6 +606,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     return true;
   }
 
+  @SuppressWarnings("NonApiType")
   protected abstract void internalConsistencyCheck(
       final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender);
 

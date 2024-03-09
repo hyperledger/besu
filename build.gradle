@@ -173,13 +173,16 @@ allprojects {
       forRepositories(ethExecSpecTestsRepo)
       filter { includeModule('ethereum', 'execution-spec-tests')}
     }
+
+    // TODO: For testing custom besu-errorprone-check. Should be remove once errorprone is published
+    mavenLocal()
   }
 
   dependencies {
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
-    // TODO: Move to Hyperledger BESU's errorprone-checks once it's published
-    errorprone "tech.pegasys.tools.epchecks:errorprone-checks"
+    // https://github.com/hyperledger/besu-errorprone-checks/
+    errorprone "org.hyperledger.errorpronechecks:besu-errorprone-checks"
   }
 
   configurations.all {
@@ -228,8 +231,9 @@ allprojects {
     ]
 
     options.errorprone {
-      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*|build/.*/annotation-output/.*)'
-
+      //excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*|build/.*/annotation-output/.*)'
+      excludedPaths = '.*/generated/*.*'
+      disableWarningsInGeneratedCode = true
       // Our equals need to be symmetric, this checker doesn't respect that.
       check('EqualsGetClass', CheckSeverity.OFF)
       // We like to use futures with no return values.
@@ -251,6 +255,9 @@ allprojects {
       check('FieldCanBeFinal', CheckSeverity.WARN)
       check('InsecureCryptoUsage', CheckSeverity.WARN)
       check('WildcardImport', CheckSeverity.WARN)
+
+      // These checks are imported from errorprone-checks dependency
+      check('MethodInputParametersMustBeFinal', net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
     }
 
     options.encoding = 'UTF-8'
@@ -291,7 +298,7 @@ allprojects {
    *
    */
   test {
-    jvmArgs = [
+    jvmArgs += [
       '-Xmx4g',
       '-XX:-UseGCOverheadLimit',
       // Mockito and jackson-databind do some strange reflection during tests.
@@ -1091,11 +1098,11 @@ tasks.register("verifyDistributions") {
 }
 
 dependencies {
+  errorprone 'com.google.errorprone:error_prone_core'
+  // https://github.com/hyperledger/besu-errorprone-checks/
+  errorprone 'org.hyperledger.errorpronechecks:besu-errorprone-checks'
   implementation project(':besu')
   implementation project(':ethereum:evmtool')
-  errorprone 'com.google.errorprone:error_prone_core'
-  // TODO: Use Hyperledger BESU's errorprone-checks once it's published
-  errorprone 'tech.pegasys.tools.epchecks:errorprone-checks'
 }
 
 @CompileStatic

@@ -26,6 +26,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.net.InetSocketAddress;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -332,7 +333,9 @@ public class WebSocketService {
                 configuration.getHostsAllowlist().stream()
                     .anyMatch(
                         allowlistEntry ->
-                            allowlistEntry.toLowerCase().equals(header.toLowerCase())))
+                            allowlistEntry
+                                .toLowerCase(Locale.ROOT)
+                                .equals(header.toLowerCase(Locale.ROOT))))
         .orElse(false);
   }
 }

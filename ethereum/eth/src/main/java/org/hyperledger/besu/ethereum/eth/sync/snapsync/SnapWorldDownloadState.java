@@ -42,6 +42,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.OptionalLong;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -72,7 +73,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   protected final InMemoryTasksPriorityQueues<SnapDataRequest>
       pendingStorageFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
-  private HashSet<Bytes> accountsHealingList = new HashSet<>();
+  private Set<Bytes> accountsHealingList = new HashSet<>();
   private DynamicPivotBlockSelector pivotBlockSelector;
 
   private final SnapSyncStatePersistenceManager snapContext;
@@ -286,7 +287,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     }
   }
 
-  public synchronized void setAccountsHealingList(final HashSet<Bytes> addAccountToHealingList) {
+  public synchronized void setAccountsHealingList(final Set<Bytes> addAccountToHealingList) {
     this.accountsHealingList = addAccountToHealingList;
   }
 
@@ -304,7 +305,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     }
   }
 
-  public HashSet<Bytes> getAccountsHealingList() {
+  public Set<Bytes> getAccountsHealingList() {
     return accountsHealingList;
   }
 

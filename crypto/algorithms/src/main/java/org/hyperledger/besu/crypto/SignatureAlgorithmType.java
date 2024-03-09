@@ -94,11 +94,9 @@ public class SignatureAlgorithmType {
   }
 
   private static String invalidTypeErrorMessage(final String invalidEcCurve) {
-    return new StringBuilder()
-        .append(invalidEcCurve)
-        .append(" is not in the list of valid elliptic curves ")
-        .append(getEcCurvesListAsString())
-        .toString();
+    return invalidEcCurve
+        + " is not in the list of valid elliptic curves "
+        + getEcCurvesListAsString();
   }
 
   private static String getEcCurvesListAsString() {

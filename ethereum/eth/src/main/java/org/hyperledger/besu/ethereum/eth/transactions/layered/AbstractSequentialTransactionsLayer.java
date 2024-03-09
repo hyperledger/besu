@@ -141,6 +141,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
   }
 
   @Override
+  @SuppressWarnings("NonApiType")
   protected void internalConsistencyCheck(
       final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     txsBySender.values().stream()

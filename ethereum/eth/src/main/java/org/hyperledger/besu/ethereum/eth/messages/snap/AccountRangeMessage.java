@@ -133,6 +133,7 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
   @Value.Immutable
   public interface AccountRangeData {
 
+    @SuppressWarnings("NonApiType")
     TreeMap<Bytes32, Bytes> accounts();
 
     ArrayDeque<Bytes> proofs();
