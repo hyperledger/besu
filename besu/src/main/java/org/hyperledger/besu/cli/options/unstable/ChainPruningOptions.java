@@ -32,9 +32,6 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   private static final String CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG =
       "--Xchain-pruning-blocks-retained-limit";
   private static final String CHAIN_PRUNING_FREQUENCY_FLAG = "--Xchain-pruning-frequency";
-  /** The constant DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED. */
-  public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 7200;
-
   /**
    * The "CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT" field sets the minimum limit for the
    * "DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED" value. For most networks, the default value of
@@ -57,11 +54,10 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
       hidden = true,
       names = {CHAIN_PRUNING_BLOCKS_RETAINED_FLAG},
       description =
-          "The number of recent blocks for which to keep the chain data. Must be >= "
+          "The number of recent blocks for which to keep the chain data. Should be >= "
               + CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
               + " (default: ${DEFAULT-VALUE})")
-  private final Long chainDataPruningBlocksRetained =
-      DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED;
+  private final Long chainDataPruningBlocksRetained = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
 
   @CommandLine.Option(
       hidden = true,

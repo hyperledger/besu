@@ -662,7 +662,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
 
     if (chainPrunerConfiguration.getChainPruningEnabled()) {
-      final ChainDataPruner chainDataPruner = createChainPruner(syncState, blockchainStorage);
+      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
       blockchain.observeBlockAdded(chainDataPruner);
       LOG.info(
           "Chain data pruning enabled with recent blocks retained to be: "
@@ -1069,8 +1069,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     };
   }
 
-  private ChainDataPruner createChainPruner(
-      final SyncState syncState, final BlockchainStorage blockchainStorage) {
+  private ChainDataPruner createChainPruner(final BlockchainStorage blockchainStorage) {
     return new ChainDataPruner(
         blockchainStorage,
         new ChainDataPrunerStorage(
@@ -1078,7 +1077,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
                 KeyValueSegmentIdentifier.CHAIN_PRUNER_STATE)),
         chainPrunerConfiguration.getChainPruningBlocksRetained(),
         chainPrunerConfiguration.getChainPruningBlocksFrequency(),
-        syncState::isInitialSyncPhaseDone,
         MonitoredExecutors.newBoundedThreadPool(
             ChainDataPruner.class.getSimpleName(),
             1,
