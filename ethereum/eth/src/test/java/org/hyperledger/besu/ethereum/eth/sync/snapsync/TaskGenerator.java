@@ -26,10 +26,12 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
+import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
@@ -43,14 +45,19 @@ public class TaskGenerator {
 
   public static List<Task<SnapDataRequest>> createAccountRequest(final boolean withData) {
 
-    final WorldStateStorage worldStateStorage =
-        new InMemoryKeyValueStorageProvider()
-            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG);
+    final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(),
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
     final WorldStateProofProvider worldStateProofProvider =
-        new WorldStateProofProvider(worldStateStorage);
+        new WorldStateProofProvider(worldStateStorageCoordinator);
 
-    final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(worldStateStorage, 1);
+    final MerkleTrie<Bytes, Bytes> trie =
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, 1);
     final RangeStorageEntriesCollector collector =
         RangeStorageEntriesCollector.createCollector(
             Bytes32.ZERO, RangeManager.MAX_RANGE, 1, Integer.MAX_VALUE);
@@ -78,14 +85,14 @@ public class TaskGenerator {
     final StorageRangeDataRequest storageRangeDataRequest =
         createStorageRangeDataRequest(
             worldStateProofProvider,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             rootHash,
             accountHash,
             stateTrieAccountValue.getStorageRoot(),
             withData);
     final BytecodeRequest bytecodeRequest =
         createBytecodeDataRequest(
-            worldStateStorage,
+            worldStateKeyValueStorage,
             rootHash,
             accountHash,
             stateTrieAccountValue.getCodeHash(),
@@ -99,7 +106,7 @@ public class TaskGenerator {
 
   private static StorageRangeDataRequest createStorageRangeDataRequest(
       final WorldStateProofProvider worldStateProofProvider,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateKeyValueStorage,
       final Hash rootHash,
       final Hash accountHash,
       final Bytes32 storageRoot,
@@ -111,7 +118,7 @@ public class TaskGenerator {
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
-                worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+                worldStateKeyValueStorage.getAccountStorageTrieNode(accountHash, location, hash),
             storageRoot,
             b -> b,
             b -> b);
@@ -135,7 +142,7 @@ public class TaskGenerator {
   }
 
   private static BytecodeRequest createBytecodeDataRequest(
-      final WorldStateStorage worldStateStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Hash rootHash,
       final Hash accountHash,
       final Hash codeHash,
@@ -143,7 +150,7 @@ public class TaskGenerator {
     final BytecodeRequest request =
         SnapDataRequest.createBytecodeRequest(accountHash, rootHash, codeHash);
     if (withData) {
-      request.setCode(worldStateStorage.getCode(codeHash, accountHash).get());
+      request.setCode(worldStateKeyValueStorage.getCode(codeHash, accountHash).get());
     }
     return request;
   }

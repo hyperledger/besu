@@ -16,8 +16,7 @@ package org.hyperledger.besu.ethereum.trie.forest.storage;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
@@ -35,7 +34,7 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
+public class ForestWorldStateKeyValueStorage implements WorldStateKeyValueStorage {
 
   private final Subscribers<NodesAddedListener> nodeAddedListeners = Subscribers.create();
   private final KeyValueStorage keyValueStorage;
@@ -50,8 +49,7 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
     return DataStorageFormat.FOREST;
   }
 
-  @Override
-  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
+  public Optional<Bytes> getCode(final Hash codeHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -59,14 +57,11 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
     }
   }
 
-  @Override
-  public Optional<Bytes> getAccountStateTrieNode(final Bytes location, final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStateTrieNode(final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
-  @Override
-  public Optional<Bytes> getAccountStorageTrieNode(
-      final Hash accountHash, final Bytes location, final Bytes32 nodeHash) {
+  public Optional<Bytes> getAccountStorageTrieNode(final Bytes32 nodeHash) {
     return getTrieNode(nodeHash);
   }
 
@@ -78,18 +73,12 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
     }
   }
 
-  @Override
-  public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
-    return keyValueStorage.get(key.toArrayUnsafe()).map(Bytes::wrap);
+  public boolean contains(final Bytes32 hash) {
+    // we don't have location info
+    return getNodeData(hash).isPresent();
   }
 
-  @Override
-  public FlatDbMode getFlatDbMode() {
-    return FlatDbMode.NO_FLATTENED;
-  }
-
-  @Override
-  public Optional<Bytes> getNodeData(final Bytes location, final Bytes32 hash) {
+  public Optional<Bytes> getNodeData(final Bytes32 hash) {
     if (hash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
       return Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
     } else if (hash.equals(Hash.EMPTY)) {
@@ -99,9 +88,8 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
     }
   }
 
-  @Override
-  public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
-    return getAccountStateTrieNode(Bytes.EMPTY, rootHash).isPresent();
+  public boolean isWorldStateAvailable(final Bytes32 rootHash) {
+    return getAccountStateTrieNode(rootHash).isPresent();
   }
 
   @Override
@@ -110,21 +98,10 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
   }
 
   @Override
-  public void clearTrieLog() {
-    // nothing to do for forest
-  }
-
-  @Override
-  public void clearFlatDatabase() {
-    // nothing to do for forest
-  }
-
-  @Override
   public Updater updater() {
     return new Updater(lock, keyValueStorage.startTransaction(), nodeAddedListeners);
   }
 
-  @Override
   public long prune(final Predicate<byte[]> inUseCheck) {
     final AtomicInteger prunedKeys = new AtomicInteger(0);
     try (final Stream<byte[]> entry = keyValueStorage.streamKeys()) {
@@ -144,17 +121,15 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
     return prunedKeys.get();
   }
 
-  @Override
   public long addNodeAddedListener(final NodesAddedListener listener) {
     return nodeAddedListeners.subscribe(listener);
   }
 
-  @Override
   public void removeNodeAddedListener(final long id) {
     nodeAddedListeners.unsubscribe(id);
   }
 
-  public static class Updater implements WorldStateStorage.Updater {
+  public static class Updater implements WorldStateKeyValueStorage.Updater {
 
     private final KeyValueStorageTransaction transaction;
     private final Subscribers<NodesAddedListener> nodeAddedListeners;
@@ -170,9 +145,13 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
       this.nodeAddedListeners = nodeAddedListeners;
     }
 
-    @Override
-    public WorldStateStorage.Updater putCode(
-        final Hash accountHash, final Hash codeHash, final Bytes code) {
+    public Updater putCode(final Bytes code) {
+      // Skip the hash calculation for empty code
+      final Hash codeHash = code.size() == 0 ? Hash.EMPTY : Hash.hash(code);
+      return putCode(codeHash, code);
+    }
+
+    public Updater putCode(final Bytes32 codeHash, final Bytes code) {
       if (code.size() == 0) {
         // Don't save empty values
         return this;
@@ -183,15 +162,11 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
       return this;
     }
 
-    @Override
-    public WorldStateStorage.Updater saveWorldState(
-        final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
-      return putAccountStateTrieNode(null, nodeHash, node);
+    public Updater saveWorldState(final Bytes32 nodeHash, final Bytes node) {
+      return putAccountStateTrieNode(nodeHash, node);
     }
 
-    @Override
-    public Updater putAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+    public Updater putAccountStateTrieNode(final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;
@@ -201,16 +176,12 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
       return this;
     }
 
-    @Override
-    public WorldStateStorage.Updater removeAccountStateTrieNode(
-        final Bytes location, final Bytes32 nodeHash) {
+    public WorldStateKeyValueStorage.Updater removeAccountStateTrieNode(final Bytes32 nodeHash) {
       transaction.remove(nodeHash.toArrayUnsafe());
       return this;
     }
 
-    @Override
-    public Updater putAccountStorageTrieNode(
-        final Hash accountHash, final Bytes location, final Bytes32 nodeHash, final Bytes node) {
+    public Updater putAccountStorageTrieNode(final Bytes32 nodeHash, final Bytes node) {
       if (nodeHash.equals(MerkleTrie.EMPTY_TRIE_NODE_HASH)) {
         // Don't save empty nodes
         return this;
@@ -231,7 +202,6 @@ public class ForestWorldStateKeyValueStorage implements WorldStateStorage {
       }
     }
 
-    @Override
     public void rollback() {
       addedNodes.clear();
       transaction.rollback();
