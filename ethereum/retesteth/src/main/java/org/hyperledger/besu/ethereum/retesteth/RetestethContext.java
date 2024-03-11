@@ -64,6 +64,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -170,7 +171,8 @@ public class RetestethContext {
 
     final WorldStateArchive worldStateArchive =
         new ForestWorldStateArchive(
-            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+            new WorldStateStorageCoordinator(
+                new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage())),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
             EvmConfiguration.DEFAULT);
     final MutableWorldState worldState = worldStateArchive.getMutable();

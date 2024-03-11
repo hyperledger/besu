@@ -47,11 +47,12 @@ import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -89,7 +90,6 @@ public class BesuControllerBuilderTest {
   @Mock Clock clock;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
-  @Mock WorldStateStorage worldStateStorage;
   @Mock WorldStateArchive worldStateArchive;
   @Mock BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
   @Mock WorldStatePreimageStorage worldStatePreimageStorage;
@@ -105,6 +105,12 @@ public class BesuControllerBuilderTest {
 
   @BeforeEach
   public void setup() {
+
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+        mock(ForestWorldStateKeyValueStorage.class);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
     when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
     when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     when(genesisConfigFile.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
@@ -132,17 +138,21 @@ public class BesuControllerBuilderTest {
 
     lenient()
         .when(
-            storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
-        .thenReturn(worldStateStorage);
+            storageProvider.createWorldStateStorageCoordinator(
+                DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
+        .thenReturn(worldStateStorageCoordinator);
     lenient()
         .when(storageProvider.createWorldStatePreimageStorage())
         .thenReturn(worldStatePreimageStorage);
 
-    lenient().when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
+    lenient().when(worldStateKeyValueStorage.isWorldStateAvailable(any())).thenReturn(true);
     lenient()
         .when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
-    lenient().when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
+    lenient()
+        .when(worldStateKeyValueStorage.updater())
+        .thenReturn(mock(ForestWorldStateKeyValueStorage.Updater.class));
+
     besuControllerBuilder = spy(visitWithMockConfigs(new MainnetBesuControllerBuilder()));
   }
 
@@ -167,18 +177,23 @@ public class BesuControllerBuilderTest {
 
   @Test
   public void shouldDisablePruningIfBonsaiIsEnabled() {
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI)
+            .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .build();
     BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class, Answers.RETURNS_DEEP_STUBS);
     doReturn(worldStateArchive)
         .when(besuControllerBuilder)
         .createWorldStateArchive(
-            any(WorldStateStorage.class), any(Blockchain.class), any(CachedMerkleTrieLoader.class));
+            any(WorldStateStorageCoordinator.class),
+            any(Blockchain.class),
+            any(CachedMerkleTrieLoader.class));
     doReturn(mockWorldState).when(worldStateArchive).getMutable();
+    when(storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration))
+        .thenReturn(new WorldStateStorageCoordinator(bonsaiWorldStateStorage));
+    besuControllerBuilder.isPruningEnabled(true).dataStorageConfiguration(dataStorageConfiguration);
 
-    when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG))
-        .thenReturn(bonsaiWorldStateStorage);
-    besuControllerBuilder
-        .isPruningEnabled(true)
-        .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     besuControllerBuilder.build();
 
     verify(storageProvider, never())
