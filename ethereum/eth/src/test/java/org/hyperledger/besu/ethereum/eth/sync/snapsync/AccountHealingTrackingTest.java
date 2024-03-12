@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -62,6 +62,8 @@ public class AccountHealingTrackingTest {
           new InMemoryKeyValueStorageProvider(),
           new NoOpMetricsSystem(),
           DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   private WorldStateStorageCoordinator worldStateStorageCoordinator;
 

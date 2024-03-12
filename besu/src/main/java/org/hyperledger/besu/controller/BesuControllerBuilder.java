@@ -81,11 +81,11 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogPruner;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.MarkSweepPruner;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
@@ -575,10 +575,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             dataDirectory.toString(),
             numberOfBlocksToCache);
 
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
+    final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
-            .orElseGet(() -> new CachedMerkleTrieLoader(metricsSystem));
+            .orElseGet(() -> new BonsaiCachedMerkleTrieLoader(metricsSystem));
 
     final WorldStateArchive worldStateArchive =
         createWorldStateArchive(worldStateStorageCoordinator, blockchain, cachedMerkleTrieLoader);
@@ -1047,7 +1047,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   WorldStateArchive createWorldStateArchive(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final Blockchain blockchain,
-      final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
+      final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
@@ -1066,6 +1066,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         yield new ForestWorldStateArchive(
             worldStateStorageCoordinator, preimageStorage, evmConfiguration);
       }
+      default -> throw new IllegalStateException(
+          "Unexpected value: " + dataStorageConfiguration.getDataStorageFormat());
     };
   }
 
