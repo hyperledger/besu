@@ -115,13 +115,12 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
   /**
    * Registers plugins based on the provided {@link PluginConfiguration}. This method finds plugins
-   * according to the configuration settings, filters them if necessary (based on the detection
-   * type), and then registers the filtered or found plugins. It also logs a summary of the plugin
-   * registration process.
+   * according to the configuration settings, filters them if necessary and then registers the
+   * filtered or found plugins
    *
    * @param config The configuration settings used to find and filter plugins for registration. The
-   *     configuration includes the plugin directory, detection type, and any explicit plugin
-   *     identifiers if applicable.
+   *     configuration includes the plugin directory and any configured plugin identifiers if
+   *     applicable.
    * @throws IllegalStateException if the system is not in the UNINITIALIZED state.
    */
   public void registerPlugins(final PluginConfiguration config) {
@@ -141,7 +140,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
       registerPlugins(registeringPlugins);
     } else {
-      // If strict registration is not enabled, register all detected plugins
+      // If no plugins were specified, register all detected plugins
       registerPlugins(detectedPlugins);
     }
   }

@@ -30,8 +30,8 @@ public class PluginConfiguration {
   private final Path pluginsDir;
 
   /**
-   * Constructs a new PluginConfiguration with the specified plugin information, detection type, and
-   * requestedPlugins directory.
+   * Constructs a new PluginConfiguration with the specified plugin information and requestedPlugins
+   * directory.
    *
    * @param requestedPlugins List of {@link PluginInfo} objects representing the requestedPlugins.
    * @param pluginsDir The directory where requestedPlugins are located.
@@ -42,8 +42,7 @@ public class PluginConfiguration {
   }
 
   /**
-   * Constructs a PluginConfiguration with specified plugins and registration type, using the
-   * default directory.
+   * Constructs a PluginConfiguration with specified plugins using the default directory.
    *
    * @param requestedPlugins List of plugins for consideration or registration. discoverable plugins
    *     are.
@@ -54,8 +53,7 @@ public class PluginConfiguration {
   }
 
   /**
-   * Constructs a PluginConfiguration with the specified plugins directory, defaulting to non-strict
-   * registration.
+   * Constructs a PluginConfiguration with the specified plugins directory
    *
    * @param pluginsDir The directory where plugins are located. Cannot be null.
    */
