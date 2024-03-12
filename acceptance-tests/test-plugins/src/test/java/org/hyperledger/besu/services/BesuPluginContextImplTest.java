@@ -32,7 +32,6 @@ import java.util.List;
 import java.util.NoSuchElementException;
 import java.util.Optional;
 
-import org.assertj.core.api.Assertions;
 import org.assertj.core.api.ThrowableAssert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
@@ -70,7 +69,7 @@ public class BesuPluginContextImplTest {
 
     final Optional<TestPicoCLIPlugin> testPluginOptional =
         findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
-    Assertions.assertThat(testPluginOptional).isPresent();
+    assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
 
@@ -180,7 +179,7 @@ public class BesuPluginContextImplTest {
     contextImpl.registerPlugins(config);
     final Optional<TestPicoCLIPlugin> testPluginOptional =
         findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
-    Assertions.assertThat(testPluginOptional).isPresent();
+    assertThat(testPluginOptional).isPresent();
     final TestPicoCLIPlugin testPicoCLIPlugin = testPluginOptional.get();
     assertThat(testPicoCLIPlugin.getState()).isEqualTo("registered");
   }
@@ -192,21 +191,27 @@ public class BesuPluginContextImplTest {
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
     contextImpl.registerPlugins(config);
 
+    final Optional<TestPicoCLIPlugin> requestedPlugin =
+        findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
+
+    assertThat(requestedPlugin).isPresent();
+    assertThat(requestedPlugin.get().getState()).isEqualTo("registered");
+
     final Optional<TestPicoCLIPlugin> nonRequestedPlugin =
         findTestPlugin(contextImpl.getRegisteredPlugins(), TestBesuEventsPlugin.class);
 
-    Assertions.assertThat(nonRequestedPlugin).isEmpty();
+    assertThat(nonRequestedPlugin).isEmpty();
   }
 
   @Test
-  public void shouldNotRegisterUnspecifiedPluginsWhenWhenPluginsOptionIsSet() {
+  public void shouldNotRegisterUnspecifiedPluginsWhenPluginsOptionIsSet() {
     final PluginConfiguration config = createConfigurationForSpecificPlugin("TestPicoCLIPlugin");
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
     contextImpl.registerPlugins(config);
 
     final Optional<TestPicoCLIPlugin> nonRequestedPlugin =
         findTestPlugin(contextImpl.getRegisteredPlugins(), TestBesuEventsPlugin.class);
-    Assertions.assertThat(nonRequestedPlugin).isEmpty();
+    assertThat(nonRequestedPlugin).isEmpty();
   }
 
   @Test

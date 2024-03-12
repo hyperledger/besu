@@ -20,7 +20,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * Configuration for managing plugins, including their information, detection type, and directory.
@@ -70,7 +69,7 @@ public class PluginConfiguration {
   public List<String> getRequestedPlugins() {
     return requestedPlugins == null
         ? Collections.emptyList()
-        : requestedPlugins.stream().map(PluginInfo::name).collect(Collectors.toList());
+        : requestedPlugins.stream().map(PluginInfo::name).toList();
   }
 
   public Path getPluginsDir() {

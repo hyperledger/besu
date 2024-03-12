@@ -34,7 +34,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
       split = ",",
       hidden = true,
       converter = PluginInfoConverter.class,
-      arity = "0..*")
+      arity = "1..*")
   private List<PluginInfo> plugins;
 
   @Override

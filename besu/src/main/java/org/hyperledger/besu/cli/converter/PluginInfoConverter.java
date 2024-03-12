@@ -17,7 +17,6 @@ package org.hyperledger.besu.cli.converter;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import picocli.CommandLine;
@@ -36,13 +35,10 @@ public class PluginInfoConverter implements CommandLine.ITypeConverter<List<Plug
    */
   @Override
   public List<PluginInfo> convert(final String value) {
-    if (value == null || value.trim().isEmpty()) {
+    if (value == null || value.isBlank()) {
       return List.of();
     }
-    return Stream.of(value.split(","))
-        .map(String::trim)
-        .map(this::toPluginInfo)
-        .collect(Collectors.toList());
+    return Stream.of(value.split(",")).map(String::trim).map(this::toPluginInfo).toList();
   }
 
   /**
@@ -52,6 +48,6 @@ public class PluginInfoConverter implements CommandLine.ITypeConverter<List<Plug
    * @return A {@link PluginInfo} object representing the plugin.
    */
   private PluginInfo toPluginInfo(final String pluginName) {
-    return new PluginInfo(pluginName.trim());
+    return new PluginInfo(pluginName);
   }
 }

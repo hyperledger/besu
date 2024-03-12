@@ -25,7 +25,7 @@ public final class PluginInfo {
    * @throws IllegalArgumentException if the name is null or empty.
    */
   public PluginInfo(final String name) {
-    if (name == null || name.trim().isEmpty()) {
+    if (name == null || name.isBlank()) {
       throw new IllegalArgumentException("Plugin name cannot be null or empty.");
     }
     this.name = name;

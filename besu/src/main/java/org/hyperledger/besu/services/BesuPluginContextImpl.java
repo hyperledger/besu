@@ -110,7 +110,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     ClassLoader pluginLoader =
         pluginDirectoryLoader(config.getPluginsDir()).orElse(getClass().getClassLoader());
     ServiceLoader<BesuPlugin> serviceLoader = ServiceLoader.load(BesuPlugin.class, pluginLoader);
-    return StreamSupport.stream(serviceLoader.spliterator(), false).collect(Collectors.toList());
+    return StreamSupport.stream(serviceLoader.spliterator(), false).toList();
   }
 
   /**
@@ -153,7 +153,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     List<BesuPlugin> matchingPlugins =
         detectedPlugins.stream()
             .filter(plugin -> requestedPluginNames.contains(plugin.getClass().getSimpleName()))
-            .collect(Collectors.toList());
+            .toList();
 
     // Check if all requested plugins were found among the detected plugins
     if (matchingPlugins.size() != requestedPluginNames.size()) {
