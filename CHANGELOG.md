@@ -39,8 +39,6 @@
 - `--Xfilter-on-enr-fork-id` has been removed. To disable the feature use `--filter-on-enr-fork-id=false`.
 - `--engine-jwt-enabled` has been removed. Use `--engine-jwt-disabled` instead. [#6491](https://github.com/hyperledger/besu/pull/6491)
 - Release docker images now provided at ghcr.io instead of dockerhub
-- Add blob transaction support to `eth_call` [#6661](https://github.com/hyperledger/besu/pull/6661)
-- Add blobs to `eth_feeHistory` [#6679](https://github.com/hyperledger/besu/pull/6679)
 
 ### Deprecations
 - X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.6.0 in favor of SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
@@ -70,6 +68,8 @@
 - More accurate column size `storage rocksdb usage` subcommand [#6540](https://github.com/hyperledger/besu/pull/6540)
 - Adds `storage rocksdb x-stats` subcommand [#6540](https://github.com/hyperledger/besu/pull/6540)
 - New `eth_blobBaseFee`JSON-RPC method [#6581](https://github.com/hyperledger/besu/pull/6581)
+- Add blob transaction support to `eth_call` [#6661](https://github.com/hyperledger/besu/pull/6661)
+- Add blobs to `eth_feeHistory` [#6679](https://github.com/hyperledger/besu/pull/6679)
 - Upgrade reference tests to version 13.1 [#6574](https://github.com/hyperledger/besu/pull/6574)
 - Extend `BesuConfiguration` service [#6584](https://github.com/hyperledger/besu/pull/6584)
 - Add `ethereum_min_gas_price` and `ethereum_min_priority_fee` metrics to track runtime values of `min-gas-price` and `min-priority-fee` [#6587](https://github.com/hyperledger/besu/pull/6587)
