@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -52,7 +52,8 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class FastSyncChainDownloaderTest {
 
-  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator =
+      mock(WorldStateStorageCoordinator.class);
 
   protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
@@ -73,7 +74,8 @@ public class FastSyncChainDownloaderTest {
   }
 
   public void setup(final DataStorageFormat storageFormat) {
-    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
+    when(worldStateStorageCoordinator.getDataStorageFormat()).thenReturn(storageFormat);
+    when(worldStateStorageCoordinator.isWorldStateAvailable(any(), any())).thenReturn(true);
     final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
     otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
@@ -100,7 +102,7 @@ public class FastSyncChainDownloaderTest {
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
     return FastSyncChainDownloader.create(
         syncConfig,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         protocolSchedule,
         protocolContext,
         ethContext,

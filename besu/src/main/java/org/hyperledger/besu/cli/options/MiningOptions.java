@@ -42,7 +42,6 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.util.List;
-import java.util.OptionalInt;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -191,7 +190,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
         DEFAULT_POS_BLOCK_CREATION_REPETITION_MIN_DURATION;
   }
 
-  private OptionalInt maybeGenesisBlockPeriodSeconds;
   private TransactionSelectionService transactionSelectionService;
 
   private MiningOptions() {}
@@ -203,16 +201,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
    */
   public static MiningOptions create() {
     return new MiningOptions();
-  }
-
-  /**
-   * Set the optional genesis block period per seconds
-   *
-   * @param genesisBlockPeriodSeconds if the network is PoA then the block period in seconds
-   *     specified in the genesis file, otherwise empty.
-   */
-  public void setGenesisBlockPeriodSeconds(final OptionalInt genesisBlockPeriodSeconds) {
-    maybeGenesisBlockPeriodSeconds = genesisBlockPeriodSeconds;
   }
 
   /**
@@ -312,7 +300,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
   static MiningOptions fromConfig(final MiningParameters miningParameters) {
     final MiningOptions miningOptions = MiningOptions.create();
-    miningOptions.setGenesisBlockPeriodSeconds(miningParameters.getGenesisBlockPeriodSeconds());
     miningOptions.setTransactionSelectionService(miningParameters.getTransactionSelectionService());
     miningOptions.isMiningEnabled = miningParameters.isMiningEnabled();
     miningOptions.iStratumMiningEnabled = miningParameters.isStratumMiningEnabled();
@@ -349,9 +336,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
   @Override
   public MiningParameters toDomainObject() {
     checkNotNull(
-        maybeGenesisBlockPeriodSeconds,
-        "genesisBlockPeriodSeconds must be set before using this object");
-    checkNotNull(
         transactionSelectionService,
         "transactionSelectionService must be set before using this object");
 
@@ -371,7 +355,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
     }
 
     return ImmutableMiningParameters.builder()
-        .genesisBlockPeriodSeconds(maybeGenesisBlockPeriodSeconds)
         .transactionSelectionService(transactionSelectionService)
         .mutableInitValues(updatableInitValuesBuilder.build())
         .isStratumMiningEnabled(iStratumMiningEnabled)

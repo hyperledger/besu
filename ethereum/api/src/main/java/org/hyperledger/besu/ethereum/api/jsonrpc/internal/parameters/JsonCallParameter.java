@@ -71,7 +71,7 @@ public class JsonCallParameter extends CallParameter {
         Optional.ofNullable(maxFeePerBlobGas),
         Optional.ofNullable(blobVersionedHashes));
 
-    if (input != null && data != null) {
+    if (input != null && data != null && !input.equals(data)) {
       throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
     }
 

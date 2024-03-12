@@ -17,11 +17,15 @@
 - RocksDB database metadata refactoring [#6555](https://github.com/hyperledger/besu/pull/6555)
 - Make layered txpool aware of minGasPrice and minPriorityFeePerGas dynamic options [#6611](https://github.com/hyperledger/besu/pull/6611)
 - Update commons-compress to 1.26.0 [#6648](https://github.com/hyperledger/besu/pull/6648)
+- Update Vert.x to 4.5.4 [#6666](https://github.com/hyperledger/besu/pull/6666)
 - Add blob transaction support to `eth_call` [#6661](https://github.com/hyperledger/besu/pull/6661)
 - Add blobs to `eth_feeHistory` [#6679](https://github.com/hyperledger/besu/pull/6679)
 - Refactor and extend `TransactionPoolValidatorService` [#6636](https://github.com/hyperledger/besu/pull/6636)
+- Transaction call object to accept both `input` and `data` field simultaneously if they are set to equal values [#6702](https://github.com/hyperledger/besu/pull/6702)
 
 ### Bug fixes
+- Make block transaction selection max time aware of PoA transitions [#6676](https://github.com/hyperledger/besu/pull/6676)
+- Don't enable the BFT mining coordinator when running sub commands such as `blocks export` [#6675](https://github.com/hyperledger/besu/pull/6675)
 
 ### Download Links
 

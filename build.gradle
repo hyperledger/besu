@@ -517,6 +517,13 @@ subprojects {
 
     dependencies { jmh 'org.slf4j:slf4j-api' }
   }
+
+  // making sure assemble task invokes integration test compile
+  afterEvaluate { project ->
+    if (project.tasks.findByName('compileIntegrationTestJava')) {
+      project.tasks.assemble.dependsOn compileIntegrationTestJava
+    }
+  }
 }
 
 jar { enabled = false }
