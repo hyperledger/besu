@@ -19,6 +19,7 @@
 - Update commons-compress to 1.26.0 [#6648](https://github.com/hyperledger/besu/pull/6648)
 - Update Vert.x to 4.5.4 [#6666](https://github.com/hyperledger/besu/pull/6666)
 - Refactor and extend `TransactionPoolValidatorService` [#6636](https://github.com/hyperledger/besu/pull/6636)
+- Transaction call object to accept both `input` and `data` field simultaneously if they are set to equal values [#6702](https://github.com/hyperledger/besu/pull/6702)
 
 ### Bug fixes
 
