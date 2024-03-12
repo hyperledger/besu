@@ -46,9 +46,10 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -86,7 +87,6 @@ public class CliqueBesuControllerBuilderTest {
   @Mock private Clock clock;
   @Mock private StorageProvider storageProvider;
   @Mock private GasLimitCalculator gasLimitCalculator;
-  @Mock private WorldStateStorage worldStateStorage;
   @Mock private WorldStatePreimageStorage worldStatePreimageStorage;
   private static final BigInteger networkId = BigInteger.ONE;
   private static final NodeKey nodeKey = NodeKeyUtils.generate();
@@ -101,6 +101,11 @@ public class CliqueBesuControllerBuilderTest {
   @BeforeEach
   public void setup() throws JsonProcessingException {
     // Clique Besu controller setup
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+        mock(ForestWorldStateKeyValueStorage.class);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
     lenient().when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
     lenient().when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     when(genesisConfigFile.getExtraData())
@@ -120,10 +125,13 @@ public class CliqueBesuControllerBuilderTest {
                 new MainnetBlockHeaderFunctions()));
     lenient()
         .when(
-            storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
-        .thenReturn(worldStateStorage);
-    lenient().when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
-    lenient().when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
+            storageProvider.createWorldStateStorageCoordinator(
+                DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
+        .thenReturn(worldStateStorageCoordinator);
+    lenient().when(worldStateKeyValueStorage.isWorldStateAvailable(any())).thenReturn(true);
+    lenient()
+        .when(worldStateKeyValueStorage.updater())
+        .thenReturn(mock(ForestWorldStateKeyValueStorage.Updater.class));
     lenient()
         .when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
