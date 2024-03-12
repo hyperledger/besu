@@ -39,9 +39,10 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.NodeDataReques
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
@@ -77,7 +78,7 @@ public class WorldStateDownloaderBenchmark {
   private BlockHeader blockHeader;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private WorldStateDownloader worldStateDownloader;
-  private WorldStateStorage worldStateStorage;
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
   private RespondingEthPeer peer;
   private Responder responder;
   private InMemoryTasksPriorityQueues<NodeDataRequest> pendingRequests;
@@ -106,14 +107,14 @@ public class WorldStateDownloaderBenchmark {
 
     final StorageProvider storageProvider =
         createKeyValueStorageProvider(tempDir, tempDir.resolve("database"));
-    worldStateStorage =
-        storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG);
+    worldStateStorageCoordinator =
+        storageProvider.createWorldStateStorageCoordinator(DataStorageConfiguration.DEFAULT_CONFIG);
 
     pendingRequests = new InMemoryTasksPriorityQueues<>();
     worldStateDownloader =
         new FastWorldStateDownloader(
             ethContext,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             pendingRequests,
             syncConfig.getWorldStateHashCountPerRequest(),
             syncConfig.getWorldStateRequestParallelism(),
@@ -153,7 +154,9 @@ public class WorldStateDownloaderBenchmark {
     peer.respondWhileOtherThreadsWork(responder, () -> !result.isDone());
     result.getNow(null);
     final Optional<Bytes> rootData =
-        worldStateStorage.getNodeData(Bytes.EMPTY, blockHeader.getStateRoot());
+        worldStateStorageCoordinator
+            .getStrategy(ForestWorldStateKeyValueStorage.class)
+            .getNodeData(blockHeader.getStateRoot());
     if (rootData.isEmpty()) {
       throw new IllegalStateException("World state download did not complete.");
     }

@@ -35,7 +35,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
@@ -60,7 +60,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       final ProtocolContext protocolContext,
       final MetricsSystem metricsSystem,
       final EthContext ethContext,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SyncState syncState,
       final Clock clock) {
 
@@ -104,7 +104,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       fastSyncActions =
           new FastSyncActions(
               syncConfig,
-              worldStateStorage,
+              worldStateStorageCoordinator,
               protocolSchedule,
               protocolContext,
               ethContext,
@@ -121,7 +121,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       fastSyncActions =
           new CheckpointSyncActions(
               syncConfig,
-              worldStateStorage,
+              worldStateStorageCoordinator,
               protocolSchedule,
               protocolContext,
               ethContext,
@@ -142,7 +142,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
             ethContext,
             snapContext,
             protocolContext,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             snapTaskCollection,
             syncConfig.getSnapSyncConfiguration(),
             syncConfig.getWorldStateRequestParallelism(),
@@ -153,7 +153,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
     final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
             fastSyncActions,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             snapWorldStateDownloader,
             fastSyncStateStorage,
             snapTaskCollection,

@@ -69,6 +69,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBui
 import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -94,7 +95,7 @@ import org.junit.jupiter.api.io.TempDir;
 
 public abstract class AbstractIsolationTests {
   protected BonsaiWorldStateProvider archive;
-  protected BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorage;
+  protected WorldStateKeyValueStorage worldStateKeyValueStorage;
   protected ProtocolContext protocolContext;
   protected EthContext ethContext;
   protected EthScheduler ethScheduler = new DeterministicEthScheduler();
@@ -148,13 +149,12 @@ public abstract class AbstractIsolationTests {
 
   @BeforeEach
   public void createStorage() {
-    bonsaiWorldStateStorage =
-        (BonsaiWorldStateKeyValueStorage)
-            createKeyValueStorageProvider()
-                .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+    worldStateKeyValueStorage =
+        createKeyValueStorageProvider()
+            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     archive =
         new BonsaiWorldStateProvider(
-            bonsaiWorldStateStorage,
+            (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
             blockchain,
             Optional.of(16L),
             new CachedMerkleTrieLoader(new NoOpMetricsSystem()),
