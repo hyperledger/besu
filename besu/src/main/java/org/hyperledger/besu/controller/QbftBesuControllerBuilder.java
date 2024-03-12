@@ -286,11 +286,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
                         .getBlockPeriodSeconds()));
 
     if (syncState.isInitialSyncPhaseDone()) {
-      LOG.info("Starting QBFT mining coordinator");
       miningCoordinator.enable();
-      miningCoordinator.start();
-    } else {
-      LOG.info("QBFT mining coordinator not starting while initial sync in progress");
     }
 
     syncState.subscribeCompletionReached(

@@ -246,11 +246,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
                         .getBlockPeriodSeconds()));
 
     if (syncState.isInitialSyncPhaseDone()) {
-      LOG.info("Starting IBFT mining coordinator");
       ibftMiningCoordinator.enable();
-      ibftMiningCoordinator.start();
-    } else {
-      LOG.info("IBFT mining coordinator not starting while initial sync in progress");
     }
 
     syncState.subscribeCompletionReached(
