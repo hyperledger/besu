@@ -45,6 +45,8 @@ jobs:
           if_no_artifact_found: true
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: Split tests
         id: split-tests
         uses: r7kamura/split-tests-by-timings@9322bd292d9423e2bc5a65bec548901801341e3f

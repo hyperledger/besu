@@ -38,7 +38,8 @@ jobs:
           java-version: 17
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
-        #shame the test generation isn't less redundant, we used to do this in a dependent job, but artifact downloading broke
+        with:
+          cache-disabled: true
       - name: execute generate reference tests
         run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: list test files generated
