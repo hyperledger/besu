@@ -34,7 +34,6 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -316,6 +315,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Test
   public void blockTxsSelectionMaxTimeDefaultValue() {
     internalTestSuccess(
+        this::runtimeConfiguration,
         miningParams ->
             assertThat(miningParams.getNonPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME));
@@ -324,6 +324,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Test
   public void blockTxsSelectionMaxTimeOption() {
     internalTestSuccess(
+        this::runtimeConfiguration,
         miningParams -> assertThat(miningParams.getBlockTxsSelectionMaxTime()).isEqualTo(1700L),
         "--block-txs-selection-max-time",
         "1700");
@@ -343,6 +344,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Test
   public void poaBlockTxsSelectionMaxTimeDefaultValue() {
     internalTestSuccess(
+        this::runtimeConfiguration,
         miningParams ->
             assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME));
@@ -352,6 +354,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   public void poaBlockTxsSelectionMaxTimeOption() throws IOException {
     final Path genesisFileIBFT2 = createFakeGenesisFile(VALID_GENESIS_IBFT2_POST_LONDON);
     internalTestSuccess(
+        this::runtimeConfiguration,
         miningParams ->
             assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
                 .isEqualTo(PositiveNumber.fromInt(80)),
@@ -365,6 +368,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   public void poaBlockTxsSelectionMaxTimeOptionOver100Percent() throws IOException {
     final Path genesisFileClique = createFakeGenesisFile(VALID_GENESIS_CLIQUE_POST_LONDON);
     internalTestSuccess(
+        this::runtimeConfiguration,
         miningParams -> {
           assertThat(miningParams.getPoaBlockTxsSelectionMaxTime())
               .isEqualTo(PositiveNumber.fromInt(200));
@@ -412,16 +416,19 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
 
   @Override
   protected MiningOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
-    final var miningOptions = besuCommand.getMiningOptions();
-    miningOptions.setGenesisBlockPeriodSeconds(
-        besuCommand.getActualGenesisConfigOptions().isPoa()
-            ? OptionalInt.of(POA_BLOCK_PERIOD_SECONDS)
-            : OptionalInt.empty());
-    return miningOptions;
+    return besuCommand.getMiningOptions();
   }
 
   @Override
   protected String[] getNonOptionFields() {
-    return new String[] {"maybeGenesisBlockPeriodSeconds", "transactionSelectionService"};
+    return new String[] {"transactionSelectionService"};
+  }
+
+  private MiningParameters runtimeConfiguration(
+      final TestBesuCommand besuCommand, final MiningParameters miningParameters) {
+    if (besuCommand.getActualGenesisConfigOptions().isPoa()) {
+      miningParameters.setBlockPeriodSeconds(POA_BLOCK_PERIOD_SECONDS);
+    }
+    return miningParameters;
   }
 }

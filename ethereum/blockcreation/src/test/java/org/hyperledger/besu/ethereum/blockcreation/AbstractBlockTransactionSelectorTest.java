@@ -1405,9 +1405,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
             MutableInitValues.builder()
                 .minTransactionGasPrice(minGasPrice)
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
+                .blockPeriodSeconds(genesisBlockPeriodSeconds)
                 .build())
         .transactionSelectionService(transactionSelectionService)
-        .genesisBlockPeriodSeconds(genesisBlockPeriodSeconds)
         .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
         .build();
   }
