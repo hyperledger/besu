@@ -227,8 +227,7 @@ public class BesuPluginContextImplTest {
   }
 
   private PluginConfiguration createConfigurationForSpecificPlugin(final String pluginName) {
-    return new PluginConfiguration(
-        List.of(new PluginInfo(pluginName)), DEFAULT_PLUGIN_DIRECTORY);
+    return new PluginConfiguration(List.of(new PluginInfo(pluginName)), DEFAULT_PLUGIN_DIRECTORY);
   }
 
   private Optional<TestPicoCLIPlugin> findTestPlugin(

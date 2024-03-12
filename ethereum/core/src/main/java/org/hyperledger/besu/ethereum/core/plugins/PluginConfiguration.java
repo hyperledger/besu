@@ -36,9 +36,7 @@ public class PluginConfiguration {
    * @param requestedPlugins List of {@link PluginInfo} objects representing the requestedPlugins.
    * @param pluginsDir The directory where requestedPlugins are located.
    */
-  public PluginConfiguration(
-      final List<PluginInfo> requestedPlugins,
-      final Path pluginsDir) {
+  public PluginConfiguration(final List<PluginInfo> requestedPlugins, final Path pluginsDir) {
     this.requestedPlugins = requestedPlugins;
     this.pluginsDir = pluginsDir;
   }
@@ -47,11 +45,10 @@ public class PluginConfiguration {
    * Constructs a PluginConfiguration with specified plugins and registration type, using the
    * default directory.
    *
-   * @param requestedPlugins List of plugins for consideration or registration.
-   *     discoverable plugins are.
+   * @param requestedPlugins List of plugins for consideration or registration. discoverable plugins
+   *     are.
    */
-  public PluginConfiguration(
-      final List<PluginInfo> requestedPlugins) {
+  public PluginConfiguration(final List<PluginInfo> requestedPlugins) {
     this.requestedPlugins = requestedPlugins;
     this.pluginsDir = PluginConfiguration.defaultPluginsDir();
   }
@@ -77,7 +74,6 @@ public class PluginConfiguration {
         ? Collections.emptyList()
         : requestedPlugins.stream().map(PluginInfo::name).collect(Collectors.toList());
   }
-
 
   public Path getPluginsDir() {
     return pluginsDir;

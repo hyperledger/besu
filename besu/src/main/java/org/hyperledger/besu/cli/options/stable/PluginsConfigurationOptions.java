@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_OPTION_NAME;
+
 import org.hyperledger.besu.cli.converter.PluginInfoConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
@@ -22,6 +23,7 @@ import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.core.plugins.PluginInfo;
 
 import java.util.List;
+
 import picocli.CommandLine;
 
 /** The Plugins Options options. */
@@ -34,7 +36,6 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
       converter = PluginInfoConverter.class,
       arity = "0..*")
   private List<PluginInfo> plugins;
-
 
   @Override
   public PluginConfiguration toDomainObject() {
