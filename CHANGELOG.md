@@ -25,6 +25,8 @@
 - Enhanced control over plugins registration [6700](https://github.com/hyperledger/besu/pull/6700)
 
 ### Bug fixes
+- Make block transaction selection max time aware of PoA transitions [#6676](https://github.com/hyperledger/besu/pull/6676)
+- Don't enable the BFT mining coordinator when running sub commands such as `blocks export` [#6675](https://github.com/hyperledger/besu/pull/6675)
 
 ### Download Links
 
