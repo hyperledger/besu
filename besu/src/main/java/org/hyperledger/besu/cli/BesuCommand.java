@@ -2166,10 +2166,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private MiningParameters getMiningParameters() {
     if (miningParameters == null) {
-      miningOptions.setGenesisBlockPeriodSeconds(
-          getGenesisBlockPeriodSeconds(getActualGenesisConfigOptions()));
       miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
       miningParameters = miningOptions.toDomainObject();
+      getGenesisBlockPeriodSeconds(getActualGenesisConfigOptions())
+          .ifPresent(miningParameters::setBlockPeriodSeconds);
       initMiningParametersMetrics(miningParameters);
     }
     return miningParameters;
