@@ -21,6 +21,7 @@
 - Add blob transaction support to `eth_call` [#6661](https://github.com/hyperledger/besu/pull/6661)
 - Add blobs to `eth_feeHistory` [#6679](https://github.com/hyperledger/besu/pull/6679)
 - Refactor and extend `TransactionPoolValidatorService` [#6636](https://github.com/hyperledger/besu/pull/6636)
+- Enhanced control over plugins registration [6700](https://github.com/hyperledger/besu/pull/6700)
 
 ### Bug fixes
 
