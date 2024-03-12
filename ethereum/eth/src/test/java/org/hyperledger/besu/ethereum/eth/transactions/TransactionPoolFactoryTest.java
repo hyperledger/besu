@@ -22,6 +22,7 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.atLeast;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -126,6 +128,37 @@ public class TransactionPoolFactoryTest {
         ArgumentCaptor.forClass(BlockAddedObserver.class);
     verify(blockchain, atLeastOnce()).observeBlockAdded(blockAddedListeners.capture());
 
+    assertThat(pool.isEnabled()).isFalse();
+  }
+
+  @Test
+  public void assertPoolDisabledIfChainInSyncWithoutInitialSync() {
+    SyncState syncSpy = spy(new SyncState(blockchain, ethPeers, true, Optional.empty()));
+    ArgumentCaptor<Synchronizer.InSyncListener> chainSyncCaptor =
+        ArgumentCaptor.forClass(Synchronizer.InSyncListener.class);
+
+    setupInitialSyncPhase(syncSpy);
+    // verify that we are registered to the sync state
+    verify(syncSpy).subscribeInSync(chainSyncCaptor.capture());
+    // Retrieve the captured InSyncListener
+    Synchronizer.InSyncListener chainSyncListener = chainSyncCaptor.getValue();
+
+    // mock chain being in sync:
+    chainSyncListener.onInSyncStatusChange(true);
+
+    // assert pool is disabled if chain in sync and initial sync not done
+    assertThat(pool.isEnabled()).isFalse();
+
+    // mock initial sync done (avoid triggering initial sync listener)
+    when(syncSpy.isInitialSyncPhaseDone()).thenReturn(true);
+
+    // assert pool is enabled when chain in sync and initial sync done
+    chainSyncListener.onInSyncStatusChange(true);
+    assertThat(pool.isEnabled()).isTrue();
+
+    // assert pool is re-disabled when initial sync is incomplete but chain reaches head:
+    when(syncSpy.isInitialSyncPhaseDone()).thenCallRealMethod();
+    chainSyncListener.onInSyncStatusChange(false);
     assertThat(pool.isEnabled()).isFalse();
   }
 
@@ -231,7 +264,10 @@ public class TransactionPoolFactoryTest {
 
   private void setupInitialSyncPhase(final boolean hasInitialSyncPhase) {
     syncState = new SyncState(blockchain, ethPeers, hasInitialSyncPhase, Optional.empty());
+    setupInitialSyncPhase(syncState);
+  }
 
+  private void setupInitialSyncPhase(final SyncState syncState) {
     pool =
         TransactionPoolFactory.createTransactionPool(
             schedule,

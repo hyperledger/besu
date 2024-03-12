@@ -60,7 +60,7 @@ public class RollingImport {
             new BonsaiWorldStateKeyValueStorage(
                 provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             EvmConfiguration.DEFAULT);
-    final SegmentedInMemoryKeyValueStorage worldStateStorage =
+    final SegmentedInMemoryKeyValueStorage worldStateKeyValueStorage =
         (SegmentedInMemoryKeyValueStorage)
             provider.getStorageBySegmentIdentifiers(
                 List.of(
@@ -128,7 +128,7 @@ public class RollingImport {
       }
     }
     System.out.printf("Back to zero!%n");
-    worldStateStorage.dump(System.out);
+    worldStateKeyValueStorage.dump(System.out);
     trieLogStorage.dump(System.out);
   }
 }

@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.RemoveVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.HashMap;
 import java.util.List;
@@ -48,10 +48,10 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public class WorldStateProofProvider {
 
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
 
-  public WorldStateProofProvider(final WorldStateStorage worldStateStorage) {
-    this.worldStateStorage = worldStateStorage;
+  public WorldStateProofProvider(final WorldStateStorageCoordinator worldStateStorageCoordinator) {
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
   }
 
   public Optional<WorldStateProof> getAccountProof(
@@ -59,7 +59,7 @@ public class WorldStateProofProvider {
       final Address accountAddress,
       final List<UInt256> accountStorageKeys) {
 
-    if (!worldStateStorage.isWorldStateAvailable(worldStateRoot, null)) {
+    if (!worldStateStorageCoordinator.isWorldStateAvailable(worldStateRoot, null)) {
       return Optional.empty();
     } else {
       final Hash accountHash = accountAddress.addressHash();
@@ -122,14 +122,14 @@ public class WorldStateProofProvider {
 
   private MerkleTrie<Bytes, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
+        worldStateStorageCoordinator::getAccountStateTrieNode, rootHash, b -> b, b -> b);
   }
 
   private MerkleTrie<Bytes32, Bytes> newAccountStorageTrie(
       final Hash accountHash, final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
         (location, hash) ->
-            worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+            worldStateStorageCoordinator.getAccountStorageTrieNode(accountHash, location, hash),
         rootHash,
         b -> b,
         b -> b);
