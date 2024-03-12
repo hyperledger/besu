@@ -26,8 +26,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collection;
 import java.util.List;
@@ -99,16 +101,39 @@ public class RoundChangeMessageValidator {
     final BlockValidator blockValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getBlockValidator();
 
-    final var validationResult =
-        blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
+    while (!StorageExceptionManager.errorCountAtThreshold()) {
+      try {
+        final var validationResult =
+            blockValidator.validateAndProcessBlock(
+                protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
 
-    if (!validationResult.isSuccessful()) {
-      LOG.info(
-          "{}: block did not pass validation. Reason {}",
-          ERROR_PREFIX,
-          validationResult.errorMessage);
-      return false;
+        if (!validationResult.isSuccessful()) {
+          LOG.info(
+              "{}: block did not pass validation. Reason {}",
+              ERROR_PREFIX,
+              validationResult.errorMessage);
+          return false;
+        }
+      } catch (StorageException storageException) {
+        if (StorageExceptionManager.canRetryOnError(storageException)) {
+          // We reset the task by setting it to null. This way, it is considered as failed by the
+          // pipeline, and it will attempt to execute it again later.
+          if (StorageExceptionManager.errorCountAtThreshold()) {
+            LOG.info(
+                "Encountered {} retryable RocksDB errors, latest error message {}",
+                StorageExceptionManager.getRetryableErrorCounter(),
+                storageException.getMessage());
+          }
+        } else {
+          throw storageException;
+        }
+      }
+
+      try {
+        Thread.sleep(1);
+      } catch (InterruptedException e) {
+        // Ignore
+      }
     }
 
     return true;
