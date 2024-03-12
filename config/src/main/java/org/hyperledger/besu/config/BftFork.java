@@ -81,10 +81,11 @@ public class BftFork {
   /**
    * Gets empty block period seconds.
    *
-   * @return the block empty period seconds
+   * @return the empty block period seconds
    */
   public OptionalInt getEmptyBlockPeriodSeconds() {
-    return JsonUtil.getPositiveInt(forkConfigRoot, EMPTY_BLOCK_PERIOD_SECONDS_KEY);
+    // it can be 0 for emptyblockperiodseconds
+    return JsonUtil.getInt(forkConfigRoot, EMPTY_BLOCK_PERIOD_SECONDS_KEY);
   }
 
   /**

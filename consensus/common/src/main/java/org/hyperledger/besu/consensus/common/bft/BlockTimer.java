@@ -86,9 +86,9 @@ public class BlockTimer {
       final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
 
     // absolute time when the timer is supposed to expire
-    final int blockPeriodSeconds =
+    final int currentBlockPeriodSeconds =
         forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
-    final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
+    final long minimumTimeBetweenBlocksMillis = currentBlockPeriodSeconds * 1000L;
     final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
 
     setBlockTimes(round, false);
@@ -136,12 +136,16 @@ public class BlockTimer {
             ? this.emptyBlockPeriodSeconds
             : this.blockPeriodSeconds;
 
-    LOG.debug("NEW CURRENTBLOCKPERIODSECONDS SET TO {}:  {}", isEmpty?"EMPTYBLOCKPERIODSECONDS":"BLOCKPERIODSECONDS", currentBlockPeriodSeconds);
+    LOG.debug(
+            "NEW CURRENTBLOCKPERIODSECONDS SET TO {}:  {}"
+            , isEmpty?"EMPTYBLOCKPERIODSECONDS":"BLOCKPERIODSECONDS"
+            , currentBlockPeriodSeconds);
   }
 
   public synchronized long getBlockPeriodSeconds(){
     return blockPeriodSeconds;
   }
+
   public synchronized long getEmptyBlockPeriodSeconds(){
     return emptyBlockPeriodSeconds;
   }

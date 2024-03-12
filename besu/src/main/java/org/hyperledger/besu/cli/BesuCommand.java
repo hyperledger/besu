@@ -2128,6 +2128,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (miningParameters == null) {
       miningOptions.setGenesisBlockPeriodSeconds(
           getGenesisBlockPeriodSeconds(getActualGenesisConfigOptions()));
+      miningOptions.setGenesisEmptyBlockPeriodSeconds(
+              getGenesisEmptyBlockPeriodSeconds(getActualGenesisConfigOptions()));
       miningParameters = miningOptions.toDomainObject();
       initMiningParametersMetrics(miningParameters);
     }
@@ -2157,6 +2159,23 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
     if (genesisConfigOptions.isQbft()) {
       return OptionalInt.of(genesisConfigOptions.getQbftConfigOptions().getBlockPeriodSeconds());
+    }
+
+    return OptionalInt.empty();
+  }
+
+  private OptionalInt getGenesisEmptyBlockPeriodSeconds(
+          final GenesisConfigOptions genesisConfigOptions) {
+    if (genesisConfigOptions.isClique()) {
+      return OptionalInt.of(genesisConfigOptions.getCliqueConfigOptions().getEmptyBlockPeriodSeconds());
+    }
+
+    if (genesisConfigOptions.isIbft2()) {
+      return OptionalInt.of(genesisConfigOptions.getBftConfigOptions().getEmptyBlockPeriodSeconds());
+    }
+
+    if (genesisConfigOptions.isQbft()) {
+      return OptionalInt.of(genesisConfigOptions.getQbftConfigOptions().getEmptyBlockPeriodSeconds());
     }
 
     return OptionalInt.empty();

@@ -40,7 +40,7 @@ public interface BftConfigOptions {
   /**
    * Gets empty block period seconds.
    *
-   * @return the block period seconds
+   * @return the empty block period seconds
    */
   int getEmptyBlockPeriodSeconds();
 

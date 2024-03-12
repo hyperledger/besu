@@ -190,6 +190,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
   }
 
   private OptionalInt maybeGenesisBlockPeriodSeconds;
+  private OptionalInt maybeEmptyGenesisBlockPeriodSeconds;
 
   private MiningOptions() {}
 
@@ -210,6 +211,16 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
    */
   public void setGenesisBlockPeriodSeconds(final OptionalInt genesisBlockPeriodSeconds) {
     maybeGenesisBlockPeriodSeconds = genesisBlockPeriodSeconds;
+  }
+
+  /**
+   * Set the optional genesis empty block period per seconds
+   *
+   * @param genesisEmptyBlockPeriodSeconds if the network is PoA then the empty block period in seconds
+   *     specified in the genesis file, otherwise empty.
+   */
+  public void setGenesisEmptyBlockPeriodSeconds(final OptionalInt genesisEmptyBlockPeriodSeconds) {
+    maybeEmptyGenesisBlockPeriodSeconds = genesisEmptyBlockPeriodSeconds;
   }
 
   /**
@@ -299,6 +310,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
   static MiningOptions fromConfig(final MiningParameters miningParameters) {
     final MiningOptions miningOptions = MiningOptions.create();
     miningOptions.setGenesisBlockPeriodSeconds(miningParameters.getGenesisBlockPeriodSeconds());
+    miningOptions.setGenesisEmptyBlockPeriodSeconds(miningParameters.getGenesisEmptyBlockPeriodSeconds());
     miningOptions.isMiningEnabled = miningParameters.isMiningEnabled();
     miningOptions.iStratumMiningEnabled = miningParameters.isStratumMiningEnabled();
     miningOptions.stratumNetworkInterface = miningParameters.getStratumNetworkInterface();
@@ -337,6 +349,10 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
       throw new IllegalStateException(
           "genesisBlockPeriodSeconds must be set before using this object");
     }
+    if (maybeGenesisEmptyBlockPeriodSeconds == null) {
+      throw new IllegalStateException(
+              "genesisEmptyBlockPeriodSeconds must be set before using this object");
+    }
 
     final var updatableInitValuesBuilder =
         MutableInitValues.builder()
@@ -355,6 +371,7 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
 
     return ImmutableMiningParameters.builder()
         .genesisBlockPeriodSeconds(maybeGenesisBlockPeriodSeconds)
+        .genesisEmptyBBlockPeriodSeconds(maybeGenesisEmptyBBlockPeriodSeconds)
         .mutableInitValues(updatableInitValuesBuilder.build())
         .isStratumMiningEnabled(iStratumMiningEnabled)
         .stratumNetworkInterface(stratumNetworkInterface)
