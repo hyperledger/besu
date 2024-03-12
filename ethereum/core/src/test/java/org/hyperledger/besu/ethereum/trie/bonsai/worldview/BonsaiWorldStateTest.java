@@ -62,7 +62,8 @@ class BonsaiWorldStateTest {
         new BonsaiWorldState(
             InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain),
             bonsaiWorldStateKeyValueStorage,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new BonsaiWorldStateConfig());
   }
 
   @ParameterizedTest

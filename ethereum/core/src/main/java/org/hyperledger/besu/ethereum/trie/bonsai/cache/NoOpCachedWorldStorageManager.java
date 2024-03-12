@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateConfig;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -26,7 +27,7 @@ public class NoOpCachedWorldStorageManager extends CachedWorldStorageManager {
 
   public NoOpCachedWorldStorageManager(
       final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage) {
-    super(null, bonsaiWorldStateKeyValueStorage);
+    super(null, bonsaiWorldStateKeyValueStorage, BonsaiWorldStateConfig::new);
   }
 
   @Override
