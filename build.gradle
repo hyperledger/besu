@@ -157,6 +157,10 @@ allprojects {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
+    maven {
+      url 'https://maven.pkg.github.com/hyperledger/besu-errorprone-checks'
+      content { includeGroupByRegex('org\\.hyperledger\\..*') }
+    }
     mavenCentral()
 
     // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
@@ -174,8 +178,8 @@ allprojects {
       filter { includeModule('ethereum', 'execution-spec-tests')}
     }
 
-    // TODO: For testing custom besu-errorprone-check. Should be remove once errorprone is published
-    mavenLocal()
+    // besu-errorprone-check and future internal packages.
+    // mavenLocal()
   }
 
   dependencies {

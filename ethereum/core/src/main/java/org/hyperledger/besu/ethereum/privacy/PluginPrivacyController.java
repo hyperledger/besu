@@ -156,6 +156,6 @@ public class PluginPrivacyController extends AbstractPrivacyController {
   @Override
   public void verifyPrivacyGroupContainsPrivacyUserId(
       final String privacyGroupId, final String privacyUserId) {
-    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId, Optional.empty());
+    verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId, Optional.empty());
   }
 }
