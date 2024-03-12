@@ -44,7 +44,9 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.PermissioningService;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
+import org.hyperledger.besu.plugin.services.PrivacyPluginService;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.StorageService;
@@ -56,6 +58,7 @@ import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
+import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
@@ -117,15 +120,16 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     } else {
       pluginsPath = Path.of(pluginDir);
     }
-    besuPluginContext.registerPlugins(pluginsPath);
-
-    commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
     besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
+    besuPluginContext.addService(PermissioningService.class, new PermissioningServiceImpl());
+    besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
+
+    besuPluginContext.registerPlugins(pluginsPath);
+    commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
     // register built-in plugins
     new RocksDBPlugin().register(besuPluginContext);
-
     return besuPluginContext;
   }
 
