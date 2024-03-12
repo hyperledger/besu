@@ -110,6 +110,11 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
       throws MerkleTrieException {
 
     return super.retrieve(location, hash)
+        .map(
+            vNode -> {
+              vNode.markDirty();
+              return vNode;
+            })
         .or(
             () -> {
               if (!allowMissingElementInRange && isInRange(location, startKeyPath, endKeyPath)) {
