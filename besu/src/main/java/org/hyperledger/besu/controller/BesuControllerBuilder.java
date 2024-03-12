@@ -92,8 +92,9 @@ import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -559,8 +560,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
-    final WorldStateStorage worldStateStorage =
-        storageProvider.createWorldStateStorage(dataStorageConfiguration);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration);
 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(protocolSchedule, variablesStorage);
@@ -580,7 +581,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             .orElseGet(() -> new CachedMerkleTrieLoader(metricsSystem));
 
     final WorldStateArchive worldStateArchive =
-        createWorldStateArchive(worldStateStorage, blockchain, cachedMerkleTrieLoader);
+        createWorldStateArchive(worldStateStorageCoordinator, blockchain, cachedMerkleTrieLoader);
 
     if (blockchain.getChainHeadBlockNumber() < 1) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
@@ -707,7 +708,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final Synchronizer synchronizer =
         createSynchronizer(
             protocolSchedule,
-            worldStateStorage,
+            worldStateStorageCoordinator,
             protocolContext,
             maybePruner,
             ethContext,
@@ -739,8 +740,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
       final TrieLogManager trieLogManager =
           ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+          worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
       final TrieLogPruner trieLogPruner =
-          createTrieLogPruner(worldStateStorage, blockchain, scheduler);
+          createTrieLogPruner(worldStateKeyValueStorage, blockchain, scheduler);
       trieLogManager.subscribe(trieLogPruner);
     }
 
@@ -773,7 +776,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private TrieLogPruner createTrieLogPruner(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final EthScheduler scheduler) {
     final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
@@ -796,7 +799,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * Create synchronizer synchronizer.
    *
    * @param protocolSchedule the protocol schedule
-   * @param worldStateStorage the world state storage
+   * @param worldStateStorageCoordinator the world state storage
    * @param protocolContext the protocol context
    * @param maybePruner the maybe pruner
    * @param ethContext the eth context
@@ -807,7 +810,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   protected Synchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
       final Optional<Pruner> maybePruner,
       final EthContext ethContext,
@@ -819,7 +822,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         syncConfig,
         protocolSchedule,
         protocolContext,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         ethProtocolManager.getBlockBroadcaster(),
         maybePruner,
         ethContext,
@@ -1042,21 +1045,26 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   WorldStateArchive createWorldStateArchive(
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final Blockchain blockchain,
       final CachedMerkleTrieLoader cachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
-      case BONSAI -> new BonsaiWorldStateProvider(
-          (BonsaiWorldStateKeyValueStorage) worldStateStorage,
-          blockchain,
-          Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
-          cachedMerkleTrieLoader,
-          besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
-          evmConfiguration);
+      case BONSAI -> {
+        final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+            worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+        yield new BonsaiWorldStateProvider(
+            worldStateKeyValueStorage,
+            blockchain,
+            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            cachedMerkleTrieLoader,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration);
+      }
       case FOREST -> {
         final WorldStatePreimageStorage preimageStorage =
             storageProvider.createWorldStatePreimageStorage();
-        yield new ForestWorldStateArchive(worldStateStorage, preimageStorage, evmConfiguration);
+        yield new ForestWorldStateArchive(
+            worldStateStorageCoordinator, preimageStorage, evmConfiguration);
       }
     };
   }

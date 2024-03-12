@@ -54,16 +54,6 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
     this.protocolSpecs = protocolSchedule.protocolSpecs;
   }
 
-  public ScheduledProtocolSpec specScheduledForBlock(final ProcessableBlockHeader blockHeader) {
-    return protocolSpecs.stream()
-        .filter(s -> s.isOnOrAfterMilestoneBoundary(blockHeader))
-        .findFirst()
-        .orElseThrow(
-            () ->
-                new IllegalStateException(
-                    "No protocol spec found for block " + blockHeader.getNumber()));
-  }
-
   @Override
   public ProtocolSpec getByBlockHeader(final ProcessableBlockHeader blockHeader) {
     checkArgument(
