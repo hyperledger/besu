@@ -182,7 +182,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
     state = Lifecycle.REGISTERED;
   }
 
-  private boolean registerPlugin(BesuPlugin plugin) {
+  private boolean registerPlugin(final BesuPlugin plugin) {
     try {
       plugin.register(this);
       LOG.info("Registered plugin of type {}.", plugin.getClass().getName());
