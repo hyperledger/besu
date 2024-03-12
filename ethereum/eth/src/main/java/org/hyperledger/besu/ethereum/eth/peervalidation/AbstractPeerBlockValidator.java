@@ -95,7 +95,7 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
                   return false;
                 } else {
                   LOG.debug(
-                      "Peer {} deemed valid despite block ({}) being unavailable.",
+                      "Peer {} deemed valid because unavailable block ({}) is not required.",
                       ethPeer,
                       blockNumber);
                   return true;
