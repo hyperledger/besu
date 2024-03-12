@@ -21,6 +21,7 @@
 - Add blob transaction support to `eth_call` [#6661](https://github.com/hyperledger/besu/pull/6661)
 - Add blobs to `eth_feeHistory` [#6679](https://github.com/hyperledger/besu/pull/6679)
 - Refactor and extend `TransactionPoolValidatorService` [#6636](https://github.com/hyperledger/besu/pull/6636)
+- Transaction call object to accept both `input` and `data` field simultaneously if they are set to equal values [#6702](https://github.com/hyperledger/besu/pull/6702)
 
 ### Bug fixes
 - Don't enable the BFT mining coordinator when running sub commands such as `blocks export` [#6675](https://github.com/hyperledger/besu/pull/6675)
