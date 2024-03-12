@@ -61,6 +61,8 @@ public enum RpcErrorType {
   CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
   GAS_PRICE_BELOW_CURRENT_BASE_FEE(-32009, "Gas price below current base fee"),
+
+  BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE(-32009, "blob gas price below current blob base fee"),
   WRONG_CHAIN_ID(-32000, "Wrong chainId"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(-32000, "ChainId not supported"),
   REPLAY_PROTECTED_SIGNATURE_REQUIRED(-32000, "ChainId is required"),

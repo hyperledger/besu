@@ -20,6 +20,7 @@ import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent.EventType;
@@ -665,13 +666,15 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
       final Block block,
       final BlockHeader parent,
       final BadBlockManager badBlockManager) {
+    final HeaderValidationMode validationMode = HeaderValidationMode.FULL;
     if (blockHeaderValidator.validateHeader(
-        block.getHeader(), parent, protocolContext, HeaderValidationMode.FULL)) {
+        block.getHeader(), parent, protocolContext, validationMode)) {
       ethContext.getScheduler().scheduleSyncWorkerTask(() -> broadcastBlock(block, parent));
       return runImportTask(block);
     } else {
       processingBlocksManager.registerBlockImportDone(block.getHash());
-      badBlockManager.addBadBlock(block, Optional.empty());
+      final String description = String.format("Failed header validation (%s)", validationMode);
+      badBlockManager.addBadBlock(block, BadBlockCause.fromValidationFailure(description));
       LOG.warn(
           "Added to bad block manager for invalid header, failed to import announced block {}",
           block.toLogString());

@@ -66,10 +66,7 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
     final long startTime = System.nanoTime();
     for (final BlockWithReceipts blockWithReceipts : blocksWithReceipts) {
       if (!importBlock(blockWithReceipts)) {
-        throw new InvalidBlockException(
-            "Failed to import block",
-            blockWithReceipts.getHeader().getNumber(),
-            blockWithReceipts.getHash());
+        throw InvalidBlockException.fromInvalidBlock(blockWithReceipts.getHeader());
       }
       LOG.atTrace()
           .setMessage("Imported block {}")

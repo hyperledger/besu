@@ -23,10 +23,11 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -53,7 +54,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class ForestMutableWorldState implements MutableWorldState {
 
   private final EvmConfiguration evmConfiguration;
-  private final WorldStateStorage worldStateStorage;
+  private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage;
   private final WorldStatePreimageStorage preimageStorage;
 
   private final MerkleTrie<Bytes32, Bytes> accountStateTrie;
@@ -63,18 +64,22 @@ public class ForestMutableWorldState implements MutableWorldState {
   private final Map<Bytes32, Address> newAccountKeyPreimages = new HashMap<>();
 
   public ForestMutableWorldState(
-      final WorldStateStorage storage,
+      final WorldStateKeyValueStorage worldStateKeyValueStorage,
       final WorldStatePreimageStorage preimageStorage,
       final EvmConfiguration evmConfiguration) {
-    this(MerkleTrie.EMPTY_TRIE_NODE_HASH, storage, preimageStorage, evmConfiguration);
+    this(
+        MerkleTrie.EMPTY_TRIE_NODE_HASH,
+        worldStateKeyValueStorage,
+        preimageStorage,
+        evmConfiguration);
   }
 
   public ForestMutableWorldState(
       final Bytes32 rootHash,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateKeyValueStorage worldStateKeyValueStorage,
       final WorldStatePreimageStorage preimageStorage,
       final EvmConfiguration evmConfiguration) {
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateKeyValueStorage = (ForestWorldStateKeyValueStorage) worldStateKeyValueStorage;
     this.accountStateTrie = newAccountStateTrie(rootHash);
     this.preimageStorage = preimageStorage;
     this.evmConfiguration = evmConfiguration;
@@ -88,8 +93,7 @@ public class ForestMutableWorldState implements MutableWorldState {
     if (!(worldState instanceof ForestMutableWorldState other)) {
       throw new UnsupportedOperationException();
     }
-
-    this.worldStateStorage = other.worldStateStorage;
+    this.worldStateKeyValueStorage = other.worldStateKeyValueStorage;
     this.preimageStorage = other.preimageStorage;
     this.accountStateTrie = newAccountStateTrie(other.accountStateTrie.getRootHash());
     this.evmConfiguration = evmConfiguration;
@@ -97,12 +101,15 @@ public class ForestMutableWorldState implements MutableWorldState {
 
   private MerkleTrie<Bytes32, Bytes> newAccountStateTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        worldStateStorage::getAccountStateTrieNode, rootHash, b -> b, b -> b);
+        (location, hash) -> worldStateKeyValueStorage.getAccountStateTrieNode(hash),
+        rootHash,
+        b -> b,
+        b -> b);
   }
 
   private MerkleTrie<Bytes32, Bytes> newAccountStorageTrie(final Bytes32 rootHash) {
     return new StoredMerklePatriciaTrie<>(
-        (location, hash) -> worldStateStorage.getAccountStorageTrieNode(null, location, hash),
+        (location, hash) -> worldStateKeyValueStorage.getAccountStorageTrieNode(hash),
         rootHash,
         b -> b,
         b -> b);
@@ -168,19 +175,20 @@ public class ForestMutableWorldState implements MutableWorldState {
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    final WorldStateStorage.Updater stateUpdater = worldStateStorage.updater();
+    final ForestWorldStateKeyValueStorage.Updater stateUpdater =
+        worldStateKeyValueStorage.updater();
     // Store updated code
     for (final Bytes code : updatedAccountCode.values()) {
-      stateUpdater.putCode(null, code);
+      stateUpdater.putCode(code);
     }
     // Commit account storage tries
     for (final MerkleTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
       updatedStorage.commit(
-          (location, hash, value) ->
-              stateUpdater.putAccountStorageTrieNode(null, location, hash, value));
+          (location, hash, value) -> stateUpdater.putAccountStorageTrieNode(hash, value));
     }
     // Commit account updates
-    accountStateTrie.commit(stateUpdater::putAccountStateTrieNode);
+    accountStateTrie.commit(
+        (location, hash, value) -> stateUpdater.putAccountStateTrieNode(hash, value));
 
     // Persist preimages
     final WorldStatePreimageStorage.Updater preimageUpdater = preimageStorage.updater();
@@ -274,7 +282,7 @@ public class ForestMutableWorldState implements MutableWorldState {
       if (codeHash.equals(Hash.EMPTY)) {
         return Bytes.EMPTY;
       }
-      return worldStateStorage.getCode(codeHash, null).orElse(Bytes.EMPTY);
+      return worldStateKeyValueStorage.getCode(codeHash).orElse(Bytes.EMPTY);
     }
 
     @Override

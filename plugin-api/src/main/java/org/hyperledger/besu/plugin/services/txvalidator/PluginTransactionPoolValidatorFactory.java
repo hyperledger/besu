@@ -17,14 +17,14 @@ package org.hyperledger.besu.plugin.services.txvalidator;
 
 import org.hyperledger.besu.plugin.Unstable;
 
-/** Interface for a factory that creates transaction validators */
+/** Interface for a factory that creates transaction validators for txpool usage */
 @Unstable
-public interface PluginTransactionValidatorFactory {
+public interface PluginTransactionPoolValidatorFactory {
 
   /**
-   * Create a transaction validator
+   * Create a transaction validator for txpool usage
    *
    * @return the transaction validator
    */
-  PluginTransactionValidator create();
+  PluginTransactionPoolValidator createTransactionValidator();
 }

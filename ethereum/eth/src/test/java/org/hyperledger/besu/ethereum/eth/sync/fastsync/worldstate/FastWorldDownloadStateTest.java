@@ -29,7 +29,8 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProce
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -55,7 +56,9 @@ public class FastWorldDownloadStateTest {
   private static final int MAX_REQUESTS_WITHOUT_PROGRESS = 10;
   private static final long MIN_MILLIS_BEFORE_STALLING = 50_000;
 
-  private WorldStateStorage worldStateStorage;
+  private WorldStateKeyValueStorage worldStateKeyValueStorage;
+
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();
@@ -79,17 +82,20 @@ public class FastWorldDownloadStateTest {
 
   public void setUp(final DataStorageFormat storageFormat) {
     if (storageFormat == DataStorageFormat.BONSAI) {
-      worldStateStorage =
+      worldStateKeyValueStorage =
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(),
               new NoOpMetricsSystem(),
               DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     } else {
-      worldStateStorage = new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+      worldStateKeyValueStorage =
+          new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
     downloadState =
         new FastWorldDownloadState(
-            worldStateStorage,
+            worldStateStorageCoordinator,
             pendingRequests,
             MAX_REQUESTS_WITHOUT_PROGRESS,
             MIN_MILLIS_BEFORE_STALLING,
@@ -118,7 +124,9 @@ public class FastWorldDownloadStateTest {
     final CompletableFuture<Void> postFutureChecks =
         future.thenAccept(
             result ->
-                assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+                assertThat(
+                        worldStateStorageCoordinator.getAccountStateTrieNode(
+                            Bytes.EMPTY, ROOT_NODE_HASH))
                     .contains(ROOT_NODE_DATA));
 
     downloadState.checkCompletion(header);
@@ -137,7 +145,8 @@ public class FastWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
