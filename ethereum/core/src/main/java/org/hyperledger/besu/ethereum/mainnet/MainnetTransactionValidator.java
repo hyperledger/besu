@@ -304,7 +304,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
     if (transaction.getType().supportsBlob() && transaction.getTo().isEmpty()) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_TRANSACTION_FORMAT,
-          "transaction blob transactions cannot have a to address");
+          "transaction blob transactions must have a to address");
     }
 
     if (transaction.getVersionedHashes().isEmpty()) {

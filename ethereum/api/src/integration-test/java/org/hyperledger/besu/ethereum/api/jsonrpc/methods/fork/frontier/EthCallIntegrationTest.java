@@ -408,6 +408,33 @@ public class EthCallIntegrationTest {
     assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
+  @Test
+  public void shouldReturnSuccessWithInputAndDataFieldSetToSameValue() {
+    final JsonCallParameter callParameter =
+        new JsonCallParameter(
+            Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"),
+            Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"),
+            null,
+            null,
+            null,
+            null,
+            null,
+            Bytes.fromHexString("0x12a7b914"),
+            Bytes.fromHexString("0x12a7b914"),
+            null,
+            null,
+            null,
+            null);
+    final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            null, "0x0000000000000000000000000000000000000000000000000000000000000001");
+
+    final JsonRpcResponse response = method.response(request);
+
+    assertThat(response).usingRecursiveComparison().isEqualTo(expectedResponse);
+  }
+
   private JsonRpcRequestContext requestWithParams(final Object... params) {
     return new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_call", params));
   }
