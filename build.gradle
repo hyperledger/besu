@@ -1040,10 +1040,10 @@ def buildTime() {
 
 @Memoized
 def calculateVersion() {
-  // Regex pattern for basic semantic versioning
-  def semVerPattern = ~/\d+\.\d+\.\d+(-.*)?/
+  // Regex pattern for basic calendar versioning, with provision to omit patch rev
+  def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
 
-  if (project.hasProperty('version') && (project.version =~ semVerPattern)) {
+  if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
     return "${project.version}"
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
@@ -1072,15 +1072,16 @@ def getGitCommitDetails(length = 8) {
       commitHash = refHeadFile.text.trim().take(takeFromHash)
     }
 
-    // Use file modification time as a proxy for the commit date
+    // Use head file modification time as a proxy for the build date
     def lastModified = new Date(refHeadFile.lastModified())
-    def formattedDate = new SimpleDateFormat("yy.M.d").format(lastModified)
+    // Format the date as "yy.M" (e.g. 24.3 for March 2024)
+    def formattedDate = new SimpleDateFormat("yy.M").format(lastModified)
 
     return [hash: commitHash, date: formattedDate]
   } catch (Exception e) {
     logger.warn('Could not calculate git commit details, using defaults (run with --info for stacktrace)')
     logger.info('Error retrieving git commit details', e)
-    return [hash: "xxxxxxxx", date: "00.0.0"]
+    return [hash: "xxxxxxxx", date: "00.0"]
   }
 }
 
