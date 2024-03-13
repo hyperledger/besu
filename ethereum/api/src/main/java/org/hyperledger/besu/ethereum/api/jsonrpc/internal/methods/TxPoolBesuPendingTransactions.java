@@ -50,8 +50,10 @@ public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
-    final Collection<PendingTransaction> pendingTransactions = transactionPool.getPendingTransactions();
-    final Integer limit = requestContext.getOptionalParameter(0, Integer.class).orElse(pendingTransactions.size());
+    final Collection<PendingTransaction> pendingTransactions =
+        transactionPool.getPendingTransactions();
+    final Integer limit =
+        requestContext.getOptionalParameter(0, Integer.class).orElse(pendingTransactions.size());
     final List<Filter> filters =
         requestContext
             .getOptionalParameter(1, PendingTransactionsParams.class)
