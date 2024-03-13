@@ -231,6 +231,7 @@ public class DatabaseMetadata {
           case FOREST -> switch (versionedStorageFormat.getVersion()) {
             case 1 -> PrivacyVersionedStorageFormat.FOREST_ORIGINAL;
             case 2 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
+            case 3 -> PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
             default -> throw new StorageException(
                 "Unsupported database with format FOREST and version "
                     + versionedStorageFormat.getVersion());
@@ -238,6 +239,7 @@ public class DatabaseMetadata {
           case BONSAI -> switch (versionedStorageFormat.getVersion()) {
             case 1 -> PrivacyVersionedStorageFormat.BONSAI_ORIGINAL;
             case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+            case 3 -> PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION;
             default -> throw new StorageException(
                 "Unsupported database with format BONSAI and version "
                     + versionedStorageFormat.getVersion());
