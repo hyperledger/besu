@@ -22,6 +22,7 @@ import org.hyperledger.besu.cli.CommandTestAbstract;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.function.BiFunction;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.Test;
@@ -113,10 +114,18 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
   protected abstract T getOptionsFromBesuCommand(final TestBesuCommand besuCommand);
 
   protected void internalTestSuccess(final Consumer<D> assertion, final String... args) {
+    internalTestSuccess((bc, conf) -> conf, assertion, args);
+  }
+
+  protected void internalTestSuccess(
+      final BiFunction<TestBesuCommand, D, D> runtimeConf,
+      final Consumer<D> assertion,
+      final String... args) {
     final TestBesuCommand cmd = parseCommand(args);
 
     final T options = getOptionsFromBesuCommand(cmd);
-    final D config = options.toDomainObject();
+    final D config = runtimeConf.apply(cmd, options.toDomainObject());
+
     assertion.accept(config);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
