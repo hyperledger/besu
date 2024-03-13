@@ -19,6 +19,8 @@ jobs:
           java-version: 17
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: hadoLint_openj9-jdk_17
         run: docker run --rm -i hadolint/hadolint < docker/openj9-jdk-17/Dockerfile
       - name: hadoLint_openjdk_17
@@ -66,6 +68,8 @@ jobs:
           java-version: 17
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: install goss
         run: |
           mkdir -p docker/reports
@@ -81,6 +85,7 @@ jobs:
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
+          cache-disabled: true
           arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
       - name: publish
         env:
@@ -102,6 +107,8 @@ jobs:
           java-version: 17
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: login to ${{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
