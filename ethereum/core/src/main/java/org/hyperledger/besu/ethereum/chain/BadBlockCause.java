@@ -15,19 +15,14 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import static org.hyperledger.besu.ethereum.chain.BadBlockReason.DESCENDS_FROM_BAD_BLOCK;
+import static org.hyperledger.besu.ethereum.chain.BadBlockReason.SPEC_VALIDATION_FAILURE;
+
 import org.hyperledger.besu.ethereum.core.Block;
 
 import com.google.common.base.MoreObjects;
 
 public class BadBlockCause {
-  public enum BadBlockReason {
-    // Standard spec-related validation failures
-    SPEC_VALIDATION_FAILURE,
-    // When an unexpected exception occurs during block processing
-    EXCEPTIONAL_BLOCK_PROCESSING,
-    // This block is bad because it descends from a bad block
-    DESCENDS_FROM_BAD_BLOCK,
-  }
 
   private final BadBlockReason reason;
   private final String description;
@@ -35,11 +30,11 @@ public class BadBlockCause {
   public static BadBlockCause fromBadAncestorBlock(final Block badAncestor) {
     final String description =
         String.format("Descends from bad block %s", badAncestor.toLogString());
-    return new BadBlockCause(BadBlockReason.DESCENDS_FROM_BAD_BLOCK, description);
+    return new BadBlockCause(DESCENDS_FROM_BAD_BLOCK, description);
   }
 
   public static BadBlockCause fromValidationFailure(final String failureMessage) {
-    return new BadBlockCause(BadBlockReason.SPEC_VALIDATION_FAILURE, failureMessage);
+    return new BadBlockCause(SPEC_VALIDATION_FAILURE, failureMessage);
   }
 
   private BadBlockCause(final BadBlockReason reason, final String description) {
