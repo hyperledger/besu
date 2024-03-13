@@ -114,7 +114,7 @@ public class NodeSmartContractV2PermissioningController
   }
 
   private boolean parseResult(final TransactionSimulatorResult result) {
-    switch (result.getResult().getStatus()) {
+    switch (result.result().getStatus()) {
       case INVALID:
         throw new IllegalStateException("Invalid node permissioning smart contract call");
       case FAILED:

@@ -195,6 +195,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
     return false;
   }
 
+  protected Wei getMinGasPrice() {
+    return Wei.ONE;
+  }
+
   protected ProcessableBlockHeader createBlock(final long gasLimit) {
     return createBlock(gasLimit, Wei.ONE);
   }
