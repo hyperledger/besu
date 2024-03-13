@@ -46,7 +46,9 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
   private static final Set<PrivacyVersionedStorageFormat> SUPPORTED_VERSIONS =
       EnumSet.of(
           PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES,
-          PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES);
+          PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION,
+          PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES,
+          PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION);
   private static final String PRIVATE_DATABASE_PATH = "private";
   private final RocksDBKeyValueStorageFactory publicFactory;
   private DatabaseMetadata databaseMetadata;
@@ -145,7 +147,9 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
         privacyMetadata = existingPrivacyMetadata;
         final int existingPrivacyVersion = maybeExistingPrivacyVersion.getAsInt();
         final var runtimeVersion =
-            PrivacyVersionedStorageFormat.defaultForNewDB(commonConfiguration.getDatabaseFormat());
+            PrivacyVersionedStorageFormat.defaultForNewDB(
+                commonConfiguration.getDatabaseFormat(),
+                commonConfiguration.getDataStorageConfiguration());
 
         if (existingPrivacyVersion > runtimeVersion.getPrivacyVersion().getAsInt()) {
           final var maybeDowngradedMetadata =
@@ -215,6 +219,18 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
     // database.
     // In case we do an automated upgrade, then we also need to update the metadata on disk to
     // reflect the change to the runtime version, and return it.
+
+    // Besu supports both formats of receipts so no upgrade is needed other than updating metadata
+    if (runtimeVersion == PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
+        || runtimeVersion == PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION) {
+      final DatabaseMetadata metadata = new DatabaseMetadata(runtimeVersion);
+      try {
+        metadata.writeToDirectory(dataDir);
+        return Optional.of(metadata);
+      } catch (IOException e) {
+        throw new StorageException("Database upgrade to use receipt compaction failed", e);
+      }
+    }
 
     // for the moment there are no planned automated upgrades, so we just fail.
     String error =
