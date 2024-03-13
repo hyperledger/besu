@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 
 package org.hyperledger.besu.ethereum.trie.diffbased.common;
@@ -25,8 +24,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWo
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.account.MutableAccount;
 
-import java.io.PrintWriter;
-import java.io.StringWriter;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,7 +40,6 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   protected Wei balance;
   protected Bytes code;
 
-  private final String stack;
   protected final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
   public DiffBasedAccount(
@@ -62,10 +58,6 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     this.codeHash = codeHash;
 
     this.immutable = mutable;
-
-    StringWriter sw = new StringWriter();
-    new Exception().printStackTrace(new PrintWriter(sw));
-    stack = sw.toString();
   }
 
   public DiffBasedAccount(
@@ -95,10 +87,6 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     updatedStorage.putAll(toCopy.updatedStorage);
 
     this.immutable = mutable;
-
-    StringWriter sw = new StringWriter();
-    new Exception().printStackTrace(new PrintWriter(sw));
-    stack = sw.toString();
   }
 
   @Override
@@ -132,7 +120,6 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   @Override
   public void setBalance(final Wei value) {
     if (immutable) {
-      System.out.println(stack);
       throw new ModificationNotAllowedException();
     }
     balance = value;

@@ -45,7 +45,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DiffBasedWorldStateProvider implements WorldStateArchive {
+public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
 
   private static final Logger LOG = LoggerFactory.getLogger(DiffBasedWorldStateProvider.class);
 
