@@ -78,6 +78,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     return DataStorageFormat.BONSAI;
   }
 
+  @Override
   public FlatDbMode getFlatDbMode() {
     return flatDbStrategyProvider.getFlatDbMode();
   }
@@ -296,10 +297,12 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
           composedWorldStateTransaction, accountHash, slotHash);
     }
 
+    @Override
     public SegmentedKeyValueStorageTransaction getWorldStateTransaction() {
       return composedWorldStateTransaction;
     }
 
+    @Override
     public KeyValueStorageTransaction getTrieLogStorageTransaction() {
       return trieLogStorageTransaction;
     }
@@ -311,6 +314,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       composedWorldStateTransaction.commit();
     }
 
+    @Override
     public void rollback() {
       composedWorldStateTransaction.rollback();
       trieLogStorageTransaction.rollback();

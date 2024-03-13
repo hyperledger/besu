@@ -93,6 +93,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
             evmConfiguration));
   }
 
+  @Override
   public BonsaiWorldStateKeyValueStorage getWorldStateStorage() {
     return (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage;
   }
@@ -338,6 +339,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
     }
   }
 
+  @Override
   public MutableWorldState freeze() {
     this.isFrozen = true;
     this.worldStateKeyValueStorage = new BonsaiWorldStateLayerStorage(getWorldStateStorage());
