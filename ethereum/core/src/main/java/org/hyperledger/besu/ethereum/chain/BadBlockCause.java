@@ -15,27 +15,31 @@
  */
 package org.hyperledger.besu.ethereum.chain;
 
+import static org.hyperledger.besu.ethereum.chain.BadBlockReason.DESCENDS_FROM_BAD_BLOCK;
+import static org.hyperledger.besu.ethereum.chain.BadBlockReason.SPEC_VALIDATION_FAILURE;
+
 import org.hyperledger.besu.ethereum.core.Block;
 
 import com.google.common.base.MoreObjects;
 
 public class BadBlockCause {
+
   private final BadBlockReason reason;
   private final String description;
-
-  private BadBlockCause(final BadBlockReason reason, final String description) {
-    this.reason = reason;
-    this.description = description;
-  }
 
   public static BadBlockCause fromBadAncestorBlock(final Block badAncestor) {
     final String description =
         String.format("Descends from bad block %s", badAncestor.toLogString());
-    return new BadBlockCause(BadBlockReason.DESCENDS_FROM_BAD_BLOCK, description);
+    return new BadBlockCause(DESCENDS_FROM_BAD_BLOCK, description);
   }
 
   public static BadBlockCause fromValidationFailure(final String failureMessage) {
-    return new BadBlockCause(BadBlockReason.SPEC_VALIDATION_FAILURE, failureMessage);
+    return new BadBlockCause(SPEC_VALIDATION_FAILURE, failureMessage);
+  }
+
+  private BadBlockCause(final BadBlockReason reason, final String description) {
+    this.reason = reason;
+    this.description = description;
   }
 
   public BadBlockReason getReason() {

@@ -4,7 +4,7 @@
 
 ### Breaking Changes
 - RocksDB database metadata format has changed to be more expressive, the migration of an existing metadata file to the new format is automatic at startup. Before performing a downgrade to a previous version it is mandatory to revert to the original format using the subcommand `besu --data-path=/path/to/besu/datadir storage revert-metadata v2-to-v1`.
-- PoA networks won't start with SNAP or CHECKPOINT sync (previously Besu would start with this config but quietly fail to sync, so it's now more obvious that it won't work) [#6625](https://github.com/hyperledger/besu/pull/6625)
+- BFT networks won't start with SNAP or CHECKPOINT sync (previously Besu would start with this config but quietly fail to sync, so it's now more obvious that it won't work) [#6625](https://github.com/hyperledger/besu/pull/6625), [#6667](https://github.com/hyperledger/besu/pull/6667)
 
 ### Upcoming Breaking Changes
 
@@ -18,18 +18,18 @@
 - Make layered txpool aware of minGasPrice and minPriorityFeePerGas dynamic options [#6611](https://github.com/hyperledger/besu/pull/6611)
 - Update commons-compress to 1.26.0 [#6648](https://github.com/hyperledger/besu/pull/6648)
 - Update Vert.x to 4.5.4 [#6666](https://github.com/hyperledger/besu/pull/6666)
-- Add blob transaction support to `eth_call` [#6661](https://github.com/hyperledger/besu/pull/6661)
-- Add blobs to `eth_feeHistory` [#6679](https://github.com/hyperledger/besu/pull/6679)
 - Refactor and extend `TransactionPoolValidatorService` [#6636](https://github.com/hyperledger/besu/pull/6636)
 - Transaction call object to accept both `input` and `data` field simultaneously if they are set to equal values [#6702](https://github.com/hyperledger/besu/pull/6702)
+- Introduce `TransactionSimulationService` [#6686](https://github.com/hyperledger/besu/pull/6686)
 
 ### Bug fixes
+- Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
 - Make block transaction selection max time aware of PoA transitions [#6676](https://github.com/hyperledger/besu/pull/6676)
 - Don't enable the BFT mining coordinator when running sub commands such as `blocks export` [#6675](https://github.com/hyperledger/besu/pull/6675)
 
 ### Download Links
 
-## 24.2.0-SNAPSHOT
+## 24.3.0
 
 ### Breaking Changes
 - SNAP - Snap sync is now the default for named networks [#6530](https://github.com/hyperledger/besu/pull/6530)
@@ -46,7 +46,7 @@
 - Release docker images now provided at ghcr.io instead of dockerhub
 
 ### Deprecations
-- X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.4.0 in favor of SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
+- X_SNAP and X_CHECKPOINT are marked for deprecation and will be removed in 24.6.0 in favor of SNAP and CHECKPOINT [#6405](https://github.com/hyperledger/besu/pull/6405)
 - `--Xp2p-peer-lower-bound` is deprecated. [#6501](https://github.com/hyperledger/besu/pull/6501)
 
 ### Upcoming Breaking Changes
@@ -73,6 +73,8 @@
 - More accurate column size `storage rocksdb usage` subcommand [#6540](https://github.com/hyperledger/besu/pull/6540)
 - Adds `storage rocksdb x-stats` subcommand [#6540](https://github.com/hyperledger/besu/pull/6540)
 - New `eth_blobBaseFee`JSON-RPC method [#6581](https://github.com/hyperledger/besu/pull/6581)
+- Add blob transaction support to `eth_call` [#6661](https://github.com/hyperledger/besu/pull/6661)
+- Add blobs to `eth_feeHistory` [#6679](https://github.com/hyperledger/besu/pull/6679)
 - Upgrade reference tests to version 13.1 [#6574](https://github.com/hyperledger/besu/pull/6574)
 - Extend `BesuConfiguration` service [#6584](https://github.com/hyperledger/besu/pull/6584)
 - Add `ethereum_min_gas_price` and `ethereum_min_priority_fee` metrics to track runtime values of `min-gas-price` and `min-priority-fee` [#6587](https://github.com/hyperledger/besu/pull/6587)
@@ -86,6 +88,9 @@
 - Fix traces so that call gas costing in traces matches other clients traces [#6525](https://github.com/hyperledger/besu/pull/6525)
 
 ### Download Links
+https://github.com/hyperledger/besu/releases/tag/24.3.0
+https://github.com/hyperledger/besu/releases/download/24.3.0/besu-24.3.0.tar.gz / sha256 8037ce51bb5bb396d29717a812ea7ff577b0d6aa341d67d1e5b77cbc55b15f84
+https://github.com/hyperledger/besu/releases/download/24.3.0/besu-24.3.0.zip / sha256 41ea2ca734a3b377f43ee178166b5b809827084789378dbbe4e5b52bbd8e0674
 
 ## 24.1.2
 
