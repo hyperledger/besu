@@ -197,7 +197,7 @@ public class EthCallTest {
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
-    when(result.getResult()).thenReturn(processingResult);
+    when(result.result()).thenReturn(processingResult);
     verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
     assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
         .isEqualTo(Optional.of(expectedResponse));
@@ -236,7 +236,7 @@ public class EthCallTest {
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
-    when(result.getResult()).thenReturn(processingResult);
+    when(result.result()).thenReturn(processingResult);
     verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
     assertThat(mapperCaptor.getValue().apply(mock(MutableWorldState.class), Optional.of(result)))
         .isEqualTo(Optional.of(expectedResponse));
@@ -277,7 +277,7 @@ public class EthCallTest {
     final TransactionSimulatorResult result = mock(TransactionSimulatorResult.class);
     when(result.isSuccessful()).thenReturn(false);
     when(result.getValidationResult()).thenReturn(ValidationResult.valid());
-    when(result.getResult()).thenReturn(processingResult);
+    when(result.result()).thenReturn(processingResult);
 
     verify(transactionSimulator).process(any(), any(), any(), mapperCaptor.capture(), any());
     System.out.println(result);
