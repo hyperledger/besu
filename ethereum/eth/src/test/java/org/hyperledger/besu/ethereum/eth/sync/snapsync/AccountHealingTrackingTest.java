@@ -65,8 +65,6 @@ public class AccountHealingTrackingTest {
 
   private WorldStateStorageCoordinator worldStateStorageCoordinator;
 
-  private WorldStateStorageCoordinator worldStateStorageCoordinator;
-
   private WorldStateProofProvider worldStateProofProvider;
 
   private MerkleTrie<Bytes, Bytes> accountStateTrie;
