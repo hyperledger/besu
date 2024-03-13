@@ -180,7 +180,8 @@ public final class RunnerTest {
             aheadDbNodeKey,
             createKeyValueStorageProvider(
                 dataDirAhead, dbAhead, dataStorageConfiguration, miningParameters),
-            noOpMetricsSystem);
+            noOpMetricsSystem,
+            miningParameters);
     setupState(
         blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
 
@@ -235,7 +236,8 @@ public final class RunnerTest {
               dataDirBehind,
               behindDbNodeKey,
               new InMemoryKeyValueStorageProvider(),
-              noOpMetricsSystem);
+              noOpMetricsSystem,
+              miningParameters);
 
       final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
@@ -452,14 +454,15 @@ public final class RunnerTest {
       final Path dataDir,
       final NodeKey nodeKey,
       final StorageProvider storageProvider,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final MiningParameters miningParameters) {
     return new MainnetBesuControllerBuilder()
         .genesisConfigFile(genesisConfig)
         .synchronizerConfiguration(syncConfig)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .dataDirectory(dataDir)
         .networkId(NETWORK_ID)
-        .miningParameters(MiningParameters.newDefault())
+        .miningParameters(miningParameters)
         .nodeKey(nodeKey)
         .storageProvider(storageProvider)
         .metricsSystem(metricsSystem)

@@ -134,7 +134,7 @@ public class TransactionSmartContractPermissioningController
         transactionSimulator.processAtHead(callParams);
 
     if (result.isPresent()) {
-      switch (result.get().getResult().getStatus()) {
+      switch (result.get().result().getStatus()) {
         case INVALID:
           throw new IllegalStateException(
               "Transaction permissioning transaction found to be Invalid");
