@@ -16,9 +16,9 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.List;
 import java.util.Objects;
@@ -209,21 +209,40 @@ public class CallParameter {
         + ", gasLimit="
         + gasLimit
         + ", maxPriorityFeePerGas="
-        + maxPriorityFeePerGas
+        + maxPriorityFeePerGas.map(Wei::toHumanReadableString).orElse("N/A")
         + ", maxFeePerGas="
-        + maxFeePerGas
+        + maxFeePerGas.map(Wei::toHumanReadableString).orElse("N/A")
+        + ", maxFeePerBlobGas="
+        + maxFeePerBlobGas.map(Wei::toHumanReadableString).orElse("N/A")
         + ", gasPrice="
-        + gasPrice
+        + (gasPrice != null ? gasPrice.toHumanReadableString() : "N/A")
         + ", value="
-        + value
+        + (value != null ? value.toHumanReadableString() : "N/A")
         + ", payloadSize="
-        + (payload == null ? "null" : payload.size())
+        + (payload != null ? payload.size() : "null")
         + ", accessListSize="
         + accessList.map(List::size)
+        + ", blobVersionedHashesSize="
+        + blobVersionedHashes.map(List::size)
         + '}';
   }
 
   public static CallParameter fromTransaction(final Transaction tx) {
+    return new CallParameter(
+        tx.getSender(),
+        tx.getTo().orElseGet(() -> null),
+        tx.getGasLimit(),
+        tx.getGasPrice().orElse(Wei.ZERO),
+        tx.getMaxPriorityFeePerGas(),
+        tx.getMaxFeePerGas(),
+        tx.getValue(),
+        tx.getPayload(),
+        tx.getAccessList(),
+        tx.getMaxFeePerBlobGas(),
+        tx.getVersionedHashes());
+  }
+
+  public static CallParameter fromTransaction(final org.hyperledger.besu.datatypes.Transaction tx) {
     return new CallParameter(
         tx.getSender(),
         tx.getTo().orElse(null),

@@ -43,7 +43,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
   public TransactionSimulationServiceImpl() {}
 
   /**
-   * Configure the plugin
+   * Configure the service
    *
    * @param blockchain the blockchain
    * @param transactionSimulator transaction simulator

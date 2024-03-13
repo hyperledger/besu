@@ -104,4 +104,26 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(false);
   }
+
+  @Test
+  public void validatePeer_responsivePeerDoesNotHaveBlockWhenPastForkHeight() {
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+
+    final PeerValidator validator =
+        new RequiredBlocksPeerValidator(
+            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), 1, Hash.ZERO);
+
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
+
+    final CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
+
+    assertThat(result).isNotDone();
+
+    // Respond to block header request with empty
+    peer.respond(RespondingEthPeer.emptyResponder());
+
+    assertThat(result).isDone();
+    assertThat(result).isCompletedWithValue(false);
+  }
 }
