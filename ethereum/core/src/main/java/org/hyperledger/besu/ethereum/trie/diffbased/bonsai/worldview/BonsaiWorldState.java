@@ -340,6 +340,15 @@ public class BonsaiWorldState extends DiffBasedWorldState {
   }
 
   @Override
+  public Hash frontierRootHash() {
+    return calculateRootHash(
+        Optional.of(
+            new BonsaiWorldStateKeyValueStorage.Updater(
+                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
+        accumulator.copy());
+  }
+
+  @Override
   public MutableWorldState freeze() {
     this.isFrozen = true;
     this.worldStateKeyValueStorage = new BonsaiWorldStateLayerStorage(getWorldStateStorage());

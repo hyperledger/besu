@@ -131,14 +131,14 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    DiffBasedValue<ACCOUNT> bonsaiValue = accountsToUpdate.get(address);
+    DiffBasedValue<ACCOUNT> diffBasedValue = accountsToUpdate.get(address);
 
-    if (bonsaiValue == null) {
-      bonsaiValue = new DiffBasedValue<>(null, null);
-      accountsToUpdate.put(address, bonsaiValue);
-    } else if (bonsaiValue.getUpdated() != null) {
-      if (bonsaiValue.getUpdated().isEmpty()) {
-        return track(new UpdateTrackingAccount<>(bonsaiValue.getUpdated()));
+    if (diffBasedValue == null) {
+      diffBasedValue = new DiffBasedValue<>(null, null);
+      accountsToUpdate.put(address, diffBasedValue);
+    } else if (diffBasedValue.getUpdated() != null) {
+      if (diffBasedValue.getUpdated().isEmpty()) {
+        return track(new UpdateTrackingAccount<>(diffBasedValue.getUpdated()));
       } else {
         throw new IllegalStateException("Cannot create an account when one already exists");
       }
@@ -154,7 +154,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
             Hash.EMPTY_TRIE_HASH,
             Hash.EMPTY,
             true);
-    bonsaiValue.setUpdated(newAccount);
+    diffBasedValue.setUpdated(newAccount);
     return track(new UpdateTrackingAccount<>(newAccount));
   }
 
@@ -186,8 +186,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   protected ACCOUNT loadAccount(
       final Address address, final Function<DiffBasedValue<ACCOUNT>, ACCOUNT> accountFunction) {
     try {
-      final DiffBasedValue<ACCOUNT> bonsaiValue = accountsToUpdate.get(address);
-      if (bonsaiValue == null) {
+      final DiffBasedValue<ACCOUNT> diffBasedValue = accountsToUpdate.get(address);
+      if (diffBasedValue == null) {
         final Account account;
         if (wrappedWorldView() instanceof DiffBasedWorldStateUpdateAccumulator) {
           final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> worldStateUpdateAccumulator =
@@ -207,7 +207,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
           return null;
         }
       } else {
-        return accountFunction.apply(bonsaiValue);
+        return accountFunction.apply(diffBasedValue);
       }
     } catch (MerkleTrieException e) {
       // need to throw to trigger the heal
@@ -484,11 +484,11 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   @Override
   public Map<Bytes32, Bytes> getAllAccountStorage(final Address address, final Hash rootHash) {
     final Map<Bytes32, Bytes> results = wrappedWorldView().getAllAccountStorage(address, rootHash);
-    final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> bonsaiValueStorage =
+    final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> diffBasedValueStorage =
         storageToUpdate.get(address);
-    if (bonsaiValueStorage != null) {
+    if (diffBasedValueStorage != null) {
       // hash the key to match the implied storage interface of hashed slotKey
-      bonsaiValueStorage.forEach(
+      diffBasedValueStorage.forEach(
           (key, value) -> results.put(key.getSlotHash(), value.getUpdated()));
     }
     return results;

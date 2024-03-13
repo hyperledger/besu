@@ -93,7 +93,7 @@ public class DiffBasedValue<T> implements TrieLog.LogTuple<T> {
 
   @Override
   public String toString() {
-    return "BonsaiValue{"
+    return "DiffBasedValue{"
         + "prior="
         + prior
         + ", updated="

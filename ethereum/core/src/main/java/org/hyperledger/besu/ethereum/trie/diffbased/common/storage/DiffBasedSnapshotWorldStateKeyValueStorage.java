@@ -15,4 +15,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage;
 
-public interface DiffBasedSnapshotWorldStateKeyValueStorage {}
+public interface DiffBasedSnapshotWorldStateKeyValueStorage {
+
+  DiffBasedWorldStateKeyValueStorage getParentWorldStateStorage();
+}

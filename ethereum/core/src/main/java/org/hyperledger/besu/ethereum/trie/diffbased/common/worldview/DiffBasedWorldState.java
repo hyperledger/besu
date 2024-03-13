@@ -16,18 +16,18 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiSnapshotWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
@@ -113,7 +113,7 @@ public abstract class DiffBasedWorldState
   }
 
   private boolean isPersisted(final WorldStateKeyValueStorage worldStateKeyValueStorage) {
-    return !(worldStateKeyValueStorage instanceof BonsaiSnapshotWorldStateKeyValueStorage);
+    return !(worldStateKeyValueStorage instanceof DiffBasedSnapshotWorldStateKeyValueStorage);
   }
 
   /**
@@ -164,31 +164,22 @@ public abstract class DiffBasedWorldState
               trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
               // not save a frozen state in the cache
               if (!isFrozen) {
-                cachedWorldStorageManager.addCachedLayer(
-                    blockHeader, newWorldStateRootHash, (BonsaiWorldState) this);
+                cachedWorldStorageManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
               }
             };
 
         stateUpdater
             .getWorldStateTransaction()
-            .put(
-                TRIE_BRANCH_STORAGE,
-                BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY,
-                blockHeader.getHash().toArrayUnsafe());
+            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getHash();
       } else {
-        stateUpdater
-            .getWorldStateTransaction()
-            .remove(TRIE_BRANCH_STORAGE, BonsaiWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY);
+        stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;
       }
 
       stateUpdater
           .getWorldStateTransaction()
-          .put(
-              TRIE_BRANCH_STORAGE,
-              BonsaiWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY,
-              newWorldStateRootHash.toArrayUnsafe());
+          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, newWorldStateRootHash.toArrayUnsafe());
       worldStateRootHash = newWorldStateRootHash;
       success = true;
     } finally {
@@ -227,7 +218,7 @@ public abstract class DiffBasedWorldState
     return Hash.wrap(worldStateRootHash);
   }
 
-  static final KeyValueStorageTransaction noOpTx =
+  protected static final KeyValueStorageTransaction noOpTx =
       new KeyValueStorageTransaction() {
 
         @Override
@@ -251,7 +242,7 @@ public abstract class DiffBasedWorldState
         }
       };
 
-  static final SegmentedKeyValueStorageTransaction noOpSegmentedTx =
+  protected static final SegmentedKeyValueStorageTransaction noOpSegmentedTx =
       new SegmentedKeyValueStorageTransaction() {
 
         @Override
@@ -276,22 +267,13 @@ public abstract class DiffBasedWorldState
         }
       };
 
-  @Override
-  public Hash frontierRootHash() {
-    return calculateRootHash(
-        Optional.of(
-            new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
-        accumulator.copy());
-  }
-
   public Hash blockHash() {
     return worldStateBlockHash;
   }
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("Bonsai Tries do not provide account streaming.");
+    throw new RuntimeException("storage format do not provide account streaming.");
   }
 
   @Override
@@ -315,8 +297,8 @@ public abstract class DiffBasedWorldState
 
   private void closeFrozenStorage() {
     try {
-      final BonsaiWorldStateLayerStorage worldStateLayerStorage =
-          (BonsaiWorldStateLayerStorage) worldStateKeyValueStorage;
+      final DiffBasedLayeredWorldStateKeyValueStorage worldStateLayerStorage =
+          (DiffBasedLayeredWorldStateKeyValueStorage) worldStateKeyValueStorage;
       if (!isPersisted(worldStateLayerStorage.getParentWorldStateStorage())) {
         worldStateLayerStorage.getParentWorldStateStorage().close();
       }
@@ -324,6 +306,9 @@ public abstract class DiffBasedWorldState
       // no op
     }
   }
+
+  @Override
+  public abstract Hash frontierRootHash();
 
   @Override
   public abstract MutableWorldState freeze();
