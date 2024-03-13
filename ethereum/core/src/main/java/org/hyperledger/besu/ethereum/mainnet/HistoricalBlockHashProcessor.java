@@ -22,14 +22,18 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** A helper class to store the historical block hash. */
+/** A helper class to store the historical block hash (eip-2935) */
 public class HistoricalBlockHashProcessor {
 
   private static final long HISTORY_SERVE_WINDOW = 256;
   public static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
 
-  public HistoricalBlockHashProcessor() {}
+  private final long forkTimestamp;
+
+  public HistoricalBlockHashProcessor(final long forkTimestamp) {
+    this.forkTimestamp = forkTimestamp;
+  }
 
   public void storeHistoricalBlockHashes(
       final Blockchain blockchain,
@@ -37,42 +41,24 @@ public class HistoricalBlockHashProcessor {
       final BlockHeader currentBlockHeader) {
 
     final MutableAccount account = worldUpdater.getOrCreate(HISTORY_STORAGE_ADDRESS);
-    final long currentBlockNumber = currentBlockHeader.getNumber();
-    // If this is not the genesis block
-    if (currentBlockNumber > 0) {
-      // Store the previous block's hash
-      final long parentBlockNumber = currentBlockNumber - 1;
-      storeBlockHash(blockchain, account, parentBlockNumber);
 
-      if (parentBlockNumber > 0) {
-        // If this is the first block of the fork
-        if (isFirstBlockOfFork(account, currentBlockNumber)) {
-          // Store the hashes of the last min(HISTORY_SERVE_WINDOW-1, currentBlockNumber-1) blocks
-          final long rangeSize = Math.min(HISTORY_SERVE_WINDOW - 1, currentBlockNumber - 1);
-          storeBlockHashesInRange(blockchain, account, currentBlockNumber, rangeSize);
+    // If this is not the genesis block
+    if (currentBlockHeader.getNumber() > 0) {
+      account.setStorageValue(
+          UInt256.valueOf((currentBlockHeader.getNumber() - 1) % HISTORY_SERVE_WINDOW),
+          UInt256.fromBytes(currentBlockHeader.getParentHash()));
+
+      BlockHeader ancestor =
+          blockchain.getBlockHeader(currentBlockHeader.getNumber() - 1).orElseThrow();
+      // If this is the first fork block, add the parent's direct 255 ancestors as well
+      if (ancestor.getTimestamp() < forkTimestamp) {
+        for (int i = 0; i < HISTORY_SERVE_WINDOW && ancestor.getNumber() > 0; i++) {
+          ancestor = blockchain.getBlockHeader(ancestor.getNumber() - 1).orElseThrow();
+          account.setStorageValue(
+              UInt256.valueOf(ancestor.getNumber() % HISTORY_SERVE_WINDOW),
+              UInt256.fromBytes(ancestor.getHash()));
         }
       }
     }
-  }
-
-  private boolean isFirstBlockOfFork(final MutableAccount account, final long currentBlockNumber) {
-    return account.getStorageValue(UInt256.valueOf(currentBlockNumber - 2)).isZero();
-  }
-
-  private void storeBlockHashesInRange(
-      final Blockchain blockchain,
-      final MutableAccount account,
-      final long currentBlockNumber,
-      final long rangeSize) {
-    for (long i = 0; i <= rangeSize; i++) {
-      storeBlockHash(blockchain, account, currentBlockNumber - 1 - i);
-    }
-  }
-
-  private void storeBlockHash(
-      final Blockchain blockchain, final MutableAccount account, final long blockNumber) {
-    final BlockHeader blockHeader = blockchain.getBlockHeader(blockNumber).orElseThrow();
-    account.setStorageValue(
-        UInt256.valueOf(blockHeader.getNumber()), UInt256.fromBytes(blockHeader.getBlockHash()));
   }
 }

@@ -747,7 +747,8 @@ public abstract class MainnetProtocolSpecs {
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
-        .historicalBlockHashProcessor(new HistoricalBlockHashProcessor())
+        .historicalBlockHashProcessor(
+            new HistoricalBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
         .name("Prague");
   }
   /*
