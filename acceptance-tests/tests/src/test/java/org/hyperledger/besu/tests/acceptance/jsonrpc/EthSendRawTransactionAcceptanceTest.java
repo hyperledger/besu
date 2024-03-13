@@ -44,6 +44,10 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
     strictNode = besu.createArchiveNode("strictNode", configureNode((true)));
     miningNode = besu.createMinerNode("strictMiningNode", configureNode((true)));
     cluster.start(lenientNode, strictNode, miningNode);
+    // verify all nodes are done syncing so the tx pool will be enabled
+    lenientNode.verify(eth.syncingStatus(false));
+    strictNode.verify(eth.syncingStatus(false));
+    miningNode.verify(eth.syncingStatus(false));
   }
 
   @Test
