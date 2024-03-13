@@ -59,6 +59,7 @@ public enum PrivacyVersionedStorageFormat implements VersionedStorageFormat {
    * Return the default version for new db for a specific format
    *
    * @param format data storage format
+   * @param configuration data storage configuration
    * @return the version to use for new db
    */
   public static VersionedStorageFormat defaultForNewDB(
