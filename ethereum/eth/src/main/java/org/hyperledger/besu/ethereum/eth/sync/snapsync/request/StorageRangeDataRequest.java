@@ -95,7 +95,6 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final SnapSyncConfiguration snapSyncConfiguration) {
 
     // search incomplete nodes in the range
-    final AtomicInteger nbNodesSaved = new AtomicInteger();
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
           applyForStrategy(
@@ -126,7 +125,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
-    return nbNodesSaved.get();
+    return 0;
   }
 
   public void addResponse(
