@@ -86,12 +86,20 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
               }
               final List<BlockHeader> headers = res.getResult();
               if (headers.size() == 0) {
-                // If no headers are returned, fail
-                LOG.debug(
-                    "Peer {} is invalid because required block ({}) is unavailable.",
-                    ethPeer,
-                    blockNumber);
-                return false;
+                if (blockIsRequired()) {
+                  // If no headers are returned, fail
+                  LOG.debug(
+                      "Peer {} is invalid because required block ({}) is unavailable.",
+                      ethPeer,
+                      blockNumber);
+                  return false;
+                } else {
+                  LOG.debug(
+                      "Peer {} deemed valid because unavailable block ({}) is not required.",
+                      ethPeer,
+                      blockNumber);
+                  return true;
+                }
               }
               final BlockHeader header = headers.get(0);
               return validateBlockHeader(ethPeer, header);
@@ -103,6 +111,10 @@ abstract class AbstractPeerBlockValidator implements PeerValidator {
   @Override
   public boolean canBeValidated(final EthPeer ethPeer) {
     return ethPeer.chainState().getEstimatedHeight() >= (blockNumber + chainHeightEstimationBuffer);
+  }
+
+  protected boolean blockIsRequired() {
+    return true;
   }
 
   @Override
