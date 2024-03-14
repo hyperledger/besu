@@ -83,7 +83,7 @@ public class DebugTraceCall extends AbstractTraceCall {
 
               final TransactionTrace transactionTrace =
                   new TransactionTrace(
-                      result.getTransaction(), result.getResult(), tracer.getTraceFrames());
+                      result.transaction(), result.result(), tracer.getTraceFrames());
 
               return new DebugTraceTransactionResult(transactionTrace);
             });

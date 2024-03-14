@@ -11,6 +11,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- `txpool_besuPendingTransactions`change parameter `numResults` to optional parameter [#6708](https://github.com/hyperledger/besu/pull/6708)
 - Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)
 - Add bft-style blockperiodseconds transitions to Clique [#6596](https://github.com/hyperledger/besu/pull/6596)
 - Add createemptyblocks transitions to Clique [#6608](https://github.com/hyperledger/besu/pull/6608)
@@ -20,9 +21,11 @@
 - Update Vert.x to 4.5.4 [#6666](https://github.com/hyperledger/besu/pull/6666)
 - Refactor and extend `TransactionPoolValidatorService` [#6636](https://github.com/hyperledger/besu/pull/6636)
 - Transaction call object to accept both `input` and `data` field simultaneously if they are set to equal values [#6702](https://github.com/hyperledger/besu/pull/6702)
+- Introduce `TransactionSimulationService` [#6686](https://github.com/hyperledger/besu/pull/6686)
 - Enhanced control over plugins registration [6700](https://github.com/hyperledger/besu/pull/6700)
 
 ### Bug fixes
+- Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
 - Make block transaction selection max time aware of PoA transitions [#6676](https://github.com/hyperledger/besu/pull/6676)
 - Don't enable the BFT mining coordinator when running sub commands such as `blocks export` [#6675](https://github.com/hyperledger/besu/pull/6675)
 

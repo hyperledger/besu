@@ -199,18 +199,61 @@ public class CallParameter {
         blobVersionedHashes);
   }
 
+  @Override
+  public String toString() {
+    return "CallParameter{"
+        + "from="
+        + from
+        + ", to="
+        + to
+        + ", gasLimit="
+        + gasLimit
+        + ", maxPriorityFeePerGas="
+        + maxPriorityFeePerGas.map(Wei::toHumanReadableString).orElse("N/A")
+        + ", maxFeePerGas="
+        + maxFeePerGas.map(Wei::toHumanReadableString).orElse("N/A")
+        + ", maxFeePerBlobGas="
+        + maxFeePerBlobGas.map(Wei::toHumanReadableString).orElse("N/A")
+        + ", gasPrice="
+        + (gasPrice != null ? gasPrice.toHumanReadableString() : "N/A")
+        + ", value="
+        + (value != null ? value.toHumanReadableString() : "N/A")
+        + ", payloadSize="
+        + (payload != null ? payload.size() : "null")
+        + ", accessListSize="
+        + accessList.map(List::size)
+        + ", blobVersionedHashesSize="
+        + blobVersionedHashes.map(List::size)
+        + '}';
+  }
+
   public static CallParameter fromTransaction(final Transaction tx) {
     return new CallParameter(
         tx.getSender(),
-        tx.getTo().orElseGet(() -> null),
+        tx.getTo().orElse(null),
         tx.getGasLimit(),
-        Wei.fromQuantity(tx.getGasPrice().orElseGet(() -> Wei.ZERO)),
-        Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().orElseGet(() -> Wei.ZERO))),
+        tx.getGasPrice().orElse(Wei.ZERO),
+        tx.getMaxPriorityFeePerGas(),
         tx.getMaxFeePerGas(),
-        Wei.fromQuantity(tx.getValue()),
+        tx.getValue(),
         tx.getPayload(),
         tx.getAccessList(),
         tx.getMaxFeePerBlobGas(),
+        tx.getVersionedHashes());
+  }
+
+  public static CallParameter fromTransaction(final org.hyperledger.besu.datatypes.Transaction tx) {
+    return new CallParameter(
+        tx.getSender(),
+        tx.getTo().orElse(null),
+        tx.getGasLimit(),
+        tx.getGasPrice().map(Wei::fromQuantity).orElse(Wei.ZERO),
+        tx.getMaxPriorityFeePerGas().map(Wei::fromQuantity),
+        tx.getMaxFeePerGas().map(Wei::fromQuantity),
+        Wei.fromQuantity(tx.getValue()),
+        tx.getPayload(),
+        tx.getAccessList(),
+        tx.getMaxFeePerBlobGas().map(Wei::fromQuantity),
         tx.getVersionedHashes());
   }
 }
