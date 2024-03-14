@@ -106,7 +106,21 @@ public class TransactionSimulator {
         header);
   }
 
+  public Optional<TransactionSimulatorResult> process(
+      final CallParameter callParams,
+      final TransactionValidationParams transactionValidationParams,
+      final OperationTracer operationTracer,
+      final BlockHeader blockHeader) {
+    return process(
+        callParams,
+        transactionValidationParams,
+        operationTracer,
+        (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
+        blockHeader);
+  }
+
   public Optional<TransactionSimulatorResult> processAtHead(final CallParameter callParams) {
+    final var chainHeadHash = blockchain.getChainHeadHash();
     return process(
         callParams,
         ImmutableTransactionValidationParams.builder()
@@ -115,7 +129,10 @@ public class TransactionSimulator {
             .build(),
         OperationTracer.NO_TRACING,
         (mutableWorldState, transactionSimulatorResult) -> transactionSimulatorResult,
-        blockchain.getChainHeadHeader());
+        blockchain
+            .getBlockHeader(chainHeadHash)
+            .or(() -> blockchain.getBlockHeaderSafe(chainHeadHash))
+            .orElse(null));
   }
 
   /**
@@ -294,6 +311,10 @@ public class TransactionSimulator {
 
     // Set access list if present
     callParams.getAccessList().ifPresent(transactionBuilder::accessList);
+    // Set versioned hashes if present
+    callParams.getBlobVersionedHashes().ifPresent(transactionBuilder::versionedHashes);
+    // Set max fee per blob gas if present
+    callParams.getMaxFeePerBlobGas().ifPresent(transactionBuilder::maxFeePerBlobGas);
 
     final Wei gasPrice;
     final Wei maxFeePerGas;

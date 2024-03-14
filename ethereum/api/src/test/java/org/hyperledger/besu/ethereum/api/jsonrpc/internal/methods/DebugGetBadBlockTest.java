@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BadBlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
+import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -37,7 +38,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Optional;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -95,8 +95,10 @@ public class DebugGetBadBlockTest {
                     .setBlockHeaderFunctions(new MainnetBlockHeaderFunctions())
                     .setParentHash(parentBlock.getHash()));
 
-    badBlockManager.addBadBlock(badBlockWithTransaction, Optional.empty());
-    badBlockManager.addBadBlock(badBlockWoTransaction, Optional.empty());
+    badBlockManager.addBadBlock(
+        badBlockWithTransaction, BadBlockCause.fromValidationFailure("failed"));
+    badBlockManager.addBadBlock(
+        badBlockWoTransaction, BadBlockCause.fromValidationFailure("failed"));
 
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "debug_traceBlock", new Object[] {}));

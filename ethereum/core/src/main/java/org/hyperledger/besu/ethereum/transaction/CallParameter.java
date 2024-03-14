@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.transaction;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
@@ -37,6 +38,7 @@ public class CallParameter {
   private final Optional<Wei> maxPriorityFeePerGas;
 
   private final Optional<Wei> maxFeePerGas;
+  private final Optional<Wei> maxFeePerBlobGas;
 
   private final Wei gasPrice;
 
@@ -45,6 +47,7 @@ public class CallParameter {
   private final Bytes payload;
 
   private final Optional<List<AccessListEntry>> accessList;
+  private final Optional<List<VersionedHash>> blobVersionedHashes;
 
   public CallParameter(
       final Address from,
@@ -62,6 +65,8 @@ public class CallParameter {
     this.gasPrice = gasPrice;
     this.value = value;
     this.payload = payload;
+    this.maxFeePerBlobGas = Optional.empty();
+    this.blobVersionedHashes = Optional.empty();
   }
 
   public CallParameter(
@@ -83,6 +88,33 @@ public class CallParameter {
     this.value = value;
     this.payload = payload;
     this.accessList = accessList;
+    this.maxFeePerBlobGas = Optional.empty();
+    this.blobVersionedHashes = Optional.empty();
+  }
+
+  public CallParameter(
+      final Address from,
+      final Address to,
+      final long gasLimit,
+      final Wei gasPrice,
+      final Optional<Wei> maxPriorityFeePerGas,
+      final Optional<Wei> maxFeePerGas,
+      final Wei value,
+      final Bytes payload,
+      final Optional<List<AccessListEntry>> accessList,
+      final Optional<Wei> maxFeePerBlobGas,
+      final Optional<List<VersionedHash>> blobVersionedHashes) {
+    this.from = from;
+    this.to = to;
+    this.gasLimit = gasLimit;
+    this.maxPriorityFeePerGas = maxPriorityFeePerGas;
+    this.maxFeePerGas = maxFeePerGas;
+    this.gasPrice = gasPrice;
+    this.value = value;
+    this.payload = payload;
+    this.accessList = accessList;
+    this.maxFeePerBlobGas = maxFeePerBlobGas;
+    this.blobVersionedHashes = blobVersionedHashes;
   }
 
   public Address getFrom() {
@@ -121,6 +153,14 @@ public class CallParameter {
     return accessList;
   }
 
+  public Optional<Wei> getMaxFeePerBlobGas() {
+    return maxFeePerBlobGas;
+  }
+
+  public Optional<List<VersionedHash>> getBlobVersionedHashes() {
+    return blobVersionedHashes;
+  }
+
   @Override
   public boolean equals(final Object o) {
     if (this == o) {
@@ -137,25 +177,83 @@ public class CallParameter {
         && Objects.equals(maxPriorityFeePerGas, that.maxPriorityFeePerGas)
         && Objects.equals(maxFeePerGas, that.maxFeePerGas)
         && Objects.equals(value, that.value)
-        && Objects.equals(payload, that.payload);
+        && Objects.equals(payload, that.payload)
+        && Objects.equals(accessList, that.accessList)
+        && Objects.equals(maxFeePerBlobGas, that.maxFeePerBlobGas)
+        && Objects.equals(blobVersionedHashes, that.blobVersionedHashes);
   }
 
   @Override
   public int hashCode() {
     return Objects.hash(
-        from, to, gasLimit, gasPrice, maxPriorityFeePerGas, maxFeePerGas, value, payload);
+        from,
+        to,
+        gasLimit,
+        gasPrice,
+        maxPriorityFeePerGas,
+        maxFeePerGas,
+        value,
+        payload,
+        accessList,
+        maxFeePerBlobGas,
+        blobVersionedHashes);
+  }
+
+  @Override
+  public String toString() {
+    return "CallParameter{"
+        + "from="
+        + from
+        + ", to="
+        + to
+        + ", gasLimit="
+        + gasLimit
+        + ", maxPriorityFeePerGas="
+        + maxPriorityFeePerGas.map(Wei::toHumanReadableString).orElse("N/A")
+        + ", maxFeePerGas="
+        + maxFeePerGas.map(Wei::toHumanReadableString).orElse("N/A")
+        + ", maxFeePerBlobGas="
+        + maxFeePerBlobGas.map(Wei::toHumanReadableString).orElse("N/A")
+        + ", gasPrice="
+        + (gasPrice != null ? gasPrice.toHumanReadableString() : "N/A")
+        + ", value="
+        + (value != null ? value.toHumanReadableString() : "N/A")
+        + ", payloadSize="
+        + (payload != null ? payload.size() : "null")
+        + ", accessListSize="
+        + accessList.map(List::size)
+        + ", blobVersionedHashesSize="
+        + blobVersionedHashes.map(List::size)
+        + '}';
   }
 
   public static CallParameter fromTransaction(final Transaction tx) {
     return new CallParameter(
         tx.getSender(),
-        tx.getTo().orElseGet(() -> null),
+        tx.getTo().orElse(null),
         tx.getGasLimit(),
-        Wei.fromQuantity(tx.getGasPrice().orElseGet(() -> Wei.ZERO)),
-        Optional.of(Wei.fromQuantity(tx.getMaxPriorityFeePerGas().orElseGet(() -> Wei.ZERO))),
+        tx.getGasPrice().orElse(Wei.ZERO),
+        tx.getMaxPriorityFeePerGas(),
         tx.getMaxFeePerGas(),
+        tx.getValue(),
+        tx.getPayload(),
+        tx.getAccessList(),
+        tx.getMaxFeePerBlobGas(),
+        tx.getVersionedHashes());
+  }
+
+  public static CallParameter fromTransaction(final org.hyperledger.besu.datatypes.Transaction tx) {
+    return new CallParameter(
+        tx.getSender(),
+        tx.getTo().orElse(null),
+        tx.getGasLimit(),
+        tx.getGasPrice().map(Wei::fromQuantity).orElse(Wei.ZERO),
+        tx.getMaxPriorityFeePerGas().map(Wei::fromQuantity),
+        tx.getMaxFeePerGas().map(Wei::fromQuantity),
         Wei.fromQuantity(tx.getValue()),
         tx.getPayload(),
-        tx.getAccessList());
+        tx.getAccessList(),
+        tx.getMaxFeePerBlobGas().map(Wei::fromQuantity),
+        tx.getVersionedHashes());
   }
 }
