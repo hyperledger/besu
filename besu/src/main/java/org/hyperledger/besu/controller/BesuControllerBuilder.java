@@ -579,9 +579,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(
-            protocolSchedule,
-            variablesStorage,
-            dataStorageConfiguration.getReceiptCompactionEnabled());
+            protocolSchedule, variablesStorage, dataStorageConfiguration);
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
