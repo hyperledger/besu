@@ -307,7 +307,7 @@ public class RocksDBKeyValueStorageFactoryTest {
       final Path tempDataDir, final Path tempDatabaseDir, final DataStorageFormat format) {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    lenient().when(commonConfiguration.getDatabaseFormat()).thenReturn(format);
+    lenient().when(dataStorageConfiguration.getDatabaseFormat()).thenReturn(format);
     lenient()
         .when(commonConfiguration.getDataStorageConfiguration())
         .thenReturn(dataStorageConfiguration);

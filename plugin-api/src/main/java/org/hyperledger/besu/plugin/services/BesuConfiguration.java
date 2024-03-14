@@ -44,6 +44,7 @@ public interface BesuConfiguration extends BesuService {
    * @return Database format.
    */
   @Unstable
+  @Deprecated
   DataStorageFormat getDatabaseFormat();
 
   /**

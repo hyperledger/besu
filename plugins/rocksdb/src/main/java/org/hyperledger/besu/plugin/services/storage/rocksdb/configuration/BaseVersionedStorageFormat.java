@@ -57,13 +57,12 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
   /**
    * Return the default version for new db for a specific format
    *
-   * @param format data storage format
    * @param configuration data storage configuration
    * @return the version to use for new db
    */
   public static BaseVersionedStorageFormat defaultForNewDB(
-      final DataStorageFormat format, final DataStorageConfiguration configuration) {
-    return switch (format) {
+      final DataStorageConfiguration configuration) {
+    return switch (configuration.getDatabaseFormat()) {
       case FOREST -> configuration.getReceiptCompactionEnabled()
           ? FOREST_WITH_RECEIPT_COMPACTION
           : FOREST_WITH_VARIABLES;

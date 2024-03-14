@@ -22,6 +22,14 @@ import org.hyperledger.besu.plugin.Unstable;
 public interface DataStorageConfiguration {
 
   /**
+   * Database format. This sets the list of segmentIdentifiers that should be initialized.
+   *
+   * @return Database format.
+   */
+  @Unstable
+  DataStorageFormat getDatabaseFormat();
+
+  /**
    * Whether receipt compaction is enabled. When enabled this reduces the storage needed for
    * receipts.
    *

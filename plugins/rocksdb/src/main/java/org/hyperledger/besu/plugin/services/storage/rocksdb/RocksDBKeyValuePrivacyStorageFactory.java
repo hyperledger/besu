@@ -148,7 +148,6 @@ public class RocksDBKeyValuePrivacyStorageFactory implements PrivacyKeyValueStor
         final int existingPrivacyVersion = maybeExistingPrivacyVersion.getAsInt();
         final var runtimeVersion =
             PrivacyVersionedStorageFormat.defaultForNewDB(
-                commonConfiguration.getDatabaseFormat(),
                 commonConfiguration.getDataStorageConfiguration());
 
         if (existingPrivacyVersion > runtimeVersion.getPrivacyVersion().getAsInt()) {

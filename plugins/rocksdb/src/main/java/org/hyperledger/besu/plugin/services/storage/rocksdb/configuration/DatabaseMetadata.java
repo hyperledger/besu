@@ -65,7 +65,6 @@ public class DatabaseMetadata {
   public static DatabaseMetadata defaultForNewDb(final BesuConfiguration besuConfiguration) {
     return new DatabaseMetadata(
         BaseVersionedStorageFormat.defaultForNewDB(
-            besuConfiguration.getDatabaseFormat(),
             besuConfiguration.getDataStorageConfiguration()));
   }
 

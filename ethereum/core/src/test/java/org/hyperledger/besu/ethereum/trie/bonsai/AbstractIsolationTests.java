@@ -217,7 +217,17 @@ public abstract class AbstractIsolationTests {
               @Override
               public org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration
                   getDataStorageConfiguration() {
-                return () -> false;
+                return new org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration() {
+                  @Override
+                  public DataStorageFormat getDatabaseFormat() {
+                    return DataStorageFormat.BONSAI;
+                  }
+
+                  @Override
+                  public boolean getReceiptCompactionEnabled() {
+                    return false;
+                  }
+                };
               }
             })
         .withMetricsSystem(new NoOpMetricsSystem())

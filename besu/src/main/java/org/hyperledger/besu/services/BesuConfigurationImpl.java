@@ -71,6 +71,34 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   @Override
   public org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration
       getDataStorageConfiguration() {
-    return () -> dataStorageConfiguration.getReceiptCompactionEnabled();
+    return new DataStoreConfigurationImpl(dataStorageConfiguration);
+  }
+
+  /**
+   * A concrete implementation of DataStorageConfiguration which is used in Besu plugin framework.
+   */
+  public static class DataStoreConfigurationImpl
+      implements org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration {
+
+    private final DataStorageConfiguration dataStorageConfiguration;
+
+    /**
+     * Instantiate the concrete implementation of the plugin DataStorageConfiguration.
+     *
+     * @param dataStorageConfiguration The Ethereum core module data storage configuration
+     */
+    public DataStoreConfigurationImpl(final DataStorageConfiguration dataStorageConfiguration) {
+      this.dataStorageConfiguration = dataStorageConfiguration;
+    }
+
+    @Override
+    public DataStorageFormat getDatabaseFormat() {
+      return dataStorageConfiguration.getDataStorageFormat();
+    }
+
+    @Override
+    public boolean getReceiptCompactionEnabled() {
+      return dataStorageConfiguration.getReceiptCompactionEnabled();
+    }
   }
 }
