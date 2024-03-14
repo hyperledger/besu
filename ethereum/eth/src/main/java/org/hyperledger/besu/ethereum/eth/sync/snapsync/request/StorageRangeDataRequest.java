@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -94,16 +95,14 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final SnapSyncConfiguration snapSyncConfiguration) {
 
     // search incomplete nodes in the range
+    final AtomicInteger nbNodesSaved = new AtomicInteger();
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
           applyForStrategy(
               updater,
-              onBonsai -> {
-                onBonsai.putAccountStorageTrieNode(accountHash, location, hash, value);
-              },
-              onForest -> {
-                onForest.putAccountStorageTrieNode(hash, value);
-              });
+              onBonsai -> onBonsai.putAccountStorageTrieNode(accountHash, location, hash, value),
+              onForest -> onForest.putAccountStorageTrieNode(hash, value));
+          nbNodesSaved.incrementAndGet();
         };
 
     final AtomicReference<StackTrie.FlatDatabaseUpdater> flatDatabaseUpdater =
@@ -124,7 +123,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
-    return 0;
+    return nbNodesSaved.get();
   }
 
   public void addResponse(
