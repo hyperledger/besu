@@ -28,17 +28,17 @@ jobs:
       - name: assemble release
         run:
           ./gradlew assemble
+      - name: rename files
+        run: |
+          cd build/distributions
+          mv besu*.zip besu-develop.zip
+          mv besu*.tar.gz besu-develop.zip
       - name: hashes
         id: hashes
         run: |
           cd build/distributions
           echo "zipSha=$(shasum -a 256 besu*.zip)" >> $GITHUB_OUTPUT
           echo "tarSha=$(shasum -a 256 besu*.tar.gz)" >> $GITHUB_OUTPUT
-      - name: rename files
-        run: |
-          cd 'build/distributions'
-          mv besu*.zip besu-develop.zip
-          mv besu*.tar.gz besu-develop.zip
       - name: Upload Release assets
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
