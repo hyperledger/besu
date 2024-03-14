@@ -11,6 +11,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- `txpool_besuPendingTransactions`change parameter `numResults` to optional parameter [#6708](https://github.com/hyperledger/besu/pull/6708)
 - Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)
 - Add bft-style blockperiodseconds transitions to Clique [#6596](https://github.com/hyperledger/besu/pull/6596)
 - Add createemptyblocks transitions to Clique [#6608](https://github.com/hyperledger/besu/pull/6608)
