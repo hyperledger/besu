@@ -73,7 +73,7 @@ public class TraceCall extends AbstractTraceCall {
 
               final TransactionTrace transactionTrace =
                   new TransactionTrace(
-                      result.getTransaction(), result.getResult(), tracer.getTraceFrames());
+                      result.transaction(), result.result(), tracer.getTraceFrames());
 
               final Block block =
                   blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
