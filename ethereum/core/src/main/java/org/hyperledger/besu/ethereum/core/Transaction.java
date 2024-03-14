@@ -210,8 +210,6 @@ public class Transaction
         checkArgument(
             !versionedHashes.get().isEmpty(),
             "Blob transaction must have at least one versioned hash");
-        checkArgument(
-            maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
       }
     }
 

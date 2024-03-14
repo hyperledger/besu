@@ -26,7 +26,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
-// Represents parameters for a eth_call or eth_estimateGas JSON-RPC methods.
+// Represents parameters for eth_call and eth_estimateGas JSON-RPC methods.
 public class CallParameter {
 
   private final Address from;
