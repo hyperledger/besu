@@ -945,6 +945,7 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerCancunOperations(registry, gasCalculator, chainID);
+    registry.put(new BlockHashOperation(gasCalculator, true));
   }
 
   /**

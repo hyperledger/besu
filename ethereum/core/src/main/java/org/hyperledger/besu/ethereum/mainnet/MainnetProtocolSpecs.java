@@ -722,7 +722,7 @@ public abstract class MainnetProtocolSpecs {
 
     final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
         new ClearEmptyAccountWithException(
-            List.of(HistoricalBlockHashProcessor.HISTORY_STORAGE_ADDRESS));
+            List.of(HistoricalBlockHashProcessor.HISTORICAL_BLOCKHASH_ADDRESS));
     return shanghaiDefinition(
             chainId,
             configContractSizeLimit,

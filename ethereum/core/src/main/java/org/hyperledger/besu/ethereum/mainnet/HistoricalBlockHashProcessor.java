@@ -25,9 +25,10 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** A helper class to store the historical block hash (eip-2935) */
 public class HistoricalBlockHashProcessor {
 
-  private static final long HISTORY_SERVE_WINDOW = 256;
-  public static final Address HISTORY_STORAGE_ADDRESS =
+  public static final Address HISTORICAL_BLOCKHASH_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
+
+  private static final long HISTORY_SERVE_WINDOW = 256;
 
   private final long forkTimestamp;
 
@@ -40,7 +41,7 @@ public class HistoricalBlockHashProcessor {
       final WorldUpdater worldUpdater,
       final BlockHeader currentBlockHeader) {
 
-    final MutableAccount account = worldUpdater.getOrCreate(HISTORY_STORAGE_ADDRESS);
+    final MutableAccount account = worldUpdater.getOrCreate(HISTORICAL_BLOCKHASH_ADDRESS);
 
     // If this is not the genesis block
     if (currentBlockHeader.getNumber() > 0) {
