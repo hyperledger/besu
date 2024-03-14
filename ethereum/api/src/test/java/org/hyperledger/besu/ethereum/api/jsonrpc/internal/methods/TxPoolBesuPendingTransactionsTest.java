@@ -70,7 +70,7 @@ public class TxPoolBesuPendingTransactionsTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(
             new JsonRpcRequest(
-                JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {100}));
+                JSON_RPC_VERSION, TXPOOL_PENDING_TRANSACTIONS_METHOD, new Object[] {}));
 
     final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
     final Set<TransactionPendingResult> result =
@@ -119,6 +119,36 @@ public class TxPoolBesuPendingTransactionsTest {
 
   @Test
   public void shouldReturnPendingTransactionsWithFilter() {
+
+    final Map<String, String> fromFilter = new HashMap<>();
+    fromFilter.put(
+        "eq", listTrx.stream().findAny().get().getTransaction().getSender().toHexString());
+
+    final JsonRpcRequestContext request =
+        new JsonRpcRequestContext(
+            new JsonRpcRequest(
+                JSON_RPC_VERSION,
+                TXPOOL_PENDING_TRANSACTIONS_METHOD,
+                new Object[] {
+                  null,
+                  new PendingTransactionsParams(
+                      fromFilter,
+                      new HashMap<>(),
+                      new HashMap<>(),
+                      new HashMap<>(),
+                      new HashMap<>(),
+                      new HashMap<>())
+                }));
+
+    final JsonRpcSuccessResponse actualResponse = (JsonRpcSuccessResponse) method.response(request);
+
+    final Set<TransactionPendingResult> result =
+        (Set<TransactionPendingResult>) actualResponse.getResult();
+    assertThat(result.size()).isEqualTo(1);
+  }
+
+  @Test
+  public void shouldReturnPendingTransactionsWithLimitAndFilter() {
 
     final Map<String, String> fromFilter = new HashMap<>();
     fromFilter.put(
