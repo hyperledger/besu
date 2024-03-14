@@ -91,14 +91,22 @@ jobs:
           - "ethereum:api:testRemainder"
           - "ethereum:eth:test"
           - "ethereum:core:test"
-        archive_name:
-          - "everythingElse"
-          - "consensusCrypto"
-          - "apiBonsai"
-          - "apiForest"
-          - "apiRemainder"
-          - "eth"
-          - "core"
+        #includes will need exact strings from gradle args above
+        include:
+          - gradle_args: "test -x besu:test -x consensus:test -x crypto:test -x ethereum:eth:test -x ethereum:api:test -x ethereum:core:test"
+            filename: "everythingElse"
+          - gradle_args: "besu:test consensus:test crypto:test"
+            filename: "consensusCrypto"
+          - gradle_args: "ethereum:api:testBonsai"
+            filename: "apiBonsai"
+          - gradle_args: "ethereum:api:testRemainder"
+            filename: "apiForest"
+          - gradle_args: "ethereum:api:testRemainder"
+            filename: "apiRemainder"
+          - gradle_args: "ethereum:eth:test"
+            filename: "eth"
+          - gradle_args: "ethereum:core:test"
+            filename: "core"
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -119,7 +127,7 @@ jobs:
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:
-          name: unit-${{matrix.archive_name}}-test-results
+          name: unit-${{matrix.filename}}-test-results
           path: '**/test-results/**/TEST-*.xml'
   unittests-passed:
     name: "unittests-passed"
