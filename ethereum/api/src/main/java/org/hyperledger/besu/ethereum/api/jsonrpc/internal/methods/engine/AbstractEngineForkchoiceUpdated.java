@@ -44,10 +44,12 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.spi.LoggingEventBuilder;
 
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
@@ -277,12 +279,31 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   private void logPayload(final EnginePayloadAttributesParameter payloadAttributes) {
-    LOG.atDebug()
-        .setMessage("timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}")
-        .addArgument(payloadAttributes::getTimestamp)
-        .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
-        .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString())
-        .log();
+    String message = "payloadAttributes: timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}";
+    LoggingEventBuilder builder =
+        LOG.atDebug()
+            .setMessage(message)
+            .addArgument(payloadAttributes::getTimestamp)
+            .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
+            .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString());
+    if (payloadAttributes.getWithdrawals() != null) {
+      message += ", withdrawals: {}";
+      builder =
+          builder
+              .setMessage(message)
+              .addArgument(
+                  payloadAttributes.getWithdrawals().stream()
+                      .map(WithdrawalParameter::toString)
+                      .collect(Collectors.joining(", ", "[", "]")));
+    }
+    if (payloadAttributes.getParentBeaconBlockRoot() != null) {
+      message += ", parentBeaconBlockRoot: {}";
+      builder =
+          builder
+              .setMessage(message)
+              .addArgument(() -> payloadAttributes.getParentBeaconBlockRoot().toHexString());
+    }
+    builder.log();
   }
 
   private boolean isValidForkchoiceState(

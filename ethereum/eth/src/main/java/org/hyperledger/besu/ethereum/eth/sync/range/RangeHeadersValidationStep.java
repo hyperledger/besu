@@ -67,8 +67,7 @@ public class RangeHeadersValidationStep implements Function<RangeHeaders, Stream
                         rangeEndDescription,
                         firstHeader.getNumber(),
                         firstHeader.getHash());
-                throw new InvalidBlockException(
-                    errorMessage, firstHeader.getNumber(), firstHeader.getHash());
+                throw InvalidBlockException.fromInvalidBlock(errorMessage, firstHeader);
               }
             })
         .orElse(Stream.empty());

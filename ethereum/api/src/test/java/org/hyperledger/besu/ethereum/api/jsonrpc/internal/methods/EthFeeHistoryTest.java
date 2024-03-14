@@ -26,6 +26,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeCoordinator;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
@@ -47,9 +48,12 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -80,6 +84,8 @@ public class EthFeeHistoryTest {
     miningCoordinator = mock(MergeCoordinator.class);
     when(miningCoordinator.getMinPriorityFeePerGas()).thenReturn(Wei.ONE);
 
+    mockFork();
+
     method =
         new EthFeeHistory(
             protocolSchedule,
@@ -90,9 +96,6 @@ public class EthFeeHistoryTest {
 
   @Test
   public void params() {
-    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
     // should fail because no required params given
     assertThatThrownBy(this::feeHistoryRequest).isInstanceOf(InvalidJsonRpcParameters.class);
     // should fail because newestBlock not given
@@ -110,12 +113,7 @@ public class EthFeeHistoryTest {
 
   @Test
   public void allFieldsPresentForLatestBlock() {
-    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getForNextBlockHeader(
-            eq(blockchain.getChainHeadHeader()),
-            eq(blockchain.getChainHeadHeader().getTimestamp())))
-        .thenReturn(londonSpec);
+
     final Object latest =
         ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest", new double[] {100.0}))
             .getResult();
@@ -126,6 +124,8 @@ public class EthFeeHistoryTest {
                     .oldestBlock(10)
                     .baseFeePerGas(List.of(Wei.of(25496L), Wei.of(28683L)))
                     .gasUsedRatio(List.of(0.9999999992132459))
+                    .baseFeePerBlobGas(List.of(Wei.of(0), Wei.of(0)))
+                    .blobGasUsedRatio(List.of(0.0))
                     .reward(List.of(List.of(Wei.of(1524763764L))))
                     .build()));
   }
@@ -250,29 +250,19 @@ public class EthFeeHistoryTest {
 
   @Test
   public void doesntGoPastChainHeadWithHighBlockCount() {
-    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getForNextBlockHeader(
-            eq(blockchain.getChainHeadHeader()),
-            eq(blockchain.getChainHeadHeader().getTimestamp())))
-        .thenReturn(londonSpec);
     final FeeHistory.FeeHistoryResult result =
         (ImmutableFeeHistoryResult)
             ((JsonRpcSuccessResponse) feeHistoryRequest("0x14", "latest")).getResult();
     assertThat(Long.decode(result.getOldestBlock())).isEqualTo(0);
     assertThat(result.getBaseFeePerGas()).hasSize(12);
     assertThat(result.getGasUsedRatio()).hasSize(11);
+    assertThat(result.getBaseFeePerBlobGas()).hasSize(12);
+    assertThat(result.getBlobGasUsedRatio()).hasSize(11);
     assertThat(result.getReward()).isNull();
   }
 
   @Test
   public void feeValuesAreInTheBlockCountAndHighestBlock() {
-    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getForNextBlockHeader(
-            eq(blockchain.getChainHeadHeader()),
-            eq(blockchain.getChainHeadHeader().getTimestamp())))
-        .thenReturn(londonSpec);
     double[] percentile = new double[] {100.0};
 
     final Object ninth =
@@ -286,12 +276,6 @@ public class EthFeeHistoryTest {
 
   @Test
   public void feeValuesDontGoPastHighestBlock() {
-    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
-    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
-    when(protocolSchedule.getForNextBlockHeader(
-            eq(blockchain.getChainHeadHeader()),
-            eq(blockchain.getChainHeadHeader().getTimestamp())))
-        .thenReturn(londonSpec);
     double[] percentile = new double[] {100.0};
 
     final Object second =
@@ -345,6 +329,70 @@ public class EthFeeHistoryTest {
     assertThat(((ImmutableFeeHistoryResult) feeObject).getReward().size()).isEqualTo(blockCount);
     assertThat(((ImmutableFeeHistoryResult) feeObject).getGasUsedRatio().size())
         .isEqualTo(blockCount);
+    assertThat(((ImmutableFeeHistoryResult) feeObject).getBaseFeePerBlobGas().size())
+        .isEqualTo(blockCount + 1);
+    assertThat(((ImmutableFeeHistoryResult) feeObject).getBlobGasUsedRatio().size())
+        .isEqualTo(blockCount);
+  }
+
+  @Test
+  public void shouldCalculateBlobFeeCorrectly_preBlob() {
+    assertBlobBaseFee(List.of(Wei.ZERO, Wei.ZERO));
+  }
+
+  @Test
+  public void shouldCalculateBlobFeeCorrectly_postBlob() {
+    mockPostBlobFork();
+    assertBlobBaseFee(List.of(Wei.ONE, Wei.ONE));
+  }
+
+  @Test
+  public void shouldCalculateBlobFeeCorrectly_transitionFork() {
+    mockTransitionBlobFork();
+    assertBlobBaseFee(List.of(Wei.ZERO, Wei.ONE));
+  }
+
+  private void mockFork() {
+    final ProtocolSpec londonSpec = mock(ProtocolSpec.class);
+    when(londonSpec.getGasCalculator()).thenReturn(new LondonGasCalculator());
+    when(londonSpec.getFeeMarket()).thenReturn(FeeMarket.london(5));
+    when(londonSpec.getGasLimitCalculator()).thenReturn(mock(GasLimitCalculator.class));
+
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(londonSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(londonSpec);
+  }
+
+  private void mockPostBlobFork() {
+    final ProtocolSpec cancunSpec = mock(ProtocolSpec.class);
+    when(cancunSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
+    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancun(5, Optional.empty()));
+    when(cancunSpec.getGasLimitCalculator())
+        .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(cancunSpec);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(cancunSpec);
+  }
+
+  private void mockTransitionBlobFork() {
+    final ProtocolSpec cancunSpec = mock(ProtocolSpec.class);
+    when(cancunSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
+    when(cancunSpec.getFeeMarket()).thenReturn(FeeMarket.cancun(5, Optional.empty()));
+    when(cancunSpec.getGasLimitCalculator())
+        .thenReturn(mock(CancunTargetingGasLimitCalculator.class));
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(cancunSpec);
+  }
+
+  private void assertBlobBaseFee(final List<Wei> baseFeePerBlobGas) {
+    final Object latest = ((JsonRpcSuccessResponse) feeHistoryRequest("0x1", "latest")).getResult();
+    assertThat(latest)
+        .isEqualTo(
+            FeeHistory.FeeHistoryResult.from(
+                ImmutableFeeHistory.builder()
+                    .oldestBlock(10)
+                    .baseFeePerGas(List.of(Wei.of(25496L), Wei.of(28683L)))
+                    .gasUsedRatio(List.of(0.9999999992132459))
+                    .baseFeePerBlobGas(baseFeePerBlobGas)
+                    .blobGasUsedRatio(List.of(0.0))
+                    .build()));
   }
 
   private JsonRpcResponse feeHistoryRequest(final Object... params) {

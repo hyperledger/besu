@@ -292,8 +292,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       names = SNAP_FLAT_DB_HEALING_ENABLED_FLAG,
       hidden = true,
       paramLabel = "<Boolean>",
-      description =
-          "(Deprecated) Always enabled: Snap sync flat db healing enabled (default: ${DEFAULT-VALUE})")
+      description = "Snap sync flat db healing enabled (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncFlatDbHealingEnabled =
       SnapSyncConfiguration.DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
 
@@ -305,6 +304,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
   private SynchronizerOptions() {}
+
+  /**
+   * Flag to know whether the flat db healing feature is enabled or disabled.
+   *
+   * @return true is the flat db healing is enabled
+   */
+  public boolean isSnapsyncFlatDbHealingEnabled() {
+    return snapsyncFlatDbHealingEnabled;
+  }
 
   /**
    * Create synchronizer options.
@@ -441,11 +449,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(snapsyncBytecodeCountPerRequest),
             SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
-            OptionParser.format(snapsyncTrieNodeCountPerRequest),
-            SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
-            OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
-            SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
-            OptionParser.format(snapsyncFlatStorageHealedCountPerRequest));
+            OptionParser.format(snapsyncTrieNodeCountPerRequest));
+    if (isSnapsyncFlatDbHealingEnabled()) {
+      value.addAll(
+          Arrays.asList(
+              SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
+              OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
+              SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
+              OptionParser.format(snapsyncFlatStorageHealedCountPerRequest)));
+    }
     return value;
   }
 }

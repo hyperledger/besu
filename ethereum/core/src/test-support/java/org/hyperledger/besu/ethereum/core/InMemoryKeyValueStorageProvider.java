@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -79,7 +80,8 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
 
   public static ForestWorldStateArchive createInMemoryWorldStateArchive() {
     return new ForestWorldStateArchive(
-        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+        new WorldStateStorageCoordinator(
+            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage())),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
         EvmConfiguration.DEFAULT);
   }

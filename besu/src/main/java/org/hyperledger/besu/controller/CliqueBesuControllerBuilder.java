@@ -54,7 +54,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   private Address localAddress;
   private EpochManager epochManager;
-  private boolean createEmptyBlocks = true;
   private final BlockInterface blockInterface = new CliqueBlockInterface();
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
@@ -63,7 +62,6 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
     final CliqueConfigOptions cliqueConfig = configOptionsSupplier.get().getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
-    createEmptyBlocks = cliqueConfig.getCreateEmptyBlocks();
 
     epochManager = new EpochManager(blocksPerEpoch);
     forksSchedule = CliqueForksSchedulesFactory.create(configOptionsSupplier.get());
@@ -96,7 +94,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
                 localAddress,
                 forksSchedule),
             epochManager,
-            createEmptyBlocks,
+            forksSchedule,
             ethProtocolManager.ethContext().getScheduler());
     final CliqueMiningCoordinator miningCoordinator =
         new CliqueMiningCoordinator(
@@ -104,6 +102,18 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             miningExecutor,
             syncState,
             new CliqueMiningTracker(localAddress, protocolContext));
+
+    // Update the next block period in seconds according to the transition schedule
+    protocolContext
+        .getBlockchain()
+        .observeBlockAdded(
+            o ->
+                miningParameters.setBlockPeriodSeconds(
+                    forksSchedule
+                        .getFork(o.getBlock().getHeader().getNumber() + 1)
+                        .getValue()
+                        .getBlockPeriodSeconds()));
+
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
     // Clique mining is implicitly enabled.

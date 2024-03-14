@@ -37,7 +37,7 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
     var preTruncatedWorldState = archive.getMutable(genesisState.getBlock().getHeader(), false);
     assertThat(preTruncatedWorldState)
         .isPresent(); // really just assert that we have not segfaulted after truncating
-    bonsaiWorldStateStorage.clear();
+    worldStateKeyValueStorage.clear();
     var postTruncatedWorldState = archive.getMutable(genesisState.getBlock().getHeader(), false);
     assertThat(postTruncatedWorldState).isEmpty();
     // assert that trying to access pre-worldstate does not segfault after truncating
