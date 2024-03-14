@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.List;
@@ -57,11 +57,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class AccountHealingTrackingTest {
 
   private final List<Address> accounts = List.of(Address.fromHexString("0xdeadbeef"));
-  private final WorldStateStorage worldStateStorage =
+  private final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
       new BonsaiWorldStateKeyValueStorage(
           new InMemoryKeyValueStorageProvider(),
           new NoOpMetricsSystem(),
           DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   private WorldStateProofProvider worldStateProofProvider;
 
@@ -71,11 +73,12 @@ public class AccountHealingTrackingTest {
 
   @BeforeEach
   public void setup() {
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
     accountStateTrie =
         TrieGenerator.generateTrie(
-            worldStateStorage,
+            worldStateStorageCoordinator,
             accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
-    worldStateProofProvider = new WorldStateProofProvider(worldStateStorage);
+    worldStateProofProvider = new WorldStateProofProvider(worldStateStorageCoordinator);
   }
 
   @Test
@@ -90,7 +93,8 @@ public class AccountHealingTrackingTest {
         new StoredMerklePatriciaTrie<>(
             new StoredNodeFactory<>(
                 (location, hash) ->
-                    worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+                    worldStateKeyValueStorage.getAccountStorageTrieNode(
+                        accountHash, location, hash),
                 Function.identity(),
                 Function.identity()),
             stateTrieAccountValue.getStorageRoot());
@@ -121,7 +125,8 @@ public class AccountHealingTrackingTest {
             MAX_RANGE);
     storageRangeDataRequest.addResponse(
         snapWorldDownloadState, worldStateProofProvider, slots, new ArrayDeque<>(proofs));
-    storageRangeDataRequest.getChildRequests(snapWorldDownloadState, worldStateStorage, null);
+    storageRangeDataRequest.getChildRequests(
+        snapWorldDownloadState, worldStateStorageCoordinator, null);
     verify(snapWorldDownloadState, never()).addAccountToHealingList(any(Bytes.class));
   }
 
@@ -133,7 +138,7 @@ public class AccountHealingTrackingTest {
 
     final List<Bytes> proofs =
         List.of(
-            worldStateStorage
+            worldStateKeyValueStorage
                 .getAccountStorageTrieNode(
                     accountHash, Bytes.EMPTY, stateTrieAccountValue.getStorageRoot())
                 .get());
@@ -162,7 +167,8 @@ public class AccountHealingTrackingTest {
         new StoredMerklePatriciaTrie<>(
             new StoredNodeFactory<>(
                 (location, hash) ->
-                    worldStateStorage.getAccountStorageTrieNode(accountHash, location, hash),
+                    worldStateKeyValueStorage.getAccountStorageTrieNode(
+                        accountHash, location, hash),
                 Function.identity(),
                 Function.identity()),
             stateTrieAccountValue.getStorageRoot());
@@ -200,7 +206,8 @@ public class AccountHealingTrackingTest {
     verify(snapWorldDownloadState, never()).addAccountToHealingList(any(Bytes.class));
 
     // should mark during the getchild request
-    storageRangeDataRequest.getChildRequests(snapWorldDownloadState, worldStateStorage, null);
+    storageRangeDataRequest.getChildRequests(
+        snapWorldDownloadState, worldStateStorageCoordinator, null);
     verify(snapWorldDownloadState).addAccountToHealingList(any(Bytes.class));
   }
 
@@ -215,7 +222,7 @@ public class AccountHealingTrackingTest {
             accountHash,
             Hash.wrap(accountStateTrie.getRootHash()),
             Bytes.EMPTY);
-    storageTrieNodeHealingRequest.getExistingData(snapWorldDownloadState, worldStateStorage);
+    storageTrieNodeHealingRequest.getExistingData(worldStateStorageCoordinator);
     verify(snapWorldDownloadState, never()).addAccountToHealingList(any(Bytes.class));
   }
 }

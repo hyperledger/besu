@@ -28,6 +28,8 @@ jar {
 }
 
 dependencies {
+  api project(':datatypes')
+
   api 'org.slf4j:slf4j-api'
 
   implementation project(':config')

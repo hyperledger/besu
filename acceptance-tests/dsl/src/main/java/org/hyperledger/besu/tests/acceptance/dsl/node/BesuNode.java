@@ -436,6 +436,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
       nodeRequests =
           new NodeRequests(
+              web3jService,
               new JsonRpc2_0Web3j(web3jService, 2000, Async.defaultExecutorService()),
               new CliqueRequestFactory(web3jService),
               new BftRequestFactory(web3jService, bftType),

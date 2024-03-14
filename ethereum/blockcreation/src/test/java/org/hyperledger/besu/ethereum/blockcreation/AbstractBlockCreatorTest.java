@@ -387,8 +387,7 @@ abstract class AbstractBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
-            poolConf,
-            null);
+            poolConf);
     transactionPool.setEnabled();
 
     final MiningParameters miningParameters =

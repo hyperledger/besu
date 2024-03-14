@@ -274,12 +274,19 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
             blockchain,
             bftEventQueue);
 
+    // Update the next block period in seconds according to the transition schedule
+    protocolContext
+        .getBlockchain()
+        .observeBlockAdded(
+            o ->
+                miningParameters.setBlockPeriodSeconds(
+                    qbftForksSchedule
+                        .getFork(o.getBlock().getHeader().getNumber() + 1)
+                        .getValue()
+                        .getBlockPeriodSeconds()));
+
     if (syncState.isInitialSyncPhaseDone()) {
-      LOG.info("Starting QBFT mining coordinator");
       miningCoordinator.enable();
-      miningCoordinator.start();
-    } else {
-      LOG.info("QBFT mining coordinator not starting while initial sync in progress");
     }
 
     syncState.subscribeCompletionReached(

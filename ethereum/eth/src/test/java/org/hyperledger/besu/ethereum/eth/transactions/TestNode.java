@@ -167,7 +167,6 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
-            null,
             new BlobCache(),
             MiningParameters.newDefault());
 

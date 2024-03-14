@@ -49,4 +49,13 @@ public class DaoForkPeerValidator extends AbstractPeerBlockValidator {
     }
     return validDaoBlock;
   }
+
+  /**
+   * In order to support chain history pruning, clients do not need to have the dao fork block to be
+   * deemed valid.
+   */
+  @Override
+  protected boolean blockIsRequired() {
+    return false;
+  }
 }

@@ -342,8 +342,7 @@ class PoWBlockCreatorTest extends AbstractBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
     transactionPool.setEnabled();
 
     return transactionPool;

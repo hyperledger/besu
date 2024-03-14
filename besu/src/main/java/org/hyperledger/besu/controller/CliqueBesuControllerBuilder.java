@@ -102,6 +102,18 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
             miningExecutor,
             syncState,
             new CliqueMiningTracker(localAddress, protocolContext));
+
+    // Update the next block period in seconds according to the transition schedule
+    protocolContext
+        .getBlockchain()
+        .observeBlockAdded(
+            o ->
+                miningParameters.setBlockPeriodSeconds(
+                    forksSchedule
+                        .getFork(o.getBlock().getHeader().getNumber() + 1)
+                        .getValue()
+                        .getBlockPeriodSeconds()));
+
     miningCoordinator.addMinedBlockObserver(ethProtocolManager);
 
     // Clique mining is implicitly enabled.
