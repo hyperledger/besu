@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.datatypes.VersionedHash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -36,7 +35,7 @@ public class BlobTransactionEncoder {
     out.writeUInt256Scalar(transaction.getValue());
     out.writeBytes(transaction.getPayload());
     AccessListTransactionEncoder.writeAccessList(out, transaction.getAccessList());
-    out.writeUInt256Scalar(transaction.getMaxFeePerBlobGas().orElse(Wei.MAX_WEI));
+    out.writeUInt256Scalar(transaction.getMaxFeePerBlobGas().orElseThrow());
     out.startList();
     transaction
         .getVersionedHashes()
