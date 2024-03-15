@@ -340,7 +340,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
   /**
    * Generates a summary log of plugin registration. The summary includes registered plugins,
-   * detected but not registered (skipped) plugins, and requested but not found plugins.
+   * detected but not registered (skipped) plugins
    *
    * @return A list of strings, each representing a line in the summary log.
    */
