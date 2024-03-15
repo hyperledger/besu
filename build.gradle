@@ -682,7 +682,9 @@ distZip {
 publishing {
   publications {
     distArtifactory(MavenPublication) {
+      groupId = '.'
       version = project.version
+      artifactId = 'besu'
     }
   }
 }
