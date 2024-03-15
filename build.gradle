@@ -766,9 +766,10 @@ task distDocker {
           dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
           println "Building for platform ${project.getProperty('docker-platform')}"
         }
+        def gitDetails = getGitCommitDetails(10)
         executable "sh"
         workingDir dockerBuildDir
-        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
       }
     }
 
