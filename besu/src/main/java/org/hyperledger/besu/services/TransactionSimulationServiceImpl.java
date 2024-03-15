@@ -19,7 +19,10 @@ import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.Unstable;
@@ -62,14 +65,16 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
 
     final CallParameter callParameter = CallParameter.fromTransaction(transaction);
 
-    final var blockHeader =
-        blockchain
-            .getBlockHeader(blockHash)
-            .or(() -> blockchain.getBlockHeaderSafe(blockHash))
-            .orElseThrow(
-                () ->
-                    new IllegalStateException(
-                        "Block header not yet present for chain head hash: " + blockHash));
+    final var maybeBlockHeader =
+        blockchain.getBlockHeader(blockHash).or(() -> blockchain.getBlockHeaderSafe(blockHash));
+
+    if (maybeBlockHeader.isEmpty()) {
+      return Optional.of(
+          new TransactionSimulationResult(
+              transaction,
+              TransactionProcessingResult.invalid(
+                  ValidationResult.invalid(TransactionInvalidReason.BLOCK_NOT_FOUND))));
+    }
 
     return transactionSimulator
         .process(
@@ -78,7 +83,7 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
                 ? SIMULATOR_ALLOWING_EXCEEDING_BALANCE
                 : TransactionValidationParams.transactionSimulator(),
             operationTracer,
-            blockHeader)
+            maybeBlockHeader.get())
         .map(res -> new TransactionSimulationResult(transaction, res.result()));
   }
 }
