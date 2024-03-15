@@ -679,6 +679,13 @@ distZip {
   setVersion(archiveBuildVersion)
 }
 
+publishing {
+  publications {
+    distArtifactory(MavenPublication) {
+      version = project.version
+    }
+  }
+}
 
 def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
 def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
