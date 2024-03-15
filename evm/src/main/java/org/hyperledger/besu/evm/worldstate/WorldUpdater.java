@@ -140,6 +140,13 @@ public interface WorldUpdater extends MutableWorldView {
   void commit();
 
   /**
+   * Commits the changes made to this updater to the underlying {@link WorldView} this is an updater
+   * of.
+   */
+  void commitPrivateNonce();
+
+
+  /**
    * The parent updater (if it exists).
    *
    * @return The parent WorldUpdater if this wraps another one, empty otherwise

@@ -393,6 +393,9 @@ public class BonsaiWorldStateUpdateAccumulator
   }
 
   @Override
+  public void commitPrivateNonce() {}
+
+  @Override
   public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
     final BonsaiValue<Bytes> localCode = codeToUpdate.get(address);
     if (localCode == null) {

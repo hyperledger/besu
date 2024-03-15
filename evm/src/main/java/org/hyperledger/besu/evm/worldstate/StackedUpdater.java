@@ -111,6 +111,11 @@ public class StackedUpdater<W extends WorldView, A extends Account>
     }
   }
 
+  @Override
+  public void commitPrivateNonce() {
+
+  }
+
   /** Mark transaction boundary. */
   @Override
   public void markTransactionBoundary() {

@@ -113,7 +113,8 @@ public class ProtocolScheduleBuilder {
             config.getEvmStackSize(),
             isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
-            evmConfiguration);
+            evmConfiguration,
+            privacyParameters.isPrivateNonceIncrementationEnabled());
 
     validateForkOrdering();
 

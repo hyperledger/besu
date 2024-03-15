@@ -129,6 +129,11 @@ public class SimpleWorld implements WorldUpdater {
   }
 
   @Override
+  public void commitPrivateNonce() {
+
+  }
+
+  @Override
   public Optional<WorldUpdater> parentUpdater() {
     return Optional.ofNullable(parent);
   }

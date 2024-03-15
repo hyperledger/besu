@@ -56,6 +56,8 @@ public class PrivateTransactionProcessor {
 
   private final int maxStackSize;
 
+  private final boolean incrementPrivateNonce;
+
   @SuppressWarnings("unused")
   private final boolean clearEmptyAccounts;
 
@@ -65,13 +67,15 @@ public class PrivateTransactionProcessor {
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
-      final PrivateTransactionValidator privateTransactionValidator) {
+      final PrivateTransactionValidator privateTransactionValidator,
+      final boolean incrementPrivateNonce) {
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
     this.privateTransactionValidator = privateTransactionValidator;
+    this.incrementPrivateNonce = incrementPrivateNonce;
   }
 
   public TransactionProcessingResult processTransaction(
@@ -169,7 +173,11 @@ public class PrivateTransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+        LOG.info("Private nonce success {} committed", sender.getNonce());
         mutablePrivateWorldStateUpdater.commit();
+      } else if (incrementPrivateNonce) {
+        mutablePrivateWorldStateUpdater.commitPrivateNonce();
+        LOG.info("Private nonce  non-success {} committed", sender.getNonce());
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {

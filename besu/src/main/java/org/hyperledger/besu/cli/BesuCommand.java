@@ -687,6 +687,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         names = {"--privacy-flexible-groups-enabled"},
         description = "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
     private final Boolean isFlexiblePrivacyGroupsEnabled = false;
+
+    @Option(
+            names = {"--privacy-nonce-incrementation-enabled"},
+            description = "Enable private nonce incrementation even if the transaction didn't succeeded (default: ${DEFAULT-VALUE})")
+    private final Boolean isPrivateNonceIncrementationEnabled = false;
   }
 
   // Metrics Option Group
@@ -1999,6 +2004,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           privacyOptionGroup.isFlexiblePrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
           unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
+      privacyParametersBuilder.setPrivateNonceIncrementationEnabled(
+              privacyOptionGroup.isPrivateNonceIncrementationEnabled);
 
       final boolean hasPrivacyPublicKey = privacyOptionGroup.privacyPublicKeyFile != null;
 
