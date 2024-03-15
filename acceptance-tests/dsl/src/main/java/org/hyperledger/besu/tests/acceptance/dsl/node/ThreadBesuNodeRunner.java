@@ -107,7 +107,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl,
       final BlockchainServiceImpl blockchainServiceImpl,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
-      final BesuConfiguration commonPluginConfiguration) {
+      final BesuConfiguration commonPluginConfiguration,
+      final PermissioningServiceImpl permissioningService) {
     final CommandLine commandLine = new CommandLine(CommandSpec.create());
     final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
     besuPluginContext.addService(StorageService.class, storageService);
@@ -138,7 +139,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     besuPluginContext.addService(BesuConfiguration.class, commonPluginConfiguration);
-    besuPluginContext.addService(PermissioningService.class, new PermissioningServiceImpl());
+    besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
 
     besuPluginContext.registerPlugins(new PluginConfiguration(pluginsPath));
@@ -174,6 +175,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final RpcEndpointServiceImpl rpcEndpointServiceImpl = new RpcEndpointServiceImpl();
     final Path dataDir = node.homeDirectory();
     final BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
+    final PermissioningServiceImpl permissioningService = new PermissioningServiceImpl();
+
     final var miningParameters =
         ImmutableMiningParameters.builder()
             .from(node.getMiningParameters())
@@ -197,7 +200,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                     transactionPoolValidatorServiceImpl,
                     blockchainServiceImpl,
                     rpcEndpointServiceImpl,
-                    commonPluginConfiguration));
+                    commonPluginConfiguration,
+                    permissioningService));
 
     GlobalOpenTelemetry.resetForTest();
     final ObservableMetricsSystem metricsSystem =
@@ -285,7 +289,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .jsonRpcIpcConfiguration(node.jsonRpcIpcConfiguration())
         .dataDir(node.homeDirectory())
         .metricsSystem(metricsSystem)
-        .permissioningService(new PermissioningServiceImpl())
+        .permissioningService(permissioningService)
         .metricsConfiguration(node.getMetricsConfiguration())
         .p2pEnabled(node.isP2pEnabled())
         .p2pTLSConfiguration(node.getTLSConfiguration())
@@ -294,15 +298,14 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             node.getStaticNodes().stream()
                 .map(EnodeURLImpl::fromString)
                 .collect(Collectors.toList()))
-        .besuPluginContext(new BesuPluginContextImpl())
+        .besuPluginContext(besuPluginContext)
         .autoLogBloomCaching(false)
         .storageProvider(storageProvider)
         .rpcEndpointService(rpcEndpointServiceImpl);
     node.engineRpcConfiguration().ifPresent(runnerBuilder::engineJsonRpcConfiguration);
 
-    final Runner runner = runnerBuilder.build();
-
     besuPluginContext.beforeExternalServices();
+    final Runner runner = runnerBuilder.build();
 
     runner.startExternalServices();
 
