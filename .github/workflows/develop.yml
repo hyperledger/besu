@@ -32,7 +32,7 @@ jobs:
         run: |
           cd build/distributions
           mv besu*.zip besu-develop.zip
-          mv besu*.tar.gz besu-develop.zip
+          mv besu*.tar.gz besu-develop.tar.gz
           echo "zipSha=$(shasum -a 256 besu*.zip)" >> $GITHUB_OUTPUT
           echo "tarSha=$(shasum -a 256 besu*.tar.gz)" >> $GITHUB_OUTPUT
           cd ../..
