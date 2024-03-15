@@ -1,3 +1,10 @@
+## PR description
+
+## Fixed Issue(s)
+<!-- Please link to fixed issue(s) here using format: fixes #<issue number> -->
+<!-- Example: "fixes #2" -->
+
+
 ### Thanks for sending a pull request! Have you done the following?
 
 - [ ] Checked out our [contribution guidelines](https://github.com/hyperledger/besu/blob/main/CONTRIBUTING.md)?
@@ -12,9 +19,3 @@
 - [ ] locally run all integration tests via: `./gradlew integrationTest`
 - [ ] locally run all reference tests via: `./gradlew ethereum:referenceTests:referenceTests`
 
-
-## PR description
-
-## Fixed Issue(s)
-<!-- Please link to fixed issue(s) here using format: fixes #<issue number> -->
-<!-- Example: "fixes #2" -->
