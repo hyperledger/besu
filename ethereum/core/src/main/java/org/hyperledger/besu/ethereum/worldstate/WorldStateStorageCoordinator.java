@@ -69,7 +69,11 @@ public class WorldStateStorageCoordinator {
   }
 
   public boolean isMatchingFlatMode(final FlatDbMode flatDbMode) {
-    if (getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+    Optional<DataStorageFormat> storageFormat =
+        Optional.ofNullable(getDataStorageFormat())
+            .filter(format -> format.equals(DataStorageFormat.BONSAI));
+
+    if (storageFormat.isPresent()) {
       final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
           (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();
       return bonsaiWorldStateStorageStrategy.getFlatDbMode().equals(flatDbMode);
