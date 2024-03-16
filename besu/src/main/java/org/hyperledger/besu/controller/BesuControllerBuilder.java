@@ -992,7 +992,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final List<PeerValidator> peerValidators,
       final EthPeers ethPeers,
       final EthMessages snapMessages) {
-    if (syncConfig.getSnapSyncConfiguration().isSnapServerEnabled()) {
+    if (Optional.ofNullable(syncConfig.getSnapSyncConfiguration())
+        .map(snapConfig -> snapConfig.isSnapServerEnabled())
+        .orElse(false)) {
       return Optional.of(
           new SnapProtocolManager(
               worldStateStorageCoordinator,
