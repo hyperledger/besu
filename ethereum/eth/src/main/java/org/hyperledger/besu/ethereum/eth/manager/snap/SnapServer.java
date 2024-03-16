@@ -531,11 +531,14 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   }
 
   static class StatefulPredicate implements Predicate<Pair<Bytes32, Bytes>> {
+    // default to a max of 4 seconds per request
+    static final long MAX_MILLIS_PER_REQUEST = 4000;
 
     final AtomicInteger byteLimit = new AtomicInteger(0);
     final AtomicInteger recordLimit = new AtomicInteger(0);
     final AtomicBoolean shouldContinue = new AtomicBoolean(true);
     final Function<Pair<Bytes32, Bytes>, Integer> encodingSizeAccumulator;
+    final StopWatch stopWatch = StopWatch.createStarted();
     final int maxResponseBytes;
     // TODO: remove this hack,  10% is a fudge factor to account for the proof node size
     final int maxResponseBytesFudgeFactor;
@@ -564,6 +567,11 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .addArgument(byteLimit::get)
           .addArgument(recordLimit::get)
           .log();
+      if (stopWatch.getSplitTime() > MAX_MILLIS_PER_REQUEST) {
+        shouldContinue.set(false);
+        LOGGER.debug("{} took too long, stopped at {} ms", forWhat, stopWatch.formatSplitTime());
+        return false;
+      }
 
       var underRecordLimit = recordLimit.addAndGet(1) <= MAX_ENTRIES_PER_REQUEST;
       var underByteLimit =
