@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -68,7 +69,8 @@ public class BackwardSyncStepTest {
   private BackwardSyncContext context;
 
   private final ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions(), new BadBlockManager());
+      MainnetProtocolSchedule.fromConfig(
+          new StubGenesisConfigOptions(), MiningParameters.MINING_DISABLED, new BadBlockManager());
 
   private final DeterministicEthScheduler ethScheduler = new DeterministicEthScheduler();
 
