@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -99,6 +98,15 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolContext = Optional.of(protocolContext);
     registerResponseConstructors();
+
+    // subscribe to initial sync completed events to start/stop snap server:
+    this.protocolContext
+        .flatMap(ProtocolContext::getSynchronizer)
+        .filter(z -> z instanceof DefaultSynchronizer)
+        .map(DefaultSynchronizer.class::cast)
+        .ifPresentOrElse(
+            z -> this.listenerId.set(z.subscribeInitialSync(this)),
+            () -> LOGGER.warn("SnapServer created without reference to sync status"));
   }
 
   /**
@@ -128,54 +136,47 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   }
 
   public synchronized SnapServer start() {
+    if (!isStarted.get()) {
+      // if we are bonsai and full flat, we can provide a worldstate storage:
+      var worldStateKeyValueStorage = worldStateStorageCoordinator.worldStateKeyValueStorage();
+      if (worldStateKeyValueStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
+          && worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
+        LOGGER.debug("Starting snap server with Bonsai full flat db");
+        var bonsaiArchive =
+            protocolContext
+                .map(ProtocolContext::getWorldStateArchive)
+                .map(BonsaiWorldStateProvider.class::cast);
+        var cachedStorageManagerOpt =
+            bonsaiArchive.map(archive -> archive.getCachedWorldStorageManager());
 
-    // if we are bonsai and full flat, we can provide a worldstate storage:
-    var worldStateKeyValueStorage = worldStateStorageCoordinator.worldStateKeyValueStorage();
-    if (worldStateKeyValueStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
-        && worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
-      LOGGER.debug("Starting snap server with Bonsai full flat db");
-      var bonsaiArchive =
-          protocolContext
-              .map(ProtocolContext::getWorldStateArchive)
-              .map(BonsaiWorldStateProvider.class::cast);
-      var cachedStorageManagerOpt =
-          bonsaiArchive.map(DiffBasedWorldStateProvider::getCachedWorldStorageManager);
+        if (cachedStorageManagerOpt.isPresent()) {
+          var cachedStorageManager = cachedStorageManagerOpt.get();
+          this.worldStateStorageProvider =
+              rootHash ->
+                  cachedStorageManager
+                      .getStorageByRootHash(rootHash)
+                      .map(BonsaiWorldStateKeyValueStorage.class::cast);
 
-      if (cachedStorageManagerOpt.isPresent()) {
-        var cachedStorageManager = cachedStorageManagerOpt.get();
-        this.worldStateStorageProvider =
-            rootHash ->
-                cachedStorageManager
-                    .getStorageByRootHash(rootHash)
-                    .map(BonsaiWorldStateKeyValueStorage.class::cast);
+          // when we start we need to build the cache of latest 128 worldstates
+          // trielogs-to-root-hash:
+          var blockchain = protocolContext.map(ProtocolContext::getBlockchain).orElse(null);
 
-        // when we start we need to build the cache of latest 128 worldstates trielogs-to-root-hash:
-        var blockchain = protocolContext.map(ProtocolContext::getBlockchain).orElse(null);
+          // at startup, prime the latest worldstates by roothash:
+          cachedStorageManager.primeRootToBlockHashCache(blockchain, PRIME_STATE_ROOT_CACHE_LIMIT);
 
-        // at startup, prime the latest worldstates by roothash:
-        cachedStorageManager.primeRootToBlockHashCache(blockchain, PRIME_STATE_ROOT_CACHE_LIMIT);
-
-        // subscribe to initial sync completed events to start/stop snap server:
-        protocolContext
-            .flatMap(ProtocolContext::getSynchronizer)
-            .filter(z -> z instanceof DefaultSynchronizer)
-            .map(DefaultSynchronizer.class::cast)
-            .ifPresentOrElse(
-                z -> this.listenerId.set(z.subscribeInitialSync(this)),
-                () -> LOGGER.warn("SnapServer created without reference to sync status"));
-
-        var flatDbStrategy =
-            ((BonsaiWorldStateKeyValueStorage)
-                    worldStateStorageCoordinator.worldStateKeyValueStorage())
-                .getFlatDbStrategy();
-        if (!flatDbStrategy.isCodeByCodeHash()) {
-          LOGGER.warn("SnapServer requires code stored by codehash, but it is not enabled");
+          var flatDbStrategy =
+              ((BonsaiWorldStateKeyValueStorage)
+                      worldStateStorageCoordinator.worldStateKeyValueStorage())
+                  .getFlatDbStrategy();
+          if (!flatDbStrategy.isCodeByCodeHash()) {
+            LOGGER.warn("SnapServer requires code stored by codehash, but it is not enabled");
+          }
+        } else {
+          LOGGER.warn(
+              "SnapServer started without cached storage manager, this should only happen in tests");
         }
-      } else {
-        LOGGER.warn(
-            "SnapServer started without cached storage manager, this should only happen in tests");
+        isStarted.set(true);
       }
-      isStarted.set(true);
     }
     return this;
   }
@@ -567,9 +568,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .addArgument(byteLimit::get)
           .addArgument(recordLimit::get)
           .log();
-      if (stopWatch.getSplitTime() > MAX_MILLIS_PER_REQUEST) {
+      if (stopWatch.getTime() > MAX_MILLIS_PER_REQUEST) {
         shouldContinue.set(false);
-        LOGGER.debug("{} took too long, stopped at {} ms", forWhat, stopWatch.formatSplitTime());
+        LOGGER.debug("{} took too long, stopped at {} ms", forWhat, stopWatch.formatTime());
         return false;
       }
 
