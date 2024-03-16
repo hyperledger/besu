@@ -108,6 +108,10 @@ public abstract class FlatDbStrategy {
       StorageSlotKey storageSlotKey,
       SegmentedKeyValueStorage storageStorage);
 
+  public boolean isCodeByCodeHash() {
+    return codeStorageStrategy instanceof CodeHashCodeStorageStrategy;
+  }
+
   /*
    * Retrieves the code data for the given code hash and account hash.
    */

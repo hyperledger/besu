@@ -38,6 +38,8 @@ public class SnapSyncConfiguration {
 
   public static final Boolean DEFAULT_IS_FLAT_DB_HEALING_ENABLED = Boolean.FALSE;
 
+  public static final Boolean DEFAULT_SNAP_SERVER_ENABLED = Boolean.FALSE;
+
   public static SnapSyncConfiguration getDefault() {
     return ImmutableSnapSyncConfiguration.builder().build();
   }
@@ -80,5 +82,10 @@ public class SnapSyncConfiguration {
   @Value.Default
   public Boolean isFlatDbHealingEnabled() {
     return DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
+  }
+
+  @Value.Default
+  public Boolean isSnapServerEnabled() {
+    return DEFAULT_SNAP_SERVER_ENABLED;
   }
 }

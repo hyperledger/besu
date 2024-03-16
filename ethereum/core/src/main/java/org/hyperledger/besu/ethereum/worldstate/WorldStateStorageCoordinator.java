@@ -62,6 +62,11 @@ public class WorldStateStorageCoordinator {
         forest -> forest.getAccountStorageTrieNode(nodeHash));
   }
 
+  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
+    return applyForStrategy(
+        bonsai -> bonsai.getCode(codeHash, accountHash), forest -> forest.getCode(codeHash));
+  }
+
   @SuppressWarnings("unchecked")
   public <STRATEGY extends WorldStateKeyValueStorage> STRATEGY getStrategy(
       final Class<STRATEGY> strategyClass) {
