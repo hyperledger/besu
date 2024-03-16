@@ -287,8 +287,6 @@ public class TransactionSimulator {
             transactionValidationParams,
             operationTracer,
             blobGasPrice);
-    LOG.info("tx simulator " + transaction);
-    LOG.info("tx simulator " + result);
 
     return Optional.of(new TransactionSimulatorResult(transaction, result));
   }
