@@ -226,6 +226,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                         range.endKeyHash(),
                         new StatefulPredicate(
                             "account",
+                            stopWatch,
                             maxResponseBytes,
                             (pair) -> {
                               var rlpOutput = new BytesValueRLPOutput();
@@ -318,6 +319,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 var statefulPredicate =
                     new StatefulPredicate(
                         "storage",
+                        stopWatch,
                         maxResponseBytes,
                         (pair) -> {
                           var slotRlpOutput = new BytesValueRLPOutput();
@@ -436,7 +438,8 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
       for (Bytes32 codeHash : codeHashes.hashes()) {
         Optional<Bytes> optCode = worldStateStorageCoordinator.getCode(Hash.wrap(codeHash), null);
         if (optCode.isPresent()) {
-          if (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes) {
+          if (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes
+              || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST) {
             break;
           }
           codeBytes.add(optCode.get());
@@ -485,7 +488,8 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     var optStorage =
                         storage.getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)));
                     if (optStorage.isPresent()) {
-                      if (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes) {
+                      if (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes
+                          || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST) {
                         break;
                       }
                       trieNodes.add(optStorage.get());
@@ -539,7 +543,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     final AtomicInteger recordLimit = new AtomicInteger(0);
     final AtomicBoolean shouldContinue = new AtomicBoolean(true);
     final Function<Pair<Bytes32, Bytes>, Integer> encodingSizeAccumulator;
-    final StopWatch stopWatch = StopWatch.createStarted();
+    final StopWatch stopWatch;
     final int maxResponseBytes;
     // TODO: remove this hack,  10% is a fudge factor to account for the proof node size
     final int maxResponseBytesFudgeFactor;
@@ -547,8 +551,10 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
     StatefulPredicate(
         final String forWhat,
+        final StopWatch stopWatch,
         final int maxResponseBytes,
         final Function<Pair<Bytes32, Bytes>, Integer> encodingSizeAccumulator) {
+      this.stopWatch = stopWatch;
       this.maxResponseBytes = maxResponseBytes;
       this.maxResponseBytesFudgeFactor = maxResponseBytes * 9 / 10;
       this.forWhat = forWhat;
