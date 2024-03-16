@@ -416,6 +416,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .isFlatDbHealingEnabled(snapsyncFlatDbHealingEnabled)
+            .isSnapServerEnabled(snapsyncServerEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
