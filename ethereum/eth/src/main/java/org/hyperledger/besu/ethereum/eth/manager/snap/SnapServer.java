@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
@@ -34,10 +33,11 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.BesuEvents;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -84,44 +84,21 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private final AtomicLong listenerId = new AtomicLong();
   private final EthMessages snapMessages;
 
-  // provide worldstate storage by root hash
-  private final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
-      worldStateStorageProvider;
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
+  private final Optional<ProtocolContext> protocolContext;
+
+  // provide worldstate storage by root hash
+  private Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
+      worldStateStorageProvider = __ -> Optional.empty();
 
   SnapServer(
       final EthMessages snapMessages,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext) {
-    this(
-        snapMessages,
-        worldStateStorageCoordinator,
-        rootHash ->
-            ((BonsaiWorldStateProvider) protocolContext.getWorldStateArchive())
-                .getCachedWorldStorageManager()
-                .getStorageByRootHash(rootHash)
-                .map(BonsaiWorldStateKeyValueStorage.class::cast));
-
-    Optional.of(protocolContext.getWorldStateArchive())
-        .filter(__ -> worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL))
-        .map(BonsaiWorldStateProvider.class::cast)
-        .ifPresent(
-            flatArchive -> {
-              var cachedStorageManager = flatArchive.getCachedWorldStorageManager();
-              var blockchain = protocolContext.getBlockchain();
-
-              // prime state-root-to-blockhash cache
-              primeWorldStateArchive(cachedStorageManager, blockchain);
-
-              // subscribe to initial sync completed events to start/stop snap server:
-              protocolContext
-                  .getSynchronizer()
-                  .filter(z -> z instanceof DefaultSynchronizer)
-                  .map(DefaultSynchronizer.class::cast)
-                  .ifPresentOrElse(
-                      z -> this.listenerId.set(z.subscribeInitialSync(this)),
-                      () -> LOGGER.warn("SnapServer created without reference to sync status"));
-            });
+    this.snapMessages = snapMessages;
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
+    this.protocolContext = Optional.of(protocolContext);
+    registerResponseConstructors();
   }
 
   /**
@@ -137,7 +114,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     this.snapMessages = snapMessages;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.worldStateStorageProvider = worldStateStorageProvider;
-    registerResponseConstructors();
+    this.protocolContext = Optional.empty();
   }
 
   @Override
@@ -150,20 +127,62 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     stop();
   }
 
-  public SnapServer start() {
-    isStarted.set(true);
+  public synchronized SnapServer start() {
+
+    // if we are bonsai and full flat, we can provide a worldstate storage:
+    var worldStateKeyValueStorage = worldStateStorageCoordinator.worldStateKeyValueStorage();
+    if (worldStateKeyValueStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
+        && worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
+      LOGGER.debug("Starting snap server with Bonsai full flat db");
+      var bonsaiArchive =
+          protocolContext
+              .map(ProtocolContext::getWorldStateArchive)
+              .map(BonsaiWorldStateProvider.class::cast);
+      var cachedStorageManagerOpt =
+          bonsaiArchive.map(DiffBasedWorldStateProvider::getCachedWorldStorageManager);
+
+      if (cachedStorageManagerOpt.isPresent()) {
+        var cachedStorageManager = cachedStorageManagerOpt.get();
+        this.worldStateStorageProvider =
+            rootHash ->
+                cachedStorageManager
+                    .getStorageByRootHash(rootHash)
+                    .map(BonsaiWorldStateKeyValueStorage.class::cast);
+
+        // when we start we need to build the cache of latest 128 worldstates trielogs-to-root-hash:
+        var blockchain = protocolContext.map(ProtocolContext::getBlockchain).orElse(null);
+
+        // at startup, prime the latest worldstates by roothash:
+        cachedStorageManager.primeRootToBlockHashCache(blockchain, PRIME_STATE_ROOT_CACHE_LIMIT);
+
+        // subscribe to initial sync completed events to start/stop snap server:
+        protocolContext
+            .flatMap(ProtocolContext::getSynchronizer)
+            .filter(z -> z instanceof DefaultSynchronizer)
+            .map(DefaultSynchronizer.class::cast)
+            .ifPresentOrElse(
+                z -> this.listenerId.set(z.subscribeInitialSync(this)),
+                () -> LOGGER.warn("SnapServer created without reference to sync status"));
+
+        var flatDbStrategy =
+            ((BonsaiWorldStateKeyValueStorage)
+                    worldStateStorageCoordinator.worldStateKeyValueStorage())
+                .getFlatDbStrategy();
+        if (!flatDbStrategy.isCodeByCodeHash()) {
+          LOGGER.warn("SnapServer requires code stored by codehash, but it is not enabled");
+        }
+      } else {
+        LOGGER.warn(
+            "SnapServer started without cached storage manager, this should only happen in tests");
+      }
+      isStarted.set(true);
+    }
     return this;
   }
 
-  public SnapServer stop() {
+  public synchronized SnapServer stop() {
     isStarted.set(false);
     return this;
-  }
-
-  private void primeWorldStateArchive(
-      final DiffBasedCachedWorldStorageManager storageManager, final Blockchain blockchain) {
-    // at startup, prime the latest worldstates by roothash:
-    storageManager.primeRootToBlockHashCache(blockchain, PRIME_STATE_ROOT_CACHE_LIMIT);
   }
 
   private void registerResponseConstructors() {
@@ -411,40 +430,25 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         .addArgument(codeHashes.hashes()::size)
         .log();
 
-    // there is no worldstate root or block header for us to use, so default to head.  This
-    // can cause problems for self-destructed contracts pre-shanghai.  for now since this impl
-    // is deferring to #5889, we can just get any flat code storage and know we are not deleting
-    // code for now.
     try {
-      return worldStateStorageProvider
-          .apply(Optional.empty())
-          .map(
-              storage -> {
-                LOGGER.trace("obtained worldstate in {}", stopWatch);
-                List<Bytes> codeBytes = new ArrayDeque<>();
-                for (Bytes32 codeHash : codeHashes.hashes()) {
-                  Optional<Bytes> optCode = storage.getCode(Hash.wrap(codeHash), null);
-                  if (optCode.isPresent()) {
-                    if (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes) {
-                      break;
-                    }
-                    codeBytes.add(optCode.get());
-                  }
-                }
-                var resp = ByteCodesMessage.create(codeBytes);
-                LOGGER.debug(
-                    "returned in {} code bytes message with {} entries, resp size {} of max {}",
-                    stopWatch,
-                    codeBytes.size(),
-                    resp.getSize(),
-                    maxResponseBytes);
-                return resp;
-              })
-          .orElseGet(
-              () -> {
-                LOGGER.debug("returned empty byte codes message due to missing worldstate");
-                return EMPTY_BYTE_CODES_MESSAGE;
-              });
+      List<Bytes> codeBytes = new ArrayDeque<>();
+      for (Bytes32 codeHash : codeHashes.hashes()) {
+        Optional<Bytes> optCode = worldStateStorageCoordinator.getCode(Hash.wrap(codeHash), null);
+        if (optCode.isPresent()) {
+          if (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes) {
+            break;
+          }
+          codeBytes.add(optCode.get());
+        }
+      }
+      var resp = ByteCodesMessage.create(codeBytes);
+      LOGGER.debug(
+          "returned in {} code bytes message with {} entries, resp size {} of max {}",
+          stopWatch,
+          codeBytes.size(),
+          resp.getSize(),
+          maxResponseBytes);
+      return resp;
     } catch (Exception ex) {
       LOGGER.error("Unexpected exception serving bytecodes request", ex);
       return EMPTY_BYTE_CODES_MESSAGE;

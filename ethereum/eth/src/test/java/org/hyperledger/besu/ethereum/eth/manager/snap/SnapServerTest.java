@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hyperledger.besu.ethereum.eth.manager.snap.SnapServer.HASH_LAST;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.BONSAI_CODE_BY_HASH_CONFIG;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -24,7 +23,6 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.ByteCodesMessage;
@@ -37,16 +35,21 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
 import java.math.BigInteger;
 import java.util.Collections;
@@ -60,6 +63,7 @@ import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 public class SnapServerTest {
@@ -76,10 +80,26 @@ public class SnapServerTest {
   }
 
   static final ObservableMetricsSystem noopMetrics = new NoOpMetricsSystem();
+  final SegmentedInMemoryKeyValueStorage storage = new SegmentedInMemoryKeyValueStorage();
 
-  final KeyValueStorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
+  // force a full flat db with code stored by code hash:
   final BonsaiWorldStateKeyValueStorage inMemoryStorage =
-      new BonsaiWorldStateKeyValueStorage(storageProvider, noopMetrics, BONSAI_CODE_BY_HASH_CONFIG);
+      new BonsaiWorldStateKeyValueStorage(
+          new FlatDbStrategyProvider(noopMetrics, DataStorageConfiguration.DEFAULT_BONSAI_CONFIG) {
+            @Override
+            public FlatDbMode getFlatDbMode() {
+              return FlatDbMode.FULL;
+            }
+
+            @Override
+            protected boolean deriveUseCodeStorageByHash(
+                final SegmentedKeyValueStorage composedWorldStateStorage) {
+              return true;
+            }
+          },
+          storage,
+          new InMemoryKeyValueStorage());
+
   final WorldStateStorageCoordinator storageCoordinator =
       new WorldStateStorageCoordinator(inMemoryStorage);
   final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
@@ -104,6 +124,11 @@ public class SnapServerTest {
   final SnapTestAccount acct2 = createTestAccount("20");
   final SnapTestAccount acct3 = createTestContractAccount("30", inMemoryStorage);
   final SnapTestAccount acct4 = createTestContractAccount("40", inMemoryStorage);
+
+  @BeforeEach
+  public void setup() {
+    snapServer.start();
+  }
 
   @Test
   public void assertNoStartNoOp() {
