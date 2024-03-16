@@ -60,6 +60,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -195,6 +196,7 @@ public abstract class AbstractTransactionPoolTest {
                 new PrivacyParameters(),
                 false,
                 EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
                 new BadBlockManager())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
