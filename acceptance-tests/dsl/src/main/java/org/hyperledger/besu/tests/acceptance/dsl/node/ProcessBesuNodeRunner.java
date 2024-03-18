@@ -114,7 +114,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     params.addAll(
         DataStorageOptions.fromConfig(
                 node.getDataStorageConfiguration() == null
-                    ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
+                    ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
                     : node.getDataStorageConfiguration())
             .getCLIOptions());
 
