@@ -124,7 +124,7 @@ jobs:
       - name: run unit tests
         id: unitTest
         run: ./gradlew $GRADLEW_UNIT_TEST_ARGS
-      - name: Upload Acceptance Test Results
+      - name: Upload Unit Test Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:
           name: unit-${{matrix.filename}}-test-results
