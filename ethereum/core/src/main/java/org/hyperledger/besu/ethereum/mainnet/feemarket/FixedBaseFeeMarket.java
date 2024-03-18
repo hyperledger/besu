@@ -16,10 +16,22 @@ package org.hyperledger.besu.ethereum.mainnet.feemarket;
 
 import org.hyperledger.besu.datatypes.Wei;
 
-public class ZeroBaseFeeMarket extends FixedBaseFeeMarket {
+import java.util.Optional;
 
-  public ZeroBaseFeeMarket(final long londonForkBlockNumber) {
-    super(londonForkBlockNumber, Wei.ZERO);
+public class FixedBaseFeeMarket extends LondonFeeMarket {
+
+  public FixedBaseFeeMarket(final long londonForkBlockNumber, final Wei fixedBaseFee) {
+    super(londonForkBlockNumber, Optional.of(fixedBaseFee));
+  }
+
+  @Override
+  public Wei computeBaseFee(
+      final long blockNumber,
+      final Wei parentBaseFee,
+      final long parentBlockGasUsed,
+      final long targetGasUsed) {
+
+    return baseFeeInitialValue;
   }
 
   @Override

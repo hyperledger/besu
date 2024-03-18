@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -136,6 +137,7 @@ public class QbftProtocolScheduleTest {
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
+        MiningParameters.MINING_DISABLED,
         new BadBlockManager());
   }
 

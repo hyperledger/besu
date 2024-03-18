@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -40,6 +41,7 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final EvmConfiguration evmConfiguration;
+  private final MiningParameters miningParameters;
   private final BadBlockManager badBlockManager;
 
   private DefaultProtocolSchedule protocolSchedule;
@@ -51,6 +53,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
     this(
         config,
@@ -59,6 +62,7 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager);
   }
 
@@ -68,6 +72,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
     this(
         config,
@@ -76,6 +81,7 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager);
   }
 
@@ -86,6 +92,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
@@ -93,6 +100,7 @@ public class ProtocolScheduleBuilder {
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
+    this.miningParameters = miningParameters;
     this.badBlockManager = badBlockManager;
   }
 
@@ -113,7 +121,8 @@ public class ProtocolScheduleBuilder {
             config.getEvmStackSize(),
             isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
-            evmConfiguration);
+            evmConfiguration,
+            miningParameters);
 
     validateForkOrdering();
 
