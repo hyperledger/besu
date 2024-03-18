@@ -157,10 +157,7 @@ allprojects {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
-    maven {
-      url 'https://maven.pkg.github.com/hyperledger/besu-errorprone-checks'
-      content { includeGroupByRegex('org\\.hyperledger\\..*') }
-    }
+
     mavenCentral()
 
     // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
@@ -179,14 +176,14 @@ allprojects {
     }
 
     // besu-errorprone-check and future internal packages.
-    // mavenLocal()
+    mavenLocal()
   }
 
   dependencies {
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
     // https://github.com/hyperledger/besu-errorprone-checks/
-    errorprone "org.hyperledger.errorpronechecks:besu-errorprone-checks"
+    errorprone "org.hyperledger.besu:besu-errorprone-checks"
   }
 
   configurations.all {
@@ -1112,7 +1109,7 @@ tasks.register("verifyDistributions") {
 dependencies {
   errorprone 'com.google.errorprone:error_prone_core'
   // https://github.com/hyperledger/besu-errorprone-checks/
-  errorprone 'org.hyperledger.errorpronechecks:besu-errorprone-checks'
+  errorprone 'org.hyperledger.besu:besu-errorprone-checks'
   implementation project(':besu')
   implementation project(':ethereum:evmtool')
 }

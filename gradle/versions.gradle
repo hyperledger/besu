@@ -39,14 +39,7 @@ dependencyManagement {
       entry'dagger'
     }
 
-//    dependencySet(group: 'com.google.errorprone', version: '2.25.0') {
-//      entry 'error_prone_annotation'
-//      entry 'error_prone_check_api'
-//      entry 'error_prone_core'
-//      entry 'error_prone_test_helpers'
-//    }
-
-    dependency 'org.hyperledger.errorpronechecks:besu-errorprone-checks:0.1.0'
+    dependency 'org.hyperledger.besu:besu-errorprone-checks:0.1.3'
 
     dependency 'com.google.guava:guava:33.0.0-jre'
 
