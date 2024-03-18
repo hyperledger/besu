@@ -119,7 +119,7 @@ allprojects {
   apply plugin: 'net.ltgt.errorprone'
   apply from: "${rootDir}/gradle/versions.gradle"
 
-  version = rootProject.version
+  version = calculateVersion()
 
   jacoco {
     toolVersion = '0.8.8'
@@ -540,6 +540,13 @@ subprojects {
 
     dependencies { jmh 'org.slf4j:slf4j-api' }
   }
+
+  // making sure assemble task invokes integration test compile
+  afterEvaluate { project ->
+    if (project.tasks.findByName('compileIntegrationTestJava')) {
+      project.tasks.assemble.dependsOn compileIntegrationTestJava
+    }
+  }
 }
 
 jar { enabled = false }
@@ -678,8 +685,6 @@ publishing {
       groupId = '.'
       version = project.version
       artifactId = 'besu'
-      artifact("$buildDir/distributions/besu-${project.version}.zip")
-      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") { extension = 'tar.gz' }
     }
   }
 }
@@ -691,11 +696,6 @@ def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
 artifactory {
   contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
   publish {
-    repository {
-      repoKey = "besu-binaries"
-      username = artifactoryUser
-      password = artifactoryKey
-    }
     defaults {
       publications('distArtifactory')
       publishArtifacts = true
@@ -759,9 +759,10 @@ task distDocker {
           dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
           println "Building for platform ${project.getProperty('docker-platform')}"
         }
+        def gitDetails = getGitCommitDetails(10)
         executable "sh"
         workingDir dockerBuildDir
-        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
       }
     }
 
@@ -1031,42 +1032,50 @@ def buildTime() {
   return df.format(new Date())
 }
 
-// Takes the version, and if -SNAPSHOT is part of it replaces SNAPSHOT
-// with the git commit version.
 @Memoized
 def calculateVersion() {
-  String version = rootProject.version
-  if (version.endsWith("-SNAPSHOT")) {
-    version = version.replace("-SNAPSHOT", "-dev-" + getCheckedOutGitCommitHash())
+  // Regex pattern for basic calendar versioning, with provision to omit patch rev
+  def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
+
+  if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
+    return "${project.version}"
+  } else {
+    // If no version is supplied or it doesn't match the semantic versioning, calculate from git
+    println("Generating project version as supplied is version not semver: ${project.version}")
+    def gitDetails = getGitCommitDetails(10) // Adjust length as needed
+    return "${gitDetails.date}-develop-${gitDetails.hash}"
   }
-  return version
 }
 
-def getCheckedOutGitCommitHash(length = 8) {
+def getGitCommitDetails(length = 8) {
   try {
     def gitFolder = "$projectDir/.git/"
     if (!file(gitFolder).isDirectory()) {
-      // We are in a submodule.  The file's contents are `gitdir: <gitFolder>\n`.
-      // Read the file, cut off the front, and trim the whitespace.
       gitFolder = file(gitFolder).text.substring(length).trim() + "/"
     }
     def takeFromHash = length
-    /*
-     * '.git/HEAD' contains either
-     *      in case of detached head: the currently checked out commit hash
-     *      otherwise: a reference to a file containing the current commit hash
-     */
-    def head = new File(gitFolder + "HEAD").text.split(":") // .git/HEAD
-    def isCommit = head.length == 1 // e5a7c79edabbf7dd39888442df081b1c9d8e88fd
+    def head = new File(gitFolder + "HEAD").text.split(":")
+    def isCommit = head.length == 1
 
-    if (isCommit) return head[0].trim().take(takeFromHash) // e5a7c79edabb
+    def commitHash, refHeadFile
+    if (isCommit) {
+      commitHash = head[0].trim().take(takeFromHash)
+      refHeadFile = new File(gitFolder + "HEAD")
+    } else {
+      refHeadFile = new File(gitFolder + head[1].trim())
+      commitHash = refHeadFile.text.trim().take(takeFromHash)
+    }
 
-    def refHead = new File(gitFolder + head[1].trim()) // .git/refs/heads/master
-    refHead.text.trim().take takeFromHash
+    // Use head file modification time as a proxy for the build date
+    def lastModified = new Date(refHeadFile.lastModified())
+    // Format the date as "yy.M" (e.g. 24.3 for March 2024)
+    def formattedDate = new SimpleDateFormat("yy.M").format(lastModified)
+
+    return [hash: commitHash, date: formattedDate]
   } catch (Exception e) {
-    logger.warn('Could not calculate git commit, using "xxxxxxxx" (run with --info for stacktrace)')
-    logger.info('Error retrieving git commit', e)
-    return "xxxxxxxx"
+    logger.warn('Could not calculate git commit details, using defaults (run with --info for stacktrace)')
+    logger.info('Error retrieving git commit details', e)
+    return [hash: "xxxxxxxx", date: "00.0"]
   }
 }
 

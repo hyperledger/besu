@@ -332,6 +332,7 @@ public class TestContextBuilder {
             forksSchedule,
             IBFT_EXTRA_DATA_ENCODER,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -349,7 +350,6 @@ public class TestContextBuilder {
             blockChain,
             worldStateArchive,
             new BftContext(validatorProvider, epochManager, blockInterface),
-            Optional.empty(),
             new BadBlockManager());
     final TransactionPoolConfiguration poolConf =
         ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
@@ -369,8 +369,7 @@ public class TestContextBuilder {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
 
     transactionPool.setEnabled();
 

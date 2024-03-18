@@ -188,7 +188,7 @@ public class Address extends DelegatingBytes {
     final Bytes value = Bytes.fromHexString(str);
     checkArgument(
         value.size() == SIZE,
-        "An account address must be be %s bytes long, got %s",
+        "An account address must be %s bytes long, got %s",
         SIZE,
         value.size());
     return new Address(value);

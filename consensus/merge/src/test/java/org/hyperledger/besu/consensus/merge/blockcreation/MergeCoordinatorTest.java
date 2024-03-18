@@ -187,8 +187,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
 
     protocolContext =
-        new ProtocolContext(
-            blockchain, worldStateArchive, mergeContext, Optional.empty(), badBlockManager);
+        new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
@@ -215,8 +214,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
 
     this.transactionPool.setEnabled();
 
@@ -326,7 +324,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Optional.empty(),
             Optional.empty());
 
-    verify(willThrow, never()).addBadBlock(any(), any());
     blockCreationTask.get();
 
     ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
@@ -346,7 +343,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     // this only verifies that adding the bad block didn't happen through the mergeCoordinator, it
     // still may be called directly.
     verify(badBlockManager, never()).addBadBlock(any(), any());
-    verify(willThrow, never()).addBadBlock(any(), any());
   }
 
   @Test

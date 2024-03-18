@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.List;
-import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
@@ -53,11 +52,7 @@ public class BftCoinbaseValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null,
-            null,
-            setupContextWithValidators(validators),
-            Optional.empty(),
-            new BadBlockManager());
+            null, null, setupContextWithValidators(validators), new BadBlockManager());
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 
@@ -78,11 +73,7 @@ public class BftCoinbaseValidationRuleTest {
 
     final ProtocolContext context =
         new ProtocolContext(
-            null,
-            null,
-            setupContextWithValidators(validators),
-            Optional.empty(),
-            new BadBlockManager());
+            null, null, setupContextWithValidators(validators), new BadBlockManager());
 
     final BftCoinbaseValidationRule coinbaseValidationRule = new BftCoinbaseValidationRule();
 

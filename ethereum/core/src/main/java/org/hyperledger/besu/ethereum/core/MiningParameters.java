@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.time.Duration;
@@ -119,6 +122,15 @@ public abstract class MiningParameters {
     return this;
   }
 
+  public OptionalInt getBlockPeriodSeconds() {
+    return getMutableRuntimeValues().blockPeriodSeconds;
+  }
+
+  public MiningParameters setBlockPeriodSeconds(final int blockPeriodSeconds) {
+    getMutableRuntimeValues().blockPeriodSeconds = OptionalInt.of(blockPeriodSeconds);
+    return this;
+  }
+
   @Value.Default
   public boolean isStratumMiningEnabled() {
     return false;
@@ -144,12 +156,24 @@ public abstract class MiningParameters {
     return DEFAULT_POA_BLOCK_TXS_SELECTION_MAX_TIME;
   }
 
-  public abstract OptionalInt getGenesisBlockPeriodSeconds();
+  @Value.Default
+  public TransactionSelectionService getTransactionSelectionService() {
+    return new TransactionSelectionService() {
+      @Override
+      public PluginTransactionSelector createPluginTransactionSelector() {
+        return PluginTransactionSelector.ACCEPT_ALL;
+      }
 
-  @Value.Derived
+      @Override
+      public void registerPluginTransactionSelectorFactory(
+          final PluginTransactionSelectorFactory transactionSelectorFactory) {}
+    };
+  }
+
   public long getBlockTxsSelectionMaxTime() {
-    if (getGenesisBlockPeriodSeconds().isPresent()) {
-      return (TimeUnit.SECONDS.toMillis(getGenesisBlockPeriodSeconds().getAsInt())
+    final var maybeBlockPeriodSeconds = getMutableRuntimeValues().blockPeriodSeconds;
+    if (maybeBlockPeriodSeconds.isPresent()) {
+      return (TimeUnit.SECONDS.toMillis(maybeBlockPeriodSeconds.getAsInt())
               * getPoaBlockTxsSelectionMaxTime().getValue())
           / 100;
     }
@@ -205,6 +229,8 @@ public abstract class MiningParameters {
       return DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
     }
 
+    OptionalInt getBlockPeriodSeconds();
+
     Optional<Address> getCoinbase();
 
     OptionalLong getTargetGasLimit();
@@ -221,6 +247,7 @@ public abstract class MiningParameters {
     private volatile Optional<Address> coinbase;
     private volatile OptionalLong targetGasLimit;
     private volatile Optional<Iterable<Long>> nonceGenerator;
+    private volatile OptionalInt blockPeriodSeconds;
 
     private MutableRuntimeValues(final MutableInitValues initValues) {
       miningEnabled = initValues.isMiningEnabled();
@@ -231,6 +258,7 @@ public abstract class MiningParameters {
       coinbase = initValues.getCoinbase();
       targetGasLimit = initValues.getTargetGasLimit();
       nonceGenerator = initValues.nonceGenerator();
+      blockPeriodSeconds = initValues.getBlockPeriodSeconds();
     }
 
     @Override
@@ -245,7 +273,8 @@ public abstract class MiningParameters {
           && Objects.equals(coinbase, that.coinbase)
           && Objects.equals(minPriorityFeePerGas, that.minPriorityFeePerGas)
           && Objects.equals(targetGasLimit, that.targetGasLimit)
-          && Objects.equals(nonceGenerator, that.nonceGenerator);
+          && Objects.equals(nonceGenerator, that.nonceGenerator)
+          && Objects.equals(blockPeriodSeconds, that.blockPeriodSeconds);
     }
 
     @Override
@@ -258,7 +287,8 @@ public abstract class MiningParameters {
           minBlockOccupancyRatio,
           coinbase,
           targetGasLimit,
-          nonceGenerator);
+          nonceGenerator,
+          blockPeriodSeconds);
     }
 
     @Override
@@ -280,6 +310,8 @@ public abstract class MiningParameters {
           + targetGasLimit
           + ", nonceGenerator="
           + nonceGenerator
+          + ", blockPeriodSeconds="
+          + blockPeriodSeconds
           + '}';
     }
   }

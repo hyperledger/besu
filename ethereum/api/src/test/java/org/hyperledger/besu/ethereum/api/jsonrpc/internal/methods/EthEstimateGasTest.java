@@ -451,7 +451,7 @@ public class EthEstimateGasTest {
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
     when(mockResult.getRevertReason()).thenReturn(revertReason);
 
-    when(mockTxSimResult.getResult()).thenReturn(mockResult);
+    when(mockTxSimResult.result()).thenReturn(mockResult);
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
     return mockTxSimResult;
   }
@@ -473,6 +473,8 @@ public class EthEstimateGasTest {
         Bytes.EMPTY,
         null,
         isStrict,
+        null,
+        null,
         null);
   }
 
@@ -505,6 +507,8 @@ public class EthEstimateGasTest {
         Bytes.EMPTY,
         null,
         false,
+        null,
+        null,
         null);
   }
 
