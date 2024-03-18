@@ -58,6 +58,7 @@ import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.stable.PermissionsOptions;
+import org.hyperledger.besu.cli.options.stable.PluginsConfigurationOptions;
 import org.hyperledger.besu.cli.options.stable.RpcWebsocketOptions;
 import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
@@ -121,6 +122,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.VersionMetadata;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -895,6 +897,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
 
+  // Plugins Configuration Option Group
+  @CommandLine.ArgGroup(validate = false)
+  PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
+
   private EthNetworkConfig ethNetworkConfig;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private JsonRpcConfiguration engineJsonRpcConfiguration;
@@ -1057,10 +1063,39 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     handleUnstableOptions();
     preparePlugins();
 
-    final int exitCode =
-        parse(resultHandler, executionExceptionHandler, parameterExceptionHandler, args);
+    final ConfigOptionSearchAndRunHandler configParsingHandler =
+        getConfigOptionSearchAndRunHandler(resultHandler, parameterExceptionHandler);
 
-    return exitCode;
+    return commandLine
+        .setExecutionStrategy(configParsingHandler)
+        .setParameterExceptionHandler(parameterExceptionHandler)
+        .setExecutionExceptionHandler(executionExceptionHandler)
+        .execute(args);
+  }
+
+  /**
+   * Creates a handler for searching and running configuration options with plugin registration.
+   *
+   * @param nextHandler The next execution strategy to be used after plugin registration.
+   * @param parameterExceptionHandler The parameterExceptionHandler
+   * @return A {@link ConfigOptionSearchAndRunHandler} configured to register plugins and then
+   *     delegate to the next handler.
+   */
+  private ConfigOptionSearchAndRunHandler getConfigOptionSearchAndRunHandler(
+      final IExecutionStrategy nextHandler,
+      final BesuParameterExceptionHandler parameterExceptionHandler) {
+    final IExecutionStrategy pluginRegistrationTask =
+        parseResult -> {
+          // Extract PluginConfiguration from command line arguments and register plugins.
+          PluginConfiguration configuration =
+              PluginsConfigurationOptions.fromCommandLine(parseResult.commandSpec().commandLine());
+          besuPluginContext.registerPlugins(configuration);
+
+          commandLine.setExecutionStrategy(nextHandler);
+          return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
+        };
+    return new ConfigOptionSearchAndRunHandler(
+        pluginRegistrationTask, parameterExceptionHandler, environment);
   }
 
   /** Used by Dagger to parse all options into a commandline instance. */
@@ -1227,8 +1262,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     rocksDBPlugin.register(besuPluginContext);
     new InMemoryStoragePlugin().register(besuPluginContext);
 
-    besuPluginContext.registerPlugins(pluginsDir());
-
     metricCategoryRegistry
         .getMetricCategories()
         .forEach(metricCategoryConverter::addRegistryCategory);
@@ -1252,26 +1285,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public KeyPair loadKeyPair(final File nodePrivateKeyFile) {
     return KeyPairUtil.loadKeyPair(resolveNodePrivateKeyFile(nodePrivateKeyFile));
-  }
-
-  private int parse(
-      final CommandLine.IExecutionStrategy resultHandler,
-      final BesuExecutionExceptionHandler besuExecutionExceptionHandler,
-      final BesuParameterExceptionHandler besuParameterExceptionHandler,
-      final String... args) {
-    // Create a handler that will search for a config file option and use it for
-    // default values
-    // and eventually it will run regular parsing of the remaining options.
-
-    final ConfigOptionSearchAndRunHandler configParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
-            resultHandler, besuParameterExceptionHandler, environment);
-
-    return commandLine
-        .setExecutionStrategy(configParsingHandler)
-        .setParameterExceptionHandler(besuParameterExceptionHandler)
-        .setExecutionExceptionHandler(besuExecutionExceptionHandler)
-        .execute(args);
   }
 
   private void preSynchronization() {
@@ -2416,15 +2429,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public Path dataDir() {
     return dataPath.toAbsolutePath();
-  }
-
-  private Path pluginsDir() {
-    final String pluginsDir = System.getProperty("besu.plugins.dir");
-    if (pluginsDir == null) {
-      return new File(System.getProperty("besu.home", "."), "plugins").toPath();
-    } else {
-      return new File(pluginsDir).toPath();
-    }
   }
 
   private SecurityModule securityModule() {

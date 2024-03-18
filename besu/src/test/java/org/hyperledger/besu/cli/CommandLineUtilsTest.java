@@ -69,7 +69,6 @@ public class CommandLineUtilsTest {
       commandLine.setDefaultValueProvider(new EnvironmentVariableDefaultProvider(environment));
     }
 
-    // Completely disables p2p within Besu.
     @Option(
         names = {"--option-enabled"},
         arity = "1")
