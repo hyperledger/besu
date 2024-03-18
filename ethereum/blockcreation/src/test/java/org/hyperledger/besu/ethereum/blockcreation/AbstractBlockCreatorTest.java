@@ -364,6 +364,7 @@ abstract class AbstractBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
+                        MiningParameters.MINING_DISABLED,
                         new BadBlockManager())
                     .createProtocolSchedule())
             .build();

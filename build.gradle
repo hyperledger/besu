@@ -685,8 +685,6 @@ publishing {
       groupId = '.'
       version = project.version
       artifactId = 'besu'
-      artifact("$buildDir/distributions/besu-${project.version}.zip")
-      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") { extension = 'tar.gz' }
     }
   }
 }
@@ -698,11 +696,6 @@ def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
 artifactory {
   contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
   publish {
-    repository {
-      repoKey = "besu-binaries"
-      username = artifactoryUser
-      password = artifactoryKey
-    }
     defaults {
       publications('distArtifactory')
       publishArtifacts = true
