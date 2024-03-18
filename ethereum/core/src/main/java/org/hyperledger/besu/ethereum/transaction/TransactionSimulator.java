@@ -250,12 +250,14 @@ public class TransactionSimulator {
     final Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeaderToProcess.getParentHash());
     final Wei blobGasPrice =
-        protocolSpec
-            .getFeeMarket()
-            .blobGasPricePerGas(
-                maybeParentHeader
-                    .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
-                    .orElse(BlobGas.ZERO));
+        transactionValidationParams.isAllowExceedingBalance()
+            ? Wei.ZERO
+            : protocolSpec
+                .getFeeMarket()
+                .blobGasPricePerGas(
+                    maybeParentHeader
+                        .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                        .orElse(BlobGas.ZERO));
 
     final Optional<Transaction> maybeTransaction =
         buildTransaction(
@@ -324,10 +326,12 @@ public class TransactionSimulator {
       gasPrice = Wei.ZERO;
       maxFeePerGas = Wei.ZERO;
       maxPriorityFeePerGas = Wei.ZERO;
+      maxFeePerBlobGas = Wei.ZERO;
     } else {
       gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
       maxFeePerGas = callParams.getMaxFeePerGas().orElse(gasPrice);
       maxPriorityFeePerGas = callParams.getMaxPriorityFeePerGas().orElse(gasPrice);
+      maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(blobGasPrice);
     }
     if (header.getBaseFee().isEmpty()) {
       transactionBuilder.gasPrice(gasPrice);
@@ -339,7 +343,6 @@ public class TransactionSimulator {
 
     transactionBuilder.guessType();
     if (transactionBuilder.getTransactionType().supportsBlob()) {
-      maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(blobGasPrice);
       transactionBuilder.maxFeePerBlobGas(maxFeePerBlobGas);
     }
     if (transactionBuilder.getTransactionType().requiresChainId()) {
