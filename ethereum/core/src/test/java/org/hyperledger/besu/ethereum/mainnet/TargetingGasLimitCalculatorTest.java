@@ -75,9 +75,8 @@ public class TargetingGasLimitCalculatorTest {
   @Test
   public void verifyMaxGasLimit() {
     assertThat(AbstractGasLimitSpecification.isValidTargetGasLimit(DEFAULT_MAX_GAS_LIMIT - 1))
-            .isTrue();
-    assertThat(AbstractGasLimitSpecification.isValidTargetGasLimit(DEFAULT_MAX_GAS_LIMIT))
-            .isTrue();
+        .isTrue();
+    assertThat(AbstractGasLimitSpecification.isValidTargetGasLimit(DEFAULT_MAX_GAS_LIMIT)).isTrue();
   }
 
   @Test
