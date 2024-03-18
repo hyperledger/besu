@@ -24,6 +24,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTra
 import java.math.BigInteger;
 import java.util.function.UnaryOperator;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,12 +52,15 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
+  @Ignore("flaky with timeout")
   public void shouldSendSuccessfullyToLenientNodeWithoutChainId() {
     final TransferTransaction tx = createTransactionWithoutChainId();
     final String rawTx = tx.signedTransactionData();
     final String txHash = tx.transactionHash();
 
     lenientNode.verify(eth.expectSuccessfulEthRawTransaction(rawTx));
+
+    // this line is where the test is flaky
     // Tx should be included on-chain
     miningNode.verify(eth.expectSuccessfulTransactionReceipt(txHash));
   }

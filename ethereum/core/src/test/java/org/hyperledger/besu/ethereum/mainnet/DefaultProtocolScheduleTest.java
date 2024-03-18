@@ -23,6 +23,7 @@ import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -60,6 +61,7 @@ public class DefaultProtocolScheduleTest {
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
   }
 
