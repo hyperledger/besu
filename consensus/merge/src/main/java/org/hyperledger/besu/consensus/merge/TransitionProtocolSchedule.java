@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -62,15 +63,19 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    *
    * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the
    *     milestone starting points
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return an initialised TransitionProtocolSchedule using post-merge defaults
    */
   public static TransitionProtocolSchedule fromConfig(
-      final GenesisConfigOptions genesisConfigOptions, final BadBlockManager badBlockManager) {
+      final GenesisConfigOptions genesisConfigOptions,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     ProtocolSchedule preMergeProtocolSchedule =
-        MainnetProtocolSchedule.fromConfig(genesisConfigOptions, badBlockManager);
+        MainnetProtocolSchedule.fromConfig(genesisConfigOptions, miningParameters, badBlockManager);
     ProtocolSchedule postMergeProtocolSchedule =
-        MergeProtocolSchedule.create(genesisConfigOptions, false, badBlockManager);
+        MergeProtocolSchedule.create(
+            genesisConfigOptions, false, miningParameters, badBlockManager);
     return new TransitionProtocolSchedule(
         preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
   }
