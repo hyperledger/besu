@@ -40,6 +40,13 @@ public abstract class AbstractGasLimitSpecification {
     return Long.divideUnsigned(currentGasLimit, GAS_LIMIT_BOUND_DIVISOR);
   }
 
+  /**
+   * Verify that the target gas limit is within the allowed bounds.
+   *
+   * @param targetGasLimit the target gas limit to validate
+   * @return true if within bounds
+   */
+  @SuppressWarnings("ComparisonOutOfRange")
   public static boolean isValidTargetGasLimit(final long targetGasLimit) {
     return DEFAULT_MIN_GAS_LIMIT <= targetGasLimit && DEFAULT_MAX_GAS_LIMIT >= targetGasLimit;
   }
