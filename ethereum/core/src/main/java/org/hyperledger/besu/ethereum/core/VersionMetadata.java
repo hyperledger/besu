@@ -98,7 +98,7 @@ public class VersionMetadata {
    * data directory. Currently this check is limited to checking that the version is >= the previous
    * version, to avoid accidentally running a lower version of Besu and potentially corrupting data,
    * but the method could be extended to perform any other version-to-version compatibility checks
-   * necessary. If the --version-compatibility-protection flag is set to true and the compatibilty
+   * necessary. If the --version-compatibility-protection flag is set to true and the compatibility
    * checks pass, the version metadata is updated to the current version of Besu.
    */
   public static void versionCompatibilityChecks(
