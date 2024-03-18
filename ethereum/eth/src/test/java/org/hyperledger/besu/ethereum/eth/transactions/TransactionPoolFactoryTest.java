@@ -366,6 +366,7 @@ public class TransactionPoolFactoryTest {
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
                 new BadBlockManager())
             .createProtocolSchedule();
 
