@@ -36,6 +36,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   private static final long INIT_CODE_COST = 2L;
+
+  private static final long CREATE_OPERATION_GAS_COST = 1_000L;
+
   /**
    * Instantiates a new ShanghaiGasCalculator
    *
@@ -107,9 +110,14 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   @Override
   public long createOperationGasCost(final MessageFrame frame) {
+
+    final long initCodeOffset = clampedToLong(frame.getStackItem(1));
     final long initCodeLength = clampedToLong(frame.getStackItem(2));
-    long cost = super.createOperationGasCost(frame);
-    return clampedAdd(cost, calculateInitGasCost(initCodeLength));
+
+    final long memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
+    long gasCost = clampedAdd(CREATE_OPERATION_GAS_COST, memoryGasCost);
+
+    return clampedAdd(gasCost, calculateInitGasCost(initCodeLength));
   }
 
   private static long calculateInitGasCost(final long initCodeLength) {
@@ -166,7 +174,8 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
 
-    long gasCost = super.calculateStorageCost(frame, key, newValue, currentValue, originalValue);
+    long gasCost = 0;
+
     // TODO VEKLE: right now we're not computing what is the tree index and subindex we're just
     // charging the cost of writing to the storage
     AccessWitness accessWitness = frame.getAccessWitness();
@@ -182,6 +191,9 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
             .touchAddressOnWriteAndComputeGas(
                 frame.getRecipientAddress(), treeIndexes.get(0), treeIndexes.get(1));
 
+    if (gasCost == 0) {
+      gasCost = WARM_STORAGE_READ_COST;
+    }
     return gasCost;
   }
 
@@ -189,32 +201,39 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
     AccessWitness accessWitness = frame.getAccessWitness();
     List<UInt256> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
-    return clampedAdd(
-        super.getSloadOperationGasCost(frame, key),
+    long gasCost =
         frame
             .getAccessWitness()
             .touchAddressOnReadAndComputeGas(
-                frame.getContractAddress(), treeIndexes.get(0), treeIndexes.get(1)));
+                frame.getContractAddress(), treeIndexes.get(0), treeIndexes.get(1));
+    if (gasCost == 0) {
+      gasCost = WARM_STORAGE_READ_COST;
+    }
+    return gasCost;
   }
 
   @Override
   public long getBalanceOperationGasCost(final MessageFrame frame) {
-    return clampedAdd(
-        super.getBalanceOperationGasCost(frame),
-        frame
-            .getAccessWitness()
-            .touchAddressOnWriteAndComputeGas(
-                frame.getContractAddress(), UInt256.ZERO, BALANCE_LEAF_KEY));
+    return frame
+        .getAccessWitness()
+        .touchAddressOnWriteAndComputeGas(
+            frame.getContractAddress(), UInt256.ZERO, BALANCE_LEAF_KEY);
   }
 
   @Override
   public long extCodeHashOperationGasCost(final MessageFrame frame) {
-    return clampedAdd(
-        super.extCodeHashOperationGasCost(frame),
-        frame
-            .getAccessWitness()
-            .touchAddressOnReadAndComputeGas(
-                frame.getContractAddress(), UInt256.ZERO, CODE_KECCAK_LEAF_KEY));
+    return frame
+        .getAccessWitness()
+        .touchAddressOnReadAndComputeGas(
+            frame.getContractAddress(), UInt256.ZERO, CODE_KECCAK_LEAF_KEY);
+  }
+
+  @Override
+  public long calculateStorageRefundAmount(
+      final UInt256 newValue,
+      final Supplier<UInt256> currentValue,
+      final Supplier<UInt256> originalValue) {
+    return 0L;
   }
 
   @Override
