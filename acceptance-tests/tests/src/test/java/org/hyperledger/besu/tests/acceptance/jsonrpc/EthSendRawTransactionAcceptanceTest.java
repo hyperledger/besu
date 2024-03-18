@@ -24,8 +24,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTra
 import java.math.BigInteger;
 import java.util.function.UnaryOperator;
 
-import org.junit.Ignore;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
@@ -52,7 +52,7 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
-  @Ignore("flaky with timeout")
+  @Disabled("flaky with timeout")
   public void shouldSendSuccessfullyToLenientNodeWithoutChainId() {
     final TransferTransaction tx = createTransactionWithoutChainId();
     final String rawTx = tx.signedTransactionData();
