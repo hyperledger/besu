@@ -139,6 +139,10 @@ public class IbftRoundTest {
         .when(blockImporter.importBlock(any(), any(), any()))
         .thenReturn(new BlockImportResult(BlockImportResult.BlockImportStatus.IMPORTED));
 
+    lenient()
+        .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
+        .thenReturn(protocolSpec);
+
     subscribers.subscribe(minedBlockObserver);
   }
 
