@@ -27,6 +27,7 @@
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
 - Make block transaction selection max time aware of PoA transitions [#6676](https://github.com/hyperledger/besu/pull/6676)
 - Don't enable the BFT mining coordinator when running sub commands such as `blocks export` [#6675](https://github.com/hyperledger/besu/pull/6675)
+- Fix Shanghai/QBFT block import bug when syncing new nodes [#6765](https://github.com/hyperledger/besu/pull/6765)
 
 ### Download Links
 

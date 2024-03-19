@@ -114,6 +114,13 @@ public class PkiQbftBlockCreator implements BlockCreator {
         timestamp);
   }
 
+  @Override
+  public BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp) {
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createEmptyWithdrawalsBlock(timestamp);
+    return replaceCmsInBlock(blockCreationResult);
+  }
+
   private BlockCreationResult replaceCmsInBlock(final BlockCreationResult blockCreationResult) {
     final Block block = blockCreationResult.getBlock();
     final BlockHeader blockHeader = block.getHeader();

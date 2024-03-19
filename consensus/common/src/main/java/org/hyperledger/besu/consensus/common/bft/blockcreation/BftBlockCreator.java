@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+import java.util.Collections;
 import java.util.Optional;
 
 /** The Bft block creator. */
@@ -81,6 +82,12 @@ public class BftBlockCreator extends AbstractBlockCreator {
       final Address localAddress, final ForksSchedule<? extends BftConfigOptions> forksSchedule) {
     return blockNum ->
         forksSchedule.getFork(blockNum).getValue().getMiningBeneficiary().orElse(localAddress);
+  }
+
+  @Override
+  public BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp) {
+    return createBlock(
+        Optional.empty(), Optional.empty(), Optional.of(Collections.emptyList()), timestamp);
   }
 
   @Override
