@@ -55,6 +55,7 @@ discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPR
 # chain
 network="MAINNET"
 genesis-file="~/genesis.json"
+use-cached-genesis-state-hash=false
 sync-mode="fast"
 fast-sync-min-peers=5
 network-id=303
