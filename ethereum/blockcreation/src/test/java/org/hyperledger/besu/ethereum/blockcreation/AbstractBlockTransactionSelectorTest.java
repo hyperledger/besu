@@ -195,6 +195,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
     return false;
   }
 
+  protected Wei getMinGasPrice() {
+    return Wei.ONE;
+  }
+
   protected ProcessableBlockHeader createBlock(final long gasLimit) {
     return createBlock(gasLimit, Wei.ONE);
   }
@@ -217,6 +221,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         FixedDifficultyProtocolSchedule.create(
             GenesisConfigFile.development().getConfigOptions(),
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeader(0)).getTransactionProcessor();

@@ -117,7 +117,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
           JsonRpcErrorConverter.convertTransactionInvalidReason(
               validationResult.getInvalidReason()));
     } else {
-      final TransactionProcessingResult resultTrx = result.getResult();
+      final TransactionProcessingResult resultTrx = result.result();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
         return errorResponse(
             request,
@@ -164,6 +164,11 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
         callParams.getGasPrice() == null || Wei.ZERO.equals(callParams.getGasPrice());
 
     if (header.getBaseFee().isPresent()) {
+      if (callParams.getBlobVersionedHashes().isPresent()
+          && (callParams.getMaxFeePerBlobGas().isEmpty()
+              || callParams.getMaxFeePerBlobGas().get().equals(Wei.ZERO))) {
+        return true;
+      }
       boolean isZeroMaxFeePerGas = callParams.getMaxFeePerGas().orElse(Wei.ZERO).equals(Wei.ZERO);
       boolean isZeroMaxPriorityFeePerGas =
           callParams.getMaxPriorityFeePerGas().orElse(Wei.ZERO).equals(Wei.ZERO);

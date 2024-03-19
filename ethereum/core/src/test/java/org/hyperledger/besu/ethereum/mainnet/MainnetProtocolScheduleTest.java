@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -74,6 +75,7 @@ public class MainnetProtocolScheduleTest {
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig("{}").getConfigOptions(),
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
@@ -88,6 +90,7 @@ public class MainnetProtocolScheduleTest {
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(json).getConfigOptions(),
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(2)).getName()).isEqualTo("Homestead");
@@ -119,6 +122,7 @@ public class MainnetProtocolScheduleTest {
                 MainnetProtocolSchedule.fromConfig(
                     GenesisConfigFile.fromConfig(json).getConfigOptions(),
                     EvmConfiguration.DEFAULT,
+                    MiningParameters.MINING_DISABLED,
                     new BadBlockManager()));
   }
 
@@ -131,6 +135,7 @@ public class MainnetProtocolScheduleTest {
                         this.getClass().getResource("/goerli.json"), StandardCharsets.UTF_8))
                 .getConfigOptions(),
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(0L)).getName())
         .isEqualTo("Petersburg");
