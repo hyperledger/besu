@@ -436,4 +436,31 @@ public class BackwardSyncContextTest {
       }
     }
   }
+
+  @Test
+  public void shouldRepeatedlyFailWhenReorgedBlockNotPresentInPeers() throws Exception {
+    // choose an intermediate remote block to create a reorg block from
+    final Hash reorgBlockParentHash = getBlockByNumber(REMOTE_HEIGHT - 2).getHash();
+    final Block reorgBlock = createUncle(REMOTE_HEIGHT - 1, reorgBlockParentHash);
+    // represents first FCU with a block that will become reorged away
+    final CompletableFuture<Void> future = context.syncBackwardsUntil(reorgBlock.getHash());
+
+    respondUntilFutureIsDone(future);
+
+    try {
+      future.get();
+    } catch (final Throwable throwable) {
+      if (throwable instanceof ExecutionException) {
+        BackwardSyncException backwardSyncException = (BackwardSyncException) throwable.getCause();
+        assertThat(backwardSyncException.getMessage())
+            .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
+      }
+    }
+
+    // represents subsequent FCU with reorged version of the same block
+    final CompletableFuture<Void> secondFuture =
+        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT - 1).getHash());
+    respondUntilFutureIsDone(secondFuture);
+    secondFuture.get();
+  }
 }

@@ -22,11 +22,13 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -61,7 +63,28 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
   public CompletableFuture<Void> pickNextStep() {
     final Optional<Hash> firstHash = context.getBackwardChain().getFirstHashToAppend();
     if (firstHash.isPresent()) {
-      return executeSyncStep(firstHash.get())
+      final CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+      executeSyncStep(firstHash.get())
+          .whenComplete(
+              (result, error) -> {
+                if (error != null) {
+                  if (error instanceof CompletionException
+                      && error.getCause() instanceof MaxRetriesReachedException) { // &&
+                    // context.getEthContext().getEthPeers().peerCount() >
+                    // (context.getEthContext().getEthPeers().getMaxPeers() / 2)
+                    LOG.debug(
+                        "Unable to retrieve block {} from any peer, with {} peers available. Could be a reorged block. Removing hash from queue",
+                        firstHash.get(),
+                        context.getEthContext().getEthPeers().peerCount());
+                    completableFuture.complete(null);
+                    context.getBackwardChain().removeFromHashToAppend(firstHash.get());
+                    completableFuture.complete(null);
+                  } else {
+                    completableFuture.completeExceptionally(error);
+                  }
+                }
+                completableFuture.complete(null);
+              })
           .thenAccept(
               result -> {
                 LOG.atDebug()
@@ -71,6 +94,7 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
                 context.getBackwardChain().removeFromHashToAppend(firstHash.get());
                 context.getStatus().updateTargetHeight(result.getHeader().getNumber());
               });
+      return completableFuture;
     }
     if (!context.isReady()) {
       return waitForReady();
