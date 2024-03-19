@@ -247,6 +247,18 @@ public class TransactionSimulator {
     final MainnetTransactionProcessor transactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeaderToProcess).getTransactionProcessor();
 
+    final Optional<BlockHeader> maybeParentHeader =
+        blockchain.getBlockHeader(blockHeaderToProcess.getParentHash());
+    final Wei blobGasPrice =
+        transactionValidationParams.isAllowExceedingBalance()
+            ? Wei.ZERO
+            : protocolSpec
+                .getFeeMarket()
+                .blobGasPricePerGas(
+                    maybeParentHeader
+                        .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
+                        .orElse(BlobGas.ZERO));
+
     final Optional<Transaction> maybeTransaction =
         buildTransaction(
             callParams,
@@ -256,20 +268,11 @@ public class TransactionSimulator {
             nonce,
             gasLimit,
             value,
-            payload);
+            payload,
+            blobGasPrice);
     if (maybeTransaction.isEmpty()) {
       return Optional.empty();
     }
-
-    final Optional<BlockHeader> maybeParentHeader =
-        blockchain.getBlockHeader(blockHeaderToProcess.getParentHash());
-    final Wei blobGasPrice =
-        protocolSpec
-            .getFeeMarket()
-            .blobGasPricePerGas(
-                maybeParentHeader
-                    .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
-                    .orElse(BlobGas.ZERO));
 
     final Transaction transaction = maybeTransaction.get();
     final TransactionProcessingResult result =
@@ -298,7 +301,8 @@ public class TransactionSimulator {
       final long nonce,
       final long gasLimit,
       final Wei value,
-      final Bytes payload) {
+      final Bytes payload,
+      final Wei blobGasPrice) {
     final Transaction.Builder transactionBuilder =
         Transaction.builder()
             .nonce(nonce)
@@ -313,20 +317,21 @@ public class TransactionSimulator {
     callParams.getAccessList().ifPresent(transactionBuilder::accessList);
     // Set versioned hashes if present
     callParams.getBlobVersionedHashes().ifPresent(transactionBuilder::versionedHashes);
-    // Set max fee per blob gas if present
-    callParams.getMaxFeePerBlobGas().ifPresent(transactionBuilder::maxFeePerBlobGas);
 
     final Wei gasPrice;
     final Wei maxFeePerGas;
     final Wei maxPriorityFeePerGas;
+    final Wei maxFeePerBlobGas;
     if (transactionValidationParams.isAllowExceedingBalance()) {
       gasPrice = Wei.ZERO;
       maxFeePerGas = Wei.ZERO;
       maxPriorityFeePerGas = Wei.ZERO;
+      maxFeePerBlobGas = Wei.ZERO;
     } else {
       gasPrice = callParams.getGasPrice() != null ? callParams.getGasPrice() : Wei.ZERO;
       maxFeePerGas = callParams.getMaxFeePerGas().orElse(gasPrice);
       maxPriorityFeePerGas = callParams.getMaxPriorityFeePerGas().orElse(gasPrice);
+      maxFeePerBlobGas = callParams.getMaxFeePerBlobGas().orElse(blobGasPrice);
     }
     if (header.getBaseFee().isEmpty()) {
       transactionBuilder.gasPrice(gasPrice);
@@ -337,6 +342,9 @@ public class TransactionSimulator {
     }
 
     transactionBuilder.guessType();
+    if (transactionBuilder.getTransactionType().supportsBlob()) {
+      transactionBuilder.maxFeePerBlobGas(maxFeePerBlobGas);
+    }
     if (transactionBuilder.getTransactionType().requiresChainId()) {
       transactionBuilder.chainId(
           protocolSchedule
