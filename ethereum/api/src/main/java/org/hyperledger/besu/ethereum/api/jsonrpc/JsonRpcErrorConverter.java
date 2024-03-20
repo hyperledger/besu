@@ -83,6 +83,8 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE;
       case EXECUTION_HALTED:
         return RpcErrorType.EXECUTION_HALTED;
+      case BLOCK_NOT_FOUND:
+        return RpcErrorType.BLOCK_NOT_FOUND;
       default:
         return RpcErrorType.INTERNAL_ERROR;
     }

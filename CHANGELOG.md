@@ -23,6 +23,7 @@
 - Introduce `TransactionSimulationService` [#6686](https://github.com/hyperledger/besu/pull/6686)
 - Transaction call object to accept both `input` and `data` field simultaneously if they are set to equal values [#6702](https://github.com/hyperledger/besu/pull/6702)
 - `eth_call` for blob tx allows for empty `maxFeePerBlobGas` [#6731](https://github.com/hyperledger/besu/pull/6731)
+- Extend error handling of plugin RPC methods [#6759](https://github.com/hyperledger/besu/pull/6759)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
