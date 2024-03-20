@@ -109,18 +109,6 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
               });
       return completableFuture;
     }
-    //    if (firstHash.isPresent()) {
-    //      return executeSyncStep(firstHash.get())
-    //          .thenAccept(
-    //              result -> {
-    //                LOG.atDebug()
-    //                    .setMessage("Backward sync target block is {}")
-    //                    .addArgument(result::toLogString)
-    //                    .log();
-    //                context.getBackwardChain().removeFromHashToAppend(firstHash.get());
-    //                context.getStatus().updateTargetHeight(result.getHeader().getNumber());
-    //              });
-    //    }
     if (!context.isReady()) {
       return waitForReady();
     }
