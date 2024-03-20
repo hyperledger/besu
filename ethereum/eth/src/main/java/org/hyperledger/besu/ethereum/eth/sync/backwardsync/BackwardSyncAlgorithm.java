@@ -72,18 +72,31 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
                       && error.getCause() instanceof MaxRetriesReachedException) { // &&
                     // context.getEthContext().getEthPeers().peerCount() >
                     // (context.getEthContext().getEthPeers().getMaxPeers() / 2)
-                    LOG.debug(
-                        "Unable to retrieve block {} from any peer, with {} peers available. Could be a reorged block. Removing hash from queue",
-                        firstHash.get(),
-                        context.getEthContext().getEthPeers().peerCount());
-                    completableFuture.complete(null);
-                    context.getBackwardChain().removeFromHashToAppend(firstHash.get());
-                    completableFuture.complete(null);
+                    if (context.getBackwardChain().getHashesToAppendSize() > 1) {
+                      context.getBackwardChain().removeFromHashToAppend(firstHash.get());
+                      LOG.atWarn()
+                          .setMessage(
+                              "Unable to retrieve block {} from any peer, with {} peers available. Could be a reorged block. Removing hash from queue to move onto next hash.")
+                          .addArgument(firstHash.get())
+                          .addArgument(context.getEthContext().getEthPeers().peerCount())
+                          .addArgument(context.getBackwardChain().getFirstHashToAppend())
+                          .log();
+                      completableFuture.complete(null);
+                    } else { // removing the last hash from the queue will break things
+                      LOG.atWarn()
+                          .setMessage(
+                              "Unable to retrieve block {} from any peer, with {} peers available. Could be a reorged block. Waiting for another block hash from consensus client...")
+                          .addArgument(firstHash::get)
+                          .addArgument(() -> context.getEthContext().getEthPeers().peerCount())
+                          .log();
+                      completableFuture.completeExceptionally(error);
+                    }
                   } else {
                     completableFuture.completeExceptionally(error);
                   }
+                } else {
+                  completableFuture.complete(null);
                 }
-                completableFuture.complete(null);
               })
           .thenAccept(
               result -> {
@@ -96,6 +109,18 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
               });
       return completableFuture;
     }
+    //    if (firstHash.isPresent()) {
+    //      return executeSyncStep(firstHash.get())
+    //          .thenAccept(
+    //              result -> {
+    //                LOG.atDebug()
+    //                    .setMessage("Backward sync target block is {}")
+    //                    .addArgument(result::toLogString)
+    //                    .log();
+    //                context.getBackwardChain().removeFromHashToAppend(firstHash.get());
+    //                context.getStatus().updateTargetHeight(result.getHeader().getNumber());
+    //              });
+    //    }
     if (!context.isReady()) {
       return waitForReady();
     }

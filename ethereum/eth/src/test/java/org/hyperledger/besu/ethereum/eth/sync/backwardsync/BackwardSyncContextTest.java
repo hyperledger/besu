@@ -60,8 +60,12 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -83,7 +87,7 @@ public class BackwardSyncContextTest {
   public static final int REMOTE_HEIGHT = 50;
   public static final int UNCLE_HEIGHT = 25 - 3;
 
-  public static final int NUM_OF_RETRIES = 100;
+  public static final int NUM_OF_RETRIES = 2;
   public static final int TEST_MAX_BAD_CHAIN_EVENT_ENTRIES = 25;
 
   private BackwardSyncContext context;
@@ -186,13 +190,16 @@ public class BackwardSyncContextTest {
   }
 
   private Block createUncle(final int i, final Hash parentHash) {
+    return createBlock(i, parentHash);
+  }
+
+  private Block createBlock(final int i, final Hash parentHash) {
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()
             .setBlockNumber(i)
             .setParentHash(parentHash)
             .transactionTypes(TransactionType.ACCESS_LIST);
-    final Block block = blockDataGenerator.block(options);
-    return block;
+    return blockDataGenerator.block(options);
   }
 
   public static BackwardChain inMemoryBackwardChain() {
@@ -439,30 +446,42 @@ public class BackwardSyncContextTest {
     }
   }
 
+  @SuppressWarnings("BannedMethod")
   @Test
-  public void shouldRepeatedlyFailWhenReorgedBlockNotPresentInPeers() throws Exception {
+  public void
+      whenMaxRetriesException_shouldRemoveUnattainableBlockFromQueueAndProgressUponNextFCU() {
+    // This scenario can happen due to a reorg
+    // The expectation is we can progress beyond the reorg block the next time we receive an FCU
+
+    Configurator.setLevel(LogManager.getRootLogger(), Level.TRACE);
+
     // choose an intermediate remote block to create a reorg block from
-    final Hash reorgBlockParentHash = getBlockByNumber(REMOTE_HEIGHT - 2).getHash();
-    final Block reorgBlock = createUncle(REMOTE_HEIGHT - 1, reorgBlockParentHash);
+    int reorgBlockHeight = REMOTE_HEIGHT - 1;
+    final Hash reorgBlockParentHash = getBlockByNumber(reorgBlockHeight - 1).getHash();
+    final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
     // represents first FCU with a block that will become reorged away
-    final CompletableFuture<Void> future = context.syncBackwardsUntil(reorgBlock.getHash());
+    final CompletableFuture<Void> fcuBeforeReorg = context.syncBackwardsUntil(reorgBlock.getHash());
 
-    respondUntilFutureIsDone(future);
+    respondUntilFutureIsDone(fcuBeforeReorg);
 
-    try {
-      future.get();
-    } catch (final Throwable throwable) {
-      if (throwable instanceof ExecutionException) {
-        BackwardSyncException backwardSyncException = (BackwardSyncException) throwable.getCause();
-        assertThat(backwardSyncException.getMessage())
-            .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
-      }
-    }
+    assertThatThrownBy(() -> fcuBeforeReorg.get(100, TimeUnit.MILLISECONDS))
+        .isInstanceOf(ExecutionException.class)
+        .hasCauseInstanceOf(BackwardSyncException.class)
+        .cause()
+        .hasMessageContaining("Max number of retries " + NUM_OF_RETRIES + " reached");
 
-    // represents subsequent FCU with reorged version of the same block
-    final CompletableFuture<Void> secondFuture =
+    assertThat(localBlockchain.getChainHeadBlockNumber()).isLessThan(reorgBlockHeight);
+
+    // represents subsequent FCU with successfully reorged version of the same block
+    final CompletableFuture<Void> fcuAfterReorg =
         context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT - 1).getHash());
-    respondUntilFutureIsDone(secondFuture);
-    secondFuture.get();
+    respondUntilFutureIsDone(fcuAfterReorg);
+    try {
+      fcuAfterReorg.get(100, TimeUnit.MILLISECONDS);
+      assertThat(localBlockchain.getChainHeadBlock())
+          .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
+    } catch (final Throwable throwable) {
+      throw new AssertionError("Expected backwards sync to progress", throwable);
+    }
   }
 }
