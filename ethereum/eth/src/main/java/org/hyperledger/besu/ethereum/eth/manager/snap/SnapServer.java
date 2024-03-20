@@ -223,24 +223,23 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .map(
               storage -> {
                 LOGGER.trace("obtained worldstate in {}", stopWatch);
-                StatefulPredicate shouldContinuePredicate = new StatefulPredicate(
-                    "account",
-                    stopWatch,
-                    maxResponseBytes,
-                    (pair) -> {
-                      var rlpOutput = new BytesValueRLPOutput();
-                      rlpOutput.startList();
-                      rlpOutput.writeBytes(pair.getFirst());
-                      rlpOutput.writeRLPBytes(pair.getSecond());
-                      rlpOutput.endList();
-                      return rlpOutput.encodedSize();
-                    });
+                StatefulPredicate shouldContinuePredicate =
+                    new StatefulPredicate(
+                        "account",
+                        stopWatch,
+                        maxResponseBytes,
+                        (pair) -> {
+                          var rlpOutput = new BytesValueRLPOutput();
+                          rlpOutput.startList();
+                          rlpOutput.writeBytes(pair.getFirst());
+                          rlpOutput.writeRLPBytes(pair.getSecond());
+                          rlpOutput.endList();
+                          return rlpOutput.encodedSize();
+                        });
 
                 NavigableMap<Bytes32, Bytes> accounts =
                     storage.streamFlatAccounts(
-                        range.startKeyHash(),
-                        range.endKeyHash(),
-                        shouldContinuePredicate);
+                        range.startKeyHash(), range.endKeyHash(), shouldContinuePredicate);
 
                 if (accounts.isEmpty() && shouldContinuePredicate.shouldContinue.get()) {
                   // fetch next account after range, if it exists
@@ -251,7 +250,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 }
 
                 final var worldStateProof =
-                    new WorldStateProofProvider(worldStateStorageCoordinator);
+                    new WorldStateProofProvider(new WorldStateStorageCoordinator(storage));
                 final List<Bytes> proof =
                     worldStateProof.getAccountProofRelatedNodes(
                         range.worldStateRootHash(), Hash.wrap(range.startKeyHash()));
@@ -351,7 +350,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
                 List<Bytes> proofNodes = new ArrayList<>();
                 final var worldStateProof =
-                    new WorldStateProofProvider(worldStateStorageCoordinator);
+                    new WorldStateProofProvider(new WorldStateStorageCoordinator(storage));
 
                 for (var forAccountHash : range.hashes()) {
                   var accountStorages =
