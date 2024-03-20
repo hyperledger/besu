@@ -239,7 +239,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     final DataStorageConfiguration dataStorageConfiguration =
         node.getDataStorageConfiguration() == null
-            ? DataStorageConfiguration.DEFAULT_FOREST_CONFIG
+            ? DataStorageConfiguration.DEFAULT_BONSAI_CONFIG
             : node.getDataStorageConfiguration();
 
     builder
