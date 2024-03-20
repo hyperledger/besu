@@ -57,7 +57,7 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     this.balance = balance;
     this.codeHash = codeHash;
 
-    this.immutable = mutable;
+    this.immutable = !mutable;
   }
 
   public DiffBasedAccount(
@@ -86,7 +86,7 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     this.code = toCopy.code;
     updatedStorage.putAll(toCopy.updatedStorage);
 
-    this.immutable = mutable;
+    this.immutable = !mutable;
   }
 
   @Override

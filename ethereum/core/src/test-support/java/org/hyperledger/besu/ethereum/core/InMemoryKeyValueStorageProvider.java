@@ -95,7 +95,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
       final Blockchain blockchain, final EvmConfiguration evmConfiguration) {
     final InMemoryKeyValueStorageProvider inMemoryKeyValueStorageProvider =
         new InMemoryKeyValueStorageProvider();
-    final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader =
+    final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
     return new BonsaiWorldStateProvider(
         (BonsaiWorldStateKeyValueStorage)
@@ -103,7 +103,7 @@ public class InMemoryKeyValueStorageProvider extends KeyValueStorageProvider {
                 DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
         blockchain,
         Optional.empty(),
-        cachedMerkleTrieLoader,
+        bonsaiCachedMerkleTrieLoader,
         null,
         evmConfiguration);
   }

@@ -49,7 +49,7 @@ public class BonsaiAccount extends DiffBasedAccount {
       final Hash storageRoot,
       final Hash codeHash,
       final boolean mutable) {
-    super(context, address, addressHash, nonce, balance, codeHash, !mutable);
+    super(context, address, addressHash, nonce, balance, codeHash, mutable);
     this.storageRoot = storageRoot;
   }
 
@@ -65,7 +65,7 @@ public class BonsaiAccount extends DiffBasedAccount {
         stateTrieAccount.getNonce(),
         stateTrieAccount.getBalance(),
         stateTrieAccount.getCodeHash(),
-        !mutable);
+        mutable);
     this.storageRoot = stateTrieAccount.getStorageRoot();
   }
 
@@ -82,7 +82,7 @@ public class BonsaiAccount extends DiffBasedAccount {
         toCopy.nonce,
         toCopy.balance,
         toCopy.codeHash,
-        !mutable);
+        mutable);
     this.storageRoot = toCopy.storageRoot;
     updatedStorage.putAll(toCopy.updatedStorage);
   }
@@ -96,7 +96,7 @@ public class BonsaiAccount extends DiffBasedAccount {
         tracked.getNonce(),
         tracked.getBalance(),
         tracked.getCodeHash(),
-        false);
+        true);
     this.storageRoot = Hash.EMPTY_TRIE_HASH;
     updatedStorage.putAll(tracked.getUpdatedStorage());
   }
