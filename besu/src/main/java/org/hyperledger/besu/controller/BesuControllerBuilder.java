@@ -718,7 +718,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
         createSnapProtocolManager(
-            protocolContext, worldStateStorageCoordinator, peerValidators, ethPeers, snapMessages);
+            protocolContext, worldStateStorageCoordinator, ethPeers, snapMessages);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -1040,7 +1040,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
       final ProtocolContext protocolContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final List<PeerValidator> peerValidators,
       final EthPeers ethPeers,
       final EthMessages snapMessages) {
     if (Optional.ofNullable(syncConfig.getSnapSyncConfiguration())
@@ -1049,7 +1048,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       return Optional.of(
           new SnapProtocolManager(
               worldStateStorageCoordinator,
-              peerValidators,
+              syncConfig.getSnapSyncConfiguration(),
               ethPeers,
               snapMessages,
               protocolContext));
