@@ -223,38 +223,29 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
   }
 
   /**
-   * Returns the worldstate for the supplied root hash, or the head worldstate if no root hash is
-   * supplied. synchronized to prevent concurrent adds to the cache of the same root hash.
+   * Returns the worldstate for the supplied root hash. If the worldstate is not already in cache,
+   * this method will attempt to fetch it and add it to the cahce. synchronized to prevent
+   * concurrent loads/adds to the cache of the same root hash.
    *
-   * @param rootHash optional rootHash to supply worldstate storage for
+   * @param rootHash rootHash to supply worldstate storage for
    * @return Optional worldstate storage
    */
   public synchronized Optional<DiffBasedWorldStateKeyValueStorage> getStorageByRootHash(
-      final Optional<Hash> rootHash) {
-    if (rootHash.isPresent()) {
-      // if we supplied a hash, return the worldstate for that hash if it is available:
-      return rootHash
-          .map(stateRootToBlockHeaderCache::getIfPresent)
-          .flatMap(
-              header ->
-                  Optional.ofNullable(cachedWorldStatesByHash.get(header.getHash()))
-                      .map(DiffBasedCachedWorldView::getWorldStateStorage)
-                      .or(
-                          () -> {
-                            // if not cached already, maybe fetch and cache this worldstate
-                            var maybeWorldState =
-                                archive.getMutable(header, false).map(BonsaiWorldState.class::cast);
-                            maybeWorldState.ifPresent(
-                                ws -> addCachedLayer(header, header.getStateRoot(), ws));
-                            return maybeWorldState.map(BonsaiWorldState::getWorldStateStorage);
-                          }));
-    } else {
-      // if we did not supply a hash, return the head worldstate from cachedWorldStates
-      return rootWorldStateStorage
-          .getWorldStateBlockHash()
-          .map(cachedWorldStatesByHash::get)
-          .map(DiffBasedCachedWorldView::getWorldStateStorage);
-    }
+      final Hash rootHash) {
+    return Optional.ofNullable(stateRootToBlockHeaderCache.getIfPresent(rootHash))
+        .flatMap(
+            header ->
+                Optional.ofNullable(cachedWorldStatesByHash.get(header.getHash()))
+                    .map(DiffBasedCachedWorldView::getWorldStateStorage)
+                    .or(
+                        () -> {
+                          // if not cached already, maybe fetch and cache this worldstate
+                          var maybeWorldState =
+                              archive.getMutable(header, false).map(BonsaiWorldState.class::cast);
+                          maybeWorldState.ifPresent(
+                              ws -> addCachedLayer(header, header.getStateRoot(), ws));
+                          return maybeWorldState.map(BonsaiWorldState::getWorldStateStorage);
+                        }));
   }
 
   @Override

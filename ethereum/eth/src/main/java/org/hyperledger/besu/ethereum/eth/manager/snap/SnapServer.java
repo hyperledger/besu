@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.eth.messages.snap.SnapV1;
 import org.hyperledger.besu.ethereum.eth.messages.snap.StorageRangeMessage;
 import org.hyperledger.besu.ethereum.eth.messages.snap.TrieNodesMessage;
 import org.hyperledger.besu.ethereum.eth.sync.DefaultSynchronizer;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
@@ -86,14 +87,19 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final Optional<ProtocolContext> protocolContext;
 
+  //
+  private final boolean snapServerEnabled;
+
   // provide worldstate storage by root hash
-  private Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
-      worldStateStorageProvider = __ -> Optional.empty();
+  private Function<Hash, Optional<BonsaiWorldStateKeyValueStorage>> worldStateStorageProvider =
+      __ -> Optional.empty();
 
   SnapServer(
+      final SnapSyncConfiguration snapConfig,
       final EthMessages snapMessages,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext) {
+    this.snapServerEnabled = snapConfig.isSnapServerEnabled();
     this.snapMessages = snapMessages;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolContext = Optional.of(protocolContext);
@@ -111,14 +117,14 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
   /**
    * Create a snap server without registering a listener for worldstate initial sync events or
-   * priming worldstates by root hash.
+   * priming worldstates by root hash. Used by unit tests.
    */
   @VisibleForTesting
   SnapServer(
       final EthMessages snapMessages,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>
-          worldStateStorageProvider) {
+      final Function<Hash, Optional<BonsaiWorldStateKeyValueStorage>> worldStateStorageProvider) {
+    this.snapServerEnabled = true;
     this.snapMessages = snapMessages;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.worldStateStorageProvider = worldStateStorageProvider;
@@ -136,7 +142,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   }
 
   public synchronized SnapServer start() {
-    if (!isStarted.get()) {
+    if (!isStarted.get() && snapServerEnabled) {
       // if we are bonsai and full flat, we can provide a worldstate storage:
       var worldStateKeyValueStorage = worldStateStorageCoordinator.worldStateKeyValueStorage();
       if (worldStateKeyValueStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
@@ -216,7 +222,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         .log();
     try {
       return worldStateStorageProvider
-          .apply(Optional.of(range.worldStateRootHash()))
+          .apply(range.worldStateRootHash())
           .map(
               storage -> {
                 LOGGER.trace("obtained worldstate in {}", stopWatch);
@@ -311,7 +317,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         .log();
     try {
       return worldStateStorageProvider
-          .apply(Optional.of(range.worldStateRootHash()))
+          .apply(range.worldStateRootHash())
           .map(
               storage -> {
                 LOGGER.trace("obtained worldstate in {}", stopWatch);
@@ -476,7 +482,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
     try {
       return worldStateStorageProvider
-          .apply(Optional.of(triePaths.worldStateRootHash()))
+          .apply(triePaths.worldStateRootHash())
           .map(
               storage -> {
                 LOGGER.trace("obtained worldstate in {}", stopWatch);

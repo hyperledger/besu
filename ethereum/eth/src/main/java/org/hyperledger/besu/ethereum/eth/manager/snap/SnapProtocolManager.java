@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -51,14 +51,14 @@ public class SnapProtocolManager implements ProtocolManager {
 
   public SnapProtocolManager(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final List<PeerValidator> peerValidators,
+      final SnapSyncConfiguration snapConfig,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
       final ProtocolContext protocolContext) {
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
     this.supportedCapabilities = calculateCapabilities();
-    new SnapServer(snapMessages, worldStateStorageCoordinator, protocolContext);
+    new SnapServer(snapConfig, snapMessages, worldStateStorageCoordinator, protocolContext);
   }
 
   private List<Capability> calculateCapabilities() {

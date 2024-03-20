@@ -107,12 +107,12 @@ public class SnapServerTest {
           inMemoryStorage::getAccountStateTrieNode, Function.identity(), Function.identity());
   final WorldStateProofProvider proofProvider = new WorldStateProofProvider(storageCoordinator);
 
-  final Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>> spyProvider =
+  final Function<Hash, Optional<BonsaiWorldStateKeyValueStorage>> spyProvider =
       spy(
-          new Function<Optional<Hash>, Optional<BonsaiWorldStateKeyValueStorage>>() {
+          new Function<Hash, Optional<BonsaiWorldStateKeyValueStorage>>() {
             // explicit non-final class is necessary for Mockito to spy:
             @Override
-            public Optional<BonsaiWorldStateKeyValueStorage> apply(final Optional<Hash> hash) {
+            public Optional<BonsaiWorldStateKeyValueStorage> apply(final Hash hash) {
               return Optional.of(inMemoryStorage);
             }
           });
