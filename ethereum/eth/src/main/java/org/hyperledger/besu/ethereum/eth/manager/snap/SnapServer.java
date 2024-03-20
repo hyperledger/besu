@@ -226,24 +226,26 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .map(
               storage -> {
                 LOGGER.trace("obtained worldstate in {}", stopWatch);
+                StatefulPredicate shouldContinuePredicate = new StatefulPredicate(
+                    "account",
+                    stopWatch,
+                    maxResponseBytes,
+                    (pair) -> {
+                      var rlpOutput = new BytesValueRLPOutput();
+                      rlpOutput.startList();
+                      rlpOutput.writeBytes(pair.getFirst());
+                      rlpOutput.writeRLPBytes(pair.getSecond());
+                      rlpOutput.endList();
+                      return rlpOutput.encodedSize();
+                    });
+
                 NavigableMap<Bytes32, Bytes> accounts =
                     storage.streamFlatAccounts(
                         range.startKeyHash(),
                         range.endKeyHash(),
-                        new StatefulPredicate(
-                            "account",
-                            stopWatch,
-                            maxResponseBytes,
-                            (pair) -> {
-                              var rlpOutput = new BytesValueRLPOutput();
-                              rlpOutput.startList();
-                              rlpOutput.writeBytes(pair.getFirst());
-                              rlpOutput.writeRLPBytes(pair.getSecond());
-                              rlpOutput.endList();
-                              return rlpOutput.encodedSize();
-                            }));
+                        shouldContinuePredicate);
 
-                if (accounts.isEmpty()) {
+                if (accounts.isEmpty() && shouldContinuePredicate.shouldContinue.get()) {
                   // fetch next account after range, if it exists
                   LOGGER.debug(
                       "found no accounts in range, taking first value starting from {}",
@@ -582,7 +584,12 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .log();
       if (stopWatch.getTime() > MAX_MILLIS_PER_REQUEST) {
         shouldContinue.set(false);
-        LOGGER.debug("{} took too long, stopped at {} ms", forWhat, stopWatch.formatTime());
+        LOGGER.warn(
+            "{} took too long, stopped at {} ms with {} records and {} bytes",
+            forWhat,
+            stopWatch.formatTime(),
+            recordLimit.get(),
+            byteLimit.get());
         return false;
       }
 
