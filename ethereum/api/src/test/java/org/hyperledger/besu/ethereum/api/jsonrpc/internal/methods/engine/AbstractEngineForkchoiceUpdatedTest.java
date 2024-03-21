@@ -475,7 +475,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
                 mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
             Optional.of(payloadParams));
 
-    assertInvalidForkchoiceState(resp, expectedInvalidPayloadError());
+    assertInvalidForkchoiceState(resp, RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES);
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
