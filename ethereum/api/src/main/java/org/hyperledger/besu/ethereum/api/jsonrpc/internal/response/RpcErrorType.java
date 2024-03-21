@@ -239,7 +239,7 @@ public enum RpcErrorType implements RpcMethodError {
   }
 
   RpcErrorType(
-      final int code, final String message, Function<String, Optional<String>> dataDecoder) {
+      final int code, final String message, final Function<String, Optional<String>> dataDecoder) {
     this.code = code;
     this.message = message;
     this.dataDecoder = dataDecoder;
