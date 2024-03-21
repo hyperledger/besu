@@ -125,11 +125,11 @@ public class BackwardSyncContext {
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
-    if (!isTrusted(newBlockHash)) {
-      backwardChain.addNewHash(newBlockHash);
-    }
-
     if (isReady()) {
+      if (!isTrusted(newBlockHash)) {
+        backwardChain.addNewHash(newBlockHash);
+      }
+
       final Status status = getOrStartSyncSession();
       backwardChain
           .getBlock(newBlockHash)
@@ -142,11 +142,11 @@ public class BackwardSyncContext {
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Block newPivot) {
-    if (!isTrusted(newPivot.getHash())) {
-      backwardChain.appendTrustedBlock(newPivot);
-    }
-
     if (isReady()) {
+      if (!isTrusted(newPivot.getHash())) {
+        backwardChain.appendTrustedBlock(newPivot);
+      }
+
       final Status status = getOrStartSyncSession();
       status.updateTargetHeight(newPivot.getHeader().getNumber());
       return status.currentFuture;
