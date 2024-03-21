@@ -111,12 +111,7 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
         result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
       if (validationResult.getErrorMessage().length() > 0) {
-        final RpcErrorType rpcErrorType =
-            JsonRpcErrorConverter.convertTransactionInvalidReason(
-                validationResult.getInvalidReason());
-        final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
-        rpcError.setReason(validationResult.getErrorMessage());
-        return errorResponse(request, rpcError);
+        return errorResponse(request, JsonRpcError.from(validationResult));
       }
       return errorResponse(
           request,
