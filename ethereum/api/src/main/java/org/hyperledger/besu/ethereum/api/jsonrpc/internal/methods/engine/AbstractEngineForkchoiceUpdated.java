@@ -172,7 +172,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       if (!getWithdrawalsValidator(
               protocolSchedule.get(), newHead, maybePayloadAttributes.get().getTimestamp())
           .validateWithdrawals(withdrawals)) {
-        return new JsonRpcErrorResponse(requestId, getInvalidPayloadError());
+        return new JsonRpcErrorResponse(requestId, getInvalidParametersError());
       }
     }
 
@@ -241,7 +241,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     if (payloadAttributes.getTimestamp() <= headBlockHeader.getTimestamp()) {
       LOG.warn(
           "Payload attributes timestamp is smaller than timestamp of header in fork choice update");
-      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadError()));
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     }
 
     return Optional.empty();
@@ -364,8 +364,12 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     return false;
   }
 
-  protected RpcErrorType getInvalidPayloadError() {
+  protected RpcErrorType getInvalidParametersError() {
     return RpcErrorType.INVALID_PARAMS;
+  }
+
+  protected RpcErrorType getInvalidPayloadAttributesError() {
+    return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
 
   // fcU calls are synchronous, no need to make volatile
