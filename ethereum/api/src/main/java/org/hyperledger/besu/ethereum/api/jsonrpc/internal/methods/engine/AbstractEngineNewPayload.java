@@ -320,7 +320,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     if (executionResult.isSuccessful()) {
       logImportedBlockInfo(
-          block, blobTransactions.size(), (System.currentTimeMillis() - startTimeMs) / 1000.0);
+          block,
+          blobTransactions.stream()
+              .map(Transaction::getVersionedHashes)
+              .flatMap(Optional::stream)
+              .mapToInt(List::size)
+              .sum(),
+          (System.currentTimeMillis() - startTimeMs) / 1000.0);
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {

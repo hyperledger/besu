@@ -358,7 +358,7 @@ public class MainnetTransactionValidatorTest {
         .isEqualTo(ValidationResult.invalid(BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE));
     assertThat(validationResult.getErrorMessage())
         .matches(
-            "max fee per blob gas less than block blob gas fee: address 0x[0-9a-f]+ blobGasFeeCap: 7 wei, blobBaseFee: 10 wei");
+            "tx max fee per blob gas less than block blob gas fee: address 0x[0-9a-f]+ blobGasFeeCap: 7 wei, blobBaseFee: 10 wei");
   }
 
   @Test
