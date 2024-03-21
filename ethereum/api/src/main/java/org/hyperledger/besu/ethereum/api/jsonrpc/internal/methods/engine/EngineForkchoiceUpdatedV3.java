@@ -56,11 +56,14 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
       final EngineForkchoiceUpdatedParameter fcuParameter,
       final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes) {
     if (fcuParameter.getHeadBlockHash() == null) {
-      return ValidationResult.invalid(getInvalidPayloadAttributesError(), "Missing head block hash");
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing head block hash");
     } else if (fcuParameter.getSafeBlockHash() == null) {
-      return ValidationResult.invalid(getInvalidPayloadAttributesError(), "Missing safe block hash");
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing safe block hash");
     } else if (fcuParameter.getFinalizedBlockHash() == null) {
-      return ValidationResult.invalid(getInvalidPayloadAttributesError(), "Missing finalized block hash");
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing finalized block hash");
     }
     if (maybePayloadAttributes.isPresent()) {
       if (maybePayloadAttributes.get().getParentBeaconBlockRoot() == null) {

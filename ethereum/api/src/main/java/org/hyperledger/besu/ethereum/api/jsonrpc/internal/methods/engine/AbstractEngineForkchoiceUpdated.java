@@ -367,6 +367,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   protected RpcErrorType getInvalidParametersError() {
     return RpcErrorType.INVALID_PARAMS;
   }
+
   protected RpcErrorType getInvalidPayloadAttributesError() {
     return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
