@@ -35,7 +35,6 @@ jobs:
       - uses: gradle/wrapper-validation-action@56b90f209b02bf6d1deae490e9ef18b21a389cd4
   spotless:
     runs-on: ubuntu-22.04
-    if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
