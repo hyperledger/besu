@@ -85,7 +85,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawalsParam, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawalsParam, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -103,7 +103,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -121,7 +121,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
                 createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
-                null));
+                null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -136,7 +136,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
     assertThat(jsonRpcError.getData()).isEqualTo("non-null BlobGasUsed pre-cancun");
@@ -151,7 +151,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
             .excessBlobGas(BlobGas.MAX_BLOB_GAS)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -171,7 +171,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
                 createBlockHeader(Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
-                null));
+                null, null));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();

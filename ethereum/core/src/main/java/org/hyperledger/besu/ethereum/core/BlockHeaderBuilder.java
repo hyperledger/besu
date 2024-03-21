@@ -46,6 +46,7 @@ public class BlockHeaderBuilder {
 
   private Hash withdrawalsRoot = null;
   private Hash depositsRoot = null;
+  private Hash exitsRoot = null;
 
   private Hash receiptsRoot;
 
@@ -124,7 +125,8 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-        .depositsRoot(header.getDepositsRoot().orElse(null));
+        .depositsRoot(header.getDepositsRoot().orElse(null))
+        .exitsRoot(header.getExitsRoot().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -149,6 +151,7 @@ public class BlockHeaderBuilder {
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .depositsRoot(fromBuilder.depositsRoot)
+            .exitsRoot(fromBuilder.exitsRoot)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -179,6 +182,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         depositsRoot,
+        exitsRoot,
         blockHeaderFunctions);
   }
 
@@ -220,7 +224,8 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot);
+        depositsRoot,
+        exitsRoot);
   }
 
   private void validateBlockHeader() {
@@ -243,6 +248,7 @@ public class BlockHeaderBuilder {
     checkState(this.ommersHash != null, "Missing ommers hash");
     checkState(this.stateRoot != null, "Missing state root");
     checkState(this.transactionsRoot != null, "Missing transaction root");
+    checkState(this.exitsRoot != null, "Missing exits root");
     checkState(this.receiptsRoot != null, "Missing receipts root");
     checkState(this.logsBloom != null, "Missing logs bloom filter");
     checkState(this.gasUsed > -1L, "Missing gas used");
@@ -285,6 +291,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
+    exitsRoot(sealableBlockHeader.getExitsRoot().orElse(null));
     return this;
   }
 
@@ -401,6 +408,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder depositsRoot(final Hash hash) {
     this.depositsRoot = hash;
+    return this;
+  }
+
+  public BlockHeaderBuilder exitsRoot(final Hash hash) {
+    this.exitsRoot = hash;
     return this;
   }
 

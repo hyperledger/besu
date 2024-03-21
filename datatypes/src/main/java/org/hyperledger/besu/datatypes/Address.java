@@ -77,6 +77,8 @@ public class Address extends DelegatingBytes {
   public static final Address BLS12_MAP_FP_TO_G1 = Address.precompiled(0x12);
   /** The constant BLS12_MAP_FP2_TO_G2. */
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x13);
+  /** EIP-7002 Validator Exit Contract **/
+  public static final Address VALIDATOR_EXIT = Address.precompiled(0x14); //TODO-lucas confirm address
   /** The constant ZERO. */
   public static final Address ZERO = Address.fromHexString("0x0");
 

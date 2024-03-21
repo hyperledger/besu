@@ -162,7 +162,8 @@ public interface MainnetPrecompiledContracts {
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForCancun(registry, gasCalculator);
 
-    // TODO: add Prague precompiles here
+    // EIP-7002 - Execution layer triggerable exits
+    registry.put(Address.VALIDATOR_EXIT, new ValidatorExitPrecompile(gasCalculator));
   }
 
   /**

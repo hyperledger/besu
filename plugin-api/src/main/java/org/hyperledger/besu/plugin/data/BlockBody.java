@@ -57,4 +57,7 @@ public interface BlockBody {
    */
   @Unstable
   Optional<? extends List<? extends Deposit>> getDeposits();
+
+  @Unstable
+  Optional<? extends List<? extends ValidatorExit>> getExits();
 }

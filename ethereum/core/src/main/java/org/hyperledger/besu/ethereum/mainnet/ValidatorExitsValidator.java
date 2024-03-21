@@ -1,5 +1,6 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu
+ *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,32 +13,22 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-public enum JsonRpcResponseKey {
-  CHAIN_ID,
-  COINBASE,
-  DIFFICULTY,
-  EXTRA_DATA,
-  GAS_LIMIT,
-  GAS_PRICE,
-  GAS_USED,
-  LOGS_BLOOM,
-  MIX_HASH,
-  NONCE,
-  NUMBER,
-  OMMERS_HASH,
-  PARENT_HASH,
-  PUBLIC_KEY,
-  RAW,
-  RECEIPTS_ROOT,
-  SIZE,
-  STATE_ROOT,
-  TIMESTAMP,
-  TOTAL_DIFFICULTY,
-  TRANSACTION_ROOT,
-  BASEFEE,
-  WITHDRAWALS_ROOT,
-  DEPOSITS_ROOT,
-  EXITS_ROOT
+package org.hyperledger.besu.ethereum.mainnet;
+
+import java.util.List;
+import java.util.Optional;
+import org.hyperledger.besu.ethereum.core.ValidatorExit;
+
+public interface ValidatorExitsValidator {
+
+  boolean validateValidatorExitParameter(Optional<List<ValidatorExit>> validatorExits);
+
+  class StubValidatorExitsValidator implements ValidatorExitsValidator {
+
+    @Override
+    public boolean validateValidatorExitParameter(final Optional<List<ValidatorExit>> validatorExits) {
+      return validatorExits.isPresent();
+    }
+  }
 }
