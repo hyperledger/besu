@@ -48,7 +48,8 @@ jobs:
           compression-level: 0
       - name: Artifactory Publish
         env:
-          ARTIFACTORY_USER: ${{ secrets.BESU_ARTIFACTORY }}
+          ARTIFACTORY_USER: ${{ secrets.ARTIFACTORY_USER }}
+          ARTIFACTORY_KEY: ${{ secrets.BESU_ARTIFACTORY }}
         run: ./gradlew -Prelease.releaseVersion=${{ github.ref_name }} -Pversion=${{github.ref_name}} artifactoryPublish
   testWindows:
     runs-on: windows-2022
