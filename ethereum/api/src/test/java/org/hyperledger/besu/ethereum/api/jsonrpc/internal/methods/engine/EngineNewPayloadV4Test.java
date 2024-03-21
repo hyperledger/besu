@@ -54,11 +54,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class EngineNewPayloadV6110Test extends EngineNewPayloadV3Test {
+public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   private static final Address depositContractAddress =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
-  public EngineNewPayloadV6110Test() {}
+  public EngineNewPayloadV4Test() {}
 
   @BeforeEach
   @Override

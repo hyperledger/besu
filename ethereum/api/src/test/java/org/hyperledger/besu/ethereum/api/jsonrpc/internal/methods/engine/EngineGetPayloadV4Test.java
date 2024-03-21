@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV6110;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV4;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -59,9 +59,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(
     MockitoExtension.class) // mocks in parent class may not be used, throwing unnecessary stubbing
-public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
+public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
 
-  public EngineGetPayloadV6110Test() {
+  public EngineGetPayloadV4Test() {
     super();
   }
 
@@ -74,7 +74,7 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
         .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
-        new EngineGetPayloadV6110(
+        new EngineGetPayloadV4(
             vertx,
             protocolContext,
             mergeMiningCoordinator,
@@ -137,14 +137,14 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
 
     when(mergeContext.retrieveBlockById(postEip6110Pid)).thenReturn(Optional.of(postEip6110Block));
 
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V6110.getMethodName(), postEip6110Pid);
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), postEip6110Pid);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
     Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
         .ifPresent(
             r -> {
-              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV6110.class);
-              final EngineGetPayloadResultV6110 res = (EngineGetPayloadResultV6110) r.getResult();
+              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV4.class);
+              final EngineGetPayloadResultV4 res = (EngineGetPayloadResultV4) r.getResult();
               assertThat(res.getExecutionPayload().getWithdrawals()).isNotNull();
               assertThat(res.getExecutionPayload().getDeposits()).isNotNull();
               assertThat(res.getExecutionPayload().getHash())
@@ -163,7 +163,7 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
 
   @Test
   public void shouldReturnUnsupportedFork() {
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V6110.getMethodName(), mockPid);
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), mockPid);
 
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
     assertThat(((JsonRpcErrorResponse) resp).getErrorType())
@@ -172,6 +172,6 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
 
   @Override
   protected String getMethodName() {
-    return RpcMethod.ENGINE_GET_PAYLOAD_V6110.getMethodName();
+    return RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName();
   }
 }
