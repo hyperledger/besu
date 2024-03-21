@@ -44,6 +44,7 @@ jobs:
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
           prerelease: true
+          draft: false
           name: develop
           tag_name: develop
           fail_on_unmatched_files: true
