@@ -16,6 +16,10 @@ package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.datatypes.Transaction;
 
+import java.util.Optional;
+
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * TransactionSimulationResult
  *
@@ -41,6 +45,24 @@ public record TransactionSimulationResult(
    */
   public boolean isInvalid() {
     return result.isInvalid();
+  }
+
+  /**
+   * Return the optional revert reason
+   *
+   * @return the optional revert reason
+   */
+  public Optional<Bytes> getRevertReason() {
+    return result.getRevertReason();
+  }
+
+  /**
+   * Return the optional invalid reason
+   *
+   * @return the optional invalid reason
+   */
+  public Optional<String> getInvalidReason() {
+    return result.getInvalidReason();
   }
 
   /**

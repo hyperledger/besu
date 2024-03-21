@@ -36,6 +36,8 @@ jobs:
           echo "zipSha=$(shasum -a 256 besu*.zip)" >> $GITHUB_OUTPUT
           echo "tarSha=$(shasum -a 256 besu*.tar.gz)" >> $GITHUB_OUTPUT
           cd ../..
+      - name: delete current develop release
+        run: gh release delete develop -y --cleanup-tag
       - name: Upload Release assets
         uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
         with:
