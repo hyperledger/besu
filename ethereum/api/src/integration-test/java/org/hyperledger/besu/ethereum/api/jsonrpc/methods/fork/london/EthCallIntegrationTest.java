@@ -75,6 +75,8 @@ public class EthCallIntegrationTest {
             Bytes.fromHexString("0x2e64cec1"),
             null,
             null,
+            null,
+            null,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
@@ -100,6 +102,8 @@ public class EthCallIntegrationTest {
             Bytes.fromHexString("0x2e64cec1"),
             null,
             null,
+            null,
+            null,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
@@ -122,6 +126,8 @@ public class EthCallIntegrationTest {
             null,
             null,
             Bytes.fromHexString("0x2e64cec1"),
+            null,
+            null,
             null,
             null,
             null);
@@ -149,6 +155,8 @@ public class EthCallIntegrationTest {
             Bytes.fromHexString("0x2e64cec1"),
             null,
             null,
+            null,
+            null,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
@@ -171,6 +179,8 @@ public class EthCallIntegrationTest {
             Wei.fromHexString("0x3B9ACA01"),
             null,
             Bytes.fromHexString("0x2e64cec1"),
+            null,
+            null,
             null,
             null,
             null);
@@ -198,6 +208,8 @@ public class EthCallIntegrationTest {
             Bytes.fromHexString("0x2e64cec1"),
             null,
             null,
+            null,
+            null,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
@@ -221,6 +233,8 @@ public class EthCallIntegrationTest {
             Wei.fromHexString("0x0A"),
             null,
             Bytes.fromHexString("0x2e64cec1"),
+            null,
+            null,
             null,
             null,
             null);
@@ -247,6 +261,8 @@ public class EthCallIntegrationTest {
             Bytes.fromHexString("0x2e64cec1"),
             null,
             null,
+            null,
+            null,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter, "latest");
     final JsonRpcResponse expectedResponse =
@@ -270,6 +286,8 @@ public class EthCallIntegrationTest {
             Wei.fromHexString("0x3B9ACA01"),
             null,
             Bytes.fromHexString("0x2e64cec1"),
+            null,
+            null,
             null,
             null,
             null);

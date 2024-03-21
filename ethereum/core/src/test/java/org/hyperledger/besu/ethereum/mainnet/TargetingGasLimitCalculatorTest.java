@@ -73,6 +73,12 @@ public class TargetingGasLimitCalculatorTest {
   }
 
   @Test
+  public void verifyMaxGasLimit() {
+    assertThat(AbstractGasLimitSpecification.isValidTargetGasLimit(Long.MAX_VALUE - 1)).isTrue();
+    assertThat(AbstractGasLimitSpecification.isValidTargetGasLimit(Long.MAX_VALUE)).isTrue();
+  }
+
+  @Test
   public void verifyWithinGasLimitDelta() {
     final long targetGasLimit = 10_000_000L;
     final long currentGasLimit = 1024L * 1024L;

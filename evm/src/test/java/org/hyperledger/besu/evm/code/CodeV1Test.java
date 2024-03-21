@@ -200,7 +200,7 @@ class CodeV1Test {
             IntStream.rangeClosed(0xb0, 0xcf),
             IntStream.rangeClosed(0xd4, 0xdf),
             IntStream.rangeClosed(0xe9, 0xeb),
-            IntStream.of(0xef, 0xf6, 0xf7, 0xfc))
+            IntStream.of(0xef, 0xf6, 0xfc))
         .flatMapToInt(i -> i)
         .mapToObj(i -> String.format("%02x", i) + ZERO_HEX)
         .map(Arguments::arguments);
@@ -847,7 +847,7 @@ class CodeV1Test {
             List.of(List.of("30 e0fffc00", 0, 0x80, 1))),
         Arguments.of(
             "Stack height mismatch forwards",
-            "Calculated max stack height (5) exceeds reported stack height (2)",
+            "Calculated max stack height (5) does not match reported stack height (2)",
             0,
             List.of(List.of("30e10003303030303000", 0, 0x80, 2))));
   }

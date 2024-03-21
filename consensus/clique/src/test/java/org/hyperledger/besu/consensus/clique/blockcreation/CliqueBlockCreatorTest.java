@@ -30,6 +30,7 @@ import org.hyperledger.besu.consensus.clique.CliqueHelpers;
 import org.hyperledger.besu.consensus.clique.CliqueProtocolSchedule;
 import org.hyperledger.besu.consensus.clique.TestHelpers;
 import org.hyperledger.besu.consensus.common.EpochManager;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.ValidatorVote;
 import org.hyperledger.besu.consensus.common.validator.VoteProvider;
@@ -41,6 +42,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.AddressHelpers;
@@ -100,9 +102,12 @@ public class CliqueBlockCreatorTest {
     protocolSchedule =
         CliqueProtocolSchedule.create(
             GenesisConfigFile.DEFAULT.getConfigOptions(),
+            new ForksSchedule<>(List.of()),
             proposerNodeKey,
             false,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager());
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);
@@ -117,7 +122,7 @@ public class CliqueBlockCreatorTest {
         GenesisState.fromConfig(GenesisConfigFile.mainnet(), protocolSchedule).getBlock();
     blockchain = createInMemoryBlockchain(genesis);
     protocolContext =
-        new ProtocolContext(blockchain, stateArchive, cliqueContext, Optional.empty());
+        new ProtocolContext(blockchain, stateArchive, cliqueContext, new BadBlockManager());
     epochManager = new EpochManager(10);
 
     // Add a block above the genesis
@@ -239,8 +244,7 @@ public class CliqueBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            conf,
-            null);
+            conf);
     transactionPool.setEnabled();
     return transactionPool;
   }

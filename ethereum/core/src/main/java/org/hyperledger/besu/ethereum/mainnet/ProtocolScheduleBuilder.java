@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -40,7 +41,8 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final EvmConfiguration evmConfiguration;
-  private final BadBlockManager badBlockManager = new BadBlockManager();
+  private final MiningParameters miningParameters;
+  private final BadBlockManager badBlockManager;
 
   private DefaultProtocolSchedule protocolSchedule;
 
@@ -50,14 +52,18 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     this(
         config,
         Optional.of(defaultChainId),
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters,
+        badBlockManager);
   }
 
   public ProtocolScheduleBuilder(
@@ -65,14 +71,18 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     this(
         config,
         Optional.empty(),
         protocolSpecAdapters,
         privacyParameters,
         isRevertReasonEnabled,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters,
+        badBlockManager);
   }
 
   private ProtocolScheduleBuilder(
@@ -81,13 +91,17 @@ public class ProtocolScheduleBuilder {
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
+    this.miningParameters = miningParameters;
+    this.badBlockManager = badBlockManager;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -107,7 +121,8 @@ public class ProtocolScheduleBuilder {
             config.getEvmStackSize(),
             isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
-            evmConfiguration);
+            evmConfiguration,
+            miningParameters);
 
     validateForkOrdering();
 

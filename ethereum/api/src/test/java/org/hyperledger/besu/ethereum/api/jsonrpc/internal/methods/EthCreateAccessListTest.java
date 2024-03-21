@@ -300,7 +300,7 @@ public class EthCreateAccessListTest {
     when(mockResult.getEstimateGasUsedByTransaction()).thenReturn(estimateGas);
     when(mockResult.getRevertReason())
         .thenReturn(isReverted ? Optional.of(Bytes.of(0)) : Optional.empty());
-    when(mockTxSimResult.getResult()).thenReturn(mockResult);
+    when(mockTxSimResult.result()).thenReturn(mockResult);
     when(mockTxSimResult.isSuccessful()).thenReturn(isSuccessful);
   }
 
@@ -316,6 +316,8 @@ public class EthCreateAccessListTest {
         Bytes.EMPTY,
         null,
         false,
+        null,
+        null,
         null);
   }
 
@@ -345,7 +347,9 @@ public class EthCreateAccessListTest {
         Bytes.EMPTY,
         null,
         false,
-        accessListEntries);
+        accessListEntries,
+        null,
+        null);
   }
 
   private List<AccessListEntry> createAccessList() {

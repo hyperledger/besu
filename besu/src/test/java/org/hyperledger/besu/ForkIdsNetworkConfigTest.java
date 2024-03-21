@@ -28,10 +28,12 @@ import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.TransitionUtils;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
@@ -186,10 +188,14 @@ public class ForkIdsNetworkConfigTest {
     final GenesisConfigOptions configOptions = genesisConfigFile.getConfigOptions();
     MilestoneStreamingProtocolSchedule preMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
-            (DefaultProtocolSchedule) MainnetProtocolSchedule.fromConfig(configOptions));
+            (DefaultProtocolSchedule)
+                MainnetProtocolSchedule.fromConfig(
+                    configOptions, MiningParameters.MINING_DISABLED, new BadBlockManager()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
-            (DefaultProtocolSchedule) MergeProtocolSchedule.create(configOptions, false));
+            (DefaultProtocolSchedule)
+                MergeProtocolSchedule.create(
+                    configOptions, false, MiningParameters.MINING_DISABLED, new BadBlockManager()));
     final MilestoneStreamingTransitionProtocolSchedule schedule =
         new MilestoneStreamingTransitionProtocolSchedule(
             preMergeProtocolSchedule, postMergeProtocolSchedule);

@@ -36,7 +36,8 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
       final long outputDataLength,
       final Wei transferValue,
       final Account recipient,
-      final Address to) {
+      final Address to,
+      final boolean accountIsWarm) {
     final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
     final long outputDataMemoryExpansionCost =

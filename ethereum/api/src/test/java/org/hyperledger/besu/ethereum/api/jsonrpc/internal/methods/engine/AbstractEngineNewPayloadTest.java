@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -59,7 +58,6 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -81,17 +79,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiTest {
-
-  @FunctionalInterface
-  interface MethodFactory {
-    AbstractEngineNewPayload create(
-        final Vertx vertx,
-        final ProtocolSchedule protocolSchedule,
-        final ProtocolContext protocolContext,
-        final MergeMiningCoordinator mergeCoordinator,
-        final EthPeers ethPeers,
-        final EngineCallListener engineCallListener);
-  }
 
   protected AbstractEngineNewPayload method;
   protected Optional<Bytes32> maybeParentBeaconBlockRoot = Optional.empty();
@@ -229,8 +216,6 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
 
     fromErrorResp(resp);
     verify(engineCallListener, times(1)).executionEngineCalled();
-    verify(mergeCoordinator, times(0)).addBadBlock(any(), any());
-    // verify mainnetBlockValidator does not add to bad block manager
   }
 
   @Test
@@ -247,7 +232,6 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     verify(engineCallListener, times(1)).executionEngineCalled();
-    verify(mergeCoordinator, times(0)).addBadBlock(any(), any());
 
     fromErrorResp(resp);
   }
@@ -265,7 +249,6 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList()));
 
     verify(engineCallListener, times(1)).executionEngineCalled();
-    verify(mergeCoordinator, never()).addBadBlock(any(), any());
 
     fromErrorResp(resp);
   }

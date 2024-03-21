@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
+import org.hyperledger.besu.ethereum.chain.BadBlockCause;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -690,9 +691,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public Optional<Hash> getLatestValidAncestor(final Hash blockHash) {
     final var chain = protocolContext.getBlockchain();
-    final var chainHeadHeader = chain.getChainHeadHeader();
-    return findValidAncestor(
-        chain, blockHash, protocolSchedule.getByBlockHeader(chainHeadHeader).getBadBlocksManager());
+    return findValidAncestor(chain, blockHash);
   }
 
   @Override
@@ -701,8 +700,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     final var self = chain.getBlockHeader(blockHeader.getHash());
 
     if (self.isEmpty()) {
-      final var badBlocks = protocolSchedule.getByBlockHeader(blockHeader).getBadBlocksManager();
-      return findValidAncestor(chain, blockHeader.getParentHash(), badBlocks);
+      return findValidAncestor(chain, blockHeader.getParentHash());
     }
     return self.map(BlockHeader::getHash);
   }
@@ -722,8 +720,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     return miningParameters.isMiningEnabled();
   }
 
-  private Optional<Hash> findValidAncestor(
-      final Blockchain chain, final Hash parentHash, final BadBlockManager badBlocks) {
+  private Optional<Hash> findValidAncestor(final Blockchain chain, final Hash parentHash) {
 
     // check chain first
     return chain
@@ -740,12 +737,12 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
         .map(Optional::of)
         .orElseGet(
             () ->
-                badBlocks
+                protocolContext
+                    .getBadBlockManager()
                     .getBadBlock(parentHash)
                     .map(
                         badParent ->
-                            findValidAncestor(
-                                chain, badParent.getHeader().getParentHash(), badBlocks))
+                            findValidAncestor(chain, badParent.getHeader().getParentHash()))
                     .orElse(Optional.empty()));
   }
 
@@ -785,8 +782,8 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
       final Block badBlock,
       final List<Block> badBlockDescendants,
       final List<BlockHeader> badBlockHeaderDescendants) {
-    LOG.trace("Adding bad block {} and all its descendants", badBlock.getHash());
-    final BadBlockManager badBlockManager = getBadBlockManager();
+    LOG.trace("Mark descendents of bad block {} as bad", badBlock.getHash());
+    final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
 
     final Optional<BlockHeader> parentHeader =
         protocolContext.getBlockchain().getBlockHeader(badBlock.getHeader().getParentHash());
@@ -795,12 +792,11 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
             ? Optional.of(parentHeader.get().getHash())
             : Optional.empty();
 
-    badBlockManager.addBadBlock(badBlock, Optional.empty());
-
+    // Bad block has already been marked, but we need to mark the bad block's descendants
     badBlockDescendants.forEach(
         block -> {
           LOG.trace("Add descendant block {} to bad blocks", block.getHash());
-          badBlockManager.addBadBlock(block, Optional.empty());
+          badBlockManager.addBadBlock(block, BadBlockCause.fromBadAncestorBlock(badBlock));
           maybeLatestValidHash.ifPresent(
               latestValidHash ->
                   badBlockManager.addLatestValidHash(block.getHash(), latestValidHash));
@@ -809,7 +805,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
     badBlockHeaderDescendants.forEach(
         header -> {
           LOG.trace("Add descendant header {} to bad blocks", header.getHash());
-          badBlockManager.addBadHeader(header);
+          badBlockManager.addBadHeader(header, BadBlockCause.fromBadAncestorBlock(badBlock));
           maybeLatestValidHash.ifPresent(
               latestValidHash ->
                   badBlockManager.addLatestValidHash(header.getHash(), latestValidHash));
@@ -840,34 +836,14 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   }
 
   @Override
-  public void addBadBlock(final Block block, final Optional<Throwable> maybeCause) {
-    protocolSchedule
-        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
-        .getBadBlocksManager()
-        .addBadBlock(block, maybeCause);
-  }
-
-  @Override
   public boolean isBadBlock(final Hash blockHash) {
-    final BadBlockManager badBlocksManager = getBadBlockManager();
-    return badBlocksManager.getBadBlock(blockHash).isPresent()
-        || badBlocksManager.getBadHash(blockHash).isPresent();
-  }
-
-  private BadBlockManager getBadBlockManager() {
-    final BadBlockManager badBlocksManager =
-        protocolSchedule
-            .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
-            .getBadBlocksManager();
-    return badBlocksManager;
+    final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
+    return badBlockManager.isBadBlock(blockHash);
   }
 
   @Override
   public Optional<Hash> getLatestValidHashOfBadBlock(Hash blockHash) {
-    return protocolSchedule
-        .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
-        .getBadBlocksManager()
-        .getLatestValidHash(blockHash);
+    return protocolContext.getBadBlockManager().getLatestValidHash(blockHash);
   }
 
   private boolean isPoSHeader(final BlockHeader header) {

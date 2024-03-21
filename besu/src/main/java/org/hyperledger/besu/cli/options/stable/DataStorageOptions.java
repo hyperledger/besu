@@ -25,8 +25,8 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.List;
 
@@ -49,7 +49,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       description =
           "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
       arity = "1")
-  private DataStorageFormat dataStorageFormat = DataStorageFormat.FOREST;
+  private DataStorageFormat dataStorageFormat = DataStorageFormat.BONSAI;
 
   @Option(
       names = {BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD, "--bonsai-maximum-back-layers-to-load"},
@@ -139,7 +139,13 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     }
   }
 
-  static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
+  /**
+   * Converts to options from the configuration
+   *
+   * @param domainObject to be reversed
+   * @return the options that correspond to the configuration
+   */
+  public static DataStorageOptions fromConfig(final DataStorageConfiguration domainObject) {
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
     dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();

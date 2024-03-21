@@ -75,10 +75,12 @@ public class JsonRpcErrorConverter {
         return RpcErrorType.TOTAL_BLOB_GAS_TOO_HIGH;
       case TX_POOL_DISABLED:
         return RpcErrorType.TX_POOL_DISABLED;
-      case PLUGIN_TX_VALIDATOR:
+      case PLUGIN_TX_POOL_VALIDATOR:
         return RpcErrorType.PLUGIN_TX_VALIDATOR;
       case INVALID_BLOBS:
         return RpcErrorType.INVALID_BLOBS;
+      case BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE:
+        return RpcErrorType.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE;
       case EXECUTION_HALTED:
         return RpcErrorType.EXECUTION_HALTED;
       default:

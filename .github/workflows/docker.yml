@@ -4,7 +4,7 @@ on:
     types:
       - prereleased
 env:
-  registry: ghcr.io
+  registry: docker.io
 
 jobs:
   hadolint:
@@ -18,7 +18,9 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: hadoLint_openj9-jdk_17
         run: docker run --rm -i hadolint/hadolint < docker/openj9-jdk-17/Dockerfile
       - name: hadoLint_openjdk_17
@@ -65,27 +67,30 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: install goss
         run: |
           mkdir -p docker/reports
           curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
-      - name: login to ghcr
+      - name: login to ${{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: ${{ env.registry }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: build and test docker
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
-          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+          cache-disabled: true
+          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
       - name: publish
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
-        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
   multiArch:
     needs: buildDocker
     runs-on: ubuntu-22.04
@@ -101,13 +106,26 @@ jobs:
           distribution: temurin
           java-version: 17
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
-      - name: login to ghcr
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
+      - name: login to ${{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
         with:
           registry: ${{ env.registry }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: multi-arch docker
-        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ github.repository_owner }} -Prelease.releaseVersion=${{ github.ref_name }}
-
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
+  amendNotes:
+    needs: multiArch
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    steps:
+      - name: add pull command to release notes
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+        with:
+          append_body: true
+          body: |
+            `docker pull ${{env.registry}}/${{secrets.DOCKER_ORG}}/besu:${{github.ref_name}}`

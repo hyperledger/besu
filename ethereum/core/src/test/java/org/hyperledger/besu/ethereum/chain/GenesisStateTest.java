@@ -57,7 +57,7 @@ final class GenesisStateTest {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
       return Stream.of(
-          Arguments.of(DataStorageConfiguration.DEFAULT_CONFIG),
+          Arguments.of(DataStorageConfiguration.DEFAULT_FOREST_CONFIG),
           Arguments.of(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
     }
   }

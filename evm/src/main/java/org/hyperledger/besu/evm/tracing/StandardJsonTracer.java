@@ -20,6 +20,7 @@ import static com.google.common.base.Strings.padStart;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.AbstractCallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 
 import java.io.PrintStream;
@@ -174,6 +175,10 @@ public class StandardJsonTracer implements OperationTracer {
     }
     final int opcode = currentOp.getOpcode();
     final Bytes returnData = messageFrame.getReturnData();
+    long thisGasCost = executeResult.getGasCost();
+    if (currentOp instanceof AbstractCallOperation) {
+      thisGasCost += messageFrame.getMessageFrameStack().getFirst().getRemainingGas();
+    }
 
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
@@ -183,7 +188,7 @@ public class StandardJsonTracer implements OperationTracer {
     }
     sb.append("\"op\":").append(opcode).append(",");
     sb.append("\"gas\":\"").append(gas).append("\",");
-    sb.append("\"gasCost\":\"").append(shortNumber(executeResult.getGasCost())).append("\",");
+    sb.append("\"gasCost\":\"").append(shortNumber(thisGasCost)).append("\",");
     if (memory != null) {
       sb.append("\"memory\":\"").append(memory.toHexString()).append("\",");
     }

@@ -1,10 +1,12 @@
 
-name: artifacts
+name: release artifacts
 
 on:
   release:
     types:
       - prereleased
+env:
+  GRADLE_OPTS: "-Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
 
 jobs:
   artifacts:
@@ -20,10 +22,12 @@ jobs:
           distribution: 'temurin'
           java-version: '17'
       - name: setup gradle
-        uses: gradle/gradle-build-action@a8f75513eafdebd8141bd1cd4e30fcd194af8dfa
-      - name: assemble distributions
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
+      - name: assemble release
         run:
-          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} assemble -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+          ./gradlew -Prelease.releaseVersion=${{github.ref_name}} -Pversion=${{github.ref_name}} assemble
       - name: hashes
         id: hashes
         run: |
@@ -42,16 +46,10 @@ jobs:
           path: 'build/distributions/besu*.zip'
           name: besu-${{ github.ref_name }}.zip
           compression-level: 0
-      - name: Upload Release assets
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
-        with:
-          append_body: true
-          files: |
-            build/distributions/besu*.tar.gz
-            build/distributions/besu*.zip
-          body: |
-            ${{steps.hashes.outputs.tarSha}}
-            ${{steps.hashes.outputs.zipSha}}
+      - name: Artifactory Publish
+        env:
+          ARTIFACTORY_USER: ${{ secrets.BESU_ARTIFACTORY }}
+        run: ./gradlew -Prelease.releaseVersion=${{ github.ref_name }} -Pversion=${{github.ref_name}} artifactoryPublish
   testWindows:
     runs-on: windows-2022
     needs: artifacts
@@ -66,13 +64,34 @@ jobs:
       - name: Download zip
         uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
         with:
-          name: besu-${{ github.ref_name }}.zip
+          pattern: besu-*.zip
+          merge-multiple: true
       - name: test Besu
         run: |
+          dir
           unzip besu-*.zip -d besu-tmp
           cd besu-tmp
           mv besu-* ../besu
           cd ..
           besu\bin\besu.bat --help
           besu\bin\besu.bat --version
-
+  publish:
+    runs-on: ubuntu-22.04
+    needs: testWindows
+    steps:
+      - name: Download archives
+        uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
+        with:
+          pattern: besu-*
+          merge-multiple: true
+          path: 'build/distributions'
+      - name: Upload Release assets
+        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+        with:
+          append_body: true
+          files: |
+            build/distributions/besu*.tar.gz
+            build/distributions/besu*.zip
+          body: |
+            ${{steps.hashes.outputs.tarSha}}
+            ${{steps.hashes.outputs.zipSha}}

@@ -101,7 +101,7 @@ public class ExtStaticCallOperation extends AbstractCallOperation {
   }
 
   @Override
-  public long cost(final MessageFrame frame) {
+  public long cost(final MessageFrame frame, final boolean accountIsWarm) {
     final long inputDataOffset = inputDataOffset(frame);
     final long inputDataLength = inputDataLength(frame);
     final Account recipient = frame.getWorldUpdater().get(address(frame));
@@ -116,6 +116,7 @@ public class ExtStaticCallOperation extends AbstractCallOperation {
             0,
             value(frame),
             recipient,
-            to(frame));
+            to(frame),
+            accountIsWarm);
   }
 }

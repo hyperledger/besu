@@ -56,11 +56,10 @@ import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -189,15 +188,10 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+      final ConsensusContextFactory consensusContextFactory) {
     final ProtocolContext protocolContext =
         super.createProtocolContext(
-            blockchain,
-            worldStateArchive,
-            protocolSchedule,
-            consensusContextFactory,
-            transactionSelectorFactory);
+            blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     return protocolContext;
   }
@@ -223,7 +217,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected Synchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
       final Optional<Pruner> maybePruner,
       final EthContext ethContext,
@@ -235,7 +229,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         (DefaultSynchronizer)
             super.createSynchronizer(
                 protocolSchedule,
-                worldStateStorage,
+                worldStateStorageCoordinator,
                 protocolContext,
                 maybePruner,
                 ethContext,

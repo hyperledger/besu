@@ -370,4 +370,9 @@ public class TransactionPoolOptionsTest
   protected TransactionPoolOptions getOptionsFromBesuCommand(final TestBesuCommand besuCommand) {
     return besuCommand.getTransactionPoolOptions();
   }
+
+  @Override
+  protected String[] getNonOptionFields() {
+    return new String[] {"transactionPoolValidatorService"};
+  }
 }

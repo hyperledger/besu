@@ -602,6 +602,7 @@ public record EOFLayout(
    *
    * @param out the print writer to pretty print to
    * @param prefix The prefix to prepend to all output lines (useful for nested subconntainers)
+   * @param subcontainerPrefix The prefix to add to subcontainer names.
    */
   public void prettyPrint(
       final PrintWriter out, final String prefix, final String subcontainerPrefix) {

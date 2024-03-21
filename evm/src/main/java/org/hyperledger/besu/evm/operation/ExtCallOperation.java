@@ -93,17 +93,7 @@ public class ExtCallOperation extends AbstractCallOperation {
   }
 
   @Override
-  protected boolean isStatic(final MessageFrame frame) {
-    return frame.isStatic();
-  }
-
-  @Override
-  protected boolean isDelegate() {
-    return false;
-  }
-
-  @Override
-  public long cost(final MessageFrame frame) {
+  public long cost(final MessageFrame frame, final boolean accountIsWarm) {
     final long inputDataOffset = inputDataOffset(frame);
     final long inputDataLength = inputDataLength(frame);
     final Account recipient = frame.getWorldUpdater().get(address(frame));
@@ -118,13 +108,17 @@ public class ExtCallOperation extends AbstractCallOperation {
             0,
             value(frame),
             recipient,
-            to(frame));
+            to(frame),
+            accountIsWarm);
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.isStatic() && !value(frame).isZero()) {
-      return new OperationResult(cost(frame), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+      Address to = to(frame);
+      final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
+      return new OperationResult(
+          cost(frame, accountIsWarm), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else {
       return super.execute(frame, evm);
     }

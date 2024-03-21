@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalcu
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer.TraceableState;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -39,9 +40,14 @@ public class BlockReplay {
 
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
+  private final ProtocolContext protocolContext;
 
-  public BlockReplay(final ProtocolSchedule protocolSchedule, final Blockchain blockchain) {
+  public BlockReplay(
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final Blockchain blockchain) {
     this.protocolSchedule = protocolSchedule;
+    this.protocolContext = protocolContext;
     this.blockchain = blockchain;
   }
 
@@ -145,7 +151,7 @@ public class BlockReplay {
   public <T> Optional<T> performActionWithBlock(final Hash blockHash, final BlockAction<T> action) {
     Optional<Block> maybeBlock = getBlock(blockHash);
     if (maybeBlock.isEmpty()) {
-      maybeBlock = getBadBlock(blockHash);
+      maybeBlock = protocolContext.getBadBlockManager().getBadBlock(blockHash);
     }
     return maybeBlock.flatMap(
         block -> performActionWithBlock(block.getHeader(), block.getBody(), action));
@@ -174,12 +180,6 @@ public class BlockReplay {
       }
     }
     return Optional.empty();
-  }
-
-  private Optional<Block> getBadBlock(final Hash blockHash) {
-    final ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
-    return protocolSpec.getBadBlocksManager().getBadBlock(blockHash);
   }
 
   @FunctionalInterface
