@@ -49,9 +49,11 @@ import com.google.common.collect.Lists;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestDataStep {
-
+  private static final Logger LOG = LoggerFactory.getLogger(RequestDataStep.class);
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final SnapSyncProcessState fastSyncState;
   private final SnapWorldDownloadState downloadState;
@@ -140,23 +142,25 @@ public class RequestDataStep {
                  * An "empty range" is defined as a response where either no slots are present,
                  * or the first slot is empty, but at least one proof exists
                  */
-                final boolean isEmptyRange =
-                    (response.slots().isEmpty() || response.slots().get(0).isEmpty())
-                        && !response.proofs().isEmpty();
-                if (isEmptyRange) { // empty range detected
-                  slots.add(new TreeMap<>());
-                } else {
-                  slots.addAll(response.slots());
-                }
-                for (int i = 0; i < slots.size(); i++) {
-                  final StorageRangeDataRequest request =
-                      (StorageRangeDataRequest) requestTasks.get(i).getData();
-                  request.setRootHash(blockHeader.getStateRoot());
-                  request.addResponse(
-                      downloadState,
-                      worldStateProofProvider,
-                      response.slots().get(i),
-                      i < response.slots().size() - 1 ? new ArrayDeque<>() : response.proofs());
+                try {
+                  final boolean isEmptyRange =
+                      (response.slots().isEmpty() || response.slots().get(0).isEmpty()) && !response
+                          .proofs()
+                          .isEmpty();
+                  if (isEmptyRange) { // empty range detected
+                    slots.add(new TreeMap<>());
+                  } else {
+                    slots.addAll(response.slots());
+                  }
+                  for (int i = 0; i < slots.size(); i++) {
+                    final StorageRangeDataRequest request =
+                        (StorageRangeDataRequest) requestTasks.get(i).getData();
+                    request.setRootHash(blockHeader.getStateRoot());
+                    request.addResponse(downloadState, worldStateProofProvider, slots.get(i),
+                        i < slots.size() - 1 ? new ArrayDeque<>() : response.proofs());
+                  }
+                } catch(final Exception e) {
+                  LOG.error("Error while processing storage range response", e);
                 }
               }
               return requestTasks;
