@@ -105,7 +105,9 @@ public abstract class AbstractIsolationTests {
               .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
-          GenesisConfigFile.development().getConfigOptions(), new BadBlockManager());
+          GenesisConfigFile.development().getConfigOptions(),
+          MiningParameters.MINING_DISABLED,
+          new BadBlockManager());
   protected final GenesisState genesisState =
       GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());

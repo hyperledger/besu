@@ -28,7 +28,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.Map;
@@ -171,11 +172,11 @@ public class EthEstimateGasIntegrationTest {
             null,
             null);
     final JsonRpcRequestContext request = requestWithParams(callParameter);
-
-    final RpcErrorType rpcErrorType = RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
-    final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
-    rpcError.setReason(
-        "transaction up-front cost 0x1cc31b3333167018 exceeds transaction sender account balance 0x140");
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        ValidationResult.invalid(
+            TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+            "transaction up-front cost 0x1cc31b3333167018 exceeds transaction sender account balance 0x140");
+    final JsonRpcError rpcError = JsonRpcError.from(validationResult);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
     final JsonRpcResponse response = method.response(request);
