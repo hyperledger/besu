@@ -34,7 +34,6 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    * org.hyperledger.besu.ethereum.util.RawBlockIterator }
    */
   private final List<Transaction> transactions;
-
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
   private final Optional<List<Deposit>> deposits;
