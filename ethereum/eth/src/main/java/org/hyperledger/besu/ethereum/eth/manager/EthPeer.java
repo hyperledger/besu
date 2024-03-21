@@ -401,6 +401,18 @@ public class EthPeer implements Comparable<EthPeer> {
         messageData);
   }
 
+  /**
+   * Determines the validity of a message received from a peer. A message is considered valid if
+   * either of the following conditions are met: 1) The message is a request type message (e.g.
+   * GET_BLOCK_HEADERS), or 2) The message is a response type message (e.g. BLOCK_HEADERS), the node
+   * has made at least 1 request for that type of message (i.e. it has sent at least 1
+   * GET_BLOCK_HEADERS request), and it has at least 1 outstanding request of that type which it
+   * expects to receive a response for.
+   *
+   * @param message The message being validated
+   * @param protocolName The protocol type of the message
+   * @return true if the message is valid as per the above logic, otherwise false.
+   */
   public boolean validateReceivedMessage(final EthMessage message, final String protocolName) {
     checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
     return getRequestManager(protocolName, message.getData().getCode())
@@ -442,6 +454,16 @@ public class EthPeer implements Comparable<EthPeer> {
     dispatch(ethMessage, protocolName);
   }
 
+  /**
+   * Attempt to get a request manager for a received response-type message e.g. BLOCK_HEADERS. If
+   * the message is a request-type message e.g. GET_BLOCK_HEADERS no request manager will exist so
+   * Optional.empty() will be returned.
+   *
+   * @param protocolName the type of protocol the message is for
+   * @param code the message code
+   * @return a request manager for the received response messsage, or Optional.empty() if this is a
+   *     request message
+   */
   private Optional<RequestManager> getRequestManager(final String protocolName, final int code) {
     if (requestManagers.containsKey(protocolName)) {
       final Map<Integer, RequestManager> managers = requestManagers.get(protocolName);

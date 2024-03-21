@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -46,7 +47,8 @@ public class MergeProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
-        MergeProtocolSchedule.create(config, false, new BadBlockManager());
+        MergeProtocolSchedule.create(
+            config, false, MiningParameters.MINING_DISABLED, new BadBlockManager());
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
     final ProtocolSpec londonSpec = protocolSchedule.getByBlockHeader(blockHeader(1559));
@@ -61,7 +63,8 @@ public class MergeProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.mainnet().getConfigOptions();
     final ProtocolSchedule protocolSchedule =
-        MergeProtocolSchedule.create(config, false, new BadBlockManager());
+        MergeProtocolSchedule.create(
+            config, false, MiningParameters.MINING_DISABLED, new BadBlockManager());
 
     final long lastParisBlockNumber = 17034869L;
     final ProtocolSpec parisSpec =
@@ -96,7 +99,8 @@ public class MergeProtocolScheduleTest {
 
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
-        MergeProtocolSchedule.create(config, false, new BadBlockManager());
+        MergeProtocolSchedule.create(
+            config, false, MiningParameters.MINING_DISABLED, new BadBlockManager());
 
     final ProtocolSpec parisSpec =
         protocolSchedule.getByBlockHeader(
@@ -123,7 +127,8 @@ public class MergeProtocolScheduleTest {
   public void mergeSpecificModificationsAreUnappliedForAllMainnetForksAfterParis() {
     final GenesisConfigOptions config = GenesisConfigFile.mainnet().getConfigOptions();
     final ProtocolSchedule protocolSchedule =
-        MergeProtocolSchedule.create(config, false, new BadBlockManager());
+        MergeProtocolSchedule.create(
+            config, false, MiningParameters.MINING_DISABLED, new BadBlockManager());
 
     final long lastParisBlockNumber = 17034869L;
     final ProtocolSpec parisSpec =
@@ -152,7 +157,10 @@ public class MergeProtocolScheduleTest {
   public void parametersAlignWithMainnetWithAdjustments() {
     final ProtocolSpec london =
         MergeProtocolSchedule.create(
-                GenesisConfigFile.DEFAULT.getConfigOptions(), false, new BadBlockManager())
+                GenesisConfigFile.DEFAULT.getConfigOptions(),
+                false,
+                MiningParameters.MINING_DISABLED,
+                new BadBlockManager())
             .getByBlockHeader(blockHeader(0));
 
     assertThat(london.getName()).isEqualTo("Paris");

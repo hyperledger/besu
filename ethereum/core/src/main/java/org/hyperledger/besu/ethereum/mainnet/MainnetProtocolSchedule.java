@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyCalculators;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
@@ -37,6 +38,7 @@ public class MainnetProtocolSchedule {
    * @param privacyParameters the parameters set for private transactions
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @param evmConfiguration how to configure the EVMs jumpdest cache
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return A configured mainnet protocol schedule
    */
@@ -45,10 +47,16 @@ public class MainnetProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
-          config, privacyParameters, isRevertReasonEnabled, evmConfiguration, badBlockManager);
+          config,
+          privacyParameters,
+          isRevertReasonEnabled,
+          evmConfiguration,
+          miningParameters,
+          badBlockManager);
     }
     return new ProtocolScheduleBuilder(
             config,
@@ -57,6 +65,7 @@ public class MainnetProtocolSchedule {
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
+            miningParameters,
             badBlockManager)
         .createProtocolSchedule();
   }
@@ -68,6 +77,7 @@ public class MainnetProtocolSchedule {
    *     starting points
    * @param isRevertReasonEnabled whether storing the revert reason is for failed transactions
    * @param evmConfiguration how to configure the EVMs jumpdest cache
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return A configured mainnet protocol schedule
    */
@@ -75,12 +85,14 @@ public class MainnetProtocolSchedule {
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
     return fromConfig(
         config,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager);
   }
 
@@ -90,14 +102,22 @@ public class MainnetProtocolSchedule {
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
    * @param evmConfiguration size of
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
-    return fromConfig(config, PrivacyParameters.DEFAULT, false, evmConfiguration, badBlockManager);
+    return fromConfig(
+        config,
+        PrivacyParameters.DEFAULT,
+        false,
+        evmConfiguration,
+        miningParameters,
+        badBlockManager);
   }
 
   /**
@@ -105,12 +125,20 @@ public class MainnetProtocolSchedule {
    *
    * @param config {@link GenesisConfigOptions} containing the config options for the milestone
    *     starting points
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
-      final GenesisConfigOptions config, final BadBlockManager badBlockManager) {
+      final GenesisConfigOptions config,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     return fromConfig(
-        config, PrivacyParameters.DEFAULT, false, EvmConfiguration.DEFAULT, badBlockManager);
+        config,
+        PrivacyParameters.DEFAULT,
+        false,
+        EvmConfiguration.DEFAULT,
+        miningParameters,
+        badBlockManager);
   }
 }

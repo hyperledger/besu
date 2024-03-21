@@ -14,28 +14,58 @@
  */
 package org.hyperledger.besu.plugin.services.exception;
 
+import org.hyperledger.besu.plugin.services.rpc.RpcMethodError;
+
 /** Base exception class for problems encountered in the RpcEndpointService. */
 public class PluginRpcEndpointException extends RuntimeException {
+  /** The error */
+  private final RpcMethodError rpcMethodError;
+
   /**
-   * Constructs a new PluginRpcEndpointException exception with the specified message.
+   * Constructs a new PluginRpcEndpointException exception with the specified error.
    *
-   * @param message the detail message (which is saved for later retrieval by the {@link
-   *     #getMessage()} method).
+   * @param rpcMethodError the error.
    */
-  public PluginRpcEndpointException(final String message) {
-    super(message);
+  public PluginRpcEndpointException(final RpcMethodError rpcMethodError) {
+    super();
+    this.rpcMethodError = rpcMethodError;
   }
 
   /**
-   * Constructs a new PluginRpcEndpointException exception with the specified message.
+   * Constructs a new PluginRpcEndpointException exception with the specified error and message.
    *
+   * @param rpcMethodError the error.
+   * @param message the detail message (which is saved for later retrieval by the {@link
+   *     #getMessage()} method).
+   */
+  public PluginRpcEndpointException(final RpcMethodError rpcMethodError, final String message) {
+    super(message);
+    this.rpcMethodError = rpcMethodError;
+  }
+
+  /**
+   * Constructs a new PluginRpcEndpointException exception with the specified error, message and
+   * cause.
+   *
+   * @param rpcMethodError the error.
    * @param message the detail message (which is saved for later retrieval by the {@link
    *     #getMessage()} method).
    * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method).
    *     (A {@code null} value is permitted, and indicates that the cause is nonexistent or
    *     unknown.)
    */
-  public PluginRpcEndpointException(final String message, final Throwable cause) {
+  public PluginRpcEndpointException(
+      final RpcMethodError rpcMethodError, final String message, final Throwable cause) {
     super(message, cause);
+    this.rpcMethodError = rpcMethodError;
+  }
+
+  /**
+   * Get the error
+   *
+   * @return the error
+   */
+  public RpcMethodError getRpcMethodError() {
+    return rpcMethodError;
   }
 }

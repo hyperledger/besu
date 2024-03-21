@@ -9,7 +9,9 @@
         "from": "a94f5374fce5edbc8e2a8697c15331677e6ebf0b",
         "data": "0x12a7b914",
         "blobVersionedHashes" : ["0x0100000051c8833cfbaf272e62da1285b183b0405357f62b052a4894ffcdaa2d"],
-        "maxFeePerBlobGas": "0x0"
+        "gasPrice": "0x000000000000000000000000000000000000000000000000000000003437004a",
+        "maxFeePerBlobGas": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "strict": true
       },
       "latest"
     ]
@@ -17,7 +19,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 4,
-    "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
+    "error":{"code":-32009,"message":"blob gas price below current blob base fee"}
   },
   "statusCode": 200
 }
