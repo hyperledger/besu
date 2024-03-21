@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -31,7 +32,8 @@ public class LineaProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
 
     return MainnetProtocolSpecs.londonDefinition(
             chainId,
@@ -39,7 +41,8 @@ public class LineaProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             genesisConfigOptions,
-            evmConfiguration)
+            evmConfiguration,
+            miningParameters)
         // some Linea evm opcodes behave differently.
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->

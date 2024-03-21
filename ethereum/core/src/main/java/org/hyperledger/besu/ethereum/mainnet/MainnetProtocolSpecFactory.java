@@ -333,6 +333,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         genesisConfigOptions,
-        evmConfiguration);
+        evmConfiguration,
+        miningParameters);
   }
 }
