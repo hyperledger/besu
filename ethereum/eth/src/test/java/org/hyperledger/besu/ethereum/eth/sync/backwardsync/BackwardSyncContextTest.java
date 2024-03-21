@@ -60,12 +60,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
-import org.apache.logging.log4j.Level;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.core.config.Configurator;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -87,7 +83,7 @@ public class BackwardSyncContextTest {
   public static final int REMOTE_HEIGHT = 50;
   public static final int UNCLE_HEIGHT = 25 - 3;
 
-  public static final int NUM_OF_RETRIES = 2;
+  public static final int NUM_OF_RETRIES = 1;
   public static final int TEST_MAX_BAD_CHAIN_EVENT_ENTRIES = 25;
 
   private BackwardSyncContext context;
@@ -448,40 +444,50 @@ public class BackwardSyncContextTest {
 
   @SuppressWarnings("BannedMethod")
   @Test
-  public void
-      whenMaxRetriesException_shouldRemoveUnattainableBlockFromQueueAndProgressUponNextFCU() {
+  public void whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressInNextSession() {
     // This scenario can happen due to a reorg
-    // The expectation is we can progress beyond the reorg block the next time we receive an FCU
-
-    Configurator.setLevel(LogManager.getRootLogger(), Level.TRACE);
+    // Expectation we progress beyond the reorg block upon receiving the next FCU
 
     // choose an intermediate remote block to create a reorg block from
-    int reorgBlockHeight = REMOTE_HEIGHT - 1;
+    int reorgBlockHeight = REMOTE_HEIGHT - 1; // 49
     final Hash reorgBlockParentHash = getBlockByNumber(reorgBlockHeight - 1).getHash();
     final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
+
     // represents first FCU with a block that will become reorged away
     final CompletableFuture<Void> fcuBeforeReorg = context.syncBackwardsUntil(reorgBlock.getHash());
-
     respondUntilFutureIsDone(fcuBeforeReorg);
-
-    assertThatThrownBy(() -> fcuBeforeReorg.get(100, TimeUnit.MILLISECONDS))
-        .isInstanceOf(ExecutionException.class)
-        .hasCauseInstanceOf(BackwardSyncException.class)
-        .cause()
-        .hasMessageContaining("Max number of retries " + NUM_OF_RETRIES + " reached");
-
     assertThat(localBlockchain.getChainHeadBlockNumber()).isLessThan(reorgBlockHeight);
 
     // represents subsequent FCU with successfully reorged version of the same block
     final CompletableFuture<Void> fcuAfterReorg =
-        context.syncBackwardsUntil(getBlockByNumber(REMOTE_HEIGHT - 1).getHash());
+        context.syncBackwardsUntil(getBlockByNumber(reorgBlockHeight).getHash());
     respondUntilFutureIsDone(fcuAfterReorg);
-    try {
-      fcuAfterReorg.get(100, TimeUnit.MILLISECONDS);
-      assertThat(localBlockchain.getChainHeadBlock())
-          .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
-    } catch (final Throwable throwable) {
-      throw new AssertionError("Expected backwards sync to progress", throwable);
-    }
+    assertThat(localBlockchain.getChainHeadBlock())
+        .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
+  }
+
+  @SuppressWarnings("BannedMethod")
+  @Test
+  public void
+      whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressWithQueueInSameSession() {
+    // This scenario can happen due to a reorg
+    // Expectation we progress beyond the reorg block due to FCU we received during the same session
+
+    // choose an intermediate remote block to create a reorg block from
+    int reorgBlockHeight = REMOTE_HEIGHT - 1; // 49
+    final Hash reorgBlockParentHash = getBlockByNumber(reorgBlockHeight - 1).getHash();
+    final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
+
+    // represents first FCU with a block that will become reorged away
+    final CompletableFuture<Void> fcuBeforeReorg = context.syncBackwardsUntil(reorgBlock.getHash());
+    // represents subsequent FCU with successfully reorged version of the same block
+    // received during the first FCU's BWS session
+    final CompletableFuture<Void> fcuAfterReorg =
+        context.syncBackwardsUntil(getBlockByNumber(reorgBlockHeight).getHash());
+
+    respondUntilFutureIsDone(fcuBeforeReorg);
+    respondUntilFutureIsDone(fcuAfterReorg);
+    assertThat(localBlockchain.getChainHeadBlock())
+        .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
   }
 }

@@ -254,8 +254,4 @@ public class BackwardChain {
       hashesToAppend.remove(hashToRemove);
     }
   }
-
-  public synchronized int getHashesToAppendSize() {
-    return hashesToAppend.size();
-  }
 }

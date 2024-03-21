@@ -63,51 +63,40 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
   public CompletableFuture<Void> pickNextStep() {
     final Optional<Hash> firstHash = context.getBackwardChain().getFirstHashToAppend();
     if (firstHash.isPresent()) {
-      final CompletableFuture<Void> completableFuture = new CompletableFuture<>();
+      final CompletableFuture<Void> syncStep = new CompletableFuture<>();
       executeSyncStep(firstHash.get())
           .whenComplete(
               (result, error) -> {
                 if (error != null) {
                   if (error instanceof CompletionException
-                      && error.getCause() instanceof MaxRetriesReachedException) { // &&
-                    // context.getEthContext().getEthPeers().peerCount() >
-                    // (context.getEthContext().getEthPeers().getMaxPeers() / 2)
-                    if (context.getBackwardChain().getHashesToAppendSize() > 1) {
-                      context.getBackwardChain().removeFromHashToAppend(firstHash.get());
-                      LOG.atWarn()
-                          .setMessage(
-                              "Unable to retrieve block {} from any peer, with {} peers available. Could be a reorged block. Removing hash from queue to move onto next hash.")
-                          .addArgument(firstHash.get())
-                          .addArgument(context.getEthContext().getEthPeers().peerCount())
-                          .addArgument(context.getBackwardChain().getFirstHashToAppend())
-                          .log();
-                      completableFuture.complete(null);
-                    } else { // removing the last hash from the queue will break things
-                      LOG.atWarn()
-                          .setMessage(
-                              "Unable to retrieve block {} from any peer, with {} peers available. Could be a reorged block. Waiting for another block hash from consensus client...")
-                          .addArgument(firstHash::get)
-                          .addArgument(() -> context.getEthContext().getEthPeers().peerCount())
-                          .log();
-                      completableFuture.completeExceptionally(error);
-                    }
+                      && error.getCause() instanceof MaxRetriesReachedException) {
+                    context.getBackwardChain().removeFromHashToAppend(firstHash.get());
+                    LOG.atWarn()
+                        .setMessage(
+                            "Unable to retrieve block {} from any peer, with {} peers available. Could be a reorged block. Waiting for the next block from the consensus client to try again.")
+                        .addArgument(firstHash.get())
+                        .addArgument(context.getEthContext().getEthPeers().peerCount())
+                        .addArgument(context.getBackwardChain().getFirstHashToAppend())
+                        .log();
+                    LOG.atDebug()
+                        .setMessage("Removing hash {} from hashesToAppend")
+                        .addArgument(firstHash.get())
+                        .log();
+                    syncStep.complete(null);
                   } else {
-                    completableFuture.completeExceptionally(error);
+                    syncStep.completeExceptionally(error);
                   }
                 } else {
-                  completableFuture.complete(null);
+                  LOG.atDebug()
+                      .setMessage("Backward sync target block is {}")
+                      .addArgument(result::toLogString)
+                      .log();
+                  context.getBackwardChain().removeFromHashToAppend(firstHash.get());
+                  context.getStatus().updateTargetHeight(result.getHeader().getNumber());
+                  syncStep.complete(null);
                 }
-              })
-          .thenAccept(
-              result -> {
-                LOG.atDebug()
-                    .setMessage("Backward sync target block is {}")
-                    .addArgument(result::toLogString)
-                    .log();
-                context.getBackwardChain().removeFromHashToAppend(firstHash.get());
-                context.getStatus().updateTargetHeight(result.getHeader().getNumber());
               });
-      return completableFuture;
+      return syncStep;
     }
     if (!context.isReady()) {
       return waitForReady();

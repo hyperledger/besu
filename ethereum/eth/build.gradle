@@ -84,7 +84,6 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
   testImplementation 'org.openjdk.jol:jol-core'
-  testImplementation 'org.apache.logging.log4j:log4j-core'
 
   testSupportImplementation 'org.mockito:mockito-core'
   testSupportImplementation project(':testutil')
