@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
@@ -138,10 +139,6 @@ public class IbftRoundTest {
     lenient()
         .when(blockImporter.importBlock(any(), any(), any()))
         .thenReturn(new BlockImportResult(BlockImportResult.BlockImportStatus.IMPORTED));
-
-    lenient()
-        .when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
-        .thenReturn(protocolSpec);
 
     subscribers.subscribe(minedBlockObserver);
   }
@@ -277,6 +274,9 @@ public class IbftRoundTest {
 
   @Test
   public void localNodeProposesToNetworkOfTwoValidatorsImportsOnReceptionOfCommitFromPeer() {
+    lenient()
+        .when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
     final RoundState roundState = new RoundState(roundIdentifier, 2, messageValidator);
     final IbftRound round =
         new IbftRound(

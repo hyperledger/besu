@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
-import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
@@ -46,8 +45,6 @@ import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -132,19 +129,8 @@ public class QbftRound {
    */
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
+    final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
 
-    // Determine if we're at a protocol spec that requires withdrawals (even if empty) to be present
-    ProtocolSpec protocolSpec =
-        ((BftProtocolSchedule) protocolSchedule)
-            .getByBlockNumberOrTimestamp(
-                roundState.getRoundIdentifier().getSequenceNumber(), headerTimeStampSeconds);
-
-    final Block block;
-    if (protocolSpec.getWithdrawalsValidator() instanceof WithdrawalsValidator.AllowedWithdrawals) {
-      block = blockCreator.createEmptyWithdrawalsBlock(headerTimeStampSeconds).getBlock();
-    } else {
-      block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
-    }
     LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
@@ -162,21 +148,8 @@ public class QbftRound {
 
     final Block blockToPublish;
     if (bestPreparedCertificate.isEmpty()) {
-
-      // Determine if we're at a protocol spec that requires withdrawals (even if empty) to be
-      // present
-      ProtocolSpec protocolSpec =
-          ((BftProtocolSchedule) protocolSchedule)
-              .getByBlockNumberOrTimestamp(
-                  roundState.getRoundIdentifier().getSequenceNumber(), headerTimestamp);
-
-      if (protocolSpec.getWithdrawalsValidator()
-          instanceof WithdrawalsValidator.AllowedWithdrawals) {
-        blockToPublish = blockCreator.createEmptyWithdrawalsBlock(headerTimestamp).getBlock();
-      } else {
-        blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
-      }
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
+      blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
