@@ -586,8 +586,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
       if (variablesStorage != null) {
         VariablesStorage.Updater updater = variablesStorage.updater();
-        updater.setGenesisStateHash(genesisState.getBlock().getHeader().getStateRoot());
-        updater.commit();
+        if (updater != null) {
+          updater.setGenesisStateHash(genesisState.getBlock().getHeader().getStateRoot());
+          updater.commit();
+        }
       }
     }
 

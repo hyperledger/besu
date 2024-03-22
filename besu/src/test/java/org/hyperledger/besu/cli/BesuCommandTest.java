@@ -2377,14 +2377,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void useCachedGenesisStateHashShouldWork() throws IOException {
+  public void useCachedGenesisStateHashShouldWork() {
     parseCommand("--use-cached-genesis-state-hash");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
-    verify(mockControllerBuilder).build();
     verify(mockControllerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
