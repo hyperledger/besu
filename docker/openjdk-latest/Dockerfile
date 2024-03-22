@@ -3,7 +3,7 @@ FROM ubuntu:23.10
 ARG VERSION="dev"
 
 RUN apt-get update && \
- apt-get install --no-install-recommends -q --assume-yes openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3* && \
+ apt-get install --no-install-recommends -q --assume-yes curl=8* openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3* && \
  apt-get clean  && \
  rm -rf /var/lib/apt/lists/*  && \
  # Ubuntu 23.10 comes with an "ubuntu" user with uid 1000. We need 1000 for besu.
