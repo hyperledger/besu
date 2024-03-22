@@ -20,6 +20,8 @@ import org.hyperledger.besu.plugin.services.rpc.RpcMethodError;
 public class PluginRpcEndpointException extends RuntimeException {
   /** The error */
   private final RpcMethodError rpcMethodError;
+  /** The data associated with the exception */
+  private final String data;
 
   /**
    * Constructs a new PluginRpcEndpointException exception with the specified error.
@@ -27,20 +29,18 @@ public class PluginRpcEndpointException extends RuntimeException {
    * @param rpcMethodError the error.
    */
   public PluginRpcEndpointException(final RpcMethodError rpcMethodError) {
-    super();
-    this.rpcMethodError = rpcMethodError;
+    this(rpcMethodError, null);
   }
 
   /**
    * Constructs a new PluginRpcEndpointException exception with the specified error and message.
    *
    * @param rpcMethodError the error.
-   * @param message the detail message (which is saved for later retrieval by the {@link
-   *     #getMessage()} method).
+   * @param data the data associated with the exception that could be parsed to extract more
+   *     information to return in the error response.
    */
-  public PluginRpcEndpointException(final RpcMethodError rpcMethodError, final String message) {
-    super(message);
-    this.rpcMethodError = rpcMethodError;
+  public PluginRpcEndpointException(final RpcMethodError rpcMethodError, final String data) {
+    this(rpcMethodError, data, null);
   }
 
   /**
@@ -48,16 +48,17 @@ public class PluginRpcEndpointException extends RuntimeException {
    * cause.
    *
    * @param rpcMethodError the error.
-   * @param message the detail message (which is saved for later retrieval by the {@link
-   *     #getMessage()} method).
+   * @param data the data associated with the exception that could be parsed to extract more
+   *     information to return in the error response.
    * @param cause the cause (which is saved for later retrieval by the {@link #getCause()} method).
    *     (A {@code null} value is permitted, and indicates that the cause is nonexistent or
    *     unknown.)
    */
   public PluginRpcEndpointException(
-      final RpcMethodError rpcMethodError, final String message, final Throwable cause) {
-    super(message, cause);
+      final RpcMethodError rpcMethodError, final String data, final Throwable cause) {
+    super(rpcMethodError.getMessage(), cause);
     this.rpcMethodError = rpcMethodError;
+    this.data = data;
   }
 
   /**
@@ -67,5 +68,14 @@ public class PluginRpcEndpointException extends RuntimeException {
    */
   public RpcMethodError getRpcMethodError() {
     return rpcMethodError;
+  }
+
+  /**
+   * Get the data associated with the exception
+   *
+   * @return data as string, could be null.
+   */
+  public String getData() {
+    return data;
   }
 }
