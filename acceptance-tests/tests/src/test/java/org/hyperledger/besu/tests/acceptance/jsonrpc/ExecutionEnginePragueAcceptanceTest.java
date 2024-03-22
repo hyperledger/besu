@@ -22,13 +22,13 @@ import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.params.provider.Arguments;
 
-public class ExecutionEngineEip6110AcceptanceTest extends AbstractJsonRpcTest {
-  private static final String GENESIS_FILE = "/jsonrpc/engine/eip6110/genesis.json";
-  private static final String TEST_CASE_PATH = "/jsonrpc/engine/eip6110/test-cases/";
+public class ExecutionEnginePragueAcceptanceTest extends AbstractJsonRpcTest {
+  private static final String GENESIS_FILE = "/jsonrpc/engine/prague/genesis.json";
+  private static final String TEST_CASE_PATH = "/jsonrpc/engine/prague/test-cases/";
 
   private static JsonRpcTestsContext testsContext;
 
-  public ExecutionEngineEip6110AcceptanceTest() {
+  public ExecutionEnginePragueAcceptanceTest() {
     super(testsContext);
   }
 
