@@ -73,7 +73,6 @@ import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
-import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
@@ -232,7 +231,8 @@ public class JsonRpcHttpService {
       // Create the HTTP server and a router object.
       httpServer = vertx.createHttpServer(getHttpServerOptions());
 
-      httpServer.connectionHandler(connectionHandler());
+      httpServer.connectionHandler(
+          HandlerFactory.maxConnections(activeConnectionsCount, maxActiveConnections));
 
       httpServer
           .requestHandler(buildRouter())
@@ -273,33 +273,6 @@ public class JsonRpcHttpService {
     }
 
     return resultFuture;
-  }
-
-  private Handler<HttpConnection> connectionHandler() {
-
-    return connection -> {
-      if (activeConnectionsCount.get() >= maxActiveConnections) {
-        // disallow new connections to prevent DoS
-        LOG.warn(
-            "Rejecting new connection from {}. Max {} active connections limit reached.",
-            connection.remoteAddress(),
-            activeConnectionsCount.getAndIncrement());
-        connection.close();
-      } else {
-        LOG.debug(
-            "Opened connection from {}. Total of active connections: {}/{}",
-            connection.remoteAddress(),
-            activeConnectionsCount.incrementAndGet(),
-            maxActiveConnections);
-      }
-      connection.closeHandler(
-          c ->
-              LOG.debug(
-                  "Connection closed from {}. Total of active connections: {}/{}",
-                  connection.remoteAddress(),
-                  activeConnectionsCount.decrementAndGet(),
-                  maxActiveConnections));
-    };
   }
 
   private Router buildRouter() {

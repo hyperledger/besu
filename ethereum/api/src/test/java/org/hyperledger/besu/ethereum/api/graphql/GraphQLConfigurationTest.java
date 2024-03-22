@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.graphql;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.google.common.collect.Lists;
 import org.junit.jupiter.api.Test;
 
 public class GraphQLConfigurationTest {
@@ -27,5 +28,21 @@ public class GraphQLConfigurationTest {
     assertThat(configuration.isEnabled()).isFalse();
     assertThat(configuration.getHost()).isEqualTo("127.0.0.1");
     assertThat(configuration.getPort()).isEqualTo(8547);
+    assertThat(configuration.getCorsAllowedDomains()).isEmpty();
+    assertThat(configuration.getMaxActiveConnections())
+        .isEqualTo(GraphQLConfiguration.DEFAULT_MAX_ACTIVE_CONNECTIONS);
+    assertThat(configuration.getPrettyJsonEnabled())
+        .isEqualTo(GraphQLConfiguration.DEFAULT_PRETTY_JSON_ENABLED);
+  }
+
+  @Test
+  public void settingCorsAllowedOriginsShouldOverridePreviousValues() {
+    final GraphQLConfiguration configuration = GraphQLConfiguration.createDefault();
+
+    configuration.setCorsAllowedDomains(Lists.newArrayList("foo", "bar"));
+    assertThat(configuration.getCorsAllowedDomains()).containsExactly("foo", "bar");
+
+    configuration.setCorsAllowedDomains(Lists.newArrayList("zap"));
+    assertThat(configuration.getCorsAllowedDomains()).containsExactly("zap");
   }
 }
