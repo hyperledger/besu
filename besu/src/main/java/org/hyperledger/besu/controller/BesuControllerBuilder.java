@@ -131,7 +131,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               .orElseThrow();
 
   /** The is genesis state hash from data. */
-  protected boolean useCachedGenesisStateHash;
+  protected boolean genesisStateHashCacheEnabled;
 
   /** The Sync config. */
   protected SynchronizerConfiguration syncConfig;
@@ -230,11 +230,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /**
    * Genesis state hash from data besu controller builder.
    *
-   * @param useCachedGenesisStateHash the is genesis state hash from data
+   * @param genesisStateHashCacheEnabled the is genesis state hash from data
    * @return the besu controller builder
    */
-  public BesuControllerBuilder useCachedGenesisStateHash(final Boolean useCachedGenesisStateHash) {
-    this.useCachedGenesisStateHash = useCachedGenesisStateHash;
+  public BesuControllerBuilder genesisStateHashCacheEnabled(
+      final Boolean genesisStateHashCacheEnabled) {
+    this.genesisStateHashCacheEnabled = genesisStateHashCacheEnabled;
     return this;
   }
 
@@ -574,7 +575,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
     Optional<Hash> genesisStateHash = Optional.empty();
-    if (variablesStorage != null && this.useCachedGenesisStateHash) {
+    if (variablesStorage != null && this.genesisStateHashCacheEnabled) {
       genesisStateHash = variablesStorage.getGenesisStateHash();
     }
 

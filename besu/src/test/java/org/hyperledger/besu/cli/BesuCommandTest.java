@@ -2378,7 +2378,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void useCachedGenesisStateHashShouldWork() {
-    parseCommand("--use-cached-genesis-state-hash");
+    parseCommand("--genesis-state-hash-cache-enabled");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
