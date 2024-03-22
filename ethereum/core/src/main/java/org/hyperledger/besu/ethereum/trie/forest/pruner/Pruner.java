@@ -51,7 +51,7 @@ public class Pruner {
   private final ExecutorService executorService;
 
   @VisibleForTesting
-  public Pruner(
+  Pruner(
       final MarkSweepPruner pruningStrategy,
       final Blockchain blockchain,
       final PrunerConfiguration prunerConfiguration,
