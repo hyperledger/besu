@@ -50,8 +50,8 @@ public class PluginJsonRpcMethod implements JsonRpcMethod {
       final Object result = function.apply(() -> request.getRequest().getParams());
       return new JsonRpcSuccessResponse(request.getRequest().getId(), result);
     } catch (final PluginRpcEndpointException ex) {
-      final JsonRpcError error = new JsonRpcError(ex.getRpcMethodError(), ex.getMessage());
-      LOG.error("Error calling plugin JSON-RPC endpoint", ex);
+      final JsonRpcError error = new JsonRpcError(ex.getRpcMethodError(), ex.getData());
+      LOG.debug("Error calling plugin JSON-RPC endpoint", ex);
       return new JsonRpcErrorResponse(request.getRequest().getId(), error);
     }
   }
