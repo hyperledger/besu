@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.manager.task;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockReceipts;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
 
@@ -25,30 +26,30 @@ import java.util.List;
 import java.util.Map;
 
 public class GetReceiptsFromPeerTaskTest
-    extends PeerMessageTaskTest<Map<BlockHeader, List<TransactionReceipt>>> {
+    extends PeerMessageTaskTest<Map<BlockHeader, BlockReceipts>> {
 
   @Override
-  protected Map<BlockHeader, List<TransactionReceipt>> generateDataToBeRequested() {
-    final Map<BlockHeader, List<TransactionReceipt>> expectedData = new HashMap<>();
+  protected Map<BlockHeader, BlockReceipts> generateDataToBeRequested() {
+    final Map<BlockHeader, BlockReceipts> expectedData = new HashMap<>();
     for (long i = 0; i < 3; i++) {
       final BlockHeader header = blockchain.getBlockHeader(10 + i).get();
       final List<TransactionReceipt> transactionReceipts =
           blockchain.getTxReceipts(header.getHash()).get();
-      expectedData.put(header, transactionReceipts);
+      expectedData.put(header, new BlockReceipts(transactionReceipts, true));
     }
     return expectedData;
   }
 
   @Override
-  protected EthTask<AbstractPeerTask.PeerTaskResult<Map<BlockHeader, List<TransactionReceipt>>>>
-      createTask(final Map<BlockHeader, List<TransactionReceipt>> requestedData) {
+  protected EthTask<AbstractPeerTask.PeerTaskResult<Map<BlockHeader, BlockReceipts>>> createTask(
+      final Map<BlockHeader, BlockReceipts> requestedData) {
     return GetReceiptsFromPeerTask.forHeaders(ethContext, requestedData.keySet(), metricsSystem);
   }
 
   @Override
   protected void assertPartialResultMatchesExpectation(
-      final Map<BlockHeader, List<TransactionReceipt>> requestedData,
-      final Map<BlockHeader, List<TransactionReceipt>> partialResponse) {
+      final Map<BlockHeader, BlockReceipts> requestedData,
+      final Map<BlockHeader, BlockReceipts> partialResponse) {
 
     assertThat(partialResponse.size()).isLessThanOrEqualTo(requestedData.size());
     assertThat(partialResponse.size()).isGreaterThan(0);

@@ -20,7 +20,7 @@ import static java.util.Collections.emptyMap;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.BlockReceipts;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
@@ -40,14 +40,14 @@ import org.slf4j.LoggerFactory;
 
 /** Given a set of headers, repeatedly requests the receipts for those blocks. */
 public class GetReceiptsForHeadersTask
-    extends AbstractRetryingPeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
+    extends AbstractRetryingPeerTask<Map<BlockHeader, BlockReceipts>> {
   private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsForHeadersTask.class);
   private static final int DEFAULT_RETRIES = 4;
 
   private final EthContext ethContext;
 
   private final List<BlockHeader> headers;
-  private final Map<BlockHeader, List<TransactionReceipt>> receipts;
+  private final Map<BlockHeader, BlockReceipts> receipts;
   private final MetricsSystem metricsSystem;
 
   private GetReceiptsForHeadersTask(
@@ -83,16 +83,16 @@ public class GetReceiptsForHeadersTask
   private void completeEmptyReceipts(final List<BlockHeader> headers) {
     headers.stream()
         .filter(header -> header.getReceiptsRoot().equals(Hash.EMPTY_TRIE_HASH))
-        .forEach(header -> receipts.put(header, emptyList()));
+        .forEach(header -> receipts.put(header, new BlockReceipts(emptyList(), false)));
   }
 
   @Override
-  protected CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> executePeerTask(
+  protected CompletableFuture<Map<BlockHeader, BlockReceipts>> executePeerTask(
       final Optional<EthPeer> assignedPeer) {
     return requestReceipts(assignedPeer).thenCompose(this::processResponse);
   }
 
-  private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> requestReceipts(
+  private CompletableFuture<Map<BlockHeader, BlockReceipts>> requestReceipts(
       final Optional<EthPeer> assignedPeer) {
     final List<BlockHeader> incompleteHeaders = incompleteHeaders();
     if (incompleteHeaders.isEmpty()) {
@@ -111,8 +111,8 @@ public class GetReceiptsForHeadersTask
         });
   }
 
-  private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> processResponse(
-      final Map<BlockHeader, List<TransactionReceipt>> responseData) {
+  private CompletableFuture<Map<BlockHeader, BlockReceipts>> processResponse(
+      final Map<BlockHeader, BlockReceipts> responseData) {
     receipts.putAll(responseData);
 
     if (isComplete()) {
