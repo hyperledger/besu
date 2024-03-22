@@ -86,24 +86,24 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
   @Override
   @Test
   public void shouldReturnExpectedMethodName() {
-    assertThat(method.getName()).isEqualTo("engine_getPayloadV6110");
+    assertThat(method.getName()).isEqualTo("engine_getPayloadV4");
   }
 
   @Override
   @Test
   public void shouldReturnBlockForKnownPayloadId() {
 
-    BlockHeader eip6110Header =
+    BlockHeader header =
         new BlockHeaderTestFixture()
             .prevRandao(Bytes32.random())
-            .timestamp(experimentalHardfork.milestone() + 1)
+            .timestamp(pragueHardfork.milestone() + 1)
             .excessBlobGas(BlobGas.of(10L))
             .buildHeader();
     // should return withdrawals, deposits and excessGas for a post-6110 block
-    PayloadIdentifier postEip6110Pid =
+    PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(
             Hash.ZERO,
-            experimentalHardfork.milestone(),
+            pragueHardfork.milestone(),
             Bytes32.random(),
             Address.fromHexString("0x42"),
             Optional.empty(),
@@ -124,10 +124,10 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
             .createTransaction(senderKeys);
     TransactionReceipt blobReceipt = mock(TransactionReceipt.class);
     when(blobReceipt.getCumulativeGasUsed()).thenReturn(100L);
-    BlockWithReceipts postEip6110Block =
+    BlockWithReceipts block =
         new BlockWithReceipts(
             new Block(
-                eip6110Header,
+                header,
                 new BlockBody(
                     List.of(blobTx),
                     Collections.emptyList(),
@@ -135,9 +135,9 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
                     Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
 
-    when(mergeContext.retrieveBlockById(postEip6110Pid)).thenReturn(Optional.of(postEip6110Block));
+    when(mergeContext.retrieveBlockById(payloadIdentifier)).thenReturn(Optional.of(block));
 
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), postEip6110Pid);
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), payloadIdentifier);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
     Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
@@ -148,10 +148,10 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
               assertThat(res.getExecutionPayload().getWithdrawals()).isNotNull();
               assertThat(res.getExecutionPayload().getDeposits()).isNotNull();
               assertThat(res.getExecutionPayload().getHash())
-                  .isEqualTo(eip6110Header.getHash().toString());
+                  .isEqualTo(header.getHash().toString());
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));
               assertThat(res.getExecutionPayload().getPrevRandao())
-                  .isEqualTo(eip6110Header.getPrevRandao().map(Bytes32::toString).orElse(""));
+                  .isEqualTo(header.getPrevRandao().map(Bytes32::toString).orElse(""));
               // excessBlobGas: QUANTITY, 256 bits
               String expectedQuantityOf10 = Bytes32.leftPad(Bytes.of(10)).toQuantityHexString();
               assertThat(res.getExecutionPayload().getExcessBlobGas()).isNotEmpty();
