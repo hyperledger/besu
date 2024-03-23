@@ -733,6 +733,9 @@ public abstract class MainnetProtocolSpecs {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
 
+    final Address depositContractAddress =
+        genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
+
     return cancunDefinition(
             chainId,
             configContractSizeLimit,
@@ -760,6 +763,7 @@ public abstract class MainnetProtocolSpecs {
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
+        .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
         .name("Prague");
   }
 

@@ -14,7 +14,7 @@
     "londonBlock":0,
     "terminalTotalDifficulty":0,
     "cancunTime":0,
-    "experimentalEipsTime":20,
+    "pragueTime":20,
     "clique": {
       "period": 5,
       "epoch": 30000

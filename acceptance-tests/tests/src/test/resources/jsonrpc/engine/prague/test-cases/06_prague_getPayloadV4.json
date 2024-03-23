@@ -1,7 +1,7 @@
 {
   "request": {
     "jsonrpc": "2.0",
-    "method": "engine_getPayloadV6110",
+    "method": "engine_getPayloadV4",
     "params": [
       "0x282643b909febddf"
     ],
