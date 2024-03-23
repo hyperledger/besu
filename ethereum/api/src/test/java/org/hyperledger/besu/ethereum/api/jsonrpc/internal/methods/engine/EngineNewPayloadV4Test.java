@@ -65,7 +65,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void before() {
     super.before();
     maybeParentBeaconBlockRoot = Optional.of(Bytes32.ZERO);
-    //TODO this should be using NewPayloadV4
+    // TODO this should be using NewPayloadV4
     this.method =
         new EngineNewPayloadV3(
             vertx,
