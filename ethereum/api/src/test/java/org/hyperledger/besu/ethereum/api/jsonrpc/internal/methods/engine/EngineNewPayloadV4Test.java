@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.Hardfork;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
 import java.util.Collections;
@@ -65,22 +66,23 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void before() {
     super.before();
     maybeParentBeaconBlockRoot = Optional.of(Bytes32.ZERO);
-    // TODO this should be using NewPayloadV4
     this.method =
-        new EngineNewPayloadV3(
+        new EngineNewPayloadV4(
             vertx,
             protocolSchedule,
             protocolContext,
             mergeCoordinator,
             ethPeers,
             engineCallListener);
-    lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(pragueHardfork));
+    lenient()
+        .when(protocolSchedule.hardforkFor(any()))
+        .thenReturn(Optional.of(getSupportedMilestone()));
     lenient().when(protocolSpec.getGasCalculator()).thenReturn(new PragueGasCalculator());
   }
 
   @Override
   public void shouldReturnExpectedMethodName() {
-    assertThat(method.getName()).isEqualTo("engine_newPayloadV3");
+    assertThat(method.getName()).isEqualTo("engine_newPayloadV4");
   }
 
   @Test
@@ -199,5 +201,10 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .orElseGet(() -> new Object[] {payload});
     return method.response(
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+  }
+
+  @Override
+  protected Hardfork getSupportedMilestone() {
+    return pragueHardfork;
   }
 }

@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.CancunTargetingGasLimitCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec.Hardfork;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 
@@ -107,7 +108,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
     final Bytes shortHash = Bytes.fromHexString("0x" + "69".repeat(31));
 
     final EnginePayloadParameter payload = mock(EnginePayloadParameter.class);
-    when(payload.getTimestamp()).thenReturn(cancunHardfork.milestone());
+    when(payload.getTimestamp()).thenReturn(getSupportedMilestone().milestone());
     when(payload.getExcessBlobGas()).thenReturn("99");
     when(payload.getBlobGasUsed()).thenReturn(9l);
 
@@ -262,5 +263,9 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .orElseGet(() -> new Object[] {payload});
     return method.response(
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+  }
+
+  protected Hardfork getSupportedMilestone() {
+    return cancunHardfork;
   }
 }
