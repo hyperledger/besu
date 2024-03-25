@@ -39,7 +39,7 @@ dependencyManagement {
       entry'dagger'
     }
 
-    dependency 'org.hyperledger.besu:besu-errorprone-checks:0.1.3'
+    dependency 'org.hyperledger.besu:besu-errorprone-checks:1.0.0'
 
     dependency 'com.google.guava:guava:33.0.0-jre'
 
