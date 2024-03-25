@@ -169,7 +169,12 @@ public class GetBodiesFromPeerTask extends AbstractPeerRequestTask<List<Block>> 
     }
 
     public BodyIdentifier(final BlockBody body) {
-      this(body.getTransactions(), body.getOmmers(), body.getWithdrawals(), body.getDeposits(), body.getExits());
+      this(
+          body.getTransactions(),
+          body.getOmmers(),
+          body.getWithdrawals(),
+          body.getDeposits(),
+          body.getExits());
     }
 
     public BodyIdentifier(

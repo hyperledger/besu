@@ -17,17 +17,12 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameterTestFixture.DEPOSIT_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ValidatorExitTestFixture.VALIDATOR_EXIT_PARAMETER_1;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.datatypes.BLSSignature;
-import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.ValidatorExit;
+
 import org.junit.jupiter.api.Test;
 
 public class ValidatorExitParameterTest {
@@ -50,6 +45,7 @@ public class ValidatorExitParameterTest {
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"));
 
-    assertThat(ValidatorExitParameter.fromValidatorExit(validatorExit)).isEqualTo(VALIDATOR_EXIT_PARAMETER_1);
+    assertThat(ValidatorExitParameter.fromValidatorExit(validatorExit))
+        .isEqualTo(VALIDATOR_EXIT_PARAMETER_1);
   }
 }

@@ -170,10 +170,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposits"));
     }
 
-    final Optional<List<ValidatorExit>> maybeExits = Optional.ofNullable(blockParam.getExits())
-        .map(exits -> exits.stream().map(ValidatorExitParameter::toValidatorExit).collect(toList()));
+    final Optional<List<ValidatorExit>> maybeExits =
+        Optional.ofNullable(blockParam.getExits())
+            .map(
+                exits ->
+                    exits.stream().map(ValidatorExitParameter::toValidatorExit).collect(toList()));
     if (!getValidatorExitsValidator(
-        protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateValidatorExitParameter(maybeExits)) {
       return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid exits"));
     }
@@ -309,7 +312,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final var block =
         new Block(
             newBlockHeader,
-            new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals, maybeDeposits, maybeExits));
+            new BlockBody(
+                transactions,
+                Collections.emptyList(),
+                maybeWithdrawals,
+                maybeDeposits,
+                maybeExits));
 
     if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()

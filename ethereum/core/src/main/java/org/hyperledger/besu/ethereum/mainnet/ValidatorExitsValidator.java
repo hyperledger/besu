@@ -16,18 +16,40 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.ValidatorExit;
+
 import java.util.List;
 import java.util.Optional;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 
 public interface ValidatorExitsValidator {
 
   boolean validateValidatorExitParameter(Optional<List<ValidatorExit>> validatorExits);
 
-  class StubValidatorExitsValidator implements ValidatorExitsValidator {
+  /** Used before Prague */
+  class ProhibitedExits implements ValidatorExitsValidator {
+
+    /**
+     * Before Prague we do not expect to have execution layer triggered exits, so it is expected the
+     * optional parameter will be empty
+     *
+     * @param validatorExits Optional list of exits
+     * @return true, if valid, false otherwise
+     */
+    @Override
+    public boolean validateValidatorExitParameter(
+        final Optional<List<ValidatorExit>> validatorExits) {
+      return validatorExits.isEmpty();
+    }
+  }
+
+  /** Used after Prague */
+  class AllowedExits implements ValidatorExitsValidator {
 
     @Override
-    public boolean validateValidatorExitParameter(final Optional<List<ValidatorExit>> validatorExits) {
+    public boolean validateValidatorExitParameter(
+        final Optional<List<ValidatorExit>> validatorExits) {
+      // TODO implement any extra required validation (see
+      // https://github.com/hyperledger/besu/issues/6800)
       return validatorExits.isPresent();
     }
   }

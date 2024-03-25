@@ -211,8 +211,7 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     final Hash depositHashRoot =
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
-    final Hash exitsHashRoot =
-        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final Hash exitsHashRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -327,10 +326,7 @@ public class BlockHeader extends SealableBlockHeader
             .getDepositsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
-        pluginBlockHeader
-            .getExitsRoot()
-            .map(h -> Hash.fromHexString(h.toHexString()))
-            .orElse(null),
+        pluginBlockHeader.getExitsRoot().map(h -> Hash.fromHexString(h.toHexString())).orElse(null),
         blockHeaderFunctions);
   }
 

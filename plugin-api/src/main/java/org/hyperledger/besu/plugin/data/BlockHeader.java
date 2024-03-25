@@ -131,11 +131,11 @@ public interface BlockHeader extends ProcessableBlockHeader {
   Optional<? extends Hash> getDepositsRoot();
 
   /**
-   * The Keccak 256-bit hash of the root node of the trie structure populated with each exit in
-   * the exits list portion of the block.
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each exit in the
+   * exits list portion of the block.
    *
-   * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
-   *     exit in the exits list portion of the block.
+   * @return The Keccak 256-bit hash of the root node of the trie structure populated with each exit
+   *     in the exits list portion of the block.
    */
   @Unstable
   Optional<? extends Hash> getExitsRoot();

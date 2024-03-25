@@ -14,19 +14,22 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BLSPublicKey;
+import org.hyperledger.besu.ethereum.core.ValidatorExit;
+
+import java.util.Objects;
+
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
-import java.util.Objects;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 
 public class ValidatorExitParameter {
 
   private final String sourceAddress;
   private final String validatorPubKey;
+
   @JsonCreator
   public ValidatorExitParameter(
       @JsonProperty("sourceAddress") final String sourceAddress,
@@ -37,14 +40,12 @@ public class ValidatorExitParameter {
 
   public static ValidatorExitParameter fromValidatorExit(final ValidatorExit exit) {
     return new ValidatorExitParameter(
-        exit.getSourceAddress().toHexString(),
-        exit.getValidatorPubKey().toHexString());
+        exit.getSourceAddress().toHexString(), exit.getValidatorPubKey().toHexString());
   }
 
   public ValidatorExit toValidatorExit() {
     return new ValidatorExit(
-        Address.fromHexString(sourceAddress),
-        BLSPublicKey.fromHexString(validatorPubKey));
+        Address.fromHexString(sourceAddress), BLSPublicKey.fromHexString(validatorPubKey));
   }
 
   public JsonObject asJsonObject() {

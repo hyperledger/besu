@@ -20,7 +20,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
-import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator.StubValidatorExitsValidator;
+
+import java.util.Optional;
 
 public class ValidatorExitsValidatorProvider {
 
@@ -35,9 +36,10 @@ public class ValidatorExitsValidatorProvider {
     return getValidatorExitsValidator(protocolSchedule.getByBlockHeader(blockHeader));
   }
 
-  @SuppressWarnings("unused")
-  private static ValidatorExitsValidator getValidatorExitsValidator(final ProtocolSpec protocolSchedule) {
-    //TODO hook up proper logic to chose validator based on milestone
-    return new StubValidatorExitsValidator();
+  private static ValidatorExitsValidator getValidatorExitsValidator(
+      final ProtocolSpec protocolSchedule) {
+    return Optional.ofNullable(protocolSchedule)
+        .map(ProtocolSpec::getExitsValidator)
+        .orElseGet(ValidatorExitsValidator.ProhibitedExits::new);
   }
 }

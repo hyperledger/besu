@@ -107,8 +107,7 @@ public class JsonRpcResponseUtils {
         values.containsKey(WITHDRAWALS_ROOT) ? hash(values.get(WITHDRAWALS_ROOT)) : null;
     final Hash depositsRoot =
         values.containsKey(DEPOSITS_ROOT) ? hash(values.get(DEPOSITS_ROOT)) : null;
-    final Hash exitsRoot =
-        values.containsKey(EXITS_ROOT) ? hash(values.get(EXITS_ROOT)) : null;
+    final Hash exitsRoot = values.containsKey(EXITS_ROOT) ? hash(values.get(EXITS_ROOT)) : null;
     final List<JsonNode> ommers = new ArrayList<>();
 
     final BlockHeader header =

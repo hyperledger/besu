@@ -739,7 +739,8 @@ public class BlockDataGenerator {
       return exitsRoot.orElse(defaultValue);
     }
 
-    public Optional<List<ValidatorExit>> getExits(final Optional<List<ValidatorExit>> defaultValue) {
+    public Optional<List<ValidatorExit>> getExits(
+        final Optional<List<ValidatorExit>> defaultValue) {
       return exits.orElse(defaultValue);
     }
 

@@ -78,7 +78,9 @@ public class Block {
     final Optional<List<Deposit>> deposits =
         in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readList(Deposit::readFrom));
     final Optional<List<ValidatorExit>> exits =
-        in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readList(ValidatorExit::readFrom));
+        in.isEndOfCurrentList()
+            ? Optional.empty()
+            : Optional.of(in.readList(ValidatorExit::readFrom));
     in.leaveList();
 
     return new Block(header, new BlockBody(transactions, ommers, withdrawals, deposits, exits));

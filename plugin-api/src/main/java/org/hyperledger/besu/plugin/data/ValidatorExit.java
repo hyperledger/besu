@@ -14,17 +14,13 @@
  */
 package org.hyperledger.besu.plugin.data;
 
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.PublicKey;
-import org.hyperledger.besu.datatypes.Quantity;
 import org.hyperledger.besu.plugin.Unstable;
 
 /**
- * A deposit is a system-level operation to support validator exitys that are pushed from the EVM
- * to beacon chain.
+ * A deposit is a system-level operation to support validator exitys that are pushed from the EVM to
+ * beacon chain.
  */
 @Unstable
 public interface ValidatorExit {
@@ -42,5 +38,4 @@ public interface ValidatorExit {
    * @return public key of validator
    */
   PublicKey getValidatorPubKey();
-
 }

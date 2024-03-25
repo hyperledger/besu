@@ -85,7 +85,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawalsParam, null, null));
+    var resp =
+        resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawalsParam, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -103,7 +104,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
+    var resp =
+        resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -121,7 +123,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
                 createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
-                null, null));
+                null,
+                null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -171,7 +174,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
                 createBlockHeader(Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
-                null, null));
+                null,
+                null));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
     verify(engineCallListener, times(1)).executionEngineCalled();

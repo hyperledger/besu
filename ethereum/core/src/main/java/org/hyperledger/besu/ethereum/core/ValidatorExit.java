@@ -14,31 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.core;
 
-import java.util.Objects;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt64;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.datatypes.BLSSignature;
-import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.PublicKey;
-import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.ValidatorExitDecoder;
 import org.hyperledger.besu.ethereum.core.encoding.ValidatorExitEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Objects;
+
+import org.apache.tuweni.bytes.Bytes;
+
 public class ValidatorExit implements org.hyperledger.besu.plugin.data.ValidatorExit {
 
   private final Address sourceAddress;
   private final BLSPublicKey validatorPubKey;
 
-  public ValidatorExit(
-      final Address sourceAddress,
-      final BLSPublicKey validatorPubKey) {
+  public ValidatorExit(final Address sourceAddress, final BLSPublicKey validatorPubKey) {
     this.sourceAddress = sourceAddress;
     this.validatorPubKey = validatorPubKey;
   }

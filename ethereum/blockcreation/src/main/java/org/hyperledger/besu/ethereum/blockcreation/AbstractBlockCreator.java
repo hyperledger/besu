@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
-import javax.swing.text.html.Option;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -233,7 +232,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      //TODO implement logic to retrieve validatolr exits from precompile
+      // TODO implement logic to retrieve validatolr exits from precompile
       final Optional<List<ValidatorExit>> maybeExits = Optional.empty();
 
       throwIfStopped();
@@ -286,7 +285,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
           new BlockBody(
-              transactionResults.getSelectedTransactions(), ommers, withdrawals, maybeDeposits, maybeExits);
+              transactionResults.getSelectedTransactions(),
+              ommers,
+              withdrawals,
+              maybeDeposits,
+              maybeExits);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);

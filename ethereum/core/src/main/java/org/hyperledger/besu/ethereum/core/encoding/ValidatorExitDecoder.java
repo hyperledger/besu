@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class ValidatorExitDecoder {
 
