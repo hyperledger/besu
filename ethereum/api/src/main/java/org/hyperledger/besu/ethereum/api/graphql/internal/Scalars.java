@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.graphql.internal;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
 import java.math.BigInteger;
@@ -256,6 +257,8 @@ public class Scalars {
                 return null;
               }
             }
+          } else if (input instanceof VersionedHash versionedHash) {
+            return versionedHash.toBytes();
           } else {
             return null;
           }

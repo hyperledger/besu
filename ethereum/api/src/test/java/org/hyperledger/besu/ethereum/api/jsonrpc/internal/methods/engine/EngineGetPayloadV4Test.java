@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV6110;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadResultV4;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -59,9 +59,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(
     MockitoExtension.class) // mocks in parent class may not be used, throwing unnecessary stubbing
-public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
+public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
 
-  public EngineGetPayloadV6110Test() {
+  public EngineGetPayloadV4Test() {
     super();
   }
 
@@ -74,7 +74,7 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
         .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
-        new EngineGetPayloadV6110(
+        new EngineGetPayloadV4(
             vertx,
             protocolContext,
             mergeMiningCoordinator,
@@ -86,24 +86,24 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
   @Override
   @Test
   public void shouldReturnExpectedMethodName() {
-    assertThat(method.getName()).isEqualTo("engine_getPayloadV6110");
+    assertThat(method.getName()).isEqualTo("engine_getPayloadV4");
   }
 
   @Override
   @Test
   public void shouldReturnBlockForKnownPayloadId() {
 
-    BlockHeader eip6110Header =
+    BlockHeader header =
         new BlockHeaderTestFixture()
             .prevRandao(Bytes32.random())
-            .timestamp(experimentalHardfork.milestone() + 1)
+            .timestamp(pragueHardfork.milestone() + 1)
             .excessBlobGas(BlobGas.of(10L))
             .buildHeader();
     // should return withdrawals, deposits and excessGas for a post-6110 block
-    PayloadIdentifier postEip6110Pid =
+    PayloadIdentifier payloadIdentifier =
         PayloadIdentifier.forPayloadParams(
             Hash.ZERO,
-            experimentalHardfork.milestone(),
+            pragueHardfork.milestone(),
             Bytes32.random(),
             Address.fromHexString("0x42"),
             Optional.empty(),
@@ -124,10 +124,10 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
             .createTransaction(senderKeys);
     TransactionReceipt blobReceipt = mock(TransactionReceipt.class);
     when(blobReceipt.getCumulativeGasUsed()).thenReturn(100L);
-    BlockWithReceipts postEip6110Block =
+    BlockWithReceipts block =
         new BlockWithReceipts(
             new Block(
-                eip6110Header,
+                header,
                 new BlockBody(
                     List.of(blobTx),
                     Collections.emptyList(),
@@ -135,23 +135,23 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
                     Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
 
-    when(mergeContext.retrieveBlockById(postEip6110Pid)).thenReturn(Optional.of(postEip6110Block));
+    when(mergeContext.retrieveBlockById(payloadIdentifier)).thenReturn(Optional.of(block));
 
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V6110.getMethodName(), postEip6110Pid);
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), payloadIdentifier);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
     Optional.of(resp)
         .map(JsonRpcSuccessResponse.class::cast)
         .ifPresent(
             r -> {
-              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV6110.class);
-              final EngineGetPayloadResultV6110 res = (EngineGetPayloadResultV6110) r.getResult();
+              assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV4.class);
+              final EngineGetPayloadResultV4 res = (EngineGetPayloadResultV4) r.getResult();
               assertThat(res.getExecutionPayload().getWithdrawals()).isNotNull();
               assertThat(res.getExecutionPayload().getDeposits()).isNotNull();
               assertThat(res.getExecutionPayload().getHash())
-                  .isEqualTo(eip6110Header.getHash().toString());
+                  .isEqualTo(header.getHash().toString());
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));
               assertThat(res.getExecutionPayload().getPrevRandao())
-                  .isEqualTo(eip6110Header.getPrevRandao().map(Bytes32::toString).orElse(""));
+                  .isEqualTo(header.getPrevRandao().map(Bytes32::toString).orElse(""));
               // excessBlobGas: QUANTITY, 256 bits
               String expectedQuantityOf10 = Bytes32.leftPad(Bytes.of(10)).toQuantityHexString();
               assertThat(res.getExecutionPayload().getExcessBlobGas()).isNotEmpty();
@@ -163,7 +163,7 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
 
   @Test
   public void shouldReturnUnsupportedFork() {
-    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V6110.getMethodName(), mockPid);
+    final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), mockPid);
 
     assertThat(resp).isInstanceOf(JsonRpcErrorResponse.class);
     assertThat(((JsonRpcErrorResponse) resp).getErrorType())
@@ -172,6 +172,6 @@ public class EngineGetPayloadV6110Test extends AbstractEngineGetPayloadTest {
 
   @Override
   protected String getMethodName() {
-    return RpcMethod.ENGINE_GET_PAYLOAD_V6110.getMethodName();
+    return RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName();
   }
 }

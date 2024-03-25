@@ -2598,7 +2598,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   /**
-   * Returns the flag indicating that version compatiblity checks will be made.
+   * Returns the flag indicating that version compatibility checks will be made.
    *
    * @return true if compatibility checks should be made, otherwise false
    */

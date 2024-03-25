@@ -173,12 +173,13 @@ public class MainnetTransactionValidator implements TransactionValidator {
       if (maybeBlobFee.isEmpty()) {
         throw new IllegalArgumentException(
             "blob fee must be provided from blocks containing blobs");
+        // tx.getMaxFeePerBlobGas can be empty for eth_call
       } else if (!transactionValidationParams.allowUnderpriced()
           && maybeBlobFee.get().compareTo(transaction.getMaxFeePerBlobGas().get()) > 0) {
         return ValidationResult.invalid(
             TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE,
             String.format(
-                "max fee per blob gas less than block blob gas fee: address %s blobGasFeeCap: %s, blobBaseFee: %s",
+                "tx max fee per blob gas less than block blob gas fee: address %s blobGasFeeCap: %s, blobBaseFee: %s",
                 transaction.getSender().toHexString(),
                 transaction.getMaxFeePerBlobGas().get().toHumanReadableString(),
                 maybeBlobFee.get().toHumanReadableString()));
