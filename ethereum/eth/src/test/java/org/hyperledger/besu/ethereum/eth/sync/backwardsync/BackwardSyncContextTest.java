@@ -442,7 +442,6 @@ public class BackwardSyncContextTest {
     }
   }
 
-  @SuppressWarnings("BannedMethod")
   @Test
   public void whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressInNextSession() {
     // This scenario can happen due to a reorg
@@ -466,7 +465,6 @@ public class BackwardSyncContextTest {
         .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
   }
 
-  @SuppressWarnings("BannedMethod")
   @Test
   public void
       whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressWithQueueInSameSession() {
