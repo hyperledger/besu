@@ -19,6 +19,8 @@ import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
+import org.apache.tuweni.bytes.Bytes;
+
 public class ValidatorExitDecoder {
 
   public static ValidatorExit decode(final RLPInput rlpInput) {
