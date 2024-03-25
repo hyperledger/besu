@@ -174,9 +174,6 @@ allprojects {
       forRepositories(ethExecSpecTestsRepo)
       filter { includeModule('ethereum', 'execution-spec-tests')}
     }
-
-    // besu-errorprone-check and future internal packages.
-    mavenLocal()
   }
 
   dependencies {
