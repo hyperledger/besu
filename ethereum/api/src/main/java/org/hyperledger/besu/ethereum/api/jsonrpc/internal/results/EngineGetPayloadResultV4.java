@@ -30,13 +30,13 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
 @JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle", "shouldOverrideBuilder"})
-public class EngineGetPayloadResultV6110 {
+public class EngineGetPayloadResultV4 {
   protected final PayloadResult executionPayload;
   private final String blockValue;
   private final BlobsBundleV1 blobsBundle;
   private final boolean shouldOverrideBuilder;
 
-  public EngineGetPayloadResultV6110(
+  public EngineGetPayloadResultV4(
       final BlockHeader header,
       final List<String> transactions,
       final Optional<List<Withdrawal>> withdrawals,

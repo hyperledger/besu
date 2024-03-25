@@ -41,7 +41,7 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
-import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
 import java.util.Collections;
 import java.util.List;
@@ -54,17 +54,18 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class EngineNewPayloadV6110Test extends EngineNewPayloadV3Test {
+public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   private static final Address depositContractAddress =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
-  public EngineNewPayloadV6110Test() {}
+  public EngineNewPayloadV4Test() {}
 
   @BeforeEach
   @Override
   public void before() {
     super.before();
     maybeParentBeaconBlockRoot = Optional.of(Bytes32.ZERO);
+    // TODO this should be using NewPayloadV4
     this.method =
         new EngineNewPayloadV3(
             vertx,
@@ -73,10 +74,8 @@ public class EngineNewPayloadV6110Test extends EngineNewPayloadV3Test {
             mergeCoordinator,
             ethPeers,
             engineCallListener);
-    lenient()
-        .when(protocolSchedule.hardforkFor(any()))
-        .thenReturn(Optional.of(super.cancunHardfork));
-    lenient().when(protocolSpec.getGasCalculator()).thenReturn(new CancunGasCalculator());
+    lenient().when(protocolSchedule.hardforkFor(any())).thenReturn(Optional.of(pragueHardfork));
+    lenient().when(protocolSpec.getGasCalculator()).thenReturn(new PragueGasCalculator());
   }
 
   @Override
@@ -171,7 +170,7 @@ public class EngineNewPayloadV6110Test extends EngineNewPayloadV3Test {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
-            .timestamp(super.experimentalHardfork.milestone())
+            .timestamp(pragueHardfork.milestone())
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .buildHeader();
