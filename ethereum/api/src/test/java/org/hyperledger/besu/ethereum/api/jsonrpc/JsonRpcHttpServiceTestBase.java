@@ -152,8 +152,7 @@ public class JsonRpcHttpServiceTestBase {
     baseUrl = service.url();
   }
 
-  protected static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config)
-      throws Exception {
+  protected static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config) {
     return new JsonRpcHttpService(
         vertx,
         folder,
@@ -165,7 +164,7 @@ public class JsonRpcHttpServiceTestBase {
         HealthService.ALWAYS_HEALTHY);
   }
 
-  protected static JsonRpcHttpService createJsonRpcHttpService() throws Exception {
+  protected static JsonRpcHttpService createJsonRpcHttpService() {
     return new JsonRpcHttpService(
         vertx,
         folder,

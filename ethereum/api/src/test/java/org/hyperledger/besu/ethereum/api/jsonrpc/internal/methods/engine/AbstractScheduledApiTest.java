@@ -39,8 +39,10 @@ public class AbstractScheduledApiTest {
       new ScheduledProtocolSpec.Hardfork("Shanghai", 20);
   protected final ScheduledProtocolSpec.Hardfork cancunHardfork =
       new ScheduledProtocolSpec.Hardfork("Cancun", 30);
+  protected final ScheduledProtocolSpec.Hardfork pragueHardfork =
+      new ScheduledProtocolSpec.Hardfork("Prague", 40);
   protected final ScheduledProtocolSpec.Hardfork experimentalHardfork =
-      new ScheduledProtocolSpec.Hardfork("ExperimentalEips", 40);
+      new ScheduledProtocolSpec.Hardfork("ExperimentalEips", 50);
 
   @Mock protected DefaultProtocolSchedule protocolSchedule;
 
@@ -74,6 +76,9 @@ public class AbstractScheduledApiTest {
     lenient()
         .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(cancunHardfork))))
         .thenReturn(Optional.of(cancunHardfork));
+    lenient()
+        .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(pragueHardfork))))
+        .thenReturn(Optional.of(pragueHardfork));
     lenient()
         .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(shanghaiHardfork))))
         .thenReturn(Optional.of(shanghaiHardfork));

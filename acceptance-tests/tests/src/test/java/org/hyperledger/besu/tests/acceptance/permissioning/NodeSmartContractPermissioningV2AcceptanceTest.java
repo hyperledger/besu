@@ -47,10 +47,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
     permissionedNode.execute(allowNode(permissionedNode));
     permissionedNode.verify(connectionIsAllowed(permissionedNode));
 
-    allowedNode.verify(eth.syncingStatus(false));
-    bootnode.verify(eth.syncingStatus(false));
-    permissionedNode.verify(eth.syncingStatus(false));
-    forbiddenNode.verify(eth.syncingStatus(false));
+    verifyAllNodesHaveFinishedSyncing();
   }
 
   @Test
@@ -92,6 +89,8 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 
+    verifyAllNodesHaveFinishedSyncing();
+
     // permissioning changes in peer should propagate to permissioned node
     allowedNode.execute(allowNode(forbiddenNode));
     allowedNode.verify(connectionIsAllowed(forbiddenNode));
@@ -99,6 +98,13 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
     permissionedNode.verify(admin.addPeer(forbiddenNode));
     permissionedNode.verify(net.awaitPeerCount(3));
+  }
+
+  private void verifyAllNodesHaveFinishedSyncing() {
+    allowedNode.verify(eth.syncingStatus(false));
+    bootnode.verify(eth.syncingStatus(false));
+    permissionedNode.verify(eth.syncingStatus(false));
+    forbiddenNode.verify(eth.syncingStatus(false));
   }
 
   @Test

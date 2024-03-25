@@ -219,9 +219,11 @@ public class EthEstimateGasTest {
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
         "transaction up-front cost 10 exceeds transaction sender account balance 5");
 
-    final RpcErrorType rpcErrorType = RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
-    final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
-    rpcError.setReason("transaction up-front cost 10 exceeds transaction sender account balance 5");
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        ValidationResult.invalid(
+            TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+            "transaction up-front cost 10 exceeds transaction sender account balance 5");
+    final JsonRpcError rpcError = JsonRpcError.from(validationResult);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
     Assertions.assertThat(method.response(request))
@@ -235,10 +237,11 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultTxInvalidReason(
         TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
         "transaction up-front cost 10 exceeds transaction sender account balance 5");
-
-    final RpcErrorType rpcErrorType = RpcErrorType.TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE;
-    final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
-    rpcError.setReason("transaction up-front cost 10 exceeds transaction sender account balance 5");
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        ValidationResult.invalid(
+            TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE,
+            "transaction up-front cost 10 exceeds transaction sender account balance 5");
+    final JsonRpcError rpcError = JsonRpcError.from(validationResult);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
     Assertions.assertThat(method.response(request))
@@ -384,9 +387,9 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultTxInvalidReason(
         TransactionInvalidReason.EXECUTION_HALTED, "INVALID_OPERATION");
 
-    final RpcErrorType rpcErrorType = RpcErrorType.EXECUTION_HALTED;
-    final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
-    rpcError.setReason("INVALID_OPERATION");
+    final ValidationResult<TransactionInvalidReason> validationResult =
+        ValidationResult.invalid(TransactionInvalidReason.EXECUTION_HALTED, "INVALID_OPERATION");
+    final JsonRpcError rpcError = JsonRpcError.from(validationResult);
     final JsonRpcResponse expectedResponse = new JsonRpcErrorResponse(null, rpcError);
 
     Assertions.assertThat(method.response(request))
