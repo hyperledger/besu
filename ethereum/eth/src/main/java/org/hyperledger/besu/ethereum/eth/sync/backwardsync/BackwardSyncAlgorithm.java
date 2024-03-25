@@ -120,27 +120,32 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
 
   private void handleSyncStepSuccess(
       final Block result, final Hash firstHash, final CompletableFuture<Void> syncStep) {
-    LOG.atDebug()
-        .setMessage("Backward sync target block is {}")
-        .addArgument(result::toLogString)
-        .log();
-    context.getBackwardChain().removeFromHashToAppend(firstHash);
-    context.getStatus().updateTargetHeight(result.getHeader().getNumber());
-    syncStep.complete(null);
+    if (result == null) {
+      LOG.atWarn().setMessage("Unexpected null result in for hash {}").addArgument(firstHash).log();
+      syncStep.completeExceptionally(new BackwardSyncException("Unexpected null result", true));
+    } else {
+      LOG.atDebug()
+          .setMessage("Backward sync target block is {}")
+          .addArgument(result::toLogString)
+          .log();
+      context.getBackwardChain().removeFromHashToAppend(firstHash);
+      context.getStatus().updateTargetHeight(result.getHeader().getNumber());
+      syncStep.complete(null);
+    }
   }
 
   private void handleSyncStepError(
       final Throwable error, final Hash firstHash, final CompletableFuture<Void> syncStep) {
     if (error instanceof CompletionException
         && error.getCause() instanceof MaxRetriesReachedException) {
-      handleMaxRetriesException(firstHash);
+      handleEthPeerMaxRetriesException(firstHash);
       syncStep.complete(null);
     } else {
       syncStep.completeExceptionally(error);
     }
   }
 
-  private void handleMaxRetriesException(final Hash firstHash) {
+  private void handleEthPeerMaxRetriesException(final Hash firstHash) {
     context.getBackwardChain().removeFromHashToAppend(firstHash);
     LOG.atWarn()
         .setMessage(
