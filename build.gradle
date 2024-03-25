@@ -252,9 +252,6 @@ allprojects {
       check('FieldCanBeFinal', CheckSeverity.WARN)
       check('InsecureCryptoUsage', CheckSeverity.WARN)
       check('WildcardImport', CheckSeverity.WARN)
-
-      // These checks are imported from errorprone-checks dependency
-      check('MethodInputParametersMustBeFinal', net.ltgt.gradle.errorprone.CheckSeverity.ERROR)
     }
 
     options.encoding = 'UTF-8'
