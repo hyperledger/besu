@@ -40,6 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
@@ -94,7 +95,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
       final SnapSyncConfiguration snapSyncConfiguration) {
 
     // search incomplete nodes in the range
-    // final AtomicInteger nbNodesSaved = new AtomicInteger(); //TODO: This variable is not used???
+    final AtomicInteger nbNodesSaved = new AtomicInteger();
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
           applyForStrategy(
@@ -122,7 +123,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
 
     downloadState.getMetricsManager().notifySlotsDownloaded(stackTrie.getElementsCount().get());
 
-    return 0; // are we supposed to return stackTrie.getElementsCount().get() ??
+    return nbNodesSaved.get();
   }
 
   @SuppressWarnings("NonApiType")
