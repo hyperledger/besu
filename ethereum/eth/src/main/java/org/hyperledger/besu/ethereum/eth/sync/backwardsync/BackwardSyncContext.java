@@ -127,6 +127,10 @@ public class BackwardSyncContext {
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
     if (isReady()) {
       if (!isTrusted(newBlockHash)) {
+        LOG.atDebug()
+            .setMessage("Appending new head block hash {} to backward sync")
+            .addArgument(newBlockHash::toHexString)
+            .log();
         backwardChain.addNewHash(newBlockHash);
       }
 
