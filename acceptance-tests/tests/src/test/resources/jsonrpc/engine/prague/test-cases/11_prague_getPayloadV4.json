@@ -1,0 +1,45 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_getPayloadV4",
+    "params": [
+      "0x282643db882670cf"
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "result": {
+      "executionPayload": {
+        "parentHash": "0xddb65a684b9b8980b6231ee0e388566c10a9c4583bbddf16f8d68bbc0b8ed965",
+        "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "stateRoot": "0x14208ac0e218167936e220b72d5d5887a963cb858ea2f2d268518f014a3da3fa",
+        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "gasLimit": "0x1c9c380",
+        "gasUsed": "0x0",
+        "timestamp": "0x30",
+        "extraData": "0x",
+        "baseFeePerGas": "0x7",
+        "excessBlobGas": "0x0",
+        "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "transactions": [],
+        "withdrawals": [],
+        "depositReceipts": [],
+        "blockNumber": "0x3",
+        "blockHash": "0xf1e7093b5d229885caab11a3acb95412af80f9077b742020a8014cf81c8c75f2",
+        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
+        "blobGasUsed": "0x0"
+      },
+      "blockValue": "0x0",
+      "blobsBundle": {
+        "commitments": [],
+        "proofs": [],
+        "blobs": []
+      },
+      "shouldOverrideBuilder": false
+    }
+  },
+  "statusCode": 200
+}

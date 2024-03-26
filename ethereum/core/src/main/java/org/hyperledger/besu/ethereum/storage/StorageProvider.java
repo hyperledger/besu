@@ -33,7 +33,9 @@ public interface StorageProvider extends Closeable {
   VariablesStorage createVariablesStorage();
 
   BlockchainStorage createBlockchainStorage(
-      ProtocolSchedule protocolSchedule, VariablesStorage variablesStorage);
+      ProtocolSchedule protocolSchedule,
+      VariablesStorage variablesStorage,
+      DataStorageConfiguration storageConfiguration);
 
   WorldStateKeyValueStorage createWorldStateStorage(
       DataStorageConfiguration dataStorageConfiguration);
