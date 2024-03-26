@@ -14,16 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.getRangeCount;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.MAX_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.MIN_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.findNewBeginElementInRange;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.getRangeCount;
 import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -62,7 +62,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
 
-  private StackTrie stackTrie;
+  private final StackTrie stackTrie;
   private Optional<Boolean> isProofValid;
 
   protected StorageRangeDataRequest(
@@ -77,7 +77,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
     this.isProofValid = Optional.empty();
-    addStackTrie(Optional.empty());
+    this.stackTrie = new StackTrie(Hash.wrap(getStorageRoot()), startKeyHash);
     LOG.trace(
         "create get storage range data request for account {} with root hash={} from {} to {}",
         accountHash,
@@ -183,7 +183,6 @@ public class StorageRangeDataRequest extends SnapDataRequest {
                         final StorageRangeDataRequest storageRangeDataRequest =
                             createStorageRangeDataRequest(
                                 getRootHash(), accountHash, storageRoot, key, value);
-                        storageRangeDataRequest.addStackTrie(Optional.of(stackTrie));
                         childRequests.add(storageRangeDataRequest);
                       });
               if (startKeyHash.equals(MIN_RANGE) && endKeyHash.equals(MAX_RANGE)) {
@@ -224,12 +223,5 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   @VisibleForTesting
   public void setProofValid(final boolean isProofValid) {
     this.isProofValid = Optional.of(isProofValid);
-  }
-
-  public void addStackTrie(final Optional<StackTrie> maybeStackTrie) {
-    stackTrie =
-        maybeStackTrie
-            .filter(StackTrie::addSegment)
-            .orElse(new StackTrie(Hash.wrap(getStorageRoot()), 1, 3, startKeyHash));
   }
 }
