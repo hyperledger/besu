@@ -89,7 +89,7 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
   }
 
   public SlotRangeData slotsData(final boolean withRequestId) {
-    final ArrayDeque<TreeMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
+    final ArrayDeque<NavigableMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
     final ArrayDeque<Bytes> proofs = new ArrayDeque<>();
     final RLPInput input = new BytesValueRLPInput(data, false);
     input.enterList();
