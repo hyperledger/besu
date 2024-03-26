@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
@@ -232,8 +233,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      // TODO implement logic to retrieve validatolr exits from precompile
-      final Optional<List<ValidatorExit>> maybeExits = Optional.empty();
+      // TODO implement logic to retrieve validator exits from precompile
+      // https://github.com/hyperledger/besu/issues/6800
+      final ValidatorExitsValidator exitsValidator = newProtocolSpec.getExitsValidator();
+      Optional<List<ValidatorExit>> maybeExits = Optional.empty();
+      if (exitsValidator instanceof ValidatorExitsValidator.AllowedExits) {
+        maybeExits = Optional.of(List.of());
+      }
 
       throwIfStopped();
 
