@@ -24,6 +24,9 @@ import org.hyperledger.besu.plugin.services.exception.PluginRpcEndpointException
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.plugin.services.rpc.RpcMethodError;
 
+import java.util.Locale;
+import java.util.Optional;
+
 import io.vertx.core.json.JsonObject;
 import okhttp3.RequestBody;
 import okhttp3.Response;
@@ -128,6 +131,25 @@ public class PluginJsonRpcMethodTest extends JsonRpcHttpServiceTestBase {
   }
 
   @Test
+  public void methodErrorWithDataShouldReturnErrorResponseWithDecodedData() throws Exception {
+    final var wrongParamContent =
+        """
+        {"jsonrpc":"2.0","id":1,"method":"plugin_echo","params":["data"]}""";
+    try (var unused =
+        addRpcMethod(
+            "plugin_echo",
+            new PluginJsonRpcMethod("plugin_echo", PluginJsonRpcMethodTest::echoPluginRpcMethod))) {
+      final RequestBody body = RequestBody.create(wrongParamContent, JSON);
+
+      try (final Response resp = client.newCall(buildPostRequest(body)).execute()) {
+        assertThat(resp.code()).isEqualTo(200);
+        final JsonObject json = new JsonObject(resp.body().string());
+        testHelper.assertValidJsonRpcError(json, 1, -2, "Error with data: ABC", "abc");
+      }
+    }
+  }
+
+  @Test
   public void unhandledExceptionShouldReturnInternalErrorResponse() throws Exception {
     final var nullParam =
         """
@@ -168,6 +190,29 @@ public class PluginJsonRpcMethodTest extends JsonRpcHttpServiceTestBase {
             }
           });
     }
+
+    if (input.toString().equals("data")) {
+      throw new PluginRpcEndpointException(
+          new RpcMethodError() {
+            @Override
+            public int getCode() {
+              return -2;
+            }
+
+            @Override
+            public String getMessage() {
+              return "Error with data";
+            }
+
+            @Override
+            public Optional<String> decodeData(final String data) {
+              // just turn everything uppercase
+              return Optional.of(data.toUpperCase(Locale.US));
+            }
+          },
+          "abc");
+    }
+
     return input;
   }
 }

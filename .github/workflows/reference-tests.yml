@@ -69,7 +69,15 @@ jobs:
     permissions:
       checks: write
       statuses: write
+    if: always()
     steps:
-      - name: consolidation
-        run: echo "consolidating statuses"
-
+      # Fail if any `needs` job was not a success.
+      # Along with `if: always()`, this allows this job to act as a single required status check for the entire workflow.
+      - name: Fail on workflow error
+        run: exit 1
+        if: >-
+          ${{
+            contains(needs.*.result, 'failure')
+            || contains(needs.*.result, 'cancelled')
+            || contains(needs.*.result, 'skipped')
+          }}
