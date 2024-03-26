@@ -5,6 +5,7 @@
 ### Breaking Changes
 - RocksDB database metadata format has changed to be more expressive, the migration of an existing metadata file to the new format is automatic at startup. Before performing a downgrade to a previous version it is mandatory to revert to the original format using the subcommand `besu --data-path=/path/to/besu/datadir storage revert-metadata v2-to-v1`.
 - BFT networks won't start with SNAP or CHECKPOINT sync (previously Besu would start with this config but quietly fail to sync, so it's now more obvious that it won't work) [#6625](https://github.com/hyperledger/besu/pull/6625), [#6667](https://github.com/hyperledger/besu/pull/6667)
+- Forest pruning has been removed, it was deprecated since 24.1.0. In case you are still using it you must now remove any of the following options: `pruning-enabled`, `pruning-blocks-retained` and `pruning-block-confirmations`, from you configuration, and you may want to consider switching to Bonsai.  
 
 ### Upcoming Breaking Changes
 - Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
@@ -27,6 +28,7 @@
 - Extend error handling of plugin RPC methods [#6759](https://github.com/hyperledger/besu/pull/6759)
 - Added engine_newPayloadV4 and engine_getPayloadV4 methods [#6783](https://github.com/hyperledger/besu/pull/6783)
 - Reduce storage size of receipts [#6602](https://github.com/hyperledger/besu/pull/6602)
+- Remove deprecated Forest pruning [#6810](https://github.com/hyperledger/besu/pull/6810)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
