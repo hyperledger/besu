@@ -38,8 +38,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
@@ -129,7 +129,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
   public void addResponse(
       final SnapWorldDownloadState downloadState,
       final WorldStateProofProvider worldStateProofProvider,
-      final TreeMap<Bytes32, Bytes> slots,
+      final NavigableMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
     if (!slots.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
@@ -202,7 +202,7 @@ public class StorageRangeDataRequest extends SnapDataRequest {
     return storageRoot;
   }
 
-  public TreeMap<Bytes32, Bytes> getSlots() {
+  public NavigableMap<Bytes32, Bytes> getSlots() {
     return stackTrie.getElement(startKeyHash).keys();
   }
 

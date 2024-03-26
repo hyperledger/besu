@@ -188,6 +188,7 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
+  @SuppressWarnings("unused")
   public Comparator<BlockHeader> getBlockChoiceRule() {
     return (a, b) -> {
       throw new NonDeterministicOperationException(

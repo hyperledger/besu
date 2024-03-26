@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import io.prometheus.client.Collector;
 import org.rocksdb.HistogramData;
@@ -175,7 +176,7 @@ public class RocksDBStats {
       return;
     }
     for (final TickerType ticker : TICKERS) {
-      final String promCounterName = ticker.name().toLowerCase();
+      final String promCounterName = ticker.name().toLowerCase(Locale.ROOT);
       metricsSystem.createLongGauge(
           category,
           promCounterName,
@@ -192,7 +193,7 @@ public class RocksDBStats {
       final Statistics stats, final HistogramType histogram) {
     return new Collector() {
       final String metricName =
-          KVSTORE_ROCKSDB_STATS.getName() + "_" + histogram.name().toLowerCase();
+          KVSTORE_ROCKSDB_STATS.getName() + "_" + histogram.name().toLowerCase(Locale.ROOT);
 
       @Override
       public List<MetricFamilySamples> collect() {
