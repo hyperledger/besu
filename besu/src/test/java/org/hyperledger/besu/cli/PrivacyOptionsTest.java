@@ -193,6 +193,15 @@ public class PrivacyOptionsTest extends CommandTestAbstract {
   }
 
   @Test
+  public void privacyWithBonsaiMustError() {
+    parseCommand("--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Bonsai cannot be enabled with privacy.");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void privacyWithPruningMustError() {
     parseCommand("--pruning-enabled", "--privacy-enabled");
 
