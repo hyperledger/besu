@@ -90,7 +90,7 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
         Math.pow(SUB_CALL_REMAINING_GAS_RATIO, operationTracer.getMaxDepth());
     // and minimum gas remaining is necessary for some operation (additionalStipend)
     final long gasStipend = operationTracer.getStipendNeeded();
-    final long gasUsedByTransaction = result.getResult().getEstimateGasUsedByTransaction();
+    final long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
     return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }
 
@@ -111,19 +111,14 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
         result.getValidationResult();
     if (validationResult != null && !validationResult.isValid()) {
       if (validationResult.getErrorMessage().length() > 0) {
-        final RpcErrorType rpcErrorType =
-            JsonRpcErrorConverter.convertTransactionInvalidReason(
-                validationResult.getInvalidReason());
-        final JsonRpcError rpcError = new JsonRpcError(rpcErrorType);
-        rpcError.setReason(validationResult.getErrorMessage());
-        return errorResponse(request, rpcError);
+        return errorResponse(request, JsonRpcError.from(validationResult));
       }
       return errorResponse(
           request,
           JsonRpcErrorConverter.convertTransactionInvalidReason(
               validationResult.getInvalidReason()));
     } else {
-      final TransactionProcessingResult resultTrx = result.getResult();
+      final TransactionProcessingResult resultTrx = result.result();
       if (resultTrx != null && resultTrx.getRevertReason().isPresent()) {
         return errorResponse(
             request,

@@ -215,6 +215,7 @@ ethstats-cacert-file="./root.cert"
 # Data storage
 data-storage-format="BONSAI"
 bonsai-historical-block-limit=512
+receipt-compaction-enabled=true
 
 # feature flags
 Xsecp256k1-native-enabled=false

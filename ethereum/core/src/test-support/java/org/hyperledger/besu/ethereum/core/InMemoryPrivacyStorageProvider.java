@@ -24,8 +24,9 @@ import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -33,7 +34,8 @@ public class InMemoryPrivacyStorageProvider implements PrivacyStorageProvider {
 
   public static WorldStateArchive createInMemoryWorldStateArchive() {
     return new ForestWorldStateArchive(
-        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+        new WorldStateStorageCoordinator(
+            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage())),
         new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
         EvmConfiguration.DEFAULT);
   }
@@ -47,8 +49,13 @@ public class InMemoryPrivacyStorageProvider implements PrivacyStorageProvider {
   }
 
   @Override
-  public WorldStateStorage createWorldStateStorage() {
+  public WorldStateKeyValueStorage createWorldStateStorage() {
     return new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+  }
+
+  @Override
+  public WorldStateStorageCoordinator createWorldStateStorageCoordinator() {
+    return new WorldStateStorageCoordinator(createWorldStateStorage());
   }
 
   @Override

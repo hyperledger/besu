@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
@@ -77,7 +77,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final SynchronizerConfiguration syncConfig,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final BlockBroadcaster blockBroadcaster,
       final Optional<Pruner> maybePruner,
       final EthContext ethContext,
@@ -141,7 +141,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
-                  worldStateStorage,
+                  worldStateStorageCoordinator,
                   syncState,
                   clock);
     } else if (SyncMode.isCheckpointSync(syncConfig.getSyncMode())) {
@@ -156,7 +156,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
-                  worldStateStorage,
+                  worldStateStorageCoordinator,
                   syncState,
                   clock);
     } else {
@@ -171,7 +171,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   protocolContext,
                   metricsSystem,
                   ethContext,
-                  worldStateStorage,
+                  worldStateStorageCoordinator,
                   syncState,
                   clock);
     }

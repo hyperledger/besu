@@ -44,8 +44,9 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     accountOne = accounts.createAccount("account-one");
     minerWebSocket = new WebSocket(vertx, minerNode.getConfiguration());
     archiveWebSocket = new WebSocket(vertx, archiveNode.getConfiguration());
-    // to make sure that the transaction pool is active:
+    // verify all nodes are done syncing so the tx pool will be enabled
     archiveNode.verify(eth.syncingStatus(false));
+    minerNode.verify(eth.syncingStatus(false));
   }
 
   @AfterEach

@@ -29,11 +29,11 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
-public class EngineNewPayloadV6110 extends AbstractEngineNewPayload {
+public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
 
-  private final Optional<ScheduledProtocolSpec.Hardfork> eip6110;
+  private final Optional<ScheduledProtocolSpec.Hardfork> prague;
 
-  public EngineNewPayloadV6110(
+  public EngineNewPayloadV4(
       final Vertx vertx,
       final ProtocolSchedule timestampSchedule,
       final ProtocolContext protocolContext,
@@ -42,13 +42,12 @@ public class EngineNewPayloadV6110 extends AbstractEngineNewPayload {
       final EngineCallListener engineCallListener) {
     super(
         vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
-    this.eip6110 =
-        timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("ExperimentalEips"));
+    this.prague = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("prague"));
   }
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_NEW_PAYLOAD_V6110.getMethodName();
+    return RpcMethod.ENGINE_NEW_PAYLOAD_V4.getMethodName();
   }
 
   @Override
@@ -74,16 +73,16 @@ public class EngineNewPayloadV6110 extends AbstractEngineNewPayload {
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     if (protocolSchedule.isPresent()) {
-      if (eip6110.isPresent() && blockTimestamp >= eip6110.get().milestone()) {
+      if (prague.isPresent() && blockTimestamp >= prague.get().milestone()) {
         return ValidationResult.valid();
       } else {
         return ValidationResult.invalid(
             RpcErrorType.UNSUPPORTED_FORK,
-            "EIP-6110 configured to start at timestamp: " + eip6110.get().milestone());
+            "Prague configured to start at timestamp: " + prague.get().milestone());
       }
     } else {
       return ValidationResult.invalid(
-          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for EIP-6110 fork set");
+          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Prague fork set");
     }
   }
 }

@@ -50,11 +50,12 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   public BonsaiSnapshotWorldStateKeyValueStorage(
-      final BonsaiWorldStateKeyValueStorage worldStateStorage) {
+      final BonsaiWorldStateKeyValueStorage worldStateStorageKeyValueStorage) {
     this(
-        worldStateStorage,
-        ((SnappableKeyValueStorage) worldStateStorage.composedWorldStateStorage).takeSnapshot(),
-        worldStateStorage.trieLogStorage);
+        worldStateStorageKeyValueStorage,
+        ((SnappableKeyValueStorage) worldStateStorageKeyValueStorage.composedWorldStateStorage)
+            .takeSnapshot(),
+        worldStateStorageKeyValueStorage.trieLogStorage);
   }
 
   private boolean isClosedGet() {
@@ -66,7 +67,7 @@ public class BonsaiSnapshotWorldStateKeyValueStorage extends BonsaiWorldStateKey
   }
 
   @Override
-  public BonsaiUpdater updater() {
+  public Updater updater() {
     return new Updater(
         ((SnappedKeyValueStorage) composedWorldStateStorage).getSnapshotTransaction(),
         trieLogStorage.startTransaction(),

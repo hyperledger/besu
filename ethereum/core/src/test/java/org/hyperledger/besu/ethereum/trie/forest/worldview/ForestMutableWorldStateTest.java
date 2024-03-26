@@ -263,12 +263,12 @@ class ForestMutableWorldStateTest {
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);
 
     // Check that storage is empty before persisting
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isFalse();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isFalse();
 
     // Persist and re-run assertions
     worldState.persist(null);
 
-    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash(), null)).isTrue();
+    assertThat(kvWorldStateStorage.isWorldStateAvailable(worldState.rootHash())).isTrue();
     assertThat(worldState.rootHash()).isEqualTo(expectedRootHash);
     assertThat(worldState.get(ADDRESS)).isNotNull();
     assertThat(worldState.get(ADDRESS).getBalance()).isEqualTo(newBalance);

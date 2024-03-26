@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -26,7 +25,7 @@ import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValu
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -43,13 +42,11 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ArgumentsProvider;
 import org.junit.jupiter.params.provider.ArgumentsSource;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class StorageTrieNodeHealingRequestTest {
 
-  @Mock private SnapWorldDownloadState downloadState;
   final List<Address> accounts =
       List.of(
           Address.fromHexString("0xdeadbeef"),
@@ -57,7 +54,7 @@ class StorageTrieNodeHealingRequestTest {
           Address.fromHexString("0xdeadbeea"),
           Address.fromHexString("0xdeadbeeb"));
 
-  private WorldStateStorage worldStateStorage;
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
   private Hash account0Hash;
   private Hash account0StorageRoot;
 
@@ -71,18 +68,21 @@ class StorageTrieNodeHealingRequestTest {
 
   public void setup(final DataStorageFormat storageFormat) {
     if (storageFormat.equals(DataStorageFormat.FOREST)) {
-      worldStateStorage = new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+      worldStateStorageCoordinator =
+          new WorldStateStorageCoordinator(
+              new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()));
     } else {
       final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
-      worldStateStorage =
-          new BonsaiWorldStateKeyValueStorage(
-              storageProvider,
-              new NoOpMetricsSystem(),
-              DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+      worldStateStorageCoordinator =
+          new WorldStateStorageCoordinator(
+              new BonsaiWorldStateKeyValueStorage(
+                  storageProvider,
+                  new NoOpMetricsSystem(),
+                  DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
     }
     final MerkleTrie<Bytes, Bytes> trie =
         TrieGenerator.generateTrie(
-            worldStateStorage,
+            worldStateStorageCoordinator,
             accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
 
     account0Hash = accounts.get(0).addressHash();
@@ -103,7 +103,7 @@ class StorageTrieNodeHealingRequestTest {
         new StorageTrieNodeHealingRequest(
             account0StorageRoot, account0Hash, Hash.EMPTY, Bytes.EMPTY);
 
-    Assertions.assertThat(request.getExistingData(downloadState, worldStateStorage)).isPresent();
+    Assertions.assertThat(request.getExistingData(worldStateStorageCoordinator)).isPresent();
   }
 
   @ParameterizedTest
@@ -113,6 +113,6 @@ class StorageTrieNodeHealingRequestTest {
     final StorageTrieNodeHealingRequest request =
         new StorageTrieNodeHealingRequest(Hash.EMPTY, account0Hash, Hash.EMPTY, Bytes.EMPTY);
 
-    Assertions.assertThat(request.getExistingData(downloadState, worldStateStorage)).isEmpty();
+    Assertions.assertThat(request.getExistingData(worldStateStorageCoordinator)).isEmpty();
   }
 }

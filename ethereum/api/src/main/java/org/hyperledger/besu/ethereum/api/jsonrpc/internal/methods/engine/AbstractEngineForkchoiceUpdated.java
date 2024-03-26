@@ -44,10 +44,12 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.BiConsumer;
+import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.spi.LoggingEventBuilder;
 
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
@@ -170,7 +172,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       if (!getWithdrawalsValidator(
               protocolSchedule.get(), newHead, maybePayloadAttributes.get().getTimestamp())
           .validateWithdrawals(withdrawals)) {
-        return new JsonRpcErrorResponse(requestId, getInvalidPayloadError());
+        return new JsonRpcErrorResponse(requestId, getInvalidParametersError());
       }
     }
 
@@ -239,7 +241,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     if (payloadAttributes.getTimestamp() <= headBlockHeader.getTimestamp()) {
       LOG.warn(
           "Payload attributes timestamp is smaller than timestamp of header in fork choice update");
-      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadError()));
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     }
 
     return Optional.empty();
@@ -277,12 +279,31 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
   }
 
   private void logPayload(final EnginePayloadAttributesParameter payloadAttributes) {
-    LOG.atDebug()
-        .setMessage("timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}")
-        .addArgument(payloadAttributes::getTimestamp)
-        .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
-        .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString())
-        .log();
+    String message = "payloadAttributes: timestamp: {}, prevRandao: {}, suggestedFeeRecipient: {}";
+    LoggingEventBuilder builder =
+        LOG.atDebug()
+            .setMessage(message)
+            .addArgument(payloadAttributes::getTimestamp)
+            .addArgument(() -> payloadAttributes.getPrevRandao().toHexString())
+            .addArgument(() -> payloadAttributes.getSuggestedFeeRecipient().toHexString());
+    if (payloadAttributes.getWithdrawals() != null) {
+      message += ", withdrawals: {}";
+      builder =
+          builder
+              .setMessage(message)
+              .addArgument(
+                  payloadAttributes.getWithdrawals().stream()
+                      .map(WithdrawalParameter::toString)
+                      .collect(Collectors.joining(", ", "[", "]")));
+    }
+    if (payloadAttributes.getParentBeaconBlockRoot() != null) {
+      message += ", parentBeaconBlockRoot: {}";
+      builder =
+          builder
+              .setMessage(message)
+              .addArgument(() -> payloadAttributes.getParentBeaconBlockRoot().toHexString());
+    }
+    builder.log();
   }
 
   private boolean isValidForkchoiceState(
@@ -343,8 +364,12 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     return false;
   }
 
-  protected RpcErrorType getInvalidPayloadError() {
+  protected RpcErrorType getInvalidParametersError() {
     return RpcErrorType.INVALID_PARAMS;
+  }
+
+  protected RpcErrorType getInvalidPayloadAttributesError() {
+    return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
 
   // fcU calls are synchronous, no need to make volatile

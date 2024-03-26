@@ -399,7 +399,7 @@ public class EthServerTest {
   private int calculateRlpEncodedSize(final List<TransactionReceipt> receipts) {
     final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
     rlp.startList();
-    receipts.forEach(r -> r.writeTo(rlp));
+    receipts.forEach(r -> r.writeToForNetwork(rlp));
     rlp.endList();
     return rlp.encodedSize();
   }
