@@ -160,7 +160,7 @@ public class SECP256R1Test {
           final BigInteger recoveredPubKeyBigInt =
               secp256R1.recoverFromSignature(
                   signature.getRecId(), signature.getR(), signature.getS(), dataHash);
-          assertThat(recoveredPubKeyBigInt).isEqualTo(recoveredPubKeyBigInt);
+          assertThat(recoveredPubKeyBigInt).isEqualTo(publicKeyBigInt);
         });
   }
 

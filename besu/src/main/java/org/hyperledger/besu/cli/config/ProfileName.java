@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.cli.config;
 
+import java.util.Locale;
+
 import org.apache.commons.lang3.StringUtils;
 
 /** Enum for profile names. Each profile corresponds to a configuration file. */
@@ -51,6 +53,6 @@ public enum ProfileName {
 
   @Override
   public String toString() {
-    return StringUtils.capitalize(name().replaceAll("_", " ").toLowerCase());
+    return StringUtils.capitalize(name().replaceAll("_", " ").toLowerCase(Locale.ROOT));
   }
 }

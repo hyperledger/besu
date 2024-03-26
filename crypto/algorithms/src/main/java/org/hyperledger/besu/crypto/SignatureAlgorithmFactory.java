@@ -49,10 +49,8 @@ public class SignatureAlgorithmFactory {
 
     if (!SignatureAlgorithmType.isDefault(instance)) {
       LOG.info(
-          new StringBuilder("The signature algorithm uses the elliptic curve ")
-              .append(instance.getCurveName())
-              .append(". The usage of alternative elliptic curves is still experimental.")
-              .toString());
+          "The signature algorithm uses the elliptic curve {}. The usage of alternative elliptic curves is still experimental.",
+          instance.getCurveName());
     }
   }
 

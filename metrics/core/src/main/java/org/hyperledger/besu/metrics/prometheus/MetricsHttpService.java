@@ -26,6 +26,7 @@ import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.nio.charset.StandardCharsets;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.Set;
 import java.util.TreeSet;
@@ -175,7 +176,10 @@ public class MetricsHttpService implements MetricsService {
   private boolean hostIsInAllowlist(final String hostHeader) {
     if (config.getHostsAllowlist().stream()
         .anyMatch(
-            allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+            allowlistEntry ->
+                allowlistEntry
+                    .toLowerCase(Locale.ROOT)
+                    .equals(hostHeader.toLowerCase(Locale.ROOT)))) {
       return true;
     } else {
       LOG.trace("Host not in allowlist: '{}'", hostHeader);

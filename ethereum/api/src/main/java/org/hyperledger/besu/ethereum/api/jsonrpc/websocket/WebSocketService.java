@@ -331,9 +331,7 @@ public class WebSocketService {
         .map(
             header ->
                 configuration.getHostsAllowlist().stream()
-                    .anyMatch(
-                        allowlistEntry ->
-                            allowlistEntry.toLowerCase().equals(header.toLowerCase())))
+                    .anyMatch(allowListEntry -> allowListEntry.equalsIgnoreCase(header)))
         .orElse(false);
   }
 }
