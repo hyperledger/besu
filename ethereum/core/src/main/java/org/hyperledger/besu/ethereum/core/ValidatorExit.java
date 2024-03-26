@@ -61,7 +61,7 @@ public class ValidatorExit implements org.hyperledger.besu.plugin.data.Validator
 
   @Override
   public String toString() {
-    return "Deposit{"
+    return "ValidatorExit{"
         + "sourceAddress="
         + sourceAddress
         + "validatorPubKey="
