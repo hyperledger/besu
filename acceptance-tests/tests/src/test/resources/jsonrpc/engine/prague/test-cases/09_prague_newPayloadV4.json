@@ -1,7 +1,7 @@
 {
   "request": {
     "jsonrpc": "2.0",
-    "method": "engine_newPayloadV6110",
+    "method": "engine_newPayloadV4",
     "params": [
       {
         "parentHash": "0x1dd4f141551d53ce393845e2873754e43396101a8ebc0fd0eeb2e6798a591315",

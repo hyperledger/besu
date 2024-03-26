@@ -100,12 +100,9 @@ public class StorageRangeDataRequest extends SnapDataRequest {
         (location, hash, value) -> {
           applyForStrategy(
               updater,
-              onBonsai -> {
-                onBonsai.putAccountStorageTrieNode(accountHash, location, hash, value);
-              },
-              onForest -> {
-                onForest.putAccountStorageTrieNode(hash, value);
-              });
+              onBonsai -> onBonsai.putAccountStorageTrieNode(accountHash, location, hash, value),
+              onForest -> onForest.putAccountStorageTrieNode(hash, value));
+          nbNodesSaved.incrementAndGet();
         };
 
     final AtomicReference<StackTrie.FlatDatabaseUpdater> flatDatabaseUpdater =

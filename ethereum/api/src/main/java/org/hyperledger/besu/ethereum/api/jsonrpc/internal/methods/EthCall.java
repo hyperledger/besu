@@ -164,6 +164,11 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
         callParams.getGasPrice() == null || Wei.ZERO.equals(callParams.getGasPrice());
 
     if (header.getBaseFee().isPresent()) {
+      if (callParams.getBlobVersionedHashes().isPresent()
+          && (callParams.getMaxFeePerBlobGas().isEmpty()
+              || callParams.getMaxFeePerBlobGas().get().equals(Wei.ZERO))) {
+        return true;
+      }
       boolean isZeroMaxFeePerGas = callParams.getMaxFeePerGas().orElse(Wei.ZERO).equals(Wei.ZERO);
       boolean isZeroMaxPriorityFeePerGas =
           callParams.getMaxPriorityFeePerGas().orElse(Wei.ZERO).equals(Wei.ZERO);

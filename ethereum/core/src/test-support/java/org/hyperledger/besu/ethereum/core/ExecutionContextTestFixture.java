@@ -141,6 +141,7 @@ public class ExecutionContextTestFixture {
                     new PrivacyParameters(),
                     false,
                     EvmConfiguration.DEFAULT,
+                    MiningParameters.MINING_DISABLED,
                     new BadBlockManager())
                 .createProtocolSchedule();
       }

@@ -220,12 +220,14 @@ public class VertxPeerDiscoveryAgent extends PeerDiscoveryAgent {
             .addArgument(err)
             .log();
       } else {
-        LOG.warn(
-            "Sending to peer {} failed, native error code {}, packet: {}, stacktrace: {}",
-            peer,
-            nativeErr.expectedErr(),
-            wrapBuffer(packet.encode()),
-            err);
+        LOG.atDebug()
+            .setMessage(
+                "Sending to peer {} failed, native error code {}, packet: {}, stacktrace: {}")
+            .addArgument(peer)
+            .addArgument(nativeErr.expectedErr())
+            .addArgument(wrapBuffer(packet.encode()))
+            .addArgument(err)
+            .log();
       }
     } else if (err instanceof SocketException && err.getMessage().contains("unreachable")) {
       LOG.atDebug()
