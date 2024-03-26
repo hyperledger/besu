@@ -73,7 +73,7 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
       this.v =
           (transactionType == TransactionType.ACCESS_LIST
                   || transactionType == TransactionType.EIP1559)
-              ? this.yParity
+              ? Quantity.create(tx.getV())
               : null;
     }
     this.value = Quantity.create(tx.getValue());
