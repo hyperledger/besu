@@ -20,13 +20,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 
 public class EngineGetInclusionListV1 implements JsonRpcMethod {
-    @Override
-    public String getName() {
-        return "engine_getInclusionListV1";
-    }
+  @Override
+  public String getName() {
+    return "engine_getInclusionListV1";
+  }
 
-    @Override
-    public JsonRpcResponse response(final JsonRpcRequestContext request) {
-        return null;
-    }
+  @Override
+  public JsonRpcResponse response(final JsonRpcRequestContext request) {
+    return null;
+  }
 }

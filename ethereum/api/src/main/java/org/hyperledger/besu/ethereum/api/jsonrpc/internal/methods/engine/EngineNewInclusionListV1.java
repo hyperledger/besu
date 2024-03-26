@@ -20,13 +20,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 
 public class EngineNewInclusionListV1 implements JsonRpcMethod {
-    @Override
-    public String getName() {
-        return "engine_newInclusionListV1";
-    }
+  @Override
+  public String getName() {
+    return "engine_newInclusionListV1";
+  }
 
-    @Override
-    public JsonRpcResponse response(final JsonRpcRequestContext request) {
-        return null;
-    }
+  @Override
+  public JsonRpcResponse response(final JsonRpcRequestContext request) {
+    // InclusionList il = request.getRequiredParameter(0, InclusionList.class);
+
+    // add it to a shared cache
+    // bound by time
+    // purged by finalization
+    return null;
+  }
 }

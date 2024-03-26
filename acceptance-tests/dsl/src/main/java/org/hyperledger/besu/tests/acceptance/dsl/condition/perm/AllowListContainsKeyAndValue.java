@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -28,6 +30,8 @@ public class AllowListContainsKeyAndValue implements Condition {
   private final ALLOWLIST_TYPE allowlistType;
   private final Collection<String> allowlistValues;
   private final Path configFilePath;
+
+  private static final Logger LOG = LoggerFactory.getLogger(AllowListContainsKeyAndValue.class);
 
   public AllowListContainsKeyAndValue(
       final ALLOWLIST_TYPE allowlistType,
@@ -47,6 +51,7 @@ public class AllowListContainsKeyAndValue implements Condition {
               allowlistType, allowlistValues, configFilePath);
     } catch (final Exception e) {
       result = false;
+      LOG.error("Error verifying allowlist contains key and value", e);
     }
     assertThat(result).isTrue();
   }

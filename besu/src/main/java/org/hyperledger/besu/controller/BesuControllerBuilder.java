@@ -15,6 +15,7 @@
 package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static com.google.common.base.Preconditions.checkState;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
@@ -535,6 +536,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
     checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
+    //checkNotNull(besuComponent, "Missing Dagger context");
+    //checkState(besuComponent.isPresent(), "Missing Dagger context");
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
