@@ -116,7 +116,7 @@ public class TransactionPendingResult implements TransactionResult {
       this.v =
           (transactionType == TransactionType.ACCESS_LIST
                   || transactionType == TransactionType.EIP1559)
-              ? this.yParity
+              ? Quantity.create(transaction.getV())
               : null;
     }
     this.value = Quantity.create(transaction.getValue());
