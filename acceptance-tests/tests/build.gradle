@@ -20,7 +20,11 @@ web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
 
 sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
-solidity { resolvePackages = false }
+solidity {
+  resolvePackages = false
+  // TODO: remove the forced version, when DEV network is upgraded to support latest forks
+  version '0.8.19'
+}
 
 dependencies {
   api 'org.slf4j:slf4j-api'
