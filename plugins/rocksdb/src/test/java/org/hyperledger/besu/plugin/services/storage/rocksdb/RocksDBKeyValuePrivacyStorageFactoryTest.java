@@ -15,13 +15,17 @@
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.FOREST;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.segmented.RocksDBColumnarKeyValueStorageTest.TestSegment;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.DatabaseMetadata;
@@ -35,6 +39,8 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -42,6 +48,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class RocksDBKeyValuePrivacyStorageFactoryTest {
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
+  @Mock private DataStorageConfiguration dataStorageConfiguration;
   @TempDir private Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final SegmentIdentifier segment = TestSegment.BAR;
@@ -94,20 +101,25 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
     }
   }
 
-  @Test
-  public void shouldUpdateCorrectMetadataFileForLatestVersion() throws Exception {
+  @ParameterizedTest
+  @EnumSource(DataStorageFormat.class)
+  public void shouldUpdateCorrectMetadataFileForLatestVersion(
+      final DataStorageFormat dataStorageFormat) throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
-    mockCommonConfiguration(tempDataDir, tempDatabaseDir);
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir, dataStorageFormat);
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
             () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS);
 
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
-
+      final BaseVersionedStorageFormat expectedBaseVersion =
+          dataStorageFormat == BONSAI
+              ? BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES
+              : BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_VARIABLES);
+          .isEqualTo(expectedBaseVersion);
     }
     storageFactory.close();
 
@@ -116,16 +128,67 @@ public class RocksDBKeyValuePrivacyStorageFactoryTest {
 
     try (final var storage =
         privacyStorageFactory.create(segment, commonConfiguration, metricsSystem)) {
-
+      final PrivacyVersionedStorageFormat expectedPrivacyVersion =
+          dataStorageFormat == BONSAI
+              ? PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES
+              : PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES);
+          .isEqualTo(expectedPrivacyVersion);
+    }
+    privacyStorageFactory.close();
+  }
+
+  @ParameterizedTest
+  @EnumSource(DataStorageFormat.class)
+  public void shouldUpdateCorrectMetadataFileForLatestVersionWithReceiptCompaction(
+      final DataStorageFormat dataStorageFormat) throws Exception {
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir, dataStorageFormat);
+    when(dataStorageConfiguration.getReceiptCompactionEnabled()).thenReturn(true);
+
+    final RocksDBKeyValueStorageFactory storageFactory =
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PRIVATE_ROCKS_DB_METRICS);
+
+    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
+      final BaseVersionedStorageFormat expectedBaseVersion =
+          dataStorageFormat == BONSAI
+              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
+              : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
+      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+          .isEqualTo(expectedBaseVersion);
+    }
+    storageFactory.close();
+
+    final RocksDBKeyValuePrivacyStorageFactory privacyStorageFactory =
+        new RocksDBKeyValuePrivacyStorageFactory(storageFactory);
+
+    try (final var storage =
+        privacyStorageFactory.create(segment, commonConfiguration, metricsSystem)) {
+      final PrivacyVersionedStorageFormat expectedPrivacyVersion =
+          dataStorageFormat == BONSAI
+              ? PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
+              : PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
+      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+          .isEqualTo(expectedPrivacyVersion);
     }
     privacyStorageFactory.close();
   }
 
   private void mockCommonConfiguration(final Path tempDataDir, final Path tempDatabaseDir) {
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir, FOREST);
+  }
+
+  private void mockCommonConfiguration(
+      final Path tempDataDir,
+      final Path tempDatabaseDir,
+      final DataStorageFormat dataStorageFormat) {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    when(commonConfiguration.getDatabaseFormat()).thenReturn(FOREST);
+    when(dataStorageConfiguration.getDatabaseFormat()).thenReturn(dataStorageFormat);
+    lenient()
+        .when(commonConfiguration.getDataStorageConfiguration())
+        .thenReturn(dataStorageConfiguration);
   }
 }

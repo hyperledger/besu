@@ -133,12 +133,13 @@ public class MergeBesuControllerBuilderTest {
     when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
     lenient().when(genesisConfigOptions.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
     lenient()
-        .when(storageProvider.createBlockchainStorage(any(), any()))
+        .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-                new MainnetBlockHeaderFunctions()));
+                new MainnetBlockHeaderFunctions(),
+                false));
     lenient()
         .when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());

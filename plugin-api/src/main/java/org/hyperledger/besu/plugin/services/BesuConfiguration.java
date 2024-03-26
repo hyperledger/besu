@@ -16,6 +16,7 @@ package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.nio.file.Path;
@@ -43,6 +44,7 @@ public interface BesuConfiguration extends BesuService {
    * @return Database format.
    */
   @Unstable
+  @Deprecated
   DataStorageFormat getDatabaseFormat();
 
   /**
@@ -52,4 +54,12 @@ public interface BesuConfiguration extends BesuService {
    */
   @Unstable
   Wei getMinGasPrice();
+
+  /**
+   * Database storage configuration.
+   *
+   * @return Database storage configuration.
+   */
+  @Unstable
+  DataStorageConfiguration getDataStorageConfiguration();
 }
