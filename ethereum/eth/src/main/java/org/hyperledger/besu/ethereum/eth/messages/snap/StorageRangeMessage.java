@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 
@@ -48,16 +49,14 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
     return new StorageRangeMessage(message.getData());
   }
 
-  @SuppressWarnings("NonApiType")
   public static StorageRangeMessage create(
-      final ArrayDeque<TreeMap<Bytes32, Bytes>> slots, final List<Bytes> proof) {
+      final ArrayDeque<NavigableMap<Bytes32, Bytes>> slots, final List<Bytes> proof) {
     return create(Optional.empty(), slots, proof);
   }
 
-  @SuppressWarnings("NonApiType")
   public static StorageRangeMessage create(
       final Optional<BigInteger> requestId,
-      final ArrayDeque<TreeMap<Bytes32, Bytes>> slots,
+      final ArrayDeque<NavigableMap<Bytes32, Bytes>> slots,
       final List<Bytes> proof) {
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     tmp.startList();
@@ -122,8 +121,7 @@ public final class StorageRangeMessage extends AbstractSnapMessageData {
   @Value.Immutable
   public interface SlotRangeData {
 
-    @SuppressWarnings("NonApiType")
-    ArrayDeque<TreeMap<Bytes32, Bytes>> slots();
+    ArrayDeque<NavigableMap<Bytes32, Bytes>> slots();
 
     ArrayDeque<Bytes> proofs();
   }

@@ -36,6 +36,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -56,7 +57,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   private final Bytes32 storageRoot;
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
-  private TreeMap<Bytes32, Bytes> slots;
+  private NavigableMap<Bytes32, Bytes> slots;
   private boolean isProofValid;
 
   public StorageFlatDatabaseHealingRangeRequest(
@@ -118,10 +119,9 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
     return true;
   }
 
-  @SuppressWarnings("NonApiType")
   public void addLocalData(
       final WorldStateProofProvider worldStateProofProvider,
-      final TreeMap<Bytes32, Bytes> slots,
+      final NavigableMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
     if (!slots.isEmpty() && !proofs.isEmpty()) {
       // very proof in order to check if the local flat database is valid or not

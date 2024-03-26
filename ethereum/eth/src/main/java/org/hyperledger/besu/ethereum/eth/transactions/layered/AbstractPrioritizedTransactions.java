@@ -25,7 +25,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -139,9 +138,8 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   @Override
-  @SuppressWarnings("NonApiType")
   protected void internalConsistencyCheck(
-      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+      final Map<Address, NavigableMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     super.internalConsistencyCheck(prevLayerTxsBySender);
 
     final var controlOrderByFee = new TreeSet<>(this::compareByFee);

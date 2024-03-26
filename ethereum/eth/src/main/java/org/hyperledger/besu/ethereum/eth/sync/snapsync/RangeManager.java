@@ -23,6 +23,7 @@ import java.math.BigInteger;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
@@ -42,9 +43,8 @@ public class RangeManager {
 
   private RangeManager() {}
 
-  @SuppressWarnings("NonApiType")
   public static int getRangeCount(
-      final Bytes32 min, final Bytes32 max, final TreeMap<Bytes32, Bytes> items) {
+      final Bytes32 min, final Bytes32 max, final NavigableMap<Bytes32, Bytes> items) {
     if (min.equals(MIN_RANGE) && max.equals(MAX_RANGE)) {
       return MAX_RANGE
           .toUnsignedBigInteger()
@@ -118,11 +118,10 @@ public class RangeManager {
    * @param receivedKeys the last key received
    * @return begin of the new range
    */
-  @SuppressWarnings("NonApiType")
   public static Optional<Bytes32> findNewBeginElementInRange(
       final Bytes32 worldstateRootHash,
       final List<Bytes> proofs,
-      final TreeMap<Bytes32, Bytes> receivedKeys,
+      final NavigableMap<Bytes32, Bytes> receivedKeys,
       final Bytes32 endKeyHash) {
     if (receivedKeys.isEmpty() || receivedKeys.lastKey().compareTo(endKeyHash) >= 0) {
       return Optional.empty();
