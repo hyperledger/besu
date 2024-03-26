@@ -153,6 +153,16 @@ public class RangeManager {
     return Bytes32.leftPad(Bytes.of(data.toByteArray()).trimLeadingZeros());
   }
 
+  /**
+   * Checks if a given location is within a specified range. This method determines whether a given
+   * location (represented as {@link Bytes}) falls within the range defined by a start key path and
+   * an end key path.
+   *
+   * @param location The location to check, represented as {@link Bytes}.
+   * @param startKeyPath The start of the range as path, represented as {@link Bytes}.
+   * @param endKeyPath The end of the range as path, represented as {@link Bytes}.
+   * @return {@code true} if the location is within the range (inclusive); {@code false} otherwise.
+   */
   public static boolean isInRange(
       final Bytes location, final Bytes startKeyPath, final Bytes endKeyPath) {
     final MutableBytes path = MutableBytes.create(Bytes32.SIZE * 2);
@@ -162,6 +172,14 @@ public class RangeManager {
         && Arrays.compare(path.toArrayUnsafe(), endKeyPath.toArrayUnsafe()) <= 0;
   }
 
+  /**
+   * Transforms a list of bytes into a path. This method processes a sequence of bytes, expanding
+   * each byte into two separate bytes to form a new path. The resulting path will have twice the
+   * length of the input byte sequence.
+   *
+   * @param bytes The byte sequence to be transformed into a path.
+   * @return A {@link Bytes} object representing the newly formed path.
+   */
   public static Bytes createPath(final Bytes bytes) {
     final MutableBytes path = MutableBytes.create(bytes.size() * 2);
     int j = 0;
