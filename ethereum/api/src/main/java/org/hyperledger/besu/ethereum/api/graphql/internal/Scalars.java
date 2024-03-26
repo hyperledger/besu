@@ -330,7 +330,7 @@ public class Scalars {
           if (input instanceof Number number) {
             return number;
           } else if (input instanceof String string) {
-            final String value = string.toLowerCase();
+            final String value = string.toLowerCase(Locale.ROOT);
             if (value.startsWith("0x")) {
               return Bytes.fromHexStringLenient(value).toLong();
             } else {
@@ -352,7 +352,7 @@ public class Scalars {
             if (input instanceof IntValue intValue) {
               return intValue.getValue().longValue();
             } else if (input instanceof StringValue stringValue) {
-              final String value = stringValue.getValue().toLowerCase();
+              final String value = stringValue.getValue().toLowerCase(Locale.ROOT);
               if (value.startsWith("0x")) {
                 return Bytes.fromHexStringLenient(value).toLong();
               } else {

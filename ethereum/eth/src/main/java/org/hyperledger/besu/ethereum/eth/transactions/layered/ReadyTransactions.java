@@ -33,7 +33,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.NavigableSet;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -220,7 +219,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   @Override
   protected void internalConsistencyCheck(
-      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+      final Map<Address, NavigableMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     super.internalConsistencyCheck(prevLayerTxsBySender);
 
     final var minNonceBySender =
@@ -241,7 +240,6 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
           : "orderByMaxFee does not match pendingTransactions";
     }
 
-    assert itCurrent.hasNext() == false
-        : "orderByMaxFee has more elements than pendingTransactions";
+    assert !itCurrent.hasNext() : "orderByMaxFee has more elements than pendingTransactions";
   }
 }

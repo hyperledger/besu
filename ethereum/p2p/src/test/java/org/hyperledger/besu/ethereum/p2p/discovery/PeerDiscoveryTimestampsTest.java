@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.p2p.discovery.internal.MockPeerDiscoveryAge
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.Packet;
 
 import java.util.Collections;
-import java.util.concurrent.atomic.AtomicLong;
 
 import org.junit.jupiter.api.Test;
 
@@ -41,8 +40,8 @@ public class PeerDiscoveryTimestampsTest {
     final Packet pong = helper.createPongPacket(agent, Hash.hash(agentPing.getHash()));
     helper.sendMessageBetweenAgents(testAgent, agent, pong);
 
-    final AtomicLong lastSeen = new AtomicLong();
-    final AtomicLong firstDiscovered = new AtomicLong();
+    long lastSeen;
+    long firstDiscovered;
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
@@ -50,16 +49,16 @@ public class PeerDiscoveryTimestampsTest {
     assertThat(p.getLastSeen()).isGreaterThan(0);
     assertThat(p.getFirstDiscovered()).isGreaterThan(0);
 
-    lastSeen.set(p.getLastSeen());
-    firstDiscovered.set(p.getFirstDiscovered());
+    lastSeen = p.getLastSeen();
+    firstDiscovered = p.getFirstDiscovered();
 
     helper.sendMessageBetweenAgents(testAgent, agent, testAgentPing);
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
     p = agent.streamDiscoveredPeers().iterator().next();
-    assertThat(p.getLastSeen()).isGreaterThan(lastSeen.get());
-    assertThat(p.getFirstDiscovered()).isEqualTo(firstDiscovered.get());
+    assertThat(p.getLastSeen()).isGreaterThan(lastSeen);
+    assertThat(p.getFirstDiscovered()).isEqualTo(firstDiscovered);
   }
 
   @Test
@@ -74,9 +73,9 @@ public class PeerDiscoveryTimestampsTest {
 
     assertThat(agent.streamDiscoveredPeers()).hasSize(1);
 
-    final AtomicLong lastContacted = new AtomicLong();
-    final AtomicLong lastSeen = new AtomicLong();
-    final AtomicLong firstDiscovered = new AtomicLong();
+    final long lastContacted;
+    final long lastSeen;
+    final long firstDiscovered;
 
     DiscoveryPeer peer = agent.streamDiscoveredPeers().iterator().next();
     final long lc = peer.getLastContacted();
@@ -87,9 +86,9 @@ public class PeerDiscoveryTimestampsTest {
     assertThat(ls).isGreaterThan(0);
     assertThat(fd).isGreaterThan(0);
 
-    lastContacted.set(lc);
-    lastSeen.set(ls);
-    firstDiscovered.set(fd);
+    lastContacted = lc;
+    lastSeen = ls;
+    firstDiscovered = fd;
 
     // Send another packet and ensure that timestamps are updated accordingly.
     // Sleep beforehand to make sure timestamps will be different.
@@ -102,8 +101,8 @@ public class PeerDiscoveryTimestampsTest {
 
     peer = agent.streamDiscoveredPeers().iterator().next();
 
-    assertThat(peer.getLastContacted()).isGreaterThan(lastContacted.get());
-    assertThat(peer.getLastSeen()).isGreaterThan(lastSeen.get());
-    assertThat(peer.getFirstDiscovered()).isEqualTo(firstDiscovered.get());
+    assertThat(peer.getLastContacted()).isGreaterThan(lastContacted);
+    assertThat(peer.getLastSeen()).isGreaterThan(lastSeen);
+    assertThat(peer.getFirstDiscovered()).isEqualTo(firstDiscovered);
   }
 }
