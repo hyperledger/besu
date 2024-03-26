@@ -52,7 +52,8 @@ public class CheckPointBlockImportStepTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            false);
     blockchain =
         DefaultBlockchain.createMutable(
             generateBlock(0), blockchainStorage, mock(MetricsSystem.class), 0);

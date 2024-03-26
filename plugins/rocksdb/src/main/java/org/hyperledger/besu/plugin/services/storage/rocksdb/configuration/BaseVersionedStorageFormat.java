@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.OptionalInt;
@@ -27,13 +28,23 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
    * make BlobDB more effective
    */
   FOREST_WITH_VARIABLES(DataStorageFormat.FOREST, 2),
+  /**
+   * Current Forest version, with receipts using compaction, in order to make Receipts use less disk
+   * space
+   */
+  FOREST_WITH_RECEIPT_COMPACTION(DataStorageFormat.FOREST, 3),
   /** Original Bonsai version, not used since replace by BONSAI_WITH_VARIABLES */
   BONSAI_ORIGINAL(DataStorageFormat.BONSAI, 1),
   /**
    * Current Bonsai version, with blockchain variables in a dedicated column family, in order to
    * make BlobDB more effective
    */
-  BONSAI_WITH_VARIABLES(DataStorageFormat.BONSAI, 2);
+  BONSAI_WITH_VARIABLES(DataStorageFormat.BONSAI, 2),
+  /**
+   * Current Bonsai version, with receipts using compaction, in order to make Receipts use less disk
+   * space
+   */
+  BONSAI_WITH_RECEIPT_COMPACTION(DataStorageFormat.BONSAI, 3);
 
   private final DataStorageFormat format;
   private final int version;
@@ -46,13 +57,18 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
   /**
    * Return the default version for new db for a specific format
    *
-   * @param format data storage format
+   * @param configuration data storage configuration
    * @return the version to use for new db
    */
-  public static BaseVersionedStorageFormat defaultForNewDB(final DataStorageFormat format) {
-    return switch (format) {
-      case FOREST -> FOREST_WITH_VARIABLES;
-      case BONSAI -> BONSAI_WITH_VARIABLES;
+  public static BaseVersionedStorageFormat defaultForNewDB(
+      final DataStorageConfiguration configuration) {
+    return switch (configuration.getDatabaseFormat()) {
+      case FOREST -> configuration.getReceiptCompactionEnabled()
+          ? FOREST_WITH_RECEIPT_COMPACTION
+          : FOREST_WITH_VARIABLES;
+      case BONSAI -> configuration.getReceiptCompactionEnabled()
+          ? BONSAI_WITH_RECEIPT_COMPACTION
+          : BONSAI_WITH_VARIABLES;
     };
   }
 
