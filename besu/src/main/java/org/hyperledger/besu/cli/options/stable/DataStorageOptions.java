@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine;
@@ -193,6 +194,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * @return the normalized string
    */
   public String normalizeDataStorageFormat() {
-    return StringUtils.capitalize(dataStorageFormat.toString().toLowerCase());
+    return StringUtils.capitalize(dataStorageFormat.toString().toLowerCase(Locale.ROOT));
   }
 }

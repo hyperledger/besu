@@ -20,6 +20,7 @@ import java.lang.reflect.Method;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import org.web3j.crypto.Credentials;
@@ -83,7 +84,7 @@ public class DeploySmartContractTransaction<T extends Contract> implements Trans
 
   @SuppressWarnings("rawtypes")
   private boolean parameterTypesAreEqual(
-      final Class<?>[] expectedTypes, final ArrayList<Object> actualObjects) {
+      final Class<?>[] expectedTypes, final List<Object> actualObjects) {
     if (expectedTypes.length != actualObjects.size()) {
       return false;
     }

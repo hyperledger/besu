@@ -41,6 +41,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -58,9 +59,9 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
-  private TreeMap<Bytes32, Bytes> existingAccounts;
+  private NavigableMap<Bytes32, Bytes> existingAccounts;
 
-  private TreeMap<Bytes32, Bytes> flatDbAccounts;
+  private NavigableMap<Bytes32, Bytes> flatDbAccounts;
   private boolean isProofValid;
 
   public AccountFlatDatabaseHealingRangeRequest(
@@ -132,7 +133,7 @@ public class AccountFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   public void addLocalData(
       final WorldStateProofProvider worldStateProofProvider,
-      final TreeMap<Bytes32, Bytes> accounts,
+      final NavigableMap<Bytes32, Bytes> accounts,
       final ArrayDeque<Bytes> proofs) {
     if (!accounts.isEmpty() && !proofs.isEmpty()) {
       // very proof in order to check if the local flat database is valid or not
