@@ -27,6 +27,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
+import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat;
@@ -43,6 +44,8 @@ import org.junit.jupiter.api.condition.DisabledOnOs;
 import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -51,16 +54,19 @@ public class RocksDBKeyValueStorageFactoryTest {
 
   @Mock private RocksDBFactoryConfiguration rocksDbConfiguration;
   @Mock private BesuConfiguration commonConfiguration;
+  @Mock private DataStorageConfiguration dataStorageConfiguration;
   @TempDir public Path temporaryFolder;
   private final ObservableMetricsSystem metricsSystem = new NoOpMetricsSystem();
   private final SegmentIdentifier segment = TestSegment.FOO;
   private final List<SegmentIdentifier> segments = List.of(TestSegment.DEFAULT, segment);
 
-  @Test
-  public void shouldCreateCorrectMetadataFileForLatestVersionForNewDb() throws Exception {
+  @ParameterizedTest
+  @EnumSource(DataStorageFormat.class)
+  public void shouldCreateCorrectMetadataFileForLatestVersionForNewDb(
+      final DataStorageFormat dataStorageFormat) throws Exception {
     final Path tempDataDir = temporaryFolder.resolve("data");
     final Path tempDatabaseDir = temporaryFolder.resolve("db");
-    mockCommonConfiguration(tempDataDir, tempDatabaseDir, FOREST);
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir, dataStorageFormat);
 
     final RocksDBKeyValueStorageFactory storageFactory =
         new RocksDBKeyValueStorageFactory(
@@ -68,8 +74,36 @@ public class RocksDBKeyValueStorageFactoryTest {
 
     try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
       // Side effect is creation of the Metadata version file
+      final BaseVersionedStorageFormat expectedVersion =
+          dataStorageFormat == BONSAI
+              ? BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES
+              : BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
       assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
-          .isEqualTo(BaseVersionedStorageFormat.FOREST_WITH_VARIABLES);
+          .isEqualTo(expectedVersion);
+    }
+  }
+
+  @ParameterizedTest
+  @EnumSource(DataStorageFormat.class)
+  public void shouldCreateCorrectMetadataFileForLatestVersionForNewDbWithReceiptCompaction(
+      final DataStorageFormat dataStorageFormat) throws Exception {
+    final Path tempDataDir = temporaryFolder.resolve("data");
+    final Path tempDatabaseDir = temporaryFolder.resolve("db");
+    mockCommonConfiguration(tempDataDir, tempDatabaseDir, dataStorageFormat);
+    when(dataStorageConfiguration.getReceiptCompactionEnabled()).thenReturn(true);
+
+    final RocksDBKeyValueStorageFactory storageFactory =
+        new RocksDBKeyValueStorageFactory(
+            () -> rocksDbConfiguration, segments, RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS);
+
+    try (final var storage = storageFactory.create(segment, commonConfiguration, metricsSystem)) {
+      // Side effect is creation of the Metadata version file
+      final BaseVersionedStorageFormat expectedVersion =
+          dataStorageFormat == BONSAI
+              ? BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION
+              : BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
+      assertThat(DatabaseMetadata.lookUpFrom(tempDataDir).getVersionedStorageFormat())
+          .isEqualTo(expectedVersion);
     }
   }
 
@@ -273,6 +307,9 @@ public class RocksDBKeyValueStorageFactoryTest {
       final Path tempDataDir, final Path tempDatabaseDir, final DataStorageFormat format) {
     when(commonConfiguration.getStoragePath()).thenReturn(tempDatabaseDir);
     when(commonConfiguration.getDataPath()).thenReturn(tempDataDir);
-    lenient().when(commonConfiguration.getDatabaseFormat()).thenReturn(format);
+    lenient().when(dataStorageConfiguration.getDatabaseFormat()).thenReturn(format);
+    lenient()
+        .when(commonConfiguration.getDataStorageConfiguration())
+        .thenReturn(dataStorageConfiguration);
   }
 }
