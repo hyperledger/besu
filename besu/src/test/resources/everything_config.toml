@@ -151,11 +151,6 @@ Xminer-remote-sealers-limit=1000
 Xminer-remote-sealers-hashrate-ttl=10
 Xpos-block-creation-max-time=5
 
-# Pruning
-pruning-enabled=true
-pruning-blocks-retained=1024
-pruning-block-confirmations=10
-
 # Permissioning
 permissions-nodes-config-file-enabled=false
 permissions-nodes-config-file="./permissions_config.toml"

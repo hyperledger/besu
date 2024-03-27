@@ -14,12 +14,6 @@
       "available-options": "org.hyperledger.besu.ethereum.eth.sync.SyncMode"
     },
     {
-      "prompt-type": "CONFIRM",
-      "question": "Do you want to enable pruning?",
-      "config-key": "pruning-enabled",
-      "default-option": "no"
-    },
-    {
       "prompt-type": "INPUT",
       "question": "What is the data directory ?",
       "config-key": "data-path"

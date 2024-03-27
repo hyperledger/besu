@@ -56,7 +56,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -366,20 +365,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         .values()
         .forEach(b -> b.isRevertReasonEnabled(isRevertReasonEnabled));
     return super.isRevertReasonEnabled(isRevertReasonEnabled);
-  }
-
-  @Override
-  public BesuControllerBuilder isPruningEnabled(final boolean isPruningEnabled) {
-    besuControllerBuilderSchedule.values().forEach(b -> b.isPruningEnabled(isPruningEnabled));
-    return super.isPruningEnabled(isPruningEnabled);
-  }
-
-  @Override
-  public BesuControllerBuilder pruningConfiguration(final PrunerConfiguration prunerConfiguration) {
-    besuControllerBuilderSchedule
-        .values()
-        .forEach(b -> b.pruningConfiguration(prunerConfiguration));
-    return super.pruningConfiguration(prunerConfiguration);
   }
 
   @Override

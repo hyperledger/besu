@@ -193,15 +193,6 @@ public class PrivacyOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void privacyWithPruningMustError() {
-    parseCommand("--pruning-enabled", "--privacy-enabled");
-
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Pruning cannot be enabled with privacy.");
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
   public void privacyWithoutPrivacyPublicKeyFails() {
     parseCommand("--privacy-enabled", "--privacy-url", ENCLAVE_URI);
 
