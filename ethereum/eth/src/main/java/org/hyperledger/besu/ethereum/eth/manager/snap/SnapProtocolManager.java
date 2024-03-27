@@ -83,7 +83,7 @@ public class SnapProtocolManager implements ProtocolManager {
   public void awaitStop() throws InterruptedException {}
 
   /**
-   * This function is called by the P2P framework when an "SNAP message has been received.
+   * This function is called by the P2P framework when a SNAP message has been received.
    *
    * @param cap The capability under which the message was transmitted.
    * @param message The message to be decoded.
