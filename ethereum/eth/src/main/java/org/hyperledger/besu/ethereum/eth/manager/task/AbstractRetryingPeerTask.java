@@ -67,8 +67,19 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     this.metricsSystem = metricsSystem;
   }
 
-  public void assignPeer(final EthPeer peer) {
-    assignedPeer = Optional.of(peer);
+  /**
+   * Assign the peer to be used for the task.
+   *
+   * @param peer The peer to assign to the task.
+   * @return True if the peer was assigned, false otherwise.
+   */
+  public boolean assignPeer(final EthPeer peer) {
+    if (isSuitablePeer(peer)) {
+      assignedPeer = Optional.of(peer);
+      return true;
+    } else {
+      return false;
+    }
   }
 
   public Optional<EthPeer> getAssignedPeer() {
@@ -163,5 +174,9 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   public int getMaxRetries() {
     return maxRetries;
+  }
+
+  protected boolean isSuitablePeer(final EthPeer peer) {
+    return true;
   }
 }

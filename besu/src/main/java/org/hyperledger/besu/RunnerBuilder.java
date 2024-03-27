@@ -668,13 +668,14 @@ public class RunnerBuilder {
             .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
             .orElse(bannedNodes);
 
+    final EthPeers ethPeers = besuController.getEthPeers();
+
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
         caps -> {
-          final EthPeers ethPeers = besuController.getEthPeers();
           return DefaultP2PNetwork.builder()
               .vertx(vertx)
               .nodeKey(nodeKey)
@@ -701,6 +702,7 @@ public class RunnerBuilder {
             .subProtocols(subProtocols)
             .network(p2pEnabled ? activeNetwork : inactiveNetwork)
             .metricsSystem(metricsSystem)
+            .ethPeersShouldConnect(ethPeers::shouldTryToConnect)
             .build();
 
     besuController.getEthPeers().setRlpxAgent(networkRunner.getRlpxAgent());
