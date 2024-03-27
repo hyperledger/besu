@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -61,6 +62,8 @@ import java.util.stream.StreamSupport;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 /**
  * Holds the current set of pending transactions with the ability to iterate them based on priority
@@ -71,6 +74,7 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractPendingTransactionsSorter implements PendingTransactions {
   private static final Logger LOG =
       LoggerFactory.getLogger(AbstractPendingTransactionsSorter.class);
+  private static final Marker INVALID_TX_REMOVED = MarkerFactory.getMarker("INVALID_TX_REMOVED");
 
   protected final Clock clock;
   protected final TransactionPoolConfiguration poolConfig;
@@ -247,6 +251,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
 
           if (result.discard()) {
             transactionsToRemove.add(transactionToProcess.getTransaction());
+            logDiscardedTransaction(transactionToProcess, result);
           }
 
           if (result.stop()) {
@@ -257,6 +262,23 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       }
       transactionsToRemove.forEach(this::removeTransaction);
     }
+  }
+
+  private void logDiscardedTransaction(
+      final PendingTransaction pendingTransaction, final TransactionSelectionResult result) {
+    LOG.atInfo()
+        .addMarker(INVALID_TX_REMOVED)
+        .addKeyValue("txhash", pendingTransaction::getHash)
+        .addKeyValue("txlog", pendingTransaction::toTraceLog)
+        .addKeyValue("reason", result)
+        .addKeyValue(
+            "txrlp",
+            () -> {
+              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+              pendingTransaction.getTransaction().writeTo(rlp);
+              return rlp.encoded().toHexString();
+            })
+        .log();
   }
 
   private AccountTransactionOrder createSenderTransactionOrder(final Address address) {

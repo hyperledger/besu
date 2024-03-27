@@ -48,6 +48,9 @@
         <Logger name="io.vertx.core.dns.DnsException">
             <RegexFilter regex="DNS query error occurred:.*" onMatch="DENY" onMismatch="NEUTRAL" />
         </Logger>
+        <Logger name="org.hyperledger.besu.ethereum.eth.transactions">
+            <MarkerFilter marker="INVALID_TX_REMOVED" onMatch="DENY" onMismatch="NEUTRAL" />
+        </Logger>
         <Root level="${sys:root.log.level}">
             <AppenderRef ref="Router" />
         </Root>

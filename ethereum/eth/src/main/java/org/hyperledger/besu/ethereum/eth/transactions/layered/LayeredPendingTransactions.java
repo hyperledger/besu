@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
+import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -53,10 +54,13 @@ import java.util.stream.Collectors;
 import kotlin.ranges.LongRange;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.slf4j.Marker;
+import org.slf4j.MarkerFactory;
 
 public class LayeredPendingTransactions implements PendingTransactions {
   private static final Logger LOG = LoggerFactory.getLogger(LayeredPendingTransactions.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
+  private static final Marker INVALID_TX_REMOVED = MarkerFactory.getMarker("INVALID_TX_REMOVED");
   private final TransactionPoolConfiguration poolConfig;
   private final AbstractPrioritizedTransactions prioritizedTransactions;
 
@@ -234,7 +238,8 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .log();
   }
 
-  private void logTransactionForReplayDelete(final PendingTransaction pendingTransaction) {
+  private void logDiscardedTransaction(
+      final PendingTransaction pendingTransaction, final TransactionSelectionResult result) {
     // csv fields: sequence, addedAt, sender, nonce, type, hash, rlp
     LOG_FOR_REPLAY
         .atTrace()
@@ -246,6 +251,19 @@ public class LayeredPendingTransactions implements PendingTransactions {
         .addArgument(pendingTransaction.getTransaction().getType())
         .addArgument(pendingTransaction::getHash)
         .addArgument(
+            () -> {
+              final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
+              pendingTransaction.getTransaction().writeTo(rlp);
+              return rlp.encoded().toHexString();
+            })
+        .log();
+    LOG.atInfo()
+        .addMarker(INVALID_TX_REMOVED)
+        .addKeyValue("txhash", pendingTransaction::getHash)
+        .addKeyValue("txlog", pendingTransaction::toTraceLog)
+        .addKeyValue("reason", result)
+        .addKeyValue(
+            "txrlp",
             () -> {
               final BytesValueRLPOutput rlp = new BytesValueRLPOutput();
               pendingTransaction.getTransaction().writeTo(rlp);
@@ -333,7 +351,7 @@ public class LayeredPendingTransactions implements PendingTransactions {
 
                           if (res.discard()) {
                             invalidTransactions.add(candidatePendingTx);
-                            logTransactionForReplayDelete(candidatePendingTx);
+                            logDiscardedTransaction(candidatePendingTx, res);
                           }
 
                           if (res.stop()) {
