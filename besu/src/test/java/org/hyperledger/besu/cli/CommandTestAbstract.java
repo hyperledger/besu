@@ -136,6 +136,7 @@ public abstract class CommandTestAbstract {
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
 
   protected static final int POA_BLOCK_PERIOD_SECONDS = 5;
+  protected static final int POA_EMPTY_BLOCK_PERIOD_SECONDS = 50; // TODO: IS THIS APPLICABLE FOR POA?
   protected static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
       (new JsonObject())
           .put(
@@ -144,7 +145,11 @@ public abstract class CommandTestAbstract {
                   .put("londonBlock", 0)
                   .put(
                       "qbft",
-                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)));
+                      new JsonObject().put("blockperiodseconds", POA_BLOCK_PERIOD_SECONDS)
+                  .put(
+                      "qbft",
+                      new JsonObject().put("emptyblockperiodseconds", POA_EMPTY_BLOCK_PERIOD_SECONDS)
+                  ));
   protected static final JsonObject VALID_GENESIS_IBFT2_POST_LONDON =
       (new JsonObject())
           .put(

@@ -146,6 +146,8 @@ public abstract class MiningParameters {
 
   public abstract OptionalInt getGenesisBlockPeriodSeconds();
 
+  public abstract OptionalInt getGenesisEmptyBlockPeriodSeconds(); // TODO: WILL THIS BE NEEDED?
+
   @Value.Derived
   public long getBlockTxsSelectionMaxTime() {
     if (getGenesisBlockPeriodSeconds().isPresent()) {

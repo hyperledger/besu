@@ -152,6 +152,7 @@ public class TestContextBuilder {
   private boolean useZeroBaseFee = false;
   public static final int EPOCH_LENGTH = 10_000;
   public static final int BLOCK_TIMER_SEC = 3;
+  public static final int EMPTY_BLOCK_TIMER_SEC = 30;
   public static final int ROUND_TIMER_SEC = 12;
   public static final int MESSAGE_QUEUE_LIMIT = 1000;
   public static final int GOSSIPED_HISTORY_LIMIT = 100;
@@ -557,6 +558,7 @@ public class TestContextBuilder {
     final MutableQbftConfigOptions qbftConfigOptions =
         new MutableQbftConfigOptions(JsonQbftConfigOptions.DEFAULT);
     qbftConfigOptions.setBlockPeriodSeconds(BLOCK_TIMER_SEC);
+    qbftConfigOptions.setEmptyBlockPeriodSeconds(EMPTY_BLOCK_TIMER_SEC);
     if (useValidatorContract) {
       qbftConfigOptions.setValidatorContractAddress(
           Optional.of(VALIDATOR_CONTRACT_ADDRESS.toHexString()));
