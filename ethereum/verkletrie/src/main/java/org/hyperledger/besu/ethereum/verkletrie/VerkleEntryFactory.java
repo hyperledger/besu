@@ -18,8 +18,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyAdapter;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.PedersenHasher;
+import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyBatchAdapter;
+import org.hyperledger.besu.ethereum.trie.verkle.hasher.Hasher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -31,9 +31,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class VerkleTrieKeyValueGenerator {
+public class VerkleEntryFactory {
 
-  final TrieKeyAdapter trieKeyAdapter = new TrieKeyAdapter(new PedersenHasher());
+  private final TrieKeyBatchAdapter trieKeyAdapter;
+
+  public VerkleEntryFactory(final Hasher hasher) {
+    trieKeyAdapter = new TrieKeyBatchAdapter(hasher);
+  }
 
   public Map<Bytes, Bytes> generateKeyValuesForAccount(
       final Address address, final long nonce, final Wei balance, final Hash codeHash) {
@@ -58,10 +62,8 @@ public class VerkleTrieKeyValueGenerator {
     final Map<Bytes, Bytes> keyValues = new HashMap<>();
     keyValues.put(
         trieKeyAdapter.codeSizeKey(address), toLittleEndian(UInt256.valueOf(code.size())));
-    List<Bytes32> codeChunks = trieKeyAdapter.chunkifyCode(code);
+    List<UInt256> codeChunks = trieKeyAdapter.chunkifyCode(code);
     for (int i = 0; i < codeChunks.size(); i++) {
-      // System.out.println("add code " + trieKeyAdapter.codeChunkKey(address, UInt256.valueOf(i)) +
-      // " " +  codeChunks.get(i));
       keyValues.put(trieKeyAdapter.codeChunkKey(address, UInt256.valueOf(i)), codeChunks.get(i));
     }
     return keyValues;
@@ -71,7 +73,7 @@ public class VerkleTrieKeyValueGenerator {
     final List<Bytes> keys = new ArrayList<>();
     keys.add(trieKeyAdapter.codeKeccakKey(address));
     keys.add(trieKeyAdapter.codeSizeKey(address));
-    List<Bytes32> codeChunks = trieKeyAdapter.chunkifyCode(code);
+    List<UInt256> codeChunks = trieKeyAdapter.chunkifyCode(code);
     for (int i = 0; i < codeChunks.size(); i++) {
       keys.add(trieKeyAdapter.codeChunkKey(address, UInt256.valueOf(i)));
     }
