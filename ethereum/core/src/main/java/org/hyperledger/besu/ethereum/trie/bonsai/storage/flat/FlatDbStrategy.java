@@ -28,9 +28,12 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.util.Map;
+import java.util.Comparator;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -46,7 +49,6 @@ import org.apache.tuweni.rlp.RLP;
  * data, and storage data from the corresponding KeyValueStorage.
  */
 public abstract class FlatDbStrategy {
-
   protected final MetricsSystem metricsSystem;
   protected final Counter getAccountCounter;
   protected final Counter getAccountFoundInFlatDatabaseCounter;
@@ -105,6 +107,10 @@ public abstract class FlatDbStrategy {
       Hash accountHash,
       StorageSlotKey storageSlotKey,
       SegmentedKeyValueStorage storageStorage);
+
+  public boolean isCodeByCodeHash() {
+    return codeStorageStrategy instanceof CodeHashCodeStorageStrategy;
+  }
 
   /*
    * Retrieves the code data for the given code hash and account hash.
@@ -190,47 +196,86 @@ public abstract class FlatDbStrategy {
     storage.clear(ACCOUNT_STORAGE_STORAGE);
   }
 
-  public Map<Bytes32, Bytes> streamAccountFlatDatabase(
+  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
       final SegmentedKeyValueStorage storage,
       final Bytes startKeyHash,
       final Bytes32 endKeyHash,
       final long max) {
-    final Stream<Pair<Bytes32, Bytes>> pairStream =
-        storage
-            .streamFromKey(
-                ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
-            .limit(max)
-            .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
 
-    final TreeMap<Bytes32, Bytes> collected =
-        pairStream.collect(
-            Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
-    pairStream.close();
-    return collected;
+    return toNavigableMap(accountsToPairStream(storage, startKeyHash, endKeyHash).limit(max));
   }
 
-  public Map<Bytes32, Bytes> streamStorageFlatDatabase(
+  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
+      final SegmentedKeyValueStorage storage,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+
+    return toNavigableMap(
+        accountsToPairStream(storage, startKeyHash, endKeyHash).takeWhile(takeWhile));
+  }
+
+  /** streams RLP encoded storage values using a specified stream limit. */
+  public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
       final Bytes startKeyHash,
       final Bytes32 endKeyHash,
       final long max) {
-    final Stream<Pair<Bytes32, Bytes>> pairStream =
-        storage
-            .streamFromKey(
-                ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
-                Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
-            .limit(max)
-            .map(
-                pair ->
-                    new Pair<>(
-                        Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                        RLP.encodeValue(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
 
+    return toNavigableMap(
+        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash, RLP::encodeValue)
+            .limit(max));
+  }
+
+  /** streams raw storage Bytes using a specified predicate filter and value mapper. */
+  public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+
+    return toNavigableMap(
+        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash, RLP::encodeValue)
+            .takeWhile(takeWhile));
+  }
+
+  private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Function<Bytes, Bytes> valueMapper) {
+
+    return storage
+        .streamFromKey(
+            ACCOUNT_STORAGE_STORAGE,
+            Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
+            Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
+        .map(
+            pair ->
+                new Pair<>(
+                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
+  }
+
+  private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+      final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
+    return storage
+        .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
+        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
+  }
+
+  private static NavigableMap<Bytes32, Bytes> toNavigableMap(
+      final Stream<Pair<Bytes32, Bytes>> pairStream) {
     final TreeMap<Bytes32, Bytes> collected =
         pairStream.collect(
-            Collectors.toMap(Pair::getFirst, Pair::getSecond, (v1, v2) -> v1, TreeMap::new));
+            Collectors.toMap(
+                Pair::getFirst,
+                Pair::getSecond,
+                (v1, v2) -> v1,
+                () -> new TreeMap<>(Comparator.comparing(Bytes::toHexString))));
     pairStream.close();
     return collected;
   }

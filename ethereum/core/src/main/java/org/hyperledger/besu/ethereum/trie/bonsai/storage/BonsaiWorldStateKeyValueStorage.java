@@ -41,13 +41,14 @@ import org.hyperledger.besu.util.Subscribers;
 
 import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -150,9 +151,7 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
   }
 
   public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
-    return composedWorldStateStorage
-        .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(key).toArrayUnsafe())
-        .map(Bytes::wrap);
+    return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   public Optional<byte[]> getTrieLog(final Hash blockHash) {
@@ -209,19 +208,37 @@ public class BonsaiWorldStateKeyValueStorage implements WorldStateKeyValueStorag
             composedWorldStateStorage);
   }
 
-  public Map<Bytes32, Bytes> streamFlatAccounts(
+  public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
       final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
     return flatDbStrategyProvider
         .getFlatDbStrategy(composedWorldStateStorage)
         .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, max);
   }
 
-  public Map<Bytes32, Bytes> streamFlatStorages(
+  public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return getFlatDbStrategy()
+        .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, takeWhile);
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamFlatStorages(
       final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
     return flatDbStrategyProvider
         .getFlatDbStrategy(composedWorldStateStorage)
         .streamStorageFlatDatabase(
             composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, max);
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamFlatStorages(
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Bytes32 endKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return getFlatDbStrategy()
+        .streamStorageFlatDatabase(
+            composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, takeWhile);
   }
 
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(

@@ -38,7 +38,7 @@ public class NoOpCachedWorldStorageManager extends CachedWorldStorageManager {
   }
 
   @Override
-  public boolean containWorldStateStorage(final Hash blockHash) {
+  public boolean contains(final Hash blockHash) {
     return false;
   }
 

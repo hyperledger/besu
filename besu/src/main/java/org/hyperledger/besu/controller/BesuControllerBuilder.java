@@ -699,9 +699,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             peerValidators,
             Optional.empty());
 
-    final Optional<SnapProtocolManager> maybeSnapProtocolManager =
-        createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
-
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
             protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
@@ -718,6 +715,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             pivotBlockSelector);
 
     protocolContext.setSynchronizer(Optional.of(synchronizer));
+
+    final Optional<SnapProtocolManager> maybeSnapProtocolManager =
+        createSnapProtocolManager(
+            protocolContext, worldStateStorageCoordinator, ethPeers, snapMessages);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -1037,12 +1038,23 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
-      final List<PeerValidator> peerValidators,
+      final ProtocolContext protocolContext,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final EthPeers ethPeers,
-      final EthMessages snapMessages,
-      final WorldStateArchive worldStateArchive) {
-    return Optional.of(
-        new SnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive));
+      final EthMessages snapMessages) {
+    if (Optional.ofNullable(syncConfig.getSnapSyncConfiguration())
+        .map(snapConfig -> snapConfig.isSnapServerEnabled())
+        .orElse(false)) {
+      return Optional.of(
+          new SnapProtocolManager(
+              worldStateStorageCoordinator,
+              syncConfig.getSnapSyncConfiguration(),
+              ethPeers,
+              snapMessages,
+              protocolContext));
+    } else {
+      return Optional.empty();
+    }
   }
 
   WorldStateArchive createWorldStateArchive(
