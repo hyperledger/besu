@@ -235,8 +235,7 @@ public class GraphQLHttpService {
 
   private boolean hostIsInAllowlist(final String hostHeader) {
     if (config.getHostsAllowlist().stream()
-        .anyMatch(
-            allowlistEntry -> allowlistEntry.toLowerCase().equals(hostHeader.toLowerCase()))) {
+        .anyMatch(allowlistEntry -> allowlistEntry.equalsIgnoreCase(hostHeader))) {
       return true;
     } else {
       LOG.trace("Host not in allowlist: '{}'", hostHeader);

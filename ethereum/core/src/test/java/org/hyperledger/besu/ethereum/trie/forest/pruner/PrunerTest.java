@@ -63,7 +63,8 @@ public class PrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            false);
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
@@ -86,7 +87,8 @@ public class PrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            false);
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
@@ -114,7 +116,8 @@ public class PrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            false);
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 
@@ -186,7 +189,8 @@ public class PrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            false);
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(genesisBlock, blockchainStorage, metricsSystem, 0);
 

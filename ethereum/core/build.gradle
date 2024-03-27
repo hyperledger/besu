@@ -33,6 +33,7 @@ dependencies {
   api 'org.web3j:core'
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
+  annotationProcessor 'org.hyperledger.besu:besu-errorprone-checks'
 
   implementation project(':config')
   implementation project(':crypto:algorithms')

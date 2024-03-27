@@ -62,6 +62,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -431,7 +432,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
           getGenesisConfig()
               .map(
                   gc ->
-                      gc.toLowerCase().contains("ibft") ? ConsensusType.IBFT2 : ConsensusType.QBFT)
+                      gc.toLowerCase(Locale.ROOT).contains("ibft")
+                          ? ConsensusType.IBFT2
+                          : ConsensusType.QBFT)
               .orElse(ConsensusType.IBFT2);
 
       nodeRequests =
@@ -785,6 +788,21 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     if (nodeRequests != null) {
       nodeRequests.shutdown();
       nodeRequests = null;
+    }
+
+    deleteRuntimeFiles();
+  }
+
+  private void deleteRuntimeFiles() {
+    try {
+      Files.deleteIfExists(homeDirectory.resolve("besu.networks"));
+    } catch (IOException e) {
+      LOG.error("Failed to clean up besu.networks file in {}", homeDirectory, e);
+    }
+    try {
+      Files.deleteIfExists(homeDirectory.resolve("besu.ports"));
+    } catch (IOException e) {
+      LOG.error("Failed to clean up besu.ports file in {}", homeDirectory, e);
     }
   }
 
