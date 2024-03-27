@@ -232,6 +232,20 @@ public class BackwardSyncContextTest {
   }
 
   @Test
+  public void shouldNotSyncUntilHashWhenNotInSync() {
+    doReturn(false).when(context).isReady();
+    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
+    final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
+
+    respondUntilFutureIsDone(future);
+
+    assertThatThrownBy(future::get)
+        .isInstanceOf(ExecutionException.class)
+        .hasMessageContaining("Backward sync is not ready");
+    assertThat(backwardChain.getFirstHashToAppend()).isEmpty();
+  }
+
+  @Test
   public void shouldSyncUntilRemoteBranch() throws Exception {
 
     final CompletableFuture<Void> future =

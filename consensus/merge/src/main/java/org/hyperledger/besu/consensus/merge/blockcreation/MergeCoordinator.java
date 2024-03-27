@@ -501,10 +501,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
           .addArgument(maybeHeadHeader.get()::toLogString)
           .log();
     } else {
-      LOG.atDebug()
-          .setMessage("Appending new head block hash {} to backward sync")
-          .addArgument(headHash::toHexString)
-          .log();
       backwardSyncContext.maybeUpdateTargetHeight(headHash);
       backwardSyncContext
           .syncBackwardsUntil(headHash)
