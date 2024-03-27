@@ -52,6 +52,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -77,8 +78,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     final Path dataDir = node.homeDirectory();
 
+    final var workingDir =
+        new File(System.getProperty("user.dir")).getParentFile().getParentFile().toPath();
+
     final List<String> params = new ArrayList<>();
-    params.add("build/install/besu/bin/besu");
+    if (SystemUtils.IS_OS_WINDOWS) {
+      params.add(workingDir.resolve("build\\install\\besu\\bin\\besu.bat").toString());
+    } else {
+      params.add("build/install/besu/bin/besu");
+    }
 
     params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
@@ -422,15 +430,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
         new ProcessBuilder(params)
-            .directory(new File(System.getProperty("user.dir")).getParentFile().getParentFile())
+            .directory(workingDir.toFile())
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
     if (!node.getPlugins().isEmpty()) {
       processBuilder
           .environment()
-          .put(
-              "BESU_OPTS",
-              "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
+          .put("BESU_OPTS", "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath());
     }
     // Use non-blocking randomness for acceptance tests
     processBuilder
@@ -572,7 +578,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     LOG.info("Killing {} process, pid {}", name, process.pid());
 
-    process.destroy();
+    process.descendants().forEach(ProcessHandle::destroy);
     try {
       process.waitFor(30, TimeUnit.SECONDS);
     } catch (final InterruptedException e) {
