@@ -7,6 +7,7 @@
 - BFT networks won't start with SNAP or CHECKPOINT sync (previously Besu would start with this config but quietly fail to sync, so it's now more obvious that it won't work) [#6625](https://github.com/hyperledger/besu/pull/6625), [#6667](https://github.com/hyperledger/besu/pull/6667)
 
 ### Upcoming Breaking Changes
+- Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
 
 ### Deprecations
 
@@ -25,11 +26,13 @@
 - `eth_call` for blob tx allows for empty `maxFeePerBlobGas` [#6731](https://github.com/hyperledger/besu/pull/6731)
 - Extend error handling of plugin RPC methods [#6759](https://github.com/hyperledger/besu/pull/6759)
 - Added engine_newPayloadV4 and engine_getPayloadV4 methods [#6783](https://github.com/hyperledger/besu/pull/6783)
+- Reduce storage size of receipts [#6602](https://github.com/hyperledger/besu/pull/6602)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
 - Make block transaction selection max time aware of PoA transitions [#6676](https://github.com/hyperledger/besu/pull/6676)
 - Don't enable the BFT mining coordinator when running sub commands such as `blocks export` [#6675](https://github.com/hyperledger/besu/pull/6675)
+- In JSON-RPC return optional `v` fields for type 1 and type 2 transactions [#6762](https://github.com/hyperledger/besu/pull/6762)
 
 ### Download Links
 

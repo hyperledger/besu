@@ -124,12 +124,13 @@ public class BesuControllerBuilderTest {
     when(ethashConfigOptions.getFixedDifficulty()).thenReturn(OptionalLong.empty());
     when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());
-    when(storageProvider.createBlockchainStorage(any(), any()))
+    when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-                new MainnetBlockHeaderFunctions()));
+                new MainnetBlockHeaderFunctions(),
+                false));
     when(synchronizerConfiguration.getDownloaderParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getTransactionsParallelism()).thenReturn(1);
     when(synchronizerConfiguration.getComputationParallelism()).thenReturn(1);

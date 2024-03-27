@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.MAX_RANGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.discovery;
 
+import java.util.Locale;
+
 /** The status of a {@link DiscoveryPeer}, in relation to the peer discovery state machine. */
 public enum PeerDiscoveryStatus {
 
@@ -40,6 +42,6 @@ public enum PeerDiscoveryStatus {
 
   @Override
   public String toString() {
-    return name().toLowerCase();
+    return name().toLowerCase(Locale.ROOT);
   }
 }

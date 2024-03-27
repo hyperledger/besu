@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import java.util.EnumSet;
+import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -34,10 +35,10 @@ public enum SyncMode {
   public String normalize() {
     if (this.toString().startsWith("X_")) {
       // removes X_ at the beginning
-      return StringUtils.capitalize(this.toString().substring(2).toLowerCase());
+      return StringUtils.capitalize(this.toString().substring(2).toLowerCase(Locale.ROOT));
     }
 
-    return StringUtils.capitalize(this.toString().toLowerCase());
+    return StringUtils.capitalize(this.toString().toLowerCase(Locale.ROOT));
   }
 
   public static boolean isFullSync(final SyncMode syncMode) {

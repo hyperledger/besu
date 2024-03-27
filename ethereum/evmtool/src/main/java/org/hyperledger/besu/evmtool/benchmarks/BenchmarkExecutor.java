@@ -36,6 +36,7 @@ import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.PrintStream;
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.base.Stopwatch;
@@ -127,7 +128,7 @@ public abstract class BenchmarkExecutor {
    * @return a gas calculator
    */
   public static GasCalculator gasCalculatorForFork(final String fork) {
-    return switch (EvmSpecVersion.valueOf(fork.toUpperCase())) {
+    return switch (EvmSpecVersion.valueOf(fork.toUpperCase(Locale.ROOT))) {
       case HOMESTEAD -> new HomesteadGasCalculator();
       case FRONTIER -> new FrontierGasCalculator();
       case BYZANTIUM -> new ByzantiumGasCalculator();

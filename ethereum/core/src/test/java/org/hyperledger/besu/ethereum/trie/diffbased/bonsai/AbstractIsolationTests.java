@@ -214,6 +214,22 @@ public abstract class AbstractIsolationTests {
               public Wei getMinGasPrice() {
                 return MiningParameters.newDefault().getMinTransactionGasPrice();
               }
+
+              @Override
+              public org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration
+                  getDataStorageConfiguration() {
+                return new org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration() {
+                  @Override
+                  public DataStorageFormat getDatabaseFormat() {
+                    return DataStorageFormat.BONSAI;
+                  }
+
+                  @Override
+                  public boolean getReceiptCompactionEnabled() {
+                    return false;
+                  }
+                };
+              }
             })
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();

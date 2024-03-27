@@ -12,23 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.eth.sync.snapsync;
+package org.hyperledger.besu.ethereum.trie;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 
 import java.math.BigInteger;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /**
  * This class helps to generate ranges according to several parameters (the start and the end of the
@@ -43,7 +44,7 @@ public class RangeManager {
   private RangeManager() {}
 
   public static int getRangeCount(
-      final Bytes32 min, final Bytes32 max, final TreeMap<Bytes32, Bytes> items) {
+      final Bytes32 min, final Bytes32 max, final NavigableMap<Bytes32, Bytes> items) {
     if (min.equals(MIN_RANGE) && max.equals(MAX_RANGE)) {
       return MAX_RANGE
           .toUnsignedBigInteger()
@@ -120,7 +121,7 @@ public class RangeManager {
   public static Optional<Bytes32> findNewBeginElementInRange(
       final Bytes32 worldstateRootHash,
       final List<Bytes> proofs,
-      final TreeMap<Bytes32, Bytes> receivedKeys,
+      final NavigableMap<Bytes32, Bytes> receivedKeys,
       final Bytes32 endKeyHash) {
     if (receivedKeys.isEmpty() || receivedKeys.lastKey().compareTo(endKeyHash) >= 0) {
       return Optional.empty();
@@ -151,5 +152,43 @@ public class RangeManager {
 
   private static Bytes32 format(final BigInteger data) {
     return Bytes32.leftPad(Bytes.of(data.toByteArray()).trimLeadingZeros());
+  }
+
+  /**
+   * Checks if a given location is within a specified range. This method determines whether a given
+   * location (represented as {@link Bytes}) falls within the range defined by a start key path and
+   * an end key path.
+   *
+   * @param location The location to check, represented as {@link Bytes}.
+   * @param startKeyPath The start of the range as path, represented as {@link Bytes}.
+   * @param endKeyPath The end of the range as path, represented as {@link Bytes}.
+   * @return {@code true} if the location is within the range (inclusive); {@code false} otherwise.
+   */
+  public static boolean isInRange(
+      final Bytes location, final Bytes startKeyPath, final Bytes endKeyPath) {
+    final MutableBytes path = MutableBytes.create(Bytes32.SIZE * 2);
+    path.set(0, location);
+    return !location.isEmpty()
+        && Arrays.compare(path.toArrayUnsafe(), startKeyPath.toArrayUnsafe()) >= 0
+        && Arrays.compare(path.toArrayUnsafe(), endKeyPath.toArrayUnsafe()) <= 0;
+  }
+
+  /**
+   * Transforms a list of bytes into a path. This method processes a sequence of bytes, expanding
+   * each byte into two separate bytes to form a new path. The resulting path will have twice the
+   * length of the input byte sequence.
+   *
+   * @param bytes The byte sequence to be transformed into a path.
+   * @return A {@link Bytes} object representing the newly formed path.
+   */
+  public static Bytes createPath(final Bytes bytes) {
+    final MutableBytes path = MutableBytes.create(bytes.size() * 2);
+    int j = 0;
+    for (int i = 0; i < bytes.size(); i += 1, j += 2) {
+      final byte b = bytes.get(i);
+      path.set(j, (byte) ((b >>> 4) & 0x0f));
+      path.set(j + 1, (byte) (b & 0x0f));
+    }
+    return path;
   }
 }
