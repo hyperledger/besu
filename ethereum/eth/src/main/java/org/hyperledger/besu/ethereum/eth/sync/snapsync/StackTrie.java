@@ -15,12 +15,12 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.trie.CommitVisitor;
 import org.hyperledger.besu.ethereum.trie.InnerNodeDiscoveryManager;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
-import org.hyperledger.besu.ethereum.trie.SnapPutVisitor;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
+import org.hyperledger.besu.ethereum.trie.SnapCommitVisitor;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 
 import java.util.ArrayList;
@@ -28,6 +28,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -72,7 +73,9 @@ public class StackTrie {
   }
 
   public void addElement(
-      final Bytes32 taskIdentifier, final List<Bytes> proofs, final TreeMap<Bytes32, Bytes> keys) {
+      final Bytes32 taskIdentifier,
+      final List<Bytes> proofs,
+      final NavigableMap<Bytes32, Bytes> keys) {
     this.elementsCount.addAndGet(keys.size());
     this.elements.put(
         taskIdentifier, ImmutableTaskElement.builder().proofs(proofs).keys(keys).build());
@@ -122,7 +125,7 @@ public class StackTrie {
               Function.identity(),
               Function.identity(),
               startKeyHash,
-              keys.lastKey(),
+              proofs.isEmpty() ? RangeManager.MAX_RANGE : keys.lastKey(),
               true);
 
       final MerkleTrie<Bytes, Bytes> trie =
@@ -130,14 +133,17 @@ public class StackTrie {
               snapStoredNodeFactory, proofs.isEmpty() ? MerkleTrie.EMPTY_TRIE_NODE_HASH : rootHash);
 
       for (Map.Entry<Bytes32, Bytes> entry : keys.entrySet()) {
-        trie.put(entry.getKey(), new SnapPutVisitor<>(snapStoredNodeFactory, entry.getValue()));
+        trie.put(entry.getKey(), entry.getValue());
       }
 
       keys.forEach(flatDatabaseUpdater::update);
 
       trie.commit(
           nodeUpdater,
-          (new CommitVisitor<>(nodeUpdater) {
+          (new SnapCommitVisitor<>(
+              nodeUpdater,
+              startKeyHash,
+              proofs.isEmpty() ? RangeManager.MAX_RANGE : keys.lastKey()) {
             @Override
             public void maybeStoreNode(final Bytes location, final Node<Bytes> node) {
               if (!node.isHealNeeded()) {
@@ -180,7 +186,7 @@ public class StackTrie {
     }
 
     @Value.Default
-    public TreeMap<Bytes32, Bytes> keys() {
+    public NavigableMap<Bytes32, Bytes> keys() {
       return new TreeMap<>();
     }
   }

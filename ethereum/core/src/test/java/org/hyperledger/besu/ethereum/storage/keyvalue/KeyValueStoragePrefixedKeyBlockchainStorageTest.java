@@ -62,7 +62,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
 
     final var blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            kvBlockchain, variablesStorage, blockHeaderFunctions);
+            kvBlockchain, variablesStorage, blockHeaderFunctions, false);
 
     assertNoVariablesInStorage(kvBlockchain);
     assertVariablesPresentInVariablesStorage(kvVariables, variableValues);
@@ -80,7 +80,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
 
     final var blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            kvBlockchain, variablesStorage, blockHeaderFunctions);
+            kvBlockchain, variablesStorage, blockHeaderFunctions, false);
 
     assertNoVariablesInStorage(kvBlockchain);
     assertVariablesPresentInVariablesStorage(kvVariables, variableValues);
@@ -96,7 +96,7 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
 
     final var blockchainStorage =
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            kvBlockchain, variablesStorage, blockHeaderFunctions);
+            kvBlockchain, variablesStorage, blockHeaderFunctions, false);
 
     assertNoVariablesInStorage(kvBlockchain);
     assertVariablesPresentInVariablesStorage(kvVariables, variableValues);
@@ -114,6 +114,6 @@ public class KeyValueStoragePrefixedKeyBlockchainStorageTest {
         IllegalStateException.class,
         () ->
             new KeyValueStoragePrefixedKeyBlockchainStorage(
-                kvBlockchain, variablesStorage, blockHeaderFunctions));
+                kvBlockchain, variablesStorage, blockHeaderFunctions, false));
   }
 }

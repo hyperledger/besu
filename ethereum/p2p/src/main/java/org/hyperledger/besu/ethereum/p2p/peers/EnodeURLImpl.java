@@ -23,6 +23,7 @@ import org.hyperledger.besu.util.NetworkUtility;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.UnknownHostException;
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
@@ -157,7 +158,7 @@ public class EnodeURLImpl implements EnodeURL {
 
   public static Bytes parseNodeId(final String nodeId) {
     int expectedSize = EnodeURLImpl.NODE_ID_SIZE * 2;
-    if (nodeId.toLowerCase().startsWith("0x")) {
+    if (nodeId.toLowerCase(Locale.ROOT).startsWith("0x")) {
       expectedSize += 2;
     }
     checkArgument(

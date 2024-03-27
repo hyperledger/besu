@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -106,7 +107,7 @@ public interface TransactionsLayer {
     private final String label;
 
     RemovalReason() {
-      this.label = name().toLowerCase();
+      this.label = name().toLowerCase(Locale.ROOT);
     }
 
     public String label() {

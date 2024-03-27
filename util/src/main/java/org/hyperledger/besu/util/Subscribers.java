@@ -165,9 +165,7 @@ public class Subscribers<T> {
     }
 
     @Override
-    public void forEach(final Consumer<T> action) {
-      return;
-    }
+    public void forEach(final Consumer<T> action) {}
 
     @Override
     public int getSubscriberCount() {

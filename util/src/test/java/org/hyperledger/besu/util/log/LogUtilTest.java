@@ -114,6 +114,7 @@ public class LogUtilTest {
     return lines;
   }
 
+  @SuppressWarnings("InfiniteRecursion")
   private void recurseTimesAndThrow(final int times) {
     if (times < 1) {
       throw new RuntimeException("FakeStackOverflowError");
