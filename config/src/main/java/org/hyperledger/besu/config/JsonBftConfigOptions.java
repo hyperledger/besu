@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.math.BigInteger;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -117,7 +118,7 @@ public class JsonBftConfigOptions implements BftConfigOptions {
       return BigInteger.ZERO;
     }
     final String weiStr = configFileContent.get();
-    if (weiStr.toLowerCase().startsWith("0x")) {
+    if (weiStr.toLowerCase(Locale.ROOT).startsWith("0x")) {
       return new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe());
     }
     return new BigInteger(weiStr);

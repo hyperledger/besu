@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -44,7 +45,7 @@ public class BlockParameterOrBlockHash {
   @JsonCreator
   public BlockParameterOrBlockHash(final Object value) throws JsonProcessingException {
     if (value instanceof String) {
-      final String normalizedValue = String.valueOf(value).toLowerCase();
+      final String normalizedValue = String.valueOf(value).toLowerCase(Locale.ROOT);
 
       if (Objects.equals(normalizedValue, "earliest")) {
         type = BlockParameterType.EARLIEST;

@@ -14,6 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.plugin.services.rpc.RpcMethodError;
+
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
@@ -21,7 +26,6 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import org.apache.tuweni.bytes.Bytes;
 
 @JsonInclude(value = JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
@@ -41,21 +45,26 @@ public class JsonRpcError {
     this.data = data;
   }
 
-  public JsonRpcError(final RpcErrorType errorType, final String data) {
+  public JsonRpcError(final RpcMethodError errorType, final String data) {
     this(errorType.getCode(), errorType.getMessage(), data);
 
-    // For execution reverted errors decode the data (if present)
-    if (errorType == RpcErrorType.REVERT_ERROR && data != null) {
-      JsonRpcErrorResponse.decodeRevertReason(Bytes.fromHexString(data))
-          .ifPresent(
-              (decodedReason) -> {
-                this.reason = decodedReason;
-              });
+    if (data != null) {
+      errorType.decodeData(data).ifPresent(decodedData -> this.reason = decodedData);
     }
   }
 
   public JsonRpcError(final RpcErrorType errorType) {
     this(errorType, null);
+  }
+
+  public static JsonRpcError from(
+      final ValidationResult<TransactionInvalidReason> validationResult) {
+    final var jsonRpcError =
+        new JsonRpcError(
+            JsonRpcErrorConverter.convertTransactionInvalidReason(
+                validationResult.getInvalidReason()));
+    jsonRpcError.reason = validationResult.getErrorMessage();
+    return jsonRpcError;
   }
 
   @JsonGetter("code")
@@ -71,10 +80,6 @@ public class JsonRpcError {
   @JsonGetter("data")
   public String getData() {
     return data;
-  }
-
-  public void setReason(final String reason) {
-    this.reason = reason;
   }
 
   @Override

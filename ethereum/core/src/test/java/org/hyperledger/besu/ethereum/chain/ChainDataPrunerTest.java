@@ -41,7 +41,8 @@ public class ChainDataPrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            false);
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
@@ -79,7 +80,8 @@ public class ChainDataPrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            false);
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
