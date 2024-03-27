@@ -74,8 +74,8 @@ public class ProtocolSpecBuilder {
   private WithdrawalsValidator withdrawalsValidator =
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
-
   private DepositsValidator depositsValidator = new DepositsValidator.ProhibitedDeposits();
+  private ValidatorExitsValidator exitsValidator = new ValidatorExitsValidator.ProhibitedExits();
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -265,6 +265,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder exitsValidator(final ValidatorExitsValidator exitsValidator) {
+    this.exitsValidator = exitsValidator;
+    return this;
+  }
+
   public ProtocolSpecBuilder isPoS(final boolean isPoS) {
     this.isPoS = isPoS;
     return this;
@@ -384,6 +389,7 @@ public class ProtocolSpecBuilder {
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),
         depositsValidator,
+        exitsValidator,
         isPoS,
         isReplayProtectionSupported);
   }

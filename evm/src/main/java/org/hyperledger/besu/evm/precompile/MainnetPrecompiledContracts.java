@@ -163,6 +163,8 @@ public interface MainnetPrecompiledContracts {
     populateForCancun(registry, gasCalculator);
 
     // TODO: add Prague precompiles here
+    // EIP-7002 - Execution layer triggerable exits
+    // (https://github.com/hyperledger/besu/issues/6800)
   }
 
   /**

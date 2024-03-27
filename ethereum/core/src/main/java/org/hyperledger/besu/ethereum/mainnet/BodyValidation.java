@@ -21,10 +21,12 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.ValidatorExitEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -99,6 +101,21 @@ public final class BodyValidation {
 
     IntStream.range(0, deposits.size())
         .forEach(i -> trie.put(indexKey(i), DepositEncoder.encodeOpaqueBytes(deposits.get(i))));
+
+    return Hash.wrap(trie.getRootHash());
+  }
+
+  /**
+   * Generates the exits root for a list of exits
+   *
+   * @param exits list of exits
+   * @return the exits root
+   */
+  public static Hash exitsRoot(final List<ValidatorExit> exits) {
+    final MerkleTrie<Bytes, Bytes> trie = trie();
+
+    IntStream.range(0, exits.size())
+        .forEach(i -> trie.put(indexKey(i), ValidatorExitEncoder.encodeOpaqueBytes(exits.get(i))));
 
     return Hash.wrap(trie.getRootHash());
   }

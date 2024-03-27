@@ -130,6 +130,7 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                     List.of(blobTx),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
+                    Optional.of(Collections.emptyList()),
                     Optional.empty())),
             List.of(blobReceipt));
 

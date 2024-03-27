@@ -764,6 +764,7 @@ public abstract class MainnetProtocolSpecs {
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
+        .exitsValidator(new ValidatorExitsValidator.AllowedExits())
         .name("Prague");
   }
 
@@ -831,6 +832,7 @@ public abstract class MainnetProtocolSpecs {
                 MainnetEVMs.experimentalEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
+        .exitsValidator(new ValidatorExitsValidator.AllowedExits())
         .name("ExperimentalEips");
   }
 

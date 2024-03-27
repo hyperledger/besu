@@ -37,23 +37,27 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
   private final Optional<List<Deposit>> deposits;
+  private final Optional<List<ValidatorExit>> exits;
 
   public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = Optional.empty();
     this.deposits = Optional.empty();
+    this.exits = Optional.empty();
   }
 
   public BlockBody(
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Deposit>> deposits) {
+      final Optional<List<Deposit>> deposits,
+      final Optional<List<ValidatorExit>> exits) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = withdrawals;
     this.deposits = deposits;
+    this.exits = exits;
   }
 
   public static BlockBody empty() {
@@ -87,6 +91,16 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   }
 
   /**
+   * Returns the exits of the block.
+   *
+   * @return The optional list of exits included in the block.
+   */
+  @Override
+  public Optional<List<ValidatorExit>> getExits() {
+    return exits;
+  }
+
+  /**
    * Returns the deposits of the block.
    *
    * @return The optional list of deposits included in the block.
@@ -112,6 +126,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     output.writeList(getOmmers(), BlockHeader::writeTo);
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
     deposits.ifPresent(deposits -> output.writeList(deposits, Deposit::writeTo));
+    exits.ifPresent(exits -> output.writeList(exits, ValidatorExit::writeTo));
   }
 
   public static BlockBody readWrappedBodyFrom(
@@ -163,7 +178,10 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
             : Optional.of(input.readList(Withdrawal::readFrom)),
         input.isEndOfCurrentList()
             ? Optional.empty()
-            : Optional.of(input.readList(Deposit::readFrom)));
+            : Optional.of(input.readList(Deposit::readFrom)),
+        input.isEndOfCurrentList()
+            ? Optional.empty()
+            : Optional.of(input.readList(ValidatorExit::readFrom)));
   }
 
   @Override
@@ -174,19 +192,21 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return Objects.equals(transactions, blockBody.transactions)
         && Objects.equals(ommers, blockBody.ommers)
         && Objects.equals(withdrawals, blockBody.withdrawals)
-        && Objects.equals(deposits, blockBody.deposits);
+        && Objects.equals(deposits, blockBody.deposits)
+        && Objects.equals(exits, blockBody.exits);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers, withdrawals, deposits);
+    return Objects.hash(transactions, ommers, withdrawals, deposits, exits);
   }
 
   public boolean isEmpty() {
     return transactions.isEmpty()
         && ommers.isEmpty()
         && withdrawals.isEmpty()
-        && deposits.isEmpty();
+        && deposits.isEmpty()
+        && exits.isEmpty();
   }
 
   @Override
@@ -200,6 +220,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         + withdrawals
         + ", deposits="
         + deposits
+        + ", exits="
+        + exits
         + '}';
   }
 }

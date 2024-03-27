@@ -260,6 +260,7 @@ public class MessageWrapperTest {
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Optional.of(Collections.emptyList()),
+                Optional.empty(),
                 Optional.empty()));
   }
 
@@ -285,6 +286,7 @@ public class MessageWrapperTest {
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Optional.of(Collections.emptyList()),
+                Optional.empty(),
                 Optional.empty()));
   }
 
@@ -395,6 +397,7 @@ public class MessageWrapperTest {
           null,
           Hash.fromHexString(mixHash),
           Bytes.fromHexStringLenient(nonce).toLong(),
+          null,
           null,
           null,
           null,

@@ -120,6 +120,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Optional.empty(),
+                Optional.empty(),
                 Optional.empty()));
     final Block block2 =
         new Block(
@@ -128,6 +129,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Optional.of(Collections.emptyList()),
+                Optional.empty(),
                 Optional.empty()));
 
     final List<Block> expectedBlocks = asList(block1, block2);
@@ -167,6 +169,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Optional.of(withdrawals),
+                Optional.empty(),
                 Optional.empty()));
     final Block block3 =
         new Block(
@@ -175,6 +178,7 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
                 Collections.emptyList(),
                 Collections.emptyList(),
                 Optional.of(Collections.emptyList()),
+                Optional.empty(),
                 Optional.empty()));
     final List<Block> expected = asList(block1, block2, block3);
 

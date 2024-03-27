@@ -132,6 +132,7 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
                     List.of(blobTx),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
+                    Optional.of(Collections.emptyList()),
                     Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
 
@@ -147,6 +148,7 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
               final EngineGetPayloadResultV4 res = (EngineGetPayloadResultV4) r.getResult();
               assertThat(res.getExecutionPayload().getWithdrawals()).isNotNull();
               assertThat(res.getExecutionPayload().getDeposits()).isNotNull();
+              assertThat(res.getExecutionPayload().getExits()).isNotNull();
               assertThat(res.getExecutionPayload().getHash())
                   .isEqualTo(header.getHash().toString());
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));
