@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.consensus.common.bft.BftExtraDataFixture.createExtraData;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
@@ -25,6 +26,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
@@ -37,6 +39,8 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.pki.cms.CmsCreator;
 
 import java.util.Collections;
@@ -53,21 +57,38 @@ public class PkiQbftBlockCreatorTest {
   private CmsCreator cmsCreator;
   private PkiQbftBlockCreator pkiQbftBlockCreator;
   private BlockHeaderTestFixture blockHeaderBuilder;
+  private BlockHeader blockHeader;
+  private BftProtocolSchedule protocolSchedule;
+  private ProtocolSpec protocolSpec;
 
   @BeforeEach
   public void before() {
     blockCreator = mock(BlockCreator.class);
     cmsCreator = mock(CmsCreator.class);
+    blockHeader = mock(BlockHeader.class);
+    protocolSchedule = mock(BftProtocolSchedule.class);
+    protocolSpec = mock(ProtocolSpec.class);
 
-    pkiQbftBlockCreator = new PkiQbftBlockCreator(blockCreator, cmsCreator, extraDataCodec);
+    pkiQbftBlockCreator =
+        new PkiQbftBlockCreator(
+            blockCreator, cmsCreator, extraDataCodec, blockHeader, protocolSchedule);
 
     blockHeaderBuilder = new BlockHeaderTestFixture();
+
+    when(protocolSchedule.getByBlockNumberOrTimestamp(anyLong(), anyLong()))
+        .thenReturn(protocolSpec);
   }
 
   @Test
   public void createProposalBehaviourWithNonPkiCodecFails() {
     assertThatThrownBy(
-            () -> new PkiQbftBlockCreator(blockCreator, cmsCreator, new QbftExtraDataCodec()))
+            () ->
+                new PkiQbftBlockCreator(
+                    blockCreator,
+                    cmsCreator,
+                    new QbftExtraDataCodec(),
+                    blockHeader,
+                    protocolSchedule))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessageContaining("PkiQbftBlockCreator must use PkiQbftExtraDataCodec");
   }
@@ -75,6 +96,8 @@ public class PkiQbftBlockCreatorTest {
   @Test
   public void cmsInProposedBlockHasValueCreatedByCmsCreator() {
     createBlockBeingProposed();
+    when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.AllowedWithdrawals());
 
     final Bytes cms = Bytes.random(32);
     when(cmsCreator.create(any(Bytes.class))).thenReturn(cms);
@@ -89,6 +112,8 @@ public class PkiQbftBlockCreatorTest {
 
   @Test
   public void cmsIsCreatedWithCorrectHashingFunction() {
+    when(protocolSpec.getWithdrawalsValidator())
+        .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
     final Block block = createBlockBeingProposed();
     final Hash expectedHashForCmsCreation =
         PkiQbftBlockHeaderFunctions.forCmsSignature(extraDataCodec).hash(block.getHeader());
@@ -123,6 +148,8 @@ public class PkiQbftBlockCreatorTest {
             blockHeaderWithExtraData,
             new BlockBody(Collections.emptyList(), Collections.emptyList()));
     when(blockCreator.createBlock(eq(1L)))
+        .thenReturn(new BlockCreationResult(block, new TransactionSelectionResults()));
+    when(blockCreator.createEmptyWithdrawalsBlock(anyLong()))
         .thenReturn(new BlockCreationResult(block, new TransactionSelectionResults()));
 
     return block;
