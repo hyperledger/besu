@@ -57,7 +57,7 @@ public class ValidatorExitContractHelper {
   private static final UInt256 EXIT_MESSAGE_QUEUE_STORAGE_OFFSET = UInt256.valueOf(4L);
   // How many slots each exit occupies in the account state
   private static final int EXIT_MESSAGE_STORAGE_SLOT_SIZE = 3;
-  private static final int MAX_EXITS_PER_BLOCK = 16;
+  @VisibleForTesting static final int MAX_EXITS_PER_BLOCK = 16;
   private static final int TARGET_EXITS_PER_BLOCK = 2;
 
   /*
