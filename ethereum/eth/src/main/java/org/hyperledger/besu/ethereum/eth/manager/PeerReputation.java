@@ -73,7 +73,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
           "Disconnection triggered by {} repeated timeouts for requestCode {} for peer {}, new score {} \n\t{}",
           newTimeoutCount,
           requestCode,
-          peer.getLoggableId(),
+          peer,
           score,
           this);
       return Optional.of(DisconnectReason.TIMEOUT);
@@ -106,7 +106,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
       score -= LARGE_ADJUSTMENT;
       LOG.debug(
           "Disconnection triggered by exceeding useless response threshold for peer {}, new score {}, {}",
-          peer.getLoggableId(),
+          peer,
           score,
           this);
       return Optional.of(DisconnectReason.USELESS_PEER);
