@@ -99,7 +99,7 @@ public class PeerReputation implements Comparable<PeerReputation> {
     }
     if (uselessResponseTimes.size() >= USELESS_RESPONSE_THRESHOLD) {
       score -= LARGE_ADJUSTMENT;
-      LOG.warn(
+      LOG.debug(
           "Disconnection triggered by exceeding useless response threshold for peer {}",
           peer.getLoggableId());
       return Optional.of(DisconnectReason.USELESS_PEER);
