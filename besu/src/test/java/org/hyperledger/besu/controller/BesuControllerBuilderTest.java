@@ -32,6 +32,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
@@ -62,6 +63,7 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.math.BigInteger;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.util.Optional;
 import java.util.OptionalLong;
 
 import com.google.common.collect.Range;
@@ -214,5 +216,76 @@ public class BesuControllerBuilderTest {
     besuControllerBuilder.build();
 
     verify(storageProvider).getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.PRUNING_STATE);
+  }
+
+  @Test
+  public void shouldNotCacheGenesisStateHashFirstBuild() {
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI)
+            .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .build();
+    BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class, Answers.RETURNS_DEEP_STUBS);
+    doReturn(worldStateArchive)
+        .when(besuControllerBuilder)
+        .createWorldStateArchive(
+            any(WorldStateStorageCoordinator.class),
+            any(Blockchain.class),
+            any(CachedMerkleTrieLoader.class));
+    doReturn(mockWorldState).when(worldStateArchive).getMutable();
+    when(storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration))
+        .thenReturn(new WorldStateStorageCoordinator(bonsaiWorldStateStorage));
+    besuControllerBuilder.dataStorageConfiguration(dataStorageConfiguration);
+    besuControllerBuilder.genesisStateHashCacheEnabled(true);
+
+    VariablesStorage mockStorage = mock(VariablesStorage.class);
+    when(storageProvider.createVariablesStorage()).thenReturn(mockStorage);
+    VariablesStorage.Updater mockUpdater = mock(VariablesStorage.Updater.class);
+    when(mockStorage.updater()).thenReturn(mockUpdater);
+
+    besuControllerBuilder.build();
+
+    verify(mockStorage).getGenesisStateHash();
+    verify(mockStorage).updater();
+    verify(mockUpdater).setGenesisStateHash(any());
+    verify(mockUpdater).commit();
+  }
+
+  @Test
+  public void shouldCacheGenesisStateHashSecondBuild() {
+    DataStorageConfiguration dataStorageConfiguration =
+        ImmutableDataStorageConfiguration.builder()
+            .dataStorageFormat(DataStorageFormat.BONSAI)
+            .bonsaiMaxLayersToLoad(DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+            .build();
+    BonsaiWorldState mockWorldState = mock(BonsaiWorldState.class, Answers.RETURNS_DEEP_STUBS);
+    doReturn(worldStateArchive)
+        .when(besuControllerBuilder)
+        .createWorldStateArchive(
+            any(WorldStateStorageCoordinator.class),
+            any(Blockchain.class),
+            any(CachedMerkleTrieLoader.class));
+    doReturn(mockWorldState).when(worldStateArchive).getMutable();
+    when(storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration))
+        .thenReturn(new WorldStateStorageCoordinator(bonsaiWorldStateStorage));
+    besuControllerBuilder.dataStorageConfiguration(dataStorageConfiguration);
+    besuControllerBuilder.genesisStateHashCacheEnabled(true);
+
+    VariablesStorage mockStorage = mock(VariablesStorage.class);
+    when(storageProvider.createVariablesStorage()).thenReturn(mockStorage);
+    when(mockStorage.getGenesisStateHash())
+        .thenReturn(
+            Optional.of(
+                Hash.fromHexString(
+                    "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421")));
+    VariablesStorage.Updater mockUpdater = mock(VariablesStorage.Updater.class);
+    lenient().when(mockStorage.updater()).thenReturn(mockUpdater);
+
+    besuControllerBuilder.build();
+
+    verify(mockStorage).getGenesisStateHash();
+    verify(mockStorage, never()).updater();
+    verify(mockUpdater, never()).setGenesisStateHash(any());
+    verify(mockUpdater, never()).commit();
   }
 }
