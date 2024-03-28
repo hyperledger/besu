@@ -88,7 +88,9 @@ public class ChainHeadTracker implements ConnectCallback {
             Hash.wrap(peer.chainState().getBestBlock().getHash()),
             0,
             metricsSystem)
-        .assignPeer(peer)
+        .assignFixedPeer(
+            peer) // want to make sure we are using this peer. If it can't even provide this header,
+        // it's useless!
         .run();
   }
 
@@ -122,9 +124,10 @@ public class ChainHeadTracker implements ConnectCallback {
         } else {
           LOG.atDebug()
               .setMessage(
-                  "Failed to retrieve chain head info from {} after "
+                  "Failed to retrieve chain head info from {}. Disconnecting after "
                       + MAX_RETRIES
-                      + "retries. Reason: {}. Disconnecting...")
+                      + 1
+                      + " tries. Reason: {}.")
               .addArgument(peer::getLoggableId)
               .addArgument(() -> getReason(peerResult, error))
               .log();
