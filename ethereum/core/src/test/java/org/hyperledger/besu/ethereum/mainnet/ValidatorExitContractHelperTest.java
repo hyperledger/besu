@@ -37,38 +37,6 @@ class ValidatorExitContractHelperTest {
   }
 
   @Test
-  public void readExpectedExits_whenContractCodeIsEmpty_ReturnsEmptyListOfExits() {
-    // Create account with empty code
-    final WorldUpdater updater = worldState.updater();
-    updater.createAccount(VALIDATOR_EXIT_ADDRESS);
-    updater.commit();
-
-    assertThat(ValidatorExitContractHelper.peekExpectedExits(worldState)).isEmpty();
-  }
-
-  @Test
-  public void readExpectedExits_ReturnExpectedExits() {
-    final List<ValidatorExit> expectedExits = List.of(createExit(), createExit());
-    loadContractStorage(worldState, expectedExits);
-
-    final List<ValidatorExit> exitsFromContract =
-        ValidatorExitContractHelper.peekExpectedExits(worldState);
-    assertThat(exitsFromContract).isEqualTo(expectedExits);
-  }
-
-  @Test
-  public void readExpectedExitsRespectsMaxExitsLimit() {
-    // Loading contract with more than 16 exits
-    final List<ValidatorExit> validatorExits =
-        IntStream.range(0, 30).mapToObj(__ -> createExit()).collect(Collectors.toList());
-    loadContractStorage(worldState, validatorExits);
-
-    final List<ValidatorExit> exitsFromContract =
-        ValidatorExitContractHelper.peekExpectedExits(worldState);
-    assertThat(exitsFromContract).isEqualTo(validatorExits.subList(0, 16));
-  }
-
-  @Test
   public void popExitsFromQueue_whenContractCodeIsEmpty_ReturnsEmptyListOfExits() {
     // Create account with empty code
     final WorldUpdater updater = worldState.updater();
@@ -90,10 +58,6 @@ class ValidatorExitContractHelperTest {
     final List<ValidatorExit> poppedExits =
         ValidatorExitContractHelper.popExitsFromQueue(worldState);
     assertThat(poppedExits).hasSize(16);
-
-    final List<ValidatorExit> remainingExits =
-        ValidatorExitContractHelper.peekExpectedExits(worldState);
-    assertThat(remainingExits).hasSize(14);
 
     // Check that queue pointers were updated successfully (head advanced to index 16)
     assertContractStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT, 16);

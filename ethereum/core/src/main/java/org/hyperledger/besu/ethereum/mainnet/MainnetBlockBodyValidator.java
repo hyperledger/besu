@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
@@ -107,6 +108,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     if (!validateDeposits(block, receipts)) {
       return false;
     }
+
+    // TODO-lucas light (?) exits validation (do we need the expected exits to perform this
+    // validation?
+    //    if (!validateExits(block, exits)) {
+    //      return false;
+    //    }
 
     return true;
   }
@@ -322,5 +329,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     return true;
+  }
+
+  @SuppressWarnings("unused")
+  private boolean validateExits(final Block block, final List<ValidatorExit> exits) {
+    final ValidatorExitsValidator exitsValidator =
+        protocolSchedule.getByBlockHeader(block.getHeader()).getExitsValidator();
+    return exitsValidator.validateExitsInBlock(block, exits);
   }
 }

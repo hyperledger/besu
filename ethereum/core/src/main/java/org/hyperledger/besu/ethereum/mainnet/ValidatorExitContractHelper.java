@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -61,28 +60,12 @@ public class ValidatorExitContractHelper {
   private static final int TARGET_EXITS_PER_BLOCK = 2;
 
   /*
-   Peeks the expected list of exits from smart contract without any modification to the queue or state.
-  */
-  public static List<ValidatorExit> peekExpectedExits(final WorldState worldState) {
-    final Account account = worldState.get(VALIDATOR_EXIT_ADDRESS);
-
-    if (Hash.EMPTY.equals(account.getCodeHash())) {
-      return List.of();
-    }
-
-    final UInt256 queueHeadIndex = account.getStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT);
-    final UInt256 queueTailIndex = account.getStorageValue(EXIT_MESSAGE_QUEUE_TAIL_STORAGE_SLOT);
-
-    return peekExpectedExits(account, queueHeadIndex, queueTailIndex);
-  }
-
-  /*
    Pop the expected list of exits from the validator exit smart contract, updating the queue pointers and other
    control variables in the contract state.
   */
   public static List<ValidatorExit> popExitsFromQueue(final MutableWorldState mutableWorldState) {
     final WorldUpdater worldUpdater = mutableWorldState.updater();
-    final MutableAccount account = worldUpdater.getOrCreate(VALIDATOR_EXIT_ADDRESS);
+    final MutableAccount account = worldUpdater.getAccount(VALIDATOR_EXIT_ADDRESS);
     if (Hash.EMPTY.equals(account.getCodeHash())) {
       return List.of();
     }
@@ -92,6 +75,24 @@ public class ValidatorExitContractHelper {
     resetExitCount(account);
 
     worldUpdater.commit();
+
+    return exits;
+  }
+
+  private static List<ValidatorExit> dequeueExits(final MutableAccount account) {
+    final UInt256 queueHeadIndex = account.getStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT);
+    final UInt256 queueTailIndex = account.getStorageValue(EXIT_MESSAGE_QUEUE_TAIL_STORAGE_SLOT);
+
+    final List<ValidatorExit> exits = peekExpectedExits(account, queueHeadIndex, queueTailIndex);
+
+    final UInt256 newQueueHeadIndex = queueHeadIndex.plus(exits.size());
+    if (newQueueHeadIndex.equals(queueTailIndex)) {
+      // Queue is empty, reset queue pointers
+      account.setStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT, UInt256.valueOf(0L));
+      account.setStorageValue(EXIT_MESSAGE_QUEUE_TAIL_STORAGE_SLOT, UInt256.valueOf(0L));
+    } else {
+      account.setStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT, newQueueHeadIndex);
+    }
 
     return exits;
   }
@@ -120,24 +121,6 @@ public class ValidatorExitContractHelper {
                   account.getStorageValue(queueStorageSlot.plus(2)).toBytes().slice(0, 16)));
 
       exits.add(new ValidatorExit(sourceAddress, validatorPubKey));
-    }
-
-    return exits;
-  }
-
-  private static List<ValidatorExit> dequeueExits(final MutableAccount account) {
-    final UInt256 queueHeadIndex = account.getStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT);
-    final UInt256 queueTailIndex = account.getStorageValue(EXIT_MESSAGE_QUEUE_TAIL_STORAGE_SLOT);
-
-    final List<ValidatorExit> exits = peekExpectedExits(account, queueHeadIndex, queueTailIndex);
-
-    final UInt256 newQueueHeadIndex = queueHeadIndex.plus(exits.size());
-    if (newQueueHeadIndex.equals(queueTailIndex)) {
-      // Queue is empty, reset queue pointers
-      account.setStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT, UInt256.valueOf(0L));
-      account.setStorageValue(EXIT_MESSAGE_QUEUE_TAIL_STORAGE_SLOT, UInt256.valueOf(0L));
-    } else {
-      account.setStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT, newQueueHeadIndex);
     }
 
     return exits;
