@@ -52,11 +52,13 @@ class TransactionsMessageSender {
       LOG.atTrace()
           .setMessage(
               "Sending transactions to peer {} all transactions count {}, "
-                  + "single message transactions {}, single message list {}")
+                  + "single message transactions {}, single message list {}, transactions {}, AgreedCapabilities {}")
           .addArgument(peer)
           .addArgument(allTxToSend::size)
           .addArgument(includedTransactions::size)
           .addArgument(() -> toHashList(includedTransactions))
+          .addArgument(() -> includedTransactions)
+          .addArgument(peer::getAgreedCapabilities)
           .log();
       allTxToSend.removeAll(limitedTransactionsMessages.getIncludedTransactions());
       try {
