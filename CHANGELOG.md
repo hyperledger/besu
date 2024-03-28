@@ -1,6 +1,21 @@
 # Changelog
 
-## 24.2.0-SNAPSHOT
+## Next Release
+
+### Breaking Changes
+
+### Upcoming Breaking Changes
+
+### Deprecations
+
+### Additions and Improvements
+
+### Bug fixes
+- Fix to avoid broadcasting full blob txs, instead of only the tx announcement, to a subset of nodes [#6835](https://github.com/hyperledger/besu/pull/6835)
+
+### Download Links
+
+## 24.3.0
 
 ### Breaking Changes
 - SNAP - Snap sync is now the default for named networks [#6530](https://github.com/hyperledger/besu/pull/6530)
