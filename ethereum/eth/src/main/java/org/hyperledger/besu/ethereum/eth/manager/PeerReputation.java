@@ -50,29 +50,36 @@ public class PeerReputation implements Comparable<PeerReputation> {
   private int score;
 
   private final int maxScore;
+  private final String name;
 
-  public PeerReputation() {
-    this(DEFAULT_INITIAL_SCORE, DEFAULT_MAX_SCORE);
+  public PeerReputation(final String name) {
+    this(name, DEFAULT_INITIAL_SCORE, DEFAULT_MAX_SCORE);
   }
 
-  public PeerReputation(final int initialScore, final int maxScore) {
+  public PeerReputation(final String name, final int initialScore, final int maxScore) {
     checkArgument(
         initialScore <= maxScore, "Initial score must be less than or equal to max score");
+    this.name = name;
     this.maxScore = maxScore;
     this.score = initialScore;
   }
 
-  public Optional<DisconnectReason> recordRequestTimeout(final int requestCode) {
+  public Optional<DisconnectReason> recordRequestTimeout(
+      final int requestCode, final EthPeer peer) {
     final int newTimeoutCount = getOrCreateTimeoutCount(requestCode).incrementAndGet();
     if (newTimeoutCount >= TIMEOUT_THRESHOLD) {
-      LOG.debug(
-          "Disconnection triggered by {} repeated timeouts for requestCode {}",
-          newTimeoutCount,
-          requestCode);
       score -= LARGE_ADJUSTMENT;
+      LOG.warn(
+          "Disconnection triggered by {} repeated timeouts for requestCode {} for peer {}, new score {} \n\t{}",
+          newTimeoutCount,
+          requestCode,
+          peer,
+          score,
+          this);
       return Optional.of(DisconnectReason.TIMEOUT);
     } else {
       score -= SMALL_ADJUSTMENT;
+      LOG.warn("Recorded timeout, score {}, {}", score, this);
       return Optional.empty();
     }
   }
@@ -89,17 +96,23 @@ public class PeerReputation implements Comparable<PeerReputation> {
     return timeoutCountByRequestType;
   }
 
-  public Optional<DisconnectReason> recordUselessResponse(final long timestamp) {
+  public Optional<DisconnectReason> recordUselessResponse(
+      final long timestamp, final EthPeer peer) {
     uselessResponseTimes.add(timestamp);
     while (shouldRemove(uselessResponseTimes.peek(), timestamp)) {
       uselessResponseTimes.poll();
     }
     if (uselessResponseTimes.size() >= USELESS_RESPONSE_THRESHOLD) {
       score -= LARGE_ADJUSTMENT;
-      LOG.debug("Disconnection triggered by exceeding useless response threshold");
+      LOG.debug(
+          "Disconnection triggered by exceeding useless response threshold for peer {}, new score {}, {}",
+          peer,
+          score,
+          this);
       return Optional.of(DisconnectReason.USELESS_PEER);
     } else {
       score -= SMALL_ADJUSTMENT;
+      LOG.warn("Recorded useless response, new score {}, {}", score, this);
       return Optional.empty();
     }
   }
@@ -117,8 +130,8 @@ public class PeerReputation implements Comparable<PeerReputation> {
   @Override
   public String toString() {
     return String.format(
-        "PeerReputation score: %d, timeouts: %s, useless: %s",
-        score, timeoutCounts(), uselessResponseTimes.size());
+        "PeerReputation name: %s, score: %d, timeouts: %s, useless: %s",
+        name, score, timeoutCounts(), uselessResponseTimes.size());
   }
 
   @Override

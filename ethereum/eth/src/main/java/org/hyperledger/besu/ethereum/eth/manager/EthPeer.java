@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.PeerInfo;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
@@ -100,7 +101,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private final Map<String, Map<Integer, RequestManager>> requestManagers;
 
   private final AtomicReference<Consumer<EthPeer>> onStatusesExchanged = new AtomicReference<>();
-  private final PeerReputation reputation = new PeerReputation();
+  private final PeerReputation reputation;
   private final Map<PeerValidator, Boolean> validationStatus = new ConcurrentHashMap<>();
   private final Bytes id;
 
@@ -131,6 +132,12 @@ public class EthPeer implements Comparable<EthPeer> {
       final List<NodeMessagePermissioningProvider> permissioningProviders,
       final Bytes localNodeId) {
     this.connection = connection;
+    this.reputation =
+        new PeerReputation(
+            Optional.ofNullable(this.connection)
+                .map(PeerConnection::getPeerInfo)
+                .map(PeerInfo::getClientId)
+                .orElse("none"));
     this.protocolName = protocolName;
     this.maxMessageSize = maxMessageSize;
     this.clock = clock;
@@ -215,7 +222,7 @@ public class EthPeer implements Comparable<EthPeer> {
         .addArgument(this::getLoggableId)
         .log();
     LOG.trace("Timed out while waiting for response from peer {}", this);
-    reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
+    reputation.recordRequestTimeout(requestCode, this).ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
@@ -224,7 +231,7 @@ public class EthPeer implements Comparable<EthPeer> {
         .addArgument(requestType)
         .addArgument(this::getLoggableId)
         .log();
-    reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
+    reputation.recordUselessResponse(System.currentTimeMillis(), this).ifPresent(this::disconnect);
   }
 
   public void recordUsefulResponse() {
@@ -629,12 +636,13 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, %s, %s",
+        "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, forkId: %s, %s, %s",
         getLoggableId(),
         reputation,
         isFullyValidated(),
         isDisconnected(),
         connection.getPeerInfo().getClientId(),
+        connection.getPeer().getForkId(),
         connection,
         connection.getPeer().getEnodeURLString());
   }
