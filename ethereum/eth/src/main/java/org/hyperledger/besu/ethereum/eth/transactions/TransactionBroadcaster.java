@@ -166,7 +166,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
       final Map<Boolean, List<Transaction>> txsByHashOnlyBroadcast,
       final List<EthPeer> hashOnlyPeers) {
     final List<Transaction> allTransactions =
-        txsByHashOnlyBroadcast.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        txsByHashOnlyBroadcast.values().stream().flatMap(List::stream).toList();
 
     sendTransactionHashes(allTransactions, hashOnlyPeers);
   }
@@ -183,8 +183,8 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
     if (!transactions.isEmpty()) {
       fullTransactionPeers.forEach(
           peer -> {
-            transactions.stream()
-                .forEach(transaction -> transactionTracker.addToPeerSendQueue(peer, transaction));
+            transactions.forEach(
+                transaction -> transactionTracker.addToPeerSendQueue(peer, transaction));
             ethContext
                 .getScheduler()
                 .scheduleSyncWorkerTask(

@@ -83,8 +83,6 @@ public class TransactionBroadcasterTest {
         .thenReturn(Boolean.TRUE);
     when(ethPeerWithEth65_2.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.TRUE);
-    when(ethPeerWithEth65_2.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES))
-        .thenReturn(Boolean.TRUE);
     when(ethPeerWithEth65_3.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES))
         .thenReturn(Boolean.TRUE);
 
