@@ -187,6 +187,10 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
         EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
             ? "0x3e5d325a03ad3ce5640502219833d30b89ce3ce1"
             : "0xebf56429e6500e84442467292183d4d621359838";
+    final String receiptPrivacyGroupId =
+        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
+            ? "MjuFB4b9Hz+f8zvkWWasxZWRjHWXU4t7B2nOHo4mekA="
+            : "DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=";
 
     final RawPrivateTransaction rawPrivateTransaction =
         RawPrivateTransaction.createContractTransaction(
@@ -196,6 +200,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
             Numeric.prependHexPrefix(EventEmitter.BINARY),
             Base64String.wrap(alice.getEnclaveKey()),
             Collections.singletonList(Base64String.wrap(bob.getEnclaveKey())),
+            Base64String.wrap(receiptPrivacyGroupId),
             RESTRICTED);
 
     final String signedPrivateTransaction =
@@ -243,10 +248,6 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
                     "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEXIgZqRA25V+3nN+Do6b5r0jiUunub6ubjPhqwHpPxP44uUYh9RKCQNRnsqCJ9PjeTnC8R3ieJk7HWAlycU1bug=="))
             : new ArrayList<>(
                 Collections.singletonList("Ko2bVqD+nNlNYL5EE7y3IdOnviftjiizpjRt+HTuFBs="));
-    final String receiptPrivacyGroupId =
-        EnclaveEncryptorType.EC.equals(enclaveEncryptorType)
-            ? "MjuFB4b9Hz+f8zvkWWasxZWRjHWXU4t7B2nOHo4mekA="
-            : "DyAOiF/ynpc+JXa2YAGB0bCitSlOMNm+ShmB/7M6C4w=";
 
     final PrivateTransactionReceipt expectedReceipt =
         new PrivateTransactionReceipt(
