@@ -28,12 +28,12 @@ public class PeerReputationTest {
 
   private static final int INITIAL_SCORE = 25;
   private static final int MAX_SCORE = 50;
-  private final PeerReputation reputation = new PeerReputation(INITIAL_SCORE, MAX_SCORE);
+  private final PeerReputation reputation = new PeerReputation("", INITIAL_SCORE, MAX_SCORE);
   private final EthPeer mockEthPeer = mock(EthPeer.class);
 
   @Test
   public void shouldThrowOnInvalidInitialScore() {
-    Assertions.assertThrows(IllegalArgumentException.class, () -> new PeerReputation(2, 1));
+    Assertions.assertThrows(IllegalArgumentException.class, () -> new PeerReputation("", 2, 1));
   }
 
   @Test
