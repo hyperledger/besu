@@ -19,6 +19,7 @@ package org.hyperledger.besu.tests.acceptance;
 import static java.nio.file.StandardCopyOption.REPLACE_EXISTING;
 
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
 
@@ -70,6 +71,8 @@ public class AbstractPreexistingNodeTest extends AcceptanceTestBase {
     return nodeBuilder
         .devMode(false)
         .dataPath(hostDataPath)
+        .dataStorageConfiguration(
+            DataStorageConfiguration.DEFAULT_FOREST_CONFIG) // existing db is forest
         .genesisConfigProvider((nodes) -> Optional.of(genesisData))
         .jsonRpcEnabled();
   }
