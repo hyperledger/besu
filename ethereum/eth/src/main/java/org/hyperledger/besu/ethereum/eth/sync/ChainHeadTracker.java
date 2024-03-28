@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Executor;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -91,7 +92,21 @@ public class ChainHeadTracker implements ConnectCallback {
         .assignFixedPeer(
             peer) // want to make sure we are using this peer. If it can't even provide this header,
         // it's useless!
-        .run();
+        .run()
+        .exceptionally(handleException(peer));
+  }
+
+  private static Function<Throwable, AbstractPeerTask.PeerTaskResult<List<BlockHeader>>>
+      handleException(final EthPeer peer) {
+    return e -> {
+      LOG.atDebug()
+          .setMessage("Failed to retrieve chain head info from {}. Reason: {}")
+          .addArgument(peer::getLoggableId)
+          .addArgument(e::toString)
+          .log();
+      peer.disconnect(DisconnectReason.USELESS_PEER);
+      return null;
+    };
   }
 
   private BiConsumer<AbstractPeerTask.PeerTaskResult<List<BlockHeader>>, Throwable>
