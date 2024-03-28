@@ -55,7 +55,7 @@ import org.mockito.quality.Strictness;
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
 public class TransactionBroadcasterTest {
-
+  private static final Long FIXED_RANDOM_SEED = 0L;
   @Mock private EthContext ethContext;
   @Mock private EthPeers ethPeers;
   @Mock private EthScheduler ethScheduler;
@@ -92,12 +92,14 @@ public class TransactionBroadcasterTest {
     when(ethContext.getEthPeers()).thenReturn(ethPeers);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
 
+    // we use the fixed random seed to have a predictable shuffle of peers
     txBroadcaster =
         new TransactionBroadcaster(
             ethContext,
             transactionTracker,
             transactionsMessageSender,
-            newPooledTransactionHashesMessageSender);
+            newPooledTransactionHashesMessageSender,
+            FIXED_RANDOM_SEED);
   }
 
   @Test
@@ -132,7 +134,7 @@ public class TransactionBroadcasterTest {
 
     txBroadcaster.relayTransactionPoolTo(ethPeerWithEth65, pendingTxs);
 
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
 
     sendTaskCapture.getValue().run();
 
@@ -177,14 +179,16 @@ public class TransactionBroadcasterTest {
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
     txBroadcaster.onTransactionsAdded(txs);
-
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
+    // the shuffled hash only peer list is always:
+    // [ethPeerWithEth65_3, ethPeerWithEth65_2, ethPeerWithEth65]
+    // so ethPeerWithEth65 and ethPeerWithEth65_2 are moved to the mixed broadcast list
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
     verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, txs);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
 
-    verify(transactionsMessageSender, times(2)).sendTransactionsToPeer(any(EthPeer.class));
-    verifyNoInteractions(newPooledTransactionHashesMessageSender);
+    verify(transactionsMessageSender).sendTransactionsToPeer(ethPeerWithEth65_2);
+    verify(newPooledTransactionHashesMessageSender).sendTransactionHashesToPeer(ethPeerWithEth65);
   }
 
   @Test
@@ -196,10 +200,12 @@ public class TransactionBroadcasterTest {
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
     txBroadcaster.onTransactionsAdded(txs);
-
+    // the shuffled hash only peer list is always:
+    // [ethPeerWithEth65_3, ethPeerWithEth65_2, ethPeerWithEth65]
+    // so ethPeerWithEth65 and ethPeerWithEth65_2 are moved to the mixed broadcast list
     verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
     verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, txs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_3, txs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_3, txs);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
 
@@ -218,8 +224,10 @@ public class TransactionBroadcasterTest {
     List<Transaction> txs = toTransactionList(setupTransactionPool(1, 1));
 
     txBroadcaster.onTransactionsAdded(txs);
-
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
+    // the shuffled hash only peer list is always:
+    // [ethPeerWithEth65, ethPeerWithEth65_2]
+    // so ethPeerWithEth65_2 is moved to the mixed broadcast list
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
     verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, txs);
     verifyTransactionAddedToPeerSendingQueue(ethPeerNoEth65, txs);
 
@@ -250,9 +258,11 @@ public class TransactionBroadcasterTest {
     List<Transaction> txs = toTransactionList(setupTransactionPool(BLOB, 0, 1));
 
     txBroadcaster.onTransactionsAdded(txs);
-
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, txs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, txs);
+    // the shuffled hash only peer list is always:
+    // [ethPeerWithEth65, ethPeerWithEth65_2]
+    // so ethPeerWithEth65_2 is moved to the mixed broadcast list
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, txs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_2, txs);
     verifyNoTransactionAddedToPeerSendingQueue(ethPeerNoEth65);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
@@ -268,7 +278,6 @@ public class TransactionBroadcasterTest {
 
   @Test
   public void onTransactionsAddedWithMixedPeersAndMixedBroadcastKind() {
-
     List<EthPeer> eth65Peers = List.of(ethPeerWithEth65, ethPeerWithEth65_2);
 
     when(ethPeers.peerCount()).thenReturn(3);
@@ -285,9 +294,12 @@ public class TransactionBroadcasterTest {
     mixedTxs.addAll(hashBroadcastTxs);
 
     txBroadcaster.onTransactionsAdded(mixedTxs);
-
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65, mixedTxs);
-    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, mixedTxs);
+    // the shuffled hash only peer list is always:
+    // [ethPeerWithEth65, ethPeerWithEth65_2]
+    // so ethPeerWithEth65_2 is moved to the mixed broadcast list
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65, mixedTxs);
+    verifyTransactionAddedToPeerHashSendingQueue(ethPeerWithEth65_2, hashBroadcastTxs);
+    verifyTransactionAddedToPeerSendingQueue(ethPeerWithEth65_2, fullBroadcastTxs);
     verifyTransactionAddedToPeerSendingQueue(ethPeerNoEth65, fullBroadcastTxs);
 
     sendTaskCapture.getAllValues().forEach(Runnable::run);
@@ -344,6 +356,16 @@ public class TransactionBroadcasterTest {
     ArgumentCaptor<Transaction> trackedTransactions = ArgumentCaptor.forClass(Transaction.class);
     verify(transactionTracker, times(transactions.size()))
         .addToPeerSendQueue(eq(peer), trackedTransactions.capture());
+    assertThat(trackedTransactions.getAllValues())
+        .containsExactlyInAnyOrderElementsOf(transactions);
+  }
+
+  private void verifyTransactionAddedToPeerHashSendingQueue(
+      final EthPeer peer, final Collection<Transaction> transactions) {
+
+    ArgumentCaptor<Transaction> trackedTransactions = ArgumentCaptor.forClass(Transaction.class);
+    verify(transactionTracker, times(transactions.size()))
+        .addToPeerHashSendQueue(eq(peer), trackedTransactions.capture());
     assertThat(trackedTransactions.getAllValues())
         .containsExactlyInAnyOrderElementsOf(transactions);
   }
