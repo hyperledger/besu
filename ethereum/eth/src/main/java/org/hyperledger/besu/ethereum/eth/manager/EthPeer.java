@@ -636,12 +636,13 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, %s, %s",
+        "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, forkId: %s, %s, %s",
         getLoggableId(),
         reputation,
         isFullyValidated(),
         isDisconnected(),
         connection.getPeerInfo().getClientId(),
+        connection.getPeer().getForkId(),
         connection,
         connection.getPeer().getEnodeURLString());
   }
