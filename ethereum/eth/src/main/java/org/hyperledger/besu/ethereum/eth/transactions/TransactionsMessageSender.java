@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import static org.hyperledger.besu.ethereum.core.Transaction.toHashList;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.messages.LimitedTransactionsMessages;
@@ -46,7 +47,10 @@ class TransactionsMessageSender {
     final Set<Transaction> allTxToSend = transactionTracker.claimTransactionsToSendToPeer(peer);
     while (!allTxToSend.isEmpty()) {
       final LimitedTransactionsMessages limitedTransactionsMessages =
-          LimitedTransactionsMessages.createLimited(allTxToSend);
+          LimitedTransactionsMessages.createLimited(
+              allTxToSend.stream()
+                  .filter(tx -> tx.getType() != TransactionType.BLOB)
+                  .collect(java.util.stream.Collectors.toList()));
       final Set<Transaction> includedTransactions =
           limitedTransactionsMessages.getIncludedTransactions();
       LOG.atTrace()
