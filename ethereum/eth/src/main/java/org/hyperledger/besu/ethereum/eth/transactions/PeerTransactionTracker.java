@@ -32,10 +32,12 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
   private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 100_000;
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
   private final Map<EthPeer, Set<Transaction>> transactionsToSend = new ConcurrentHashMap<>();
+  private final Map<EthPeer, Set<Transaction>> transactionHashToSend = new ConcurrentHashMap<>();
 
   public void reset() {
     seenTransactions.clear();
     transactionsToSend.clear();
+    transactionHashToSend.clear();
   }
 
   public synchronized void markTransactionsAsSeen(
@@ -54,6 +56,11 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
       transactionsToSend.computeIfAbsent(peer, key -> createTransactionsSet()).add(transaction);
     }
   }
+  public synchronized void addToPeerHashSendQueue(final EthPeer peer, final Transaction transaction) {
+    if (!hasPeerSeenTransaction(peer, transaction)) {
+      transactionHashToSend.computeIfAbsent(peer, key -> createTransactionsSet()).add(transaction);
+    }
+  }
 
   public Iterable<EthPeer> getEthPeersWithUnsentTransactions() {
     return transactionsToSend.keySet();
@@ -63,6 +70,15 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
     final Set<Transaction> transactionsToSend = this.transactionsToSend.remove(peer);
     if (transactionsToSend != null) {
       markTransactionsAsSeen(peer, transactionsToSend);
+      return transactionsToSend;
+    } else {
+      return emptySet();
+    }
+  }
+public synchronized Set<Transaction> claimTransactionsHashesToSendToPeer(final EthPeer peer) {
+    final Set<Transaction> transactionsToSend = this.transactionHashToSend.remove(peer);
+    if (transactionsToSend != null) {
+      markTransactionHashesAsSeen(peer, toHashList(transactionsToSend));
       return transactionsToSend;
     } else {
       return emptySet();
@@ -100,5 +116,6 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
   public void onDisconnect(final EthPeer peer) {
     seenTransactions.remove(peer);
     transactionsToSend.remove(peer);
+    transactionHashToSend.remove(peer);
   }
 }

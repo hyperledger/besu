@@ -44,6 +44,10 @@ class TransactionsMessageSender {
 
   void sendTransactionsToPeer(final EthPeer peer) {
     final Set<Transaction> allTxToSend = transactionTracker.claimTransactionsToSendToPeer(peer);
+    //uncomment this to see the exception being thrown
+    //if(allTxToSend.stream().anyMatch(t -> TransactionType.BLOB.equals(t.getType()))) {
+    //  throw new RuntimeException("Sent Blob");
+    //}
     while (!allTxToSend.isEmpty()) {
       final LimitedTransactionsMessages limitedTransactionsMessages =
           LimitedTransactionsMessages.createLimited(allTxToSend);

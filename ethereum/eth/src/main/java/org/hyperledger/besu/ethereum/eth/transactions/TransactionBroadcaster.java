@@ -158,8 +158,9 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
     if (!transactions.isEmpty()) {
       fullTransactionPeers.forEach(
           peer -> {
-            transactions.forEach(
-                transaction -> transactionTracker.addToPeerSendQueue(peer, transaction));
+            transactions.stream()
+                .filter(tx -> !ANNOUNCE_HASH_ONLY_TX_TYPES.contains(tx.getType()))
+                .forEach(transaction -> transactionTracker.addToPeerSendQueue(peer, transaction));
             ethContext
                 .getScheduler()
                 .scheduleSyncWorkerTask(
@@ -175,7 +176,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
           .forEach(
               peer -> {
                 transactions.forEach(
-                    transaction -> transactionTracker.addToPeerSendQueue(peer, transaction));
+                    transaction -> transactionTracker.addToPeerHashSendQueue(peer, transaction));
                 ethContext
                     .getScheduler()
                     .scheduleSyncWorkerTask(
