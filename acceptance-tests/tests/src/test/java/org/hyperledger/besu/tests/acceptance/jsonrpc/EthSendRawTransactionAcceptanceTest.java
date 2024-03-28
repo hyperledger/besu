@@ -25,7 +25,6 @@ import java.math.BigInteger;
 import java.util.function.UnaryOperator;
 
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
@@ -45,14 +44,20 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
     strictNode = besu.createArchiveNode("strictNode", configureNode((true)));
     miningNode = besu.createMinerNode("strictMiningNode", configureNode((true)));
     cluster.start(lenientNode, strictNode, miningNode);
-    // verify all nodes are done syncing so the tx pool will be enabled
-    lenientNode.verify(eth.syncingStatus(false));
-    strictNode.verify(eth.syncingStatus(false));
-    miningNode.verify(eth.syncingStatus(false));
+
+    // verify nodes are fully connected otherwise tx could not be propagated
+    lenientNode.verify(net.awaitPeerCount(2));
+    strictNode.verify(net.awaitPeerCount(2));
+    miningNode.verify(net.awaitPeerCount(2));
+
+    // verify that the miner started producing blocks and all other nodes are syncing from it
+    waitForBlockHeight(miningNode, 1);
+    final var minerChainHead = miningNode.execute(ethTransactions.block());
+    lenientNode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
+    strictNode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
   }
 
   @Test
-  @Disabled("flaky with timeout")
   public void shouldSendSuccessfullyToLenientNodeWithoutChainId() {
     final TransferTransaction tx = createTransactionWithoutChainId();
     final String rawTx = tx.signedTransactionData();
@@ -60,7 +65,6 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
 
     lenientNode.verify(eth.expectSuccessfulEthRawTransaction(rawTx));
 
-    // this line is where the test is flaky
     // Tx should be included on-chain
     miningNode.verify(eth.expectSuccessfulTransactionReceipt(txHash));
   }
