@@ -44,6 +44,8 @@ public interface BlockCreator {
 
   BlockCreationResult createBlock(final long timestamp);
 
+  BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp);
+
   BlockCreationResult createBlock(
       final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp);
 
