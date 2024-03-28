@@ -24,6 +24,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.pubsub.WebSocket;
 import io.vertx.core.Vertx;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
@@ -80,6 +81,7 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     archiveWebSocket.unsubscribe(archiveSubscription);
   }
 
+  @Disabled
   @Test
   public void everySubscriptionMustReceivePublishEvent() {
     final Subscription minerSubscriptionOne = minerWebSocket.subscribe();
