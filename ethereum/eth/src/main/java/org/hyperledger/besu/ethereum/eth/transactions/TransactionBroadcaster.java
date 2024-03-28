@@ -121,7 +121,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
         .addArgument(sendOnlyHashPeers::size)
         .addArgument(sendMixedPeers::size)
         .addArgument(sendOnlyFullTransactionPeers)
-        .addArgument(() -> sendOnlyHashPeers.toString() + sendMixedPeers.toString())
+        .addArgument(() -> sendOnlyHashPeers.toString() + sendMixedPeers)
         .log();
 
     sendToFullTransactionsPeers(
@@ -159,7 +159,6 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
       fullTransactionPeers.forEach(
           peer -> {
             transactions.stream()
-                .filter(tx -> !ANNOUNCE_HASH_ONLY_TX_TYPES.contains(tx.getType()))
                 .forEach(transaction -> transactionTracker.addToPeerSendQueue(peer, transaction));
             ethContext
                 .getScheduler()
