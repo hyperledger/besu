@@ -30,6 +30,9 @@ import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Optional;
 
 import org.junit.jupiter.api.Test;
@@ -189,6 +192,26 @@ public class PrivacyOptionsTest extends CommandTestAbstract {
 
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Checkpoint sync cannot be enabled with privacy.");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void privacyWithBonsaiDefaultMustError() {
+    // bypass overridden parseCommand method which specifies bonsai
+    super.parseCommand("--privacy-enabled");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Bonsai cannot be enabled with privacy.");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void privacyWithBonsaiExplicitMustError() {
+    // bypass overridden parseCommand method which specifies bonsai
+    super.parseCommand("--privacy-enabled", "--data-storage-format", "BONSAI");
+
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Bonsai cannot be enabled with privacy.");
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
 
@@ -482,5 +505,14 @@ public class PrivacyOptionsTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Override
+  protected TestBesuCommand parseCommand(final String... args) {
+    // privacy requires forest to be specified
+    final List<String> argsPlusForest = new ArrayList<>(Arrays.stream(args).toList());
+    argsPlusForest.add("--data-storage-format");
+    argsPlusForest.add("FOREST");
+    return super.parseCommand(argsPlusForest.toArray(String[]::new));
   }
 }
