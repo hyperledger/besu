@@ -20,11 +20,12 @@ import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor;
 import org.hyperledger.besu.ethereum.permissioning.AllowlistPersistor.ALLOWLIST_TYPE;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.nio.file.Path;
 import java.util.Collection;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class AllowListContainsKeyAndValue implements Condition {
   private final ALLOWLIST_TYPE allowlistType;

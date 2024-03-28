@@ -381,7 +381,8 @@ public class EnodeURLImpl implements EnodeURL {
       return ipAddress(ip, EnodeDnsConfiguration.dnsDisabled());
     }
 
-    public Builder ipAddress(final String hostField, final EnodeDnsConfiguration enodeDnsConfiguration) {
+    public Builder ipAddress(
+        final String hostField, final EnodeDnsConfiguration enodeDnsConfiguration) {
       if (enodeDnsConfiguration.dnsEnabled()) {
         try {
           this.ip = InetAddress.getByName(hostField);
