@@ -24,6 +24,7 @@ import java.util.Optional;
 public abstract class AbstractPeerTask<R> extends AbstractEthTask<PeerTaskResult<R>> {
   protected Optional<EthPeer> assignedPeer = Optional.empty();
   protected final EthContext ethContext;
+  protected EthPeer fixedPeer;
 
   protected AbstractPeerTask(final EthContext ethContext, final MetricsSystem metricsSystem) {
     super(metricsSystem);
@@ -32,6 +33,12 @@ public abstract class AbstractPeerTask<R> extends AbstractEthTask<PeerTaskResult
 
   public AbstractPeerTask<R> assignPeer(final EthPeer peer) {
     assignedPeer = Optional.of(peer);
+    return this;
+  }
+
+  public AbstractPeerTask<R> assignFixedPeer(final EthPeer peer) {
+    assignedPeer = Optional.ofNullable(peer);
+    fixedPeer = peer;
     return this;
   }
 

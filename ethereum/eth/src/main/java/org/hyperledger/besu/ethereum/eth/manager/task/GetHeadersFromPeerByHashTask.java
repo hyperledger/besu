@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -119,6 +120,9 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
+          if (fixedPeer != null && !peer.equals(fixedPeer)) {
+            throw new PeerDisconnectedException(fixedPeer);
+          }
           LOG.atTrace()
               .setMessage("Requesting {} headers (hash {}...) from peer {}...")
               .addArgument(count)
