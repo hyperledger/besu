@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import static com.google.common.base.Preconditions.checkArgument;
+import static org.hyperledger.besu.util.log.LogUtil.throttledLog;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -79,6 +80,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private final BlockBroadcaster blockBroadcaster;
   private final List<PeerValidator> peerValidators;
   private final Optional<MergePeerFilter> mergePeerFilter;
+  private final AtomicBoolean logDebug = new AtomicBoolean(true);
+  private final int logDebugRepeatDelay = 120;
+  private final AtomicBoolean logTrace = new AtomicBoolean(true);
+  private final int logTraceRepeatDelay = 15;
 
   public EthProtocolManager(
       final Blockchain blockchain,
@@ -392,7 +397,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
     } catch (final PeerNotConnected peerNotConnected) {
       // Nothing to do.
     }
-    LOG.atTrace().setMessage("{}").addArgument(ethPeers::toString).log();
+    throttledLog(
+        LOG::trace, String.format("Current peers: %s", ethPeers), logTrace, logTraceRepeatDelay);
+    throttledLog(
+        LOG::debug, String.format("Current peers: %s", ethPeers), logDebug, logDebugRepeatDelay);
   }
 
   @Override
@@ -426,7 +434,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .addArgument(() -> connection.getPeer().getLoggableId())
           .addArgument(ethPeers::peerCount)
           .log();
-      LOG.atTrace().setMessage("{}").addArgument(ethPeers::toString).log();
+      throttledLog(
+          LOG::trace, String.format("Current peers: %s", ethPeers), logTrace, logTraceRepeatDelay);
+      throttledLog(
+          LOG::debug, String.format("Current peers: %s", ethPeers), logDebug, logDebugRepeatDelay);
     }
   }
 
