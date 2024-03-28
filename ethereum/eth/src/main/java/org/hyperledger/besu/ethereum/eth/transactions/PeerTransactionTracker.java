@@ -32,10 +32,12 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
   private static final int MAX_TRACKED_SEEN_TRANSACTIONS = 100_000;
   private final Map<EthPeer, Set<Hash>> seenTransactions = new ConcurrentHashMap<>();
   private final Map<EthPeer, Set<Transaction>> transactionsToSend = new ConcurrentHashMap<>();
+  private final Map<EthPeer, Set<Transaction>> transactionHashesToSend = new ConcurrentHashMap<>();
 
   public void reset() {
     seenTransactions.clear();
     transactionsToSend.clear();
+    transactionHashesToSend.clear();
   }
 
   public synchronized void markTransactionsAsSeen(
@@ -55,6 +57,15 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
     }
   }
 
+  public synchronized void addToPeerHashSendQueue(
+      final EthPeer peer, final Transaction transaction) {
+    if (!hasPeerSeenTransaction(peer, transaction)) {
+      transactionHashesToSend
+          .computeIfAbsent(peer, key -> createTransactionsSet())
+          .add(transaction);
+    }
+  }
+
   public Iterable<EthPeer> getEthPeersWithUnsentTransactions() {
     return transactionsToSend.keySet();
   }
@@ -64,6 +75,16 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
     if (transactionsToSend != null) {
       markTransactionsAsSeen(peer, transactionsToSend);
       return transactionsToSend;
+    } else {
+      return emptySet();
+    }
+  }
+
+  public synchronized Set<Transaction> claimTransactionHashesToSendToPeer(final EthPeer peer) {
+    final Set<Transaction> transactionHashesToSend = this.transactionHashesToSend.remove(peer);
+    if (transactionHashesToSend != null) {
+      markTransactionHashesAsSeen(peer, toHashList(transactionHashesToSend));
+      return transactionHashesToSend;
     } else {
       return emptySet();
     }
@@ -100,5 +121,6 @@ public class PeerTransactionTracker implements EthPeer.DisconnectCallback {
   public void onDisconnect(final EthPeer peer) {
     seenTransactions.remove(peer);
     transactionsToSend.remove(peer);
+    transactionHashesToSend.remove(peer);
   }
 }
