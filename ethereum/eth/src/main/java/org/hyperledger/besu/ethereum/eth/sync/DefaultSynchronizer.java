@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.data.SyncStatus;
@@ -62,7 +61,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
-  private final Optional<Pruner> maybePruner;
   private final SyncState syncState;
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final Optional<BlockPropagationManager> blockPropagationManager;
@@ -79,7 +77,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final ProtocolContext protocolContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final BlockBroadcaster blockBroadcaster,
-      final Optional<Pruner> maybePruner,
       final EthContext ethContext,
       final SyncState syncState,
       final Path dataDirectory,
@@ -88,7 +85,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition terminationCondition,
       final PivotBlockSelector pivotBlockSelector) {
-    this.maybePruner = maybePruner;
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.protocolContext = protocolContext;
@@ -228,7 +224,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       LOG.info("Stopping synchronizer");
       fastSyncDownloader.ifPresent(FastSyncDownloader::stop);
       fullSyncDownloader.ifPresent(FullSyncDownloader::stop);
-      maybePruner.ifPresent(Pruner::stop);
       blockPropagationManager.ifPresent(
           manager -> {
             if (manager.isRunning()) {
@@ -239,11 +234,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   }
 
   @Override
-  public void awaitStop() throws InterruptedException {
-    if (maybePruner.isPresent()) {
-      maybePruner.get().awaitStop();
-    }
-  }
+  public void awaitStop() {}
 
   private CompletableFuture<Void> handleSyncResult(final FastSyncState result) {
     if (!running.get()) {
@@ -270,7 +261,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   }
 
   private CompletableFuture<Void> startFullSync() {
-    maybePruner.ifPresent(Pruner::start);
     return fullSyncDownloader
         .map(FullSyncDownloader::start)
         .orElse(CompletableFuture.completedFuture(null))
@@ -376,7 +366,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     LOG.info("Stopping block propagation.");
     blockPropagationManager.ifPresent(BlockPropagationManager::stop);
     LOG.info("Stopping the pruner.");
-    maybePruner.ifPresent(Pruner::stop);
     running.set(false);
     return null;
   }
