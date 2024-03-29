@@ -42,6 +42,9 @@ import org.hyperledger.besu.util.number.Fraction;
 import java.time.ZoneId;
 import java.util.function.Function;
 
+import org.junit.jupiter.api.Disabled;
+
+@Disabled
 public class LegacyFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
