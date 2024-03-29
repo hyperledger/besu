@@ -41,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -133,7 +134,7 @@ public class RequestDataStep {
             (response, error) -> {
               if (response != null) {
                 downloadState.removeOutstandingTask(getStorageRangeTask);
-                final ArrayDeque<TreeMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
+                final ArrayDeque<NavigableMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
                 // Check if we have an empty range
 
                 /*
