@@ -213,4 +213,125 @@ public class BftBlockCreatorTest {
             new BftBlockHashing(bftExtraDataEncoder)
                 .calculateDataHashForCommittedSeal(header, extraData));
   }
+
+  @Test
+  public void testBlockCreationResultsInEmptyWithdrawalsListShanghaiOnwards() {
+    // Construct a parent block.
+    final BlockHeaderTestFixture blockHeaderBuilder = new BlockHeaderTestFixture();
+    blockHeaderBuilder.gasLimit(5000); // required to pass validation rule checks.
+    final BlockHeader parentHeader = blockHeaderBuilder.buildHeader();
+    final Optional<BlockHeader> optionalHeader = Optional.of(parentHeader);
+
+    // Construct a blockchain and world state
+    final MutableBlockchain blockchain = mock(MutableBlockchain.class);
+    when(blockchain.getChainHeadHash()).thenReturn(parentHeader.getHash());
+    when(blockchain.getBlockHeader(any())).thenReturn(optionalHeader);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.empty());
+    when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
+
+    final List<Address> initialValidatorList = Lists.newArrayList();
+    for (int i = 0; i < 4; i++) {
+      initialValidatorList.add(AddressHelpers.ofValue(i));
+    }
+
+    final IbftExtraDataCodec bftExtraDataEncoder = new IbftExtraDataCodec();
+
+    final BaseBftProtocolScheduleBuilder bftProtocolSchedule =
+        new BaseBftProtocolScheduleBuilder() {
+          @Override
+          public BlockHeaderValidator.Builder createBlockHeaderRuleset(
+              final BftConfigOptions config, final FeeMarket feeMarket) {
+            return IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(
+                5, Optional.empty());
+          }
+        };
+    final GenesisConfigOptions configOptions =
+        GenesisConfigFile.fromConfig("{\"config\": {\"shanghaiTime\":0}}").getConfigOptions();
+    final ForksSchedule<BftConfigOptions> forksSchedule =
+        new ForksSchedule<>(List.of(new ForkSpec<>(0, configOptions.getBftConfigOptions())));
+    final ProtocolSchedule protocolSchedule =
+        bftProtocolSchedule.createProtocolSchedule(
+            configOptions,
+            forksSchedule,
+            PrivacyParameters.DEFAULT,
+            false,
+            bftExtraDataEncoder,
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager());
+    final ProtocolContext protContext =
+        new ProtocolContext(
+            blockchain,
+            createInMemoryWorldStateArchive(),
+            setupContextWithBftExtraDataEncoder(initialValidatorList, bftExtraDataEncoder),
+            new BadBlockManager());
+
+    final TransactionPoolConfiguration poolConf =
+        ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(1).build();
+
+    final GasPricePendingTransactionsSorter pendingTransactions =
+        new GasPricePendingTransactionsSorter(
+            poolConf,
+            TestClock.system(ZoneId.systemDefault()),
+            metricsSystem,
+            blockchain::getChainHeadHeader);
+
+    final EthContext ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
+    when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
+
+    final TransactionPool transactionPool =
+        new TransactionPool(
+            () -> pendingTransactions,
+            protocolSchedule,
+            protContext,
+            mock(TransactionBroadcaster.class),
+            ethContext,
+            new TransactionPoolMetrics(metricsSystem),
+            poolConf);
+
+    transactionPool.setEnabled();
+
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .extraData(
+                        bftExtraDataEncoder.encode(
+                            new BftExtraData(
+                                Bytes.wrap(new byte[32]),
+                                Collections.emptyList(),
+                                Optional.empty(),
+                                0,
+                                initialValidatorList)))
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(AddressHelpers.ofValue(1))
+                    .build())
+            .build();
+
+    final BftBlockCreator blockCreator =
+        new BftBlockCreator(
+            miningParameters,
+            forksSchedule,
+            initialValidatorList.get(0),
+            parent ->
+                bftExtraDataEncoder.encode(
+                    new BftExtraData(
+                        Bytes.wrap(new byte[32]),
+                        Collections.emptyList(),
+                        Optional.empty(),
+                        0,
+                        initialValidatorList)),
+            transactionPool,
+            protContext,
+            protocolSchedule,
+            parentHeader,
+            bftExtraDataEncoder,
+            new DeterministicEthScheduler());
+
+    final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1).getBlock();
+
+    // Test that a BFT block contains an empty withdrawals list (not an optional empty)
+    assertThat(block.getBody().getWithdrawals().isPresent()).isTrue();
+  }
 }

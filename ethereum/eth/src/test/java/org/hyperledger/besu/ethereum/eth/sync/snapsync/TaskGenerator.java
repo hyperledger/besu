@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
@@ -51,6 +51,7 @@ public class TaskGenerator {
             new InMemoryKeyValueStorageProvider(),
             new NoOpMetricsSystem(),
             DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
