@@ -27,7 +27,9 @@
 - Extend error handling of plugin RPC methods [#6759](https://github.com/hyperledger/besu/pull/6759)
 - Added engine_newPayloadV4 and engine_getPayloadV4 methods [#6783](https://github.com/hyperledger/besu/pull/6783)
 - Reduce storage size of receipts [#6602](https://github.com/hyperledger/besu/pull/6602)
+- Dedicated log marker for invalid txs removed from the txpool [#6826](https://github.com/hyperledger/besu/pull/6826)
 - Prevent startup with BONSAI and privacy enabled [#6809](https://github.com/hyperledger/besu/pull/6809)
+
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
