@@ -144,9 +144,8 @@ public class RequestDataStep {
                  */
                 try {
                   final boolean isEmptyRange =
-                      (response.slots().isEmpty() || response.slots().get(0).isEmpty()) && !response
-                          .proofs()
-                          .isEmpty();
+                      (response.slots().isEmpty() || response.slots().get(0).isEmpty())
+                          && !response.proofs().isEmpty();
                   if (isEmptyRange) { // empty range detected
                     slots.add(new TreeMap<>());
                   } else {
@@ -156,10 +155,13 @@ public class RequestDataStep {
                     final StorageRangeDataRequest request =
                         (StorageRangeDataRequest) requestTasks.get(i).getData();
                     request.setRootHash(blockHeader.getStateRoot());
-                    request.addResponse(downloadState, worldStateProofProvider, slots.get(i),
+                    request.addResponse(
+                        downloadState,
+                        worldStateProofProvider,
+                        slots.get(i),
                         i < slots.size() - 1 ? new ArrayDeque<>() : response.proofs());
                   }
-                } catch(final Exception e) {
+                } catch (final Exception e) {
                   LOG.error("Error while processing storage range response", e);
                 }
               }
