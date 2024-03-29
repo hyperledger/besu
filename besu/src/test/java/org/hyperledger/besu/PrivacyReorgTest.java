@@ -20,30 +20,53 @@ import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMP
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+import org.hyperledger.besu.components.EnclaveModule;
+import org.hyperledger.besu.components.PrivacyTestModule;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.Restriction;
 
 import java.math.BigInteger;
+import java.net.URI;
+import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -51,8 +74,12 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.hyperledger.besu.testutil.TestClock;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 @SuppressWarnings("rawtypes")
 public class PrivacyReorgTest {
@@ -90,7 +117,7 @@ public class PrivacyReorgTest {
 
 
   private Transaction privacyMarkerTransaction;
-  private final PrivacyReorgTestComponent context = DaggerPrivacyReorgTestComponent.create();
+  private final PrivacyReorgTestComponent context = DaggerPrivacyReorgTest_PrivacyReorgTestComponent.create();
 
   private final BesuController besuController = context.getBesuController();
   private final PrivateStateRootResolver privateStateRootResolver = context.getPrivacyParameters().getPrivateStateRootResolver();
@@ -432,5 +459,87 @@ public class PrivacyReorgTest {
         .setParentHash(parentBlock.getHash())
         .hasOmmers(false)
         .setLogsBloom(LogsBloomFilter.empty());
+  }
+
+  @Singleton
+  @Component(
+          modules = {PrivacyReorgTest.PrivacyReorgParametersModule.class,
+                  PrivacyReorgTest.PrivacyReorgTestBesuControllerModule.class,
+                  PrivacyReorgTest.PrivacyReorgTestGenesisConfigModule.class,
+                  EnclaveModule.class,
+                  PrivacyTestModule.class})
+  interface PrivacyReorgTestComponent {
+
+    BesuController getBesuController();
+
+    PrivacyParameters getPrivacyParameters();
+
+  }
+
+  @Module
+  static class PrivacyReorgParametersModule {
+
+    //TODO: copypasta, get this from the enclave factory
+    private static final Bytes ENCLAVE_PUBLIC_KEY =
+            Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+
+    @Provides
+    PrivacyParameters providePrivacyReorgParameters(
+            final PrivacyStorageProvider storageProvider, final EnclaveFactory enclaveFactory) {
+
+      PrivacyParameters retval = new PrivacyParameters.Builder()
+              .setEnabled(true)
+              .setStorageProvider(storageProvider)
+
+              .setEnclaveUrl(URI.create("http//1.1.1.1:1234"))
+              .setEnclaveFactory(enclaveFactory)
+              .build();
+      retval.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
+      return retval;
+    }
+  }
+
+  @Module
+  static class PrivacyReorgTestBesuControllerModule {
+
+
+    @Provides
+    @Singleton
+    @SuppressWarnings("CloseableProvides")
+    BesuController provideBesuController(final PrivacyParameters privacyParameters,
+                                         final GenesisConfigFile genesisConfigFile,
+                                         final @Named("dataDir") Path dataDir) {
+
+
+      //dataStorageConfiguration default
+      //named privacyReorgParams
+      BesuController retval = new BesuController.Builder()
+              .fromGenesisConfig(genesisConfigFile,
+                      SyncMode.FULL)
+              .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
+              .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+              .storageProvider(new InMemoryKeyValueStorageProvider())
+              .networkId(BigInteger.ONE)
+              .miningParameters(MiningParameters.newDefault())
+              .nodeKey(NodeKeyUtils.generate())
+              .metricsSystem(new NoOpMetricsSystem())
+              .dataDirectory(dataDir)
+              .clock(TestClock.fixed())
+              .privacyParameters(privacyParameters)
+              .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
+              .gasLimitCalculator(GasLimitCalculator.constant())
+              .evmConfiguration(EvmConfiguration.DEFAULT)
+              .networkConfiguration(NetworkingConfiguration.create())
+              .build();
+      return retval;
+    }
+  }
+
+  @Module
+  static class PrivacyReorgTestGenesisConfigModule {
+    @Provides
+    GenesisConfigFile providePrivacyReorgGenesisConfigFile() {
+      return GenesisConfigFile.genesisFileFromResources("/privacy_reorg_genesis.json");
+    }
   }
 }

@@ -13,37 +13,38 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu;
+package org.hyperledger.besu.components;
 
 import dagger.Module;
 import dagger.Provides;
 import io.vertx.core.Vertx;
-import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 
+/**
+ * Provides a general use PrivacyParameters instance for testing.
+ */
 @Module
-public class PrivacyReorgParametersModule {
-
-    //TODO: copypasta, get this from the enclave factory
-    private static final Bytes ENCLAVE_PUBLIC_KEY =
-            Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+public class PrivacyParametersModule {
 
     @Provides
-    PrivacyParameters providePrivacyReorgParameters(
-            final PrivacyStorageProvider storageProvider, final EnclaveFactory enclaveFactory) {
-
-        PrivacyParameters retval = new PrivacyParameters.Builder()
-                .setEnabled(true)
-                .setStorageProvider(storageProvider)
-
-                .setEnclaveUrl(URI.create("http//1.1.1.1:1234"))
-                .setEnclaveFactory(enclaveFactory)
-                .build();
-        retval.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
-        return retval;
+    PrivacyParameters providePrivacyParameters(
+            final PrivacyStorageProvider storageProvider, final Vertx vertx) {
+        try {
+            return new PrivacyParameters.Builder()
+                    .setEnabled(true)
+                    .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
+                    .setStorageProvider(storageProvider)
+                    .setEnclaveFactory(new EnclaveFactory(vertx))
+                    .setFlexiblePrivacyGroupsEnabled(false)
+                    .build();
+        } catch (URISyntaxException e) {
+            throw new RuntimeException(e);
+        }
     }
+
 }

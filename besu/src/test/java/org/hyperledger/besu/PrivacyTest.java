@@ -18,24 +18,53 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+
+import org.hyperledger.besu.components.PrivacyParametersModule;
+import org.hyperledger.besu.components.PrivacyTestModule;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.DaggerFlexGroupPrivacyTestComponent;
 import org.hyperledger.besu.components.DaggerPrivacyTestComponent;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.enclave.EnclaveFactory;
+import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
+import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 
 import java.io.IOException;
+import java.math.BigInteger;
+import java.net.URI;
 import java.net.URISyntaxException;
+import java.nio.file.Path;
 
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.TestClock;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-public class PrivacyTest {
+import javax.inject.Named;
+import javax.inject.Singleton;
+
+class PrivacyTest {
 
   private final Vertx vertx = Vertx.vertx();
 
@@ -45,8 +74,8 @@ public class PrivacyTest {
   }
 
   @Test
-  public void defaultPrivacy() throws IOException, URISyntaxException {
-    final BesuController besuController = DaggerPrivacyTestComponent.create().getBesuController();
+  void defaultPrivacy() throws IOException, URISyntaxException {
+    final BesuController besuController = DaggerPrivacyTest_PrivacyTestComponent.builder().build().getBesuController();
 
     final PrecompiledContract precompiledContract = getPrecompile(besuController, DEFAULT_PRIVACY);
 
@@ -54,9 +83,9 @@ public class PrivacyTest {
   }
 
   @Test
-  public void flexibleEnabledPrivacy() throws IOException, URISyntaxException {
+  void flexibleEnabledPrivacy() throws IOException, URISyntaxException {
     final BesuController besuController =
-        DaggerFlexGroupPrivacyTestComponent.create().getBesuController();
+            DaggerPrivacyTest_FlexGroupPrivacyTestComponent.create().getBesuController();
 
     final PrecompiledContract flexiblePrecompiledContract =
         getPrecompile(besuController, FLEXIBLE_PRIVACY);
@@ -136,5 +165,84 @@ public class PrivacyTest {
 
   private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
+  }
+
+  @Singleton
+  @Component(
+          modules = {
+                  PrivacyParametersModule.class,
+                  PrivacyTest.PrivacyTestBesuControllerModule.class,
+                  PrivacyTestModule.class})
+
+  interface PrivacyTestComponent {
+
+    BesuController getBesuController();
+  }
+
+  @Singleton
+  @Component(
+          modules = {
+                  FlexGroupPrivacyParametersModule.class,
+                  PrivacyTest.PrivacyTestBesuControllerModule.class,
+                  PrivacyTestModule.class
+          })
+  static interface FlexGroupPrivacyTestComponent {
+
+    BesuController getBesuController();
+  }
+
+  @Module
+  static class FlexGroupPrivacyParametersModule {
+
+    @Provides
+    PrivacyParameters providePrivacyParameters(
+            final PrivacyStorageProvider storageProvider, final Vertx vertx) {
+      try {
+        return new PrivacyParameters.Builder()
+                .setEnabled(true)
+                .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
+                .setStorageProvider(storageProvider)
+                .setEnclaveFactory(new EnclaveFactory(vertx))
+                .setFlexiblePrivacyGroupsEnabled(true)
+                .build();
+      } catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
+  @Module
+  static class PrivacyTestBesuControllerModule {
+
+    @Provides
+    @Singleton
+    @SuppressWarnings("CloseableProvides")
+    BesuController provideBesuController(
+            final PrivacyParameters privacyParameters,
+            final MiningParameters miningParameters,
+            final DataStorageConfiguration dataStorageConfiguration,
+            @Named("dataDir") final Path dataDir) {
+
+      return new BesuController.Builder()
+              .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FULL)
+              .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
+              .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+              .storageProvider(new InMemoryKeyValueStorageProvider())
+              .networkId(BigInteger.ONE)
+              .miningParameters(miningParameters)
+              .dataStorageConfiguration(dataStorageConfiguration)
+              .nodeKey(NodeKeyUtils.generate())
+              .metricsSystem(new NoOpMetricsSystem())
+              .dataDirectory(dataDir)
+              .clock(TestClock.fixed())
+              .privacyParameters(privacyParameters)
+              .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
+              .gasLimitCalculator(GasLimitCalculator.constant())
+              .evmConfiguration(EvmConfiguration.DEFAULT)
+              .networkConfiguration(NetworkingConfiguration.create())
+              .build();
+    }
+
+
   }
 }
