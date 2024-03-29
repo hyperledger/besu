@@ -44,7 +44,8 @@ import java.util.function.Function;
 
 import org.junit.jupiter.api.Disabled;
 
-@Disabled
+@Disabled(
+    "disabled since it's flaky with a timeout see https://github.com/hyperledger/besu/issues/6850")
 public class LegacyFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
