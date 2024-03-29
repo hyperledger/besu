@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
-import org.hyperledger.besu.plugin.data.BlockHeader;
-import org.hyperledger.besu.plugin.services.BesuEvents.BadBlockListener;
 
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -76,34 +74,22 @@ public class BadBlockManagerTest {
   @Test
   public void subscribeToBadBlocks_listenerReceivesBadBlockEvent() {
 
-    final AtomicReference<org.hyperledger.besu.plugin.data.Block> badBlockResult =
+    final AtomicReference<org.hyperledger.besu.plugin.data.BlockHeader> badBlockResult =
         new AtomicReference<>();
     final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause> badBlockCauseResult =
         new AtomicReference<>();
 
     badBlockManager.subscribeToBadBlocks(
-        (new BadBlockListener() {
-          @Override
-          public void onBadBlockAdded(
-              final org.hyperledger.besu.plugin.data.Block badBlock,
-              final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-            badBlockResult.set(badBlock);
-            badBlockCauseResult.set(cause);
-          }
-
-          @Override
-          public void onBadBlockHeaderAdded(
-              final BlockHeader badBlockHeader,
-              final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-            // Noop
-          }
-        }));
+        (badBlock, cause) -> {
+          badBlockResult.set(badBlock);
+          badBlockCauseResult.set(cause);
+        });
 
     final BadBlockCause cause = BadBlockCause.fromValidationFailure("fail");
     badBlockManager.addBadBlock(block, cause);
 
     // Check event was emitted
-    assertThat(badBlockResult.get()).isEqualTo(block);
+    assertThat(badBlockResult.get()).isEqualTo(block.getHeader());
     assertThat(badBlockCauseResult.get()).isEqualTo(cause);
   }
 
@@ -116,22 +102,10 @@ public class BadBlockManagerTest {
         new AtomicReference<>();
 
     badBlockManager.subscribeToBadBlocks(
-        (new BadBlockListener() {
-          @Override
-          public void onBadBlockAdded(
-              final org.hyperledger.besu.plugin.data.Block badBlock,
-              final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-            // Noop
-          }
-
-          @Override
-          public void onBadBlockHeaderAdded(
-              final BlockHeader badBlockHeader,
-              final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-            badBlockResult.set(badBlockHeader);
-            badBlockCauseResult.set(cause);
-          }
-        }));
+        (badBlock, cause) -> {
+          badBlockResult.set(badBlock);
+          badBlockCauseResult.set(cause);
+        });
 
     final BadBlockCause cause = BadBlockCause.fromValidationFailure("fail");
     badBlockManager.addBadHeader(block.getHeader(), cause);
@@ -146,22 +120,7 @@ public class BadBlockManagerTest {
 
     final AtomicInteger eventCount = new AtomicInteger(0);
     final long subscribeId =
-        badBlockManager.subscribeToBadBlocks(
-            (new BadBlockListener() {
-              @Override
-              public void onBadBlockAdded(
-                  final org.hyperledger.besu.plugin.data.Block badBlock,
-                  final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-                eventCount.incrementAndGet();
-              }
-
-              @Override
-              public void onBadBlockHeaderAdded(
-                  final BlockHeader badBlockHeader,
-                  final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-                eventCount.incrementAndGet();
-              }
-            }));
+        badBlockManager.subscribeToBadBlocks((block, cause) -> eventCount.incrementAndGet());
     badBlockManager.unsubscribeFromBadBlocks(subscribeId);
 
     final BadBlockCause cause = BadBlockCause.fromValidationFailure("fail");

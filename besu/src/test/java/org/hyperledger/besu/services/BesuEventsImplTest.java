@@ -62,11 +62,9 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.AddedBlockContext;
-import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
-import org.hyperledger.besu.plugin.services.BesuEvents.BadBlockListener;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
@@ -512,32 +510,17 @@ public class BesuEventsImplTest {
   }
 
   @Test
-  public void badBlockEventFiresAfterSubscribe() {
+  public void badBlockEventFiresAfterSubscribe_badBlockAdded() {
     // Track bad block events
-    final AtomicReference<org.hyperledger.besu.plugin.data.Block> badBlockResult =
+    final AtomicReference<org.hyperledger.besu.plugin.data.BlockHeader> badBlockResult =
         new AtomicReference<>();
     final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause> badBlockCauseResult =
         new AtomicReference<>();
-    final AtomicReference<BlockHeader> badBlockHeaderResult = new AtomicReference<>();
-    final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause>
-        badBlockHeaderCauseResult = new AtomicReference<>();
-    serviceImpl.addBadBlockListener(
-        new BadBlockListener() {
-          @Override
-          public void onBadBlockAdded(
-              final org.hyperledger.besu.plugin.data.Block badBlock,
-              final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-            badBlockResult.set(badBlock);
-            badBlockCauseResult.set(cause);
-          }
 
-          @Override
-          public void onBadBlockHeaderAdded(
-              final BlockHeader badBlockHeader,
-              final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-            badBlockHeaderResult.set(badBlockHeader);
-            badBlockHeaderCauseResult.set(cause);
-          }
+    serviceImpl.addBadBlockListener(
+        (badBlock, cause) -> {
+          badBlockResult.set(badBlock);
+          badBlockCauseResult.set(cause);
         });
 
     // Add bad block
@@ -548,46 +531,45 @@ public class BesuEventsImplTest {
     // Check we caught the bad block
     assertThat(badBlockResult.get()).isEqualTo(block);
     assertThat(badBlockCauseResult.get()).isEqualTo(blockCause);
-    assertThat(badBlockHeaderResult.get()).isNull();
+  }
+
+  @Test
+  public void badBlockEventFiresAfterSubscribe_badBlockHeaderAdded() {
+    // Track bad block events
+    final AtomicReference<org.hyperledger.besu.plugin.data.BlockHeader> badBlockResult =
+        new AtomicReference<>();
+    final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause> badBlockCauseResult =
+        new AtomicReference<>();
+
+    serviceImpl.addBadBlockListener(
+        (badBlock, cause) -> {
+          badBlockResult.set(badBlock);
+          badBlockCauseResult.set(cause);
+        });
 
     // Add bad block header
-    final BadBlockCause headerCause = BadBlockCause.fromValidationFailure("oops");
-    final Block headerBlock = gen.block(new BlockDataGenerator.BlockOptions());
-    badBlockManager.addBadHeader(headerBlock.getHeader(), headerCause);
+    final BadBlockCause cause = BadBlockCause.fromValidationFailure("oops");
+    final Block badBlock = gen.block(new BlockDataGenerator.BlockOptions());
+    badBlockManager.addBadHeader(badBlock.getHeader(), cause);
 
-    // Check we caught the bad block header
-    assertThat(badBlockHeaderResult.get()).isEqualTo(headerBlock.getHeader());
-    assertThat(badBlockHeaderCauseResult.get()).isEqualTo(headerCause);
+    // Check we caught the bad block
+    assertThat(badBlockResult.get()).isEqualTo(badBlock.getHeader());
+    assertThat(badBlockCauseResult.get()).isEqualTo(cause);
   }
 
   @Test
   public void badBlockEventDoesNotFireAfterUnsubscribe() {
     // Track bad block events
-    final AtomicReference<org.hyperledger.besu.plugin.data.Block> badBlockResult =
+    final AtomicReference<org.hyperledger.besu.plugin.data.BlockHeader> badBlockResult =
         new AtomicReference<>();
     final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause> badBlockCauseResult =
         new AtomicReference<>();
-    final AtomicReference<BlockHeader> badBlockHeaderResult = new AtomicReference<>();
-    final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause>
-        badBlockHeaderCauseResult = new AtomicReference<>();
+
     final long listenerId =
         serviceImpl.addBadBlockListener(
-            new BadBlockListener() {
-              @Override
-              public void onBadBlockAdded(
-                  final org.hyperledger.besu.plugin.data.Block badBlock,
-                  final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-                badBlockResult.set(badBlock);
-                badBlockCauseResult.set(cause);
-              }
-
-              @Override
-              public void onBadBlockHeaderAdded(
-                  final BlockHeader badBlockHeader,
-                  final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
-                badBlockHeaderResult.set(badBlockHeader);
-                badBlockHeaderCauseResult.set(cause);
-              }
+            (badBlock, cause) -> {
+              badBlockResult.set(badBlock);
+              badBlockCauseResult.set(cause);
             });
     // Unsubscribe
     serviceImpl.removeBadBlockListener(listenerId);
@@ -604,8 +586,6 @@ public class BesuEventsImplTest {
     // Check we did not process any events
     assertThat(badBlockResult.get()).isNull();
     assertThat(badBlockCauseResult.get()).isNull();
-    assertThat(badBlockHeaderResult.get()).isNull();
-    assertThat(badBlockHeaderCauseResult.get()).isNull();
   }
 
   private Block generateBlock() {

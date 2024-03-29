@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.data.AddedBlockContext;
 import org.hyperledger.besu.plugin.data.BadBlockCause;
-import org.hyperledger.besu.plugin.data.Block;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
@@ -283,19 +282,11 @@ public interface BesuEvents extends BesuService {
   interface BadBlockListener {
 
     /**
-     * Fires when a bad block is encountered
-     *
-     * @param badBlock The bad block
-     * @param cause The reason the block was marked bad
-     */
-    void onBadBlockAdded(Block badBlock, BadBlockCause cause);
-
-    /**
-     * Fires when a bad block's header is encountered
+     * Fires when a bad block is encountered on the network
      *
      * @param badBlockHeader The bad block's header
-     * @param cause The reason why the header was marked bad
+     * @param cause The reason why the block was marked bad
      */
-    void onBadBlockHeaderAdded(BlockHeader badBlockHeader, BadBlockCause cause);
+    void onBadBlockAdded(BlockHeader badBlockHeader, BadBlockCause cause);
   }
 }

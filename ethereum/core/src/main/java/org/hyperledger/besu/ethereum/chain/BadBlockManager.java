@@ -50,7 +50,7 @@ public class BadBlockManager {
   public void addBadBlock(final Block badBlock, final BadBlockCause cause) {
     LOG.debug("Register bad block {} with cause: {}", badBlock.toLogString(), cause);
     this.badBlocks.put(badBlock.getHash(), badBlock);
-    badBlockSubscribers.forEach(s -> s.onBadBlockAdded(badBlock, cause));
+    badBlockSubscribers.forEach(s -> s.onBadBlockAdded(badBlock.getHeader(), cause));
   }
 
   public void reset() {
@@ -86,7 +86,7 @@ public class BadBlockManager {
   public void addBadHeader(final BlockHeader header, final BadBlockCause cause) {
     LOG.debug("Register bad block header {} with cause: {}", header.toLogString(), cause);
     badHeaders.put(header.getHash(), header);
-    badBlockSubscribers.forEach(s -> s.onBadBlockHeaderAdded(header, cause));
+    badBlockSubscribers.forEach(s -> s.onBadBlockAdded(header, cause));
   }
 
   public boolean isBadBlock(final Hash blockHash) {
