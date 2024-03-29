@@ -223,7 +223,7 @@ public class ConfigurationOverviewBuilder {
   /**
    * Sets snap server enabled/disabled
    *
-   * @param snapServerEnabled bool to indicate if is snap server is enabled
+   * @param snapServerEnabled bool to indicate if snap server is enabled
    * @return the builder
    */
   public ConfigurationOverviewBuilder setSnapServerEnabled(final boolean snapServerEnabled) {

@@ -326,7 +326,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   /**
    * Flag to know whether the Snap sync server feature is enabled or disabled.
    *
-   * @return true is snap sync server is enabled
+   * @return true if snap sync server is enabled
    */
   public boolean isSnapsyncServerEnabled() {
     return snapsyncServerEnabled;

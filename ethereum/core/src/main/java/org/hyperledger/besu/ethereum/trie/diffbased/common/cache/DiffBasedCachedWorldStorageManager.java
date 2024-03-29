@@ -224,7 +224,7 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
 
   /**
    * Returns the worldstate for the supplied root hash. If the worldstate is not already in cache,
-   * this method will attempt to fetch it and add it to the cahce. synchronized to prevent
+   * this method will attempt to fetch it and add it to the cache. synchronized to prevent
    * concurrent loads/adds to the cache of the same root hash.
    *
    * @param rootHash rootHash to supply worldstate storage for
