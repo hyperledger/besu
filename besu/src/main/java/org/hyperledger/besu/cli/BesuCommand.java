@@ -140,7 +140,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
@@ -797,12 +796,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "How deep a chain reorganization must be in order for it to be logged (default: ${DEFAULT-VALUE})")
   private final Long reorgLoggingThreshold = 6L;
 
-  @Option(
-      names = {"--pruning-enabled"},
-      description =
-          "Enable disk-space saving optimization that removes old state that is unlikely to be required (default: ${DEFAULT-VALUE})")
-  private final Boolean pruningEnabled = false;
-
   // Permission Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Permissions Options|@%n")
   PermissionsOptions permissionsOptions = new PermissionsOptions();
@@ -851,23 +844,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       split = ",")
   private final Map<String, String> genesisConfigOverrides =
       new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
-
-  @Option(
-      names = {"--pruning-blocks-retained"},
-      paramLabel = "<INTEGER>",
-      description =
-          "Minimum number of recent blocks for which to keep entire world state (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer pruningBlocksRetained = PrunerConfiguration.DEFAULT_PRUNING_BLOCKS_RETAINED;
-
-  @Option(
-      names = {"--pruning-block-confirmations"},
-      paramLabel = "<INTEGER>",
-      description =
-          "Minimum number of confirmations on a block before marking begins (default: ${DEFAULT-VALUE})",
-      arity = "1")
-  private final Integer pruningBlockConfirmations =
-      PrunerConfiguration.DEFAULT_PRUNING_BLOCK_CONFIRMATIONS;
 
   @CommandLine.Option(
       names = {"--pid-path"},
@@ -1683,18 +1659,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           "--node-private-key-file",
           "--security-module=" + DEFAULT_SECURITY_MODULE);
     }
-
-    if (isPruningEnabled()) {
-      if (dataStorageOptions
-          .toDomainObject()
-          .getDataStorageFormat()
-          .equals(DataStorageFormat.BONSAI)) {
-        logger.warn("Forest pruning is ignored with Bonsai data storage format.");
-      } else {
-        logger.warn(
-            "Forest pruning is deprecated and will be removed soon. To save disk space consider switching to Bonsai data storage format.");
-      }
-    }
   }
 
   private void configure() throws Exception {
@@ -1840,9 +1804,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
         .storageProvider(storageProvider)
-        .isPruningEnabled(isPruningEnabled())
-        .pruningConfiguration(
-            new PrunerConfiguration(pruningBlockConfirmations, pruningBlocksRetained))
         .genesisConfigOverrides(genesisConfigOverrides)
         .gasLimitCalculator(
             getMiningParameters().getTargetGasLimit().isPresent()
@@ -1981,9 +1942,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       if (getDataStorageConfiguration().getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
         throw new ParameterException(commandLine, String.format("%s %s", "Bonsai", errorSuffix));
-      }
-      if (isPruningEnabled()) {
-        throw new ParameterException(commandLine, String.format("%s %s", "Pruning", errorSuffix));
       }
 
       if (Boolean.TRUE.equals(privacyOptionGroup.isPrivacyMultiTenancyEnabled)
@@ -2204,10 +2162,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     return OptionalInt.empty();
-  }
-
-  private boolean isPruningEnabled() {
-    return pruningEnabled;
   }
 
   // Blockchain synchronization from peers.
