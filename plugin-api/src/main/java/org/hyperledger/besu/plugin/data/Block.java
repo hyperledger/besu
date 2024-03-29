@@ -11,12 +11,24 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+ *
  */
-package org.hyperledger.besu.ethereum.chain;
+package org.hyperledger.besu.plugin.data;
 
-public enum BadBlockReason {
-  // Standard spec-related validation failures
-  SPEC_VALIDATION_FAILURE,
-  // This block is bad because it descends from a bad block
-  DESCENDS_FROM_BAD_BLOCK,
+/** A Block on the network */
+public interface Block {
+
+  /**
+   * The block's header
+   *
+   * @return The block header
+   */
+  BlockHeader getHeader();
+
+  /**
+   * The block's body
+   *
+   * @return The block body
+   */
+  BlockBody getBody();
 }

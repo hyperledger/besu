@@ -27,6 +27,8 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockCause;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -60,9 +62,11 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.AddedBlockContext;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
+import org.hyperledger.besu.plugin.services.BesuEvents.BadBlockListener;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
@@ -113,6 +117,7 @@ public class BesuEventsImplTest {
   private BesuEventsImpl serviceImpl;
   private MutableBlockchain blockchain;
   private final BlockDataGenerator gen = new BlockDataGenerator();
+  private final BadBlockManager badBlockManager = new BadBlockManager();
 
   @BeforeEach
   public void setUp() {
@@ -171,7 +176,9 @@ public class BesuEventsImplTest {
             new BlobCache(),
             MiningParameters.newDefault());
 
-    serviceImpl = new BesuEventsImpl(blockchain, blockBroadcaster, transactionPool, syncState);
+    serviceImpl =
+        new BesuEventsImpl(
+            blockchain, blockBroadcaster, transactionPool, syncState, badBlockManager);
   }
 
   @Test
@@ -502,6 +509,103 @@ public class BesuEventsImplTest {
     blockchain.appendBlock(block2, gen.receipts(block2));
 
     assertThat(result).isEmpty();
+  }
+
+  @Test
+  public void badBlockEventFiresAfterSubscribe() {
+    // Track bad block events
+    final AtomicReference<org.hyperledger.besu.plugin.data.Block> badBlockResult =
+        new AtomicReference<>();
+    final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause> badBlockCauseResult =
+        new AtomicReference<>();
+    final AtomicReference<BlockHeader> badBlockHeaderResult = new AtomicReference<>();
+    final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause>
+        badBlockHeaderCauseResult = new AtomicReference<>();
+    serviceImpl.addBadBlockListener(
+        new BadBlockListener() {
+          @Override
+          public void onBadBlockAdded(
+              final org.hyperledger.besu.plugin.data.Block badBlock,
+              final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
+            badBlockResult.set(badBlock);
+            badBlockCauseResult.set(cause);
+          }
+
+          @Override
+          public void onBadBlockHeaderAdded(
+              final BlockHeader badBlockHeader,
+              final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
+            badBlockHeaderResult.set(badBlockHeader);
+            badBlockHeaderCauseResult.set(cause);
+          }
+        });
+
+    // Add bad block
+    final BadBlockCause blockCause = BadBlockCause.fromValidationFailure("failed");
+    final Block block = gen.block(new BlockDataGenerator.BlockOptions());
+    badBlockManager.addBadBlock(block, blockCause);
+
+    // Check we caught the bad block
+    assertThat(badBlockResult.get()).isEqualTo(block);
+    assertThat(badBlockCauseResult.get()).isEqualTo(blockCause);
+    assertThat(badBlockHeaderResult.get()).isNull();
+
+    // Add bad block header
+    final BadBlockCause headerCause = BadBlockCause.fromValidationFailure("oops");
+    final Block headerBlock = gen.block(new BlockDataGenerator.BlockOptions());
+    badBlockManager.addBadHeader(headerBlock.getHeader(), headerCause);
+
+    // Check we caught the bad block header
+    assertThat(badBlockHeaderResult.get()).isEqualTo(headerBlock.getHeader());
+    assertThat(badBlockHeaderCauseResult.get()).isEqualTo(headerCause);
+  }
+
+  @Test
+  public void badBlockEventDoesNotFireAfterUnsubscribe() {
+    // Track bad block events
+    final AtomicReference<org.hyperledger.besu.plugin.data.Block> badBlockResult =
+        new AtomicReference<>();
+    final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause> badBlockCauseResult =
+        new AtomicReference<>();
+    final AtomicReference<BlockHeader> badBlockHeaderResult = new AtomicReference<>();
+    final AtomicReference<org.hyperledger.besu.plugin.data.BadBlockCause>
+        badBlockHeaderCauseResult = new AtomicReference<>();
+    final long listenerId =
+        serviceImpl.addBadBlockListener(
+            new BadBlockListener() {
+              @Override
+              public void onBadBlockAdded(
+                  final org.hyperledger.besu.plugin.data.Block badBlock,
+                  final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
+                badBlockResult.set(badBlock);
+                badBlockCauseResult.set(cause);
+              }
+
+              @Override
+              public void onBadBlockHeaderAdded(
+                  final BlockHeader badBlockHeader,
+                  final org.hyperledger.besu.plugin.data.BadBlockCause cause) {
+                badBlockHeaderResult.set(badBlockHeader);
+                badBlockHeaderCauseResult.set(cause);
+              }
+            });
+    // Unsubscribe
+    serviceImpl.removeBadBlockListener(listenerId);
+
+    // Add bad block
+    final BadBlockCause blockCause = BadBlockCause.fromValidationFailure("failed");
+    final Block block = gen.block(new BlockDataGenerator.BlockOptions());
+    badBlockManager.addBadBlock(block, blockCause);
+    // Add bad block header
+    final BadBlockCause headerCause = BadBlockCause.fromValidationFailure("oops");
+    final Block headerBlock = gen.block(new BlockDataGenerator.BlockOptions());
+    badBlockManager.addBadHeader(headerBlock.getHeader(), headerCause);
+
+    // Check we did not process any events
+    assertThat(badBlockResult.get()).isNull();
+    assertThat(badBlockCauseResult.get()).isNull();
+    assertThat(badBlockHeaderResult.get()).isNull();
+    assertThat(badBlockHeaderCauseResult.get()).isNull();
   }
 
   private Block generateBlock() {
