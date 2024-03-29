@@ -41,12 +41,19 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
     minerNode = besu.createMinerNode("miner-node1");
     archiveNode = besu.createArchiveNode("full-node1");
     cluster.start(minerNode, archiveNode);
+
+    // verify nodes are fully connected otherwise tx could not be propagated
+    minerNode.verify(net.awaitPeerCount(1));
+    archiveNode.verify(net.awaitPeerCount(1));
+
     accountOne = accounts.createAccount("account-one");
     minerWebSocket = new WebSocket(vertx, minerNode.getConfiguration());
     archiveWebSocket = new WebSocket(vertx, archiveNode.getConfiguration());
-    // verify all nodes are done syncing so the tx pool will be enabled
-    archiveNode.verify(eth.syncingStatus(false));
-    minerNode.verify(eth.syncingStatus(false));
+
+    // verify that the miner started producing blocks and all other nodes are syncing from it
+    waitForBlockHeight(minerNode, 1);
+    final var minerChainHead = minerNode.execute(ethTransactions.block());
+    archiveNode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
   }
 
   @AfterEach

@@ -28,6 +28,8 @@
 - Extend error handling of plugin RPC methods [#6759](https://github.com/hyperledger/besu/pull/6759)
 - Added engine_newPayloadV4 and engine_getPayloadV4 methods [#6783](https://github.com/hyperledger/besu/pull/6783)
 - Reduce storage size of receipts [#6602](https://github.com/hyperledger/besu/pull/6602)
+- Dedicated log marker for invalid txs removed from the txpool [#6826](https://github.com/hyperledger/besu/pull/6826)
+- Prevent startup with BONSAI and privacy enabled [#6809](https://github.com/hyperledger/besu/pull/6809)
 - Remove deprecated Forest pruning [#6810](https://github.com/hyperledger/besu/pull/6810)
 
 ### Bug fixes
@@ -35,6 +37,8 @@
 - Make block transaction selection max time aware of PoA transitions [#6676](https://github.com/hyperledger/besu/pull/6676)
 - Don't enable the BFT mining coordinator when running sub commands such as `blocks export` [#6675](https://github.com/hyperledger/besu/pull/6675)
 - In JSON-RPC return optional `v` fields for type 1 and type 2 transactions [#6762](https://github.com/hyperledger/besu/pull/6762)
+- Fix Shanghai/QBFT block import bug when syncing new nodes [#6765](https://github.com/hyperledger/besu/pull/6765)
+- Fix to avoid broadcasting full blob txs, instead of only the tx announcement, to a subset of nodes [#6835](https://github.com/hyperledger/besu/pull/6835)
 
 ### Download Links
 
