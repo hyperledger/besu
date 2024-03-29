@@ -159,6 +159,26 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         true);
   }
 
+  @Override
+  public BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp) {
+    throw new UnsupportedOperationException("Only used by BFT block creators");
+  }
+
+  public BlockCreationResult createBlock(
+      final Optional<List<Transaction>> maybeTransactions,
+      final Optional<List<BlockHeader>> maybeOmmers,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final long timestamp) {
+    return createBlock(
+        maybeTransactions,
+        maybeOmmers,
+        maybeWithdrawals,
+        Optional.empty(),
+        Optional.empty(),
+        timestamp,
+        true);
+  }
+
   protected BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
