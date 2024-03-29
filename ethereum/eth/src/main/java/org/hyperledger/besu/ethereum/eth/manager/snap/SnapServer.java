@@ -69,6 +69,8 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private static final int PRIME_STATE_ROOT_CACHE_LIMIT = 128;
   private static final int MAX_ENTRIES_PER_REQUEST = 100000;
   private static final int MAX_RESPONSE_SIZE = 2 * 1024 * 1024;
+  private static final int MAX_CODE_LOOKUPS_PER_REQUEST = 1024;
+  private static final int MAX_TRIE_LOOKUPS_PER_REQUEST = 1024;
   private static final AccountRangeMessage EMPTY_ACCOUNT_RANGE =
       AccountRangeMessage.create(new HashMap<>(), new ArrayDeque<>());
   private static final StorageRangeMessage EMPTY_STORAGE_RANGE =
@@ -442,14 +444,22 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
     try {
       List<Bytes> codeBytes = new ArrayDeque<>();
-      for (Bytes32 codeHash : codeHashes.hashes()) {
-        Optional<Bytes> optCode = worldStateStorageCoordinator.getCode(Hash.wrap(codeHash), null);
-        if (optCode.isPresent()) {
-          if (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes
-              || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST) {
-            break;
+      var codeHashList =
+          (codeHashes.hashes().size() < MAX_CODE_LOOKUPS_PER_REQUEST)
+              ? codeHashes.hashes()
+              : codeHashes.hashes().subList(0, MAX_CODE_LOOKUPS_PER_REQUEST);
+      for (Bytes32 codeHash : codeHashList) {
+        if (Hash.EMPTY.equals(codeHash)) {
+          codeBytes.add(Bytes.EMPTY);
+        } else {
+          Optional<Bytes> optCode = worldStateStorageCoordinator.getCode(Hash.wrap(codeHash), null);
+          if (optCode.isPresent()) {
+            if (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes
+                || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST) {
+              break;
+            }
+            codeBytes.add(optCode.get());
           }
-          codeBytes.add(optCode.get());
         }
       }
       var resp = ByteCodesMessage.create(codeBytes);
@@ -488,7 +498,11 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
               storage -> {
                 LOGGER.trace("obtained worldstate in {}", stopWatch);
                 ArrayList<Bytes> trieNodes = new ArrayList<>();
-                for (var triePath : triePaths.paths()) {
+                var triePathList =
+                    triePaths.paths().size() < MAX_TRIE_LOOKUPS_PER_REQUEST
+                        ? triePaths.paths()
+                        : triePaths.paths().subList(0, MAX_TRIE_LOOKUPS_PER_REQUEST);
+                for (var triePath : triePathList) {
                   // first element in paths is account
                   if (triePath.size() == 1) {
                     // if there is only one path, presume it should be compact encoded account path

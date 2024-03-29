@@ -126,10 +126,6 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     throwIfClosed();
     var ourLayerState = hashValueStore.computeIfAbsent(segmentId, s -> newSegmentMap());
 
-    if (ourLayerState == null) {
-      return parent.stream(segmentId);
-    }
-
     // otherwise, interleave the sorted streams:
     final PeekingIterator<Map.Entry<Bytes, Optional<byte[]>>> ourIterator =
         new PeekingIterator<>(
