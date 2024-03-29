@@ -529,7 +529,7 @@ public class BesuEventsImplTest {
     badBlockManager.addBadBlock(block, blockCause);
 
     // Check we caught the bad block
-    assertThat(badBlockResult.get()).isEqualTo(block);
+    assertThat(badBlockResult.get()).isEqualTo(block.getHeader());
     assertThat(badBlockCauseResult.get()).isEqualTo(blockCause);
   }
 
