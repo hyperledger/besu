@@ -140,8 +140,8 @@ public class RequestDataStep {
                 /*
                  * Checks if the response represents an "empty range".
                  *
-                 * An "empty range" is defined as a response where either no slots are present,
-                 * or the first slot is empty, but at least one proof exists
+                 * An "empty range" is defined as a response where at least one proof exists
+                 * and either no slots are present, or the first slot is empty
                  */
                 try {
                   final boolean isEmptyRange =
