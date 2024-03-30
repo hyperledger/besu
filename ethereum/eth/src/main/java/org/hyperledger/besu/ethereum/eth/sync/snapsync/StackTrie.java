@@ -114,6 +114,10 @@ public class StackTrie {
                 keys.putAll(taskElement.keys());
               });
 
+      if (keys.isEmpty()) {
+        return; // empty range we can ignore it
+      }
+
       final Map<Bytes32, Bytes> proofsEntries = new HashMap<>();
       for (Bytes proof : proofs) {
         proofsEntries.put(Hash.hash(proof), proof);
