@@ -2733,6 +2733,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           getDataStorageConfiguration().getUnstable().getBonsaiTrieLogPruningWindowSize());
     }
 
+    builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
+
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
     builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
 
