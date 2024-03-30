@@ -63,7 +63,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /** See https://github.com/ethereum/devp2p/blob/master/caps/snap.md */
-@SuppressWarnings("unused")
 class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private static final Logger LOGGER = LoggerFactory.getLogger(SnapServer.class);
   private static final int PRIME_STATE_ROOT_CACHE_LIMIT = 128;
@@ -149,7 +148,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
       var worldStateKeyValueStorage = worldStateStorageCoordinator.worldStateKeyValueStorage();
       if (worldStateKeyValueStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
           && worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
-        LOGGER.debug("Starting snap server with Bonsai full flat db");
+        LOGGER.debug("Starting SnapServer with Bonsai full flat db");
         var bonsaiArchive =
             protocolContext
                 .map(ProtocolContext::getWorldStateArchive)
