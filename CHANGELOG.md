@@ -31,6 +31,7 @@
 - Dedicated log marker for invalid txs removed from the txpool [#6826](https://github.com/hyperledger/besu/pull/6826)
 - Prevent startup with BONSAI and privacy enabled [#6809](https://github.com/hyperledger/besu/pull/6809)
 - Remove deprecated Forest pruning [#6810](https://github.com/hyperledger/besu/pull/6810)
+- Experimental Snap Sync Server [#6640](https://github.com/hyperledger/besu/pull/6640)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
@@ -39,6 +40,7 @@
 - In JSON-RPC return optional `v` fields for type 1 and type 2 transactions [#6762](https://github.com/hyperledger/besu/pull/6762)
 - Fix Shanghai/QBFT block import bug when syncing new nodes [#6765](https://github.com/hyperledger/besu/pull/6765)
 - Fix to avoid broadcasting full blob txs, instead of only the tx announcement, to a subset of nodes [#6835](https://github.com/hyperledger/besu/pull/6835)
+- Snap client fixes discovered during snap server testing [#6847](https://github.com/hyperledger/besu/pull/6847)
 
 ### Download Links
 

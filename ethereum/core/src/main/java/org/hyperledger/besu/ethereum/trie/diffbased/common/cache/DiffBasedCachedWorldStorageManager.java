@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.common.cache;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
@@ -29,8 +31,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -41,6 +46,11 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
       LoggerFactory.getLogger(DiffBasedCachedWorldStorageManager.class);
   private final DiffBasedWorldStateProvider archive;
   private final EvmConfiguration evmConfiguration;
+  private final Cache<Hash, BlockHeader> stateRootToBlockHeaderCache =
+      Caffeine.newBuilder()
+          .maximumSize(RETAINED_LAYERS)
+          .expireAfterWrite(100, TimeUnit.MINUTES)
+          .build();
 
   private final DiffBasedWorldStateKeyValueStorage rootWorldStateStorage;
   private final Map<Bytes32, DiffBasedCachedWorldView> cachedWorldStatesByHash;
@@ -104,6 +114,8 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
                 ((DiffBasedLayeredWorldStateKeyValueStorage) forWorldState.getWorldStateStorage())
                     .clone()));
       }
+      // add stateroot -> blockHeader cache entry
+      stateRootToBlockHeaderCache.put(blockHeader.getStateRoot(), blockHeader);
     }
     scrubCachedLayers(blockHeader.getNumber());
   }
@@ -192,12 +204,48 @@ public abstract class DiffBasedCachedWorldStorageManager implements StorageSubsc
             });
   }
 
-  public boolean containWorldStateStorage(final Hash blockHash) {
+  public boolean contains(final Hash blockHash) {
     return cachedWorldStatesByHash.containsKey(blockHash);
   }
 
   public void reset() {
     this.cachedWorldStatesByHash.clear();
+  }
+
+  public void primeRootToBlockHashCache(final Blockchain blockchain, final int numEntries) {
+    // prime the stateroot-to-blockhash cache
+    long head = blockchain.getChainHeadHeader().getNumber();
+    for (long i = head; i > Math.max(0, head - numEntries); i--) {
+      blockchain
+          .getBlockHeader(i)
+          .ifPresent(header -> stateRootToBlockHeaderCache.put(header.getStateRoot(), header));
+    }
+  }
+
+  /**
+   * Returns the worldstate for the supplied root hash. If the worldstate is not already in cache,
+   * this method will attempt to fetch it and add it to the cache. synchronized to prevent
+   * concurrent loads/adds to the cache of the same root hash.
+   *
+   * @param rootHash rootHash to supply worldstate storage for
+   * @return Optional worldstate storage
+   */
+  public synchronized Optional<DiffBasedWorldStateKeyValueStorage> getStorageByRootHash(
+      final Hash rootHash) {
+    return Optional.ofNullable(stateRootToBlockHeaderCache.getIfPresent(rootHash))
+        .flatMap(
+            header ->
+                Optional.ofNullable(cachedWorldStatesByHash.get(header.getHash()))
+                    .map(DiffBasedCachedWorldView::getWorldStateStorage)
+                    .or(
+                        () -> {
+                          // if not cached already, maybe fetch and cache this worldstate
+                          var maybeWorldState =
+                              archive.getMutable(header, false).map(BonsaiWorldState.class::cast);
+                          maybeWorldState.ifPresent(
+                              ws -> addCachedLayer(header, header.getStateRoot(), ws));
+                          return maybeWorldState.map(BonsaiWorldState::getWorldStateStorage);
+                        }));
   }
 
   @Override
