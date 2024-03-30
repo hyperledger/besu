@@ -89,7 +89,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final Optional<ProtocolContext> protocolContext;
 
-  //
+  // whether snap server is enabled
   private final boolean snapServerEnabled;
 
   // provide worldstate storage by root hash
@@ -217,7 +217,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
     LOGGER
         .atTrace()
-        .setMessage("Receive getAccountRangeMessage for {} from {} to {}")
+        .setMessage("Received getAccountRangeMessage for {} from {} to {}")
         .addArgument(() -> asLogHash(range.worldStateRootHash()))
         .addArgument(() -> asLogHash(range.startKeyHash()))
         .addArgument(() -> asLogHash(range.endKeyHash()))
@@ -438,7 +438,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     final int maxResponseBytes = Math.min(codeHashes.responseBytes().intValue(), MAX_RESPONSE_SIZE);
     LOGGER
         .atTrace()
-        .setMessage("Receive get bytecodes message for {} hashes")
+        .setMessage("Received get bytecodes message for {} hashes")
         .addArgument(codeHashes.hashes()::size)
         .log();
 
@@ -487,7 +487,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     final int maxResponseBytes = Math.min(triePaths.responseBytes().intValue(), MAX_RESPONSE_SIZE);
     LOGGER
         .atTrace()
-        .setMessage("Receive get trie nodes message of size {}")
+        .setMessage("Received get trie nodes message of size {}")
         .addArgument(() -> triePaths.paths().size())
         .log();
 
