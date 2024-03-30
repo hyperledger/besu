@@ -82,7 +82,7 @@ public class FlatDbStrategyProvider {
     return flatDbMode;
   }
 
-  private boolean deriveUseCodeStorageByHash(
+  protected boolean deriveUseCodeStorageByHash(
       final SegmentedKeyValueStorage composedWorldStateStorage) {
     final boolean configCodeUsingHash =
         dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
