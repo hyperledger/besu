@@ -1554,7 +1554,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       checkState(
           fraction >= 0.0 && fraction <= 1.0,
           "Fraction of remote connections allowed must be between 0.0 and 1.0 (inclusive).");
-      maxRemoteInitiatedPeers = (int) Math.floor(fraction * maxPeers);
+      maxRemoteInitiatedPeers = Math.round(fraction * maxPeers);
     } else {
       maxRemoteInitiatedPeers = maxPeers;
     }

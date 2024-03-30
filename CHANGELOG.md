@@ -39,6 +39,7 @@
 - In JSON-RPC return optional `v` fields for type 1 and type 2 transactions [#6762](https://github.com/hyperledger/besu/pull/6762)
 - Fix Shanghai/QBFT block import bug when syncing new nodes [#6765](https://github.com/hyperledger/besu/pull/6765)
 - Fix to avoid broadcasting full blob txs, instead of only the tx announcement, to a subset of nodes [#6835](https://github.com/hyperledger/besu/pull/6835)
+- Snap client fixes discovered during snap server testing [#6847](https://github.com/hyperledger/besu/pull/6847)
 
 ### Download Links
 
