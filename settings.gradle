@@ -17,6 +17,20 @@
 pluginManagement {
   repositories {
     gradlePluginPortal()
+    mavenCentral()
+  }
+
+}
+
+plugins {
+  id("org.kordamp.gradle.enforcer") version "0.13.0"
+}
+
+enforce {
+  rule(enforcer.rules.RequireJavaVersion) { r ->
+    r.enabled = true
+    r.phases = ['BEFORE_BUILD']
+    r.version = '[17,18)'
   }
 }
 
