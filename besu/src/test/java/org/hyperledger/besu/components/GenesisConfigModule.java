@@ -15,25 +15,25 @@
 
 package org.hyperledger.besu.components;
 
-
-import dagger.Module;
-import dagger.Provides;
 import org.hyperledger.besu.config.GenesisConfigFile;
 
 import javax.inject.Named;
 
+import dagger.Module;
+import dagger.Provides;
+
 @Module
 public class GenesisConfigModule {
 
-    @Named("default")
-    @Provides
-    GenesisConfigFile provideDefaultGenesisConfigFile() {
-        return GenesisConfigFile.DEFAULT;
-    }
+  @Named("default")
+  @Provides
+  GenesisConfigFile provideDefaultGenesisConfigFile() {
+    return GenesisConfigFile.DEFAULT;
+  }
 
-    @Named("mainnet")
-    @Provides
-    GenesisConfigFile provideMainnetGenesisConfigFile() {
-        return GenesisConfigFile.mainnet();
-    }
+  @Named("mainnet")
+  @Provides
+  GenesisConfigFile provideMainnetGenesisConfigFile() {
+    return GenesisConfigFile.mainnet();
+  }
 }

@@ -18,10 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
-import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
-
 import org.hyperledger.besu.components.PrivacyParametersModule;
 import org.hyperledger.besu.components.PrivacyTestModule;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -48,21 +44,23 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.TestClock;
 
 import java.io.IOException;
 import java.math.BigInteger;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Path;
-
-import io.vertx.core.Vertx;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.testutil.TestClock;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.Test;
-
 import javax.inject.Named;
 import javax.inject.Singleton;
+
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+import io.vertx.core.Vertx;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 
 class PrivacyTest {
 
@@ -75,7 +73,8 @@ class PrivacyTest {
 
   @Test
   void defaultPrivacy() throws IOException, URISyntaxException {
-    final BesuController besuController = DaggerPrivacyTest_PrivacyTestComponent.builder().build().getBesuController();
+    final BesuController besuController =
+        DaggerPrivacyTest_PrivacyTestComponent.builder().build().getBesuController();
 
     final PrecompiledContract precompiledContract = getPrecompile(besuController, DEFAULT_PRIVACY);
 
@@ -85,7 +84,7 @@ class PrivacyTest {
   @Test
   void flexibleEnabledPrivacy() throws IOException, URISyntaxException {
     final BesuController besuController =
-            DaggerPrivacyTest_FlexGroupPrivacyTestComponent.create().getBesuController();
+        DaggerPrivacyTest_FlexGroupPrivacyTestComponent.create().getBesuController();
 
     final PrecompiledContract flexiblePrecompiledContract =
         getPrecompile(besuController, FLEXIBLE_PRIVACY);
@@ -169,11 +168,11 @@ class PrivacyTest {
 
   @Singleton
   @Component(
-          modules = {
-                  PrivacyParametersModule.class,
-                  PrivacyTest.PrivacyTestBesuControllerModule.class,
-                  PrivacyTestModule.class})
-
+      modules = {
+        PrivacyParametersModule.class,
+        PrivacyTest.PrivacyTestBesuControllerModule.class,
+        PrivacyTestModule.class
+      })
   interface PrivacyTestComponent {
 
     BesuController getBesuController();
@@ -181,11 +180,11 @@ class PrivacyTest {
 
   @Singleton
   @Component(
-          modules = {
-                  FlexGroupPrivacyParametersModule.class,
-                  PrivacyTest.PrivacyTestBesuControllerModule.class,
-                  PrivacyTestModule.class
-          })
+      modules = {
+        FlexGroupPrivacyParametersModule.class,
+        PrivacyTest.PrivacyTestBesuControllerModule.class,
+        PrivacyTestModule.class
+      })
   static interface FlexGroupPrivacyTestComponent {
 
     BesuController getBesuController();
@@ -196,15 +195,15 @@ class PrivacyTest {
 
     @Provides
     PrivacyParameters providePrivacyParameters(
-            final PrivacyStorageProvider storageProvider, final Vertx vertx) {
+        final PrivacyStorageProvider storageProvider, final Vertx vertx) {
       try {
         return new PrivacyParameters.Builder()
-                .setEnabled(true)
-                .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
-                .setStorageProvider(storageProvider)
-                .setEnclaveFactory(new EnclaveFactory(vertx))
-                .setFlexiblePrivacyGroupsEnabled(true)
-                .build();
+            .setEnabled(true)
+            .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
+            .setStorageProvider(storageProvider)
+            .setEnclaveFactory(new EnclaveFactory(vertx))
+            .setFlexiblePrivacyGroupsEnabled(true)
+            .build();
       } catch (URISyntaxException e) {
         throw new RuntimeException(e);
       }
@@ -218,31 +217,29 @@ class PrivacyTest {
     @Singleton
     @SuppressWarnings("CloseableProvides")
     BesuController provideBesuController(
-            final PrivacyParameters privacyParameters,
-            final MiningParameters miningParameters,
-            final DataStorageConfiguration dataStorageConfiguration,
-            @Named("dataDir") final Path dataDir) {
+        final PrivacyParameters privacyParameters,
+        final MiningParameters miningParameters,
+        final DataStorageConfiguration dataStorageConfiguration,
+        @Named("dataDir") final Path dataDir) {
 
       return new BesuController.Builder()
-              .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FULL)
-              .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
-              .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
-              .storageProvider(new InMemoryKeyValueStorageProvider())
-              .networkId(BigInteger.ONE)
-              .miningParameters(miningParameters)
-              .dataStorageConfiguration(dataStorageConfiguration)
-              .nodeKey(NodeKeyUtils.generate())
-              .metricsSystem(new NoOpMetricsSystem())
-              .dataDirectory(dataDir)
-              .clock(TestClock.fixed())
-              .privacyParameters(privacyParameters)
-              .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
-              .gasLimitCalculator(GasLimitCalculator.constant())
-              .evmConfiguration(EvmConfiguration.DEFAULT)
-              .networkConfiguration(NetworkingConfiguration.create())
-              .build();
+          .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FULL)
+          .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
+          .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
+          .storageProvider(new InMemoryKeyValueStorageProvider())
+          .networkId(BigInteger.ONE)
+          .miningParameters(miningParameters)
+          .dataStorageConfiguration(dataStorageConfiguration)
+          .nodeKey(NodeKeyUtils.generate())
+          .metricsSystem(new NoOpMetricsSystem())
+          .dataDirectory(dataDir)
+          .clock(TestClock.fixed())
+          .privacyParameters(privacyParameters)
+          .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
+          .gasLimitCalculator(GasLimitCalculator.constant())
+          .evmConfiguration(EvmConfiguration.DEFAULT)
+          .networkConfiguration(NetworkingConfiguration.create())
+          .build();
     }
-
-
   }
 }

@@ -17,12 +17,7 @@ package org.hyperledger.besu;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.mock;
 
-import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
 import org.hyperledger.besu.components.EnclaveModule;
 import org.hyperledger.besu.components.PrivacyTestModule;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -53,16 +48,13 @@ import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
-import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.data.Restriction;
+import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
 import java.net.URI;
@@ -70,16 +62,17 @@ import java.nio.file.Path;
 import java.util.Collections;
 import java.util.Optional;
 import java.util.function.Supplier;
-
-import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.hyperledger.besu.testutil.TestClock;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
-
 import javax.inject.Named;
 import javax.inject.Singleton;
+
+import com.google.common.base.Suppliers;
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 @SuppressWarnings("rawtypes")
 public class PrivacyReorgTest {
@@ -112,18 +105,18 @@ public class PrivacyReorgTest {
 
   // EventEmitter contract binary
 
-
   private final BlockDataGenerator gen = new BlockDataGenerator();
 
-
   private Transaction privacyMarkerTransaction;
-  private final PrivacyReorgTestComponent context = DaggerPrivacyReorgTest_PrivacyReorgTestComponent.create();
+  private final PrivacyReorgTestComponent context =
+      DaggerPrivacyReorgTest_PrivacyReorgTestComponent.create();
 
   private final BesuController besuController = context.getBesuController();
-  private final PrivateStateRootResolver privateStateRootResolver = context.getPrivacyParameters().getPrivateStateRootResolver();
+  private final PrivateStateRootResolver privateStateRootResolver =
+      context.getPrivacyParameters().getPrivateStateRootResolver();
 
   @BeforeEach
-  public void setUp()  {
+  public void setUp() {
 
     privacyMarkerTransaction =
         Transaction.builder()
@@ -180,7 +173,8 @@ public class PrivacyReorgTest {
     // Setup an initial blockchain with one private transaction
     final ProtocolContext protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
-    final PrivateStateStorage privateStateStorage = context.getPrivacyParameters().getPrivateStateStorage();
+    final PrivateStateStorage privateStateStorage =
+        context.getPrivacyParameters().getPrivateStateStorage();
 
     final Block firstBlock =
         gen.block(
@@ -463,34 +457,35 @@ public class PrivacyReorgTest {
 
   @Singleton
   @Component(
-          modules = {PrivacyReorgTest.PrivacyReorgParametersModule.class,
-                  PrivacyReorgTest.PrivacyReorgTestBesuControllerModule.class,
-                  PrivacyReorgTest.PrivacyReorgTestGenesisConfigModule.class,
-                  EnclaveModule.class,
-                  PrivacyTestModule.class})
+      modules = {
+        PrivacyReorgTest.PrivacyReorgParametersModule.class,
+        PrivacyReorgTest.PrivacyReorgTestBesuControllerModule.class,
+        PrivacyReorgTest.PrivacyReorgTestGenesisConfigModule.class,
+        EnclaveModule.class,
+        PrivacyTestModule.class
+      })
   interface PrivacyReorgTestComponent {
 
     BesuController getBesuController();
 
     PrivacyParameters getPrivacyParameters();
-
   }
 
   @Module
   static class PrivacyReorgParametersModule {
 
-    //TODO: copypasta, get this from the enclave factory
+    // TODO: copypasta, get this from the enclave factory
     private static final Bytes ENCLAVE_PUBLIC_KEY =
-            Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
+        Bytes.fromBase64String("A1aVtMxLCUHmBVHXoZzzBgPbW/wj5axDpW9X8l91SGo=");
 
     @Provides
     PrivacyParameters providePrivacyReorgParameters(
-            final PrivacyStorageProvider storageProvider, final EnclaveFactory enclaveFactory) {
+        final PrivacyStorageProvider storageProvider, final EnclaveFactory enclaveFactory) {
 
-      PrivacyParameters retval = new PrivacyParameters.Builder()
+      PrivacyParameters retval =
+          new PrivacyParameters.Builder()
               .setEnabled(true)
               .setStorageProvider(storageProvider)
-
               .setEnclaveUrl(URI.create("http//1.1.1.1:1234"))
               .setEnclaveFactory(enclaveFactory)
               .build();
@@ -502,20 +497,19 @@ public class PrivacyReorgTest {
   @Module
   static class PrivacyReorgTestBesuControllerModule {
 
-
     @Provides
     @Singleton
     @SuppressWarnings("CloseableProvides")
-    BesuController provideBesuController(final PrivacyParameters privacyParameters,
-                                         final GenesisConfigFile genesisConfigFile,
-                                         final @Named("dataDir") Path dataDir) {
+    BesuController provideBesuController(
+        final PrivacyParameters privacyParameters,
+        final GenesisConfigFile genesisConfigFile,
+        final @Named("dataDir") Path dataDir) {
 
-
-      //dataStorageConfiguration default
-      //named privacyReorgParams
-      BesuController retval = new BesuController.Builder()
-              .fromGenesisConfig(genesisConfigFile,
-                      SyncMode.FULL)
+      // dataStorageConfiguration default
+      // named privacyReorgParams
+      BesuController retval =
+          new BesuController.Builder()
+              .fromGenesisConfig(genesisConfigFile, SyncMode.FULL)
               .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
               .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
               .storageProvider(new InMemoryKeyValueStorageProvider())

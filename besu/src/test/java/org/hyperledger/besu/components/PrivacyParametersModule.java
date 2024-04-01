@@ -15,9 +15,6 @@
 
 package org.hyperledger.besu.components;
 
-import dagger.Module;
-import dagger.Provides;
-import io.vertx.core.Vertx;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
@@ -25,26 +22,27 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import java.net.URI;
 import java.net.URISyntaxException;
 
-/**
- * Provides a general use PrivacyParameters instance for testing.
- */
+import dagger.Module;
+import dagger.Provides;
+import io.vertx.core.Vertx;
+
+/** Provides a general use PrivacyParameters instance for testing. */
 @Module
 public class PrivacyParametersModule {
 
-    @Provides
-    PrivacyParameters providePrivacyParameters(
-            final PrivacyStorageProvider storageProvider, final Vertx vertx) {
-        try {
-            return new PrivacyParameters.Builder()
-                    .setEnabled(true)
-                    .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
-                    .setStorageProvider(storageProvider)
-                    .setEnclaveFactory(new EnclaveFactory(vertx))
-                    .setFlexiblePrivacyGroupsEnabled(false)
-                    .build();
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        }
+  @Provides
+  PrivacyParameters providePrivacyParameters(
+      final PrivacyStorageProvider storageProvider, final Vertx vertx) {
+    try {
+      return new PrivacyParameters.Builder()
+          .setEnabled(true)
+          .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
+          .setStorageProvider(storageProvider)
+          .setEnclaveFactory(new EnclaveFactory(vertx))
+          .setFlexiblePrivacyGroupsEnabled(false)
+          .build();
+    } catch (URISyntaxException e) {
+      throw new RuntimeException(e);
     }
-
+  }
 }
