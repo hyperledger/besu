@@ -499,6 +499,7 @@ subprojects {
           password = artifactoryKey
         }
         defaults {
+          publishBuildInfo = false //currently 404'ing still to be investigated
           publications('mavenJava')
           publishArtifacts = true
           publishPom = true
