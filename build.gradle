@@ -834,34 +834,23 @@ task dockerUploadRelease {
 
 task manifestDocker {
   def image = "${dockerImageName}:${dockerBuildVersion}"
-  def archs = ["arm64", "amd64"]
-  def tags = ["${image}"]
-
-  if (project.hasProperty('branch') && project.property('branch') == 'main') {
-    tags.add("${dockerImageName}:develop")
-  }
-
-  if (!isInterimBuild(dockerBuildVersion)) {
-    tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
-  }
+  def archs = ["arm64", "amd64"] //TODO: this assumes dockerUpload task has already been run on 2 different archs!
 
   doLast {
-    for (baseTag in tags) {
       exec {
-        targets = ""
-        archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
-        def cmd = "docker manifest create '${baseTag}' ${targets}"
+        def targets = ""
+        archs.forEach { arch -> targets += "'${image}-${arch}' " }
+        def cmd = "docker manifest create '${image}' ${targets}"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
       exec {
-        def cmd = "docker manifest push '${baseTag}'"
+        def cmd = "docker manifest push '${image}'"
         println "Executing '${cmd}'"
         executable shell
         args "-c", cmd
       }
-    }
   }
 }
 
