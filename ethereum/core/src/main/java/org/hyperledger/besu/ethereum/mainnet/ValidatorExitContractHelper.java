@@ -109,7 +109,7 @@ public class ValidatorExitContractHelper {
           EXIT_MESSAGE_QUEUE_STORAGE_OFFSET.plus(
               queueHeadIndex.plus(i).multiply(EXIT_MESSAGE_STORAGE_SLOT_SIZE));
       final Address sourceAddress =
-          Address.wrap(account.getStorageValue(queueStorageSlot).toBytes().slice(0, 20));
+          Address.wrap(account.getStorageValue(queueStorageSlot).toBytes().slice(0, 20)); //TODO this might need to change to slice(12, 32) if we are padding left
 
       final BLSPublicKey validatorPubKey =
           BLSPublicKey.wrap(
