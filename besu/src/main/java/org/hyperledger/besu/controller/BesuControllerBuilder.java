@@ -87,9 +87,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.MarkSweepPruner;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -159,10 +156,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   GasLimitCalculator gasLimitCalculator;
   /** The Storage provider. */
   protected StorageProvider storageProvider;
-  /** The Is pruning enabled. */
-  protected boolean isPruningEnabled;
-  /** The Pruner configuration. */
-  protected PrunerConfiguration prunerConfiguration;
   /** The Required blocks. */
   protected Map<Long, Hash> requiredBlocks = Collections.emptyMap();
   /** The Reorg logging threshold. */
@@ -369,28 +362,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
     this.isRevertReasonEnabled = isRevertReasonEnabled;
-    return this;
-  }
-
-  /**
-   * Is pruning enabled besu controller builder.
-   *
-   * @param isPruningEnabled the is pruning enabled
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder isPruningEnabled(final boolean isPruningEnabled) {
-    this.isPruningEnabled = isPruningEnabled;
-    return this;
-  }
-
-  /**
-   * Pruning configuration besu controller builder.
-   *
-   * @param prunerConfiguration the pruner configuration
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder pruningConfiguration(final PrunerConfiguration prunerConfiguration) {
-    this.prunerConfiguration = prunerConfiguration;
     return this;
   }
 
@@ -607,25 +578,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
         protocolContext.getWorldStateArchive());
 
-    Optional<Pruner> maybePruner = Optional.empty();
-    if (isPruningEnabled) {
-      if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
-        LOG.warn(
-            "Cannot enable pruning with Bonsai data storage format. Disabling. Change the data storage format or disable pruning explicitly on the command line to remove this warning.");
-      } else {
-        maybePruner =
-            Optional.of(
-                new Pruner(
-                    new MarkSweepPruner(
-                        ((ForestWorldStateArchive) worldStateArchive).getWorldStateStorage(),
-                        blockchain,
-                        storageProvider.getStorageBySegmentIdentifier(
-                            KeyValueSegmentIdentifier.PRUNING_STATE),
-                        metricsSystem),
-                    blockchain,
-                    prunerConfiguration));
-      }
-    }
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
         () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
@@ -700,9 +652,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             peerValidators,
             Optional.empty());
 
-    final Optional<SnapProtocolManager> maybeSnapProtocolManager =
-        createSnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive);
-
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
             protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
@@ -712,13 +661,16 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             protocolSchedule,
             worldStateStorageCoordinator,
             protocolContext,
-            maybePruner,
             ethContext,
             syncState,
             ethProtocolManager,
             pivotBlockSelector);
 
     protocolContext.setSynchronizer(Optional.of(synchronizer));
+
+    final Optional<SnapProtocolManager> maybeSnapProtocolManager =
+        createSnapProtocolManager(
+            protocolContext, worldStateStorageCoordinator, ethPeers, snapMessages);
 
     final MiningCoordinator miningCoordinator =
         createMiningCoordinator(
@@ -803,7 +755,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param protocolSchedule the protocol schedule
    * @param worldStateStorageCoordinator the world state storage
    * @param protocolContext the protocol context
-   * @param maybePruner the maybe pruner
    * @param ethContext the eth context
    * @param syncState the sync state
    * @param ethProtocolManager the eth protocol manager
@@ -814,7 +765,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
-      final Optional<Pruner> maybePruner,
       final EthContext ethContext,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
@@ -826,7 +776,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         protocolContext,
         worldStateStorageCoordinator,
         ethProtocolManager.getBlockBroadcaster(),
-        maybePruner,
         ethContext,
         syncState,
         dataDirectory,
@@ -1038,12 +987,23 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private Optional<SnapProtocolManager> createSnapProtocolManager(
-      final List<PeerValidator> peerValidators,
+      final ProtocolContext protocolContext,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final EthPeers ethPeers,
-      final EthMessages snapMessages,
-      final WorldStateArchive worldStateArchive) {
-    return Optional.of(
-        new SnapProtocolManager(peerValidators, ethPeers, snapMessages, worldStateArchive));
+      final EthMessages snapMessages) {
+    if (Optional.ofNullable(syncConfig.getSnapSyncConfiguration())
+        .map(snapConfig -> snapConfig.isSnapServerEnabled())
+        .orElse(false)) {
+      return Optional.of(
+          new SnapProtocolManager(
+              worldStateStorageCoordinator,
+              syncConfig.getSnapSyncConfiguration(),
+              ethPeers,
+              snapMessages,
+              protocolContext));
+    } else {
+      return Optional.empty();
+    }
   }
 
   WorldStateArchive createWorldStateArchive(
