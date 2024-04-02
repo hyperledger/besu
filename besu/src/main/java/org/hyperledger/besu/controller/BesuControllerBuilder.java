@@ -127,6 +127,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
               .orElseThrow();
 
+  /** The is genesis state hash from data. */
+  protected boolean genesisStateHashCacheEnabled;
+
   /** The Sync config. */
   protected SynchronizerConfiguration syncConfig;
   /** The Ethereum wire protocol configuration. */
@@ -214,6 +217,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
     this.genesisConfig = genesisConfig;
+    return this;
+  }
+
+  /**
+   * Genesis state hash from data besu controller builder.
+   *
+   * @param genesisStateHashCacheEnabled the is genesis state hash from data
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder genesisStateHashCacheEnabled(
+      final Boolean genesisStateHashCacheEnabled) {
+    this.genesisStateHashCacheEnabled = genesisStateHashCacheEnabled;
     return this;
   }
 
@@ -526,10 +541,29 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
-    final GenesisState genesisState =
-        GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
+    final GenesisState genesisState;
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
+
+    Optional<Hash> genesisStateHash = Optional.empty();
+    if (variablesStorage != null && this.genesisStateHashCacheEnabled) {
+      genesisStateHash = variablesStorage.getGenesisStateHash();
+    }
+
+    if (genesisStateHash.isPresent()) {
+      genesisState =
+          GenesisState.fromConfig(genesisStateHash.get(), genesisConfig, protocolSchedule);
+    } else {
+      genesisState =
+          GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
+      if (variablesStorage != null) {
+        VariablesStorage.Updater updater = variablesStorage.updater();
+        if (updater != null) {
+          updater.setGenesisStateHash(genesisState.getBlock().getHeader().getStateRoot());
+          updater.commit();
+        }
+      }
+    }
 
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration);
