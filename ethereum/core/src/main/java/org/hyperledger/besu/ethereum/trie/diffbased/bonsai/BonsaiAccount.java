@@ -82,6 +82,7 @@ public class BonsaiAccount extends DiffBasedAccount {
         toCopy.nonce,
         toCopy.balance,
         toCopy.codeHash,
+        toCopy.code,
         mutable);
     this.storageRoot = toCopy.storageRoot;
     updatedStorage.putAll(toCopy.updatedStorage);
@@ -96,6 +97,7 @@ public class BonsaiAccount extends DiffBasedAccount {
         tracked.getNonce(),
         tracked.getBalance(),
         tracked.getCodeHash(),
+        tracked.getCode(),
         true);
     this.storageRoot = Hash.EMPTY_TRIE_HASH;
     updatedStorage.putAll(tracked.getUpdatedStorage());
