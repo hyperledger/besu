@@ -267,7 +267,8 @@ public abstract class AbstractTransactionPoolTest {
     final TransactionPoolConfiguration poolConfig = configBuilder.build();
 
     final TransactionPoolReplacementHandler transactionReplacementHandler =
-        new TransactionPoolReplacementHandler(poolConfig.getPriceBump());
+        new TransactionPoolReplacementHandler(
+            poolConfig.getPriceBump(), poolConfig.getBlobPriceBump());
 
     final BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester =
         (t1, t2) ->
