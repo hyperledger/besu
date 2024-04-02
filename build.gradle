@@ -847,25 +847,6 @@ task manifestDocker {
 
   doLast {
     for (baseTag in tags) {
-      //for (def variant in dockerVariants) {
-      //def variantImage = "${baseTag}-${variant}"
-      def targets = ""
-      archs.forEach { arch -> targets += "'${image}-${arch}' " }
-
-      exec {
-        def cmd = "docker manifest create '${image}' ${targets}"
-        println "Executing '${cmd}'"
-        executable shell
-        args "-c", cmd
-      }
-      exec {
-        def cmd = "docker manifest push '${image}'"
-        println "Executing '${cmd}'"
-        executable shell
-        args "-c", cmd
-      }
-      //}
-
       exec {
         targets = ""
         archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
