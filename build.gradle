@@ -834,23 +834,24 @@ task dockerUploadRelease {
 
 task manifestDocker {
   def image = "${dockerImageName}:${dockerBuildVersion}"
-  def archs = ["arm64", "amd64"] //TODO: this assumes dockerUpload task has already been run on 2 different archs!
-
+  def archs = [
+    "arm64",
+    "amd64"] //TODO: this assumes dockerUpload task has already been run on 2 different archs!
   doLast {
-      exec {
-        def targets = ""
-        archs.forEach { arch -> targets += "'${image}-${arch}' " }
-        def cmd = "docker manifest create '${image}' ${targets}"
-        println "Executing '${cmd}'"
-        executable shell
-        args "-c", cmd
-      }
-      exec {
-        def cmd = "docker manifest push '${image}'"
-        println "Executing '${cmd}'"
-        executable shell
-        args "-c", cmd
-      }
+    exec {
+      def targets = ""
+      archs.forEach { arch -> targets += "'${image}-${arch}' " }
+      def cmd = "docker manifest create '${image}' ${targets}"
+      println "Executing '${cmd}'"
+      executable shell
+      args "-c", cmd
+    }
+    exec {
+      def cmd = "docker manifest push '${image}'"
+      println "Executing '${cmd}'"
+      executable shell
+      args "-c", cmd
+    }
   }
 }
 
