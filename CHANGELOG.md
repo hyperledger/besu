@@ -9,6 +9,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- Upgrade Reference Tests to 13.2 [#6854](https://github.com/hyperledger/besu/pull/6854)
 
 ### Bug fixes
 - Fix to avoid broadcasting full blob txs, instead of only the tx announcement, to a subset of nodes [#6835](https://github.com/hyperledger/besu/pull/6835)
