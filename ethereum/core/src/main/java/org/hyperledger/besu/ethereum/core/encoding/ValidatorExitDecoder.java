@@ -17,10 +17,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.ethereum.core.ValidatorExit;
-import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class ValidatorExitDecoder {
 
@@ -31,9 +28,5 @@ public class ValidatorExitDecoder {
     rlpInput.leaveList();
 
     return new ValidatorExit(sourceAddress, validatorPublicKey);
-  }
-
-  public static ValidatorExit decodeOpaqueBytes(final Bytes input) {
-    return decode(RLP.input(input));
   }
 }

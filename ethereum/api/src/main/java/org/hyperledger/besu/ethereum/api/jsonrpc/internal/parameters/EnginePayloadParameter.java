@@ -67,7 +67,7 @@ public class EnginePayloadParameter {
    * @param blobGasUsed QUANTITY, 64 Bits
    * @param excessBlobGas QUANTITY, 64 Bits
    * @param deposits List of deposit parameters.
-   * @param deposits List of exits parameters.
+   * @param exits List of exits parameters.
    */
   @JsonCreator
   public EnginePayloadParameter(

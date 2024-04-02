@@ -816,9 +816,6 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
 
-    final Address depositContractAddress =
-        genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
-
     return futureEipsDefinition(
             chainId,
             configContractSizeLimit,
@@ -831,8 +828,6 @@ public abstract class MainnetProtocolSpecs {
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.experimentalEips(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
-        .exitsValidator(new ValidatorExitsValidator.AllowedExits())
         .name("ExperimentalEips");
   }
 
