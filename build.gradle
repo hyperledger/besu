@@ -26,7 +26,6 @@ plugins {
   id 'com.diffplug.spotless' version '6.23.3'
   id 'com.github.ben-manes.versions' version '0.50.0'
   id 'com.github.jk1.dependency-license-report' version '2.5'
-  id 'com.jfrog.artifactory' version '5.1.11'
   id 'io.spring.dependency-management' version '1.1.4'
   id 'me.champeau.jmh' version '0.7.2' apply false
   id 'net.ltgt.errorprone' version '3.1.0'
@@ -662,16 +661,6 @@ distZip {
   }
   archiveBaseName = 'linea-besu'
   setVersion(archiveBuildVersion)
-}
-
-publishing {
-  publications {
-    distArtifactory(MavenPublication) {
-      groupId = '.'
-      version = project.version
-      artifactId = 'linea-besu'
-    }
-  }
 }
 
 def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project.property('release.releaseVersion') : "${rootProject.version}"
