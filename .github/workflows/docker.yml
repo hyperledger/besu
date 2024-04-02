@@ -21,8 +21,8 @@ jobs:
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
-      - name: hadoLint_openjdk_latest
-        run: docker run --rm -i hadolint/hadolint < docker/openjdk-latest/Dockerfile
+      - name: hadoLint
+        run: docker run --rm -i hadolint/hadolint < docker/Dockerfile
   buildDocker:
     needs: hadolint
     permissions:
