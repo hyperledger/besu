@@ -32,6 +32,7 @@
 - Prevent startup with BONSAI and privacy enabled [#6809](https://github.com/hyperledger/besu/pull/6809)
 - Remove deprecated Forest pruning [#6810](https://github.com/hyperledger/besu/pull/6810)
 - Experimental Snap Sync Server [#6640](https://github.com/hyperledger/besu/pull/6640)
+- Upgrade Reference Tests to 13.2 [#6854](https://github.com/hyperledger/besu/pull/6854)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
