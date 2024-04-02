@@ -695,21 +695,6 @@ publishing {
   }
 }
 
-def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
-def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
-def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
-
-artifactory {
-  contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
-  publish {
-    defaults {
-      publications('distArtifactory')
-      publishArtifacts = true
-      publishPom = false
-    }
-  }
-}
-
 artifactoryPublish {
   dependsOn distTar
   dependsOn distZip

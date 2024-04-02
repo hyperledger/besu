@@ -117,7 +117,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return cachedWorldStorageManager.containWorldStateStorage(blockHash)
+    return cachedWorldStorageManager.contains(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateKeyValueStorage.isWorldStateAvailable(rootHash, blockHash);
   }
@@ -132,7 +132,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
       if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
           >= trieLogManager.getMaxLayersToLoad()) {
         LOG.warn(
-            "Exceeded the limit of back layers that can be loaded ({})",
+            "Exceeded the limit of historical blocks that can be loaded ({}). If you need to make older historical queries, configure your `--bonsai-historical-block-limit`.",
             trieLogManager.getMaxLayersToLoad());
         return Optional.empty();
       }

@@ -30,8 +30,10 @@ import java.util.Collections;
 import java.util.EnumSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,16 +49,33 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
   private final TransactionsMessageSender transactionsMessageSender;
   private final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender;
   private final EthContext ethContext;
+  private final Random random;
 
   public TransactionBroadcaster(
       final EthContext ethContext,
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender) {
+    this(
+        ethContext,
+        transactionTracker,
+        transactionsMessageSender,
+        newPooledTransactionHashesMessageSender,
+        null);
+  }
+
+  @VisibleForTesting
+  protected TransactionBroadcaster(
+      final EthContext ethContext,
+      final PeerTransactionTracker transactionTracker,
+      final TransactionsMessageSender transactionsMessageSender,
+      final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
+      final Long seed) {
     this.transactionTracker = transactionTracker;
     this.transactionsMessageSender = transactionsMessageSender;
     this.newPooledTransactionHashesMessageSender = newPooledTransactionHashesMessageSender;
     this.ethContext = ethContext;
+    this.random = seed != null ? new Random(seed) : new Random();
   }
 
   public void relayTransactionPoolTo(
@@ -65,7 +84,13 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
       if (peer.hasSupportForMessage(EthPV65.NEW_POOLED_TRANSACTION_HASHES)) {
         sendTransactionHashes(toTransactionList(pendingTransactions), List.of(peer));
       } else {
-        sendFullTransactions(toTransactionList(pendingTransactions), List.of(peer));
+        // we need to exclude txs that support hash only broadcasting
+        final var fullBroadcastTxs =
+            pendingTransactions.stream()
+                .map(PendingTransaction::getTransaction)
+                .filter(tx -> !ANNOUNCE_HASH_ONLY_TX_TYPES.contains(tx.getType()))
+                .toList();
+        sendFullTransactions(fullBroadcastTxs, List.of(peer));
       }
     }
   }
@@ -77,7 +102,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
       return;
     }
 
-    final int numPeersToSendFullTransactions = (int) Math.ceil(Math.sqrt(currPeerCount));
+    final int numPeersToSendFullTransactions = (int) Math.round(Math.sqrt(currPeerCount));
 
     final Map<Boolean, List<Transaction>> transactionByBroadcastMode =
         transactions.stream()
@@ -107,7 +132,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
               numPeersToSendFullTransactions - sendOnlyFullTransactionPeers.size(),
               sendOnlyHashPeers.size());
 
-      Collections.shuffle(sendOnlyHashPeers);
+      Collections.shuffle(sendOnlyHashPeers, random);
 
       // move peers from the mixed list to reach the required size for full transaction peers
       movePeersBetweenLists(sendOnlyHashPeers, sendMixedPeers, delta);
@@ -121,7 +146,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
         .addArgument(sendOnlyHashPeers::size)
         .addArgument(sendMixedPeers::size)
         .addArgument(sendOnlyFullTransactionPeers)
-        .addArgument(() -> sendOnlyHashPeers.toString() + sendMixedPeers.toString())
+        .addArgument(() -> sendOnlyHashPeers.toString() + sendMixedPeers)
         .log();
 
     sendToFullTransactionsPeers(
@@ -141,7 +166,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
       final Map<Boolean, List<Transaction>> txsByHashOnlyBroadcast,
       final List<EthPeer> hashOnlyPeers) {
     final List<Transaction> allTransactions =
-        txsByHashOnlyBroadcast.values().stream().flatMap(List::stream).collect(Collectors.toList());
+        txsByHashOnlyBroadcast.values().stream().flatMap(List::stream).toList();
 
     sendTransactionHashes(allTransactions, hashOnlyPeers);
   }
@@ -175,7 +200,7 @@ public class TransactionBroadcaster implements TransactionBatchAddedListener {
           .forEach(
               peer -> {
                 transactions.forEach(
-                    transaction -> transactionTracker.addToPeerSendQueue(peer, transaction));
+                    transaction -> transactionTracker.addToPeerHashSendQueue(peer, transaction));
                 ethContext
                     .getScheduler()
                     .scheduleSyncWorkerTask(

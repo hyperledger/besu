@@ -77,7 +77,11 @@ public class QbftBlockCreatorFactory extends BftBlockCreatorFactory<QbftConfigOp
       return blockCreator;
     } else {
       return new PkiQbftBlockCreator(
-          blockCreator, qbftContext.getPkiBlockCreationConfiguration().get(), bftExtraDataCodec);
+          blockCreator,
+          qbftContext.getPkiBlockCreationConfiguration().get(),
+          bftExtraDataCodec,
+          parentHeader,
+          protocolSchedule);
     }
   }
 
