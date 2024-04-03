@@ -469,7 +469,7 @@ public class EthPeer implements Comparable<EthPeer> {
    *
    * @param protocolName the type of protocol the message is for
    * @param code the message code
-   * @return a request manager for the received response messsage, or Optional.empty() if this is a
+   * @return a request manager for the received response message, or Optional.empty() if this is a
    *     request message
    */
   private Optional<RequestManager> getRequestManager(final String protocolName, final int code) {
@@ -639,7 +639,7 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, %s, %s, isServingSNAP %s, has height %s, connected for %s ms",
+        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s, isServingSNAP %s, has height %s, connected for %s ms",
         getLoggableId(),
         reputation,
         isFullyValidated(),
