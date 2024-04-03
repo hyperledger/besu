@@ -46,11 +46,7 @@ jobs:
           path: 'build/distributions/besu*.zip'
           name: besu-${{ github.ref_name }}.zip
           compression-level: 0
-      - name: Artifactory Publish
-        env:
-          ARTIFACTORY_USER: ${{ secrets.BESU_ARTIFACTORY_USER }}
-          ARTIFACTORY_KEY: ${{ secrets.BESU_ARTIFACTORY_TOKEN }}
-        run: ./gradlew -Prelease.releaseVersion=${{ github.ref_name }} -Pversion=${{github.ref_name}} artifactoryPublish
+
   testWindows:
     runs-on: windows-2022
     needs: artifacts
@@ -95,3 +91,12 @@ jobs:
           body: |
             ${{steps.hashes.outputs.tarSha}}
             ${{steps.hashes.outputs.zipSha}}
+  arifactoryPublish:
+    runs-on: ubuntu-22.04
+    needs: artifacts
+    steps:
+      - name: Artifactory Publish
+        env:
+          ARTIFACTORY_USER: ${{ secrets.BESU_ARTIFACTORY_USER }}
+          ARTIFACTORY_KEY: ${{ secrets.BESU_ARTIFACTORY_TOKEN }}
+        run: ./gradlew -Prelease.releaseVersion=${{ github.ref_name }} -Pversion=${{github.ref_name}} artifactoryPublish

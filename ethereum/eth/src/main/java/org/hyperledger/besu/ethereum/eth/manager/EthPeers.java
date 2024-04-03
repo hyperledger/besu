@@ -177,14 +177,21 @@ public class EthPeers {
 
   public boolean registerDisconnect(final PeerConnection connection) {
     final EthPeer peer = peer(connection);
-    return registerDisconnect(peer.getId(), peer, connection);
+    return registerDisconnect(peer, connection);
   }
 
-  private boolean registerDisconnect(
-      final Bytes id, final EthPeer peer, final PeerConnection connection) {
+  private boolean registerDisconnect(final EthPeer peer, final PeerConnection connection) {
     incompleteConnections.invalidate(connection);
     boolean removed = false;
-    if (peer != null && peer.getConnection().equals(connection)) {
+    if (peer == null) {
+      LOG.atTrace()
+          .setMessage("attempt to remove null peer with connection {}")
+          .addArgument(connection)
+          .log();
+      return false;
+    }
+    if (peer.getConnection().equals(connection)) {
+      final Bytes id = peer.getId();
       if (!peerHasIncompleteConnection(id)) {
         removed = completeConnections.remove(id, peer);
         disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
@@ -297,7 +304,7 @@ public class EthPeers {
         .forEach(
             ep -> {
               if (ep.isDisconnected()) {
-                registerDisconnect(ep.getId(), ep, ep.getConnection());
+                registerDisconnect(ep, ep.getConnection());
               }
             });
   }
