@@ -605,7 +605,7 @@ task untunedStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(startScripts) }
+  doLast { tweakStartScript(untunedStartScripts) }
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
@@ -987,7 +987,7 @@ def calculateVersion() {
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
     println("Generating project version as supplied is version not semver: ${project.version}")
-    def gitDetails = getGitCommitDetails(10) // Adjust length as needed
+    def gitDetails = getGitCommitDetails(7) // Adjust length as needed
     return "${gitDetails.date}-develop-${gitDetails.hash}"
   }
 }
