@@ -110,7 +110,8 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
     this.clock = clock;
     this.chainHeadHeaderSupplier = chainHeadHeaderSupplier;
     this.transactionReplacementHandler =
-        new TransactionPoolReplacementHandler(poolConfig.getPriceBump());
+        new TransactionPoolReplacementHandler(
+            poolConfig.getPriceBump(), poolConfig.getBlobPriceBump());
     final LabelledMetric<Counter> transactionAddedCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.TRANSACTION_POOL,
