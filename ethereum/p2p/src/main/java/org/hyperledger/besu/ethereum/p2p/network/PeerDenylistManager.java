@@ -57,7 +57,8 @@ public class PeerDenylistManager implements DisconnectCallback {
             connection.getPeer().getLoggableId(),
             reason.name());
       } else {
-        LOG.debug("Added peer {} to denylist for reason {}", connection.getPeerInfo(), reason.name());
+        LOG.debug(
+            "Added peer {} to denylist for reason {}", connection.getPeerInfo(), reason.name());
         denylist.add(connection.getPeer());
       }
     }

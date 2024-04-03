@@ -132,6 +132,7 @@ public class Subscribers<T> {
               } catch (final Exception e) {
                 if (suppressCallbackExceptions) {
                   LOG.debug("Error in callback: {}", e);
+                  LOG.trace("Error in callback: {}", e.fillInStackTrace());
                 } else {
                   throw e;
                 }
