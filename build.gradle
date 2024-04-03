@@ -695,21 +695,6 @@ publishing {
   }
 }
 
-def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
-def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
-def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
-
-artifactory {
-  contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
-  publish {
-    defaults {
-      publications('distArtifactory')
-      publishArtifacts = true
-      publishPom = false
-    }
-  }
-}
-
 artifactoryPublish {
   dependsOn distTar
   dependsOn distZip
@@ -1035,7 +1020,7 @@ def calculateVersion() {
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
     println("Generating project version as supplied is version not semver: ${project.version}")
-    def gitDetails = getGitCommitDetails(10) // Adjust length as needed
+    def gitDetails = getGitCommitDetails(7) // Adjust length as needed
     return "${gitDetails.date}-develop-${gitDetails.hash}"
   }
 }
