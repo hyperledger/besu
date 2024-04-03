@@ -100,8 +100,10 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
       final EthMessages snapMessages,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext) {
-    this.snapServerEnabled = Optional.ofNullable(snapConfig)
-        .map(SnapSyncConfiguration::isSnapServerEnabled).orElse(false);
+    this.snapServerEnabled =
+        Optional.ofNullable(snapConfig)
+            .map(SnapSyncConfiguration::isSnapServerEnabled)
+            .orElse(false);
     this.snapMessages = snapMessages;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolContext = Optional.of(protocolContext);
