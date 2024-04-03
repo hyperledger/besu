@@ -21,8 +21,13 @@ import org.hyperledger.besu.consensus.qbft.validation.MessageValidatorFactory;
 import org.hyperledger.besu.consensus.qbft.validator.ValidatorModeTransitionLogger;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** The Qbft block height manager factory. */
 public class QbftBlockHeightManagerFactory {
+
+  private static final Logger LOG = LoggerFactory.getLogger(QbftBlockHeightManagerFactory.class);
 
   private final QbftRoundFactory roundFactory;
   private final BftFinalState finalState;
@@ -62,8 +67,10 @@ public class QbftBlockHeightManagerFactory {
     validatorModeTransitionLogger.logTransitionChange(parentHeader);
 
     if (finalState.isLocalNodeValidator()) {
+      LOG.debug("Local node is a validator");
       return createFullBlockHeightManager(parentHeader);
     } else {
+      LOG.debug("Local node is a non-validator");
       return createNoOpBlockHeightManager(parentHeader);
     }
   }
