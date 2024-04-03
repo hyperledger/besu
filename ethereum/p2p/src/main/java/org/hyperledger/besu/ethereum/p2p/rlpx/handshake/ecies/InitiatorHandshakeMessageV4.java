@@ -120,4 +120,9 @@ public final class InitiatorHandshakeMessageV4 implements InitiatorHandshakeMess
   public Bytes32 getEphPubKeyHash() {
     return ephPubKeyHash;
   }
+
+  @Override
+  public String toString() {
+    return "InitiatorHandshakeMessageV4{" + "pubKey=" + pubKey + ", nonce=" + nonce + '}';
+  }
 }
