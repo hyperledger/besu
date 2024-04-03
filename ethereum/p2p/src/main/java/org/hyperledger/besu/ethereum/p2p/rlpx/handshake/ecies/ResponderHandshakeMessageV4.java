@@ -67,4 +67,14 @@ public class ResponderHandshakeMessageV4 implements ResponderHandshakeMessage {
     temp.endList();
     return temp.encoded();
   }
+
+  @Override
+  public String toString() {
+    return "ResponderHandshakeMessageV4{"
+        + "ephPublicKey="
+        + ephPublicKey
+        + ", nonce="
+        + nonce
+        + '}';
+  }
 }
