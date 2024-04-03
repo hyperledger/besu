@@ -629,7 +629,7 @@ task untunedStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(startScripts) }
+  doLast { tweakStartScript(untunedStartScripts) }
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
