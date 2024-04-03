@@ -437,7 +437,7 @@ public class EthPeer implements Comparable<EthPeer> {
         localRequestManager -> localRequestManager.dispatchResponse(ethMessage),
         () -> {
           LOG.trace(
-              "Message {} not expected has just been received for protocol {}, peer {} ",
+              "Message {} not expected has just been received for protocol {}, {} ",
               messageCode,
               protocolName,
               this);
