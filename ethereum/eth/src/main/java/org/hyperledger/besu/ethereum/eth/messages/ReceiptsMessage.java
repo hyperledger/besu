@@ -46,7 +46,7 @@ public final class ReceiptsMessage extends AbstractMessageData {
     receipts.forEach(
         (receiptSet) -> {
           tmp.startList();
-          receiptSet.forEach(r -> r.writeTo(tmp));
+          receiptSet.forEach(r -> r.writeToForNetwork(tmp));
           tmp.endList();
         });
     tmp.endList();

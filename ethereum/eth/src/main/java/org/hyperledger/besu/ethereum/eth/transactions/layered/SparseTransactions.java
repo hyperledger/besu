@@ -39,7 +39,6 @@ import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -404,7 +403,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
   @Override
   protected void internalConsistencyCheck(
-      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+      final Map<Address, NavigableMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     txsBySender.values().stream()
         .filter(senderTxs -> senderTxs.size() > 1)
         .map(NavigableMap::entrySet)

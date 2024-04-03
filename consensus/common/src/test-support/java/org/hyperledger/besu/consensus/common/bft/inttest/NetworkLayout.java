@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.Set;
 import java.util.TreeMap;
 
@@ -29,11 +30,11 @@ import com.google.common.collect.Iterables;
 public class NetworkLayout {
 
   private final NodeParams localNode;
-  private final TreeMap<Address, NodeParams> addressKeyMap;
+  private final NavigableMap<Address, NodeParams> addressKeyMap;
   private final List<NodeParams> remotePeers;
 
   public NetworkLayout(
-      final NodeParams localNode, final TreeMap<Address, NodeParams> addressKeyMap) {
+      final NodeParams localNode, final NavigableMap<Address, NodeParams> addressKeyMap) {
     this.localNode = localNode;
     this.addressKeyMap = addressKeyMap;
     this.remotePeers = new ArrayList<>(addressKeyMap.values());
@@ -42,14 +43,14 @@ public class NetworkLayout {
 
   public static NetworkLayout createNetworkLayout(
       final int validatorCount, final int firstLocalNodeBlockNum) {
-    final TreeMap<Address, NodeParams> addressKeyMap = createValidators(validatorCount);
+    final NavigableMap<Address, NodeParams> addressKeyMap = createValidators(validatorCount);
 
     final NodeParams localNode = Iterables.get(addressKeyMap.values(), firstLocalNodeBlockNum);
 
     return new NetworkLayout(localNode, addressKeyMap);
   }
 
-  private static TreeMap<Address, NodeParams> createValidators(final int validatorCount) {
+  private static NavigableMap<Address, NodeParams> createValidators(final int validatorCount) {
     // Map is required to be sorted by address
     final TreeMap<Address, NodeParams> addressKeyMap = new TreeMap<>();
 

@@ -37,8 +37,16 @@ public class JsonRpcTestHelper {
   }
 
   protected void assertValidJsonRpcError(
-      final JsonObject json, final Object id, final int errorCode, final String errorMessage)
-      throws Exception {
+      final JsonObject json, final Object id, final int errorCode, final String errorMessage) {
+    assertValidJsonRpcError(json, id, errorCode, errorMessage, null);
+  }
+
+  protected void assertValidJsonRpcError(
+      final JsonObject json,
+      final Object id,
+      final int errorCode,
+      final String errorMessage,
+      final String data) {
     // Check all expected fieldnames are set
     final Set<String> fieldNames = json.fieldNames();
     assertThat(fieldNames.size()).isEqualTo(3);
@@ -53,13 +61,19 @@ public class JsonRpcTestHelper {
     // Check error format
     final JsonObject error = json.getJsonObject("error");
     final Set<String> errorFieldNames = error.fieldNames();
-    assertThat(errorFieldNames.size()).isEqualTo(2);
+    assertThat(errorFieldNames.size()).isEqualTo(data == null ? 2 : 3);
     assertThat(errorFieldNames.contains("code")).isTrue();
     assertThat(errorFieldNames.contains("message")).isTrue();
+    if (data != null) {
+      assertThat(errorFieldNames.contains("data")).isTrue();
+    }
 
     // Check error field values
     assertThat(error.getInteger("code")).isEqualTo(errorCode);
     assertThat(error.getString("message")).isEqualTo(errorMessage);
+    if (data != null) {
+      assertThat(error.getString("data")).isEqualTo(data);
+    }
   }
 
   protected void assertIdMatches(final JsonObject json, final Object expectedId) {
