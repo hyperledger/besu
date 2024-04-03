@@ -32,6 +32,7 @@ dependencies {
   api 'org.web3j:core'
 
   annotationProcessor 'org.openjdk.jmh:jmh-generator-annprocess'
+  annotationProcessor 'org.hyperledger.besu:besu-errorprone-checks'
 
   implementation project(':config')
   implementation project(':crypto:algorithms')
@@ -47,6 +48,7 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.google.guava:guava'
+  implementation 'com.github.ben-manes.caffeine:caffeine'
   implementation 'com.google.dagger:dagger'
   implementation 'org.apache.maven:maven-artifact'
   annotationProcessor 'com.google.dagger:dagger-compiler'

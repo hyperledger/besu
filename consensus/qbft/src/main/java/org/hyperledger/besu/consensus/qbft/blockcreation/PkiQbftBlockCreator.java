@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
@@ -29,6 +30,9 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.pki.cms.CmsCreator;
 
 import java.util.Collections;
@@ -48,6 +52,8 @@ public class PkiQbftBlockCreator implements BlockCreator {
   private final BlockCreator blockCreator;
   private final PkiQbftExtraDataCodec pkiQbftExtraDataCodec;
   private final CmsCreator cmsCreator;
+  private final BlockHeader parentHeader;
+  private final ProtocolSchedule protocolSchedule;
 
   /**
    * Instantiates a new Pki qbft block creator.
@@ -55,17 +61,24 @@ public class PkiQbftBlockCreator implements BlockCreator {
    * @param blockCreator the block creator
    * @param pkiBlockCreationConfiguration the pki block creation configuration
    * @param pkiQbftExtraDataCodec the pki qbft extra data codec
+   * @param parentHeader the block header of the parent block
+   * @param protocolSchedule the protocol schedule (the type of block can vary based on the current
+   *     protocol spec)
    */
   public PkiQbftBlockCreator(
       final BlockCreator blockCreator,
       final PkiBlockCreationConfiguration pkiBlockCreationConfiguration,
-      final BftExtraDataCodec pkiQbftExtraDataCodec) {
+      final BftExtraDataCodec pkiQbftExtraDataCodec,
+      final BlockHeader parentHeader,
+      final ProtocolSchedule protocolSchedule) {
     this(
         blockCreator,
         new CmsCreator(
             pkiBlockCreationConfiguration.getKeyStore(),
             pkiBlockCreationConfiguration.getCertificateAlias()),
-        pkiQbftExtraDataCodec);
+        pkiQbftExtraDataCodec,
+        parentHeader,
+        protocolSchedule);
   }
 
   /**
@@ -74,14 +87,21 @@ public class PkiQbftBlockCreator implements BlockCreator {
    * @param blockCreator the block creator
    * @param cmsCreator the cms creator
    * @param bftExtraDataCodec the bft extra data codec
+   * @param parentHeader the block header of the parent block
+   * @param protocolSchedule the protocol schedule (the type of block can vary based on the current
+   *     protocol spec)
    */
   @VisibleForTesting
   public PkiQbftBlockCreator(
       final BlockCreator blockCreator,
       final CmsCreator cmsCreator,
-      final BftExtraDataCodec bftExtraDataCodec) {
+      final BftExtraDataCodec bftExtraDataCodec,
+      final BlockHeader parentHeader,
+      final ProtocolSchedule protocolSchedule) {
     this.blockCreator = blockCreator;
     this.cmsCreator = cmsCreator;
+    this.protocolSchedule = protocolSchedule;
+    this.parentHeader = parentHeader;
 
     checkArgument(
         bftExtraDataCodec instanceof PkiQbftExtraDataCodec,
@@ -91,7 +111,16 @@ public class PkiQbftBlockCreator implements BlockCreator {
 
   @Override
   public BlockCreationResult createBlock(final long timestamp) {
-    final BlockCreationResult blockCreationResult = blockCreator.createBlock(timestamp);
+    ProtocolSpec protocolSpec =
+        ((BftProtocolSchedule) protocolSchedule)
+            .getByBlockNumberOrTimestamp(parentHeader.getNumber() + 1, timestamp);
+
+    final BlockCreationResult blockCreationResult;
+    if (protocolSpec.getWithdrawalsValidator() instanceof WithdrawalsValidator.AllowedWithdrawals) {
+      blockCreationResult = blockCreator.createEmptyWithdrawalsBlock(timestamp);
+    } else {
+      blockCreationResult = blockCreator.createBlock(timestamp);
+    }
     return replaceCmsInBlock(blockCreationResult);
   }
 
@@ -112,6 +141,13 @@ public class PkiQbftBlockCreator implements BlockCreator {
         maybeTransactions.orElse(Collections.emptyList()),
         maybeOmmers.orElse(Collections.emptyList()),
         timestamp);
+  }
+
+  @Override
+  public BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp) {
+    final BlockCreationResult blockCreationResult =
+        blockCreator.createEmptyWithdrawalsBlock(timestamp);
+    return replaceCmsInBlock(blockCreationResult);
   }
 
   private BlockCreationResult replaceCmsInBlock(final BlockCreationResult blockCreationResult) {

@@ -569,7 +569,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected abstract String internalLogStats();
 
   boolean consistencyCheck(
-      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+      final Map<Address, NavigableMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     final BinaryOperator<PendingTransaction> noMergeExpected =
         (a, b) -> {
           throw new IllegalArgumentException();
@@ -606,7 +606,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   protected abstract void internalConsistencyCheck(
-      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender);
+      final Map<Address, NavigableMap<Long, PendingTransaction>> prevLayerTxsBySender);
 
   public BlobCache getBlobCache() {
     return blobCache;

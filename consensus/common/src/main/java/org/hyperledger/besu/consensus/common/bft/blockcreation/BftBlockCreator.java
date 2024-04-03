@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
@@ -29,7 +30,10 @@ import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
+import java.util.Collections;
 import java.util.Optional;
 
 /** The Bft block creator. */
@@ -77,10 +81,29 @@ public class BftBlockCreator extends AbstractBlockCreator {
     this.bftExtraDataCodec = bftExtraDataCodec;
   }
 
+  @Override
+  public BlockCreationResult createBlock(final long timestamp) {
+    ProtocolSpec protocolSpec =
+        ((BftProtocolSchedule) protocolSchedule)
+            .getByBlockNumberOrTimestamp(parentHeader.getNumber() + 1, timestamp);
+
+    if (protocolSpec.getWithdrawalsValidator() instanceof WithdrawalsValidator.AllowedWithdrawals) {
+      return createEmptyWithdrawalsBlock(timestamp);
+    } else {
+      return createBlock(Optional.empty(), Optional.empty(), timestamp);
+    }
+  }
+
   private static MiningBeneficiaryCalculator miningBeneficiaryCalculator(
       final Address localAddress, final ForksSchedule<? extends BftConfigOptions> forksSchedule) {
     return blockNum ->
         forksSchedule.getFork(blockNum).getValue().getMiningBeneficiary().orElse(localAddress);
+  }
+
+  @Override
+  public BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp) {
+    return createBlock(
+        Optional.empty(), Optional.empty(), Optional.of(Collections.emptyList()), timestamp);
   }
 
   @Override

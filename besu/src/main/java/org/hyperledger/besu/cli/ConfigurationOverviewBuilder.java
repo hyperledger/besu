@@ -55,6 +55,7 @@ public class ConfigurationOverviewBuilder {
   private boolean isBonsaiLimitTrieLogsEnabled = false;
   private long trieLogRetentionLimit = 0;
   private Integer trieLogsPruningWindowSize = null;
+  private boolean isSnapServerEnabled = false;
   private TransactionPoolConfiguration.Implementation txPoolImplementation;
   private EvmConfiguration.WorldUpdaterMode worldStateUpdateMode;
   private Map<String, String> environment;
@@ -220,6 +221,17 @@ public class ConfigurationOverviewBuilder {
   }
 
   /**
+   * Sets snap server enabled/disabled
+   *
+   * @param snapServerEnabled bool to indicate if snap server is enabled
+   * @return the builder
+   */
+  public ConfigurationOverviewBuilder setSnapServerEnabled(final boolean snapServerEnabled) {
+    isSnapServerEnabled = snapServerEnabled;
+    return this;
+  }
+
+  /**
    * Sets trie logs pruning window size
    *
    * @param size the max number of blocks to load and prune trie logs for at startup
@@ -338,6 +350,10 @@ public class ConfigurationOverviewBuilder {
     }
 
     lines.add("Using " + worldStateUpdateMode + " worldstate update mode");
+
+    if (isSnapServerEnabled) {
+      lines.add("Experimental Snap Sync server enabled");
+    }
 
     if (isBonsaiLimitTrieLogsEnabled) {
       final StringBuilder trieLogPruningString = new StringBuilder();

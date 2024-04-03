@@ -133,6 +133,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
@@ -802,7 +803,7 @@ public class RunnerBuilder {
               metricsSystem,
               supportedCapabilities,
               jsonRpcConfiguration.getRpcApis().stream()
-                  .filter(apiGroup -> !apiGroup.toLowerCase().startsWith("engine"))
+                  .filter(apiGroup -> !apiGroup.toLowerCase(Locale.ROOT).startsWith("engine"))
                   .collect(Collectors.toList()),
               filterManager,
               accountLocalConfigPermissioningController,
@@ -940,7 +941,7 @@ public class RunnerBuilder {
               metricsSystem,
               supportedCapabilities,
               webSocketConfiguration.getRpcApis().stream()
-                  .filter(apiGroup -> !apiGroup.toLowerCase().startsWith("engine"))
+                  .filter(apiGroup -> !apiGroup.toLowerCase(Locale.ROOT).startsWith("engine"))
                   .collect(Collectors.toList()),
               filterManager,
               accountLocalConfigPermissioningController,
@@ -1023,7 +1024,7 @@ public class RunnerBuilder {
               metricsSystem,
               supportedCapabilities,
               jsonRpcIpcConfiguration.getEnabledApis().stream()
-                  .filter(apiGroup -> !apiGroup.toLowerCase().startsWith("engine"))
+                  .filter(apiGroup -> !apiGroup.toLowerCase(Locale.ROOT).startsWith("engine"))
                   .collect(Collectors.toList()),
               filterManager,
               accountLocalConfigPermissioningController,
