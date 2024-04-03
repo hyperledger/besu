@@ -227,7 +227,7 @@ public class RlpxAgent {
       }
     } else {
       final String errorMsg =
-          "None of the ProtocolManagers wants to connect to peer " + peer.getId();
+          "None of the ProtocolManagers wants to connect to " + peer.getLoggableId();
       LOG.trace(errorMsg);
       return CompletableFuture.failedFuture((new RuntimeException(errorMsg)));
     }
@@ -298,9 +298,9 @@ public class RlpxAgent {
         .whenComplete(
             (conn, err) -> {
               if (err != null) {
-                LOG.debug("Failed to connect to peer {}: {}", peer.getId(), err);
+                LOG.debug("Failed to connect to peer {}: {}", peer.getLoggableId(), err);
               } else {
-                LOG.debug("Outbound connection established to peer: {}", peer.getId());
+                LOG.debug("Outbound connection established to peer: {}", peer.getLoggableId());
               }
             });
   }
@@ -329,6 +329,9 @@ public class RlpxAgent {
     if (checkWhetherToConnect(peer, true)) {
       dispatchConnect(peerConnection);
     } else {
+      final String errorMsg =
+          "None of the ProtocolManagers wants to connect to " + peer.getLoggableId();
+      LOG.trace(errorMsg);
       peerConnection.disconnect(DisconnectReason.UNKNOWN);
     }
   }
