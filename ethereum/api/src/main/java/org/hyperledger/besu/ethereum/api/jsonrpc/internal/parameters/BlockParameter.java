@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
+import java.util.Locale;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -38,7 +39,7 @@ public class BlockParameter {
 
   @JsonCreator
   public BlockParameter(final String value) {
-    final String normalizedValue = value.toLowerCase();
+    final String normalizedValue = value.toLowerCase(Locale.ROOT);
 
     switch (normalizedValue) {
       case "earliest":

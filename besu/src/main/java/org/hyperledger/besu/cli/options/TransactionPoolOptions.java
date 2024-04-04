@@ -52,6 +52,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private static final String TX_POOL_ENABLE_SAVE_RESTORE = "--tx-pool-enable-save-restore";
   private static final String TX_POOL_SAVE_FILE = "--tx-pool-save-file";
   private static final String TX_POOL_PRICE_BUMP = "--tx-pool-price-bump";
+  private static final String TX_POOL_BLOB_PRICE_BUMP = "--tx-pool-blob-price-bump";
   private static final String RPC_TX_FEECAP = "--rpc-tx-feecap";
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
@@ -101,6 +102,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
           "Price bump percentage to replace an already existing transaction  (default: ${DEFAULT-VALUE})",
       arity = "1")
   private Percentage priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP;
+
+  @CommandLine.Option(
+      names = {TX_POOL_BLOB_PRICE_BUMP},
+      paramLabel = "<Percentage>",
+      converter = PercentageConverter.class,
+      description =
+          "Blob price bump percentage to replace an already existing transaction blob tx (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private Percentage blobPriceBump = TransactionPoolConfiguration.DEFAULT_BLOB_PRICE_BUMP;
 
   @CommandLine.Option(
       names = {RPC_TX_FEECAP},
@@ -277,6 +287,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.saveRestoreEnabled = config.getEnableSaveRestore();
     options.noLocalPriority = config.getNoLocalPriority();
     options.priceBump = config.getPriceBump();
+    options.blobPriceBump = config.getBlobPriceBump();
     options.txFeeCap = config.getTxFeeCap();
     options.saveFile = config.getSaveFile();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
@@ -334,6 +345,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .enableSaveRestore(saveRestoreEnabled)
         .noLocalPriority(noLocalPriority)
         .priceBump(priceBump)
+        .blobPriceBump(blobPriceBump)
         .txFeeCap(txFeeCap)
         .saveFile(saveFile)
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)

@@ -19,7 +19,7 @@ import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -69,11 +69,14 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   @Override
   public BlockchainStorage createBlockchainStorage(
-      final ProtocolSchedule protocolSchedule, final VariablesStorage variablesStorage) {
+      final ProtocolSchedule protocolSchedule,
+      final VariablesStorage variablesStorage,
+      final DataStorageConfiguration dataStorageConfiguration) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
         getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN),
         variablesStorage,
-        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
+        dataStorageConfiguration.getReceiptCompactionEnabled());
   }
 
   @Override

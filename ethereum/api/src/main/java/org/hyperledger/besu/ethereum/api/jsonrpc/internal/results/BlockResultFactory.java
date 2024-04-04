@@ -154,7 +154,7 @@ public class BlockResultFactory {
         blobsBundleV1);
   }
 
-  public EngineGetPayloadResultV6110 payloadTransactionCompleteV6110(
+  public EngineGetPayloadResultV4 payloadTransactionCompleteV4(
       final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
@@ -168,7 +168,7 @@ public class BlockResultFactory {
 
     final BlobsBundleV1 blobsBundleV1 =
         new BlobsBundleV1(blockWithReceipts.getBlock().getBody().getTransactions());
-    return new EngineGetPayloadResultV6110(
+    return new EngineGetPayloadResultV4(
         blockWithReceipts.getHeader(),
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),

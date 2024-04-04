@@ -446,7 +446,8 @@ public class JsonUtil {
       final String errorMessage =
           String.format(
               "Expected %s value but got %s",
-              expectedType.toString().toLowerCase(), node.getNodeType().toString().toLowerCase());
+              expectedType.toString().toLowerCase(Locale.ROOT),
+              node.getNodeType().toString().toLowerCase(Locale.ROOT));
       throw new IllegalArgumentException(errorMessage);
     }
     return true;

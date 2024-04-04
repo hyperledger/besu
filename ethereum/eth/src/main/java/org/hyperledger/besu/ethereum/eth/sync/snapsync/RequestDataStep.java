@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.AccountFlatD
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.StorageFlatDatabaseHealingRangeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -40,6 +41,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
@@ -48,9 +50,11 @@ import com.google.common.collect.Lists;
 import kotlin.collections.ArrayDeque;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class RequestDataStep {
-
+  private static final Logger LOG = LoggerFactory.getLogger(RequestDataStep.class);
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final SnapSyncProcessState fastSyncState;
   private final SnapWorldDownloadState downloadState;
@@ -130,15 +134,36 @@ public class RequestDataStep {
             (response, error) -> {
               if (response != null) {
                 downloadState.removeOutstandingTask(getStorageRangeTask);
-                for (int i = 0; i < response.slots().size(); i++) {
-                  final StorageRangeDataRequest request =
-                      (StorageRangeDataRequest) requestTasks.get(i).getData();
-                  request.setRootHash(blockHeader.getStateRoot());
-                  request.addResponse(
-                      downloadState,
-                      worldStateProofProvider,
-                      response.slots().get(i),
-                      i < response.slots().size() - 1 ? new ArrayDeque<>() : response.proofs());
+                final ArrayDeque<NavigableMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
+                // Check if we have an empty range
+
+                /*
+                 * Checks if the response represents an "empty range".
+                 *
+                 * An "empty range" is defined as a response where at least one proof exists
+                 * and either no slots are present, or the first slot is empty
+                 */
+                try {
+                  final boolean isEmptyRange =
+                      (response.slots().isEmpty() || response.slots().get(0).isEmpty())
+                          && !response.proofs().isEmpty();
+                  if (isEmptyRange) { // empty range detected
+                    slots.add(new TreeMap<>());
+                  } else {
+                    slots.addAll(response.slots());
+                  }
+                  for (int i = 0; i < slots.size(); i++) {
+                    final StorageRangeDataRequest request =
+                        (StorageRangeDataRequest) requestTasks.get(i).getData();
+                    request.setRootHash(blockHeader.getStateRoot());
+                    request.addResponse(
+                        downloadState,
+                        worldStateProofProvider,
+                        slots.get(i),
+                        i < slots.size() - 1 ? new ArrayDeque<>() : response.proofs());
+                  }
+                } catch (final Exception e) {
+                  LOG.error("Error while processing storage range response", e);
                 }
               }
               return requestTasks;

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.config;
 
 import java.math.BigInteger;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -91,7 +92,7 @@ public enum NetworkName {
    * @return the string
    */
   public String normalize() {
-    return StringUtils.capitalize(name().toLowerCase());
+    return StringUtils.capitalize(name().toLowerCase(Locale.ROOT));
   }
 
   /**
