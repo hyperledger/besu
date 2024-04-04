@@ -210,8 +210,7 @@ class PivotBlockConfirmer {
       }
     }
 
-    LOG.debug(
-        "Query peer {}... for block {}.", peer.nodeId().toString().substring(0, 8), blockNumber);
+    LOG.debug("Query peer {} for block {}.", peer.getLoggableId(), blockNumber);
     return Optional.of(task);
   }
 

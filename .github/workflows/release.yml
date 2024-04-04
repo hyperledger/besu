@@ -25,6 +25,6 @@ jobs:
         with:
           cache-disabled: true
       - name: Docker upload
-        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" dockerUploadRelease
+        run: ./gradlew "-Prelease.releaseVersion=${{ github.event.release.name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" dockerUploadRelease
       - name: Docker manifest
-        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" manifestDockerRelease
+        run: ./gradlew "-Prelease.releaseVersion=${{ github.event.release.name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" manifestDockerRelease

@@ -1194,7 +1194,8 @@ public class LayersTest extends BaseTransactionPoolTest {
       final PendingTransaction pt1,
       final PendingTransaction pt2) {
     final TransactionPoolReplacementHandler transactionReplacementHandler =
-        new TransactionPoolReplacementHandler(poolConfig.getPriceBump());
+        new TransactionPoolReplacementHandler(
+            poolConfig.getPriceBump(), poolConfig.getBlobPriceBump());
     return transactionReplacementHandler.shouldReplace(pt1, pt2, mockBlockHeader());
   }
 
