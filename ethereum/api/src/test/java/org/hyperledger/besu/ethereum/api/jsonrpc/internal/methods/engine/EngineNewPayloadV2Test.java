@@ -81,6 +81,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.of(withdrawals),
+            Optional.empty(),
             Optional.empty());
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
@@ -99,6 +100,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            Optional.empty(),
             Optional.empty(),
             Optional.empty());
     lenient()
@@ -120,7 +122,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockEnginePayload(
-                createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
+                createBlockHeader(
+                    Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
                 null,
@@ -135,7 +138,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   public void shouldValidateBlobGasUsedCorrectly() {
     // V2 should return error if non-null blobGasUsed
     BlockHeader blockHeader =
-        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+        createBlockHeaderFixture(
+                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
             .blobGasUsed(100L)
             .buildHeader();
 
@@ -150,7 +154,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   public void shouldValidateExcessBlobGasCorrectly() {
     // V2 should return error if non-null ExcessBlobGas
     BlockHeader blockHeader =
-        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+        createBlockHeaderFixture(
+                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
             .excessBlobGas(BlobGas.MAX_BLOB_GAS)
             .buildHeader();
 
@@ -171,7 +176,7 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockEnginePayload(
-                createBlockHeader(Optional.empty(), Optional.empty()),
+                createBlockHeader(Optional.empty(), Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
                 null,
