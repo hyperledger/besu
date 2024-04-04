@@ -51,6 +51,17 @@ class ValidatorExitContractHelperTest {
   }
 
   @Test
+  public void popExitsFromQueue_ReadExitsCorrectly() {
+    final List<ValidatorExit> validatorExits = List.of(createExit(), createExit(), createExit());
+    loadContractStorage(worldState, validatorExits);
+
+    final List<ValidatorExit> poppedExits =
+        ValidatorExitContractHelper.popExitsFromQueue(worldState);
+
+    assertThat(poppedExits).isEqualTo(validatorExits);
+  }
+
+  @Test
   public void popExitsFromQueue_whenContractCodeIsEmpty_ReturnsEmptyListOfExits() {
     // Create account with empty code
     final WorldUpdater updater = worldState.updater();
@@ -160,16 +171,16 @@ class ValidatorExitContractHelperTest {
       final ValidatorExit exit = exits.get(i);
       // source_account
       contract.setStorageValue(
-          // set account to slot, with some padding on the right
+          // set account to slot, with 12 bytes padding on the left
           UInt256.valueOf(offset++),
           UInt256.fromBytes(
               Bytes.concatenate(
-                  exit.getSourceAddress(), Bytes.fromHexString("0x000000000000000000000000"))));
+                  Bytes.fromHexString("0x000000000000000000000000"), exit.getSourceAddress())));
       // validator_pubkey
       contract.setStorageValue(
           UInt256.valueOf(offset++), UInt256.fromBytes(exit.getValidatorPubKey().slice(0, 32)));
       contract.setStorageValue(
-          // set public key to slot, with some padding on the right
+          // set public key to slot, with 16 bytes padding on the right
           UInt256.valueOf(offset++),
           UInt256.fromBytes(
               Bytes.concatenate(
