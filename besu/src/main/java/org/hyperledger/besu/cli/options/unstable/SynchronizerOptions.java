@@ -82,6 +82,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_FLAT_DB_HEALING_ENABLED_FLAG =
       "--Xsnapsync-synchronizer-flat-db-healing-enabled";
 
+  private static final String SNAP_SERVER_ENABLED_FLAG = "--Xsnapsync-server-enabled";
+
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
   /**
@@ -297,6 +299,13 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SnapSyncConfiguration.DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
 
   @CommandLine.Option(
+      names = SNAP_SERVER_ENABLED_FLAG,
+      hidden = true,
+      paramLabel = "<Boolean>",
+      description = "Snap sync server enabled (default: ${DEFAULT-VALUE})")
+  private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
+
+  @CommandLine.Option(
       names = {CHECKPOINT_POST_MERGE_FLAG},
       hidden = true,
       description = "Enable the sync to start from a post-merge block.")
@@ -312,6 +321,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isSnapsyncFlatDbHealingEnabled() {
     return snapsyncFlatDbHealingEnabled;
+  }
+
+  /**
+   * Flag to know whether the Snap sync server feature is enabled or disabled.
+   *
+   * @return true if snap sync server is enabled
+   */
+  public boolean isSnapsyncServerEnabled() {
+    return snapsyncServerEnabled;
   }
 
   /**
@@ -398,6 +416,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .isFlatDbHealingEnabled(snapsyncFlatDbHealingEnabled)
+            .isSnapServerEnabled(snapsyncServerEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
@@ -456,7 +475,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
               SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
               OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
               SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
-              OptionParser.format(snapsyncFlatStorageHealedCountPerRequest)));
+              OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
+              SNAP_SERVER_ENABLED_FLAG,
+              OptionParser.format(snapsyncServerEnabled)));
     }
     return value;
   }

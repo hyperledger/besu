@@ -480,7 +480,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       }
     } catch (final RLPException e) {
       LOG.atDebug()
-          .setMessage("Unable to parse status message from peer {}... {}")
+          .setMessage("Unable to parse status message from peer {} {}")
           .addArgument(peer::getLoggableId)
           .addArgument(e)
           .log();

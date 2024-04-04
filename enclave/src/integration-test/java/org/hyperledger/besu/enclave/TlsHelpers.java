@@ -32,6 +32,7 @@ import java.security.cert.CertificateException;
 import java.security.cert.X509Certificate;
 import java.util.Enumeration;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.StringJoiner;
 
@@ -93,6 +94,6 @@ public class TlsHelpers {
       joiner.add(String.format("%02X", b));
     }
 
-    return joiner.toString().toLowerCase();
+    return joiner.toString().toLowerCase(Locale.ROOT);
   }
 }
