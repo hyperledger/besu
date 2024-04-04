@@ -388,7 +388,7 @@ public class EthPeers {
             peer -> {
               LOG.atDebug()
                   .setMessage(
-                      "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
+                      "disconnecting worst useless peer {}. Waiting for better peers. Current {} of max {}")
                   .addArgument(peer::getLoggableId)
                   .addArgument(this::peerCount)
                   .addArgument(this::getMaxPeers)
