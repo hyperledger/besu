@@ -18,7 +18,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
+import org.hyperledger.besu.components.BesuComponent;
+import org.hyperledger.besu.components.BesuPluginContextModule;
 import org.hyperledger.besu.components.EnclaveModule;
+import org.hyperledger.besu.components.MockBesuCommandModule;
+import org.hyperledger.besu.components.NoOpMetricsSystemModule;
 import org.hyperledger.besu.components.PrivacyTestModule;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
@@ -43,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
@@ -51,6 +56,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -462,9 +468,14 @@ public class PrivacyReorgTest {
         PrivacyReorgTest.PrivacyReorgTestBesuControllerModule.class,
         PrivacyReorgTest.PrivacyReorgTestGenesisConfigModule.class,
         EnclaveModule.class,
-        PrivacyTestModule.class
+        PrivacyTestModule.class,
+              MockBesuCommandModule.class,
+              NoOpMetricsSystemModule.class,
+              BonsaiCachedMerkleTrieLoaderModule.class,
+              BlobCacheModule.class,
+              BesuPluginContextModule.class
       })
-  interface PrivacyReorgTestComponent {
+  interface PrivacyReorgTestComponent extends BesuComponent {
 
     BesuController getBesuController();
 
@@ -503,6 +514,7 @@ public class PrivacyReorgTest {
     BesuController provideBesuController(
         final PrivacyParameters privacyParameters,
         final GenesisConfigFile genesisConfigFile,
+        final PrivacyReorgTestComponent context,
         final @Named("dataDir") Path dataDir) {
 
       // dataStorageConfiguration default
@@ -524,6 +536,7 @@ public class PrivacyReorgTest {
               .gasLimitCalculator(GasLimitCalculator.constant())
               .evmConfiguration(EvmConfiguration.DEFAULT)
               .networkConfiguration(NetworkingConfiguration.create())
+                  .besuComponent(context)
               .build();
       return retval;
     }
