@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -23,51 +26,43 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
-import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
-import okhttp3.RequestBody;
-import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.AfterEach;
-import org.junit.jupiter.api.BeforeEach;
+import okhttp3.Response;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import org.mockito.Mockito;
 
-public class GraphQLHttpServiceHostWhitelistTest {
+public class LimitConnectionsGraphQLHttpServiceTest {
 
-  @TempDir private Path folder;
+  @TempDir private static Path folder;
 
   protected static Vertx vertx;
 
   private static GraphQLHttpService service;
-  private static OkHttpClient client;
   private static String baseUrl;
-  protected static final MediaType GRAPHQL = MediaType.parse("application/graphql; charset=utf-8");
-  private final GraphQLConfiguration graphQLConfig = createGraphQLConfig();
-  private final List<String> hostsWhitelist = Arrays.asList("ally", "friend");
+  private static final GraphQLConfiguration graphQLConfig = createGraphQLConfig();
+  private static final int maxConnections = 2;
 
-  @BeforeEach
-  public void initServerAndClient() throws Exception {
+  @BeforeAll
+  public static void initServerAndClient() throws Exception {
     vertx = Vertx.vertx();
 
     service = createGraphQLHttpService();
     service.start().join();
 
-    client = new OkHttpClient();
-    baseUrl = service.url();
+    baseUrl = service.url() + "/graphql?query={maxPriorityFeePerGas}";
   }
 
-  private GraphQLHttpService createGraphQLHttpService() throws Exception {
+  private static GraphQLHttpService createGraphQLHttpService() throws Exception {
     final BlockchainQueries blockchainQueries = Mockito.mock(BlockchainQueries.class);
     final Synchronizer synchronizer = Mockito.mock(Synchronizer.class);
 
@@ -96,65 +91,41 @@ public class GraphQLHttpServiceHostWhitelistTest {
   private static GraphQLConfiguration createGraphQLConfig() {
     final GraphQLConfiguration config = GraphQLConfiguration.createDefault();
     config.setPort(0);
+    config.setMaxActiveConnections(maxConnections);
     return config;
   }
 
-  @AfterEach
-  public void shutdownServer() {
-    client.dispatcher().executorService().shutdown();
-    client.connectionPool().evictAll();
+  @AfterAll
+  public static void shutdownServer() {
     service.stop().join();
     vertx.close();
   }
 
   @Test
-  public void requestWithDefaultHeaderAndDefaultConfigIsAccepted() throws IOException {
-    Assertions.assertThat(doRequest("localhost:50012")).isEqualTo(200);
+  public void limitActiveConnections() throws Exception {
+
+    OkHttpClient newClient = new OkHttpClient();
+    int i;
+    for (i = 0; i < maxConnections; i++) {
+      // create a new client for each request because we want to test the limit
+      try (final Response resp = newClient.newCall(buildRequest()).execute()) {
+        assertThat(resp.code()).isEqualTo(200);
+      }
+      // new client for each request so that connection does NOT get reused
+      newClient = new OkHttpClient();
+    }
+    // now we should get a rejected connection because we have hit the limit
+    assertThat(i).isEqualTo(maxConnections);
+    final OkHttpClient newClient2 = new OkHttpClient();
+
+    // end of stream gets wrapped locally by ConnectException with message "Connection refused"
+    // but in CI it comes through as is
+    assertThatThrownBy(() -> newClient2.newCall(buildRequest()).execute())
+        .isInstanceOf(IOException.class)
+        .hasStackTraceContaining("unexpected end of stream");
   }
 
-  @Test
-  public void requestWithEmptyHeaderAndDefaultConfigIsRejected() throws IOException {
-    Assertions.assertThat(doRequest("")).isEqualTo(403);
-  }
-
-  @Test
-  public void requestWithAnyHostnameAndWildcardConfigIsAccepted() throws IOException {
-    graphQLConfig.setHostsAllowlist(Collections.singletonList("*"));
-    Assertions.assertThat(doRequest("ally")).isEqualTo(200);
-    Assertions.assertThat(doRequest("foe")).isEqualTo(200);
-  }
-
-  @Test
-  public void requestWithWhitelistedHostIsAccepted() throws IOException {
-    graphQLConfig.setHostsAllowlist(hostsWhitelist);
-    Assertions.assertThat(doRequest("ally")).isEqualTo(200);
-    Assertions.assertThat(doRequest("ally:12345")).isEqualTo(200);
-    Assertions.assertThat(doRequest("friend")).isEqualTo(200);
-  }
-
-  @Test
-  public void requestWithUnknownHostIsRejected() throws IOException {
-    graphQLConfig.setHostsAllowlist(hostsWhitelist);
-    Assertions.assertThat(doRequest("foe")).isEqualTo(403);
-  }
-
-  private int doRequest(final String hostname) throws IOException {
-    final RequestBody body = RequestBody.create("{maxPriorityFeePerGas}", GRAPHQL);
-
-    final Request build =
-        new Request.Builder()
-            .post(body)
-            .url(baseUrl + "/graphql")
-            .addHeader("Host", hostname)
-            .build();
-    return client.newCall(build).execute().code();
-  }
-
-  @Test
-  public void requestWithMalformedHostIsRejected() throws IOException {
-    graphQLConfig.setHostsAllowlist(hostsWhitelist);
-    Assertions.assertThat(doRequest("ally:friend")).isEqualTo(403);
-    Assertions.assertThat(doRequest("ally:123456")).isEqualTo(403);
-    Assertions.assertThat(doRequest("ally:friend:1234")).isEqualTo(403);
+  private Request buildRequest() {
+    return new Request.Builder().get().url(baseUrl).build();
   }
 }

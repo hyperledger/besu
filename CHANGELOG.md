@@ -104,6 +104,7 @@
 - Fix `poa-block-txs-selection-max-time` option that was inadvertently reset to its default after being configured [#6444](https://github.com/hyperledger/besu/pull/6444)
 - Fix for tx incorrectly discarded when there is a timeout during block creation [#6563](https://github.com/hyperledger/besu/pull/6563)
 - Fix traces so that call gas costing in traces matches other clients traces [#6525](https://github.com/hyperledger/besu/pull/6525)
+- Add `--graphql-http-max-active-connections` for limiting GraphQL connection count [#6218](https://github.com/hyperledger/besu/pull/6218)
 
 ### Download Links
 https://github.com/hyperledger/besu/releases/tag/24.3.0

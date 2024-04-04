@@ -26,6 +26,7 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_PRETTY_JSON_ENABLED;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.MetricsProtocol.PROMETHEUS;
@@ -782,6 +783,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       description =
           "Deprecated in favor of --host-allowlist. Comma separated list of hostnames to allow for RPC access, or * to accept any host (default: ${DEFAULT-VALUE})")
   private final JsonRPCAllowlistHostsProperty hostsWhitelist = new JsonRPCAllowlistHostsProperty();
+
+  @Option(
+      names = {"--json-pretty-print-enabled"},
+      description = "Enable JSON pretty print format (default: ${DEFAULT-VALUE})")
+  private final Boolean prettyJsonEnabled = DEFAULT_PRETTY_JSON_ENABLED;
 
   @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"})
   @Option(
@@ -1673,7 +1679,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcHttpOptions.jsonRpcConfiguration(
             hostsAllowlist,
             p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
-            unstableRPCOptions.getHttpTimeoutSec());
+            unstableRPCOptions.getHttpTimeoutSec(),
+            prettyJsonEnabled);
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration =
           createEngineJsonRpcConfiguration(
@@ -1684,7 +1691,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         graphQlOptions.graphQLConfiguration(
             hostsAllowlist,
             p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
-            unstableRPCOptions.getHttpTimeoutSec());
+            unstableRPCOptions.getHttpTimeoutSec(),
+            prettyJsonEnabled);
     webSocketConfiguration =
         rpcWebsocketOptions.webSocketConfiguration(
             hostsAllowlist,
@@ -1826,7 +1834,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         jsonRpcHttpOptions.jsonRpcConfiguration(
             allowCallsFrom,
             p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
-            unstableRPCOptions.getWsTimeoutSec());
+            unstableRPCOptions.getWsTimeoutSec(),
+            prettyJsonEnabled);
     engineConfig.setPort(engineListenPort);
     engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
     engineConfig.setEnabled(isEngineApiEnabled());

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 import static com.google.common.collect.Streams.stream;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils.truncToken;
 
+import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.DefaultAuthenticationService;
@@ -37,7 +38,6 @@ import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import io.vertx.core.buffer.Buffer;
-import io.vertx.core.http.HttpConnection;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
@@ -103,6 +103,7 @@ public class WebSocketService {
   public CompletableFuture<?> start() {
     LOG.info(
         "Starting Websocket service on {}:{}", configuration.getHost(), configuration.getPort());
+    LOG.debug("max number of active connections {}", maxActiveConnections);
 
     final CompletableFuture<?> resultFuture = new CompletableFuture<>();
     httpServer =
@@ -118,7 +119,8 @@ public class WebSocketService {
                     .setMaxWebSocketMessageSize(configuration.getMaxFrameSize() * 4)
                     .setRegisterWebSocketWriteHandlers(true))
             .webSocketHandler(websocketHandler())
-            .connectionHandler(connectionHandler())
+            .connectionHandler(
+                HandlerFactory.maxConnections(activeConnectionsCount, maxActiveConnections))
             .requestHandler(httpHandler())
             .listen(startHandler(resultFuture));
 
@@ -178,34 +180,6 @@ public class WebSocketService {
                 socketAddressAsString(socketAddress));
             websocket.close();
           });
-    };
-  }
-
-  private Handler<HttpConnection> connectionHandler() {
-
-    return connection -> {
-      if (activeConnectionsCount.get() >= maxActiveConnections) {
-        // disallow new connections to prevent DoS
-        LOG.warn(
-            "Rejecting new connection from {}. {}/{} max active connections limit reached.",
-            connection.remoteAddress(),
-            activeConnectionsCount.getAndIncrement(),
-            maxActiveConnections);
-        connection.close();
-      } else {
-        LOG.debug(
-            "Opened connection from {}. Total of active connections: {}/{}",
-            connection.remoteAddress(),
-            activeConnectionsCount.incrementAndGet(),
-            maxActiveConnections);
-      }
-      connection.closeHandler(
-          c ->
-              LOG.debug(
-                  "Connection closed from {}. Total of active connections: {}/{}",
-                  connection.remoteAddress(),
-                  activeConnectionsCount.decrementAndGet(),
-                  maxActiveConnections));
     };
   }
 
