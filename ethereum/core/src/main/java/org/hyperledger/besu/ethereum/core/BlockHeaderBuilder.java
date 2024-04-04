@@ -248,7 +248,6 @@ public class BlockHeaderBuilder {
     checkState(this.ommersHash != null, "Missing ommers hash");
     checkState(this.stateRoot != null, "Missing state root");
     checkState(this.transactionsRoot != null, "Missing transaction root");
-    //    checkState(this.exitsRoot != null, "Missing exits root");
     checkState(this.receiptsRoot != null, "Missing receipts root");
     checkState(this.logsBloom != null, "Missing logs bloom filter");
     checkState(this.gasUsed > -1L, "Missing gas used");
