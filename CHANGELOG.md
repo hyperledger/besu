@@ -13,6 +13,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- Update "host allow list" logic to transition from deprecated `host()` method to suggested `authority()` method.[#6878](https://github.com/hyperledger/besu/issues/6878)
 - `txpool_besuPendingTransactions`change parameter `numResults` to optional parameter [#6708](https://github.com/hyperledger/besu/pull/6708)
 - Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)
 - Add bft-style `blockperiodseconds` transitions to Clique [#6596](https://github.com/hyperledger/besu/pull/6596)
