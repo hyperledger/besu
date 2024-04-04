@@ -15,9 +15,11 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ValidatorExitParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 
 import java.util.List;
@@ -41,9 +43,10 @@ public class EngineGetPayloadResultV4 {
       final List<String> transactions,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<List<Deposit>> deposits,
+      final Optional<List<ValidatorExit>> exits,
       final String blockValue,
       final BlobsBundleV1 blobsBundle) {
-    this.executionPayload = new PayloadResult(header, transactions, withdrawals, deposits);
+    this.executionPayload = new PayloadResult(header, transactions, withdrawals, deposits, exits);
     this.blockValue = blockValue;
     this.blobsBundle = blobsBundle;
     this.shouldOverrideBuilder = false;
@@ -91,12 +94,14 @@ public class EngineGetPayloadResultV4 {
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
     private final List<DepositParameter> deposits;
+    private final List<ValidatorExitParameter> exits;
 
     public PayloadResult(
         final BlockHeader header,
         final List<String> transactions,
         final Optional<List<Withdrawal>> withdrawals,
-        final Optional<List<Deposit>> deposits) {
+        final Optional<List<Deposit>> deposits,
+        final Optional<List<ValidatorExit>> exits) {
       this.blockNumber = Quantity.create(header.getNumber());
       this.blockHash = header.getHash().toString();
       this.parentHash = header.getParentHash().toString();
@@ -123,6 +128,14 @@ public class EngineGetPayloadResultV4 {
           deposits
               .map(
                   ds -> ds.stream().map(DepositParameter::fromDeposit).collect(Collectors.toList()))
+              .orElse(null);
+      this.exits =
+          exits
+              .map(
+                  ds ->
+                      ds.stream()
+                          .map(ValidatorExitParameter::fromValidatorExit)
+                          .collect(Collectors.toList()))
               .orElse(null);
       this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
       this.excessBlobGas =
@@ -204,6 +217,11 @@ public class EngineGetPayloadResultV4 {
     @JsonGetter(value = "depositReceipts")
     public List<DepositParameter> getDeposits() {
       return deposits;
+    }
+
+    @JsonGetter(value = "exits")
+    public List<ValidatorExitParameter> getExits() {
+      return exits;
     }
 
     @JsonGetter(value = "feeRecipient")
