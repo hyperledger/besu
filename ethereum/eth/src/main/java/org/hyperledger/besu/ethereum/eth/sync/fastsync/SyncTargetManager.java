@@ -94,9 +94,13 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
 
-      // chainState only gives us an estimate so allow a tolerance, and then we confirm by actually asking for the header
+      // chainState only gives us an estimate so allow a tolerance, and then we confirm by actually
+      // asking for the header
       int PIVOT_BLOCK_CHAIN_HEIGHT_TOLERANCE = 700;
-      if (bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()-PIVOT_BLOCK_CHAIN_HEIGHT_TOLERANCE) {
+      if (bestPeer.chainState().getEstimatedHeight()
+          < pivotBlockHeader.getNumber() - PIVOT_BLOCK_CHAIN_HEIGHT_TOLERANCE) {
+        // TODO maybe we don't need this at all - sort by chain height estimate but then just ask
+        // bestPeer for the header - that's what confirmPivotBlockHeader() does
         LOG.info(
             "Best peer {} has chain height {} below pivotBlock height {} even with tolerance {}. Waiting for better peers. Current {} of max {}",
             maybeBestPeer.map(EthPeer::getLoggableId).orElse("none"),
@@ -105,7 +109,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
             PIVOT_BLOCK_CHAIN_HEIGHT_TOLERANCE,
             ethPeers.peerCount(),
             ethPeers.getMaxPeers());
-//        ethPeers.disconnectWorstUselessPeer();
+        //        ethPeers.disconnectWorstUselessPeer();
         return completedFuture(Optional.empty());
       } else {
         return confirmPivotBlockHeader(bestPeer);
@@ -146,6 +150,8 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                     pivotBlockHeader.toLogString());
                 return confirmPivotBlockHeader(bestPeer);
               } else {
+                // update chain height estimate of that peer to reflect reality
+                bestPeer.chainState().updateHeightEstimate(pivotBlockHeader.getNumber());
                 return CompletableFuture.completedFuture(Optional.of(bestPeer));
               }
             })
