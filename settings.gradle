@@ -22,7 +22,6 @@ pluginManagement {
       content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
     }
   }
-
 }
 
 plugins {
