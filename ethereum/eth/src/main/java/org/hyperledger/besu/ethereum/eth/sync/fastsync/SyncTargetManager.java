@@ -94,8 +94,10 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
-      LOG.debug("attempting to confirm pivot block {} with best peer {}", pivotBlockHeader.getNumber(), bestPeer);
-      LOG.atDebug().setMessage("best peer using chain height estimate would have been {}").addArgument(ethPeers.bestPeerWithHeightEstimate().orElse(null)).log();
+      LOG.debug(
+          "attempting to confirm pivot block {} with best peer {}",
+          pivotBlockHeader.getNumber(),
+          bestPeer);
 
       return confirmPivotBlockHeader(bestPeer);
     }
@@ -134,9 +136,10 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                     pivotBlockHeader.toLogString());
                 return confirmPivotBlockHeader(bestPeer);
               } else {
-                LOG.debug("Confirmed pivot block {} with peer {}", pivotBlockHeader.getNumber(), bestPeer.getLoggableId());
-                // update chain height estimate of that peer to reflect reality
-                // TODO this maybe duplication
+                LOG.debug(
+                    "Confirmed pivot block {} with peer {}",
+                    pivotBlockHeader.getNumber(),
+                    bestPeer.getLoggableId());
                 bestPeer.chainState().updateHeightEstimate(pivotBlockHeader.getNumber());
                 return CompletableFuture.completedFuture(Optional.of(bestPeer));
               }
