@@ -124,7 +124,6 @@ public final class DisconnectMessage extends AbstractMessageData {
     SUBPROTOCOL_TRIGGERED_MISMATCHED_NETWORK((byte) 0x10, "Mismatched network id"),
     SUBPROTOCOL_TRIGGERED_MISMATCHED_FORKID((byte) 0x10, "Mismatched fork id"),
     SUBPROTOCOL_TRIGGERED_MISMATCHED_GENESIS_HASH((byte) 0x10, "Mismatched genesis hash"),
-    SUBPROTOCOL_TRIGGERED_POW((byte) 0x10, "Peer still POW"),
     SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS((byte) 0x10, "Unparsable status message"),
     SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY((byte) 0x10, "Difficulty greater than TTD"),
     SUBPROTOCOL_TRIGGERED_POW_BLOCKS((byte) 0x10, "Peer sent blocks after POS transition");
@@ -142,7 +141,7 @@ public final class DisconnectMessage extends AbstractMessageData {
               .getAsInt();
       BY_ID = new DisconnectReason[maxValue + 1];
       Stream.of(DisconnectReason.values())
-          .filter(r -> r.code.isPresent())
+          .filter(r -> r.code.isPresent() && r.reason.isEmpty())
           .forEach(r -> BY_ID[r.code.get()] = r);
     }
 
