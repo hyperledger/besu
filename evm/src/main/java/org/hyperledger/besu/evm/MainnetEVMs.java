@@ -64,6 +64,7 @@ import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
 import org.hyperledger.besu.evm.operation.EOFCreateOperation;
 import org.hyperledger.besu.evm.operation.EqOperation;
+import org.hyperledger.besu.evm.operation.ExchangeOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 import org.hyperledger.besu.evm.operation.ExtCallOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
@@ -962,6 +963,7 @@ public class MainnetEVMs {
     // EIP-663 Unlimited Swap and Dup
     registry.put(new DupNOperation(gasCalculator));
     registry.put(new SwapNOperation(gasCalculator));
+    registry.put(new ExchangeOperation(gasCalculator));
 
     // EIP-4200 relative jump
     registry.put(new RelativeJumpOperation(gasCalculator));
@@ -989,7 +991,7 @@ public class MainnetEVMs {
 
     // EIP-7620 EOF Create and Transaction Create
     registry.put(new EOFCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
-    // registry.put(new TxCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
+    //registry.put(new TxCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT))
     registry.put(new ReturnContractOperation(gasCalculator));
   }
 

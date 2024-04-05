@@ -21,38 +21,39 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/** The SwapN operation. */
-public class SwapNOperation extends AbstractFixedCostOperation {
+/** The Exchange operation. */
+public class ExchangeOperation extends AbstractFixedCostOperation {
 
-  /** SWAPN Opcode 0xe7 */
-  public static final int OPCODE = 0xe7;
+  /** EXCHANGE Opcode 0xe8 */
+  public static final int OPCODE = 0xe8;
 
-  /** The Swap operation success result. */
-  static final OperationResult swapSuccess = new OperationResult(3, null);
+  /** The Exchange operation success result. */
+  static final OperationResult exchangeSuccess = new OperationResult(3, null);
 
   /**
-   * Instantiates a new SwapN operation.
+   * Instantiates a new Exchange operation.
    *
    * @param gasCalculator the gas calculator
    */
-  public SwapNOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "SWAPN", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
+  public ExchangeOperation(final GasCalculator gasCalculator) {
+    super(OPCODE, "EXCHANGE", 0, 1, gasCalculator, gasCalculator.getVeryLowTierGasCost());
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     Code code = frame.getCode();
     if (code.getEofVersion() == 0) {
       return InvalidOperation.INVALID_RESULT;
     }
     int pc = frame.getPC();
-    int index = code.readBigEndianU16(pc + 1);
+    int imm = code.readBigEndianU16(pc + 1);
+    int n = (imm >> 4) + 1;
+    int m = imm & 0x0F + n + 1;
 
-    final Bytes tmp = frame.getStackItem(0);
-    frame.setStackItem(0, frame.getStackItem(index));
-    frame.setStackItem(index, tmp);
+    final Bytes tmp = frame.getStackItem(n);
+    frame.setStackItem(n, frame.getStackItem(m));
+    frame.setStackItem(m, tmp);
 
-    return swapSuccess;
+    return exchangeSuccess;
   }
 }

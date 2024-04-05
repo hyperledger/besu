@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.DataLoadNOperation;
 import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.EOFCreateOperation;
+import org.hyperledger.besu.evm.operation.ExchangeOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.PushOperation;
@@ -336,9 +337,16 @@ public final class CodeV1Validation {
             sectionStackUsed = 0;
             break;
           case SwapNOperation.OPCODE:
-            int swapDepth = code[currentPC + 1] & 0xff;
-            stackInputs = swapDepth + 2;
-            stackOutputs = swapDepth + 2;
+            int swapDepth = 2 + code[currentPC + 1] & 0xff;
+            stackInputs = swapDepth;
+            stackOutputs = swapDepth;
+            sectionStackUsed = 0;
+            break;
+          case ExchangeOperation.OPCODE:
+            int imm = code[currentPC + 1] & 0xff;
+            int exchangeDepth = (imm >> 4) + (imm & 0xf) + 2;
+            stackInputs = exchangeDepth;
+            stackOutputs = exchangeDepth;
             sectionStackUsed = 0;
             break;
           default:
