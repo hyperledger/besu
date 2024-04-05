@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialFlatDbStrategy;
@@ -70,12 +71,30 @@ public class FlatDbStrategyProvider {
 
   @VisibleForTesting
   FlatDbMode deriveFlatDbStrategy(final SegmentedKeyValueStorage composedWorldStateStorage) {
+    final var existingTrieData = composedWorldStateStorage
+        .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
+        .isPresent();
+
     var flatDbMode =
         FlatDbMode.fromVersion(
             composedWorldStateStorage
                 .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
                 .map(Bytes::wrap)
-                .orElse(FlatDbMode.PARTIAL.getVersion()));
+                .orElseGet(() -> {
+                  // if we do not have a configured value for flatdb, derive it:
+                  // default to partial if trie data exists, but the flat config does not,
+                  // and default to full if there is no existing trie data
+                  var flatDbModeVal = existingTrieData ?
+                      FlatDbMode.PARTIAL.getVersion() :
+                      FlatDbMode.FULL.getVersion();
+                  // persist this config in the db
+                  var setDbModeTx = composedWorldStateStorage.startTransaction();
+                  setDbModeTx.put(TRIE_BRANCH_STORAGE, FLAT_DB_MODE,
+                      flatDbModeVal.toArrayUnsafe());
+                  setDbModeTx.commit();
+
+                  return flatDbModeVal;
+                }));
     LOG.info("Bonsai flat db mode found {}", flatDbMode);
 
     return flatDbMode;
