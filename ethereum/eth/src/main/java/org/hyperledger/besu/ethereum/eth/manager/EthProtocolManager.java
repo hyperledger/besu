@@ -315,7 +315,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             .addArgument(ethPeer::toString)
             .log();
         handleDisconnect(
-            ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED_GOSSIP_BLOCKS, false);
+            ethPeer.getConnection(), DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_BLOCKS, false);
         return;
       }
     }

@@ -119,13 +119,11 @@ public final class DisconnectMessage extends AbstractMessageData {
     LOCAL_IDENTITY((byte) 0x0a),
     TIMEOUT((byte) 0x0b),
     SUBPROTOCOL_TRIGGERED((byte) 0x10),
-    SUBPROTOCOL_TRIGGERED_GOSSIP_BLOCKS(
-        (byte) 0x10, "Post-merge disconnect: peer still gossiping blocks"),
     SUBPROTOCOL_TRIGGERED_MISMATCHED_NETWORK((byte) 0x10, "Mismatched network id"),
     SUBPROTOCOL_TRIGGERED_MISMATCHED_FORKID((byte) 0x10, "Mismatched fork id"),
     SUBPROTOCOL_TRIGGERED_MISMATCHED_GENESIS_HASH((byte) 0x10, "Mismatched genesis hash"),
     SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS((byte) 0x10, "Unparsable status message"),
-    SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY((byte) 0x10, "Difficulty greater than TTD"),
+    SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY((byte) 0x10, "Peer has difficulty greater than POS TTD"),
     SUBPROTOCOL_TRIGGERED_POW_BLOCKS((byte) 0x10, "Peer sent blocks after POS transition");
 
     private static final DisconnectReason[] BY_ID;
