@@ -335,7 +335,7 @@ public class EthPeers {
   }
 
   public void setBestChainComparator(final Comparator<EthPeer> comparator) {
-    LOG.info("Updating the default best peer comparator");
+    LOG.info("Updating the default best peer comparator to " + comparator.toString());
     bestPeerComparator = comparator;
   }
 
