@@ -143,7 +143,7 @@ public abstract class AbstractGetHeadersFromPeerTask
           .log();
       peer.chainState().update(blockHeader);
     }
-    LOG.trace("Peer chain state {}", peer.chainState());
+//    LOG.atTrace().setMessage("Peer {} chain state {}").addArgument(peer::getLoggableId).addArgument(peer::chainState).log();
   }
 
   protected abstract boolean matchesFirstHeader(BlockHeader firstHeader);
