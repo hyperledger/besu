@@ -991,19 +991,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final EthPeers ethPeers,
       final EthMessages snapMessages) {
-    if (Optional.ofNullable(syncConfig.getSnapSyncConfiguration())
-        .map(snapConfig -> snapConfig.isSnapServerEnabled())
-        .orElse(false)) {
-      return Optional.of(
-          new SnapProtocolManager(
-              worldStateStorageCoordinator,
-              syncConfig.getSnapSyncConfiguration(),
-              ethPeers,
-              snapMessages,
-              protocolContext));
-    } else {
-      return Optional.empty();
-    }
+    return Optional.of(
+        new SnapProtocolManager(
+            worldStateStorageCoordinator,
+            syncConfig.getSnapSyncConfiguration(),
+            ethPeers,
+            snapMessages,
+            protocolContext));
   }
 
   WorldStateArchive createWorldStateArchive(

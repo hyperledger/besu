@@ -111,23 +111,25 @@ public class LayeredPendingTransactions implements PendingTransactions {
       final Throwable throwable) {
     // in case something unexpected happened, log this sender txs, force a reconcile and retry
     // another time
-    // ToDo: demote to debug when Layered TxPool is out of preview
-    LOG.warn(
-        "Unexpected error {} when adding transaction {}, current sender status {}",
-        throwable,
-        pendingTransaction.toTraceLog(),
-        prioritizedTransactions.logSender(pendingTransaction.getSender()));
-    LOG.warn("Stack trace", throwable);
+    LOG.atDebug()
+        .setMessage(
+            "Unexpected error when adding transaction {}, current sender status {}, force a reconcile and retry")
+        .setCause(throwable)
+        .addArgument(pendingTransaction::toTraceLog)
+        .addArgument(() -> prioritizedTransactions.logSender(pendingTransaction.getSender()))
+        .log();
     reconcileSender(pendingTransaction.getSender(), stateSenderNonce);
     try {
       return prioritizedTransactions.add(pendingTransaction, nonceDistance);
     } catch (final Throwable throwable2) {
-      LOG.warn(
-          "Unexpected error {} when adding transaction {}, current sender status {}",
-          throwable,
-          pendingTransaction.toTraceLog(),
-          prioritizedTransactions.logSender(pendingTransaction.getSender()));
-      LOG.warn("Stack trace", throwable);
+      // the error should have been solved by the reconcile, logging at higher level now
+      LOG.atWarn()
+          .setCause(throwable2)
+          .setMessage(
+              "Unexpected error when adding transaction {} after reconciliation, current sender status {}")
+          .addArgument(pendingTransaction.toTraceLog())
+          .addArgument(prioritizedTransactions.logSender(pendingTransaction.getSender()))
+          .log();
       return INTERNAL_ERROR;
     }
   }

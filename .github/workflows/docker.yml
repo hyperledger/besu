@@ -86,11 +86,11 @@ jobs:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
           cache-disabled: true
-          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
+          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.event.release.name}} -Prelease.releaseVersion=${{ github.event.release.name }}
       - name: publish
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
-        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.event.release.name}} -Prelease.releaseVersion=${{ github.event.release.name }}
   multiArch:
     needs: buildDocker
     runs-on: ubuntu-22.04
@@ -116,7 +116,7 @@ jobs:
           username: ${{ secrets.DOCKER_USER_RW }}
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: multi-arch docker
-        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.ref_name}} -Prelease.releaseVersion=${{ github.ref_name }}
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.event.release.name}} -Prelease.releaseVersion=${{ github.event.release.name }}
   amendNotes:
     needs: multiArch
     runs-on: ubuntu-22.04
@@ -128,4 +128,4 @@ jobs:
         with:
           append_body: true
           body: |
-            `docker pull ${{env.registry}}/${{secrets.DOCKER_ORG}}/besu:${{github.ref_name}}`
+            `docker pull ${{env.registry}}/${{secrets.DOCKER_ORG}}/besu:${{github.event.release.name}}`
