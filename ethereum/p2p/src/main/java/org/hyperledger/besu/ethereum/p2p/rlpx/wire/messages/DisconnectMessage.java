@@ -118,10 +118,20 @@ public final class DisconnectMessage extends AbstractMessageData {
     UNEXPECTED_ID((byte) 0x09),
     LOCAL_IDENTITY((byte) 0x0a),
     TIMEOUT((byte) 0x0b),
-    SUBPROTOCOL_TRIGGERED((byte) 0x10);
+    SUBPROTOCOL_TRIGGERED((byte) 0x10),
+    SUBPROTOCOL_TRIGGERED_GOSSIP_BLOCKS(
+        (byte) 0x10, "Post-merge disconnect: peer still gossiping blocks"),
+    SUBPROTOCOL_TRIGGERED_MISMATCHED_NETWORK((byte) 0x10, "Mismatched network id"),
+    SUBPROTOCOL_TRIGGERED_MISMATCHED_FORKID((byte) 0x10, "Mismatched fork id"),
+    SUBPROTOCOL_TRIGGERED_MISMATCHED_GENESIS_HASH((byte) 0x10, "Mismatched genesis hash"),
+    SUBPROTOCOL_TRIGGERED_POW((byte) 0x10, "Peer still POW"),
+    SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS((byte) 0x10, "Unparsable status message"),
+    SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY((byte) 0x10, "Difficulty greater than TTD"),
+    SUBPROTOCOL_TRIGGERED_POW_BLOCKS((byte) 0x10, "Peer sent blocks after POS transition");
 
     private static final DisconnectReason[] BY_ID;
     private final Optional<Byte> code;
+    private final Optional<String> reason;
 
     static {
       final int maxValue =
@@ -146,15 +156,25 @@ public final class DisconnectMessage extends AbstractMessageData {
 
     DisconnectReason(final Byte code) {
       this.code = Optional.ofNullable(code);
+      this.reason = Optional.empty();
+    }
+
+    DisconnectReason(final Byte code, final String reason) {
+      this.code = Optional.ofNullable(code);
+      this.reason = Optional.of(reason);
     }
 
     public Bytes getValue() {
       return code.map(Bytes::of).orElse(Bytes.EMPTY);
     }
 
+    public String getReason() {
+      return reason.orElse("");
+    }
+
     @Override
     public String toString() {
-      return getValue().toString() + " " + name();
+      return getValue().toString() + " " + name() + " " + getReason();
     }
   }
 }
