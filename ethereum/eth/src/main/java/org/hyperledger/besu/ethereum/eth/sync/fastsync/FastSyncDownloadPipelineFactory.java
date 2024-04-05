@@ -179,13 +179,16 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
     final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
     final boolean shouldContinue =
         !peer.isDisconnected() && lastRoundHeader.getNumber() < pivotBlockHeader.getNumber();
-    LOG.trace(
-        "shouldContinueDownloadingFromPeer = {} (!peer.isDisconnected() = {} && lastRoundHeader.getNumber() = {} < pivotBlockHeader.getNumber() = {}); peer = {}",
-        shouldContinue,
-        !peer.isDisconnected(),
-        lastRoundHeader.getNumber(),
-        pivotBlockHeader.getNumber(),
-        peer);
+
+    if (!shouldContinue && peer.isDisconnected()) {
+      LOG.debug("Stopping chain download due to disconnected peer {}", peer);
+    } else if (!shouldContinue && lastRoundHeader.getNumber() >= pivotBlockHeader.getNumber()) {
+      LOG.debug(
+          "Stopping chain download as lastRoundHeader={} is not less than pivotBlockHeader={} for peer {}",
+          lastRoundHeader.getNumber(),
+          pivotBlockHeader.getNumber(),
+          peer);
+    }
     return shouldContinue;
   }
 }
