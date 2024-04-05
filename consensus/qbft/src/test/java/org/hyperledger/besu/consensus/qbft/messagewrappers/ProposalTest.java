@@ -55,6 +55,7 @@ public class ProposalTest {
               Collections.emptyList(),
               Collections.emptyList(),
               Optional.of(Collections.emptyList()),
+              Optional.empty(),
               Optional.empty()));
 
   @Test
