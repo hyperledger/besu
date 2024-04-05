@@ -118,10 +118,17 @@ public final class DisconnectMessage extends AbstractMessageData {
     UNEXPECTED_ID((byte) 0x09),
     LOCAL_IDENTITY((byte) 0x0a),
     TIMEOUT((byte) 0x0b),
-    SUBPROTOCOL_TRIGGERED((byte) 0x10);
+    SUBPROTOCOL_TRIGGERED((byte) 0x10),
+    SUBPROTOCOL_TRIGGERED_MISMATCHED_NETWORK((byte) 0x10, "Mismatched network id"),
+    SUBPROTOCOL_TRIGGERED_MISMATCHED_FORKID((byte) 0x10, "Mismatched fork id"),
+    SUBPROTOCOL_TRIGGERED_MISMATCHED_GENESIS_HASH((byte) 0x10, "Mismatched genesis hash"),
+    SUBPROTOCOL_TRIGGERED_UNPARSABLE_STATUS((byte) 0x10, "Unparsable status message"),
+    SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY((byte) 0x10, "Peer has difficulty greater than POS TTD"),
+    SUBPROTOCOL_TRIGGERED_POW_BLOCKS((byte) 0x10, "Peer sent blocks after POS transition");
 
     private static final DisconnectReason[] BY_ID;
     private final Optional<Byte> code;
+    private final Optional<String> message;
 
     static {
       final int maxValue =
@@ -132,7 +139,7 @@ public final class DisconnectMessage extends AbstractMessageData {
               .getAsInt();
       BY_ID = new DisconnectReason[maxValue + 1];
       Stream.of(DisconnectReason.values())
-          .filter(r -> r.code.isPresent())
+          .filter(r -> r.code.isPresent() && r.message.isEmpty())
           .forEach(r -> BY_ID[r.code.get()] = r);
     }
 
@@ -146,15 +153,25 @@ public final class DisconnectMessage extends AbstractMessageData {
 
     DisconnectReason(final Byte code) {
       this.code = Optional.ofNullable(code);
+      this.message = Optional.empty();
+    }
+
+    DisconnectReason(final Byte code, final String message) {
+      this.code = Optional.ofNullable(code);
+      this.message = Optional.of(message);
     }
 
     public Bytes getValue() {
       return code.map(Bytes::of).orElse(Bytes.EMPTY);
     }
 
+    public String getMessage() {
+      return message.orElse("");
+    }
+
     @Override
     public String toString() {
-      return getValue().toString() + " " + name();
+      return getValue().toString() + " " + name() + " " + getMessage();
     }
   }
 }
