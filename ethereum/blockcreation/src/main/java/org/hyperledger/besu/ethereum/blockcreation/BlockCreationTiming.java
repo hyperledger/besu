@@ -36,7 +36,7 @@ public class BlockCreationTiming {
 
   public void registerAll(final BlockCreationTiming subTiming) {
     final var offset = Duration.between(startedAt, subTiming.startedAt);
-    for(final var entry: subTiming.timing.entrySet()) {
+    for (final var entry : subTiming.timing.entrySet()) {
       timing.put(entry.getKey(), offset.plus(entry.getValue()));
     }
   }
@@ -55,8 +55,8 @@ public class BlockCreationTiming {
     for (final var entry : timing.entrySet()) {
       sb.append(entry.getKey())
           .append("=")
-          .append(entry.getValue().minus(prevDuration))
-          .append(", ");
+          .append(entry.getValue().minus(prevDuration).toMillis())
+          .append("ms, ");
       prevDuration = entry.getValue();
     }
     sb.delete(sb.length() - 2, sb.length());
