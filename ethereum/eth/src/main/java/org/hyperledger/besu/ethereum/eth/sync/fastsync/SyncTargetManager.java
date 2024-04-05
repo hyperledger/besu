@@ -74,7 +74,8 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
     final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
     final EthPeers ethPeers = ethContext.getEthPeers();
-    final Optional<EthPeer> maybeBestPeer = ethPeers.bestPeerWithHeightEstimate();
+    // just use the default (merge) comparator
+    final Optional<EthPeer> maybeBestPeer = ethPeers.bestPeer();
     if (maybeBestPeer.isEmpty()) {
       throttledLog(
           LOG::debug,
@@ -150,7 +151,9 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                     pivotBlockHeader.toLogString());
                 return confirmPivotBlockHeader(bestPeer);
               } else {
+                LOG.debug("Confirmed pivot block {} with peer {}", pivotBlockHeader.getNumber(), bestPeer.getLoggableId());
                 // update chain height estimate of that peer to reflect reality
+                // TODO this maybe duplication
                 bestPeer.chainState().updateHeightEstimate(pivotBlockHeader.getNumber());
                 return CompletableFuture.completedFuture(Optional.of(bestPeer));
               }
