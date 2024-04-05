@@ -15,7 +15,6 @@
 package org.hyperledger.besu.metrics.prometheus;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Streams.stream;
 
 import org.hyperledger.besu.metrics.MetricsService;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -32,8 +31,6 @@ import java.util.Set;
 import java.util.TreeSet;
 import java.util.concurrent.CompletableFuture;
 
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.prometheus.client.exporter.common.TextFormat;
 import io.vertx.core.Handler;
@@ -42,6 +39,7 @@ import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
@@ -158,19 +156,7 @@ public class MetricsHttpService implements MetricsService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    final String hostHeader = event.request().host();
-    if (hostHeader == null) {
-      return Optional.empty();
-    }
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostHeader);
-    final long hostPieces = stream(splitHostHeader).count();
-    if (hostPieces > 1) {
-      // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
-      if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
-        return Optional.empty();
-      }
-    }
-    return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
+    return Optional.ofNullable(event.request().authority()).map(HostAndPort::host);
   }
 
   private boolean hostIsInAllowlist(final String hostHeader) {
