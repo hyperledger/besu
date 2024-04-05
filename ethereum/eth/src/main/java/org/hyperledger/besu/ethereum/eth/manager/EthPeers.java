@@ -380,23 +380,6 @@ public class EthPeers {
     return true;
   }
 
-  public void disconnectWorstUselessPeer() {
-    streamAvailablePeers()
-        .sorted(getBestChainComparator())
-        .findFirst()
-        .ifPresent(
-            peer -> {
-              LOG.atDebug()
-                  .setMessage(
-                      "disconnecting worst useless peer {}. Waiting for better peers. Current {} of max {}")
-                  .addArgument(peer::getLoggableId)
-                  .addArgument(this::peerCount)
-                  .addArgument(this::getMaxPeers)
-                  .log();
-              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
-            });
-  }
-
   @FunctionalInterface
   public interface ConnectCallback {
     void onPeerConnected(EthPeer newPeer);
