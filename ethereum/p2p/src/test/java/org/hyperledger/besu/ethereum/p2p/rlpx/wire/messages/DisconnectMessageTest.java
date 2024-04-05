@@ -89,4 +89,14 @@ public class DisconnectMessageTest {
     assertThat(disconnectMessage.getReason()).isEqualTo(DisconnectReason.UNKNOWN);
     assertThat(disconnectMessage.getData().toString()).isEqualToIgnoringCase("0xC180");
   }
+
+  @Test
+  public void readFromWithSubprotocolTriggeredUsesGenericReason() {
+    MessageData messageData =
+        new RawMessage(WireMessageCodes.DISCONNECT, Bytes.fromHexString("0xC110"));
+    DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(messageData);
+
+    DisconnectReason reason = disconnectMessage.getReason();
+    assertThat(reason).isEqualTo(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+  }
 }
