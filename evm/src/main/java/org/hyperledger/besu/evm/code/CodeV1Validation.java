@@ -344,7 +344,7 @@ public final class CodeV1Validation {
             break;
           case ExchangeOperation.OPCODE:
             int imm = code[currentPC + 1] & 0xff;
-            int exchangeDepth = (imm >> 4) + (imm & 0xf) + 2;
+            int exchangeDepth = (imm >> 4) + (imm & 0xf) + 3;
             stackInputs = exchangeDepth;
             stackOutputs = exchangeDepth;
             sectionStackUsed = 0;

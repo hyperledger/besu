@@ -46,9 +46,9 @@ public class ExchangeOperation extends AbstractFixedCostOperation {
       return InvalidOperation.INVALID_RESULT;
     }
     int pc = frame.getPC();
-    int imm = code.readBigEndianU16(pc + 1);
+    int imm = code.readU8(pc + 1);
     int n = (imm >> 4) + 1;
-    int m = imm & 0x0F + n + 1;
+    int m = imm & 0x0F + n + 2;
 
     final Bytes tmp = frame.getStackItem(n);
     frame.setStackItem(n, frame.getStackItem(m));
