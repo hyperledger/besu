@@ -94,6 +94,8 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
+      LOG.debug("attempting to confirm pivot block {} with best peer {}", pivotBlockHeader.getNumber(), bestPeer);
+      LOG.atDebug().setMessage("best peer using chain height estimate would have been {}").addArgument(ethPeers.bestPeerWithHeightEstimate().orElse(null)).log();
 
       // chainState only gives us an estimate so allow a tolerance, and then we confirm by actually
       // asking for the header
