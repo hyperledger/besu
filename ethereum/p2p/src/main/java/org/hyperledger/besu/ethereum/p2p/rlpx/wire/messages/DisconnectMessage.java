@@ -128,7 +128,7 @@ public final class DisconnectMessage extends AbstractMessageData {
 
     private static final DisconnectReason[] BY_ID;
     private final Optional<Byte> code;
-    private final Optional<String> reason;
+    private final Optional<String> message;
 
     static {
       final int maxValue =
@@ -139,7 +139,7 @@ public final class DisconnectMessage extends AbstractMessageData {
               .getAsInt();
       BY_ID = new DisconnectReason[maxValue + 1];
       Stream.of(DisconnectReason.values())
-          .filter(r -> r.code.isPresent() && r.reason.isEmpty())
+          .filter(r -> r.code.isPresent() && r.message.isEmpty())
           .forEach(r -> BY_ID[r.code.get()] = r);
     }
 
@@ -153,25 +153,25 @@ public final class DisconnectMessage extends AbstractMessageData {
 
     DisconnectReason(final Byte code) {
       this.code = Optional.ofNullable(code);
-      this.reason = Optional.empty();
+      this.message = Optional.empty();
     }
 
-    DisconnectReason(final Byte code, final String reason) {
+    DisconnectReason(final Byte code, final String message) {
       this.code = Optional.ofNullable(code);
-      this.reason = Optional.of(reason);
+      this.message = Optional.of(message);
     }
 
     public Bytes getValue() {
       return code.map(Bytes::of).orElse(Bytes.EMPTY);
     }
 
-    public String getReason() {
-      return reason.orElse("");
+    public String getMessage() {
+      return message.orElse("");
     }
 
     @Override
     public String toString() {
-      return getValue().toString() + " " + name() + " " + getReason();
+      return getValue().toString() + " " + name() + " " + getMessage();
     }
   }
 }

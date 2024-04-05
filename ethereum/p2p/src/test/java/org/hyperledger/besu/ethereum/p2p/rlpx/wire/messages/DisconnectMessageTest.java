@@ -93,7 +93,7 @@ public class DisconnectMessageTest {
   @Test
   public void readFromWithSubprotocolTriggeredUsesGenericReason() {
     MessageData messageData =
-            new RawMessage(WireMessageCodes.DISCONNECT, Bytes.fromHexString("0xC110"));
+        new RawMessage(WireMessageCodes.DISCONNECT, Bytes.fromHexString("0xC110"));
     DisconnectMessage disconnectMessage = DisconnectMessage.readFrom(messageData);
 
     DisconnectReason reason = disconnectMessage.getReason();
