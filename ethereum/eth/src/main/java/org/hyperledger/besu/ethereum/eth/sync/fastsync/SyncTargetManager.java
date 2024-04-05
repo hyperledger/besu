@@ -97,26 +97,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       LOG.debug("attempting to confirm pivot block {} with best peer {}", pivotBlockHeader.getNumber(), bestPeer);
       LOG.atDebug().setMessage("best peer using chain height estimate would have been {}").addArgument(ethPeers.bestPeerWithHeightEstimate().orElse(null)).log();
 
-      // chainState only gives us an estimate so allow a tolerance, and then we confirm by actually
-      // asking for the header
-      int PIVOT_BLOCK_CHAIN_HEIGHT_TOLERANCE = 700;
-      if (bestPeer.chainState().getEstimatedHeight()
-          < pivotBlockHeader.getNumber() - PIVOT_BLOCK_CHAIN_HEIGHT_TOLERANCE) {
-        // TODO maybe we don't need this at all - sort by chain height estimate but then just ask
-        // bestPeer for the header - that's what confirmPivotBlockHeader() does
-        LOG.info(
-            "Best peer {} has chain height {} below pivotBlock height {} even with tolerance {}. Waiting for better peers. Current {} of max {}",
-            maybeBestPeer.map(EthPeer::getLoggableId).orElse("none"),
-            maybeBestPeer.map(p -> p.chainState().getEstimatedHeight()).orElse(-1L),
-            pivotBlockHeader.getNumber(),
-            PIVOT_BLOCK_CHAIN_HEIGHT_TOLERANCE,
-            ethPeers.peerCount(),
-            ethPeers.getMaxPeers());
-        //        ethPeers.disconnectWorstUselessPeer();
-        return completedFuture(Optional.empty());
-      } else {
-        return confirmPivotBlockHeader(bestPeer);
-      }
+      return confirmPivotBlockHeader(bestPeer);
     }
   }
 
