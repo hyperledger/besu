@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.graphql;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Streams.stream;
 import static io.vertx.core.http.HttpMethod.GET;
 import static io.vertx.core.http.HttpMethod.POST;
 
@@ -44,8 +43,6 @@ import java.util.concurrent.TimeUnit;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import com.google.common.net.MediaType;
 import graphql.ExecutionInput;
 import graphql.ExecutionResult;
@@ -62,6 +59,7 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.json.Json;
 import io.vertx.core.json.jackson.JacksonCodec;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 import io.vertx.ext.web.handler.BodyHandler;
@@ -143,7 +141,7 @@ public class GraphQLHttpService {
     final Router router = Router.router(vertx);
 
     // Verify Host header to avoid rebind attack.
-    router.route().handler(checkWhitelistHostHeader());
+    router.route().handler(checkAllowlistHostHeader());
 
     router
         .route()
@@ -199,7 +197,7 @@ public class GraphQLHttpService {
     return resultFuture;
   }
 
-  private Handler<RoutingContext> checkWhitelistHostHeader() {
+  private Handler<RoutingContext> checkAllowlistHostHeader() {
     return event -> {
       final Optional<String> hostHeader = getAndValidateHostHeader(event);
       if (config.getHostsAllowlist().contains("*")
@@ -218,19 +216,8 @@ public class GraphQLHttpService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    String hostname =
-        event.request().getHeader(HttpHeaders.HOST) != null
-            ? event.request().getHeader(HttpHeaders.HOST)
-            : event.request().host();
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
-    final long hostPieces = stream(splitHostHeader).count();
-    if (hostPieces > 1) {
-      // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
-      if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
-        return Optional.empty();
-      }
-    }
-    return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
+    final HostAndPort hostAndPort = event.request().authority();
+    return Optional.ofNullable(hostAndPort).map(HostAndPort::host);
   }
 
   private boolean hostIsInAllowlist(final String hostHeader) {

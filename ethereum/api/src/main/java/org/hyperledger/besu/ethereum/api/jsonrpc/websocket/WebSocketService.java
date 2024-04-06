@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket;
 
-import static com.google.common.collect.Streams.stream;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationUtils.truncToken;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
@@ -31,8 +30,6 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import io.vertx.core.AsyncResult;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
@@ -43,6 +40,7 @@ import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.http.ServerWebSocket;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
@@ -137,7 +135,8 @@ public class WebSocketService {
             .log();
       }
 
-      if (!hasAllowedHostnameHeader(Optional.ofNullable(websocket.headers().get("Host")))) {
+      if (!checkHostInAllowlist(
+          Optional.ofNullable(websocket.authority()).map(HostAndPort::host))) {
         websocket.reject(403);
       }
 
@@ -294,7 +293,8 @@ public class WebSocketService {
 
   private Handler<RoutingContext> checkAllowlistHostHeader() {
     return event -> {
-      if (hasAllowedHostnameHeader(Optional.ofNullable(event.request().host()))) {
+      if (checkHostInAllowlist(
+          Optional.ofNullable(event.request().authority()).map(HostAndPort::host))) {
         event.next();
       } else {
         final HttpServerResponse response = event.response();
@@ -309,29 +309,12 @@ public class WebSocketService {
   }
 
   @VisibleForTesting
-  public boolean hasAllowedHostnameHeader(final Optional<String> header) {
+  boolean checkHostInAllowlist(final Optional<String> host) {
     return configuration.getHostsAllowlist().contains("*")
-        || header.map(value -> checkHostInAllowlist(validateHostHeader(value))).orElse(false);
-  }
-
-  private Optional<String> validateHostHeader(final String header) {
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(header);
-    final long hostPieces = stream(splitHostHeader).count();
-    if (hostPieces > 1) {
-      // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
-      if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
-        return Optional.empty();
-      }
-    }
-    return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
-  }
-
-  private boolean checkHostInAllowlist(final Optional<String> hostHeader) {
-    return hostHeader
-        .map(
-            header ->
-                configuration.getHostsAllowlist().stream()
-                    .anyMatch(allowListEntry -> allowListEntry.equalsIgnoreCase(header)))
-        .orElse(false);
+        || host.map(
+                header ->
+                    configuration.getHostsAllowlist().stream()
+                        .anyMatch(allowListEntry -> allowListEntry.equalsIgnoreCase(header)))
+            .orElse(false);
   }
 }
