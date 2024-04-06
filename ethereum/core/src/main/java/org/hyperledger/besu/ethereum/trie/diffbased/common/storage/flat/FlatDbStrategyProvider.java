@@ -71,30 +71,36 @@ public class FlatDbStrategyProvider {
 
   @VisibleForTesting
   FlatDbMode deriveFlatDbStrategy(final SegmentedKeyValueStorage composedWorldStateStorage) {
-    final var existingTrieData = composedWorldStateStorage
-        .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)
-        .isPresent();
+    final FlatDbMode requestedFlatDbMode =
+        dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
+            ? FlatDbMode.FULL
+            : FlatDbMode.PARTIAL;
+
+    final var existingTrieData =
+        composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
 
     var flatDbMode =
         FlatDbMode.fromVersion(
             composedWorldStateStorage
                 .get(TRIE_BRANCH_STORAGE, FLAT_DB_MODE)
                 .map(Bytes::wrap)
-                .orElseGet(() -> {
-                  // if we do not have a configured value for flatdb, derive it:
-                  // default to partial if trie data exists, but the flat config does not,
-                  // and default to full if there is no existing trie data
-                  var flatDbModeVal = existingTrieData ?
-                      FlatDbMode.PARTIAL.getVersion() :
-                      FlatDbMode.FULL.getVersion();
-                  // persist this config in the db
-                  var setDbModeTx = composedWorldStateStorage.startTransaction();
-                  setDbModeTx.put(TRIE_BRANCH_STORAGE, FLAT_DB_MODE,
-                      flatDbModeVal.toArrayUnsafe());
-                  setDbModeTx.commit();
+                .orElseGet(
+                    () -> {
+                      // if we do not have a db-supplied config for flatdb, derive it:
+                      // default to partial if trie data exists, but the flat config does not,
+                      // and default to the storage config otherwise
+                      var flatDbModeVal =
+                          existingTrieData
+                              ? FlatDbMode.PARTIAL.getVersion()
+                              : requestedFlatDbMode.getVersion();
+                      // persist this config in the db
+                      var setDbModeTx = composedWorldStateStorage.startTransaction();
+                      setDbModeTx.put(
+                          TRIE_BRANCH_STORAGE, FLAT_DB_MODE, flatDbModeVal.toArrayUnsafe());
+                      setDbModeTx.commit();
 
-                  return flatDbModeVal;
-                }));
+                      return flatDbModeVal;
+                    }));
     LOG.info("Bonsai flat db mode found {}", flatDbMode);
 
     return flatDbMode;

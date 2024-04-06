@@ -65,6 +65,7 @@ public interface DataStorageConfiguration {
     boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = false;
     long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
     int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 30_000;
+    boolean DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED = true;
     boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = true;
 
     DataStorageConfiguration.Unstable DEFAULT =
@@ -78,6 +79,11 @@ public interface DataStorageConfiguration {
     @Value.Default
     default int getBonsaiTrieLogPruningWindowSize() {
       return DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+    }
+
+    @Value.Default
+    default boolean getBonsaiFullFlatDbEnabled() {
+      return DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED;
     }
 
     @Value.Default
