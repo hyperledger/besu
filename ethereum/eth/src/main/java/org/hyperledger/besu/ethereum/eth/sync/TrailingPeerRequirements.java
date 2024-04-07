@@ -19,8 +19,11 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class TrailingPeerRequirements {
+  private static final Logger LOG = LoggerFactory.getLogger(TrailingPeerRequirements.class);
   public static TrailingPeerRequirements UNRESTRICTED =
       new TrailingPeerRequirements(BlockHeader.GENESIS_BLOCK_NUMBER, Long.MAX_VALUE);
   private final long minimumHeightToBeUpToDate;
@@ -30,6 +33,7 @@ public class TrailingPeerRequirements {
       final long minimumHeightToBeUpToDate, final long maxTrailingPeers) {
     this.minimumHeightToBeUpToDate = minimumHeightToBeUpToDate;
     this.maxTrailingPeers = maxTrailingPeers;
+    LOG.info("trailing peer requirements {}", this);
   }
 
   public long getMinimumHeightToBeUpToDate() {
