@@ -30,6 +30,7 @@ public final class StorageExceptionManager {
   private static final long ERROR_THRESHOLD = 1000;
 
   private static long retryableErrorCounter;
+
   /**
    * Determines if an operation can be retried based on the error received. This method checks if
    * the cause of the StorageException is a RocksDBException. If it is, it retrieves the status code
