@@ -190,7 +190,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
 
   @VisibleForTesting
   protected void updateCode(
-      @VisibleForTesting final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
+      final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     maybeStateUpdater.ifPresent(
         bonsaiUpdater -> {

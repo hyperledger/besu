@@ -254,7 +254,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
           return Optional.empty();
         }
       } catch (final RuntimeException re) {
-        LOG.error("Archive rolling failed for block hash " + blockHash, re);
+        LOG.info("Archive rolling failed for block hash " + blockHash, re);
         if (re instanceof MerkleTrieException) {
           // need to throw to trigger the heal
           throw re;
