@@ -75,7 +75,7 @@ public class TrailingPeerLimiter implements BlockAddedObserver {
                   ? "(no chain state)"
                   : peerToDisconnect.chainState().getEstimatedHeight())
           .log();
-      peerToDisconnect.disconnect(DisconnectReason.USELESS_PEER);
+      peerToDisconnect.disconnect(DisconnectReason.USELESS_PEER_TRAILING_PEER);
     }
   }
 
