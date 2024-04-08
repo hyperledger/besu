@@ -29,6 +29,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Optional;
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -70,7 +71,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return UNDERFLOW_RESPONSE;
     }
 
-    final long cost = cost(frame);
+    Supplier<Code> codeSupplier = () -> getInitCode(frame, evm);
+
+    final long cost = cost(frame, codeSupplier);
     if (frame.isStatic()) {
       return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (frame.getRemainingGas() < cost) {
@@ -91,7 +94,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     if (value.compareTo(account.getBalance()) > 0
         || frame.getDepth() >= 1024
-        || account.getNonce() == -1) {
+        || account.getNonce() == -1
+        || codeSupplier.get() == null) {
       fail(frame);
     } else {
       account.incrementNonce();
@@ -117,9 +121,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * Cost operation.
    *
    * @param frame the frame
+   * @param codeSupplier a supplier for the initcode, if needed for costing
    * @return the long
    */
-  protected abstract long cost(final MessageFrame frame);
+  protected abstract long cost(final MessageFrame frame, Supplier<Code> codeSupplier);
 
   /**
    * Target contract address.
@@ -127,7 +132,16 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param frame the frame
    * @return the address
    */
-  protected abstract Address targetContractAddress(MessageFrame frame);
+  protected abstract Address targetContractAddress(MessageFrame frame, Code initcode);
+
+  /**
+   * Gets the initcode that will be run.
+   *
+   * @param frame The message frame the operation executed in
+   * @param evm the EVM executing the message frame
+   * @return the initcode, raw bytes, unparsed and unvalidated
+   */
+  protected abstract Code getInitCode(MessageFrame frame, EVM evm);
 
   private void fail(final MessageFrame frame) {
     final long inputOffset = clampedToLong(frame.getStackItem(1));
@@ -140,7 +154,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
     final Wei value = Wei.wrap(parent.getStackItem(0));
 
-    final Address contractAddress = targetContractAddress(parent);
+    final Address contractAddress = targetContractAddress(parent, code);
 
     final long childGasStipend =
         gasCalculator().gasAvailableForChildCreate(parent.getRemainingGas());
