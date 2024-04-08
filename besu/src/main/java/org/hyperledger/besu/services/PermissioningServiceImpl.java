@@ -22,12 +22,15 @@ import java.util.List;
 
 import com.google.common.collect.Lists;
 
+import javax.inject.Inject;
+
 /** The Permissioning service implementation. */
 public class PermissioningServiceImpl implements PermissioningService {
 
   private final List<NodeConnectionPermissioningProvider> connectionPermissioningProviders =
       Lists.newArrayList();
 
+  @Inject
   /** Default Constructor. */
   public PermissioningServiceImpl() {}
 

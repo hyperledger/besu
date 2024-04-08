@@ -19,6 +19,7 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
+import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -31,6 +32,7 @@ public class StorageServiceImpl implements StorageService {
   private final Map<String, KeyValueStorageFactory> factories;
 
   /** Instantiates a new Storage service. */
+  @Inject
   public StorageServiceImpl() {
     this.segments = List.of(KeyValueSegmentIdentifier.values());
     this.factories = new ConcurrentHashMap<>();

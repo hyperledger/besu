@@ -15,12 +15,14 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
+import org.hyperledger.besu.Besu;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Optional;
 
@@ -36,6 +38,7 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   private Optional<Integer> rpcHttpPort = Optional.of(8545);
 
   /** Default Constructor. */
+  @Inject
   public BesuConfigurationImpl() {}
 
   /**

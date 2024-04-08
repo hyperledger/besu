@@ -17,6 +17,7 @@ package org.hyperledger.besu.services;
 import org.hyperledger.besu.plugin.services.SecurityModuleService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 
+import javax.inject.Inject;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
@@ -24,6 +25,11 @@ import java.util.function.Supplier;
 
 /** The Security module service implementation. */
 public class SecurityModuleServiceImpl implements SecurityModuleService {
+
+  @Inject
+  public SecurityModuleServiceImpl() {
+
+  }
   private final Map<String, Supplier<SecurityModule>> securityModuleSuppliers =
       new ConcurrentHashMap<>();
 
