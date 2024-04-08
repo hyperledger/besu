@@ -27,6 +27,7 @@ import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.util.number.Percentage;
 import java.io.File;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import picocli.CommandLine;
@@ -154,6 +156,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   static class Layered {
     private static final String TX_POOL_LAYER_MAX_CAPACITY = "--tx-pool-layer-max-capacity";
     private static final String TX_POOL_MAX_PRIORITIZED = "--tx-pool-max-prioritized";
+    private static final String TX_POOL_MAX_PRIORITIZED_BY_TYPE =
+        "--tx-pool-max-prioritized-by-type";
     private static final String TX_POOL_MAX_FUTURE_BY_SENDER = "--tx-pool-max-future-by-sender";
 
     @CommandLine.Option(
@@ -173,6 +177,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         arity = "1")
     Integer txPoolMaxPrioritized =
         TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS;
+
+    @CommandLine.Option(
+        names = {TX_POOL_MAX_PRIORITIZED_BY_TYPE},
+        paramLabel = "MAP<TYPE,INTEGER>",
+        description =
+            "Max number of pending transactions, of a specific type, that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    Map<TransactionType, Integer> txPoolMaxPrioritizedByType =
+        TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS_BY_TYPE;
 
     @CommandLine.Option(
         names = {TX_POOL_MAX_FUTURE_BY_SENDER},
@@ -296,6 +309,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.layeredOptions.txPoolLayerMaxCapacity =
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
+    options.layeredOptions.txPoolMaxPrioritizedByType =
+        config.getMaxPrioritizedTransactionsByType();
     options.layeredOptions.txPoolMaxFutureBySender = config.getMaxFutureBySender();
     options.sequencedOptions.txPoolLimitByAccountPercentage =
         config.getTxPoolLimitByAccountPercentage();
@@ -353,6 +368,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .minGasPrice(minGasPrice)
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
+        .maxPrioritizedTransactionsByType(layeredOptions.txPoolMaxPrioritizedByType)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
         .txPoolLimitByAccountPercentage(sequencedOptions.txPoolLimitByAccountPercentage)
         .txPoolMaxSize(sequencedOptions.txPoolMaxSize)

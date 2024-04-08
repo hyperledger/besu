@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,8 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         originalTransaction.getType(),
         originalTransaction.getNonce(),
         originalTransaction.getMaxGasPrice().multiply(2),
+        originalTransaction.getPayload().size(),
+        originalTransaction.getBlobCount(),
         keys);
   }
 
@@ -186,6 +189,64 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
             createTransaction(0, DEFAULT_MIN_GAS_PRICE.subtract(1), KEYS1), true);
     assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(ADDED);
     assertTransactionPrioritized(lowGasPriceTx);
+  }
+
+  @Test
+  public void maxNumberOfTxsForTypeIsEnforced() {
+    final var limitedType = MAX_TRANSACTIONS_BY_TYPE.entrySet().iterator().next();
+    final var maxNumber = limitedType.getValue();
+    final var addedTxs = new ArrayList<Transaction>(maxNumber);
+    for (int i = 0; i < maxNumber; i++) {
+      final var tx =
+          createTransaction(
+              limitedType.getKey(),
+              0,
+              DEFAULT_MIN_GAS_PRICE,
+              0,
+              1,
+              SIGNATURE_ALGORITHM.get().generateKeyPair());
+      addedTxs.add(tx);
+      assertThat(prioritizeTransaction(tx)).isEqualTo(ADDED);
+    }
+
+    final var overflowTx =
+        createTransaction(
+            limitedType.getKey(),
+            0,
+            DEFAULT_MIN_GAS_PRICE,
+            0,
+            1,
+            SIGNATURE_ALGORITHM.get().generateKeyPair());
+    assertThat(prioritizeTransaction(overflowTx)).isEqualTo(DROPPED);
+
+    addedTxs.forEach(this::assertTransactionPrioritized);
+    assertTransactionNotPrioritized(overflowTx);
+  }
+
+  @Test
+  public void maxNumberOfTxsForTypeWithReplacement() {
+    final var limitedType = MAX_TRANSACTIONS_BY_TYPE.entrySet().iterator().next();
+    final var maxNumber = limitedType.getValue();
+    final var addedTxs = new ArrayList<Transaction>(maxNumber);
+    for (int i = 0; i < maxNumber; i++) {
+      final var tx = createTransaction(limitedType.getKey(), i, DEFAULT_MIN_GAS_PRICE, 0, 1, KEYS1);
+      addedTxs.add(tx);
+      assertThat(prioritizeTransaction(tx)).isEqualTo(ADDED);
+    }
+
+    final var replacedTx = addedTxs.get(0);
+    final var replacementTx = createTransactionReplacement(replacedTx, KEYS1);
+    final var txAddResult = prioritizeTransaction(replacementTx);
+
+    assertThat(txAddResult.isReplacement()).isTrue();
+    assertThat(txAddResult.maybeReplacedTransaction())
+        .map(PendingTransaction::getTransaction)
+        .contains(replacedTx);
+
+    addedTxs.remove(replacedTx);
+    addedTxs.forEach(this::assertTransactionPrioritized);
+    assertTransactionNotPrioritized(replacedTx);
+    assertTransactionPrioritized(replacementTx);
   }
 
   private void shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(

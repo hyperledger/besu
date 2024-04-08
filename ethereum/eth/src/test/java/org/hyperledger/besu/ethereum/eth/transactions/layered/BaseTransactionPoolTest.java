@@ -147,6 +147,7 @@ public class BaseTransactionPoolTest {
       tx.maxFeePerGas(Optional.of(maxGasPrice))
           .maxPriorityFeePerGas(Optional.of(maxGasPrice.divide(10)));
       if (type.supportsBlob() && blobCount > 0) {
+        tx.maxFeePerBlobGas(Optional.of(maxGasPrice));
         final var versionHashes =
             IntStream.range(0, blobCount)
                 .mapToObj(i -> new VersionedHash((byte) 1, Hash.ZERO))
