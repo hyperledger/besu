@@ -68,10 +68,10 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
     final BlockCreationTimeResult result = super.getNextTimestamp(parentHeader);
 
     final long milliSecondsUntilNextBlock =
-        result.getMillisecondsUntilValid() + calculateTurnBasedDelay(parentHeader);
+        result.millisecondsUntilValid() + calculateTurnBasedDelay(parentHeader);
 
     return new BlockCreationTimeResult(
-        result.getTimestampForHeader(), Math.max(0, milliSecondsUntilNextBlock));
+        result.timestampForHeader(), Math.max(0, milliSecondsUntilNextBlock));
   }
 
   private int calculateTurnBasedDelay(final BlockHeader parentHeader) {
