@@ -133,7 +133,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                       pivotBlockHeader.getHash(),
                       result.size() == 1 ? result.get(0).getHash() : "invalid response",
                       bestPeer);
-                  bestPeer.disconnect(DisconnectReason.USELESS_PEER);
+                  bestPeer.disconnect(DisconnectReason.USELESS_PEER_MISMATCHED_PIVOT_BLOCK);
                   return CompletableFuture.completedFuture(Optional.<EthPeer>empty());
                 }
                 LOG.debug(
