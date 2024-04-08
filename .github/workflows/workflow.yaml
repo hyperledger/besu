@@ -87,7 +87,7 @@ jobs:
 
       - name: Check Dockerfile syntax
         run: |
-          docker run --rm -i hadolint/hadolint < docker/openjdk-17/Dockerfile
+          docker run --rm -i hadolint/hadolint < docker/Dockerfile
       - name: Build Docker Image
         run: |
           ./gradlew dockerDist
