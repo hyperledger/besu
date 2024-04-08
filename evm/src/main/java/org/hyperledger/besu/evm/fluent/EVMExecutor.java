@@ -74,6 +74,7 @@ public class EVMExecutor {
   private BlockValues blockValues = new SimpleBlockValues();
   private Function<Long, Hash> blockHashLookup = h -> null;
   private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
+  private Optional<List<Bytes>> initcodes = Optional.empty();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
   private List<ContractValidationRule> contractValidationRules =
@@ -715,6 +716,7 @@ public class EVMExecutor {
             .accessListWarmAddresses(accessListWarmAddresses)
             .accessListWarmStorage(accessListWarmStorage)
             .versionedHashes(versionedHashes)
+            .initcodes(initcodes)
             .completer(c -> {})
             .build();
 
@@ -1033,6 +1035,17 @@ public class EVMExecutor {
    */
   public EVMExecutor versionedHashes(final Optional<List<VersionedHash>> versionedHashes) {
     this.versionedHashes = versionedHashes;
+    return this;
+  }
+
+  /**
+   * Sets Initcodes available tot eh TXCREATE operation
+   *
+   * @param initcodes the initcodes
+   * @return the evm executor
+   */
+  public EVMExecutor initcodes(final Optional<List<Bytes>> initcodes) {
+    this.initcodes = initcodes;
     return this;
   }
 

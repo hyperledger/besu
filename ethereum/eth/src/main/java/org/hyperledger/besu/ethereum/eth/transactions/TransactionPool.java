@@ -99,10 +99,10 @@ public class TransactionPool implements BlockAddedObserver {
   private final AtomicBoolean isPoolEnabled = new AtomicBoolean(false);
   private final PendingTransactionsListenersProxy pendingTransactionsListenersProxy =
       new PendingTransactionsListenersProxy();
-  private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
   private final SaveRestoreManager saveRestoreManager = new SaveRestoreManager();
   private final Set<Address> localSenders = ConcurrentHashMap.newKeySet();
   private final EthScheduler.OrderedProcessor<BlockAddedEvent> blockAddedEventOrderedProcessor;
+  private volatile OptionalLong subscribeConnectId = OptionalLong.empty();
 
   public TransactionPool(
       final Supplier<PendingTransactions> pendingTransactionsSupplier,
@@ -122,6 +122,18 @@ public class TransactionPool implements BlockAddedObserver {
     this.blockAddedEventOrderedProcessor =
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
     initLogForReplay();
+  }
+
+  private static void logReAddedTransactions(
+      final List<Transaction> reAddedTxs, final String source) {
+    LOG.atTrace()
+        .setMessage("Re-adding {} {} transactions from a block event: {}")
+        .addArgument(reAddedTxs::size)
+        .addArgument(source)
+        .addArgument(
+            () ->
+                reAddedTxs.stream().map(Transaction::toTraceLog).collect(Collectors.joining("; ")))
+        .log();
   }
 
   private void initLogForReplay() {
@@ -357,18 +369,6 @@ public class TransactionPool implements BlockAddedObserver {
     }
   }
 
-  private static void logReAddedTransactions(
-      final List<Transaction> reAddedTxs, final String source) {
-    LOG.atTrace()
-        .setMessage("Re-adding {} {} transactions from a block event: {}")
-        .addArgument(reAddedTxs::size)
-        .addArgument(source)
-        .addArgument(
-            () ->
-                reAddedTxs.stream().map(Transaction::toTraceLog).collect(Collectors.joining("; ")))
-        .log();
-  }
-
   private TransactionValidator getTransactionValidator() {
     return protocolSchedule
         .getByBlockHeader(protocolContext.getBlockchain().getChainHeadHeader())
@@ -431,6 +431,11 @@ public class TransactionPool implements BlockAddedObserver {
         && transaction.getBlobsWithCommitments().isEmpty()) {
       return ValidationResultAndAccount.invalid(
           TransactionInvalidReason.INVALID_BLOBS, "Blob transaction must have at least one blob");
+    } else if (transaction.getType().equals(TransactionType.INITCODE)
+        && transaction.getInitCodes().isEmpty()) {
+      return ValidationResultAndAccount.invalid(
+          TransactionInvalidReason.INVALID_INITCODE_LIST,
+          "Initcode transaction must have at least one initcode");
     }
 
     // Call the transaction validator plugin
@@ -561,39 +566,6 @@ public class TransactionPool implements BlockAddedObserver {
     return pendingTransactions.getClass();
   }
 
-  public interface TransactionBatchAddedListener {
-
-    void onTransactionsAdded(Collection<Transaction> transactions);
-  }
-
-  private static class ValidationResultAndAccount {
-    final ValidationResult<TransactionInvalidReason> result;
-    final Optional<Account> maybeAccount;
-
-    ValidationResultAndAccount(
-        final Account account, final ValidationResult<TransactionInvalidReason> result) {
-      this.result = result;
-      this.maybeAccount =
-          Optional.ofNullable(account)
-              .map(
-                  acct -> new SimpleAccount(acct.getAddress(), acct.getNonce(), acct.getBalance()));
-    }
-
-    ValidationResultAndAccount(final ValidationResult<TransactionInvalidReason> result) {
-      this.result = result;
-      this.maybeAccount = Optional.empty();
-    }
-
-    static ValidationResultAndAccount invalid(
-        final TransactionInvalidReason reason, final String message) {
-      return new ValidationResultAndAccount(ValidationResult.invalid(reason, message));
-    }
-
-    static ValidationResultAndAccount invalid(final TransactionInvalidReason reason) {
-      return new ValidationResultAndAccount(ValidationResult.invalid(reason));
-    }
-  }
-
   public CompletableFuture<Void> setEnabled() {
     if (!isEnabled()) {
       pendingTransactions = pendingTransactionsSupplier.get();
@@ -632,6 +604,39 @@ public class TransactionPool implements BlockAddedObserver {
 
   public boolean isEnabled() {
     return isPoolEnabled.get();
+  }
+
+  public interface TransactionBatchAddedListener {
+
+    void onTransactionsAdded(Collection<Transaction> transactions);
+  }
+
+  private static class ValidationResultAndAccount {
+    final ValidationResult<TransactionInvalidReason> result;
+    final Optional<Account> maybeAccount;
+
+    ValidationResultAndAccount(
+        final Account account, final ValidationResult<TransactionInvalidReason> result) {
+      this.result = result;
+      this.maybeAccount =
+          Optional.ofNullable(account)
+              .map(
+                  acct -> new SimpleAccount(acct.getAddress(), acct.getNonce(), acct.getBalance()));
+    }
+
+    ValidationResultAndAccount(final ValidationResult<TransactionInvalidReason> result) {
+      this.result = result;
+      this.maybeAccount = Optional.empty();
+    }
+
+    static ValidationResultAndAccount invalid(
+        final TransactionInvalidReason reason, final String message) {
+      return new ValidationResultAndAccount(ValidationResult.invalid(reason, message));
+    }
+
+    static ValidationResultAndAccount invalid(final TransactionInvalidReason reason) {
+      return new ValidationResultAndAccount(ValidationResult.invalid(reason));
+    }
   }
 
   class PendingTransactionsListenersProxy {

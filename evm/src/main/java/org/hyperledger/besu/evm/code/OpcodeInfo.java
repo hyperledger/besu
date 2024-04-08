@@ -146,7 +146,7 @@ record OpcodeInfo(
     OpcodeInfo.validOpcode("NOOP", 0x5b, 0, 0, 1), // was JUMPDEST
     OpcodeInfo.validOpcode("TLOAD", 0x5c, 1, 1, 1),
     OpcodeInfo.validOpcode("TSTORE", 0x5d, 2, 0, 1),
-    OpcodeInfo.validOpcode("MCOPY", 0x5e, 4, 0, 1),
+    OpcodeInfo.validOpcode("MCOPY", 0x5e, 3, 0, 1),
     OpcodeInfo.validOpcode("PUSH0", 0x5f, 0, 1, 1),
     OpcodeInfo.validOpcode("PUSH1", 0x60, 0, 1, 2),
     OpcodeInfo.validOpcode("PUSH2", 0x61, 0, 1, 3),

@@ -64,18 +64,12 @@ public class MainnetTransactionProcessor {
   protected final GasCalculator gasCalculator;
 
   protected final TransactionValidatorFactory transactionValidatorFactory;
-
-  private final AbstractMessageProcessor contractCreationProcessor;
-
-  private final AbstractMessageProcessor messageCallProcessor;
-
-  private final int maxStackSize;
-
-  private final boolean clearEmptyAccounts;
-
   protected final boolean warmCoinbase;
-
   protected final FeeMarket feeMarket;
+  private final AbstractMessageProcessor contractCreationProcessor;
+  private final AbstractMessageProcessor messageCallProcessor;
+  private final int maxStackSize;
+  private final boolean clearEmptyAccounts;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
   public MainnetTransactionProcessor(
@@ -388,6 +382,7 @@ public class MainnetTransactionProcessor {
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
       }
+      commonMessageFrameBuilder.initcodes(transaction.getInitCodes().or(Optional::empty));
 
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {

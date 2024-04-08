@@ -646,7 +646,7 @@ public record EOFLayout(
     for (int i = 0; i < codeSections.length; i++) {
       CodeSection cs = getCodeSection(i);
       out.print(prefix);
-      out.printf("       # Code %d types%n", i);
+      out.printf("       # Code section %d types%n", i);
       out.print(prefix);
       out.printf("    %02x # %1$d inputs %n", cs.getInputs());
       out.print(prefix);

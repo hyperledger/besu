@@ -623,6 +623,13 @@ public class MainnetTransactionValidatorTest {
     assertThat(validationResult.isValid()).isTrue();
   }
 
+  // TODO test a well-formed initcode transaction
+  // TODO test initcode rejected with zero initcodes
+  // TODO test initcode rejected with a single too-large initcode
+  // TODO test initcode rejected with a too-large initcode not in slot zero
+  // TODO test initcode rejected with too many initcodes (>256)
+  // TODO test initcode rejected when "to" field is nil
+
   private Account accountWithNonce(final long nonce) {
     return account(basicTransaction.getUpfrontCost(0L), nonce);
   }

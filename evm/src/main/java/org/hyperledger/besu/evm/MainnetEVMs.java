@@ -133,6 +133,7 @@ import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
 import org.hyperledger.besu.evm.operation.TimestampOperation;
+import org.hyperledger.besu.evm.operation.TxCreateOperation;
 import org.hyperledger.besu.evm.operation.XorOperation;
 
 import java.math.BigInteger;
@@ -991,7 +992,7 @@ public class MainnetEVMs {
 
     // EIP-7620 EOF Create and Transaction Create
     registry.put(new EOFCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
-    // registry.put(new TxCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT))
+    registry.put(new TxCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
     registry.put(new ReturnContractOperation(gasCalculator));
   }
 

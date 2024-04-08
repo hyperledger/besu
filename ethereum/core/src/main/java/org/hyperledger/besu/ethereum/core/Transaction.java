@@ -77,6 +77,9 @@ public class Transaction
 
   public static final BigInteger TWO = BigInteger.valueOf(2);
 
+  public static final int MAX_INITCODE_COUNT = 256;
+  public static final int MAX_INITCODE_SIZE = 2 * 24 * 1024;
+
   private static final Cache<Hash, Address> senderCache =
       CacheBuilder.newBuilder().recordStats().maximumSize(100_000L).build();
 
@@ -102,38 +105,22 @@ public class Transaction
   private final Optional<List<AccessListEntry>> maybeAccessList;
 
   private final Optional<BigInteger> chainId;
-
+  private final TransactionType transactionType;
+  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
+  private final Optional<List<VersionedHash>> versionedHashes;
+  private final Optional<BlobsWithCommitments> blobsWithCommitments;
+  private final Optional<List<Bytes>> initcodes;
+  // Caches the transaction sender.
+  protected volatile Address sender;
+  // Caches the hash used to uniquely identify the transaction.
+  protected volatile Hash hash;
+  // Caches the size in bytes of the encoded transaction.
+  protected volatile int size = -1;
   // Caches a "hash" of a portion of the transaction used for sender recovery.
   // Note that this hash does not include the transaction signature, so it does not
   // fully identify the transaction (use the result of the {@code hash()} for that).
   // It is only used to compute said signature and recover the sender from it.
   private volatile Bytes32 hashNoSignature;
-
-  // Caches the transaction sender.
-  protected volatile Address sender;
-
-  // Caches the hash used to uniquely identify the transaction.
-  protected volatile Hash hash;
-  // Caches the size in bytes of the encoded transaction.
-  protected volatile int size = -1;
-  private final TransactionType transactionType;
-
-  private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
-  private final Optional<List<VersionedHash>> versionedHashes;
-
-  private final Optional<BlobsWithCommitments> blobsWithCommitments;
-
-  public static Builder builder() {
-    return new Builder();
-  }
-
-  public static Transaction readFrom(final Bytes rlpBytes) {
-    return readFrom(RLP.input(rlpBytes));
-  }
-
-  public static Transaction readFrom(final RLPInput rlpInput) {
-    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
-  }
 
   /**
    * Instantiates a transaction instance.
@@ -177,7 +164,8 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
-      final Optional<BlobsWithCommitments> blobsWithCommitments) {
+      final Optional<BlobsWithCommitments> blobsWithCommitments,
+      final Optional<List<Bytes>> initcodes) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -213,6 +201,25 @@ public class Transaction
         checkArgument(
             maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
       }
+
+      if (Objects.equals(transactionType, TransactionType.INITCODE)) {
+        checkArgument(initcodes.isPresent(), "Initcode transactions must contain a initcode list");
+        int initcodeCount = initcodes.get().size();
+        checkArgument(
+            initcodeCount > 0, "Initcode transactions must contain at least one initcode");
+        checkArgument(
+            initcodeCount <= MAX_INITCODE_COUNT,
+            "Initcode transactions must contain no more than %s initcode entries",
+            MAX_INITCODE_COUNT);
+        for (Bytes initcode : initcodes.get()) {
+          checkArgument(
+              initcode != null && !initcode.isEmpty(), "Initcode entries cannot be zero length");
+          checkArgument(
+              initcode.size() <= MAX_INITCODE_SIZE,
+              "Initcode entries cannot be larger than %s bytes",
+              MAX_INITCODE_SIZE);
+        }
+      }
     }
 
     this.transactionType = transactionType;
@@ -231,6 +238,266 @@ public class Transaction
     this.chainId = chainId;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
+    this.initcodes = initcodes;
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static Transaction readFrom(final Bytes rlpBytes) {
+    return readFrom(RLP.input(rlpBytes));
+  }
+
+  public static Transaction readFrom(final RLPInput rlpInput) {
+    return TransactionDecoder.decodeRLP(rlpInput, EncodingContext.BLOCK_BODY);
+  }
+
+  /**
+   * Return the list of transaction hashes extracted from the collection of Transaction passed as
+   * argument
+   *
+   * @param transactions a collection of transactions
+   * @return the list of transaction hashes
+   */
+  public static List<Hash> toHashList(final Collection<Transaction> transactions) {
+    return transactions.stream().map(Transaction::getHash).toList();
+  }
+
+  private static Bytes32 computeSenderRecoveryHash(
+      final TransactionType transactionType,
+      final long nonce,
+      final Wei gasPrice,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
+      final Wei maxFeePerBlobGas,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<List<AccessListEntry>> accessList,
+      final List<VersionedHash> versionedHashes,
+      final Optional<BigInteger> chainId,
+      final List<Bytes> initcodes) {
+    if (transactionType.requiresChainId()) {
+      checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
+    }
+    final Bytes preimage =
+        switch (transactionType) {
+          case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
+          case ACCESS_LIST -> accessListPreimage(
+              nonce,
+              gasPrice,
+              gasLimit,
+              to,
+              value,
+              payload,
+              accessList.orElseThrow(
+                  () ->
+                      new IllegalStateException(
+                          "Developer error: the transaction should be guaranteed to have an access list here")),
+              chainId);
+          case EIP1559 -> eip1559Preimage(
+              nonce,
+              maxPriorityFeePerGas,
+              maxFeePerGas,
+              gasLimit,
+              to,
+              value,
+              payload,
+              chainId,
+              accessList);
+          case BLOB -> blobPreimage(
+              nonce,
+              maxPriorityFeePerGas,
+              maxFeePerGas,
+              maxFeePerBlobGas,
+              gasLimit,
+              to,
+              value,
+              payload,
+              chainId,
+              accessList,
+              versionedHashes);
+          case INITCODE -> initcodePreimage(
+              nonce,
+              maxPriorityFeePerGas,
+              maxFeePerGas,
+              gasLimit,
+              to,
+              value,
+              payload,
+              chainId,
+              accessList,
+              initcodes);
+        };
+    return keccak256(preimage);
+  }
+
+  private static Bytes frontierPreimage(
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<BigInteger> chainId) {
+    return RLP.encode(
+        rlpOutput -> {
+          rlpOutput.startList();
+          rlpOutput.writeLongScalar(nonce);
+          rlpOutput.writeUInt256Scalar(gasPrice);
+          rlpOutput.writeLongScalar(gasLimit);
+          rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
+          rlpOutput.writeUInt256Scalar(value);
+          rlpOutput.writeBytes(payload);
+          if (chainId.isPresent()) {
+            rlpOutput.writeBigIntegerScalar(chainId.get());
+            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
+            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
+          }
+          rlpOutput.endList();
+        });
+  }
+
+  private static Bytes accessListPreimage(
+      final long nonce,
+      final Wei gasPrice,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final List<AccessListEntry> accessList,
+      final Optional<BigInteger> chainId) {
+    final Bytes encode =
+        RLP.encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              AccessListTransactionEncoder.encodeAccessListInner(
+                  chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
+              rlpOutput.endList();
+            });
+    return Bytes.concatenate(Bytes.of(TransactionType.ACCESS_LIST.getSerializedType()), encode);
+  }
+
+  private static Bytes eip1559Preimage(
+      final long nonce,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<BigInteger> chainId,
+      final Optional<List<AccessListEntry>> accessList) {
+    final Bytes encoded =
+        RLP.encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              eip1559PreimageFields(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  rlpOutput);
+              rlpOutput.endList();
+            });
+    return Bytes.concatenate(Bytes.of(TransactionType.EIP1559.getSerializedType()), encoded);
+  }
+
+  private static void eip1559PreimageFields(
+      final long nonce,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<BigInteger> chainId,
+      final Optional<List<AccessListEntry>> accessList,
+      final RLPOutput rlpOutput) {
+    rlpOutput.writeBigIntegerScalar(chainId.orElseThrow());
+    rlpOutput.writeLongScalar(nonce);
+    rlpOutput.writeUInt256Scalar(maxPriorityFeePerGas);
+    rlpOutput.writeUInt256Scalar(maxFeePerGas);
+    rlpOutput.writeLongScalar(gasLimit);
+    rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
+    rlpOutput.writeUInt256Scalar(value);
+    rlpOutput.writeBytes(payload);
+    AccessListTransactionEncoder.writeAccessList(rlpOutput, accessList);
+  }
+
+  private static Bytes blobPreimage(
+      final long nonce,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
+      final Wei maxFeePerBlobGas,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<BigInteger> chainId,
+      final Optional<List<AccessListEntry>> accessList,
+      final List<VersionedHash> versionedHashes) {
+
+    final Bytes encoded =
+        RLP.encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              eip1559PreimageFields(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  rlpOutput);
+              rlpOutput.writeUInt256Scalar(maxFeePerBlobGas);
+              BlobTransactionEncoder.writeBlobVersionedHashes(rlpOutput, versionedHashes);
+              rlpOutput.endList();
+            });
+    return Bytes.concatenate(Bytes.of(TransactionType.BLOB.getSerializedType()), encoded);
+  }
+
+  private static Bytes initcodePreimage(
+      final long nonce,
+      final Wei maxPriorityFeePerGas,
+      final Wei maxFeePerGas,
+      final long gasLimit,
+      final Optional<Address> to,
+      final Wei value,
+      final Bytes payload,
+      final Optional<BigInteger> chainId,
+      final Optional<List<AccessListEntry>> accessList,
+      final List<Bytes> initcode) {
+
+    final Bytes encoded =
+        RLP.encode(
+            rlpOutput -> {
+              rlpOutput.startList();
+              eip1559PreimageFields(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  rlpOutput);
+              rlpOutput.writeList(initcode, (b, o) -> o.writeBytes(b));
+              rlpOutput.endList();
+            });
+    return Bytes.concatenate(Bytes.of(TransactionType.INITCODE.getSerializedType()), encoded);
   }
 
   /**
@@ -462,7 +729,8 @@ public class Transaction
               payload,
               maybeAccessList,
               versionedHashes.orElse(null),
-              chainId);
+              chainId,
+              initcodes.orElse(null));
     }
     return hashNoSignature;
   }
@@ -672,206 +940,9 @@ public class Transaction
     return blobsWithCommitments;
   }
 
-  /**
-   * Return the list of transaction hashes extracted from the collection of Transaction passed as
-   * argument
-   *
-   * @param transactions a collection of transactions
-   * @return the list of transaction hashes
-   */
-  public static List<Hash> toHashList(final Collection<Transaction> transactions) {
-    return transactions.stream().map(Transaction::getHash).toList();
-  }
-
-  private static Bytes32 computeSenderRecoveryHash(
-      final TransactionType transactionType,
-      final long nonce,
-      final Wei gasPrice,
-      final Wei maxPriorityFeePerGas,
-      final Wei maxFeePerGas,
-      final Wei maxFeePerBlobGas,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final Bytes payload,
-      final Optional<List<AccessListEntry>> accessList,
-      final List<VersionedHash> versionedHashes,
-      final Optional<BigInteger> chainId) {
-    if (transactionType.requiresChainId()) {
-      checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
-    }
-    final Bytes preimage =
-        switch (transactionType) {
-          case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
-          case EIP1559 -> eip1559Preimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList);
-          case BLOB -> blobPreimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              maxFeePerBlobGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList,
-              versionedHashes);
-          case ACCESS_LIST -> accessListPreimage(
-              nonce,
-              gasPrice,
-              gasLimit,
-              to,
-              value,
-              payload,
-              accessList.orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Developer error: the transaction should be guaranteed to have an access list here")),
-              chainId);
-        };
-    return keccak256(preimage);
-  }
-
-  private static Bytes frontierPreimage(
-      final long nonce,
-      final Wei gasPrice,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final Bytes payload,
-      final Optional<BigInteger> chainId) {
-    return RLP.encode(
-        rlpOutput -> {
-          rlpOutput.startList();
-          rlpOutput.writeLongScalar(nonce);
-          rlpOutput.writeUInt256Scalar(gasPrice);
-          rlpOutput.writeLongScalar(gasLimit);
-          rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
-          rlpOutput.writeUInt256Scalar(value);
-          rlpOutput.writeBytes(payload);
-          if (chainId.isPresent()) {
-            rlpOutput.writeBigIntegerScalar(chainId.get());
-            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
-            rlpOutput.writeUInt256Scalar(UInt256.ZERO);
-          }
-          rlpOutput.endList();
-        });
-  }
-
-  private static Bytes eip1559Preimage(
-      final long nonce,
-      final Wei maxPriorityFeePerGas,
-      final Wei maxFeePerGas,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final Bytes payload,
-      final Optional<BigInteger> chainId,
-      final Optional<List<AccessListEntry>> accessList) {
-    final Bytes encoded =
-        RLP.encode(
-            rlpOutput -> {
-              rlpOutput.startList();
-              eip1559PreimageFields(
-                  nonce,
-                  maxPriorityFeePerGas,
-                  maxFeePerGas,
-                  gasLimit,
-                  to,
-                  value,
-                  payload,
-                  chainId,
-                  accessList,
-                  rlpOutput);
-              rlpOutput.endList();
-            });
-    return Bytes.concatenate(Bytes.of(TransactionType.EIP1559.getSerializedType()), encoded);
-  }
-
-  private static void eip1559PreimageFields(
-      final long nonce,
-      final Wei maxPriorityFeePerGas,
-      final Wei maxFeePerGas,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final Bytes payload,
-      final Optional<BigInteger> chainId,
-      final Optional<List<AccessListEntry>> accessList,
-      final RLPOutput rlpOutput) {
-    rlpOutput.writeBigIntegerScalar(chainId.orElseThrow());
-    rlpOutput.writeLongScalar(nonce);
-    rlpOutput.writeUInt256Scalar(maxPriorityFeePerGas);
-    rlpOutput.writeUInt256Scalar(maxFeePerGas);
-    rlpOutput.writeLongScalar(gasLimit);
-    rlpOutput.writeBytes(to.map(Bytes::copy).orElse(Bytes.EMPTY));
-    rlpOutput.writeUInt256Scalar(value);
-    rlpOutput.writeBytes(payload);
-    AccessListTransactionEncoder.writeAccessList(rlpOutput, accessList);
-  }
-
-  private static Bytes blobPreimage(
-      final long nonce,
-      final Wei maxPriorityFeePerGas,
-      final Wei maxFeePerGas,
-      final Wei maxFeePerBlobGas,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final Bytes payload,
-      final Optional<BigInteger> chainId,
-      final Optional<List<AccessListEntry>> accessList,
-      final List<VersionedHash> versionedHashes) {
-
-    final Bytes encoded =
-        RLP.encode(
-            rlpOutput -> {
-              rlpOutput.startList();
-              eip1559PreimageFields(
-                  nonce,
-                  maxPriorityFeePerGas,
-                  maxFeePerGas,
-                  gasLimit,
-                  to,
-                  value,
-                  payload,
-                  chainId,
-                  accessList,
-                  rlpOutput);
-              rlpOutput.writeUInt256Scalar(maxFeePerBlobGas);
-              BlobTransactionEncoder.writeBlobVersionedHashes(rlpOutput, versionedHashes);
-              rlpOutput.endList();
-            });
-    return Bytes.concatenate(Bytes.of(TransactionType.BLOB.getSerializedType()), encoded);
-  }
-
-  private static Bytes accessListPreimage(
-      final long nonce,
-      final Wei gasPrice,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final Bytes payload,
-      final List<AccessListEntry> accessList,
-      final Optional<BigInteger> chainId) {
-    final Bytes encode =
-        RLP.encode(
-            rlpOutput -> {
-              rlpOutput.startList();
-              AccessListTransactionEncoder.encodeAccessListInner(
-                  chainId, nonce, gasPrice, gasLimit, to, value, payload, accessList, rlpOutput);
-              rlpOutput.endList();
-            });
-    return Bytes.concatenate(Bytes.of(TransactionType.ACCESS_LIST.getSerializedType()), encode);
+  @Override
+  public Optional<List<Bytes>> getInitCodes() {
+    return initcodes;
   }
 
   @Override
@@ -939,7 +1010,7 @@ public class Transaction
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
     if (transactionType.equals(TransactionType.ACCESS_LIST)) {
-      sb.append("accessList=").append(maybeAccessList).append(", ");
+      sb.append("accessList=").append(initcodes).append(", ");
     }
     if (versionedHashes.isPresent()) {
       final List<VersionedHash> vhs = versionedHashes.get();
@@ -956,6 +1027,9 @@ public class Transaction
     }
     if (transactionType.supportsBlob() && this.blobsWithCommitments.isPresent()) {
       sb.append("numberOfBlobs=").append(blobsWithCommitments.get().getBlobs().size()).append(", ");
+    }
+    if (transactionType.equals(TransactionType.BLOB)) {
+      sb.append("initcodes=").append(maybeAccessList).append(", ");
     }
     sb.append("payload=").append(getPayload());
     return sb.append("}").toString();
@@ -1022,6 +1096,8 @@ public class Transaction
         blobsWithCommitments.map(
             withCommitments ->
                 blobsWithCommitmentsDetachedCopy(withCommitments, detachedVersionedHashes.get()));
+    final Optional<List<Bytes>> detatchedInitcodes =
+        initcodes.map(initcodes -> initcodes.stream().map(Bytes::copy).toList());
 
     final var copiedTx =
         new Transaction(
@@ -1041,7 +1117,8 @@ public class Transaction
             sender,
             chainId,
             detachedVersionedHashes,
-            detachedBlobsWithCommitments);
+            detachedBlobsWithCommitments,
+            detatchedInitcodes);
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1109,6 +1186,7 @@ public class Transaction
     protected Optional<BigInteger> v = Optional.empty();
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
+    private List<Bytes> initcodes;
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1127,6 +1205,7 @@ public class Transaction
       this.chainId = toCopy.chainId;
       this.versionedHashes = toCopy.versionedHashes.orElse(null);
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
+      this.initcodes = toCopy.initcodes.orElse(null);
       return this;
     }
 
@@ -1213,6 +1292,11 @@ public class Transaction
       return this;
     }
 
+    public Builder initcodes(final List<Bytes> initcodes) {
+      this.initcodes = initcodes;
+      return this;
+    }
+
     public Builder guessType() {
       if (versionedHashes != null && !versionedHashes.isEmpty()) {
         transactionType = TransactionType.BLOB;
@@ -1249,7 +1333,8 @@ public class Transaction
           sender,
           chainId,
           Optional.ofNullable(versionedHashes),
-          Optional.ofNullable(blobsWithCommitments));
+          Optional.ofNullable(blobsWithCommitments),
+          Optional.ofNullable(initcodes));
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
@@ -1276,7 +1361,8 @@ public class Transaction
                   payload,
                   accessList,
                   versionedHashes,
-                  chainId),
+                  chainId,
+                  initcodes),
               keys);
     }
 

@@ -80,6 +80,12 @@ class TransactionBuilderTest {
     }
   }
 
+  // TODO test a well-formed initcode builder transaction
+  // TODO test initcode build failure with a single too-large initcode
+  // TODO test initcode build failure with a too-large initcode not in slot zero
+  // TODO test initcode build failure with too many initcodes (>256)
+  // TODO test initcode build failure when "to" field is nil
+
   @Test
   @SuppressWarnings("ReferenceEquality")
   void copyFromIsIdentical() {

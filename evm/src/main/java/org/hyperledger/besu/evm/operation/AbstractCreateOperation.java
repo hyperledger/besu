@@ -150,6 +150,18 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected abstract long cost(final MessageFrame frame, Supplier<Code> codeSupplier);
 
   /**
+   * Any costs related to memory expansion
+   *
+   * @param frame the message frame
+   * @return costs related to memory expansion
+   */
+  protected long memoryExpansionCost(final MessageFrame frame) {
+    final long inputOffset = clampedToLong(frame.getStackItem(1));
+    final long inputSize = clampedToLong(frame.getStackItem(2));
+    return gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize);
+  }
+
+  /**
    * Target contract address.
    *
    * @param frame the frame
