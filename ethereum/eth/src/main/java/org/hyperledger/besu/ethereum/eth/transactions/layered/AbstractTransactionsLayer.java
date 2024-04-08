@@ -26,6 +26,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -39,6 +40,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -74,7 +76,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   private OptionalLong nextLayerOnAddedListenerId = OptionalLong.empty();
   private OptionalLong nextLayerOnDroppedListenerId = OptionalLong.empty();
   protected long spaceUsed = 0;
-
+  protected final int[] txCountByType = new int[TransactionType.values().length];
   private final BlobCache blobCache;
 
   protected AbstractTransactionsLayer(
@@ -91,6 +93,11 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     metrics.initSpaceUsed(this::getLayerSpaceUsed, name());
     metrics.initTransactionCount(pendingTransactions::size, name());
     metrics.initUniqueSenderCount(txsBySender::size, name());
+    Arrays.stream(TransactionType.values())
+        .forEach(
+            type ->
+                metrics.initTransactionCountByType(
+                    () -> txCountByType[type.ordinal()], name(), type));
     this.blobCache = blobCache;
   }
 
@@ -101,6 +108,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     pendingTransactions.clear();
     txsBySender.clear();
     spaceUsed = 0;
+    Arrays.fill(txCountByType, 0);
     nextLayer.reset();
   }
 
@@ -286,7 +294,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     pendingTransactions.put(addedTx.getHash(), addedTx);
     final var senderTxs = txsBySender.computeIfAbsent(addedTx.getSender(), s -> new TreeMap<>());
     senderTxs.put(addedTx.getNonce(), addedTx);
-    increaseSpaceUsed(addedTx);
+    increaseCounters(addedTx);
     metrics.incrementAdded(addedTx, name());
     internalAdd(senderTxs, addedTx);
   }
@@ -332,7 +340,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
   protected void replaced(final PendingTransaction replacedTx) {
     pendingTransactions.remove(replacedTx.getHash());
-    decreaseSpaceUsed(replacedTx);
+    decreaseCounters(replacedTx);
     metrics.incrementRemoved(replacedTx, REPLACED.label(), name());
     internalReplaced(replacedTx);
     notifyTransactionDropped(replacedTx);
@@ -368,7 +376,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     final PendingTransaction removedTx = pendingTransactions.remove(transaction.getHash());
 
     if (removedTx != null) {
-      decreaseSpaceUsed(removedTx);
+      decreaseCounters(removedTx);
       metrics.incrementRemoved(removedTx, removalReason.label(), name());
       internalRemove(senderTxs, removedTx, removalReason);
     }
@@ -381,7 +389,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final RemovalReason reason) {
     final PendingTransaction removedTx = pendingTransactions.remove(evictedTx.getHash());
     if (removedTx != null) {
-      decreaseSpaceUsed(evictedTx);
+      decreaseCounters(evictedTx);
       metrics.incrementRemoved(evictedTx, reason.label(), name());
       internalEvict(senderTxs, removedTx);
     }
@@ -467,12 +475,14 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
   protected abstract PendingTransaction getEvictable();
 
-  protected void increaseSpaceUsed(final PendingTransaction pendingTransaction) {
+  protected void increaseCounters(final PendingTransaction pendingTransaction) {
     spaceUsed += pendingTransaction.memorySize();
+    ++txCountByType[pendingTransaction.getTransaction().getType().ordinal()];
   }
 
-  protected void decreaseSpaceUsed(final PendingTransaction pendingTransaction) {
+  protected void decreaseCounters(final PendingTransaction pendingTransaction) {
     spaceUsed -= pendingTransaction.memorySize();
+    --txCountByType[pendingTransaction.getTransaction().getType().ordinal()];
   }
 
   protected abstract long cacheFreeSpace();
