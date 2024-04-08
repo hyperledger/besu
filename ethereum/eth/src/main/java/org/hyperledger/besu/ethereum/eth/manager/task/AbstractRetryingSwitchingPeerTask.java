@@ -149,7 +149,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
                     .addArgument(peers::peerCount)
                     .addArgument(peers::getMaxPeers)
                     .log();
-                peer.disconnect(DisconnectReason.USELESS_PEER);
+                peer.disconnect(DisconnectReason.USELESS_PEER_BY_REPUTATION);
               });
     }
   }

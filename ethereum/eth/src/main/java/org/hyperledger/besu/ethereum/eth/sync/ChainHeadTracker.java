@@ -100,7 +100,7 @@ public class ChainHeadTracker implements ConnectCallback {
                     .addArgument(peer::getLoggableId)
                     .addArgument(error)
                     .log();
-                peer.disconnect(DisconnectReason.USELESS_PEER);
+                peer.disconnect(DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_STATE);
               }
             });
   }
