@@ -108,7 +108,8 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     final BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester =
         (t1, t2) ->
-            new TransactionPoolReplacementHandler(poolConf.getPriceBump())
+            new TransactionPoolReplacementHandler(
+                    poolConf.getPriceBump(), poolConfig.getBlobPriceBump())
                 .shouldReplace(t1, t2, mockBlockHeader());
 
     final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);

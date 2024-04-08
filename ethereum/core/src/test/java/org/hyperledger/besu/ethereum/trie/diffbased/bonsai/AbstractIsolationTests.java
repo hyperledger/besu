@@ -116,7 +116,8 @@ public abstract class AbstractIsolationTests {
       ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
 
   protected final TransactionPoolReplacementHandler transactionReplacementHandler =
-      new TransactionPoolReplacementHandler(poolConfiguration.getPriceBump());
+      new TransactionPoolReplacementHandler(
+          poolConfiguration.getPriceBump(), poolConfiguration.getBlobPriceBump());
 
   protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
       transactionReplacementTester =
