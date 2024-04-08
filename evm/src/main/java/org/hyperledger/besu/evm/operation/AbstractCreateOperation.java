@@ -130,6 +130,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * Target contract address.
    *
    * @param frame the frame
+   * @param initcode the initcode for the new contract.
    * @return the address
    */
   protected abstract Address targetContractAddress(MessageFrame frame, Code initcode);
