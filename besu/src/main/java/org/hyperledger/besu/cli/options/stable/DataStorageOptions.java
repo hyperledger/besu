@@ -17,6 +17,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_RECEIPT_COMPACTION_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
@@ -29,6 +30,7 @@ import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguratio
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.List;
+import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 import picocli.CommandLine;
@@ -60,6 +62,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
               + " it will also be used as the number of layers of trie logs to retain.",
       arity = "1")
   private Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+
+  @Option(
+      names = "--receipt-compaction-enabled",
+      description = "Enables compact storing of receipts (default: ${DEFAULT-VALUE}).",
+      arity = "1")
+  private Boolean receiptCompactionEnabled = DEFAULT_RECEIPT_COMPACTION_ENABLED;
 
   @CommandLine.ArgGroup(validate = false)
   private final DataStorageOptions.Unstable unstableOptions = new Unstable();
@@ -149,6 +157,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     final DataStorageOptions dataStorageOptions = DataStorageOptions.create();
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
     dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();
+    dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
     dataStorageOptions.unstableOptions.bonsaiLimitTrieLogsEnabled =
         domainObject.getUnstable().getBonsaiLimitTrieLogsEnabled();
     dataStorageOptions.unstableOptions.bonsaiTrieLogPruningWindowSize =
@@ -164,6 +173,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(dataStorageFormat)
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
+        .receiptCompactionEnabled(receiptCompactionEnabled)
         .unstable(
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiLimitTrieLogsEnabled(unstableOptions.bonsaiLimitTrieLogsEnabled)
@@ -184,6 +194,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * @return the normalized string
    */
   public String normalizeDataStorageFormat() {
-    return StringUtils.capitalize(dataStorageFormat.toString().toLowerCase());
+    return StringUtils.capitalize(dataStorageFormat.toString().toLowerCase(Locale.ROOT));
   }
 }

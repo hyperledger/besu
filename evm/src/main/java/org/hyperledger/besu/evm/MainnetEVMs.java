@@ -991,7 +991,7 @@ public class MainnetEVMs {
 
     // EIP-7620 EOF Create and Transaction Create
     registry.put(new EOFCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
-    //registry.put(new TxCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT))
+    // registry.put(new TxCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT))
     registry.put(new ReturnContractOperation(gasCalculator));
   }
 

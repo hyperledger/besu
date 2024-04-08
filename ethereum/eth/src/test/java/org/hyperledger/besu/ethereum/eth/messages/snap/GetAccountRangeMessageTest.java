@@ -15,10 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.messages.snap;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.AbstractSnapMessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;

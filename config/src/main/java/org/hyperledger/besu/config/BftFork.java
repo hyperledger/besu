@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -89,7 +90,7 @@ public class BftFork implements Fork {
       return Optional.empty();
     }
     final String weiStr = configFileContent.get();
-    if (weiStr.toLowerCase().startsWith("0x")) {
+    if (weiStr.toLowerCase(Locale.ROOT).startsWith("0x")) {
       return Optional.of(new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe()));
     }
     return Optional.of(new BigInteger(weiStr));

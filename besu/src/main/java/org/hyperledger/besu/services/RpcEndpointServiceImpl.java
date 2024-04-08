@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -58,7 +59,10 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
                 namespaces.stream()
                     .anyMatch(
                         namespace ->
-                            entry.getKey().toUpperCase().startsWith(namespace.toUpperCase())))
+                            entry
+                                .getKey()
+                                .toUpperCase(Locale.ROOT)
+                                .startsWith(namespace.toUpperCase(Locale.ROOT))))
         .map(entry -> new PluginJsonRpcMethod(entry.getKey(), entry.getValue()))
         .collect(Collectors.toMap(PluginJsonRpcMethod::getName, e -> e));
   }
@@ -71,6 +75,7 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
    */
   public boolean hasNamespace(final String namespace) {
     return rpcMethods.keySet().stream()
-        .anyMatch(key -> key.toUpperCase().startsWith(namespace.toUpperCase()));
+        .anyMatch(
+            key -> key.toUpperCase(Locale.ROOT).startsWith(namespace.toUpperCase(Locale.ROOT)));
   }
 }

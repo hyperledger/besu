@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -48,7 +49,9 @@ public class EOFCreateOperation extends AbstractCreateOperation {
 
   @Override
   public long cost(final MessageFrame frame, final Supplier<Code> codeSupplier) {
-    return gasCalculator().eofCreateOperationGasCost(codeSupplier.get());
+    return clampedAdd(
+        gasCalculator().txCreateCost(),
+        gasCalculator().createKeccakCost(codeSupplier.get().getSize()));
   }
 
   @Override

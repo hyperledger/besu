@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
 
@@ -133,7 +134,7 @@ public final class AccountRangeMessage extends AbstractSnapMessageData {
   @Value.Immutable
   public interface AccountRangeData {
 
-    TreeMap<Bytes32, Bytes> accounts();
+    NavigableMap<Bytes32, Bytes> accounts();
 
     ArrayDeque<Bytes> proofs();
   }

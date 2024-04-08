@@ -16,8 +16,6 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
 
-import org.hyperledger.besu.evm.Code;
-
 /**
  * Gas Calculator for Prague
  *
@@ -42,11 +40,5 @@ public class PragueGasCalculator extends CancunGasCalculator {
    */
   protected PragueGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
-  }
-
-  @Override
-  public long eofCreateOperationGasCost(final Code initCode) {
-    return CREATE_OPERATION_GAS_COST
-        + (initCode.getBytes().size() + 31L) / 32L * KECCAK256_OPERATION_WORD_GAS_COST;
   }
 }

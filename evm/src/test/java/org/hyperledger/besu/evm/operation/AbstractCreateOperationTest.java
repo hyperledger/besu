@@ -16,6 +16,8 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
@@ -108,7 +110,13 @@ class AbstractCreateOperationTest {
 
     @Override
     public long cost(final MessageFrame frame, final Supplier<Code> unused) {
-      return gasCalculator().createOperationGasCost(frame);
+      final int inputOffset = clampedToInt(frame.getStackItem(1));
+      final int inputSize = clampedToInt(frame.getStackItem(2));
+      return clampedAdd(
+          clampedAdd(
+              gasCalculator().txCreateCost(),
+              gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize)),
+          gasCalculator().initcodeCost(inputSize));
     }
 
     @Override

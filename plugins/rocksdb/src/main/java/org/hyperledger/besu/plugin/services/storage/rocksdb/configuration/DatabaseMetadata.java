@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb.configuration;
 
+import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
@@ -46,18 +47,25 @@ public class DatabaseMetadata {
           .enable(SerializationFeature.INDENT_OUTPUT);
   private final VersionedStorageFormat versionedStorageFormat;
 
-  private DatabaseMetadata(final VersionedStorageFormat versionedStorageFormat) {
+  /**
+   * Instantiates a new Database metadata.
+   *
+   * @param versionedStorageFormat the version storage format
+   */
+  public DatabaseMetadata(final VersionedStorageFormat versionedStorageFormat) {
     this.versionedStorageFormat = versionedStorageFormat;
   }
 
   /**
    * Return the default metadata for new db for a specific format
    *
-   * @param dataStorageFormat data storage format
+   * @param besuConfiguration besu configuration
    * @return the metadata to use for new db
    */
-  public static DatabaseMetadata defaultForNewDb(final DataStorageFormat dataStorageFormat) {
-    return new DatabaseMetadata(BaseVersionedStorageFormat.defaultForNewDB(dataStorageFormat));
+  public static DatabaseMetadata defaultForNewDb(final BesuConfiguration besuConfiguration) {
+    return new DatabaseMetadata(
+        BaseVersionedStorageFormat.defaultForNewDB(
+            besuConfiguration.getDataStorageConfiguration()));
   }
 
   /**
@@ -222,6 +230,7 @@ public class DatabaseMetadata {
           case FOREST -> switch (versionedStorageFormat.getVersion()) {
             case 1 -> PrivacyVersionedStorageFormat.FOREST_ORIGINAL;
             case 2 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
+            case 3 -> PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
             default -> throw new StorageException(
                 "Unsupported database with format FOREST and version "
                     + versionedStorageFormat.getVersion());
@@ -229,6 +238,7 @@ public class DatabaseMetadata {
           case BONSAI -> switch (versionedStorageFormat.getVersion()) {
             case 1 -> PrivacyVersionedStorageFormat.BONSAI_ORIGINAL;
             case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+            case 3 -> PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION;
             default -> throw new StorageException(
                 "Unsupported database with format BONSAI and version "
                     + versionedStorageFormat.getVersion());

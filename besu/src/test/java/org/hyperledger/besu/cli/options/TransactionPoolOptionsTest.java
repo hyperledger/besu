@@ -169,6 +169,31 @@ public class TransactionPoolOptionsTest
   }
 
   @Test
+  public void blobPriceBump() {
+    final Percentage blobPriceBump = Percentage.fromInt(50);
+    internalTestSuccess(
+        config -> assertThat(config.getBlobPriceBump()).isEqualTo(blobPriceBump),
+        "--tx-pool-blob-price-bump",
+        blobPriceBump.toString());
+  }
+
+  @Test
+  public void invalidBlobPriceBumpShouldFail() {
+    internalTestFailure(
+        "Invalid value: 101, should be a number between 0 and 100 inclusive",
+        "--tx-pool-blob-price-bump",
+        "101");
+  }
+
+  @Test
+  public void defaultBlobPriceBump() {
+    internalTestSuccess(
+        config ->
+            assertThat(config.getBlobPriceBump())
+                .isEqualTo(TransactionPoolConfiguration.DEFAULT_BLOB_PRICE_BUMP));
+  }
+
+  @Test
   public void txFeeCap() {
     final Wei txFeeCap = Wei.fromEth(2);
     internalTestSuccess(

@@ -167,7 +167,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-                new MainnetBlockHeaderFunctions()),
+                new MainnetBlockHeaderFunctions(),
+                false),
             new NoOpMetricsSystem(),
             0);
 

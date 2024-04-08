@@ -103,7 +103,8 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     if (value.compareTo(account.getBalance()) > 0
         || frame.getDepth() >= 1024
-        || account.getNonce() == -1) {
+        || account.getNonce() == -1
+        || codeSupplier.get() == null) {
       fail(frame);
     } else {
       account.incrementNonce();
@@ -152,7 +153,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * Target contract address.
    *
    * @param frame the frame
-   * @param initcode the initcode generating the new contract
+   * @param initcode the initcode for the new contract.
    * @return the address
    */
   protected abstract Address targetContractAddress(MessageFrame frame, Code initcode);

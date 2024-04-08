@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
@@ -126,7 +127,7 @@ public class ProtocolScheduleBuilder {
 
     validateForkOrdering();
 
-    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
+    final NavigableMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
 
     // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
     // inserted _AT_ the modifier block entry.
@@ -290,7 +291,7 @@ public class ProtocolScheduleBuilder {
     return referenceForkBlock;
   }
 
-  private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
+  private NavigableMap<Long, BuilderMapEntry> buildMilestoneMap(
       final MainnetProtocolSpecFactory specFactory) {
     return createMilestones(specFactory)
         .flatMap(Optional::stream)

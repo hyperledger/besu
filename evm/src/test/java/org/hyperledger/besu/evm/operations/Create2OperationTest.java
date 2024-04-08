@@ -211,7 +211,7 @@ public class Create2OperationTest {
   void shanghaiMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc000");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -239,7 +239,7 @@ public class Create2OperationTest {
   void shanghaiMaxInitCodeSizePlus1Create() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc001");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -256,11 +256,7 @@ public class Create2OperationTest {
   }
 
   @Nonnull
-  private MessageFrame testMemoryFrame(
-      final UInt256 memoryOffset,
-      final UInt256 memoryLength,
-      final UInt256 value,
-      final int depth) {
+  private MessageFrame testMemoryFrame(final UInt256 memoryOffset, final UInt256 memoryLength) {
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -283,12 +279,12 @@ public class Create2OperationTest {
     messageFrame.pushStackItem(Bytes.EMPTY);
     messageFrame.pushStackItem(memoryLength);
     messageFrame.pushStackItem(memoryOffset);
-    messageFrame.pushStackItem(value);
+    messageFrame.pushStackItem(UInt256.ZERO);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
         memoryOffset.trimLeadingZeros().toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
-    while (messageFrameStack.size() < depth) {
+    if (messageFrameStack.isEmpty()) {
       messageFrameStack.push(messageFrame);
     }
     return messageFrame;

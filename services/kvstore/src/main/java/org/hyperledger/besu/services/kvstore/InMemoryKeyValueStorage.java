@@ -18,7 +18,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
 import java.io.PrintStream;
 import java.nio.charset.StandardCharsets;
-import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -57,9 +57,9 @@ public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
         }
       };
 
-  private static ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> asSegmentMap(
-      final Map<Bytes, Optional<byte[]>> initialMap) {
-    final ConcurrentMap<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> segmentMap =
+  private static ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>>
+      asSegmentMap(final NavigableMap<Bytes, Optional<byte[]>> initialMap) {
+    final ConcurrentMap<SegmentIdentifier, NavigableMap<Bytes, Optional<byte[]>>> segmentMap =
         new ConcurrentHashMap<>();
     segmentMap.put(SEGMENT_IDENTIFIER, initialMap);
     return segmentMap;
@@ -78,7 +78,7 @@ public class InMemoryKeyValueStorage extends SegmentedKeyValueStorageAdapter {
    *
    * @param initialMap the initial map
    */
-  public InMemoryKeyValueStorage(final Map<Bytes, Optional<byte[]>> initialMap) {
+  public InMemoryKeyValueStorage(final NavigableMap<Bytes, Optional<byte[]>> initialMap) {
     super(SEGMENT_IDENTIFIER, new SegmentedInMemoryKeyValueStorage(asSegmentMap(initialMap)));
     rwLock = ((SegmentedInMemoryKeyValueStorage) storage).rwLock;
   }

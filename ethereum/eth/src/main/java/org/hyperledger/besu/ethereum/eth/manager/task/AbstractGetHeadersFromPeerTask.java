@@ -126,7 +126,7 @@ public abstract class AbstractGetHeadersFromPeerTask
     }
 
     LOG.atTrace()
-        .setMessage("Received {} of {} headers requested from peer {}...")
+        .setMessage("Received {} of {} headers requested from peer {}")
         .addArgument(headersList::size)
         .addArgument(count)
         .addArgument(peer::getLoggableId)
@@ -137,7 +137,7 @@ public abstract class AbstractGetHeadersFromPeerTask
   private void updatePeerChainState(final EthPeer peer, final BlockHeader blockHeader) {
     if (blockHeader.getNumber() > peer.chainState().getEstimatedHeight()) {
       LOG.atTrace()
-          .setMessage("Updating chain state for peer {}... to block header {}")
+          .setMessage("Updating chain state for peer {} to block header {}")
           .addArgument(peer::getLoggableId)
           .addArgument(blockHeader::toLogString)
           .log();
