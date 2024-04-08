@@ -629,7 +629,7 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s %s height (est) %s, validated? %s, disconnected? %s, client: %s, %s, %s",
+        "PeerId: %s height (est): %s %s, validated? %s, disconnected? %s, client: %s, %s, %s",
         getLoggableId(),
         chainState().getEstimatedHeight(),
         reputation,
