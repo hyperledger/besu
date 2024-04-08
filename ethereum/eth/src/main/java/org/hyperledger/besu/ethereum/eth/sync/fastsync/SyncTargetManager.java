@@ -74,8 +74,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
   protected CompletableFuture<Optional<EthPeer>> selectBestAvailableSyncTarget() {
     final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
     final EthPeers ethPeers = ethContext.getEthPeers();
-    // just use the default (merge) comparator
-    final Optional<EthPeer> maybeBestPeer = ethPeers.bestPeer();
+    final Optional<EthPeer> maybeBestPeer = ethPeers.bestPeerWithHeightEstimate();
     if (maybeBestPeer.isEmpty()) {
       throttledLog(
           LOG::debug,
