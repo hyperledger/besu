@@ -81,11 +81,13 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.of(withdrawals),
+            Optional.empty(),
             Optional.empty());
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawalsParam, null));
+    var resp =
+        resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawalsParam, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -99,11 +101,13 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty(),
+            Optional.empty(),
             Optional.empty());
     lenient()
         .when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null));
+    var resp =
+        resp(mockEnginePayload(mockHeader, Collections.emptyList(), withdrawals, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -118,9 +122,11 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockEnginePayload(
-                createBlockHeader(Optional.of(Collections.emptyList()), Optional.empty()),
+                createBlockHeader(
+                    Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
+                null,
                 null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
@@ -132,11 +138,12 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   public void shouldValidateBlobGasUsedCorrectly() {
     // V2 should return error if non-null blobGasUsed
     BlockHeader blockHeader =
-        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+        createBlockHeaderFixture(
+                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
     assertThat(jsonRpcError.getData()).isEqualTo("non-null BlobGasUsed pre-cancun");
@@ -147,11 +154,12 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
   public void shouldValidateExcessBlobGasCorrectly() {
     // V2 should return error if non-null ExcessBlobGas
     BlockHeader blockHeader =
-        createBlockHeaderFixture(Optional.of(Collections.emptyList()), Optional.empty())
+        createBlockHeaderFixture(
+                Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
             .excessBlobGas(BlobGas.MAX_BLOB_GAS)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null));
+    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -168,9 +176,10 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(
             mockEnginePayload(
-                createBlockHeader(Optional.empty(), Optional.empty()),
+                createBlockHeader(Optional.empty(), Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
                 withdrawals,
+                null,
                 null));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());

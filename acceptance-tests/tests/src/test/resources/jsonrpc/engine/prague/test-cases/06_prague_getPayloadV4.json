@@ -27,8 +27,9 @@
         "transactions": [],
         "withdrawals": [],
         "depositReceipts": [],
+        "exits": [],
         "blockNumber": "0x2",
-        "blockHash": "0xc8255831601171a628ef17f6601d3d1d30ff9b382e77592ed1af32354f6dafbb",
+        "blockHash": "0x194d190af2a85c418947fecca405eb168c832481f33f618b0c36326ba65d4767",
         "blobGasUsed": "0x0",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
       },

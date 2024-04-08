@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.eth.manager;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.TIMEOUT;
-import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.USELESS_PEER;
+import static org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES;
 
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 
@@ -62,7 +62,7 @@ public class PeerReputationTest {
   @Test
   public void shouldOnlyDisconnectWhenEmptyResponseThresholdReached() {
     sendUselessResponses(1001, PeerReputation.USELESS_RESPONSE_THRESHOLD - 1);
-    assertThat(reputation.recordUselessResponse(1005)).contains(USELESS_PEER);
+    assertThat(reputation.recordUselessResponse(1005)).contains(USELESS_PEER_USELESS_RESPONSES);
   }
 
   @Test

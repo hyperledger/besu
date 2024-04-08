@@ -76,6 +76,7 @@ public class ProtocolSpec {
   private final WithdrawalsValidator withdrawalsValidator;
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
   private final DepositsValidator depositsValidator;
+  private final ValidatorExitsValidator exitsValidator;
 
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
@@ -138,6 +139,7 @@ public class ProtocolSpec {
       final WithdrawalsValidator withdrawalsValidator,
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final DepositsValidator depositsValidator,
+      final ValidatorExitsValidator exitsValidator,
       final boolean isPoS,
       final boolean isReplayProtectionSupported) {
     this.name = name;
@@ -165,6 +167,7 @@ public class ProtocolSpec {
     this.withdrawalsValidator = withdrawalsValidator;
     this.withdrawalsProcessor = withdrawalsProcessor;
     this.depositsValidator = depositsValidator;
+    this.exitsValidator = exitsValidator;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
   }
@@ -368,6 +371,10 @@ public class ProtocolSpec {
 
   public DepositsValidator getDepositsValidator() {
     return depositsValidator;
+  }
+
+  public ValidatorExitsValidator getExitsValidator() {
+    return exitsValidator;
   }
 
   /**

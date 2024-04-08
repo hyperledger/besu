@@ -13,6 +13,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- Update "host allow list" logic to transition from deprecated `host()` method to suggested `authority()` method.[#6878](https://github.com/hyperledger/besu/issues/6878)
 - `txpool_besuPendingTransactions`change parameter `numResults` to optional parameter [#6708](https://github.com/hyperledger/besu/pull/6708)
 - Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)
 - Add bft-style `blockperiodseconds` transitions to Clique [#6596](https://github.com/hyperledger/besu/pull/6596)
@@ -35,6 +36,7 @@
 - Upgrade Reference Tests to 13.2 [#6854](https://github.com/hyperledger/besu/pull/6854)
 - Update Web3j dependencies [#6811](https://github.com/hyperledger/besu/pull/6811)
 - Add `tx-pool-blob-price-bump` option to configure the price bump percentage required to replace blob transactions (by default 100%) [#6874](https://github.com/hyperledger/besu/pull/6874)
+- Log detailed timing of block creation steps [#6880](https://github.com/hyperledger/besu/pull/6880)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
@@ -44,6 +46,7 @@
 - Fix Shanghai/QBFT block import bug when syncing new nodes [#6765](https://github.com/hyperledger/besu/pull/6765)
 - Fix to avoid broadcasting full blob txs, instead of only the tx announcement, to a subset of nodes [#6835](https://github.com/hyperledger/besu/pull/6835)
 - Snap client fixes discovered during snap server testing [#6847](https://github.com/hyperledger/besu/pull/6847)
+- Correctly initialize the txpool as disabled on creation [#6890](https://github.com/hyperledger/besu/pull/6890)
 
 ### Download Links
 
