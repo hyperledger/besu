@@ -38,6 +38,8 @@ dependencies {
   implementation 'info.picocli:picocli'
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
+  implementation "org.immutables:value-annotations"
+  annotationProcessor "org.immutables:value"
 
   testImplementation project(':testutil')
 

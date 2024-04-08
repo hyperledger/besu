@@ -45,7 +45,7 @@ class NewPooledTransactionHashesMessageSender {
     final Capability capability = peer.getConnection().capability(EthProtocol.NAME);
     for (final List<Transaction> txBatch :
         Iterables.partition(
-            transactionTracker.claimTransactionsToSendToPeer(peer), MAX_TRANSACTIONS_HASHES)) {
+            transactionTracker.claimTransactionHashesToSendToPeer(peer), MAX_TRANSACTIONS_HASHES)) {
       try {
         final List<Hash> txHashes = toHashList(txBatch);
         LOG.atTrace()

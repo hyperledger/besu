@@ -16,6 +16,8 @@ node-private-key-file="./path/to/privateKey"
 pid-path="~/.pid"
 reorg-logging-threshold=0
 static-nodes-file="~/besudata/static-nodes.json"
+version-compatibility-protection=true
+
 profile="NONE"
 # Security Module plugin to use
 security-module="localfile"
@@ -149,11 +151,6 @@ Xminer-remote-sealers-limit=1000
 Xminer-remote-sealers-hashrate-ttl=10
 Xpos-block-creation-max-time=5
 
-# Pruning
-pruning-enabled=true
-pruning-blocks-retained=1024
-pruning-block-confirmations=10
-
 # Permissioning
 permissions-nodes-config-file-enabled=false
 permissions-nodes-config-file="./permissions_config.toml"
@@ -177,6 +174,7 @@ privacy-flexible-groups-enabled=false
 # Transaction Pool
 tx-pool="layered"
 tx-pool-price-bump=13
+tx-pool-blob-price-bump=100
 rpc-tx-feecap=2000000000000000000
 strict-tx-replay-protection-enabled=true
 tx-pool-no-local-priority=false
@@ -213,6 +211,7 @@ ethstats-cacert-file="./root.cert"
 # Data storage
 data-storage-format="BONSAI"
 bonsai-historical-block-limit=512
+receipt-compaction-enabled=true
 
 # feature flags
 Xsecp256k1-native-enabled=false

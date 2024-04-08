@@ -1,5 +1,9 @@
 /*
+<<<<<<< HEAD
  * Copyright ConsenSys AG.
+=======
+ * Copyright Hyperledger Besu Contributors.
+>>>>>>> f26f3f5224c43e3af4870b7fc7fa52483df85c28
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,12 +15,17 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
+<<<<<<< HEAD
  *
+=======
+>>>>>>> f26f3f5224c43e3af4870b7fc7fa52483df85c28
  */
 
 package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY;
+import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -25,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedSnapshotWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
@@ -136,7 +146,10 @@ public abstract class DiffBasedWorldState
   @Override
   public void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
-    LOG.atInfo().setMessage("Persist world state for block {}").addArgument(maybeBlockHeader).log();
+    LOG.atDebug()
+        .setMessage("Persist world state for block {}")
+        .addArgument(maybeBlockHeader)
+        .log();
 
     final DiffBasedWorldStateUpdateAccumulator<?> localCopy = accumulator.copy();
 
@@ -165,24 +178,16 @@ public abstract class DiffBasedWorldState
 
         stateUpdater
             .getWorldStateTransaction()
-            .put(
-                TRIE_BRANCH_STORAGE,
-                DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY,
-                blockHeader.getHash().toArrayUnsafe());
+            .put(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHeader.getHash().toArrayUnsafe());
         worldStateBlockHash = blockHeader.getHash();
       } else {
-        stateUpdater
-            .getWorldStateTransaction()
-            .remove(TRIE_BRANCH_STORAGE, DiffBasedWorldStateKeyValueStorage.WORLD_BLOCK_HASH_KEY);
+        stateUpdater.getWorldStateTransaction().remove(TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY);
         worldStateBlockHash = null;
       }
 
       stateUpdater
           .getWorldStateTransaction()
-          .put(
-              TRIE_BRANCH_STORAGE,
-              DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY,
-              newWorldStateRootHash.toArrayUnsafe());
+          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, newWorldStateRootHash.toArrayUnsafe());
       worldStateRootHash = newWorldStateRootHash;
       success = true;
     } finally {
@@ -276,7 +281,7 @@ public abstract class DiffBasedWorldState
 
   @Override
   public Stream<StreamableAccount> streamAccounts(final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("Bonsai Tries do not provide account streaming.");
+    throw new RuntimeException("storage format do not provide account streaming.");
   }
 
   @Override
@@ -300,8 +305,8 @@ public abstract class DiffBasedWorldState
 
   private void closeFrozenStorage() {
     try {
-      final DiffBasedSnapshotWorldStateKeyValueStorage worldStateLayerStorage =
-          (DiffBasedSnapshotWorldStateKeyValueStorage) worldStateKeyValueStorage;
+      final DiffBasedLayeredWorldStateKeyValueStorage worldStateLayerStorage =
+          (DiffBasedLayeredWorldStateKeyValueStorage) worldStateKeyValueStorage;
       if (!isPersisted(worldStateLayerStorage.getParentWorldStateStorage())) {
         worldStateLayerStorage.getParentWorldStateStorage().close();
       }

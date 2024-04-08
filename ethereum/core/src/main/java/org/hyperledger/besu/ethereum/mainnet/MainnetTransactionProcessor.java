@@ -274,7 +274,10 @@ public class MainnetTransactionProcessor {
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(
-              transaction, blockHeader.getBaseFee(), transactionValidationParams);
+              transaction,
+              blockHeader.getBaseFee(),
+              Optional.ofNullable(blobGasPrice),
+              transactionValidationParams);
       // Make sure the transaction is intrinsically valid before trying to
       // compare against a sender account (because the transaction may not
       // be signed correctly to extract the sender).
@@ -516,6 +519,18 @@ public class MainnetTransactionProcessor {
             initialFrame.getOutputData(),
             validationResult);
       } else {
+        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+          LOG.debug(
+              "Transaction {} processing halted: {}",
+              transaction.getHash(),
+              initialFrame.getExceptionalHaltReason().get());
+        }
+        if (initialFrame.getRevertReason().isPresent()) {
+          LOG.debug(
+              "Transaction {} reverted: {}",
+              transaction.getHash(),
+              initialFrame.getRevertReason().get());
+        }
         return TransactionProcessingResult.failed(
             gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
       }

@@ -49,12 +49,10 @@ class StandardJsonTracerTest {
     //      returnStack was a valid field.  It no longer appears in any traces.
     //  (b) the summary line is omitted
     //  (c) pc:3 is in error, the size of the memory before the first MSTORE8 is zero.
-    //  (d) we don't report call requested gas in CALL series operations as a gas cost, just the EVM
-    //      consumed gas
-    //  (e) if memory is zero length, it is not included even if `showMemory` is true
-    //  (f) if return data is zero length or null, it is not included even if `showReturnData` is
+    //  (d) if memory is zero length, it is not included even if `showMemory` is true
+    //  (e) if return data is zero length or null, it is not included even if `showReturnData` is
     // true
-    //  (g) if error is zero length or null it is not included.
+    //  (f) if error is zero length or null it is not included.
     assertThat(baos)
         .hasToString(
             """
@@ -70,7 +68,7 @@ class StandardJsonTracerTest {
                         {"pc":15,"op":96,"gas":"0x2540b95bf","gasCost":"0x3","memory":"0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000","memSize":96,"stack":["0x40","0x0","0x40"],"depth":1,"refund":0,"opName":"PUSH1"}
                         {"pc":17,"op":96,"gas":"0x2540b95bc","gasCost":"0x3","memory":"0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000","memSize":96,"stack":["0x40","0x0","0x40","0x0"],"depth":1,"refund":0,"opName":"PUSH1"}
                         {"pc":19,"op":90,"gas":"0x2540b95b9","gasCost":"0x2","memory":"0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000","memSize":96,"stack":["0x40","0x0","0x40","0x0","0x2"],"depth":1,"refund":0,"opName":"GAS"}
-                        {"pc":20,"op":250,"gas":"0x2540b95b7","gasCost":"0x2bc","memory":"0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000","memSize":96,"stack":["0x40","0x0","0x40","0x0","0x2","0x2540b95b7"],"depth":1,"refund":0,"opName":"STATICCALL"}
+                        {"pc":20,"op":250,"gas":"0x2540b95b7","gasCost":"0x24abb676c","memory":"0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000","memSize":96,"stack":["0x40","0x0","0x40","0x0","0x2","0x2540b95b7"],"depth":1,"refund":0,"opName":"STATICCALL"}
                         {"pc":21,"op":96,"gas":"0x2540b92a7","gasCost":"0x3","memory":"0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b00000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000","memSize":96,"stack":["0x1"],"returnData":"0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b","depth":1,"refund":0,"opName":"PUSH1"}
                         {"pc":23,"op":243,"gas":"0x2540b92a4","gasCost":"0x0","memory":"0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b00000000000000000000000000000000000000000000000000000000000000004000000000000000000000000000000000000000000000000000000000000000","memSize":96,"stack":["0x1","0x40"],"returnData":"0xf5a5fd42d16a20302798ef6ed309979b43003d2320d9f0e8ea9831a92759fb4b","depth":1,"refund":0,"opName":"RETURN"}
                         """);
@@ -104,7 +102,7 @@ class StandardJsonTracerTest {
                         {"pc":15,"op":96,"gas":"0x2540b95bf","gasCost":"0x3","memSize":96,"depth":1,"refund":0,"opName":"PUSH1","storage":{"0x40":"0x40"}}
                         {"pc":17,"op":96,"gas":"0x2540b95bc","gasCost":"0x3","memSize":96,"depth":1,"refund":0,"opName":"PUSH1","storage":{"0x40":"0x40"}}
                         {"pc":19,"op":90,"gas":"0x2540b95b9","gasCost":"0x2","memSize":96,"depth":1,"refund":0,"opName":"GAS","storage":{"0x40":"0x40"}}
-                        {"pc":20,"op":250,"gas":"0x2540b95b7","gasCost":"0x2bc","memSize":96,"depth":1,"refund":0,"opName":"STATICCALL","storage":{"0x40":"0x40"}}
+                        {"pc":20,"op":250,"gas":"0x2540b95b7","gasCost":"0x24abb676c","memSize":96,"depth":1,"refund":0,"opName":"STATICCALL","storage":{"0x40":"0x40"}}
                         {"pc":21,"op":96,"gas":"0x2540b92a7","gasCost":"0x3","memSize":96,"depth":1,"refund":0,"opName":"PUSH1","storage":{"0x40":"0x40"}}
                         {"pc":23,"op":243,"gas":"0x2540b92a4","gasCost":"0x0","memSize":96,"depth":1,"refund":0,"opName":"RETURN","storage":{"0x40":"0x40"}}
                         """);

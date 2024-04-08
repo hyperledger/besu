@@ -101,6 +101,7 @@ class LogRollingTests {
           null,
           null,
           null,
+          null,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
@@ -122,6 +123,7 @@ class LogRollingTests {
           0,
           null,
           null, // blobGasUsed
+          null,
           null,
           null,
           null,
@@ -165,7 +167,7 @@ class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             EvmConfiguration.DEFAULT);
     final WorldUpdater updater = worldState.updater();
 
@@ -179,7 +181,9 @@ class LogRollingTests {
         new BonsaiWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(
-                secondProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                secondProvider,
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -211,7 +215,7 @@ class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
@@ -233,7 +237,9 @@ class LogRollingTests {
         new BonsaiWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(
-                secondProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                secondProvider,
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             EvmConfiguration.DEFAULT);
     final BonsaiWorldStateUpdateAccumulator secondUpdater =
         (BonsaiWorldStateUpdateAccumulator) secondWorldState.updater();
@@ -266,7 +272,7 @@ class LogRollingTests {
         new BonsaiWorldState(
             archive,
             new BonsaiWorldStateKeyValueStorage(
-                provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                provider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater updater = worldState.updater();
@@ -295,7 +301,9 @@ class LogRollingTests {
         new BonsaiWorldState(
             secondArchive,
             new BonsaiWorldStateKeyValueStorage(
-                secondProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG),
+                secondProvider,
+                new NoOpMetricsSystem(),
+                DataStorageConfiguration.DEFAULT_BONSAI_CONFIG),
             EvmConfiguration.DEFAULT);
 
     final WorldUpdater secondUpdater = secondWorldState.updater();

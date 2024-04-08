@@ -99,7 +99,6 @@ public class QbftRoundFactory {
    */
   public QbftRound createNewRoundWithState(
       final BlockHeader parentHeader, final RoundState roundState) {
-    final ConsensusRoundIdentifier roundIdentifier = roundState.getRoundIdentifier();
     final BlockCreator blockCreator = blockCreatorFactory.create(parentHeader, 0);
 
     // TODO(tmm): Why is this created everytime?!
@@ -110,7 +109,7 @@ public class QbftRoundFactory {
         roundState,
         blockCreator,
         protocolContext,
-        protocolSchedule.getByBlockNumber(roundIdentifier.getSequenceNumber()).getBlockImporter(),
+        protocolSchedule,
         minedBlockObservers,
         finalState.getNodeKey(),
         messageFactory,

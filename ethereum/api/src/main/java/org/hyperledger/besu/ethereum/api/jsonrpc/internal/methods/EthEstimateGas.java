@@ -85,7 +85,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
       return errorResponse(requestContext, gasUsed.get());
     }
 
-    var low = gasUsed.get().getResult().getEstimateGasUsedByTransaction();
+    var low = gasUsed.get().result().getEstimateGasUsedByTransaction();
     var lowResult =
         executeSimulation(
             blockHeader,

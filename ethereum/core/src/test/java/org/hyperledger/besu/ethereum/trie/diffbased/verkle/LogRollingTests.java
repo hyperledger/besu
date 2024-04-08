@@ -85,7 +85,7 @@ class LogRollingTests {
           Hash.ZERO,
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x5838fdaa799cc6702310a507f8841ac60d6dc70634650f5f31fba8ab10c38bae"),
+          Hash.fromHexString("0x47ce198a7fb1089549001a5e0838e9ef3ab6e75f9c97cbb4d6f3243a779b64d2"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -104,13 +104,14 @@ class LogRollingTests {
           null,
           null,
           null,
+          null,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x121b55c8ed6858d1f9531c73c8a5b75c5738bcffafff152baff10821ecbbf217"),
+          Hash.fromHexString("0x48bb5935338f43503c7c2452059dee413fcda1716ae64c65a46d4c54ee8ddbb8"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -129,13 +130,14 @@ class LogRollingTests {
           null,
           null,
           null,
+          null,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerThree =
       new BlockHeader(
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x35ed5a945a3ee9207c6201997e38db37e90230d531fd18f8ac1d107287465cc2"),
+          Hash.fromHexString("0x147f9bf4e32b84b49a2e6debe6831059148b0b818d9ff5ff7e3634676c285490"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -150,6 +152,7 @@ class LogRollingTests {
           0,
           null,
           null, // blobGasUsed
+          null,
           null,
           null,
           null,
@@ -161,7 +164,7 @@ class LogRollingTests {
           headerOne.getHash(),
           Hash.EMPTY_LIST_HASH,
           Address.ZERO,
-          Hash.fromHexString("0x5838fdaa799cc6702310a507f8841ac60d6dc70634650f5f31fba8ab10c38bae"),
+          Hash.fromHexString("0x47ce198a7fb1089549001a5e0838e9ef3ab6e75f9c97cbb4d6f3243a779b64d2"),
           Hash.EMPTY_TRIE_HASH,
           Hash.EMPTY_LIST_HASH,
           LogsBloomFilter.builder().build(),
@@ -176,6 +179,7 @@ class LogRollingTests {
           0,
           null,
           null, // blobGasUsed
+          null,
           null,
           null,
           null,

@@ -136,6 +136,10 @@ public abstract class RetryingSwitchingPeerMessageTaskTest<T> extends RetryingMe
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCompletedExceptionally()).isTrue();
     assertThatThrownBy(future::get).hasCauseInstanceOf(MaxRetriesReachedException.class);
+
+    // since we are below the max number of peers, no peer should be disconnected
+    assertThat(firstPeer.getEthPeer().isDisconnected()).isFalse();
+    assertThat(secondPeer.getEthPeer().isDisconnected()).isFalse();
   }
 
   @Test

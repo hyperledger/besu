@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
@@ -23,13 +24,15 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataR
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.tasks.Task;
 
 import java.util.List;
@@ -43,8 +46,12 @@ public class TaskGenerator {
 
   public static List<Task<SnapDataRequest>> createAccountRequest(final boolean withData) {
 
-    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
-        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+        new BonsaiWorldStateKeyValueStorage(
+            new InMemoryKeyValueStorageProvider(),
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
@@ -137,7 +144,7 @@ public class TaskGenerator {
   }
 
   private static BytecodeRequest createBytecodeDataRequest(
-      final ForestWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Hash rootHash,
       final Hash accountHash,
       final Hash codeHash,
@@ -145,7 +152,7 @@ public class TaskGenerator {
     final BytecodeRequest request =
         SnapDataRequest.createBytecodeRequest(accountHash, rootHash, codeHash);
     if (withData) {
-      request.setCode(worldStateKeyValueStorage.getCode(codeHash).get());
+      request.setCode(worldStateKeyValueStorage.getCode(codeHash, accountHash).get());
     }
     return request;
   }

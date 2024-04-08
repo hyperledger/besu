@@ -16,6 +16,9 @@ package org.hyperledger.besu.ethereum.eth.transactions;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidator;
+import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
@@ -61,6 +64,7 @@ public interface TransactionPoolConfiguration {
   int DEFAULT_TX_RETENTION_HOURS = 13;
   boolean DEFAULT_STRICT_TX_REPLAY_PROTECTION_ENABLED = false;
   Percentage DEFAULT_PRICE_BUMP = Percentage.fromInt(10);
+  Percentage DEFAULT_BLOB_PRICE_BUMP = Percentage.fromInt(100);
   Wei DEFAULT_RPC_TX_FEE_CAP = Wei.fromEth(1);
   boolean DEFAULT_NO_LOCAL_PRIORITY = false;
   boolean DEFAULT_ENABLE_SAVE_RESTORE = false;
@@ -97,6 +101,11 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Percentage getPriceBump() {
     return DEFAULT_PRICE_BUMP;
+  }
+
+  @Value.Default
+  default Percentage getBlobPriceBump() {
+    return DEFAULT_BLOB_PRICE_BUMP;
   }
 
   @Value.Default
@@ -152,6 +161,20 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Wei getMinGasPrice() {
     return DEFAULT_TX_POOL_MIN_GAS_PRICE;
+  }
+
+  @Value.Default
+  default TransactionPoolValidatorService getTransactionPoolValidatorService() {
+    return new TransactionPoolValidatorService() {
+      @Override
+      public PluginTransactionPoolValidator createTransactionValidator() {
+        return PluginTransactionPoolValidator.VALIDATE_ALL;
+      }
+
+      @Override
+      public void registerPluginTransactionValidatorFactory(
+          final PluginTransactionPoolValidatorFactory pluginTransactionPoolValidatorFactory) {}
+    };
   }
 
   @Value.Default

@@ -44,6 +44,9 @@ public class EnginePayloadParameter {
   private final Long blobGasUsed;
   private final String excessBlobGas;
   private final List<DepositParameter> deposits;
+
+  private final List<ValidatorExitParameter> exits;
+
   private final ExecutionWitnessParameter executionWitness;
 
   /**
@@ -67,6 +70,7 @@ public class EnginePayloadParameter {
    * @param blobGasUsed QUANTITY, 64 Bits
    * @param excessBlobGas QUANTITY, 64 Bits
    * @param deposits List of deposit parameters.
+   * @param exits List of exits parameters.
    * @param executionWitness OBJECT executionWitness.
    */
   @JsonCreator
@@ -89,6 +93,7 @@ public class EnginePayloadParameter {
       @JsonProperty("blobGasUsed") final UnsignedLongParameter blobGasUsed,
       @JsonProperty("excessBlobGas") final String excessBlobGas,
       @JsonProperty("depositReceipts") final List<DepositParameter> deposits,
+      @JsonProperty("exits") final List<ValidatorExitParameter> exits,
       @JsonProperty("executionWitness") final ExecutionWitnessParameter executionWitness) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
@@ -108,6 +113,7 @@ public class EnginePayloadParameter {
     this.blobGasUsed = blobGasUsed == null ? null : blobGasUsed.getValue();
     this.excessBlobGas = excessBlobGas;
     this.deposits = deposits;
+    this.exits = exits;
     this.executionWitness = executionWitness;
   }
 
@@ -181,6 +187,10 @@ public class EnginePayloadParameter {
 
   public List<DepositParameter> getDeposits() {
     return deposits;
+  }
+
+  public List<ValidatorExitParameter> getExits() {
+    return exits;
   }
 
   public ExecutionWitnessParameter getExecutionWitness() {

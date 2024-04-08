@@ -44,6 +44,17 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
     strictNode = besu.createArchiveNode("strictNode", configureNode((true)));
     miningNode = besu.createMinerNode("strictMiningNode", configureNode((true)));
     cluster.start(lenientNode, strictNode, miningNode);
+
+    // verify nodes are fully connected otherwise tx could not be propagated
+    lenientNode.verify(net.awaitPeerCount(2));
+    strictNode.verify(net.awaitPeerCount(2));
+    miningNode.verify(net.awaitPeerCount(2));
+
+    // verify that the miner started producing blocks and all other nodes are syncing from it
+    waitForBlockHeight(miningNode, 1);
+    final var minerChainHead = miningNode.execute(ethTransactions.block());
+    lenientNode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
+    strictNode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
   }
 
   @Test
@@ -53,6 +64,7 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
     final String txHash = tx.transactionHash();
 
     lenientNode.verify(eth.expectSuccessfulEthRawTransaction(rawTx));
+
     // Tx should be included on-chain
     miningNode.verify(eth.expectSuccessfulTransactionReceipt(txHash));
   }

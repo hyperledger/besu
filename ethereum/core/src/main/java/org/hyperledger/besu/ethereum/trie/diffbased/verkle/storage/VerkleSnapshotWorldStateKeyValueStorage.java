@@ -79,7 +79,7 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
+  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
     return isClosedGet() ? Optional.empty() : super.getCode(codeHash, accountHash);
   }
 

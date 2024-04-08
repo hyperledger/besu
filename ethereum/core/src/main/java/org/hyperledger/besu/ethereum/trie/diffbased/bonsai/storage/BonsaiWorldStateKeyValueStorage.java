@@ -24,16 +24,16 @@ import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -83,7 +83,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     return flatDbStrategyProvider.getFlatDbMode();
   }
 
-  public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
+  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -127,9 +127,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   public Optional<Bytes> getTrieNodeUnsafe(final Bytes key) {
-    return composedWorldStateStorage
-        .get(TRIE_BRANCH_STORAGE, Bytes.concatenate(key).toArrayUnsafe())
-        .map(Bytes::wrap);
+    return composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, key.toArrayUnsafe()).map(Bytes::wrap);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
@@ -210,8 +208,8 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       this.flatDbStrategy = flatDbStrategy;
     }
 
-    public Updater removeCode(final Hash accountHash) {
-      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash);
+    public Updater removeCode(final Hash accountHash, final Hash codeHash) {
+      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash, codeHash);
       return this;
     }
 
@@ -221,8 +219,8 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       return putCode(accountHash, codeHash, code);
     }
 
-    public Updater putCode(final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
-      if (code.size() == 0) {
+    public Updater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
+      if (code.isEmpty()) {
         // Don't save empty values
         return this;
       }
@@ -236,7 +234,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     }
 
     public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
-      if (accountValue.size() == 0) {
+      if (accountValue.isEmpty()) {
         // Don't save empty values
         return this;
       }

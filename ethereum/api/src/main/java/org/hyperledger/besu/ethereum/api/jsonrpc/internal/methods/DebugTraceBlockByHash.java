@@ -64,7 +64,10 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
                 mutableWorldState ->
                     blockTracerSupplier
                         .get()
-                        .trace(mutableWorldState, blockHash, new DebugOperationTracer(traceOptions))
+                        .trace(
+                            mutableWorldState,
+                            blockHash,
+                            new DebugOperationTracer(traceOptions, true))
                         .map(BlockTrace::getTransactionTraces)
                         .map(DebugTraceTransactionResult::of))
             .orElse(null);

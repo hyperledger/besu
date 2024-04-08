@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.ethereum.worldstate;
 
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+
 import org.immutables.value.Value;
 
 @Value.Immutable
@@ -23,10 +25,11 @@ import org.immutables.value.Value;
 public interface DataStorageConfiguration {
 
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
+  boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = false;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()
-          .dataStorageFormat(DataStorageFormat.FOREST)
+          .dataStorageFormat(DataStorageFormat.BONSAI)
           .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
           .unstable(Unstable.DEFAULT)
           .build();
@@ -35,12 +38,23 @@ public interface DataStorageConfiguration {
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.BONSAI)
           .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .build();
+
+  DataStorageConfiguration DEFAULT_FOREST_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.FOREST)
+          .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
           .unstable(Unstable.DEFAULT)
           .build();
 
   DataStorageFormat getDataStorageFormat();
 
   Long getBonsaiMaxLayersToLoad();
+
+  @Value.Default
+  default boolean getReceiptCompactionEnabled() {
+    return DEFAULT_RECEIPT_COMPACTION_ENABLED;
+  }
 
   @Value.Default
   default Unstable getUnstable() {
@@ -53,6 +67,7 @@ public interface DataStorageConfiguration {
     boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = false;
     long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
     int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 30_000;
+    boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = false;
 
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();
@@ -65,6 +80,11 @@ public interface DataStorageConfiguration {
     @Value.Default
     default int getBonsaiTrieLogPruningWindowSize() {
       return DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+    }
+
+    @Value.Default
+    default boolean getBonsaiCodeStoredByCodeHashEnabled() {
+      return DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
     }
   }
 }

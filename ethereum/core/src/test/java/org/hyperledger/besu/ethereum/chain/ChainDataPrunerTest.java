@@ -28,8 +28,8 @@ import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import java.util.List;
 import java.util.concurrent.AbstractExecutorService;
 import java.util.concurrent.TimeUnit;
+import javax.annotation.Nonnull;
 
-import org.jetbrains.annotations.NotNull;
 import org.junit.jupiter.api.Test;
 
 public class ChainDataPrunerTest {
@@ -41,7 +41,8 @@ public class ChainDataPrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            false);
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
@@ -79,7 +80,8 @@ public class ChainDataPrunerTest {
         new KeyValueStoragePrefixedKeyBlockchainStorage(
             new InMemoryKeyValueStorage(),
             new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-            new MainnetBlockHeaderFunctions());
+            new MainnetBlockHeaderFunctions(),
+            false);
     final ChainDataPruner chainDataPruner =
         new ChainDataPruner(
             blockchainStorage,
@@ -121,7 +123,7 @@ public class ChainDataPrunerTest {
     @Override
     public void shutdown() {}
 
-    @NotNull
+    @Nonnull
     @Override
     public List<Runnable> shutdownNow() {
       return List.of();
@@ -138,12 +140,12 @@ public class ChainDataPrunerTest {
     }
 
     @Override
-    public boolean awaitTermination(final long timeout, final @NotNull TimeUnit unit) {
+    public boolean awaitTermination(final long timeout, final @Nonnull TimeUnit unit) {
       return true;
     }
 
     @Override
-    public void execute(final @NotNull Runnable command) {
+    public void execute(final @Nonnull Runnable command) {
       command.run();
     }
   }

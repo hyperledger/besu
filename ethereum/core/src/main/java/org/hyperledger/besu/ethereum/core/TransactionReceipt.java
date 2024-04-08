@@ -30,6 +30,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -169,23 +170,26 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
    *
    * @param out The RLP output to write to
    */
-  public void writeTo(final RLPOutput out) {
-    writeTo(out, false);
+  public void writeToForNetwork(final RLPOutput out) {
+    writeTo(out, false, false);
   }
 
-  public void writeToWithRevertReason(final RLPOutput out) {
-    writeTo(out, true);
+  public void writeToForStorage(final RLPOutput out, final boolean compacted) {
+    writeTo(out, true, compacted);
   }
 
-  private void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason) {
+  @VisibleForTesting
+  void writeTo(final RLPOutput rlpOutput, final boolean withRevertReason, final boolean compacted) {
     if (transactionType.equals(TransactionType.FRONTIER)) {
-      writeToForReceiptTrie(rlpOutput, withRevertReason);
+      writeToForReceiptTrie(rlpOutput, withRevertReason, compacted);
     } else {
-      rlpOutput.writeBytes(RLP.encode(out -> writeToForReceiptTrie(out, withRevertReason)));
+      rlpOutput.writeBytes(
+          RLP.encode(out -> writeToForReceiptTrie(out, withRevertReason, compacted)));
     }
   }
 
-  public void writeToForReceiptTrie(final RLPOutput rlpOutput, final boolean withRevertReason) {
+  public void writeToForReceiptTrie(
+      final RLPOutput rlpOutput, final boolean withRevertReason, final boolean compacted) {
     if (!transactionType.equals(TransactionType.FRONTIER)) {
       rlpOutput.writeIntScalar(transactionType.getSerializedType());
     }
@@ -200,8 +204,10 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
       rlpOutput.writeLongScalar(status);
     }
     rlpOutput.writeLongScalar(cumulativeGasUsed);
-    rlpOutput.writeBytes(bloomFilter);
-    rlpOutput.writeList(logs, Log::writeTo);
+    if (!compacted) {
+      rlpOutput.writeBytes(bloomFilter);
+    }
+    rlpOutput.writeList(logs, (log, logOutput) -> log.writeTo(logOutput, compacted));
     if (withRevertReason && revertReason.isPresent()) {
       rlpOutput.writeBytes(revertReason.get());
     }
@@ -240,10 +246,21 @@ public class TransactionReceipt implements org.hyperledger.besu.plugin.data.Tran
     // correct transaction receipt encoding to use.
     final RLPInput firstElement = input.readAsRlp();
     final long cumulativeGas = input.readLongScalar();
-    // The logs below will populate the bloom filter upon construction.
+
+    LogsBloomFilter bloomFilter = null;
+
+    final boolean hasLogs = !input.nextIsList() && input.nextSize() == LogsBloomFilter.BYTE_SIZE;
+    if (hasLogs) {
+      // The logs below will populate the bloom filter upon construction.
+      bloomFilter = LogsBloomFilter.readFrom(input);
+    }
     // TODO consider validating that the logs and bloom filter match.
-    final LogsBloomFilter bloomFilter = LogsBloomFilter.readFrom(input);
-    final List<Log> logs = input.readList(Log::readFrom);
+    final boolean compacted = !hasLogs;
+    final List<Log> logs = input.readList(logInput -> Log.readFrom(logInput, compacted));
+    if (compacted) {
+      bloomFilter = LogsBloomFilter.builder().insertLogs(logs).build();
+    }
+
     final Optional<Bytes> revertReason;
     if (input.isEndOfCurrentList()) {
       revertReason = Optional.empty();

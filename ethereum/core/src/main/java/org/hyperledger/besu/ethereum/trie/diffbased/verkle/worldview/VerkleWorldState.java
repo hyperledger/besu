@@ -266,20 +266,23 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final VerkleEntryFactory verkleEntryFactory,
       final DiffBasedValue<Bytes> codeUpdate) {
-    final Bytes previousCode = codeUpdate.getPrior();
+    final Bytes priorCode = codeUpdate.getPrior();
     final Bytes updatedCode = codeUpdate.getUpdated();
     final Hash accountHash = accountKey.addressHash();
     if (updatedCode == null) {
+      final Hash priorCodeHash = Hash.hash(priorCode);
       verkleEntryFactory
-          .generateKeysForCode(accountKey, previousCode)
+          .generateKeysForCode(accountKey, priorCode)
           .forEach(
               bytes -> {
                 System.out.println("remove code " + bytes);
                 stateTrie.remove(bytes);
               });
-      maybeStateUpdater.ifPresent(bonsaiUpdater -> bonsaiUpdater.removeCode(accountHash));
+      maybeStateUpdater.ifPresent(
+          bonsaiUpdater -> bonsaiUpdater.removeCode(accountHash, priorCodeHash));
     } else {
       if (updatedCode.isEmpty()) {
+        final Hash codeHash = Hash.hash(updatedCode);
         verkleEntryFactory
             .generateKeyValuesForCode(accountKey, updatedCode)
             .forEach(
@@ -287,8 +290,10 @@ public class VerkleWorldState extends DiffBasedWorldState {
                   // System.out.println("add code " + bytes + " " + bytes2);
                   stateTrie.put(bytes, bytes2);
                 });
-        maybeStateUpdater.ifPresent(bonsaiUpdater -> bonsaiUpdater.removeCode(accountHash));
+        maybeStateUpdater.ifPresent(
+            bonsaiUpdater -> bonsaiUpdater.removeCode(accountHash, codeHash));
       } else {
+        final Hash codeHash = Hash.hash(updatedCode);
         verkleEntryFactory
             .generateKeyValuesForCode(accountKey, updatedCode)
             .forEach(
@@ -297,7 +302,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
                   stateTrie.put(bytes, bytes2);
                 });
         maybeStateUpdater.ifPresent(
-            bonsaiUpdater -> bonsaiUpdater.putCode(accountHash, null, updatedCode));
+            bonsaiUpdater -> bonsaiUpdater.putCode(accountHash, codeHash, updatedCode));
       }
     }
   }

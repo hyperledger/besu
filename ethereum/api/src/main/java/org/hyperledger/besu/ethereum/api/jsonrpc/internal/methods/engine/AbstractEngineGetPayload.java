@@ -73,8 +73,13 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     final Optional<BlockWithReceipts> blockWithReceipts =
         mergeContext.get().retrieveBlockById(payloadId);
     if (blockWithReceipts.isPresent()) {
-      final var proposal = blockWithReceipts.get();
-      LOG.atDebug().setMessage("assembledBlock {}").addArgument(() -> proposal).log();
+      final BlockWithReceipts proposal = blockWithReceipts.get();
+      LOG.atDebug()
+          .setMessage("assembledBlock for payloadId {}: {}")
+          .addArgument(() -> payloadId)
+          .addArgument(() -> proposal.getBlock().toLogString())
+          .log();
+      LOG.atTrace().setMessage("assembledBlock with receipts {}").addArgument(() -> proposal).log();
       ValidationResult<RpcErrorType> forkValidationResult =
           validateForkSupported(proposal.getHeader().getTimestamp());
       if (!forkValidationResult.isValid()) {

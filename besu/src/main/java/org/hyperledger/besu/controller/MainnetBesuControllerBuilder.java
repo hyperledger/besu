@@ -91,7 +91,12 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MainnetProtocolSchedule.fromConfig(
-        configOptionsSupplier.get(), privacyParameters, isRevertReasonEnabled, evmConfiguration);
+        configOptionsSupplier.get(),
+        privacyParameters,
+        isRevertReasonEnabled,
+        evmConfiguration,
+        miningParameters,
+        badBlockManager);
   }
 
   @Override

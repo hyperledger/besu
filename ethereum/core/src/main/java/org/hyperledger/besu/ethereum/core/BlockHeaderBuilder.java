@@ -47,6 +47,7 @@ public class BlockHeaderBuilder {
 
   private Hash withdrawalsRoot = null;
   private Hash depositsRoot = null;
+  private Hash exitsRoot = null;
 
   private Hash receiptsRoot;
 
@@ -127,6 +128,7 @@ public class BlockHeaderBuilder {
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .depositsRoot(header.getDepositsRoot().orElse(null))
+        .exitsRoot(header.getExitsRoot().orElse(null))
         .executionWitness(header.getExecutionWitness().orElse(null));
   }
 
@@ -152,8 +154,9 @@ public class BlockHeaderBuilder {
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .depositsRoot(fromBuilder.depositsRoot)
-            .blockHeaderFunctions(fromBuilder.blockHeaderFunctions)
-            .executionWitness(fromBuilder.executionWitness);
+            .exitsRoot(fromBuilder.exitsRoot)
+            .executionWitness(fromBuilder.executionWitness)
+            .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
   }
@@ -183,6 +186,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         depositsRoot,
+        exitsRoot,
         executionWitness,
         blockHeaderFunctions);
   }
@@ -226,6 +230,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         depositsRoot,
+        exitsRoot,
         executionWitness);
   }
 
@@ -291,6 +296,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
+    exitsRoot(sealableBlockHeader.getExitsRoot().orElse(null));
     executionWitness(sealableBlockHeader.getExecutionWitness().orElse(null));
     return this;
   }
@@ -408,6 +414,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder depositsRoot(final Hash hash) {
     this.depositsRoot = hash;
+    return this;
+  }
+
+  public BlockHeaderBuilder exitsRoot(final Hash hash) {
+    this.exitsRoot = hash;
     return this;
   }
 

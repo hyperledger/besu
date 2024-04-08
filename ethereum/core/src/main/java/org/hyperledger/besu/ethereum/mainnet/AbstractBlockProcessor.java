@@ -33,8 +33,11 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -101,6 +104,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
+    long currentBlobGasUsed = 0;
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
@@ -137,7 +141,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       Wei blobGasPrice =
           maybeParentHeader
               .map(
-                  (parentHeader) ->
+                  parentHeader ->
                       protocolSpec
                           .getFeeMarket()
                           .blobGasPricePerGas(
@@ -165,24 +169,34 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 blockHeader.getHash().toHexString(),
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
-        if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) worldStateUpdater).reset();
+        if (worldState instanceof DiffBasedWorldState) {
+          ((DiffBasedWorldStateUpdateAccumulator<?>) worldStateUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
       worldStateUpdater.commit();
-      LOG.info(
-          "Gas used by tx({}): {}",
-          transaction.getHash(),
-          transaction.getGasLimit() - result.getGasRemaining());
+
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
-      LOG.info("Current gas used: {} for block {}", currentGasUsed, blockHeader.getNumber());
+
+      if (transaction.getVersionedHashes().isPresent()) {
+        currentBlobGasUsed +=
+            (transaction.getVersionedHashes().get().size() * CancunGasCalculator.BLOB_GAS_PER_BLOB);
+      }
+
       final TransactionReceipt transactionReceipt =
           transactionReceiptFactory.create(
               transaction.getType(), result, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
     }
-
+    if (blockHeader.getBlobGasUsed().isPresent()
+        && currentBlobGasUsed != blockHeader.getBlobGasUsed().get()) {
+      String errorMessage =
+          String.format(
+              "block did not consume expected blob gas: header %d, transactions %d",
+              blockHeader.getBlobGasUsed().get(), currentBlobGasUsed);
+      LOG.error(errorMessage);
+      return new BlockProcessingResult(Optional.empty(), errorMessage);
+    }
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
     if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {

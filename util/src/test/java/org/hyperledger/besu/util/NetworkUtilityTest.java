@@ -17,6 +17,7 @@ package org.hyperledger.besu.util;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.IOException;
+import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 
@@ -35,10 +36,17 @@ public class NetworkUtilityTest {
   }
 
   @Test
-  public void assertPortIsNotAvailable() throws IOException {
+  public void assertPortIsNotAvailableForTcp() throws IOException {
     final ServerSocket serverSocket = new ServerSocket(8541);
-    assertThat(!NetworkUtility.isPortAvailable(8541)).isEqualTo(true);
+    assertThat(NetworkUtility.isPortUnavailableForTcp(8541)).isEqualTo(true);
     serverSocket.close();
+  }
+
+  @Test
+  public void assertPortIsNotAvailableForUdp() throws IOException {
+    final DatagramSocket datagramSocket = new DatagramSocket(8541);
+    assertThat(NetworkUtility.isPortUnavailableForUdp(8541)).isEqualTo(true);
+    datagramSocket.close();
   }
 
   @Test

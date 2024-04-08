@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.eth.messages;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -63,7 +65,9 @@ public final class BlockHeadersMessageTest {
             FixedDifficultyProtocolSchedule.create(
                 GenesisConfigFile.development().getConfigOptions(),
                 false,
-                EvmConfiguration.DEFAULT));
+                EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
+                new BadBlockManager()));
 
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readHeaders.get(i)).isEqualTo(headers.get(i));

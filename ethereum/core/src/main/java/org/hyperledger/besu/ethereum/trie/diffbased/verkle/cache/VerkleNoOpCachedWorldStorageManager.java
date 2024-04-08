@@ -38,7 +38,7 @@ public class VerkleNoOpCachedWorldStorageManager extends VerkleCachedWorldStorag
   }
 
   @Override
-  public boolean containWorldStateStorage(final Hash blockHash) {
+  public boolean contains(final Hash blockHash) {
     return false;
   }
 

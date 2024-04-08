@@ -22,9 +22,9 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManage
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.VerkleCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.Optional;
 
@@ -33,14 +33,13 @@ import com.google.common.annotations.VisibleForTesting;
 public class VerkleWorldStateProvider extends DiffBasedWorldStateProvider {
 
   public VerkleWorldStateProvider(
-      final DataStorageConfiguration dataStorageConfiguration,
       final VerkleWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
       final BesuContext pluginContext,
       final EvmConfiguration evmConfiguration) {
     super(
-        dataStorageConfiguration,
+        DataStorageFormat.VERKLE,
         worldStateKeyValueStorage,
         blockchain,
         maxLayersToLoad,

@@ -29,6 +29,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -94,7 +95,8 @@ public class LayersTest extends BaseTransactionPoolTest {
           txPoolMetrics,
           this::transactionReplacementTester,
           FeeMarket.london(0L),
-          new BlobCache());
+          new BlobCache(),
+          MiningParameters.newDefault());
 
   private final LayeredPendingTransactions pendingTransactions =
       new LayeredPendingTransactions(poolConfig, prioritizedTransactions);
@@ -1192,7 +1194,8 @@ public class LayersTest extends BaseTransactionPoolTest {
       final PendingTransaction pt1,
       final PendingTransaction pt2) {
     final TransactionPoolReplacementHandler transactionReplacementHandler =
-        new TransactionPoolReplacementHandler(poolConfig.getPriceBump());
+        new TransactionPoolReplacementHandler(
+            poolConfig.getPriceBump(), poolConfig.getBlobPriceBump());
     return transactionReplacementHandler.shouldReplace(pt1, pt2, mockBlockHeader());
   }
 

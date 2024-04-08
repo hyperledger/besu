@@ -133,12 +133,13 @@ public class MergeBesuControllerBuilderTest {
     when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
     lenient().when(genesisConfigOptions.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
     lenient()
-        .when(storageProvider.createBlockchainStorage(any(), any()))
+        .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-                new MainnetBlockHeaderFunctions()));
+                new MainnetBlockHeaderFunctions(),
+                false));
     lenient()
         .when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());
@@ -153,7 +154,7 @@ public class MergeBesuControllerBuilderTest {
     lenient()
         .when(
             storageProvider.createWorldStateStorageCoordinator(
-                DataStorageConfiguration.DEFAULT_CONFIG))
+                DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
         .thenReturn(worldStateStorageCoordinator);
     lenient()
         .when(storageProvider.createWorldStatePreimageStorage())
@@ -184,6 +185,7 @@ public class MergeBesuControllerBuilderTest {
             .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)
+            .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
             .evmConfiguration(EvmConfiguration.DEFAULT)

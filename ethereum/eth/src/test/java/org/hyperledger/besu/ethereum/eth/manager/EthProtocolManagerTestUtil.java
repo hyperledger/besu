@@ -35,9 +35,9 @@ import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.DefaultMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler.TimeoutPolicy;
 import org.hyperledger.besu.testutil.TestClock;
@@ -84,7 +84,6 @@ public class EthProtocolManagerTestUtil {
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             Bytes.random(64),
-            25,
             25,
             25,
             false);
@@ -206,7 +205,6 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            25,
             false);
     final EthMessages messages = new EthMessages();
 
@@ -241,7 +239,6 @@ public class EthProtocolManagerTestUtil {
             Bytes.random(64),
             25,
             25,
-            25,
             false);
     final EthMessages messages = new EthMessages();
 
@@ -270,7 +267,6 @@ public class EthProtocolManagerTestUtil {
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             Bytes.random(64),
-            25,
             25,
             25,
             false);

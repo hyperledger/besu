@@ -29,11 +29,11 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorl
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.ArrayList;
@@ -46,7 +46,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DiffBasedWorldStateProvider implements WorldStateArchive {
+public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
 
   private static final Logger LOG = LoggerFactory.getLogger(DiffBasedWorldStateProvider.class);
 
@@ -55,10 +55,11 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
   protected final TrieLogManager trieLogManager;
   protected DiffBasedCachedWorldStorageManager cachedWorldStorageManager;
   protected DiffBasedWorldState persistedState;
+
   protected final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
 
   public DiffBasedWorldStateProvider(
-      final DataStorageConfiguration dataStorageConfiguration,
+      final DataStorageFormat dataStorageFormat,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
@@ -69,7 +70,7 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
     this.trieLogManager =
         new TrieLogManager(
             blockchain,
-            dataStorageConfiguration,
+            dataStorageFormat,
             worldStateKeyValueStorage,
             maxLayersToLoad.orElse(DiffBasedCachedWorldStorageManager.RETAINED_LAYERS),
             pluginContext);
@@ -119,7 +120,7 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
 
   @Override
   public boolean isWorldStateAvailable(final Hash rootHash, final Hash blockHash) {
-    return cachedWorldStorageManager.containWorldStateStorage(blockHash)
+    return cachedWorldStorageManager.contains(blockHash)
         || persistedState.blockHash().equals(blockHash)
         || worldStateKeyValueStorage.isWorldStateAvailable(rootHash, blockHash);
   }
@@ -134,7 +135,7 @@ public class DiffBasedWorldStateProvider implements WorldStateArchive {
       if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
           >= trieLogManager.getMaxLayersToLoad()) {
         LOG.warn(
-            "Exceeded the limit of back layers that can be loaded ({})",
+            "Exceeded the limit of historical blocks that can be loaded ({}). If you need to make older historical queries, configure your `--bonsai-historical-block-limit`.",
             trieLogManager.getMaxLayersToLoad());
         return Optional.empty();
       }

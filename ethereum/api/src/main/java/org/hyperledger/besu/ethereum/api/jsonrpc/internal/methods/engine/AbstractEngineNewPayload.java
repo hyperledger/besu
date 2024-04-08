@@ -22,10 +22,12 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.DepositsValidatorProvider.getDepositsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.ExecutionWitnessValidatorProvider.getExecutionWitnessValidator;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.ValidatorExitsValidatorProvider.getValidatorExitsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -37,6 +39,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionWitnessParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ValidatorExitParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -51,6 +54,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
@@ -169,6 +173,17 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposits"));
     }
 
+    final Optional<List<ValidatorExit>> maybeExits =
+        Optional.ofNullable(blockParam.getExits())
+            .map(
+                exits ->
+                    exits.stream().map(ValidatorExitParameter::toValidatorExit).collect(toList()));
+    if (!getValidatorExitsValidator(
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
+        .validateValidatorExitParameter(maybeExits)) {
+      return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid exits"));
+    }
+
     final Optional<ExecutionWitness> maybeExecutionWitness =
         Optional.ofNullable(blockParam.getExecutionWitness())
             .map(ExecutionWitnessParameter::toExecutionWitness);
@@ -191,6 +206,19 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .map(Bytes::fromHexString)
               .map(in -> TransactionDecoder.decodeOpaqueBytes(in, EncodingContext.BLOCK_BODY))
               .collect(Collectors.toList());
+      transactions.forEach(
+          transaction ->
+              mergeCoordinator
+                  .getEthScheduler()
+                  .scheduleTxWorkerTask(
+                      () -> {
+                        Address sender = transaction.getSender();
+                        LOG.atTrace()
+                            .setMessage("The sender for transaction {} is calculated : {}")
+                            .addArgument(transaction::getHash)
+                            .addArgument(sender)
+                            .log();
+                      }));
     } catch (final RLPException | IllegalArgumentException e) {
       return respondWithInvalid(
           reqId,
@@ -234,6 +262,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
+            maybeExits.map(BodyValidation::exitsRoot).orElse(null),
             maybeExecutionWitness.orElse(null),
             headerFunctions);
 
@@ -297,7 +326,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final var block =
         new Block(
             newBlockHeader,
-            new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals, maybeDeposits));
+            new BlockBody(
+                transactions,
+                Collections.emptyList(),
+                maybeWithdrawals,
+                maybeDeposits,
+                maybeExits));
 
     if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()
@@ -320,7 +354,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     if (executionResult.isSuccessful()) {
       logImportedBlockInfo(
-          block, blobTransactions.size(), (System.currentTimeMillis() - startTimeMs) / 1000.0);
+          block,
+          blobTransactions.stream()
+              .map(Transaction::getVersionedHashes)
+              .flatMap(Optional::stream)
+              .mapToInt(List::size)
+              .sum(),
+          (System.currentTimeMillis() - startTimeMs) / 1000.0);
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {

@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.plugin.services;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.nio.file.Path;
 
@@ -36,12 +39,27 @@ public interface BesuConfiguration extends BesuService {
   Path getDataPath();
 
   /**
-   * Database version. This sets the list of segmentIdentifiers that should be initialized.
+   * Database format. This sets the list of segmentIdentifiers that should be initialized.
    *
-   * @return Database version.
+   * @return Database format.
    */
   @Unstable
-  default int getDatabaseVersion() {
-    return 1;
-  }
+  @Deprecated
+  DataStorageFormat getDatabaseFormat();
+
+  /**
+   * The runtime value of the min gas price
+   *
+   * @return min gas price in wei
+   */
+  @Unstable
+  Wei getMinGasPrice();
+
+  /**
+   * Database storage configuration.
+   *
+   * @return Database storage configuration.
+   */
+  @Unstable
+  DataStorageConfiguration getDataStorageConfiguration();
 }

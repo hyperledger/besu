@@ -146,7 +146,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param frame The current message frame
    * @return the gas available to execute the child message call
    */
-  protected abstract long gasAvailableForChildCall(MessageFrame frame);
+  public abstract long gasAvailableForChildCall(MessageFrame frame);
 
   /**
    * Returns whether the child message call should be static.
@@ -154,7 +154,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    * @param frame The current message frame
    * @return {@code true} if the child message call should be static; otherwise {@code false}
    */
-  protected abstract boolean isStatic(MessageFrame frame);
+  protected boolean isStatic(final MessageFrame frame) {
+    return frame.isStatic();
+  }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
@@ -163,7 +165,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return UNDERFLOW_RESPONSE;
     }
 
-    final long cost = cost(frame);
+    final Address to = to(frame);
+    final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
+    final long cost = cost(frame, accountIsWarm);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
@@ -171,7 +175,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.clearReturnData();
 
-    final Address to = to(frame);
     final Account contract = frame.getWorldUpdater().get(to);
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
@@ -224,8 +227,43 @@ public abstract class AbstractCallOperation extends AbstractOperation {
    *
    * @param frame the frame
    * @return the long
+   * @deprecated use the form with the `accountIsWarm` boolean
    */
-  protected abstract long cost(final MessageFrame frame);
+  @Deprecated(since = "24.2.0", forRemoval = true)
+  @SuppressWarnings("InlineMeSuggester") // downstream users override, so @InlineMe is inappropriate
+  public long cost(final MessageFrame frame) {
+    return cost(frame, true);
+  }
+
+  /**
+   * Calculates Cost.
+   *
+   * @param frame the frame
+   * @param accountIsWarm whether the contract being called is "warm" as per EIP-2929.
+   * @return the long
+   */
+  public long cost(final MessageFrame frame, final boolean accountIsWarm) {
+    final long stipend = gas(frame);
+    final long inputDataOffset = inputDataOffset(frame);
+    final long inputDataLength = inputDataLength(frame);
+    final long outputDataOffset = outputDataOffset(frame);
+    final long outputDataLength = outputDataLength(frame);
+    final Account recipient = frame.getWorldUpdater().get(address(frame));
+    final Address to = to(frame);
+    GasCalculator gasCalculator = gasCalculator();
+
+    return gasCalculator.callOperationGasCost(
+        frame,
+        stipend,
+        inputDataOffset,
+        inputDataLength,
+        outputDataOffset,
+        outputDataLength,
+        value(frame),
+        recipient,
+        to,
+        accountIsWarm);
+  }
 
   /**
    * Complete.

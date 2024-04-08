@@ -71,7 +71,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.BaseFeePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -186,22 +185,9 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     when(mergeContext.as(MergeContext.class)).thenReturn(mergeContext);
     when(mergeContext.getTerminalTotalDifficulty())
         .thenReturn(genesisState.getBlock().getHeader().getDifficulty().plus(1L));
-    doAnswer(
-            getSpecInvocation -> {
-              ProtocolSpec spec = (ProtocolSpec) spy(getSpecInvocation.callRealMethod());
-              doAnswer(
-                      getBadBlockInvocation -> {
-                        return badBlockManager;
-                      })
-                  .when(spec)
-                  .getBadBlocksManager();
-              return spec;
-            })
-        .when(protocolSchedule)
-        .getByBlockHeader(any(BlockHeader.class));
 
     protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, mergeContext, Optional.empty());
+        new ProtocolContext(blockchain, worldStateArchive, mergeContext, badBlockManager);
     var mutable = worldStateArchive.getMutable();
     genesisState.writeStateTo(mutable);
     mutable.persist(null);
@@ -228,8 +214,7 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
 
     this.transactionPool.setEnabled();
 
@@ -339,7 +324,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
             Optional.empty(),
             Optional.empty());
 
-    verify(willThrow, never()).addBadBlock(any(), any());
     blockCreationTask.get();
 
     ArgumentCaptor<PayloadWrapper> payloadWrapper = ArgumentCaptor.forClass(PayloadWrapper.class);
@@ -359,7 +343,6 @@ public class MergeCoordinatorTest implements MergeGenesisConfigHelper {
     // this only verifies that adding the bad block didn't happen through the mergeCoordinator, it
     // still may be called directly.
     verify(badBlockManager, never()).addBadBlock(any(), any());
-    verify(willThrow, never()).addBadBlock(any(), any());
   }
 
   @Test
