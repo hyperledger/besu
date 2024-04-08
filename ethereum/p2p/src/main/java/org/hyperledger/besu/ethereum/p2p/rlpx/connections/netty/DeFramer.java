@@ -184,7 +184,8 @@ final class DeFramer extends ByteToMessageDecoder {
           LOG.debug("Disconnecting because no capabilities are shared: {}", peerInfo);
           connectFuture.completeExceptionally(
               new IncompatiblePeerException("No shared capabilities"));
-          connection.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+          connection.disconnect(
+              DisconnectMessage.DisconnectReason.USELESS_PEER_NO_SHARED_CAPABILITIES);
         }
 
         // Setup next stage

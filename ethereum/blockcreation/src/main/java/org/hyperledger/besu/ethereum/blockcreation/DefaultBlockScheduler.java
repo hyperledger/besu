@@ -54,8 +54,8 @@ public class DefaultBlockScheduler extends AbstractBlockScheduler {
     final long nextHeaderTimestamp = Long.max(parentTimestamp + minSecondsSinceParent, now);
 
     final long earliestBlockTransmissionTime = nextHeaderTimestamp - acceptableClockDriftSeconds;
-    final long msUntilBlocKTransmission = (earliestBlockTransmissionTime * 1000) - msSinceEpoch;
+    final long msUntilBlockTransmission = (earliestBlockTransmissionTime * 1000) - msSinceEpoch;
 
-    return new BlockCreationTimeResult(nextHeaderTimestamp, Math.max(0, msUntilBlocKTransmission));
+    return new BlockCreationTimeResult(nextHeaderTimestamp, Math.max(0, msUntilBlockTransmission));
   }
 }

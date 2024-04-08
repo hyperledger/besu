@@ -190,7 +190,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final long timestamp,
       boolean rewardCoinbase) {
 
+    final var timings = new BlockCreationTiming();
+
     try (final MutableWorldState disposableWorldState = duplicateWorldStateAtParent()) {
+      timings.register("duplicateWorldState");
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
 
@@ -218,7 +221,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           pluginTransactionSelector.getOperationTracer();
 
       operationTracer.traceStartBlock(processableBlockHeader);
-
+      timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
           selectTransactions(
               processableBlockHeader,
@@ -227,9 +230,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               miningBeneficiary,
               newProtocolSpec,
               pluginTransactionSelector);
-
       transactionResults.logSelectionStats();
-
+      timings.register("txsSelection");
       throwIfStopped();
 
       final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
@@ -319,8 +321,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
-
-      return new BlockCreationResult(block, transactionResults);
+      timings.register("blockAssembled");
+      return new BlockCreationResult(block, transactionResults, timings);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
     } catch (final CancellationException | StorageException ex) {
