@@ -55,6 +55,7 @@ public class TesseraTestHarness implements EnclaveTestHarness {
 
   private final int thirdPartyPort = 9081;
   private final int q2TPort = 9082;
+
   /** The constant p2pPort. */
   public static final int p2pPort = 9001;
 

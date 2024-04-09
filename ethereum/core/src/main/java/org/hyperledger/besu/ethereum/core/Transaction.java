@@ -703,40 +703,43 @@ public class Transaction
     final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
-          case EIP1559 -> eip1559Preimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList);
-          case BLOB -> blobPreimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              maxFeePerBlobGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList,
-              versionedHashes);
-          case ACCESS_LIST -> accessListPreimage(
-              nonce,
-              gasPrice,
-              gasLimit,
-              to,
-              value,
-              payload,
-              accessList.orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Developer error: the transaction should be guaranteed to have an access list here")),
-              chainId);
+          case EIP1559 ->
+              eip1559Preimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList);
+          case BLOB ->
+              blobPreimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  maxFeePerBlobGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  versionedHashes);
+          case ACCESS_LIST ->
+              accessListPreimage(
+                  nonce,
+                  gasPrice,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  accessList.orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "Developer error: the transaction should be guaranteed to have an access list here")),
+                  chainId);
         };
     return keccak256(preimage);
   }

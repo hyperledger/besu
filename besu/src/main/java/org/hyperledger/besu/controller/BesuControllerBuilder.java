@@ -129,56 +129,78 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   /** The Sync config. */
   protected SynchronizerConfiguration syncConfig;
+
   /** The Ethereum wire protocol configuration. */
   protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
+
   /** The Transaction pool configuration. */
   protected TransactionPoolConfiguration transactionPoolConfiguration;
+
   /** The Network id. */
   protected BigInteger networkId;
+
   /** The Mining parameters. */
   protected MiningParameters miningParameters;
+
   /** The Metrics system. */
   protected ObservableMetricsSystem metricsSystem;
+
   /** The Privacy parameters. */
   protected PrivacyParameters privacyParameters;
+
   /** The Pki block creation configuration. */
   protected Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration =
       Optional.empty();
+
   /** The Data directory. */
   protected Path dataDirectory;
+
   /** The Clock. */
   protected Clock clock;
+
   /** The Node key. */
   protected NodeKey nodeKey;
+
   /** The Is revert reason enabled. */
   protected boolean isRevertReasonEnabled;
+
   /** The Gas limit calculator. */
   GasLimitCalculator gasLimitCalculator;
+
   /** The Storage provider. */
   protected StorageProvider storageProvider;
+
   /** The Required blocks. */
   protected Map<Long, Hash> requiredBlocks = Collections.emptyMap();
+
   /** The Reorg logging threshold. */
   protected long reorgLoggingThreshold;
+
   /** The Data storage configuration. */
   protected DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
+
   /** The Message permissioning providers. */
   protected List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
+
   /** The Evm configuration. */
   protected EvmConfiguration evmConfiguration;
+
   /** The Max peers. */
   protected int maxPeers;
+
   /** Manages a cache of bad blocks globally */
   protected final BadBlockManager badBlockManager = new BadBlockManager();
 
   private int maxRemotelyInitiatedPeers;
+
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority;
+
   /** the Dagger configured context that can provide dependencies */
   protected Optional<BesuComponent> besuComponent = Optional.empty();
 
@@ -1022,8 +1044,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         yield new ForestWorldStateArchive(
             worldStateStorageCoordinator, preimageStorage, evmConfiguration);
       }
-      default -> throw new IllegalStateException(
-          "Unexpected value: " + dataStorageConfiguration.getDataStorageFormat());
+      default ->
+          throw new IllegalStateException(
+              "Unexpected value: " + dataStorageConfiguration.getDataStorageFormat());
     };
   }
 

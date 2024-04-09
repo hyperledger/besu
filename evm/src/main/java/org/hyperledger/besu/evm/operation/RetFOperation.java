@@ -23,6 +23,7 @@ public class RetFOperation extends AbstractOperation {
 
   /** The Opcode. */
   public static final int OPCODE = 0xe4;
+
   /** The Ret F success. */
   static final OperationResult retfSuccess = new OperationResult(3, null);
 

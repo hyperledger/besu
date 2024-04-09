@@ -28,6 +28,7 @@ import java.util.Optional;
 public class TransitionContext implements MergeContext {
   /** The Pre merge context. */
   final ConsensusContext preMergeContext;
+
   /** The Post merge context. */
   final MergeContext postMergeContext;
 
