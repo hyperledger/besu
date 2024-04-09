@@ -103,6 +103,14 @@ public class RequestDataStep {
                 accountDataRequest.addResponse(
                     worldStateProofProvider, response.accounts(), response.proofs());
               }
+              if(error != null){
+                LOG.atInfo()
+                        .setMessage("Error handling account download accounts ({} - {}) task: {}")
+                        .addArgument(accountDataRequest.getStartKeyHash())
+                        .addArgument(accountDataRequest.getEndKeyHash())
+                        .addArgument(error)
+                        .log();
+              }
               return requestTask;
             });
   }
@@ -166,6 +174,12 @@ public class RequestDataStep {
                   LOG.error("Error while processing storage range response", e);
                 }
               }
+              if(error != null){
+                LOG.atInfo()
+                        .setMessage("Error handling storage range request task: {}")
+                        .addArgument(error)
+                        .log();
+              }
               return requestTasks;
             });
   }
@@ -197,6 +211,12 @@ public class RequestDataStep {
                     request.setCode(response.get(request.getCodeHash()));
                   }
                 }
+              }
+              if(error != null){
+                LOG.atInfo()
+                        .setMessage("Error handling code request task: {}")
+                        .addArgument(error)
+                        .log();
               }
               return requestTasks;
             });
@@ -236,6 +256,12 @@ public class RequestDataStep {
                     request.setData(matchingData);
                   }
                 }
+              }
+              if(error != null){
+                LOG.atInfo()
+                        .setMessage("Error handling trie node request task: {}")
+                        .addArgument(error)
+                        .log();
               }
               return requestTasks;
             });
