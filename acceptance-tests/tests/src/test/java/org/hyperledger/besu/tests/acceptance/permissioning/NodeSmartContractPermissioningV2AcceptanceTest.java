@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 public class NodeSmartContractPermissioningV2AcceptanceTest
@@ -108,6 +109,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
   }
 
   @Test
+  @Ignore("flaky with timeout - see https://github.com/hyperledger/besu/issues/6914")
   public void onchainPermissioningAllowlistShouldPersistAcrossRestarts() {
     permissionedCluster.stop();
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
