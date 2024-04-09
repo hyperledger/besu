@@ -127,6 +127,7 @@ public interface TrieLog {
    *     Optional
    */
   Optional<? extends AccountValue> getPriorAccount(final Address address);
+
   /**
    * Gets the account value for a specific address, if available.
    *

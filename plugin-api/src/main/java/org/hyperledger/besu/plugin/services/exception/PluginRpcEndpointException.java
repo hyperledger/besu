@@ -20,6 +20,7 @@ import org.hyperledger.besu.plugin.services.rpc.RpcMethodError;
 public class PluginRpcEndpointException extends RuntimeException {
   /** The error */
   private final RpcMethodError rpcMethodError;
+
   /** The data associated with the exception */
   private final String data;
 

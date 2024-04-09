@@ -26,8 +26,10 @@ public interface KeyStoreWrapper {
 
   /** The constant KEYSTORE_TYPE_JKS. */
   String KEYSTORE_TYPE_JKS = "JKS";
+
   /** The constant KEYSTORE_TYPE_PKCS11. */
   String KEYSTORE_TYPE_PKCS11 = "PKCS11";
+
   /** The constant KEYSTORE_TYPE_PKCS12. */
   String KEYSTORE_TYPE_PKCS12 = "PKCS12";
 

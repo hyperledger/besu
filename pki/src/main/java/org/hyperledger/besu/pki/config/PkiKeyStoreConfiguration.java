@@ -29,6 +29,7 @@ public class PkiKeyStoreConfiguration {
 
   /** The constant DEFAULT_KEYSTORE_TYPE. */
   public static String DEFAULT_KEYSTORE_TYPE = "PKCS12";
+
   /** The constant DEFAULT_CERTIFICATE_ALIAS. */
   public static String DEFAULT_CERTIFICATE_ALIAS = "validator";
 
