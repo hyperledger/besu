@@ -32,6 +32,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 /**
  * Helper for interacting with the Validator Exit Contract (https://eips.ethereum.org/EIPS/eip-7002)
+ *
+ * <p>Please note that this is not the spec-way of interacting with the Validator Exit contract. See
+ * https://github.com/hyperledger/besu/issues/6918 for more information.
  */
 public class ValidatorExitContractHelper {
 
