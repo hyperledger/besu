@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -51,10 +52,20 @@ public class TxCreateOperation extends AbstractCreateOperation {
   @Override
   public long cost(final MessageFrame frame, final Supplier<Code> codeSupplier) {
     Code code = codeSupplier.get();
-    int codeSize = code.getSize();
-    return clampedAdd(
-        clampedAdd(gasCalculator().txCreateCost(), gasCalculator().createKeccakCost(codeSize)),
-        gasCalculator().initcodeCost(codeSize));
+    if (code == null) {
+      return 0;
+    } else {
+      int codeSize = code.getSize();
+      final int inputOffset = clampedToInt(frame.getStackItem(2));
+      final int inputSize = clampedToInt(frame.getStackItem(3));
+      return clampedAdd(
+          clampedAdd(
+              gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize),
+              gasCalculator().initcodeCost(codeSize)),
+          clampedAdd(
+              gasCalculator().txCreateCost(),
+              gasCalculator().createKeccakCost(codeSupplier.get().getSize())));
+    }
   }
 
   @Override
@@ -69,12 +80,20 @@ public class TxCreateOperation extends AbstractCreateOperation {
 
   @Override
   protected Code getInitCode(final MessageFrame frame, final EVM evm) {
-    Bytes bytes = frame.getInitCodeByHash(frame.getStackItem(0));
-    return bytes == null ? null : CodeFactory.createCode(bytes, eofVersion, true);
+    Bytes bytes = frame.getInitCodeByHash(frame.getStackItem(4));
+    if (bytes == null) {
+      return null;
+    }
+    Code code = CodeFactory.createCode(bytes, eofVersion, true);
+    if (code.isValid() && code.getEofVersion() > 0) {
+      return code;
+    } else {
+      return null;
+    }
   }
 
   @Override
-  protected Bytes getAuxData(final MessageFrame frame) {
+  protected Bytes getInputData(final MessageFrame frame) {
     final long inputOffset = clampedToLong(frame.getStackItem(2));
     final long inputSize = clampedToLong(frame.getStackItem(3));
     return frame.readMemory(inputOffset, inputSize);

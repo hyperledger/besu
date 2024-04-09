@@ -223,7 +223,7 @@ class CreateOperationTest {
   }
 
   @Test
-  void eofV1CannotCreateLegacy() {
+  void eofV1CannotCall() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
@@ -244,33 +244,6 @@ class CreateOperationTest {
     var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isEqualTo(INVALID_OPERATION);
     assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
-  }
-
-  @Test
-  void legacyCanCreateEOFv1() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_EOF.size());
-    final MessageFrame messageFrame =
-        new TestMessageFrameBuilder()
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 1, true))
-            .pushStackItem(memoryLength)
-            .pushStackItem(memoryOffset)
-            .pushStackItem(Bytes.EMPTY)
-            .worldUpdater(worldUpdater)
-            .build();
-    messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_EOF);
-
-    when(account.getNonce()).thenReturn(55L);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(worldUpdater.get(any())).thenReturn(account);
-    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdater.updater()).thenReturn(worldUpdater);
-
-    final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    assertThat(result.getHaltReason()).isNull();
-    assertThat(messageFrame.getState()).isEqualTo(MessageFrame.State.CODE_SUSPENDED);
   }
 
   @Nonnull

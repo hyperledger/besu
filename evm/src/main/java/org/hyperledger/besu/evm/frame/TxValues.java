@@ -152,10 +152,12 @@ public record TxValues(
     var codes = initcodes.get();
     var hashes = initcodeHashes.get();
     for (int i = 0; i < codes.size(); i++) {
-      var hash = hashes.get(i);
-      if (hash == null) {
+      Bytes hash;
+      if (hashes.size() <= i) {
         hash = Hash.hash(codes.get(i));
-        hashes.set(i, hash);
+        hashes.add(hash);
+      } else {
+        hash = hashes.get(i);
       }
       if (hash.equals(targetHash)) {
         return codes.get(i);

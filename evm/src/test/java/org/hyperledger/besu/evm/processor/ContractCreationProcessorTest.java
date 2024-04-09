@@ -131,7 +131,7 @@ class ContractCreationProcessorTest
   }
 
   @Test
-  void eofValidationShouldAllowLegacyCode() {
+  void eofValidationShouldAllowLegacyDeplyFromLegacyInit() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -173,7 +173,7 @@ class ContractCreationProcessorTest
   }
 
   @Test
-  void eofValidationShouldPreventLegacyCodeDeployment() {
+  void eofValidationShouldPreventLegacyDeplyFromEOFInit() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,
@@ -197,7 +197,7 @@ class ContractCreationProcessorTest
   }
 
   @Test
-  void eofValidationPreventsInvalidEOFCode() {
+  void eofValidationPreventsEOFDeployFromLegacyInit() {
     processor =
         new ContractCreationProcessor(
             gasCalculator,

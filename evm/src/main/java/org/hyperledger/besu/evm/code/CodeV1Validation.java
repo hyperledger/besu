@@ -230,8 +230,10 @@ public final class CodeV1Validation {
           EOFLayout subContainer = eofLayout.getSubcontainer(subcontainerNum);
           if (subContainer.dataLength() != subContainer.data().size()) {
             return format(
-                    "A subcontainer used for %s has a truncated data section, expected %d and is %d.",
-                    V1_OPCODES[operationNum].name(), subContainer.dataLength(), subContainer.data().size());
+                "A subcontainer used for %s has a truncated data section, expected %d and is %d.",
+                V1_OPCODES[operationNum].name(),
+                subContainer.dataLength(),
+                subContainer.data().size());
           }
           pcPostInstruction += 1;
           break;

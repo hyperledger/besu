@@ -32,6 +32,7 @@ import org.hyperledger.besu.evm.internal.Words;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Abstract create operation. */
@@ -86,7 +87,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       return UNDERFLOW_RESPONSE;
     }
 
-    Supplier<Code> codeSupplier = () -> getInitCode(frame, evm);
+    Supplier<Code> codeSupplier = Suppliers.memoize(() -> getInitCode(frame, evm));
 
     final long cost = cost(frame, codeSupplier);
     if (frame.isStatic()) {
@@ -150,18 +151,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected abstract long cost(final MessageFrame frame, Supplier<Code> codeSupplier);
 
   /**
-   * Any costs related to memory expansion
-   *
-   * @param frame the message frame
-   * @return costs related to memory expansion
-   */
-  protected long memoryExpansionCost(final MessageFrame frame) {
-    final long inputOffset = clampedToLong(frame.getStackItem(1));
-    final long inputSize = clampedToLong(frame.getStackItem(2));
-    return gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize);
-  }
-
-  /**
    * Target contract address.
    *
    * @param frame the frame
@@ -191,7 +180,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final Wei value = Wei.wrap(parent.getStackItem(0));
 
     final Address contractAddress = targetContractAddress(parent, code);
-    final Bytes auxData = getAuxData(parent);
+    final Bytes inputData = getInputData(parent);
 
     final long childGasStipend =
         gasCalculator().gasAvailableForChildCreate(parent.getRemainingGas());
@@ -204,7 +193,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         .initialGas(childGasStipend)
         .address(contractAddress)
         .contract(contractAddress)
-        .inputData(auxData)
+        .inputData(inputData)
         .sender(parent.getRecipientAddress())
         .value(value)
         .apparentValue(value)
@@ -217,12 +206,13 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   }
 
   /**
-   * Get the auxiluray data to be appended to the EOF factory contract
+   * Get the input data to be appended to the EOF factory contract. For CREATE and CREATE2 this is
+   * always empty
    *
    * @param frame the message frame the operation was called in
-   * @return the auxiliary data as raw bytes, or `Bytes.EMPTY` if there is no aux data
+   * @return the input data as raw bytes, or `Bytes.EMPTY` if there is no aux data
    */
-  protected Bytes getAuxData(final MessageFrame frame) {
+  protected Bytes getInputData(final MessageFrame frame) {
     return Bytes.EMPTY;
   }
 
