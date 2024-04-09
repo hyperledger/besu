@@ -107,11 +107,11 @@ public record EOFLayout(
     return null;
   }
 
-  private static boolean checkKind(final ByteArrayInputStream inputStream, final int expectedKind) {
+  private static int peekKind(final ByteArrayInputStream inputStream) {
     inputStream.mark(1);
     int kind = inputStream.read();
     inputStream.reset();
-    return kind == expectedKind;
+    return kind;
   }
 
   /**
@@ -121,17 +121,6 @@ public record EOFLayout(
    * @return the eof layout
    */
   public static EOFLayout parseEOF(final Bytes container) {
-    return parseEOF(container, false);
-  }
-
-  /**
-   * Parse EOF.
-   *
-   * @param container the container
-   * @param inSubcontainer Is this a subcontainer, i.e. not for deployment.
-   * @return the eof layout
-   */
-  static EOFLayout parseEOF(final Bytes container, final boolean inSubcontainer) {
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(container.toArrayUnsafe());
 
     if (inputStream.available() < 3) {
@@ -192,7 +181,7 @@ public record EOFLayout(
 
     int containerSectionCount;
     int[] containerSectionSizes;
-    if (checkKind(inputStream, SECTION_CONTAINER)) {
+    if (peekKind(inputStream) == SECTION_CONTAINER) {
       error = readKind(inputStream, SECTION_CONTAINER);
       if (error != null) {
         return invalidLayout(container, version, error);
@@ -306,7 +295,7 @@ public record EOFLayout(
       }
       Bytes subcontainer = container.slice(pos, subcontianerSize);
       pos += subcontianerSize;
-      EOFLayout subLayout = EOFLayout.parseEOF(subcontainer, true);
+      EOFLayout subLayout = EOFLayout.parseEOF(subcontainer);
       if (!subLayout.isValid()) {
         String invalidSubReason = subLayout.invalidReason;
         return invalidLayout(
@@ -320,9 +309,6 @@ public record EOFLayout(
     }
 
     long loadedDataCount = inputStream.skip(dataSize);
-    if (!inSubcontainer && loadedDataCount != dataSize) {
-      return invalidLayout(container, version, "Incomplete data section");
-    }
     Bytes data = container.slice(pos, (int) loadedDataCount);
 
     if (inputStream.read() != -1) {
@@ -429,58 +415,6 @@ public record EOFLayout(
         + '}';
   }
 
-  byte[] newContainerWithAuxData(final Bytes auxData) {
-    try {
-      ByteArrayOutputStream baos = new ByteArrayOutputStream(container.size() + auxData.size());
-      DataOutputStream dataOutput = new DataOutputStream(baos);
-      dataOutput.write(new byte[] {(byte) 0xef, 0x00, 0x01});
-
-      dataOutput.writeByte(SECTION_TYPES);
-      dataOutput.write(codeSections.length * 4);
-
-      dataOutput.writeByte(SECTION_CODE);
-      dataOutput.write(codeSections.length);
-      for (var codeSection : codeSections) {
-        dataOutput.writeShort(codeSection.length);
-      }
-
-      dataOutput.writeByte(SECTION_DATA);
-      dataOutput.writeShort(data.size() + auxData.size());
-
-      if (subContainers != null && subContainers.length > 0) {
-        dataOutput.writeByte(SECTION_CONTAINER);
-        dataOutput.write(subContainers.length);
-        for (var subcontainer : subContainers) {
-          dataOutput.writeShort(subcontainer.container.size());
-        }
-      }
-
-      dataOutput.writeByte(SECTION_TERMINATOR);
-
-      for (var codeSection : codeSections) {
-        dataOutput.writeByte(codeSection.inputs);
-        dataOutput.writeByte(codeSection.outputs);
-        dataOutput.writeShort(codeSection.maxStackHeight);
-      }
-
-      byte[] containerByteArray = container.toArrayUnsafe();
-      for (var codeSection : codeSections) {
-        dataOutput.write(containerByteArray, codeSection.entryPoint, codeSection.length);
-      }
-
-      dataOutput.write(data.toArrayUnsafe());
-      dataOutput.write(auxData.toArrayUnsafe());
-
-      for (var subcontainer : subContainers) {
-        dataOutput.write(subcontainer.container.toArrayUnsafe());
-      }
-
-      return baos.toByteArray();
-    } catch (IOException ioe) {
-      throw new RuntimeException(ioe);
-    }
-  }
-
   /**
    * Re-writes the container with optional auxiliary data.
    *
@@ -528,7 +462,7 @@ public record EOFLayout(
       // Data header
       out.writeByte(SECTION_DATA);
       if (auxData == null) {
-        out.writeShort(data.size());
+        out.writeShort(dataLength);
       } else {
         int newSize = data.size() + auxData.size();
         if (newSize < dataLength) {
@@ -558,8 +492,10 @@ public record EOFLayout(
       }
 
       // Subcontainers
-      for (EOFLayout container : subContainers) {
-        out.write(container.container.toArrayUnsafe());
+      if (subContainers != null) {
+        for (EOFLayout container : subContainers) {
+          out.write(container.container.toArrayUnsafe());
+        }
       }
 
       // data
@@ -711,7 +647,7 @@ public record EOFLayout(
           }
           out.printf(" # [%d] %s", pc, ci.name());
           if (advance == 2) {
-            out.printf("(%d)", byteCode[pc + 1]);
+            out.printf("(%d)", byteCode[pc + 1] & 0xff);
           } else if (advance > 2) {
             out.print("(0x");
             for (int j = 1; j < advance; j++) {

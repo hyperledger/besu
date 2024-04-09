@@ -227,6 +227,12 @@ public final class CodeV1Validation {
                 "%s refers to non-existent subcontainer %d at pc=%d",
                 opcodeInfo.name(), subcontainerNum, pos - opcodeInfo.pcAdvance());
           }
+          EOFLayout subContainer = eofLayout.getSubcontainer(subcontainerNum);
+          if (subContainer.dataLength() != subContainer.data().size()) {
+            return format(
+                    "A subcontainer used for %s has a truncated data section, expected %d and is %d.",
+                    V1_OPCODES[operationNum].name(), subContainer.dataLength(), subContainer.data().size());
+          }
           pcPostInstruction += 1;
           break;
         default:
@@ -337,7 +343,7 @@ public final class CodeV1Validation {
             sectionStackUsed = 0;
             break;
           case SwapNOperation.OPCODE:
-            int swapDepth = 2 + code[currentPC + 1] & 0xff;
+            int swapDepth = 2 + (code[currentPC + 1] & 0xff);
             stackInputs = swapDepth;
             stackOutputs = swapDepth;
             sectionStackUsed = 0;
@@ -388,7 +394,6 @@ public final class CodeV1Validation {
         unusedBytes -= pcAdvance;
         maxStackHeight = max(maxStackHeight, current_max);
 
-        String validationError = null;
         switch (thisOp) {
           case RelativeJumpOperation.OPCODE:
             int jValue = readBigEndianI16(currentPC + 1, code);
@@ -443,7 +448,7 @@ public final class CodeV1Validation {
             nextPC = tableEnd;
             stack_max[nextPC] = max(stack_max[nextPC], current_max);
             stack_min[nextPC] = min(stack_min[nextPC], current_min);
-            for (int i = currentPC + 2; i < tableEnd && validationError == null; i += 2) {
+            for (int i = currentPC + 2; i < tableEnd; i += 2) {
               int vValue = readBigEndianI16(i, code);
               int targetPCv = tableEnd + vValue;
               if (targetPCv > currentPC) {
@@ -548,10 +553,6 @@ public final class CodeV1Validation {
             }
             break;
         }
-        if (validationError != null) {
-          return validationError;
-        }
-
         currentPC = nextPC;
       }
 

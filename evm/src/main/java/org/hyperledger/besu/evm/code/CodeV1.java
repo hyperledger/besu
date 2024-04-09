@@ -99,6 +99,9 @@ public class CodeV1 implements Code {
     EOFLayout subcontainerLayout = eofLayout.getSubcontainer(index);
     if (auxData != null && !auxData.isEmpty()) {
       Bytes subcontainerWithAuxData = subcontainerLayout.writeContainer(auxData);
+      if (subcontainerWithAuxData == null) {
+        return Optional.empty();
+      }
       subcontainerLayout = EOFLayout.parseEOF(subcontainerWithAuxData);
     }
 
