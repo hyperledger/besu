@@ -20,6 +20,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
@@ -27,9 +31,18 @@ import io.opentelemetry.api.trace.StatusCode;
 public class TracedJsonRpcProcessor implements JsonRpcProcessor {
 
   private final JsonRpcProcessor rpcProcessor;
+  protected final LabelledMetric<Counter> rpcErrorsCounter;
 
-  public TracedJsonRpcProcessor(final JsonRpcProcessor rpcProcessor) {
+  public TracedJsonRpcProcessor(
+      final JsonRpcProcessor rpcProcessor, final MetricsSystem metricsSystem) {
     this.rpcProcessor = rpcProcessor;
+    this.rpcErrorsCounter =
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.RPC,
+            "errors_count",
+            "Number of errors per RPC method and RPC error type",
+            "rpcMethod",
+            "errorType");
   }
 
   @Override
@@ -41,6 +54,7 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
     JsonRpcResponse jsonRpcResponse = rpcProcessor.process(id, method, metricSpan, request);
     if (JsonRpcResponseType.ERROR == jsonRpcResponse.getType()) {
       JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) jsonRpcResponse;
+      this.rpcErrorsCounter.labels(method.getName(), errorResponse.getErrorType().name()).inc();
       switch (errorResponse.getErrorType()) {
         case INVALID_PARAMS:
           metricSpan.setStatus(StatusCode.ERROR, "Invalid Params");
