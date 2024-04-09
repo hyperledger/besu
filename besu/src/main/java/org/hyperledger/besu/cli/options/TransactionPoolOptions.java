@@ -182,6 +182,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     @CommandLine.Option(
         names = {TX_POOL_MAX_PRIORITIZED_BY_TYPE},
         paramLabel = "MAP<TYPE,INTEGER>",
+        split = ",",
         description =
             "Max number of pending transactions, of a specific type, that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})",
         arity = "1")

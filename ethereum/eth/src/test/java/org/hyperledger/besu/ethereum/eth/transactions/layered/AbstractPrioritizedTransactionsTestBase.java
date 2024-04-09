@@ -43,7 +43,7 @@ import org.junit.jupiter.api.Test;
 public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransactionPoolTest {
   protected static final int MAX_TRANSACTIONS = 5;
   protected static final EnumMap<TransactionType, Integer> MAX_TRANSACTIONS_BY_TYPE =
-      new EnumMap<>(Map.of(TransactionType.BLOB, 1));
+      new EnumMap<>(Map.of(TransactionType.BLOB, 2));
   protected final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
   protected final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
   protected final MiningParameters miningParameters =
