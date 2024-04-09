@@ -26,8 +26,10 @@ public class JsonQbftConfigOptions extends JsonBftConfigOptions implements QbftC
   /** The constant DEFAULT. */
   public static final JsonQbftConfigOptions DEFAULT =
       new JsonQbftConfigOptions(JsonUtil.createEmptyObjectNode());
+
   /** The constant VALIDATOR_CONTRACT_ADDRESS. */
   public static final String VALIDATOR_CONTRACT_ADDRESS = "validatorcontractaddress";
+
   /** The constant START_BLOCK. */
   public static final String START_BLOCK = "startblock";
 

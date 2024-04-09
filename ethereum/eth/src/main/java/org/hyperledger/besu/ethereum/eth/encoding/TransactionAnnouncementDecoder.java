@@ -50,6 +50,7 @@ public class TransactionAnnouncementDecoder {
       return TransactionAnnouncementDecoder::decodeForEth66;
     }
   }
+
   /**
    * Decode the list of transactions in the NewPooledTransactionHashesMessage
    *

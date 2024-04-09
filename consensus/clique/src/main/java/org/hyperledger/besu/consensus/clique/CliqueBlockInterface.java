@@ -35,6 +35,7 @@ public class CliqueBlockInterface implements BlockInterface {
 
   /** The constant ADD_NONCE. */
   public static final long ADD_NONCE = 0xFFFFFFFFFFFFFFFFL;
+
   /** The constant DROP_NONCE. */
   public static final long DROP_NONCE = 0x0L;
 
