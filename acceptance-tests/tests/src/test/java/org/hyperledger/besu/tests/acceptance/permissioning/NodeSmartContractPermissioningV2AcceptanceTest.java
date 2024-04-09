@@ -17,7 +17,6 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 public class NodeSmartContractPermissioningV2AcceptanceTest
