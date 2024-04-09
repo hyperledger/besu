@@ -313,7 +313,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             besuController.getProtocolContext().getBlockchain(),
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
-            besuController.getSyncState()));
+            besuController.getSyncState(),
+            besuController.getProtocolContext().getBadBlockManager()));
     besuPluginContext.startPlugins();
 
     runner.startEthereumMainLoop();

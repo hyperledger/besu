@@ -18,6 +18,7 @@ import static java.util.stream.Collectors.toUnmodifiableList;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -44,6 +45,7 @@ public class BesuEventsImpl implements BesuEvents {
   private final BlockBroadcaster blockBroadcaster;
   private final TransactionPool transactionPool;
   private final SyncState syncState;
+  private final BadBlockManager badBlockManager;
 
   /**
    * Constructor for BesuEventsImpl
@@ -52,16 +54,19 @@ public class BesuEventsImpl implements BesuEvents {
    * @param blockBroadcaster An instance of BlockBroadcaster
    * @param transactionPool An instance of TransactionPool
    * @param syncState An instance of SyncState
+   * @param badBlockManager A cache of bad blocks encountered on the network
    */
   public BesuEventsImpl(
       final Blockchain blockchain,
       final BlockBroadcaster blockBroadcaster,
       final TransactionPool transactionPool,
-      final SyncState syncState) {
+      final SyncState syncState,
+      final BadBlockManager badBlockManager) {
     this.blockchain = blockchain;
     this.blockBroadcaster = blockBroadcaster;
     this.transactionPool = transactionPool;
     this.syncState = syncState;
+    this.badBlockManager = badBlockManager;
   }
 
   @Override
@@ -164,6 +169,16 @@ public class BesuEventsImpl implements BesuEvents {
   @Override
   public void removeLogListener(final long listenerIdentifier) {
     blockchain.removeObserver(listenerIdentifier);
+  }
+
+  @Override
+  public long addBadBlockListener(final BadBlockListener listener) {
+    return badBlockManager.subscribeToBadBlocks(listener);
+  }
+
+  @Override
+  public void removeBadBlockListener(final long listenerIdentifier) {
+    badBlockManager.unsubscribeFromBadBlocks(listenerIdentifier);
   }
 
   private static PropagatedBlockContext blockPropagatedContext(
