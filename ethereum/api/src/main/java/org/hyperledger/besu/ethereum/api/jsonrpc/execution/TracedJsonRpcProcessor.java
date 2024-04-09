@@ -39,7 +39,7 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
     this.rpcErrorsCounter =
         metricsSystem.createLabelledCounter(
             BesuMetricCategory.RPC,
-            "rpc_errors_count",
+            "errors_count",
             "Number of errors per RPC method and RPC error type",
             "rpcMethod",
             "errorType");
