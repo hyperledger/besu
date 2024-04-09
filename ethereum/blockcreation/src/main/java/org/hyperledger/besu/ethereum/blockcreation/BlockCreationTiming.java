@@ -49,7 +49,7 @@ public class BlockCreationTiming {
 
   @Override
   public String toString() {
-    final var sb = new StringBuilder("Started at " + startedAt + ", ");
+    final var sb = new StringBuilder("started at " + startedAt + ", ");
 
     var prevDuration = Duration.ZERO;
     for (final var entry : timing.entrySet()) {
