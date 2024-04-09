@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.ReplaceableDoubleSupplier;
@@ -27,6 +28,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.function.DoubleSupplier;
 
+import org.apache.commons.lang3.tuple.Pair;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -43,12 +45,15 @@ public class TransactionPoolMetrics {
   private final LabelledMetric<Counter> rejectedCounter;
   private final LabelledGauge spaceUsed;
   private final LabelledGauge transactionCount;
+  private final LabelledGauge transactionCountByType;
   private final LabelledGauge uniqueSenderCount;
   private final LabelledMetric<Counter> expiredMessagesCounter;
   private final Map<String, RunnableCounter> expiredMessagesRunnableCounters = new HashMap<>();
   private final LabelledMetric<Counter> alreadySeenTransactionsCounter;
   private final Map<String, ReplaceableDoubleSupplier> spaceUsedSuppliers = new HashMap<>();
   private final Map<String, ReplaceableDoubleSupplier> transactionCountSuppliers = new HashMap<>();
+  private final Map<Pair<String, TransactionType>, ReplaceableDoubleSupplier>
+      transactionCountByTypeSuppliers = new HashMap<>();
   private final Map<String, ReplaceableDoubleSupplier> uniqueSendersSuppliers = new HashMap<>();
 
   public TransactionPoolMetrics(final MetricsSystem metricsSystem) {
@@ -97,6 +102,14 @@ public class TransactionPoolMetrics {
             "The number of transactions currently present in the layer",
             "layer");
 
+    transactionCountByType =
+        metricsSystem.createLabelledGauge(
+            BesuMetricCategory.TRANSACTION_POOL,
+            "number_of_transactions_by_type",
+            "The number of transactions, of a specified type, currently present in the layer",
+            "layer",
+            "type");
+
     uniqueSenderCount =
         metricsSystem.createLabelledGauge(
             BesuMetricCategory.TRANSACTION_POOL,
@@ -130,6 +143,20 @@ public class TransactionPoolMetrics {
           if (existingSupplier == null) {
             final var newSupplier = new ReplaceableDoubleSupplier(spaceUsedSupplier);
             spaceUsed.labels(newSupplier, layer);
+            return newSupplier;
+          }
+          return existingSupplier.replaceDoubleSupplier(spaceUsedSupplier);
+        });
+  }
+
+  public void initTransactionCountByType(
+      final DoubleSupplier spaceUsedSupplier, final String layer, final TransactionType type) {
+    transactionCountByTypeSuppliers.compute(
+        Pair.of(layer, type),
+        (unused, existingSupplier) -> {
+          if (existingSupplier == null) {
+            final var newSupplier = new ReplaceableDoubleSupplier(spaceUsedSupplier);
+            transactionCountByType.labels(newSupplier, layer, type.name());
             return newSupplier;
           }
           return existingSupplier.replaceDoubleSupplier(spaceUsedSupplier);

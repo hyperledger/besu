@@ -944,6 +944,7 @@ public class MessageFrame {
   public void addCreate(final Address address) {
     txValues.creates().add(address);
   }
+
   /**
    * Add addresses to the create set if they are not already present.
    *
@@ -1118,6 +1119,7 @@ public class MessageFrame {
   public int getDepth() {
     return getMessageStackSize() - 1;
   }
+
   /**
    * Returns the recipient that originated the message.
    *

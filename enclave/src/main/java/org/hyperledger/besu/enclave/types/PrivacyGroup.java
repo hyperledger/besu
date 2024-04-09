@@ -22,12 +22,16 @@ public class PrivacyGroup implements Serializable {
 
   /** Private Group Id */
   private String privacyGroupId;
+
   /** Name */
   private String name;
+
   /** Description */
   private String description;
+
   /** Type */
   private Type type;
+
   /** Members */
   private List<String> members;
 

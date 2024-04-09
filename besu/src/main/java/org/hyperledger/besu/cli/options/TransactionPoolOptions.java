@@ -44,6 +44,7 @@ import picocli.CommandLine;
 /** The Transaction pool Cli stable options. */
 public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
   private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
+
   /** Use TX_POOL_NO_LOCAL_PRIORITY instead */
   @Deprecated(forRemoval = true)
   private static final String TX_POOL_DISABLE_LOCALS = "--tx-pool-disable-locals";

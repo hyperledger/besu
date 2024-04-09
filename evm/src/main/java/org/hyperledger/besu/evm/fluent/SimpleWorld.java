@@ -31,6 +31,7 @@ public class SimpleWorld implements WorldUpdater {
 
   /** The Parent. */
   SimpleWorld parent;
+
   /** The Accounts. */
   Map<Address, SimpleAccount> accounts = new HashMap<>();
 

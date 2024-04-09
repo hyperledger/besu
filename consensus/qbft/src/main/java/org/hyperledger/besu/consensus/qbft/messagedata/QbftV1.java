@@ -18,10 +18,13 @@ package org.hyperledger.besu.consensus.qbft.messagedata;
 public class QbftV1 {
   /** The constant PROPOSAL. */
   public static final int PROPOSAL = 0x12;
+
   /** The constant PREPARE. */
   public static final int PREPARE = 0x13;
+
   /** The constant COMMIT. */
   public static final int COMMIT = 0x14;
+
   /** The constant ROUND_CHANGE. */
   public static final int ROUND_CHANGE = 0x15;
 

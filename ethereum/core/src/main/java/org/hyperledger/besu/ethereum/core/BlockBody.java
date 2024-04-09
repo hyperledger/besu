@@ -26,6 +26,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private static final BlockBody EMPTY =
       new BlockBody(Collections.emptyList(), Collections.emptyList());
+
   /**
    * Adding a new field with a corresponding root hash in the block header will require a change in
    * {@link org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask.BodyIdentifier}

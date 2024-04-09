@@ -65,11 +65,13 @@ public enum EvmSpecVersion {
 
   /** The Spec finalized. */
   final boolean specFinalized;
+
   /** The Max eof version. */
   final int maxEofVersion;
 
   /** Public name matching execution-spec-tests name */
   final String name;
+
   /** A brief description of the state of the fork */
   final String description;
 

@@ -57,6 +57,7 @@ public class BesuController implements java.io.Closeable {
 
   /** The constant DATABASE_PATH. */
   public static final String DATABASE_PATH = "database";
+
   /** The constant CACHE_PATH. */
   public static final String CACHE_PATH = "caches";
 
