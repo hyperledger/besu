@@ -747,6 +747,7 @@ public abstract class CommandTestAbstract {
 
     assertThat(stringArgumentCaptor.getAllValues().get(2)).isEqualTo(mainOption);
   }
+
   /**
    * Check logger calls
    *

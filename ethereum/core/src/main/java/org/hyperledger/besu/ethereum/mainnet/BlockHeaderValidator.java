@@ -43,20 +43,22 @@ public class BlockHeaderValidator {
       final HeaderValidationMode mode) {
     return switch (mode) {
       case NONE -> true;
-      case LIGHT_DETACHED_ONLY -> applyRules(
-          header,
-          parent,
-          protocolContext,
-          rule -> rule.includeInLightValidation() && rule.isDetachedSupported());
-      case LIGHT_SKIP_DETACHED -> applyRules(
-          header,
-          parent,
-          protocolContext,
-          rule -> rule.includeInLightValidation() && !rule.isDetachedSupported());
+      case LIGHT_DETACHED_ONLY ->
+          applyRules(
+              header,
+              parent,
+              protocolContext,
+              rule -> rule.includeInLightValidation() && rule.isDetachedSupported());
+      case LIGHT_SKIP_DETACHED ->
+          applyRules(
+              header,
+              parent,
+              protocolContext,
+              rule -> rule.includeInLightValidation() && !rule.isDetachedSupported());
       case LIGHT -> applyRules(header, parent, protocolContext, Rule::includeInLightValidation);
       case DETACHED_ONLY -> applyRules(header, parent, protocolContext, Rule::isDetachedSupported);
-      case SKIP_DETACHED -> applyRules(
-          header, parent, protocolContext, rule -> !rule.isDetachedSupported());
+      case SKIP_DETACHED ->
+          applyRules(header, parent, protocolContext, rule -> !rule.isDetachedSupported());
       case FULL -> applyRules(header, parent, protocolContext, rule -> true);
     };
   }

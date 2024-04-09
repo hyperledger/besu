@@ -29,6 +29,7 @@ public class ReturnDataCopyOperation extends AbstractOperation {
   /** The constant INVALID_RETURN_DATA_BUFFER_ACCESS. */
   protected static final OperationResult INVALID_RETURN_DATA_BUFFER_ACCESS =
       new OperationResult(0L, ExceptionalHaltReason.INVALID_RETURN_DATA_BUFFER_ACCESS);
+
   /** The constant OUT_OF_BOUNDS. */
   protected static final OperationResult OUT_OF_BOUNDS =
       new OperationResult(0L, ExceptionalHaltReason.OUT_OF_BOUNDS);

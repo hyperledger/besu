@@ -31,6 +31,7 @@ public class SECPSignature {
 
   /** The constant BYTES_REQUIRED. */
   public static final int BYTES_REQUIRED = 65;
+
   /**
    * The recovery id to reconstruct the public key used to create the signature.
    *

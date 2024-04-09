@@ -139,6 +139,7 @@ public class DeterministicEthScheduler extends EthScheduler {
   public interface TimeoutPolicy {
     /** A policy that never timeouts */
     TimeoutPolicy NEVER_TIMEOUT = () -> false;
+
     /** A policy that timeouts on every task */
     TimeoutPolicy ALWAYS_TIMEOUT = () -> true;
 
