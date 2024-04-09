@@ -20,32 +20,29 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
-
-import io.opentelemetry.api.trace.Span;
-import io.opentelemetry.api.trace.StatusCode;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 
+import io.opentelemetry.api.trace.Span;
+import io.opentelemetry.api.trace.StatusCode;
+
 public class TracedJsonRpcProcessor implements JsonRpcProcessor {
 
   private final JsonRpcProcessor rpcProcessor;
-  private final MetricsSystem metricsSystem;
   protected final LabelledMetric<Counter> rpcErrorsCounter;
 
-
-  public TracedJsonRpcProcessor(final JsonRpcProcessor rpcProcessor, final MetricsSystem metricsSystem) {
+  public TracedJsonRpcProcessor(
+      final JsonRpcProcessor rpcProcessor, final MetricsSystem metricsSystem) {
     this.rpcProcessor = rpcProcessor;
-    this.metricsSystem = metricsSystem;
     this.rpcErrorsCounter =
-            metricsSystem.createLabelledCounter(
-                    BesuMetricCategory.RPC,
-                    "rpc_errors_count",
-                    "Number of errors per RPC method and RPC error type",
-                    "rpcMethod",
-                    "errorType");
+        metricsSystem.createLabelledCounter(
+            BesuMetricCategory.RPC,
+            "rpc_errors_count",
+            "Number of errors per RPC method and RPC error type",
+            "rpcMethod",
+            "errorType");
   }
 
   @Override
