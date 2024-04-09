@@ -214,10 +214,10 @@ public class BlockHeader extends SealableBlockHeader
     // TODO REACTIVATE
     /*final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
     final BlobGas excessBlobGas =
-            !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
+        !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     final Hash depositHashRoot =
-            !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     final Hash exitsHashRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;*/
     final ExecutionWitness executionWitness =
         !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;

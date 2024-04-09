@@ -81,7 +81,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager);
-
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.setAccumulator(
         new BonsaiWorldStateUpdateAccumulator(

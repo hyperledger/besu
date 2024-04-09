@@ -32,8 +32,10 @@ public abstract class AbstractFqp<T extends AbstractFqp> implements FieldElement
 
   /** The Degree. */
   protected final int degree;
+
   /** The Modulus coefficients. */
   protected final Fq[] modulusCoefficients;
+
   /** The Coefficients. */
   protected final Fq[] coefficients;
 

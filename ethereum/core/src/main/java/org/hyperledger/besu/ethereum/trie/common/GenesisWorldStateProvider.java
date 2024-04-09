@@ -48,7 +48,6 @@ public class GenesisWorldStateProvider {
    */
   public static MutableWorldState createGenesisWorldState(
       final DataStorageConfiguration dataStorageConfiguration) {
-
     if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.BONSAI) {
       return createGenesisBonsaiWorldState();

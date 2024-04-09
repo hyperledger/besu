@@ -404,7 +404,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
 
   protected EnginePayloadParameter mockEnginePayload(
       final BlockHeader header, final List<String> txs) {
-    return mockEnginePayload(header, txs, null, null, null, null);
+    return mockEnginePayload(header, txs, null, null, null);
   }
 
   protected EnginePayloadParameter mockEnginePayload(

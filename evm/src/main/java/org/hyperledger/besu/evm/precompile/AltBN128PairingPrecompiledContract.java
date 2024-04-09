@@ -43,6 +43,7 @@ public class AltBN128PairingPrecompiledContract extends AbstractAltBnPrecompiled
   /** The constant FALSE. */
   static final Bytes FALSE =
       Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000000");
+
   /** The constant TRUE. */
   public static final Bytes TRUE =
       Bytes.fromHexString("0x0000000000000000000000000000000000000000000000000000000000000001");

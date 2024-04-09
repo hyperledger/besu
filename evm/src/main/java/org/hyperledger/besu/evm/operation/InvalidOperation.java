@@ -24,9 +24,11 @@ public class InvalidOperation extends AbstractOperation {
 
   /** The constant OPCODE. */
   public static final int OPCODE = 0xFE;
+
   /** The constant INVALID_RESULT. */
   public static final OperationResult INVALID_RESULT =
       new OperationResult(0, ExceptionalHaltReason.INVALID_OPERATION);
+
   /** The Invalid operation result. */
   protected final OperationResult invalidResult;
 

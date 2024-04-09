@@ -1,4 +1,5 @@
 package org.hyperledger.besu.evm.gascalculator;
+
 /*
  * Copyright contributors to Hyperledger Besu.
  *

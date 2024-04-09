@@ -56,13 +56,14 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
         (ObjectNode)
             objectMapper.readTree(
                 """
-                                            {"qbft": [
-                                              {
-                                                        "block": 2,
-                                                        "blockperiodseconds": 2
-                                              }
-                                            ]}
-                                            """);
+
+                                {"qbft": [
+                                  {
+                                            "block": 2,
+                                            "blockperiodseconds": 2
+                                  }
+                                ]}
+                                """);
 
     lenient()
         .when(genesisConfigOptions.getTransitions())

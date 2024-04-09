@@ -11,8 +11,8 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
+
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview;
 
 import org.hyperledger.besu.datatypes.AccountValue;

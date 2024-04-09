@@ -195,8 +195,10 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
     /** The Pow. */
     final int pow;
+
     /** The Divisor. */
     final double divisor;
+
     /** The Decimals. */
     final int decimals;
 

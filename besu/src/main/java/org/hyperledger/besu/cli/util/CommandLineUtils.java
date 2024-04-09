@@ -36,11 +36,14 @@ public class CommandLineUtils {
   /** The constant DEPENDENCY_WARNING_MSG. */
   public static final String DEPENDENCY_WARNING_MSG =
       "{} has been ignored because {} was not defined on the command line.";
+
   /** The constant MULTI_DEPENDENCY_WARNING_MSG. */
   public static final String MULTI_DEPENDENCY_WARNING_MSG =
       "{} ignored because none of {} was defined.";
+
   /** The constant DEPRECATION_WARNING_MSG. */
   public static final String DEPRECATION_WARNING_MSG = "{} has been deprecated, use {} instead.";
+
   /** The constant DEPRECATED_AND_USELESS_WARNING_MSG. */
   public static final String DEPRECATED_AND_USELESS_WARNING_MSG =
       "{} has been deprecated and is now useless, remove it.";

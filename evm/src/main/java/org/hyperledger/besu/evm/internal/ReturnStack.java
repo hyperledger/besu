@@ -25,8 +25,10 @@ public class ReturnStack extends FlexStack<ReturnStack.ReturnStackItem> {
 
     /** The Code section index. */
     final int codeSectionIndex;
+
     /** The Pc. */
     final int pc;
+
     /** The Stack height. */
     final int stackHeight;
 

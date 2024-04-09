@@ -26,10 +26,12 @@ public class SwapOperation extends AbstractFixedCostOperation {
 
   /** The constant SWAP_BASE. */
   public static final int SWAP_BASE = 0x8F;
+
   /** The Swap operation success result. */
   static final OperationResult swapSuccess = new OperationResult(3, null);
 
   private final int index;
+
   /** The operation result due to underflow. */
   protected final Operation.OperationResult underflowResponse;
 

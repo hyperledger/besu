@@ -67,6 +67,7 @@ public interface ProtocolManager extends AutoCloseable {
    * @return true, if the ProtocolManager wants to connect to the peer, false otherwise
    */
   boolean shouldConnect(Peer peer, final boolean incoming);
+
   /**
    * Handles peer disconnects.
    *

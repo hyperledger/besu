@@ -134,6 +134,7 @@ public class MainnetEVMs {
 
   /** The constant SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT. */
   public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 0x6000;
+
   /** The constant SHANGHAI_INIT_CODE_SIZE_LIMIT. */
   public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
 
@@ -806,6 +807,7 @@ public class MainnetEVMs {
   public static EVM cancun(final EvmConfiguration evmConfiguration) {
     return cancun(DEV_NET_CHAIN_ID, evmConfiguration);
   }
+
   /**
    * Cancun evm.
    *
@@ -889,6 +891,7 @@ public class MainnetEVMs {
   public static EVM prague(final EvmConfiguration evmConfiguration) {
     return prague(DEV_NET_CHAIN_ID, evmConfiguration);
   }
+
   /**
    * Prague evm.
    *
@@ -957,6 +960,7 @@ public class MainnetEVMs {
   public static EVM osaka(final EvmConfiguration evmConfiguration) {
     return osaka(DEV_NET_CHAIN_ID, evmConfiguration);
   }
+
   /**
    * Osaka evm.
    *
@@ -1024,6 +1028,7 @@ public class MainnetEVMs {
   public static EVM bogota(final EvmConfiguration evmConfiguration) {
     return bogota(DEV_NET_CHAIN_ID, evmConfiguration);
   }
+
   /**
    * Bogota evm.
    *

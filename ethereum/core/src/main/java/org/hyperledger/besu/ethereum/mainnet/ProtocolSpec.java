@@ -76,13 +76,12 @@ public class ProtocolSpec {
   private final WithdrawalsValidator withdrawalsValidator;
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
   private final DepositsValidator depositsValidator;
-
   private final ValidatorExitsValidator exitsValidator;
-
   private final ExecutionWitnessValidator executionWitnessValidator;
   private final Optional<HistoricalBlockHashProcessor> historicalBlockHashProcessor;
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
+
   /**
    * Creates a new protocol specification instance.
    *

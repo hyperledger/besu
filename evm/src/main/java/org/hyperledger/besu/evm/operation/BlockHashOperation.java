@@ -36,6 +36,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
 
   private final boolean readFromState;
+
   /**
    * Instantiates a new Block hash operation.
    *

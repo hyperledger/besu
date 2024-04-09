@@ -603,6 +603,7 @@ public interface GasCalculator {
   default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
     return 0L;
   }
+
   /**
    * Compute access events cost of a transaction
    *

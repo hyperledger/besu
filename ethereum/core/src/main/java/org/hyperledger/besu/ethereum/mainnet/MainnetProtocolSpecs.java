@@ -736,7 +736,6 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     final ClearEmptyAccountStrategy clearEmptyAccountStrategy =

@@ -44,7 +44,6 @@ public class EnginePayloadParameter {
   private final Long blobGasUsed;
   private final String excessBlobGas;
   private final List<DepositParameter> deposits;
-
   private final List<ValidatorExitParameter> exits;
 
   private final ExecutionWitnessParameter executionWitness;

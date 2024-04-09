@@ -31,6 +31,7 @@ public class SStoreOperation extends AbstractOperation {
 
   /** The constant FRONTIER_MINIMUM. */
   public static final long FRONTIER_MINIMUM = 0L;
+
   /** The constant EIP_1706_MINIMUM. */
   public static final long EIP_1706_MINIMUM = 2300L;
 

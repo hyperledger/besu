@@ -45,7 +45,6 @@ import org.slf4j.LoggerFactory;
 public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
 
   private static final Logger LOG = LoggerFactory.getLogger(BonsaiWorldStateProvider.class);
-
   private final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
 
   public BonsaiWorldStateProvider(
@@ -88,6 +87,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
   private BonsaiWorldStateKeyValueStorage getWorldStateKeyValueStorage() {
     return (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage;
   }
+
   /**
    * Prepares the state healing process for a given address and location. It prepares the state
    * healing, including retrieving data from storage, identifying invalid slots or nodes, removing
