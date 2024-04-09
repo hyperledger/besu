@@ -64,7 +64,9 @@ public class BlockMinerTest {
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+        .thenReturn(
+            new BlockCreationResult(
+                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -106,7 +108,9 @@ public class BlockMinerTest {
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+        .thenReturn(
+            new BlockCreationResult(
+                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -152,7 +156,9 @@ public class BlockMinerTest {
     final Function<BlockHeader, PoWBlockCreator> blockCreatorSupplier =
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+        .thenReturn(
+            new BlockCreationResult(
+                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);

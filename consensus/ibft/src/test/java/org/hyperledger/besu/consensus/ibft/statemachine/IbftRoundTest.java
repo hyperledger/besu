@@ -47,6 +47,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -131,7 +132,9 @@ public class IbftRoundTest {
 
     lenient()
         .when(blockCreator.createBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(proposedBlock, new TransactionSelectionResults()));
+        .thenReturn(
+            new BlockCreationResult(
+                proposedBlock, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     lenient().when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);

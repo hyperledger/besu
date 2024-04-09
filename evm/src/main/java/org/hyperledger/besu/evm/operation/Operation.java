@@ -25,8 +25,10 @@ public interface Operation {
   class OperationResult {
     /** The Gas cost. */
     final long gasCost;
+
     /** The Halt reason. */
     final ExceptionalHaltReason haltReason;
+
     /** The increment. */
     final int pcIncrement;
 

@@ -12,24 +12,19 @@
  */
 
 plugins {
-  id 'org.web3j' version '4.9.2'
-  id 'org.web3j.solidity' version '0.3.5'
-}
-
-configurations.all {
-  resolutionStrategy.eachDependency { DependencyResolveDetails details ->
-    if (details.requested.group == 'org.web3j' && details.requested.version == '4.9.2') {
-      details.useVersion '4.9.4'
-      details.because 'Plugin version is 4.9.2 (latest), but we want it to use web3j libs version 4.9.4'
-    }
-  }
+  id 'org.web3j' version '4.11.1'
+  id 'org.web3j.solidity' version '0.4.0'
 }
 
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
 
 sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
 
-solidity { resolvePackages = false }
+solidity {
+  resolvePackages = false
+  // TODO: remove the forced version, when DEV network is upgraded to support latest forks
+  version '0.8.19'
+}
 
 dependencies {
   api 'org.slf4j:slf4j-api'

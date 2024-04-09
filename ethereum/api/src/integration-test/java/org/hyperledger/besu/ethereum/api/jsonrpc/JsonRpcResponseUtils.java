@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.BASEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.COINBASE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.DEPOSITS_ROOT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.DIFFICULTY;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.EXITS_ROOT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.EXTRA_DATA;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.GAS_LIMIT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.GAS_USED;
@@ -106,6 +107,7 @@ public class JsonRpcResponseUtils {
         values.containsKey(WITHDRAWALS_ROOT) ? hash(values.get(WITHDRAWALS_ROOT)) : null;
     final Hash depositsRoot =
         values.containsKey(DEPOSITS_ROOT) ? hash(values.get(DEPOSITS_ROOT)) : null;
+    final Hash exitsRoot = values.containsKey(EXITS_ROOT) ? hash(values.get(EXITS_ROOT)) : null;
     final List<JsonNode> ommers = new ArrayList<>();
 
     final BlockHeader header =
@@ -131,6 +133,7 @@ public class JsonRpcResponseUtils {
             null, // ToDo 4844: set with the value of excess_blob_gas field
             null, // TODO 4788: set with the value of the parent beacon block root field
             depositsRoot,
+            exitsRoot,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(

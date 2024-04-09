@@ -87,8 +87,8 @@ public class ImportBlocksStep implements Consumer<List<BlockWithReceipts>> {
     if (accumulatedTime > PRINT_DELAY) {
       final long blocksPercent = getBlocksPercent(lastBlock, pivotHeader.getNumber());
       LOG.info(
-          "Block import progress: {} of {} ({}%)",
-          lastBlock, pivotHeader.getNumber(), blocksPercent);
+          "Block import progress: {} of {} ({}%), Peer count: {}",
+          lastBlock, pivotHeader.getNumber(), blocksPercent, peerCount);
       LOG.debug(
           "Completed importing chain segment {} to {} ({} blocks in {}ms), Peer count: {}",
           logStartBlock.getAsLong(),

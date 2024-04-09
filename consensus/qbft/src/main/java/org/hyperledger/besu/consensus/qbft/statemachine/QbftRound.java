@@ -60,18 +60,23 @@ public class QbftRound {
   private static final Logger LOG = LoggerFactory.getLogger(QbftRound.class);
 
   private final Subscribers<MinedBlockObserver> observers;
+
   /** The Round state. */
   protected final RoundState roundState;
+
   /** The Block creator. */
   protected final BlockCreator blockCreator;
+
   /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+
   /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
 
   private final NodeKey nodeKey;
   private final MessageFactory messageFactory; // used only to create stored local msgs
   private final QbftMessageTransmitter transmitter;
+
   /** The Bft extra data codec. */
   protected final BftExtraDataCodec bftExtraDataCodec;
 
