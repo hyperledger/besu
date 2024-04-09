@@ -369,7 +369,6 @@ public class MainnetTransactionProcessor {
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
       }
-      commonMessageFrameBuilder.initcodes(transaction.getInitCodes().or(Optional::empty));
 
       final MessageFrame initialFrame;
       if (transaction.isContractCreation()) {

@@ -38,8 +38,7 @@ public class TransactionEncoder {
       ImmutableMap.ofEntries(
           Map.entry(TransactionType.ACCESS_LIST, AccessListTransactionEncoder::encode),
           Map.entry(TransactionType.EIP1559, EIP1559TransactionEncoder::encode),
-          Map.entry(TransactionType.BLOB, BlobTransactionEncoder::encode),
-          Map.entry(TransactionType.INITCODE, InitcodeTransactionEncoder::encode));
+          Map.entry(TransactionType.BLOB, BlobTransactionEncoder::encode));
   private static final ImmutableMap<TransactionType, Encoder> POOLED_TRANSACTION_ENCODERS =
       ImmutableMap.ofEntries(Map.entry(TransactionType.BLOB, BlobPooledTransactionEncoder::encode));
 

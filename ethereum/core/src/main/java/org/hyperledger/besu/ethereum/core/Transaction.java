@@ -106,7 +106,6 @@ public class Transaction
   private final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
   private final Optional<List<VersionedHash>> versionedHashes;
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
-  private final Optional<List<Bytes>> initcodes;
   // Caches the transaction sender.
   protected volatile Address sender;
   // Caches the hash used to uniquely identify the transaction.
@@ -161,8 +160,7 @@ public class Transaction
       final Address sender,
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
-      final Optional<BlobsWithCommitments> blobsWithCommitments,
-      final Optional<List<Bytes>> initcodes) {
+      final Optional<BlobsWithCommitments> blobsWithCommitments) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -198,17 +196,6 @@ public class Transaction
         checkArgument(
             maxFeePerBlobGas.isPresent(), "Must specify max fee per blob gas for blob transaction");
       }
-
-      if (Objects.equals(transactionType, TransactionType.INITCODE)) {
-        checkArgument(initcodes.isPresent(), "Initcode transactions must contain a initcode list");
-        int initcodeCount = initcodes.get().size();
-        checkArgument(
-            initcodeCount > 0, "Initcode transactions must contain at least one initcode");
-        for (Bytes initcode : initcodes.get()) {
-          checkArgument(
-              initcode != null && !initcode.isEmpty(), "Initcode entries cannot be zero length");
-        }
-      }
     }
 
     this.transactionType = transactionType;
@@ -227,7 +214,6 @@ public class Transaction
     this.chainId = chainId;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
-    this.initcodes = initcodes;
   }
 
   public static Builder builder() {
@@ -266,8 +252,7 @@ public class Transaction
       final Bytes payload,
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
-      final Optional<BigInteger> chainId,
-      final List<Bytes> initcodes) {
+      final Optional<BigInteger> chainId) {
     if (transactionType.requiresChainId()) {
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
     }
@@ -311,18 +296,6 @@ public class Transaction
                   chainId,
                   accessList,
                   versionedHashes);
-          case INITCODE ->
-              initcodePreimage(
-                  nonce,
-                  maxPriorityFeePerGas,
-                  maxFeePerGas,
-                  gasLimit,
-                  to,
-                  value,
-                  payload,
-                  chainId,
-                  accessList,
-                  initcodes);
         };
     return keccak256(preimage);
   }
@@ -458,39 +431,6 @@ public class Transaction
               rlpOutput.endList();
             });
     return Bytes.concatenate(Bytes.of(TransactionType.BLOB.getSerializedType()), encoded);
-  }
-
-  private static Bytes initcodePreimage(
-      final long nonce,
-      final Wei maxPriorityFeePerGas,
-      final Wei maxFeePerGas,
-      final long gasLimit,
-      final Optional<Address> to,
-      final Wei value,
-      final Bytes payload,
-      final Optional<BigInteger> chainId,
-      final Optional<List<AccessListEntry>> accessList,
-      final List<Bytes> initcode) {
-
-    final Bytes encoded =
-        RLP.encode(
-            rlpOutput -> {
-              rlpOutput.startList();
-              eip1559PreimageFields(
-                  nonce,
-                  maxPriorityFeePerGas,
-                  maxFeePerGas,
-                  gasLimit,
-                  to,
-                  value,
-                  payload,
-                  chainId,
-                  accessList,
-                  rlpOutput);
-              rlpOutput.writeList(initcode, (b, o) -> o.writeBytes(b));
-              rlpOutput.endList();
-            });
-    return Bytes.concatenate(Bytes.of(TransactionType.INITCODE.getSerializedType()), encoded);
   }
 
   /**
@@ -722,8 +662,7 @@ public class Transaction
               payload,
               maybeAccessList,
               versionedHashes.orElse(null),
-              chainId,
-              initcodes.orElse(null));
+              chainId);
     }
     return hashNoSignature;
   }
@@ -934,11 +873,6 @@ public class Transaction
   }
 
   @Override
-  public Optional<List<Bytes>> getInitCodes() {
-    return initcodes;
-  }
-
-  @Override
   public boolean equals(final Object other) {
     if (!(other instanceof Transaction that)) {
       return false;
@@ -1003,7 +937,7 @@ public class Transaction
     sb.append("sig=").append(getSignature()).append(", ");
     if (chainId.isPresent()) sb.append("chainId=").append(getChainId().get()).append(", ");
     if (transactionType.equals(TransactionType.ACCESS_LIST)) {
-      sb.append("accessList=").append(initcodes).append(", ");
+      sb.append("accessList=").append(maybeAccessList).append(", ");
     }
     if (versionedHashes.isPresent()) {
       final List<VersionedHash> vhs = versionedHashes.get();
@@ -1020,9 +954,6 @@ public class Transaction
     }
     if (transactionType.supportsBlob() && this.blobsWithCommitments.isPresent()) {
       sb.append("numberOfBlobs=").append(blobsWithCommitments.get().getBlobs().size()).append(", ");
-    }
-    if (transactionType.equals(TransactionType.BLOB)) {
-      sb.append("initcodes=").append(maybeAccessList).append(", ");
     }
     sb.append("payload=").append(getPayload());
     return sb.append("}").toString();
@@ -1089,8 +1020,6 @@ public class Transaction
         blobsWithCommitments.map(
             withCommitments ->
                 blobsWithCommitmentsDetachedCopy(withCommitments, detachedVersionedHashes.get()));
-    final Optional<List<Bytes>> detatchedInitcodes =
-        initcodes.map(ic -> ic.stream().map(Bytes::copy).toList());
 
     final var copiedTx =
         new Transaction(
@@ -1110,8 +1039,7 @@ public class Transaction
             sender,
             chainId,
             detachedVersionedHashes,
-            detachedBlobsWithCommitments,
-            detatchedInitcodes);
+            detachedBlobsWithCommitments);
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1179,7 +1107,6 @@ public class Transaction
     protected Optional<BigInteger> v = Optional.empty();
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
-    private List<Bytes> initcodes;
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1198,7 +1125,6 @@ public class Transaction
       this.chainId = toCopy.chainId;
       this.versionedHashes = toCopy.versionedHashes.orElse(null);
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
-      this.initcodes = toCopy.initcodes.orElse(null);
       return this;
     }
 
@@ -1285,15 +1211,8 @@ public class Transaction
       return this;
     }
 
-    public Builder initcodes(final List<Bytes> initcodes) {
-      this.initcodes = initcodes;
-      return this;
-    }
-
     public Builder guessType() {
-      if (initcodes != null && !initcodes.isEmpty()) {
-        transactionType = TransactionType.INITCODE;
-      } else if (versionedHashes != null && !versionedHashes.isEmpty()) {
+      if (versionedHashes != null && !versionedHashes.isEmpty()) {
         transactionType = TransactionType.BLOB;
       } else if (maxPriorityFeePerGas != null || maxFeePerGas != null) {
         transactionType = TransactionType.EIP1559;
@@ -1328,8 +1247,7 @@ public class Transaction
           sender,
           chainId,
           Optional.ofNullable(versionedHashes),
-          Optional.ofNullable(blobsWithCommitments),
-          Optional.ofNullable(initcodes));
+          Optional.ofNullable(blobsWithCommitments));
     }
 
     public Transaction signAndBuild(final KeyPair keys) {
@@ -1356,8 +1274,7 @@ public class Transaction
                   payload,
                   accessList,
                   versionedHashes,
-                  chainId,
-                  initcodes),
+                  chainId),
               keys);
     }
 

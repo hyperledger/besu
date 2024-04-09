@@ -92,13 +92,6 @@ public class TransactionTestFixture {
           builder.versionedHashes(versionedHashes.get());
         }
         break;
-      case INITCODE:
-        builder.maxPriorityFeePerGas(maxPriorityFeePerGas.orElse(Wei.of(500)));
-        builder.maxFeePerGas(maxFeePerGas.orElse(Wei.of(5000)));
-        builder.accessList(accessListEntries.orElse(List.of()));
-        builder.initcodes(
-            List.of(Bytes.fromHexString("0xef00010100040200010001040000000080000000")));
-        break;
     }
 
     to.ifPresent(builder::to);

@@ -24,8 +24,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.tuweni.bytes.Bytes;
-
 /**
  * Tracks the additional metadata associated with transactions to enable prioritization for mining
  * and deciding which transactions to drop when the transaction pool reaches its size limit.
@@ -138,7 +136,6 @@ public abstract class PendingTransaction
           case ACCESS_LIST -> computeAccessListMemorySize();
           case EIP1559 -> computeEIP1559MemorySize();
           case BLOB -> computeBlobMemorySize();
-          case INITCODE -> computeInitcodeMemorySize();
         }
         + PENDING_TRANSACTION_MEMORY_SIZE;
   }
@@ -183,15 +180,6 @@ public abstract class PendingTransaction
         + (BLOB_SIZE * blobCount);
   }
 
-  private int computeInitcodeMemorySize() {
-    return EIP1559_AND_EIP4844_SHALLOW_MEMORY_SIZE
-        + computePayloadMemorySize()
-        + computeToMemorySize()
-        + computeChainIdMemorySize()
-        + computeAccessListEntriesMemorySize()
-        + computeInitcodeListMemorySize();
-  }
-
   private int computePayloadMemorySize() {
     return transaction.getPayload().size() > 0
         ? PAYLOAD_BASE_MEMORY_SIZE + transaction.getPayload().size()
@@ -225,10 +213,6 @@ public abstract class PendingTransaction
               return totalSize;
             })
         .orElse(0);
-  }
-
-  private int computeInitcodeListMemorySize() {
-    return transaction.getInitCodes().map(l -> l.stream().mapToInt(Bytes::size).sum()).orElse(0);
   }
 
   @Override

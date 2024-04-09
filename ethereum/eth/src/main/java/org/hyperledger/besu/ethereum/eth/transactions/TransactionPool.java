@@ -431,11 +431,6 @@ public class TransactionPool implements BlockAddedObserver {
         && transaction.getBlobsWithCommitments().isEmpty()) {
       return ValidationResultAndAccount.invalid(
           TransactionInvalidReason.INVALID_BLOBS, "Blob transaction must have at least one blob");
-    } else if (transaction.getType().equals(TransactionType.INITCODE)
-        && transaction.getInitCodes().isEmpty()) {
-      return ValidationResultAndAccount.invalid(
-          TransactionInvalidReason.INVALID_INITCODE_LIST,
-          "Initcode transaction must have at least one initcode");
     }
 
     // Call the transaction validator plugin

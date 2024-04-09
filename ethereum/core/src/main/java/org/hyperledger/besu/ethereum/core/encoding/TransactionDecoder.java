@@ -38,8 +38,7 @@ public class TransactionDecoder {
       ImmutableMap.ofEntries(
           Map.entry(TransactionType.ACCESS_LIST, AccessListTransactionDecoder::decode),
           Map.entry(TransactionType.EIP1559, EIP1559TransactionDecoder::decode),
-          Map.entry(TransactionType.BLOB, BlobTransactionDecoder::decode),
-          Map.entry(TransactionType.INITCODE, InitcodeTransactionDecoder::decode));
+          Map.entry(TransactionType.BLOB, BlobTransactionDecoder::decode));
   private static final ImmutableMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =
       ImmutableMap.ofEntries(Map.entry(TransactionType.BLOB, BlobPooledTransactionDecoder::decode));
 

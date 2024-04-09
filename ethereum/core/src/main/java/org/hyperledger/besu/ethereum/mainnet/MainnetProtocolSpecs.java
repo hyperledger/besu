@@ -770,22 +770,6 @@ public abstract class MainnetProtocolSpecs {
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        // change transaction validation to add InitcodeTransaction
-        .transactionValidatorFactoryBuilder(
-            (gasCalculator, gasLimitCalculator, feeMarket) ->
-                new TransactionValidatorFactory(
-                    gasCalculator,
-                    gasLimitCalculator,
-                    feeMarket,
-                    true,
-                    chainId,
-                    Set.of(
-                        TransactionType.FRONTIER,
-                        TransactionType.ACCESS_LIST,
-                        TransactionType.EIP1559,
-                        TransactionType.BLOB,
-                        TransactionType.INITCODE),
-                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))

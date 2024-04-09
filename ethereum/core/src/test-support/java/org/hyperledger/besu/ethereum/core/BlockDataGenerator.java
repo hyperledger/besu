@@ -378,7 +378,6 @@ public class BlockDataGenerator {
       case ACCESS_LIST -> accessListTransaction(payload, to);
       case EIP1559 -> eip1559Transaction(payload, to);
       case BLOB -> blobTransaction(payload, to);
-      case INITCODE -> initcodeTransaction(payload, to);
         // no default, all types accounted for.
     };
   }
@@ -449,21 +448,6 @@ public class BlockDataGenerator {
         .chainId(BigInteger.ONE)
         .maxFeePerBlobGas(Wei.of(1))
         .versionedHashes(List.of(VersionedHash.DEFAULT_VERSIONED_HASH))
-        .signAndBuild(generateKeyPair());
-  }
-
-  private Transaction initcodeTransaction(final Bytes payload, final Address to) {
-    return Transaction.builder()
-        .type(TransactionType.INITCODE)
-        .nonce(random.nextLong())
-        .maxPriorityFeePerGas(Wei.wrap(bytesValue(4)))
-        .maxFeePerGas(Wei.wrap(bytesValue(4)))
-        .gasLimit(positiveLong())
-        .to(to)
-        .value(Wei.of(positiveLong()))
-        .payload(payload)
-        .chainId(BigInteger.ONE)
-        .initcodes(List.of(Bytes.fromHexString("0xef00010100040200010001040000000080000000")))
         .signAndBuild(generateKeyPair());
   }
 

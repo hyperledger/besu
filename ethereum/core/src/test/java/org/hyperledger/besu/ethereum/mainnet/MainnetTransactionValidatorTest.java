@@ -19,8 +19,6 @@ import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.
 import static org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams.transactionPoolParams;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.GAS_PRICE_BELOW_CURRENT_BASE_FEE;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_INITCODE_LIST;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_INITCODE_TX_TARGET;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.INVALID_TRANSACTION_FORMAT;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS;
 import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
@@ -53,21 +51,16 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import java.math.BigInteger;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Supplier;
-import java.util.stream.Stream;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.junit.jupiter.MockitoSettings;
@@ -626,99 +619,6 @@ class MainnetTransactionValidatorTest {
     }
 
     assertThat(validationResult.isValid()).isTrue();
-  }
-
-  private static Stream<Arguments> provideValidateInitcodeTransactions() {
-    Transaction.Builder base =
-        Transaction.builder()
-            .chainId(BigInteger.TEN)
-            .nonce(22)
-            .maxPriorityFeePerGas(Wei.of(2_000_000_000L))
-            .maxFeePerGas(Wei.of(200_000_000_000L))
-            .gasLimit(8_000_000)
-            .to(Address.fromHexString("0xabcdef0987654321"))
-            .value(Wei.ZERO)
-            .payload(Bytes.fromHexString("0x87654321"))
-            .signature(
-                new SECP256K1()
-                    .createSignature(
-                        Bytes.fromHexString(
-                                "0x2222222222222222222222222222222222222222222222222222222222222222")
-                            .toUnsignedBigInteger(),
-                        Bytes.fromHexString(
-                                "0x2222222222222222222222222222222222222222222222222222222222222222")
-                            .toUnsignedBigInteger(),
-                        (byte) 0));
-
-    Bytes[] maxCodes = new Bytes[257];
-    Arrays.fill(maxCodes, Bytes.fromHexString("0xabcdef"));
-    Bytes[] bigMaxCodes = new Bytes[257];
-    Arrays.fill(bigMaxCodes, Bytes.repeat((byte) 0xef, 0xc000));
-    Bytes tooBig = Bytes.repeat((byte) 0xef, 0xc001);
-
-    return Stream.of(
-        Arguments.of(
-            "single",
-            base.initcodes(List.of(Bytes.fromHexString("123456"))).build(),
-            ValidationResult.<TransactionInvalidReason>valid()),
-        Arguments.of(
-            "double",
-            base.initcodes(List.of(Bytes.fromHexString("123456"), Bytes.fromHexString("123456")))
-                .build(),
-            ValidationResult.<TransactionInvalidReason>valid()),
-        Arguments.of(
-            "max",
-            base.initcodes(List.of(Arrays.copyOfRange(maxCodes, 0, 256))).build(),
-            ValidationResult.<TransactionInvalidReason>valid()),
-        Arguments.of(
-            "bigmax",
-            base.initcodes(List.of(Arrays.copyOfRange(bigMaxCodes, 0, 256))).build(),
-            ValidationResult.<TransactionInvalidReason>valid()),
-        Arguments.of(
-            "too many",
-            base.initcodes(List.of(maxCodes)).build(),
-            ValidationResult.invalid(INVALID_INITCODE_LIST)),
-        Arguments.of(
-            "too big first",
-            base.initcodes(List.of(tooBig)).build(),
-            ValidationResult.invalid(INVALID_INITCODE_LIST)),
-        Arguments.of(
-            "too big second",
-            base.initcodes(List.of(maxCodes[0], tooBig)).build(),
-            ValidationResult.invalid(INVALID_INITCODE_LIST)),
-        Arguments.of(
-            "missing to",
-            base.initcodes(List.of(maxCodes[0])).to(null).build(),
-            ValidationResult.invalid(INVALID_INITCODE_TX_TARGET)));
-  }
-
-  @ParameterizedTest(name = "{index} {0}")
-  @MethodSource("provideValidateInitcodeTransactions")
-  void validateInitcodeTransactions(
-      final String ignoredName,
-      final Transaction transaction,
-      final ValidationResult<TransactionInvalidReason> validationResult) {
-    final MainnetTransactionValidator validator =
-        createTransactionValidator(
-            gasCalculator,
-            GasLimitCalculator.constant(),
-            FeeMarket.cancun(0L, Optional.empty()),
-            false,
-            Optional.of(BigInteger.ONE),
-            Set.of(
-                TransactionType.FRONTIER,
-                TransactionType.EIP1559,
-                TransactionType.BLOB,
-                TransactionType.INITCODE),
-            0xc000);
-
-    ValidationResult<TransactionInvalidReason> result =
-        validator.validateInitcodeTransaction(transaction);
-
-    assertThat(result.isValid()).isEqualTo(validationResult.isValid());
-    if (!result.isValid()) {
-      assertThat(result.getInvalidReason()).isEqualTo(validationResult.getInvalidReason());
-    }
   }
 
   private Account accountWithNonce(final long nonce) {
