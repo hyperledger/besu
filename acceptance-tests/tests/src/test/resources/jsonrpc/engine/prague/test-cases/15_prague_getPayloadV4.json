@@ -50,5 +50,5 @@
     }
   },
   "statusCode": 200,
-  "waitTime": 100
+  "waitTime": 1500
 }

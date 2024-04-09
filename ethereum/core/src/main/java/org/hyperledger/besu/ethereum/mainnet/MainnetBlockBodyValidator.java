@@ -109,11 +109,11 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    // TODO-lucas light (?) exits validation (do we need the expected exits to perform this
-    // validation?
-    //    if (!validateExits(block, exits)) {
-    //      return false;
-    //    }
+    if (body.getExits().isPresent()) {
+      if (!validateExits(block, body.getExits().get())) {
+        return false;
+      }
+    }
 
     return true;
   }
@@ -331,7 +331,6 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  @SuppressWarnings("unused")
   private boolean validateExits(final Block block, final List<ValidatorExit> exits) {
     final ValidatorExitsValidator exitsValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getExitsValidator();
