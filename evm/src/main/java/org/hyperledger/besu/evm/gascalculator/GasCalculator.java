@@ -15,9 +15,12 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
@@ -157,6 +160,46 @@ public interface GasCalculator {
    * @param recipient The CALL recipient (may be null if self destructed or new)
    * @param contract The address of the recipient (never null)
    * @return The gas cost for the CALL operation
+   * @deprecated use the variant with the `accountIsWarm` parameter.
+   */
+  @Deprecated(since = "24.2.0", forRemoval = true)
+  default long callOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address contract) {
+    return callOperationGasCost(
+        frame,
+        stipend,
+        inputDataOffset,
+        inputDataLength,
+        outputDataOffset,
+        outputDataLength,
+        transferValue,
+        recipient,
+        contract,
+        true);
+  }
+
+  /**
+   * Returns the gas cost for one of the various CALL operations.
+   *
+   * @param frame The current frame
+   * @param stipend The gas stipend being provided by the CALL caller
+   * @param inputDataOffset The offset in memory to retrieve the CALL input data
+   * @param inputDataLength The CALL input data length
+   * @param outputDataOffset The offset in memory to place the CALL output data
+   * @param outputDataLength The CALL output data length
+   * @param transferValue The wei being transferred
+   * @param recipient The CALL recipient (may be null if self destructed or new)
+   * @param contract The address of the recipient (never null)
+   * @param accountIsWarm The address of the contract is "warm" as per EIP-2929
+   * @return The gas cost for the CALL operation
    */
   long callOperationGasCost(
       MessageFrame frame,
@@ -167,7 +210,8 @@ public interface GasCalculator {
       long outputDataLength,
       Wei transferValue,
       Account recipient,
-      Address contract);
+      Address contract,
+      boolean accountIsWarm);
 
   /**
    * Gets additional call stipend.
@@ -185,6 +229,10 @@ public interface GasCalculator {
    * @return the amount of gas parent will provide its child CALL
    */
   long gasAvailableForChildCall(MessageFrame frame, long stipend, boolean transfersValue);
+
+  long initCreateContractGasCost(MessageFrame frame);
+
+  long completedCreateContractGasCost(final MessageFrame frame);
 
   /**
    * Returns the amount of gas the CREATE operation will consume.
@@ -239,7 +287,7 @@ public interface GasCalculator {
    *
    * @return the cost for executing the balance operation
    */
-  long getBalanceOperationGasCost();
+  long getBalanceOperationGasCost(MessageFrame frame);
 
   /**
    * Returns the cost for executing a {@link BlockHashOperation}.
@@ -271,7 +319,7 @@ public interface GasCalculator {
    *
    * @return the cost for executing the external code hash operation
    */
-  long extCodeHashOperationGasCost();
+  long extCodeHashOperationGasCost(MessageFrame frame);
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.
@@ -328,11 +376,14 @@ public interface GasCalculator {
   /**
    * Returns the cost for executing a {@link SelfDestructOperation}.
    *
+   * @param frame The current frame
    * @param recipient The recipient of the self destructed inheritance (may be null)
    * @param inheritance The amount the recipient will receive
+   * @param originatorAddress The address of the self destructing account
    * @return the cost for executing the self destruct operation
    */
-  long selfDestructOperationGasCost(Account recipient, Wei inheritance);
+  long selfDestructOperationGasCost(
+      MessageFrame frame, Account recipient, Wei inheritance, Address originatorAddress);
 
   /**
    * Returns the cost for executing a {@link Keccak256Operation}.
@@ -349,18 +400,24 @@ public interface GasCalculator {
    *
    * @return the cost for executing the storage load operation
    */
-  long getSloadOperationGasCost();
+  long getSloadOperationGasCost(MessageFrame frame, UInt256 key);
 
   /**
    * Returns the cost for an SSTORE operation.
    *
+   * @param frame the current frame
+   * @param key the slot key
    * @param newValue the new value to be stored
    * @param currentValue the supplier of the current value
    * @param originalValue the supplier of the original value
    * @return the gas cost for the SSTORE operation
    */
   long calculateStorageCost(
-      UInt256 newValue, Supplier<UInt256> currentValue, Supplier<UInt256> originalValue);
+      MessageFrame frame,
+      UInt256 key,
+      UInt256 newValue,
+      Supplier<UInt256> currentValue,
+      Supplier<UInt256> originalValue);
 
   /**
    * Returns the refund amount for an SSTORE operation.
@@ -432,10 +489,11 @@ public interface GasCalculator {
   /**
    * Returns the cost for a {@link AbstractMessageProcessor} to deposit the code in storage
    *
+   * @param frame The current frame
    * @param codeSize The size of the code in bytes
    * @return the code deposit cost
    */
-  long codeDepositGasCost(int codeSize);
+  long codeDepositGasCost(MessageFrame frame, int codeSize);
 
   /**
    * Returns the intrinsic gas cost of a transaction payload, i.e. the cost deriving from its
@@ -543,6 +601,18 @@ public interface GasCalculator {
    * @return the new excess blob gas value
    */
   default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
+    return 0L;
+  }
+  /**
+   * Compute access events cost of a transaction
+   *
+   * @param transaction transaction
+   * @return gas cost after computing all access events
+   */
+  default long computeBaseAccessEventsCost(
+      final AccessWitness accessWitness,
+      final Transaction transaction,
+      final MutableAccount sender) {
     return 0L;
   }
 }

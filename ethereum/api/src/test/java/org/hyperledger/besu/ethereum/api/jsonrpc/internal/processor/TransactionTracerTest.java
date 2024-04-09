@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ImmutableTransactionTraceParams;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -69,6 +70,7 @@ public class TransactionTracerTest {
   @TempDir private Path traceDir;
 
   @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolContext protocolContext;
   @Mock private Blockchain blockchain;
 
   @Mock private BlockHeader blockHeader;
@@ -91,6 +93,7 @@ public class TransactionTracerTest {
   @Mock private MainnetTransactionProcessor transactionProcessor;
 
   private TransactionTracer transactionTracer;
+  private final BadBlockManager badBlockManager = new BadBlockManager();
 
   private final Hash transactionHash =
       Hash.fromHexString("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa");
@@ -107,7 +110,8 @@ public class TransactionTracerTest {
 
   @BeforeEach
   public void setUp() throws Exception {
-    transactionTracer = new TransactionTracer(new BlockReplay(protocolSchedule, blockchain));
+    transactionTracer =
+        new TransactionTracer(new BlockReplay(protocolSchedule, protocolContext, blockchain));
     when(transaction.getHash()).thenReturn(transactionHash);
     when(otherTransaction.getHash()).thenReturn(otherTransactionHash);
     when(blockHeader.getNumber()).thenReturn(12L);
@@ -118,8 +122,8 @@ public class TransactionTracerTest {
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0L));
     when(blockchain.getChainHeadHeader()).thenReturn(blockHeader);
-    when(protocolSpec.getBadBlocksManager()).thenReturn(new BadBlockManager());
     when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
+    when(protocolContext.getBadBlockManager()).thenReturn(badBlockManager);
     lenient().when(gasCalculator.computeExcessBlobGas(anyLong(), anyInt())).thenReturn(0L);
   }
 

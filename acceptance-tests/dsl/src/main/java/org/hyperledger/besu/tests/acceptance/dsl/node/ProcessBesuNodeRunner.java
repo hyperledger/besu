@@ -18,11 +18,14 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
+import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.tests.acceptance.dsl.StaticNodesUtils;
@@ -49,6 +52,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
+import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -74,8 +78,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     final Path dataDir = node.homeDirectory();
 
+    final var workingDir =
+        new File(System.getProperty("user.dir")).getParentFile().getParentFile().toPath();
+
     final List<String> params = new ArrayList<>();
-    params.add("build/install/besu/bin/besu");
+    if (SystemUtils.IS_OS_WINDOWS) {
+      params.add(workingDir.resolve("build\\install\\besu\\bin\\besu.bat").toString());
+    } else {
+      params.add("build/install/besu/bin/besu");
+    }
 
     params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
@@ -106,6 +117,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                     .from(node.getTransactionPoolConfiguration())
                     .strictTransactionReplayProtectionEnabled(
                         node.isStrictTxReplayProtectionEnabled())
+                    .build())
+            .getCLIOptions());
+
+    params.addAll(
+        DataStorageOptions.fromConfig(
+                ImmutableDataStorageConfiguration.builder()
+                    .from(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
                     .build())
             .getCLIOptions());
 
@@ -412,15 +430,13 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
         new ProcessBuilder(params)
-            .directory(new File(System.getProperty("user.dir")).getParentFile().getParentFile())
+            .directory(workingDir.toFile())
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
     if (!node.getPlugins().isEmpty()) {
       processBuilder
           .environment()
-          .put(
-              "BESU_OPTS",
-              "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
+          .put("BESU_OPTS", "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath());
     }
     // Use non-blocking randomness for acceptance tests
     processBuilder
@@ -562,7 +578,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     LOG.info("Killing {} process, pid {}", name, process.pid());
 
-    process.destroy();
+    process.descendants().forEach(ProcessHandle::destroy);
     try {
       process.waitFor(30, TimeUnit.SECONDS);
     } catch (final InterruptedException e) {

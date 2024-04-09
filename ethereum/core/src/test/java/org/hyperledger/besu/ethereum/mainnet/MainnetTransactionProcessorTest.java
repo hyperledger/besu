@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.NotClearEmptyAccount;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -84,7 +85,7 @@ class MainnetTransactionProcessorTest {
         transactionValidatorFactory,
         contractCreationProcessor,
         messageCallProcessor,
-        false,
+        new NotClearEmptyAccount(),
         warmCoinbase,
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
@@ -103,7 +104,7 @@ class MainnetTransactionProcessorTest {
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
     when(transaction.getValue()).thenReturn(Wei.ZERO);
-    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+    when(transactionValidatorFactory.get().validate(any(), any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
@@ -168,7 +169,7 @@ class MainnetTransactionProcessorTest {
     when(transaction.getPayload()).thenReturn(Bytes.EMPTY);
     when(transaction.getSender()).thenReturn(senderAddress);
     when(transaction.getValue()).thenReturn(Wei.ZERO);
-    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+    when(transactionValidatorFactory.get().validate(any(), any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     when(transactionValidatorFactory.get().validateForSender(any(), any(), any()))
         .thenReturn(ValidationResult.valid());
@@ -255,7 +256,7 @@ class MainnetTransactionProcessorTest {
   private ArgumentCaptor<TransactionValidationParams> transactionValidationParamCaptor() {
     final ArgumentCaptor<TransactionValidationParams> txValidationParamCaptor =
         ArgumentCaptor.forClass(TransactionValidationParams.class);
-    when(transactionValidatorFactory.get().validate(any(), any(), any()))
+    when(transactionValidatorFactory.get().validate(any(), any(), any(), any()))
         .thenReturn(ValidationResult.valid());
     // returning invalid transaction to halt method execution
     when(transactionValidatorFactory

@@ -45,12 +45,14 @@ import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.rlp.RLP;
@@ -58,7 +60,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class BonsaiWorldState extends DiffBasedWorldState {
 
-  protected final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader;
+  protected final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader;
 
   public BonsaiWorldState(
       final BonsaiWorldStateProvider archive,
@@ -74,20 +76,22 @@ public class BonsaiWorldState extends DiffBasedWorldState {
 
   public BonsaiWorldState(
       final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage,
-      final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader,
+      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager);
-    this.cachedMerkleTrieLoader = cachedMerkleTrieLoader;
+
+    this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     this.setAccumulator(
         new BonsaiWorldStateUpdateAccumulator(
             this,
             (addr, value) ->
-                cachedMerkleTrieLoader.preLoadAccount(
+                bonsaiCachedMerkleTrieLoader.preLoadAccount(
                     worldStateKeyValueStorage, worldStateRootHash, addr),
             (addr, value) ->
-                cachedMerkleTrieLoader.preLoadStorageSlot(getWorldStateStorage(), addr, value),
+                bonsaiCachedMerkleTrieLoader.preLoadStorageSlot(
+                    getWorldStateStorage(), addr, value),
             evmConfiguration));
   }
 
@@ -131,7 +135,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         createTrie(
             (location, hash) ->
-                cachedMerkleTrieLoader.getAccountStateTrieNode(
+                bonsaiCachedMerkleTrieLoader.getAccountStateTrieNode(
                     getWorldStateStorage(), location, hash),
             worldStateRootHash);
 
@@ -184,7 +188,8 @@ public class BonsaiWorldState extends DiffBasedWorldState {
     }
   }
 
-  private void updateCode(
+  @VisibleForTesting
+  protected void updateCode(
       final Optional<BonsaiWorldStateKeyValueStorage.Updater> maybeStateUpdater,
       final BonsaiWorldStateUpdateAccumulator worldStateUpdater) {
     maybeStateUpdater.ifPresent(
@@ -193,13 +198,27 @@ public class BonsaiWorldState extends DiffBasedWorldState {
               worldStateUpdater.getCodeToUpdate().entrySet()) {
             final Bytes updatedCode = codeUpdate.getValue().getUpdated();
             final Hash accountHash = codeUpdate.getKey().addressHash();
-            if (updatedCode == null || updatedCode.isEmpty()) {
-              bonsaiUpdater.removeCode(accountHash);
+            final Bytes priorCode = codeUpdate.getValue().getPrior();
+
+            // code hasn't changed then do nothing
+            if (Objects.equals(priorCode, updatedCode)
+                || (codeIsEmpty(priorCode) && codeIsEmpty(updatedCode))) {
+              continue;
+            }
+
+            if (codeIsEmpty(updatedCode)) {
+              final Hash priorCodeHash = Hash.hash(priorCode);
+              bonsaiUpdater.removeCode(accountHash, priorCodeHash);
             } else {
-              bonsaiUpdater.putCode(accountHash, null, updatedCode);
+              final Hash codeHash = Hash.hash(codeUpdate.getValue().getUpdated());
+              bonsaiUpdater.putCode(accountHash, codeHash, updatedCode);
             }
           }
         });
+  }
+
+  private boolean codeIsEmpty(final Bytes value) {
+    return value == null || value.isEmpty();
   }
 
   private void updateAccountStorageState(
@@ -221,7 +240,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
       final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
           createTrie(
               (location, key) ->
-                  cachedMerkleTrieLoader.getAccountStorageTrieNode(
+                  bonsaiCachedMerkleTrieLoader.getAccountStorageTrieNode(
                       getWorldStateStorage(), updatedAddressHash, location, key),
               storageRoot);
 

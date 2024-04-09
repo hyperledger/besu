@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,9 +19,9 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
+import javax.annotation.Nonnull;
 
 import com.google.common.collect.ForwardingMap;
-import org.jetbrains.annotations.NotNull;
 
 public class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
 
@@ -38,7 +38,7 @@ public class StorageConsumingMap<K, T> extends ForwardingMap<K, T> {
   }
 
   @Override
-  public T put(@NotNull final K slotKey, @NotNull final T value) {
+  public T put(@Nonnull final K slotKey, @Nonnull final T value) {
     consumer.process(address, slotKey);
     return storages.put(slotKey, value);
   }

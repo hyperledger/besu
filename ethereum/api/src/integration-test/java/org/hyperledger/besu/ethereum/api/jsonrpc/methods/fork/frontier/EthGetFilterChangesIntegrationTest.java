@@ -120,8 +120,7 @@ public class EthGetFilterChangesIntegrationTest {
             batchAddedListener,
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            TransactionPoolConfiguration.DEFAULT,
-            null);
+            TransactionPoolConfiguration.DEFAULT);
     transactionPool.setEnabled();
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());

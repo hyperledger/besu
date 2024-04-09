@@ -20,8 +20,8 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import org.junit.jupiter.api.Test;
 
@@ -86,6 +86,46 @@ public class DataStorageOptionsTest
         "--Xbonsai-limit-trie-logs-enabled",
         "--bonsai-historical-block-limit",
         "511");
+  }
+
+  @Test
+  public void bonsaiCodeUsingCodeHashEnabledCanBeEnabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
+                .isEqualTo(true),
+        "--Xbonsai-code-using-code-hash-enabled",
+        "true");
+  }
+
+  @Test
+  public void bonsaiCodeUsingCodeHashEnabledCanBeDisabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(
+                    dataStorageConfiguration.getUnstable().getBonsaiCodeStoredByCodeHashEnabled())
+                .isEqualTo(false),
+        "--Xbonsai-code-using-code-hash-enabled",
+        "false");
+  }
+
+  @Test
+  public void receiptCompactionCanBeEnabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(true),
+        "--receipt-compaction-enabled",
+        "true");
+  }
+
+  @Test
+  public void receiptCompactionCanBeDisabled() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(false),
+        "--receipt-compaction-enabled",
+        "false");
   }
 
   @Override

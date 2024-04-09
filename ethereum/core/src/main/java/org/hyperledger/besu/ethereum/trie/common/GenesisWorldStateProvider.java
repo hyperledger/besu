@@ -30,9 +30,9 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorld
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
@@ -43,14 +43,17 @@ public class GenesisWorldStateProvider {
   /**
    * Creates a Genesis world state based on the provided data storage format.
    *
-   * @param dataStorageFormat the data storage format to use
+   * @param dataStorageConfiguration the data storage configuration to use
    * @return a mutable world state for the Genesis block
    */
   public static MutableWorldState createGenesisWorldState(
-      final DataStorageFormat dataStorageFormat) {
-    if (Objects.requireNonNull(dataStorageFormat) == DataStorageFormat.BONSAI) {
+      final DataStorageConfiguration dataStorageConfiguration) {
+
+    if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
+        == DataStorageFormat.BONSAI) {
       return createGenesisBonsaiWorldState();
-    } else if (Objects.requireNonNull(dataStorageFormat) == DataStorageFormat.VERKLE) {
+    } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
+        == DataStorageFormat.VERKLE) {
       return createGenesisVerkleWorldState();
     } else {
       return createGenesisForestWorldState();
@@ -63,7 +66,7 @@ public class GenesisWorldStateProvider {
    * @return a mutable world state for the Genesis block
    */
   private static MutableWorldState createGenesisBonsaiWorldState() {
-    final BonsaiCachedMerkleTrieLoader cachedMerkleTrieLoader =
+    final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
@@ -72,29 +75,28 @@ public class GenesisWorldStateProvider {
                 new InMemoryKeyValueStorage(),
                 new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_CONFIG);
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
-        cachedMerkleTrieLoader,
+        bonsaiCachedMerkleTrieLoader,
         new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT);
   }
 
-
-  private static MutableWorldState createGenesisVerkleWorldState(){
+  private static MutableWorldState createGenesisVerkleWorldState() {
     final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
-            new VerkleWorldStateKeyValueStorage(
-                    new KeyValueStorageProvider(
-                            segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
-                            new InMemoryKeyValueStorage(),
-                            new NoOpMetricsSystem()),
-                    new NoOpMetricsSystem());
+        new VerkleWorldStateKeyValueStorage(
+            new KeyValueStorageProvider(
+                segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
+                new InMemoryKeyValueStorage(),
+                new NoOpMetricsSystem()),
+            new NoOpMetricsSystem());
     return new VerkleWorldState(
-            verkleWorldStateKeyValueStorage,
-            new VerkleNoOpCachedWorldStorageManager(verkleWorldStateKeyValueStorage),
-            new NoOpTrieLogManager(),
-            EvmConfiguration.DEFAULT);
+        verkleWorldStateKeyValueStorage,
+        new VerkleNoOpCachedWorldStorageManager(verkleWorldStateKeyValueStorage),
+        new NoOpTrieLogManager(),
+        EvmConfiguration.DEFAULT);
   }
 
   /**

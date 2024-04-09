@@ -47,7 +47,7 @@ public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceL
         LOG.debug(
             "Disconnecting peer with difficulty {}, likely still on PoW chain",
             status.totalDifficulty());
-        peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+        peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY);
         return true;
       } else {
         return false;
@@ -61,7 +61,7 @@ public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceL
     final int code = message.getData().getCode();
     if (isFinalized() && (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES)) {
       LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
-      peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_BLOCKS);
       return true;
     } else {
       return false;

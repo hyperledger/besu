@@ -28,7 +28,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 public class BonsaiCachedWorldStorageManager extends DiffBasedCachedWorldStorageManager {
 
   public BonsaiCachedWorldStorageManager(
-      final DiffBasedWorldStateProvider archive,
+      final BonsaiWorldStateProvider archive,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage) {
     super(archive, worldStateKeyValueStorage);
   }

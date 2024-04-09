@@ -34,16 +34,22 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
+import org.hyperledger.besu.ethereum.verkletrie.TrieKeyPreloader;
+import org.hyperledger.besu.ethereum.verkletrie.TrieKeyPreloader.HasherContext;
+import org.hyperledger.besu.ethereum.verkletrie.VerkleEntryFactory;
 import org.hyperledger.besu.ethereum.verkletrie.VerkleTrie;
-import org.hyperledger.besu.ethereum.verkletrie.VerkleTrieKeyValueGenerator;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.stream.Stream;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 import javax.annotation.Nonnull;
 
 import kotlin.Pair;
@@ -53,12 +59,12 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings({"unused", "MismatchedQueryAndUpdateOfCollection", "ModifiedButNotUsed"})
 public class VerkleWorldState extends DiffBasedWorldState {
 
   private static final Logger LOG = LoggerFactory.getLogger(VerkleWorldState.class);
 
-  private final VerkleTrieKeyValueGenerator verkleTrieKeyValueGenerator =
-      new VerkleTrieKeyValueGenerator();
+  private final TrieKeyPreloader trieKeyPreloader;
 
   public VerkleWorldState(
       final VerkleWorldStateProvider archive,
@@ -77,6 +83,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager);
+    this.trieKeyPreloader = new TrieKeyPreloader();
     this.setAccumulator(
         new VerkleWorldStateUpdateAccumulator(
             this, (addr, value) -> {}, (addr, value) -> {}, evmConfiguration));
@@ -104,25 +111,74 @@ public class VerkleWorldState extends DiffBasedWorldState {
         createTrie(
             (location, hash) -> worldStateKeyValueStorage.getStateTrieNode(location),
             worldStateRootHash);
-    // clearStorage(maybeStateUpdater, worldStateUpdater);
 
-    Stream<Map.Entry<Address, StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>>>>
-        storageStream = worldStateUpdater.getStorageToUpdate().entrySet().stream();
-    if (maybeStateUpdater.isEmpty()) {
-      storageStream =
-          storageStream
-              .parallel(); // if we are not updating the state updater we can use parallel stream
+    final Map<Address, HasherContext> preloadedHashers = new ConcurrentHashMap<>();
+
+    worldStateUpdater.getAccountsToUpdate().entrySet().parallelStream()
+        .forEach(
+            accountUpdate -> {
+              final Address accountKey = accountUpdate.getKey();
+              // generate account triekeys
+              final List<Bytes32> accountKeyIds =
+                  new ArrayList<>(trieKeyPreloader.generateAccountKeyIds());
+
+              // generate storage triekeys
+              final List<Bytes32> storageKeyIds = new ArrayList<>();
+              final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>>
+                  storageAccountUpdate = worldStateUpdater.getStorageToUpdate().get(accountKey);
+              boolean isStorageUpdateNeeded;
+              if (storageAccountUpdate != null) {
+                final Set<StorageSlotKey> storageSlotKeys = storageAccountUpdate.keySet();
+                isStorageUpdateNeeded = !storageSlotKeys.isEmpty();
+                if (isStorageUpdateNeeded) {
+                  storageKeyIds.addAll(trieKeyPreloader.generateStorageKeyIds(storageSlotKeys));
+                }
+              }
+
+              // generate code triekeys
+              final List<Bytes32> codeKeyIds = new ArrayList<>();
+              final DiffBasedValue<Bytes> codeUpdate =
+                  worldStateUpdater.getCodeToUpdate().get(accountKey);
+              boolean isCodeUpdateNeeded;
+              if (codeUpdate != null) {
+                final Bytes previousCode = codeUpdate.getPrior();
+                final Bytes updatedCode = codeUpdate.getUpdated();
+                isCodeUpdateNeeded =
+                    !codeUpdate.isUnchanged()
+                        && !(codeIsEmpty(previousCode) && codeIsEmpty(updatedCode));
+                if (isCodeUpdateNeeded) {
+                  accountKeyIds.add(Parameters.CODE_SIZE_LEAF_KEY);
+                  codeKeyIds.addAll(
+                      trieKeyPreloader.generateCodeChunkKeyIds(
+                          updatedCode == null ? previousCode : updatedCode));
+                }
+              }
+
+              preloadedHashers.put(
+                  accountKey,
+                  trieKeyPreloader.createPreloadedHasher(
+                      accountKey, accountKeyIds, storageKeyIds, codeKeyIds));
+            });
+
+    for (final Map.Entry<Address, DiffBasedValue<VerkleAccount>> accountUpdate :
+        worldStateUpdater.getAccountsToUpdate().entrySet()) {
+      final Address accountKey = accountUpdate.getKey();
+      final HasherContext hasherContext = preloadedHashers.get(accountKey);
+      final VerkleEntryFactory verkleEntryFactory = new VerkleEntryFactory(hasherContext.hasher());
+      if (hasherContext.hasStorageTrieKeys()) {
+        final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageAccountUpdate =
+            worldStateUpdater.getStorageToUpdate().get(accountKey);
+        updateAccountStorageState(
+            accountKey, stateTrie, maybeStateUpdater, verkleEntryFactory, storageAccountUpdate);
+      }
+      if (hasherContext.hasCodeTrieKeys()) {
+        final DiffBasedValue<Bytes> codeUpdate =
+            worldStateUpdater.getCodeToUpdate().get(accountKey);
+        updateCode(accountKey, stateTrie, maybeStateUpdater, verkleEntryFactory, codeUpdate);
+      }
+      updateTheAccount(
+          accountKey, stateTrie, maybeStateUpdater, verkleEntryFactory, accountUpdate.getValue());
     }
-    storageStream.forEach(
-        addressMapEntry ->
-            updateAccountStorageState(
-                stateTrie, maybeStateUpdater, worldStateUpdater, addressMapEntry));
-
-    // Third update the code.  This has the side effect of ensuring a code hash is calculated.
-    updateCode(stateTrie, maybeStateUpdater, worldStateUpdater);
-
-    // for manicured tries and composting, collect branches here (not implemented)
-    updateTheAccounts(maybeStateUpdater, worldStateUpdater, stateTrie);
 
     LOG.info("start commit ");
     maybeStateUpdater.ifPresent(
@@ -139,28 +195,36 @@ public class VerkleWorldState extends DiffBasedWorldState {
     LOG.info("end commit ");
     // LOG.info(stateTrie.toDotTree());
     final Bytes32 rootHash = stateTrie.getRootHash();
+    LOG.info("end commit " + rootHash);
 
-    LOG.info("end commit ");
     return Hash.wrap(rootHash);
   }
 
-  private void updateTheAccounts(
+  private void updateTheAccount(
+      final Address accountKey,
+      final VerkleTrie stateTrie,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
-      final VerkleWorldStateUpdateAccumulator worldStateUpdater,
-      final VerkleTrie stateTrie) {
-    for (final Map.Entry<Address, DiffBasedValue<VerkleAccount>> accountUpdate :
-        worldStateUpdater.getAccountsToUpdate().entrySet()) {
-      final Address accountKey = accountUpdate.getKey();
-      final DiffBasedValue<VerkleAccount> bonsaiValue = accountUpdate.getValue();
-      final VerkleAccount priorAccount = bonsaiValue.getPrior();
-      final VerkleAccount updatedAccount = bonsaiValue.getUpdated();
+      final VerkleEntryFactory verkleEntryFactory,
+      final DiffBasedValue<VerkleAccount> accountUpdate) {
+
+    if (!accountUpdate.isUnchanged()) {
+      final VerkleAccount priorAccount = accountUpdate.getPrior();
+      final VerkleAccount updatedAccount = accountUpdate.getUpdated();
       if (updatedAccount == null) {
         final Hash addressHash = hashAndSavePreImage(accountKey);
-        verkleTrieKeyValueGenerator
+        verkleEntryFactory
             .generateKeysForAccount(accountKey)
             .forEach(
                 bytes -> {
-                  System.out.println("remove " + bytes);
+                  System.out.println(
+                      "remove "
+                          + accountKey
+                          + " "
+                          + bytes
+                          + " "
+                          + accountUpdate.getPrior()
+                          + " "
+                          + accountUpdate.getUpdated());
                   stateTrie.remove(bytes);
                 });
         maybeStateUpdater.ifPresent(
@@ -169,7 +233,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
         final Bytes priorValue = priorAccount == null ? null : priorAccount.serializeAccount();
         final Bytes accountValue = updatedAccount.serializeAccount();
         if (!accountValue.equals(priorValue)) {
-          verkleTrieKeyValueGenerator
+          verkleEntryFactory
               .generateKeyValuesForAccount(
                   accountKey,
                   updatedAccount.getNonce(),
@@ -177,7 +241,15 @@ public class VerkleWorldState extends DiffBasedWorldState {
                   updatedAccount.getCodeHash())
               .forEach(
                   (bytes, bytes2) -> {
-                    System.out.println("add " + bytes + " " + bytes2);
+                    System.out.println(
+                        "add "
+                            + accountKey
+                            + " "
+                            + bytes
+                            + " "
+                            + bytes2
+                            + " "
+                            + updatedAccount.getBalance());
                     stateTrie.put(bytes, bytes2);
                   });
           maybeStateUpdater.ifPresent(
@@ -189,71 +261,74 @@ public class VerkleWorldState extends DiffBasedWorldState {
   }
 
   private void updateCode(
+      final Address accountKey,
       final VerkleTrie stateTrie,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
-      final VerkleWorldStateUpdateAccumulator worldStateUpdater) {
-    maybeStateUpdater.ifPresent(
-        bonsaiUpdater -> {
-          for (final Map.Entry<Address, DiffBasedValue<Bytes>> codeUpdate :
-              worldStateUpdater.getCodeToUpdate().entrySet()) {
-            final Bytes previousCode = codeUpdate.getValue().getPrior();
-            final Bytes updatedCode = codeUpdate.getValue().getUpdated();
-            final Address address = codeUpdate.getKey();
-            final Hash accountHash = address.addressHash();
-            if (updatedCode == null) {
-              verkleTrieKeyValueGenerator
-                  .generateKeysForCode(address, previousCode)
-                  .forEach(
-                      bytes -> {
-                        System.out.println("remove code " + bytes);
-                        stateTrie.remove(bytes);
-                      });
-              bonsaiUpdater.removeCode(accountHash);
-            } else {
-              if (updatedCode.isEmpty()) {
-                final Hash codeHash = updatedCode.size() == 0 ? Hash.EMPTY : Hash.hash(updatedCode);
-                verkleTrieKeyValueGenerator
-                    .generateKeyValuesForCode(address, codeHash, updatedCode)
-                    .forEach(
-                        (bytes, bytes2) -> {
-                          // System.out.println("add code " + bytes + " " + bytes2);
-                          stateTrie.put(bytes, bytes2);
-                        });
-                bonsaiUpdater.removeCode(accountHash);
-              } else {
-                final Hash codeHash = updatedCode.size() == 0 ? Hash.EMPTY : Hash.hash(updatedCode);
-                verkleTrieKeyValueGenerator
-                    .generateKeyValuesForCode(address, codeHash, updatedCode)
-                    .forEach(
-                        (bytes, bytes2) -> {
-                          System.out.println("add code " + bytes + " " + bytes2);
-                          stateTrie.put(bytes, bytes2);
-                        });
-                bonsaiUpdater.putCode(accountHash, null, updatedCode);
-              }
-            }
-          }
-        });
+      final VerkleEntryFactory verkleEntryFactory,
+      final DiffBasedValue<Bytes> codeUpdate) {
+    final Bytes priorCode = codeUpdate.getPrior();
+    final Bytes updatedCode = codeUpdate.getUpdated();
+    final Hash accountHash = accountKey.addressHash();
+    if (updatedCode == null) {
+      final Hash priorCodeHash = Hash.hash(priorCode);
+      verkleEntryFactory
+          .generateKeysForCode(accountKey, priorCode)
+          .forEach(
+              bytes -> {
+                System.out.println("remove code " + bytes);
+                stateTrie.remove(bytes);
+              });
+      maybeStateUpdater.ifPresent(
+          bonsaiUpdater -> bonsaiUpdater.removeCode(accountHash, priorCodeHash));
+    } else {
+      if (updatedCode.isEmpty()) {
+        final Hash codeHash = Hash.hash(updatedCode);
+        verkleEntryFactory
+            .generateKeyValuesForCode(accountKey, updatedCode)
+            .forEach(
+                (bytes, bytes2) -> {
+                  // System.out.println("add code " + bytes + " " + bytes2);
+                  stateTrie.put(bytes, bytes2);
+                });
+        maybeStateUpdater.ifPresent(
+            bonsaiUpdater -> bonsaiUpdater.removeCode(accountHash, codeHash));
+      } else {
+        final Hash codeHash = Hash.hash(updatedCode);
+        verkleEntryFactory
+            .generateKeyValuesForCode(accountKey, updatedCode)
+            .forEach(
+                (bytes, bytes2) -> {
+                  System.out.println("add code " + bytes + " " + bytes2);
+                  stateTrie.put(bytes, bytes2);
+                });
+        maybeStateUpdater.ifPresent(
+            bonsaiUpdater -> bonsaiUpdater.putCode(accountHash, codeHash, updatedCode));
+      }
+    }
+  }
+
+  private boolean codeIsEmpty(final Bytes value) {
+    return value == null || value.isEmpty();
   }
 
   private void updateAccountStorageState(
+      final Address accountKey,
       final VerkleTrie stateTrie,
       final Optional<VerkleWorldStateKeyValueStorage.Updater> maybeStateUpdater,
-      final VerkleWorldStateUpdateAccumulator worldStateUpdater,
-      final Map.Entry<Address, StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>>>
-          storageAccountUpdate) {
-    final Address updatedAddress = storageAccountUpdate.getKey();
-    final Hash updatedAddressHash = updatedAddress.addressHash();
-    if (worldStateUpdater.getAccountsToUpdate().containsKey(updatedAddress)) {
+      final VerkleEntryFactory verkleEntryFactory,
+      final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageAccountUpdate) {
 
-      // for manicured tries and composting, collect branches here (not implemented)
-      for (final Map.Entry<StorageSlotKey, DiffBasedValue<UInt256>> storageUpdate :
-          storageAccountUpdate.getValue().entrySet()) {
-        final Hash slotHash = storageUpdate.getKey().getSlotHash();
+    final Hash updatedAddressHash = accountKey.addressHash();
+    // for manicured tries and composting, collect branches here (not implemented)
+    for (final Map.Entry<StorageSlotKey, DiffBasedValue<UInt256>> storageUpdate :
+        storageAccountUpdate.entrySet()) {
+      final Hash slotHash = storageUpdate.getKey().getSlotHash();
+
+      if (!storageUpdate.getValue().isUnchanged()) {
         final UInt256 updatedStorage = storageUpdate.getValue().getUpdated();
         if (updatedStorage == null) {
-          verkleTrieKeyValueGenerator
-              .generateKeysForStorage(updatedAddress, storageUpdate.getKey())
+          verkleEntryFactory
+              .generateKeysForStorage(accountKey, storageUpdate.getKey())
               .forEach(
                   bytes -> {
                     System.out.println("remove storage" + bytes);
@@ -264,29 +339,22 @@ public class VerkleWorldState extends DiffBasedWorldState {
                   diffBasedUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
         } else {
           final Pair<Bytes, Bytes> storage =
-              verkleTrieKeyValueGenerator.generateKeyValuesForStorage(
-                  updatedAddress, storageUpdate.getKey(), updatedStorage);
+              verkleEntryFactory.generateKeyValuesForStorage(
+                  accountKey, storageUpdate.getKey(), updatedStorage);
           System.out.println("add storage " + storage.getFirst() + " " + storage.getSecond());
           stateTrie
               .put(storage.getFirst(), storage.getSecond())
               .ifPresentOrElse(
                   bytes -> {
-                    System.out.println("found old key " + bytes);
                     storageUpdate.getValue().setPrior(UInt256.fromBytes(bytes));
                   },
                   () -> {
                     storageUpdate.getValue().setPrior(null);
                   });
-          if (updatedStorage.equals(UInt256.ZERO)) {
-            maybeStateUpdater.ifPresent(
-                bonsaiUpdater ->
-                    bonsaiUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
-          } else {
-            maybeStateUpdater.ifPresent(
-                bonsaiUpdater ->
-                    bonsaiUpdater.putStorageValueBySlotHash(
-                        updatedAddressHash, slotHash, updatedStorage));
-          }
+          maybeStateUpdater.ifPresent(
+              bonsaiUpdater ->
+                  bonsaiUpdater.putStorageValueBySlotHash(
+                      updatedAddressHash, slotHash, updatedStorage));
         }
       }
     }

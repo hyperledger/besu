@@ -23,8 +23,10 @@ import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -42,9 +44,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -104,6 +106,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
 
   @BeforeEach
   public void setupTest() {
+    protocolContext.getBadBlockManager().reset();
     peersDoTimeout = new AtomicBoolean(false);
     peerCountToTimeout = new AtomicInteger(0);
     ethPeers =
@@ -116,7 +119,6 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
                 Collections.emptyList(),
                 Bytes.random(64),
-                MAX_PEERS,
                 MAX_PEERS,
                 MAX_PEERS,
                 false));
@@ -136,8 +138,8 @@ public abstract class AbstractMessageTaskTest<T, R> {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
-            null,
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault());
     transactionPool.setEnabled();
 
     ethProtocolManager =
@@ -162,9 +164,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
   @Test
   public void completesWhenPeersAreResponsive() {
     // Setup a responsive peer
-    final RespondingEthPeer.Responder responder =
-        RespondingEthPeer.blockchainResponder(
-            blockchain, protocolContext.getWorldStateArchive(), transactionPool);
+    final RespondingEthPeer.Responder responder = getFullResponder();
     final RespondingEthPeer respondingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 32);
 
@@ -185,6 +185,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
 
     assertThat(done).isTrue();
     assertResultMatchesExpectation(requestedData, actualResult.get(), respondingPeer.getEthPeer());
+    assertNoBadBlocks();
   }
 
   @Test
@@ -223,5 +224,16 @@ public abstract class AbstractMessageTaskTest<T, R> {
     assertThat(future.isDone()).isTrue();
     assertThat(future.isCancelled()).isTrue();
     assertThat(task.run().isCancelled()).isTrue();
+  }
+
+  protected RespondingEthPeer.Responder getFullResponder() {
+    return RespondingEthPeer.blockchainResponder(
+        blockchain, protocolContext.getWorldStateArchive(), transactionPool);
+  }
+
+  protected void assertNoBadBlocks() {
+    BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
+    assertThat(badBlockManager.getBadBlocks().size()).isEqualTo(0);
+    assertThat(badBlockManager.getBadHeaders().size()).isEqualTo(0);
   }
 }

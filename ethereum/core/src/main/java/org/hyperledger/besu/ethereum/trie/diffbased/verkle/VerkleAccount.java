@@ -48,7 +48,7 @@ public class VerkleAccount extends DiffBasedAccount {
       final Hash storageRoot,
       final Hash codeHash,
       final boolean mutable) {
-    super(context, address, addressHash, nonce, balance, codeHash, !mutable);
+    super(context, address, addressHash, nonce, balance, codeHash, mutable);
     this.storageRoot = storageRoot;
   }
 
@@ -57,7 +57,7 @@ public class VerkleAccount extends DiffBasedAccount {
       final Address address,
       final AccountValue stateTrieAccount,
       final boolean mutable) {
-    super(context, address, stateTrieAccount, !mutable);
+    super(context, address, stateTrieAccount, mutable);
     this.storageRoot = stateTrieAccount.getStorageRoot();
   }
 
@@ -67,7 +67,7 @@ public class VerkleAccount extends DiffBasedAccount {
 
   public VerkleAccount(
       final VerkleAccount toCopy, final DiffBasedWorldView context, final boolean mutable) {
-    super(toCopy, context, !mutable);
+    super(toCopy, context, mutable);
     this.storageRoot = toCopy.storageRoot;
   }
 

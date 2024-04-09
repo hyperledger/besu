@@ -41,11 +41,12 @@ public class BalanceOperation extends AbstractOperation {
   /**
    * Gets Balance operation Gas Cost plus warm storage read cost or cold account access cost.
    *
+   * @param frame current frame
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @return the long
    */
-  protected long cost(final boolean accountIsWarm) {
-    return gasCalculator().getBalanceOperationGasCost()
+  protected long cost(final MessageFrame frame, final boolean accountIsWarm) {
+    return gasCalculator().getBalanceOperationGasCost(frame)
         + (accountIsWarm
             ? gasCalculator().getWarmStorageReadCost()
             : gasCalculator().getColdAccountAccessCost());
@@ -57,7 +58,7 @@ public class BalanceOperation extends AbstractOperation {
       final Address address = Words.toAddress(frame.popStackItem());
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(accountIsWarm);
+      final long cost = cost(frame, accountIsWarm);
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
@@ -66,9 +67,9 @@ public class BalanceOperation extends AbstractOperation {
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+      return new OperationResult(cost(frame, true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+      return new OperationResult(cost(frame, true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

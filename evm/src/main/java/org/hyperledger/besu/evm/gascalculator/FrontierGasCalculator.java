@@ -144,7 +144,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long codeDepositGasCost(final int codeSize) {
+  public long codeDepositGasCost(final MessageFrame frame, final int codeSize) {
     return CODE_DEPOSIT_BYTE_COST * codeSize;
   }
 
@@ -228,6 +228,7 @@ public class FrontierGasCalculator implements GasCalculator {
     return NEW_ACCOUNT_GAS_COST;
   }
 
+  @SuppressWarnings("removal")
   @Override
   public long callOperationGasCost(
       final MessageFrame frame,
@@ -239,6 +240,31 @@ public class FrontierGasCalculator implements GasCalculator {
       final Wei transferValue,
       final Account recipient,
       final Address to) {
+    return callOperationGasCost(
+        frame,
+        stipend,
+        inputDataOffset,
+        inputDataLength,
+        outputDataOffset,
+        outputDataLength,
+        transferValue,
+        recipient,
+        to,
+        true);
+  }
+
+  @Override
+  public long callOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address to,
+      final boolean accountIsWarm) {
     final long inputDataMemoryExpansionCost =
         memoryExpansionGasCost(frame, inputDataOffset, inputDataLength);
     final long outputDataMemoryExpansionCost =
@@ -280,6 +306,16 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
+  public long initCreateContractGasCost(final MessageFrame frame) {
+    return 0;
+  }
+
+  @Override
+  public long completedCreateContractGasCost(final MessageFrame frame) {
+    return 0;
+  }
+
+  @Override
   public long createOperationGasCost(final MessageFrame frame) {
     final long initCodeOffset = clampedToLong(frame.getStackItem(1));
     final long initCodeLength = clampedToLong(frame.getStackItem(2));
@@ -313,7 +349,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost(final MessageFrame frame) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
@@ -353,7 +389,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost(final MessageFrame frame) {
     throw new UnsupportedOperationException(
         "EXTCODEHASH not supported by " + getClass().getSimpleName());
   }
@@ -396,7 +432,11 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
+  public long selfDestructOperationGasCost(
+      final MessageFrame frame,
+      final Account recipient,
+      final Wei inheritance,
+      final Address originatorAddress) {
     return SELFDESTRUCT_OPERATION_GAS_COST;
   }
 
@@ -418,12 +458,14 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost() {
+  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
     return SLOAD_OPERATION_GAS_COST;
   }
 
   @Override
   public long calculateStorageCost(
+      final MessageFrame frame,
+      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {

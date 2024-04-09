@@ -38,15 +38,18 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   // new constants for EIP-2929
   private static final long COLD_SLOAD_COST = 2100L;
   private static final long COLD_ACCOUNT_ACCESS_COST = 2600L;
+
   /** Warm storage read, defined in EIP-2929 */
   protected static final long WARM_STORAGE_READ_COST = 100L;
 
   private static final long ACCESS_LIST_ADDRESS_COST = 2400L;
+
   /** The constant ACCESS_LIST_STORAGE_COST. */
   protected static final long ACCESS_LIST_STORAGE_COST = 1900L;
 
   // redefinitions for EIP-2929
   private static final long SLOAD_GAS = WARM_STORAGE_READ_COST;
+
   /** The constant SSTORE_RESET_GAS. */
   protected static final long SSTORE_RESET_GAS = 5000L - COLD_SLOAD_COST;
 
@@ -56,6 +59,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   /** The constant SSTORE_SET_GAS_LESS_SLOAD_GAS. */
   protected static final long SSTORE_SET_GAS_LESS_SLOAD_GAS = SSTORE_SET_GAS - SLOAD_GAS;
+
   /** The constant SSTORE_RESET_GAS_LESS_SLOAD_GAS. */
   protected static final long SSTORE_RESET_GAS_LESS_SLOAD_GAS = SSTORE_RESET_GAS - SLOAD_GAS;
 
@@ -115,7 +119,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
 
   // Zeroed out old costs
   @Override
-  public long getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost(final MessageFrame frame) {
     return 0L;
   }
 
@@ -125,7 +129,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost(final MessageFrame frame) {
     return 0L;
   }
 
@@ -135,8 +139,34 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost() {
+  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
     return 0L;
+  }
+
+  // Redefined costs from EIP-2929
+  @Override
+  @SuppressWarnings("java:S5738")
+  public long callOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address to) {
+    return callOperationGasCost(
+        frame,
+        stipend,
+        inputDataOffset,
+        inputDataLength,
+        outputDataOffset,
+        outputDataLength,
+        transferValue,
+        recipient,
+        to,
+        frame.warmUpAddress(to) || isPrecompile(to));
   }
 
   // Redefined costs from EIP-2929
@@ -150,7 +180,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final long outputDataLength,
       final Wei transferValue,
       final Account recipient,
-      final Address to) {
+      final Address to,
+      final boolean accountIsWarm) {
     final long baseCost =
         super.callOperationGasCost(
             frame,
@@ -161,8 +192,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
             outputDataLength,
             transferValue,
             recipient,
-            to);
-    final boolean accountIsWarm = frame.warmUpAddress(to) || isPrecompile(to);
+            to,
+            true); // we want the "warmed price" as we will charge for warming ourselves
     return clampedAdd(
         baseCost, accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
@@ -178,6 +209,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
+      final MessageFrame frame,
+      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {

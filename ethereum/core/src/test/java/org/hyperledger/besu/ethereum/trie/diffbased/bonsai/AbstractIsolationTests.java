@@ -32,6 +32,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.AbstractBlockCreator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -68,12 +69,11 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBui
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
@@ -104,7 +104,10 @@ public abstract class AbstractIsolationTests {
           SignatureAlgorithmFactory.getInstance()
               .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
   protected final ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(GenesisConfigFile.development().getConfigOptions());
+      MainnetProtocolSchedule.fromConfig(
+          GenesisConfigFile.development().getConfigOptions(),
+          MiningParameters.MINING_DISABLED,
+          new BadBlockManager());
   protected final GenesisState genesisState =
       GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -113,7 +116,8 @@ public abstract class AbstractIsolationTests {
       ImmutableTransactionPoolConfiguration.builder().txPoolMaxSize(100).build();
 
   protected final TransactionPoolReplacementHandler transactionReplacementHandler =
-      new TransactionPoolReplacementHandler(poolConfiguration.getPriceBump());
+      new TransactionPoolReplacementHandler(
+          poolConfiguration.getPriceBump(), poolConfiguration.getBlobPriceBump());
 
   protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
       transactionReplacementTester =
@@ -132,7 +136,8 @@ public abstract class AbstractIsolationTests {
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
               transactionReplacementTester,
-              new BlobCache()));
+              new BlobCache(),
+              MiningParameters.newDefault()));
 
   protected final List<GenesisAllocation> accounts =
       GenesisConfigFile.development()
@@ -149,12 +154,7 @@ public abstract class AbstractIsolationTests {
   public void createStorage() {
     worldStateKeyValueStorage =
         createKeyValueStorageProvider()
-            .createWorldStateStorage(
-                ImmutableDataStorageConfiguration.builder()
-                    .dataStorageFormat(DataStorageFormat.BONSAI)
-                    .bonsaiMaxLayersToLoad(
-                        DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
-                    .build());
+            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     archive =
         new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
@@ -165,7 +165,7 @@ public abstract class AbstractIsolationTests {
             EvmConfiguration.DEFAULT);
     var ws = archive.getMutable();
     genesisState.writeStateTo(ws);
-    protocolContext = new ProtocolContext(blockchain, archive, null, Optional.empty());
+    protocolContext = new ProtocolContext(blockchain, archive, null, new BadBlockManager());
     ethContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     when(ethContext.getEthPeers().subscribeConnect(any())).thenReturn(1L);
     transactionPool =
@@ -176,8 +176,7 @@ public abstract class AbstractIsolationTests {
             mock(TransactionBroadcaster.class),
             ethContext,
             txPoolMetrics,
-            poolConfiguration,
-            null);
+            poolConfiguration);
     transactionPool.setEnabled();
   }
 
@@ -193,7 +192,6 @@ public abstract class AbstractIsolationTests {
                         8388608 /*CACHE_CAPACITY*/,
                         false),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
-                2,
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(
             new BesuConfiguration() {
@@ -209,8 +207,29 @@ public abstract class AbstractIsolationTests {
               }
 
               @Override
-              public int getDatabaseVersion() {
-                return 2;
+              public DataStorageFormat getDatabaseFormat() {
+                return DataStorageFormat.BONSAI;
+              }
+
+              @Override
+              public Wei getMinGasPrice() {
+                return MiningParameters.newDefault().getMinTransactionGasPrice();
+              }
+
+              @Override
+              public org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration
+                  getDataStorageConfiguration() {
+                return new org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration() {
+                  @Override
+                  public DataStorageFormat getDatabaseFormat() {
+                    return DataStorageFormat.BONSAI;
+                  }
+
+                  @Override
+                  public boolean getReceiptCompactionEnabled() {
+                    return false;
+                  }
+                };
               }
             })
         .withMetricsSystem(new NoOpMetricsSystem())

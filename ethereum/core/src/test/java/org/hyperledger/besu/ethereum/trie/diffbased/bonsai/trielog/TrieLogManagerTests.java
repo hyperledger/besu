@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorld
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -57,7 +58,9 @@ class TrieLogManagerTests {
 
   @BeforeEach
   public void setup() {
-    trieLogManager = new TrieLogManager(blockchain, bonsaiWorldStateKeyValueStorage, 512, null);
+    trieLogManager =
+        new TrieLogManager(
+            blockchain, DataStorageFormat.BONSAI, bonsaiWorldStateKeyValueStorage, 512, null);
   }
 
   @Test

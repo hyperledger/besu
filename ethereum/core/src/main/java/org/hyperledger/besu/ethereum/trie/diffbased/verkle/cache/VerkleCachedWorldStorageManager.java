@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleSnapsho
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 
 public class VerkleCachedWorldStorageManager extends DiffBasedCachedWorldStorageManager {
 

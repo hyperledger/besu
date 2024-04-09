@@ -23,11 +23,11 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -70,11 +70,14 @@ public class KeyValueStorageProvider implements StorageProvider {
 
   @Override
   public BlockchainStorage createBlockchainStorage(
-      final ProtocolSchedule protocolSchedule, final VariablesStorage variablesStorage) {
+      final ProtocolSchedule protocolSchedule,
+      final VariablesStorage variablesStorage,
+      final DataStorageConfiguration dataStorageConfiguration) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
         getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.BLOCKCHAIN),
         variablesStorage,
-        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule));
+        ScheduleBasedBlockHeaderFunctions.create(protocolSchedule),
+        dataStorageConfiguration.getReceiptCompactionEnabled());
   }
 
   @Override
@@ -82,10 +85,9 @@ public class KeyValueStorageProvider implements StorageProvider {
       final DataStorageConfiguration dataStorageConfiguration) {
     if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
       return new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration);
-    }  else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.VERKLE)) {
+    } else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.VERKLE)) {
       return new VerkleWorldStateKeyValueStorage(this, metricsSystem);
-    }
-    else {
+    } else {
       return new ForestWorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));
     }

@@ -17,16 +17,18 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.util.Collection;
 import java.util.Optional;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class BadBlockManager {
+  private static final Logger LOG = LoggerFactory.getLogger(BadBlockManager.class);
 
   public static final int MAX_BAD_BLOCKS_SIZE = 100;
   private final Cache<Hash, Block> badBlocks =
@@ -40,14 +42,12 @@ public class BadBlockManager {
    * Add a new invalid block.
    *
    * @param badBlock the invalid block
-   * @param cause optional exception causing the block to be considered invalid
+   * @param cause the cause detailing why the block is considered invalid
    */
-  public void addBadBlock(final Block badBlock, final Optional<Throwable> cause) {
-    if (badBlock != null) {
-      if (cause.isEmpty() || !isInternalError(cause.get())) {
-        this.badBlocks.put(badBlock.getHash(), badBlock);
-      }
-    }
+  public void addBadBlock(final Block badBlock, final BadBlockCause cause) {
+    // TODO(#6301) Expose bad block with cause through BesuEvents
+    LOG.debug("Register bad block {} with cause: {}", badBlock.toLogString(), cause);
+    this.badBlocks.put(badBlock.getHash(), badBlock);
   }
 
   public void reset() {
@@ -65,6 +65,11 @@ public class BadBlockManager {
     return badBlocks.asMap().values();
   }
 
+  @VisibleForTesting
+  public Collection<BlockHeader> getBadHeaders() {
+    return badHeaders.asMap().values();
+  }
+
   /**
    * Return an invalid block based on the hash
    *
@@ -75,12 +80,14 @@ public class BadBlockManager {
     return Optional.ofNullable(badBlocks.getIfPresent(hash));
   }
 
-  public void addBadHeader(final BlockHeader header) {
+  public void addBadHeader(final BlockHeader header, final BadBlockCause cause) {
+    // TODO(#6301) Expose bad block header with cause through BesuEvents
+    LOG.debug("Register bad block header {} with cause: {}", header.toLogString(), cause);
     badHeaders.put(header.getHash(), header);
   }
 
-  public Optional<BlockHeader> getBadHash(final Hash blockHash) {
-    return Optional.ofNullable(badHeaders.getIfPresent(blockHash));
+  public boolean isBadBlock(final Hash blockHash) {
+    return badBlocks.asMap().containsKey(blockHash) || badHeaders.asMap().containsKey(blockHash);
   }
 
   public void addLatestValidHash(final Hash blockHash, final Hash latestValidHash) {
@@ -89,13 +96,5 @@ public class BadBlockManager {
 
   public Optional<Hash> getLatestValidHash(final Hash blockHash) {
     return Optional.ofNullable(latestValidHashes.getIfPresent(blockHash));
-  }
-
-  private boolean isInternalError(final Throwable causedBy) {
-    // As new "internal only" types of exception are discovered, add them here.
-    if (causedBy instanceof StorageException || causedBy instanceof MerkleTrieException) {
-      return true;
-    }
-    return false;
   }
 }

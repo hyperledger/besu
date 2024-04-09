@@ -23,14 +23,14 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeHashCodeStorageStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageTransaction;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -48,21 +48,21 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   protected FullFlatDbStrategy flatDbStrategy;
 
   public VerkleWorldStateKeyValueStorage(
-          final StorageProvider provider,
-          final MetricsSystem metricsSystem) {
+      final StorageProvider provider, final MetricsSystem metricsSystem) {
     super(
         provider.getStorageBySegmentIdentifiers(
             List.of(
                 ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
-    this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem);
+    this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
   }
 
   public VerkleWorldStateKeyValueStorage(
-          final FlatDbStrategy flatDbStrategy,
+      final FullFlatDbStrategy flatDbStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
     super(composedWorldStateStorage, trieLogStorage);
+    this.flatDbStrategy = flatDbStrategy;
   }
 
   @Override
@@ -80,7 +80,7 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     return FlatDbMode.FULL;
   }
 
-  public Optional<Bytes> getCode(final Bytes32 codeHash, final Hash accountHash) {
+  public Optional<Bytes> getCode(final Hash codeHash, final Hash accountHash) {
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
@@ -128,8 +128,8 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       this.flatDbStrategy = flatDbStrategy;
     }
 
-    public Updater removeCode(final Hash accountHash) {
-      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash);
+    public Updater removeCode(final Hash accountHash, final Hash codeHash) {
+      flatDbStrategy.removeFlatCode(composedWorldStateTransaction, accountHash, codeHash);
       return this;
     }
 
@@ -139,7 +139,7 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       return putCode(accountHash, codeHash, code);
     }
 
-    public Updater putCode(final Hash accountHash, final Bytes32 codeHash, final Bytes code) {
+    public Updater putCode(final Hash accountHash, final Hash codeHash, final Bytes code) {
       if (code.size() == 0) {
         // Don't save empty values
         return this;

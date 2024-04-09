@@ -381,7 +381,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     System.out.println("Base EIP1559 size: " + eip1559size);
     assertThat(eip1559size.sum())
-        .isEqualTo(PendingTransaction.EIP1559_AND_EIP4844_BASE_MEMORY_SIZE);
+        .isEqualTo(PendingTransaction.EIP1559_AND_EIP4844_SHALLOW_MEMORY_SIZE);
   }
 
   @Test
@@ -426,7 +426,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
 
     System.out.println("Base Frontier size: " + frontierSize);
     assertThat(frontierSize.sum())
-        .isEqualTo(PendingTransaction.FRONTIER_AND_ACCESS_LIST_BASE_MEMORY_SIZE);
+        .isEqualTo(PendingTransaction.FRONTIER_AND_ACCESS_LIST_SHALLOW_MEMORY_SIZE);
   }
 
   private GraphWalker getGraphWalker(

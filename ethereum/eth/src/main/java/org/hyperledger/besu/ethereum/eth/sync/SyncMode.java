@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync;
 
 import java.util.EnumSet;
+import java.util.Locale;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -24,24 +25,33 @@ public enum SyncMode {
   // Perform light validation on older blocks, and switch to full validation for more recent blocks
   FAST,
   // Perform snapsync
-  X_SNAP,
+  SNAP,
   // Perform snapsync but starting from a checkpoint instead of starting from genesis
+  CHECKPOINT,
+  // Deprecated and will be removed in 24.4.0 (X_SNAP and X_CHECKPOINT)
+  X_SNAP,
   X_CHECKPOINT;
 
   public String normalize() {
     if (this.toString().startsWith("X_")) {
       // removes X_ at the beginning
-      return StringUtils.capitalize(this.toString().substring(2).toLowerCase());
+      return StringUtils.capitalize(this.toString().substring(2).toLowerCase(Locale.ROOT));
     }
 
-    return StringUtils.capitalize(this.toString().toLowerCase());
+    return StringUtils.capitalize(this.toString().toLowerCase(Locale.ROOT));
   }
 
   public static boolean isFullSync(final SyncMode syncMode) {
-    return !EnumSet.of(SyncMode.FAST, SyncMode.X_SNAP, SyncMode.X_CHECKPOINT).contains(syncMode);
+    return !EnumSet.of(
+            SyncMode.FAST,
+            SyncMode.SNAP,
+            SyncMode.X_SNAP,
+            SyncMode.CHECKPOINT,
+            SyncMode.X_CHECKPOINT)
+        .contains(syncMode);
   }
 
   public static boolean isCheckpointSync(final SyncMode syncMode) {
-    return syncMode.equals(X_CHECKPOINT);
+    return X_CHECKPOINT.equals(syncMode) || CHECKPOINT.equals(syncMode);
   }
 }

@@ -52,15 +52,12 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.math.BigInteger;
 import java.nio.file.Path;
@@ -189,15 +186,10 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final MutableBlockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule,
-      final ConsensusContextFactory consensusContextFactory,
-      final Optional<PluginTransactionSelectorFactory> transactionSelectorFactory) {
+      final ConsensusContextFactory consensusContextFactory) {
     final ProtocolContext protocolContext =
         super.createProtocolContext(
-            blockchain,
-            worldStateArchive,
-            protocolSchedule,
-            consensusContextFactory,
-            transactionSelectorFactory);
+            blockchain, worldStateArchive, protocolSchedule, consensusContextFactory);
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     return protocolContext;
   }
@@ -225,7 +217,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
-      final Optional<Pruner> maybePruner,
       final EthContext ethContext,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
@@ -237,7 +228,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 protocolSchedule,
                 worldStateStorageCoordinator,
                 protocolContext,
-                maybePruner,
                 ethContext,
                 syncState,
                 ethProtocolManager,
@@ -255,6 +245,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     return sync;
   }
 
+  @SuppressWarnings("UnusedVariable")
   private void initTransitionWatcher(
       final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {
 
@@ -390,18 +381,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
     super.isRevertReasonEnabled(isRevertReasonEnabled);
     return propagateConfig(z -> z.isRevertReasonEnabled(isRevertReasonEnabled));
-  }
-
-  @Override
-  public BesuControllerBuilder isPruningEnabled(final boolean isPruningEnabled) {
-    super.isPruningEnabled(isPruningEnabled);
-    return propagateConfig(z -> z.isPruningEnabled(isPruningEnabled));
-  }
-
-  @Override
-  public BesuControllerBuilder pruningConfiguration(final PrunerConfiguration prunerConfiguration) {
-    super.pruningConfiguration(prunerConfiguration);
-    return propagateConfig(z -> z.pruningConfiguration(prunerConfiguration));
   }
 
   @Override

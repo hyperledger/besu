@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
@@ -29,8 +30,13 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
+import java.util.Optional;
+
+import org.apache.tuweni.units.bigints.UInt256;
+
 public class VerkleWorldStateUpdateAccumulator
     extends DiffBasedWorldStateUpdateAccumulator<VerkleAccount> {
+
   public VerkleWorldStateUpdateAccumulator(
       final DiffBasedWorldView world,
       final Consumer<DiffBasedValue<VerkleAccount>> accountPreloader,
@@ -95,6 +101,14 @@ public class VerkleWorldStateUpdateAccumulator
   protected void assertCloseEnoughForDiffing(
       final VerkleAccount source, final AccountValue account, final String context) {
     VerkleAccount.assertCloseEnoughForDiffing(source, account, context);
+  }
+
+  @Override
+  protected Optional<UInt256> getStorageValueByStorageSlotKey(
+      final DiffBasedWorldState worldState,
+      final Address address,
+      final StorageSlotKey storageSlotKey) {
+    return worldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
   }
 
   @Override

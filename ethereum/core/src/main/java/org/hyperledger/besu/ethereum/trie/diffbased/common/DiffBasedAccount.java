@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -40,8 +40,25 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   protected long nonce;
   protected Wei balance;
   protected Bytes code;
+
   protected final Map<UInt256, UInt256> updatedStorage = new HashMap<>();
 
+  /**
+   * Constructs a new DiffBasedAccount instance without the account's code. This constructor is used
+   * when the account's code is not required or will not be read from the database. It initializes
+   * the account with its context, address, address hash, nonce, balance, code hash, and mutability
+   * status.
+   *
+   * @param context The DiffBasedWorldView context in which this account exists.
+   * @param address The Ethereum address of this account.
+   * @param addressHash The hash of the account's address.
+   * @param nonce The nonce of the account, representing the number of transactions sent from this
+   *     account.
+   * @param balance The balance of the account in Wei.
+   * @param codeHash The hash of the account's code.
+   * @param mutable A boolean indicating if the account is mutable. If false, the account is
+   *     considered immutable.
+   */
   public DiffBasedAccount(
       final DiffBasedWorldView context,
       final Address address,
@@ -57,7 +74,44 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     this.balance = balance;
     this.codeHash = codeHash;
 
-    this.immutable = mutable;
+    this.immutable = !mutable;
+  }
+
+  /**
+   * Constructs a new DiffBasedAccount instance with the account's code. This constructor is used
+   * when all account information, including its code, are available. It initializes the account
+   * with its context, address, address hash, nonce, balance, code hash, the actual code, and
+   * mutability status.
+   *
+   * @param context The DiffBasedWorldView context in which this account exists.
+   * @param address The Ethereum address of this account.
+   * @param addressHash The hash of the account's address.
+   * @param nonce The nonce of the account, representing the number of transactions sent from this
+   *     account.
+   * @param balance The balance of the account in Wei.
+   * @param codeHash The hash of the account's code.
+   * @param code The actual bytecode of the account's smart contract. This is provided when the code
+   *     is known and needs to be associated with the account.
+   * @param mutable A boolean indicating if the account is mutable. If false, the account is
+   *     considered immutable.
+   */
+  public DiffBasedAccount(
+      final DiffBasedWorldView context,
+      final Address address,
+      final Hash addressHash,
+      final long nonce,
+      final Wei balance,
+      final Hash codeHash,
+      final Bytes code,
+      final boolean mutable) {
+    this.context = context;
+    this.address = address;
+    this.addressHash = addressHash;
+    this.nonce = nonce;
+    this.balance = balance;
+    this.codeHash = codeHash;
+    this.code = code;
+    this.immutable = !mutable;
   }
 
   public DiffBasedAccount(
@@ -85,7 +139,8 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     this.codeHash = toCopy.codeHash;
     this.code = toCopy.code;
     updatedStorage.putAll(toCopy.updatedStorage);
-    this.immutable = mutable;
+
+    this.immutable = !mutable;
   }
 
   @Override

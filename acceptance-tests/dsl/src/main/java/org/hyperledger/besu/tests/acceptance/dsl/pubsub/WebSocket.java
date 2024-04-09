@@ -53,6 +53,6 @@ public class WebSocket {
 
   public void verifyTotalEventsReceived(final int expectedTotalEventCount) {
     WaitUtils.waitFor(
-        () -> assertThat(connection.getSubscriptionEvents()).hasSize(expectedTotalEventCount));
+        60, () -> assertThat(connection.getSubscriptionEvents()).hasSize(expectedTotalEventCount));
   }
 }

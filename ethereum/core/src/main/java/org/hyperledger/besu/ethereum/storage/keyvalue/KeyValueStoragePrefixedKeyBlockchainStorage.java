@@ -59,14 +59,17 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
   final KeyValueStorage blockchainStorage;
   final VariablesStorage variablesStorage;
   final BlockHeaderFunctions blockHeaderFunctions;
+  final boolean receiptCompaction;
 
   public KeyValueStoragePrefixedKeyBlockchainStorage(
       final KeyValueStorage blockchainStorage,
       final VariablesStorage variablesStorage,
-      final BlockHeaderFunctions blockHeaderFunctions) {
+      final BlockHeaderFunctions blockHeaderFunctions,
+      final boolean receiptCompaction) {
     this.blockchainStorage = blockchainStorage;
     this.variablesStorage = variablesStorage;
     this.blockHeaderFunctions = blockHeaderFunctions;
+    this.receiptCompaction = receiptCompaction;
     migrateVariables();
   }
 
@@ -125,7 +128,8 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
   @Override
   public Updater updater() {
-    return new Updater(blockchainStorage.startTransaction(), variablesStorage.updater());
+    return new Updater(
+        blockchainStorage.startTransaction(), variablesStorage.updater(), receiptCompaction);
   }
 
   private List<TransactionReceipt> rlpDecodeTransactionReceipts(final Bytes bytes) {
@@ -253,12 +257,15 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
 
     private final KeyValueStorageTransaction blockchainTransaction;
     private final VariablesStorage.Updater variablesUpdater;
+    private final boolean receiptCompaction;
 
     Updater(
         final KeyValueStorageTransaction blockchainTransaction,
-        final VariablesStorage.Updater variablesUpdater) {
+        final VariablesStorage.Updater variablesUpdater,
+        final boolean receiptCompaction) {
       this.blockchainTransaction = blockchainTransaction;
       this.variablesUpdater = variablesUpdater;
+      this.receiptCompaction = receiptCompaction;
     }
 
     @Override
@@ -365,7 +372,10 @@ public class KeyValueStoragePrefixedKeyBlockchainStorage implements BlockchainSt
     }
 
     private Bytes rlpEncode(final List<TransactionReceipt> receipts) {
-      return RLP.encode(o -> o.writeList(receipts, TransactionReceipt::writeToWithRevertReason));
+      return RLP.encode(
+          o ->
+              o.writeList(
+                  receipts, (r, rlpOutput) -> r.writeToForStorage(rlpOutput, receiptCompaction)));
     }
 
     private void removeVariables() {

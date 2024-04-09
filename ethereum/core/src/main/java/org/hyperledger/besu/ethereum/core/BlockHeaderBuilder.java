@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.trie.verkle.ExecutionWitness;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.time.Instant;
@@ -46,6 +47,7 @@ public class BlockHeaderBuilder {
 
   private Hash withdrawalsRoot = null;
   private Hash depositsRoot = null;
+  private Hash exitsRoot = null;
 
   private Hash receiptsRoot;
 
@@ -76,6 +78,7 @@ public class BlockHeaderBuilder {
   private Long blobGasUsed = null;
   private BlobGas excessBlobGas = null;
   private Bytes32 parentBeaconBlockRoot = null;
+  private ExecutionWitness executionWitness = null;
 
   public static BlockHeaderBuilder create() {
     return new BlockHeaderBuilder();
@@ -124,7 +127,9 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-        .depositsRoot(header.getDepositsRoot().orElse(null));
+        .depositsRoot(header.getDepositsRoot().orElse(null))
+        .exitsRoot(header.getExitsRoot().orElse(null))
+        .executionWitness(header.getExecutionWitness().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -149,6 +154,8 @@ public class BlockHeaderBuilder {
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .depositsRoot(fromBuilder.depositsRoot)
+            .exitsRoot(fromBuilder.exitsRoot)
+            .executionWitness(fromBuilder.executionWitness)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -179,6 +186,8 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         depositsRoot,
+        exitsRoot,
+        executionWitness,
         blockHeaderFunctions);
   }
 
@@ -220,7 +229,9 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot);
+        depositsRoot,
+        exitsRoot,
+        executionWitness);
   }
 
   private void validateBlockHeader() {
@@ -285,6 +296,8 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
+    exitsRoot(sealableBlockHeader.getExitsRoot().orElse(null));
+    executionWitness(sealableBlockHeader.getExecutionWitness().orElse(null));
     return this;
   }
 
@@ -404,6 +417,11 @@ public class BlockHeaderBuilder {
     return this;
   }
 
+  public BlockHeaderBuilder exitsRoot(final Hash hash) {
+    this.exitsRoot = hash;
+    return this;
+  }
+
   public BlockHeaderBuilder excessBlobGas(final BlobGas excessBlobGas) {
     this.excessBlobGas = excessBlobGas;
     return this;
@@ -416,6 +434,11 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder parentBeaconBlockRoot(final Bytes32 parentBeaconBlockRoot) {
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
+    return this;
+  }
+
+  public BlockHeaderBuilder executionWitness(final ExecutionWitness executionWitness) {
+    this.executionWitness = executionWitness;
     return this;
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright Hyperledger Besu Contributors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 
 package org.hyperledger.besu.ethereum.trie.diffbased.common;
@@ -94,7 +93,7 @@ public class DiffBasedValue<T> implements TrieLog.LogTuple<T> {
 
   @Override
   public String toString() {
-    return "BonsaiValue{"
+    return "DiffBasedValue{"
         + "prior="
         + prior
         + ", updated="

@@ -32,9 +32,9 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
 import java.util.function.Supplier;
+import javax.annotation.Nonnull;
 
 import com.google.common.base.Suppliers;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -95,7 +95,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
         errorReason -> getJsonRpcResponse(requestContext, errorReason, validationResult));
   }
 
-  @NotNull
+  @Nonnull
   private JsonRpcResponse getJsonRpcResponse(
       final JsonRpcRequestContext requestContext,
       final TransactionInvalidReason errorReason,
@@ -103,7 +103,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     if (sendEmptyHashOnInvalidBlock) {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Hash.EMPTY.toString());
     } else {
-      if (errorReason == TransactionInvalidReason.PLUGIN_TX_VALIDATOR) {
+      if (errorReason == TransactionInvalidReason.PLUGIN_TX_POOL_VALIDATOR) {
         final RpcErrorType rpcErrorType =
             JsonRpcErrorConverter.convertTransactionInvalidReason(
                 validationResult.getInvalidReason());

@@ -44,6 +44,7 @@ dependencies {
   implementation 'io.tmio:tuweni-units'
   implementation 'org.hyperledger.besu:arithmetic'
   implementation 'org.hyperledger.besu:bls12-381'
+  implementation 'org.hyperledger.besu:besu-verkle-trie'
   implementation 'tech.pegasys:jc-kzg-4844'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'

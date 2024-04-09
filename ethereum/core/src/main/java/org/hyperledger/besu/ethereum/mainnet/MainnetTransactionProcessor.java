@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.AccessWitness;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
@@ -70,7 +71,7 @@ public class MainnetTransactionProcessor {
 
   private final int maxStackSize;
 
-  private final boolean clearEmptyAccounts;
+  private final ClearEmptyAccountStrategy clearEmptyAccountStrategy;
 
   protected final boolean warmCoinbase;
 
@@ -82,7 +83,7 @@ public class MainnetTransactionProcessor {
       final TransactionValidatorFactory transactionValidatorFactory,
       final AbstractMessageProcessor contractCreationProcessor,
       final AbstractMessageProcessor messageCallProcessor,
-      final boolean clearEmptyAccounts,
+      final ClearEmptyAccountStrategy clearEmptyAccountStrategy,
       final boolean warmCoinbase,
       final int maxStackSize,
       final FeeMarket feeMarket,
@@ -91,7 +92,7 @@ public class MainnetTransactionProcessor {
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
-    this.clearEmptyAccounts = clearEmptyAccounts;
+    this.clearEmptyAccountStrategy = clearEmptyAccountStrategy;
     this.warmCoinbase = warmCoinbase;
     this.maxStackSize = maxStackSize;
     this.feeMarket = feeMarket;
@@ -273,7 +274,10 @@ public class MainnetTransactionProcessor {
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(
-              transaction, blockHeader.getBaseFee(), transactionValidationParams);
+              transaction,
+              blockHeader.getBaseFee(),
+              Optional.ofNullable(blobGasPrice),
+              transactionValidationParams);
       // Make sure the transaction is intrinsically valid before trying to
       // compare against a sender account (because the transaction may not
       // be signed correctly to extract the sender).
@@ -333,13 +337,16 @@ public class MainnetTransactionProcessor {
       if (warmCoinbase) {
         addressList.add(miningBeneficiary);
       }
-
+      final AccessWitness accessWitness = new AccessWitness();
       final long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
+      final long accessEventCost =
+          gasCalculator.computeBaseAccessEventsCost(accessWitness, transaction, sender);
+      final long gasAvailable =
+          transaction.getGasLimit() - intrinsicGas - accessListGas - accessEventCost;
       LOG.trace(
           "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
           gasAvailable,
@@ -376,7 +383,8 @@ public class MainnetTransactionProcessor {
               .blockHashLookup(blockHashLookup)
               .contextVariables(contextVariablesBuilder.build())
               .accessListWarmAddresses(addressList)
-              .accessListWarmStorage(storageList);
+              .accessListWarmStorage(storageList)
+              .accessWitness(accessWitness);
 
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
@@ -461,7 +469,10 @@ public class MainnetTransactionProcessor {
           .addArgument(sender.getBalance())
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
-
+      LOG.info(
+          "Gas used by transaction({}): {}",
+          transaction.getHash().toShortHexString(),
+          gasUsedByTransaction);
       operationTracer.traceEndTransaction(
           worldUpdater,
           transaction,
@@ -498,9 +509,7 @@ public class MainnetTransactionProcessor {
 
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
-      if (clearEmptyAccounts) {
-        worldState.clearAccountsThatAreEmpty();
-      }
+      clearEmptyAccountStrategy.process(worldUpdater);
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         return TransactionProcessingResult.successful(
@@ -510,6 +519,18 @@ public class MainnetTransactionProcessor {
             initialFrame.getOutputData(),
             validationResult);
       } else {
+        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+          LOG.debug(
+              "Transaction {} processing halted: {}",
+              transaction.getHash(),
+              initialFrame.getExceptionalHaltReason().get());
+        }
+        if (initialFrame.getRevertReason().isPresent()) {
+          LOG.debug(
+              "Transaction {} reverted: {}",
+              transaction.getHash(),
+              initialFrame.getRevertReason().get());
+        }
         return TransactionProcessingResult.failed(
             gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
       }

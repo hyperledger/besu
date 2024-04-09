@@ -47,6 +47,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
   private static final String ZERO_BASE_FEE_KEY = "zerobasefee";
+  private static final String FIXED_BASE_FEE_KEY = "fixedbasefee";
   private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
 
   private final ObjectNode configRoot;
@@ -180,10 +181,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
-  public CliqueConfigOptions getCliqueConfigOptions() {
+  public JsonCliqueConfigOptions getCliqueConfigOptions() {
     return JsonUtil.getObjectNode(configRoot, CLIQUE_CONFIG_KEY)
-        .map(CliqueConfigOptions::new)
-        .orElse(CliqueConfigOptions.DEFAULT);
+        .map(JsonCliqueConfigOptions::new)
+        .orElse(JsonCliqueConfigOptions.DEFAULT);
   }
 
   @Override
@@ -422,6 +423,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isFixedBaseFee() {
+    return getOptionalBoolean(FIXED_BASE_FEE_KEY).orElse(false);
+  }
+
+  @Override
   public Optional<Address> getDepositContractAddress() {
     Optional<String> inputAddress = JsonUtil.getString(configRoot, DEPOSIT_CONTRACT_ADDRESS_KEY);
     return inputAddress.map(Address::fromHexString);
@@ -490,6 +496,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     if (isZeroBaseFee()) {
       builder.put("zeroBaseFee", true);
+    }
+
+    if (isFixedBaseFee()) {
+      builder.put("fixedBaseFee", true);
     }
 
     return builder.build();

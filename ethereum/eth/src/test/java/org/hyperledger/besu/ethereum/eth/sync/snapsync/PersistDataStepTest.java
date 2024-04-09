@@ -25,7 +25,7 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataR
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
-import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -75,8 +75,8 @@ public class PersistDataStepTest {
     assertThat(result).isSameAs(tasks);
     assertThat(
             worldStateStorageCoordinator
-                .getStrategy(ForestWorldStateKeyValueStorage.class)
-                .getNodeData(tasks.get(0).getData().getRootHash()))
+                .getStrategy(BonsaiWorldStateKeyValueStorage.class)
+                .getTrieNodeUnsafe(tasks.get(0).getData().getRootHash()))
         .isEmpty();
   }
 
@@ -107,8 +107,8 @@ public class PersistDataStepTest {
             final BytecodeRequest data = (BytecodeRequest) task.getData();
             assertThat(
                     worldStateStorageCoordinator
-                        .getStrategy(ForestWorldStateKeyValueStorage.class)
-                        .getCode(data.getCodeHash()))
+                        .getStrategy(BonsaiWorldStateKeyValueStorage.class)
+                        .getCode(Hash.wrap(data.getCodeHash()), Hash.wrap(data.getAccountHash())))
                 .isPresent();
           } else {
             fail("not expected message");
