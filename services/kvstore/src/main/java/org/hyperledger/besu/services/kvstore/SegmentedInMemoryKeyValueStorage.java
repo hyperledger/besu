@@ -286,6 +286,7 @@ public class SegmentedInMemoryKeyValueStorage
 
     /** protected access to updatedValues map for the transaction. */
     protected Map<SegmentIdentifier, Map<Bytes, Optional<byte[]>>> updatedValues = new HashMap<>();
+
     /** protected access to deletedValues set for the transaction. */
     protected Map<SegmentIdentifier, Set<Bytes>> removedKeys = new HashMap<>();
 

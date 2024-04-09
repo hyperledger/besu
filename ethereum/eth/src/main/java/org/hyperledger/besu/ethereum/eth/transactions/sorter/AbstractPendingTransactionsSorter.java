@@ -517,6 +517,7 @@ public abstract class AbstractPendingTransactionsSorter implements PendingTransa
       return sb.toString();
     }
   }
+
   /**
    * @param transaction to restore blobs onto
    * @return an optional copy of the supplied transaction, but with the BlobsWithCommitments

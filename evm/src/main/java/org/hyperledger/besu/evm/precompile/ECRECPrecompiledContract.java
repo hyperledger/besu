@@ -36,6 +36,7 @@ public class ECRECPrecompiledContract extends AbstractPrecompiledContract {
 
   private static final int V_BASE = 27;
   final SignatureAlgorithm signatureAlgorithm;
+
   /**
    * Instantiates a new ECREC precompiled contract with the default signature algorithm.
    *
