@@ -22,15 +22,18 @@ public class JsonRpcTestCase {
   private final JsonNode request;
   private final JsonNode response;
   private final int statusCode;
+  private final long waitTime;
 
   @JsonCreator
   public JsonRpcTestCase(
       @JsonProperty("request") final JsonNode request,
       @JsonProperty("response") final JsonNode response,
-      @JsonProperty("statusCode") final int statusCode) {
+      @JsonProperty("statusCode") final int statusCode,
+      @JsonProperty(value = "waitTime", defaultValue = "0") final long waitTime) {
     this.request = request;
     this.response = response;
     this.statusCode = statusCode;
+    this.waitTime = waitTime;
   }
 
   public JsonNode getRequest() {
@@ -43,5 +46,9 @@ public class JsonRpcTestCase {
 
   public int getStatusCode() {
     return statusCode;
+  }
+
+  public long getWaitTime() {
+    return waitTime;
   }
 }
