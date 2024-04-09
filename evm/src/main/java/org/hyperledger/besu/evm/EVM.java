@@ -347,7 +347,7 @@ public class EVM {
    * @param codeBytes the code bytes
    * @return the code
    */
-  public Code getCode(final Hash codeHash, final Bytes codeBytes) {
+  public Code getCodeUsingCache(final Hash codeHash, final Bytes codeBytes) {
     Code result = codeHash == null ? null : codeCache.getIfPresent(codeHash);
     if (result == null) {
       result = CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion(), false);

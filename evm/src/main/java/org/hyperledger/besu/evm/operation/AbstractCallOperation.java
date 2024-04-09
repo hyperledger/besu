@@ -195,7 +195,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     final Code code =
         contract == null
             ? CodeV0.EMPTY_CODE
-            : evm.getCode(contract.getCodeHash(), contract.getCode());
+            : evm.getCodeUsingCache(contract.getCodeHash(), contract.getCode());
 
     if (code.isValid()) {
       // frame addition is automatically handled by parent messageFrameStack
