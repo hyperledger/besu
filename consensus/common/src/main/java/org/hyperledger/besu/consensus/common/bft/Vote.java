@@ -29,6 +29,7 @@ public class Vote {
 
   /** The constant ADD_BYTE_VALUE. */
   public static final byte ADD_BYTE_VALUE = (byte) 0xFF;
+
   /** The constant DROP_BYTE_VALUE. */
   public static final byte DROP_BYTE_VALUE = (byte) 0x0L;
 

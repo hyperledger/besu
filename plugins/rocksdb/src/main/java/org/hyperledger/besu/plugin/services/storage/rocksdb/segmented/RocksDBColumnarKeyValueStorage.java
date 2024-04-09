@@ -72,16 +72,22 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBColumnarKeyValueStorage.class);
   private static final int ROCKSDB_FORMAT_VERSION = 5;
   private static final long ROCKSDB_BLOCK_SIZE = 32768;
+
   /** RocksDb blockcache size when using the high spec option */
   protected static final long ROCKSDB_BLOCKCACHE_SIZE_HIGH_SPEC = 1_073_741_824L;
+
   /** RocksDb memtable size when using the high spec option */
   protected static final long ROCKSDB_MEMTABLE_SIZE_HIGH_SPEC = 536_870_912L;
+
   /** Max total size of all WAL file, after which a flush is triggered */
   protected static final long WAL_MAX_TOTAL_SIZE = 1_073_741_824L;
+
   /** Expected size of a single WAL file, to determine how many WAL files to keep around */
   protected static final long EXPECTED_WAL_FILE_SIZE = 67_108_864L;
+
   /** RocksDb number of log files to keep on disk */
   private static final long NUMBER_OF_LOG_FILES_TO_KEEP = 7;
+
   /** RocksDb Time to roll a log file (1 day = 3600 * 24 seconds) */
   private static final long TIME_TO_ROLL_LOG_FILE = 86_400L;
 
@@ -98,11 +104,13 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
   private final MetricsSystem metricsSystem;
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private final RocksDBConfiguration configuration;
+
   /** RocksDB DB options */
   protected DBOptions options;
 
   /** RocksDb transactionDB options */
   protected TransactionDBOptions txOptions;
+
   /** RocksDb statistics */
   protected final Statistics stats = new Statistics();
 
@@ -111,8 +119,10 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
 
   /** Map of the columns handles by name */
   protected Map<SegmentIdentifier, RocksDbSegmentIdentifier> columnHandlesBySegmentIdentifier;
+
   /** Column descriptors */
   protected List<ColumnFamilyDescriptor> columnDescriptors;
+
   /** Column handles */
   protected List<ColumnFamilyHandle> columnHandles;
 

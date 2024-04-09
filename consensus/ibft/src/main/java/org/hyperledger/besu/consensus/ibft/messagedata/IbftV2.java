@@ -18,10 +18,13 @@ package org.hyperledger.besu.consensus.ibft.messagedata;
 public class IbftV2 {
   /** The constant PROPOSAL. */
   public static final int PROPOSAL = 0;
+
   /** The constant PREPARE. */
   public static final int PREPARE = 1;
+
   /** The constant COMMIT. */
   public static final int COMMIT = 2;
+
   /** The constant ROUND_CHANGE. */
   public static final int ROUND_CHANGE = 3;
 

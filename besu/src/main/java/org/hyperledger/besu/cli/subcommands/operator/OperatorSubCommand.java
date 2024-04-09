@@ -42,6 +42,7 @@ public class OperatorSubCommand implements Runnable {
 
   /** The constant COMMAND_NAME. */
   public static final String COMMAND_NAME = "operator";
+
   /** The constant GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME. */
   public static final String GENERATE_BLOCKCHAIN_CONFIG_SUBCOMMAND_NAME =
       "generate-blockchain-config";
