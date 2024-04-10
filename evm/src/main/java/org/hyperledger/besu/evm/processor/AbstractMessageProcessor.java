@@ -27,8 +27,8 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.stream.Collectors;
-
 import javax.annotation.Nonnull;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /**
