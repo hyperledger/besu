@@ -149,6 +149,8 @@ public class EngineJsonRpcService {
   private final HealthService livenessService;
   private final HealthService readinessService;
 
+  private final MetricsSystem metricsSystem;
+
   /**
    * Construct a EngineJsonRpcService to handle either http or websocket clients
    *
@@ -214,6 +216,7 @@ public class EngineJsonRpcService {
     this.livenessService = livenessService;
     this.readinessService = readinessService;
     this.maxActiveConnections = config.getMaxActiveConnections();
+    this.metricsSystem = metricsSystem;
   }
 
   public CompletableFuture<Void> start() {
@@ -451,7 +454,8 @@ public class EngineJsonRpcService {
               new JsonRpcExecutor(
                   new AuthenticatedJsonRpcProcessor(
                       new TimedJsonRpcProcessor(
-                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), metricsSystem),
+                          requestTimer),
                       authenticationService.get(),
                       config.getNoAuthRpcApis()),
                   rpcMethods),
@@ -463,7 +467,8 @@ public class EngineJsonRpcService {
           HandlerFactory.jsonRpcExecutor(
               new JsonRpcExecutor(
                   new TimedJsonRpcProcessor(
-                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), metricsSystem),
+                      requestTimer),
                   rpcMethods),
               tracer,
               config),
