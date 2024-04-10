@@ -102,7 +102,7 @@ class WordsTest {
 
   @ParameterizedTest
   @MethodSource("clampedToLongTestVector")
-  void clampedToLongTest(final Bytes theBytes, final int theExpectedInt) {
+  void clampedToIntTest(final Bytes theBytes, final int theExpectedInt) {
     assertThat(clampedToInt(theBytes)).isEqualTo(theExpectedInt);
   }
 }
