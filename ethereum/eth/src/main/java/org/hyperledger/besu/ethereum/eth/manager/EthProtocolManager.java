@@ -304,7 +304,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .addArgument(code)
           .addArgument(ethPeer::toString)
           .log();
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_RECEIVED_OTHER_MESSAGE_BEFORE_STATUS);
       return;
     }
 
@@ -324,9 +324,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
       LOG.debug(
-          "Unsolicited message received (BREACH_OF_PROTOCOL), disconnecting from EthPeer: {}",
+          "Unsolicited message received {} (BREACH_OF_PROTOCOL), disconnecting from EthPeer: {}",
+          ethMessage.getData().getCode(),
           ethPeer);
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_UNSOLICITED_MESSAGE_RECEIVED);
       return;
     }
 
@@ -354,7 +355,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .addArgument(e::toString)
           .log();
 
-      ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+      ethPeer.disconnect(
+          DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
     maybeResponseData.ifPresent(
         responseData -> {
