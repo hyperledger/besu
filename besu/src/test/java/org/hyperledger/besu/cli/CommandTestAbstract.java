@@ -299,6 +299,8 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.genesisStateHashCacheEnabled(any()))
+        .thenReturn(mockControllerBuilder);
 
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();
