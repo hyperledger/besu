@@ -19,7 +19,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.ForkChoiceEvent;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -493,9 +493,9 @@ public class FastSyncActionsTest {
     GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
     when(genesisConfig.getTerminalBlockNumber()).thenReturn(OptionalLong.of(10L));
 
-    final Optional<ForkchoiceEvent> finalizedEvent =
+    final Optional<ForkChoiceEvent> finalizedEvent =
         Optional.of(
-            new ForkchoiceEvent(
+            new ForkChoiceEvent(
                 null,
                 blockchain.getBlockHashByNumber(3L).get(),
                 blockchain.getBlockHashByNumber(2L).get()));

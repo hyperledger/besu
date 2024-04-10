@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static org.hyperledger.besu.util.FutureUtils.exceptionallyCompose;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
-import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
+import org.hyperledger.besu.consensus.merge.ForkChoiceEvent;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkChoiceListener;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockCause;
@@ -71,7 +71,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class BlockPropagationManager implements UnverifiedForkchoiceListener {
+public class BlockPropagationManager implements UnverifiedForkChoiceListener {
   private static final Logger LOG = LoggerFactory.getLogger(BlockPropagationManager.class);
   private final SynchronizerConfiguration config;
   private final ProtocolSchedule protocolSchedule;
@@ -741,7 +741,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
   }
 
   @Override
-  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
+  public void onNewUnverifiedForkChoice(final ForkChoiceEvent event) {
     if (event.hasValidFinalizedBlockHash()) {
       stop();
     }

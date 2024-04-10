@@ -90,7 +90,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     LOG.debug("Forkchoice parameters {}", forkChoice);
     mergeContext
         .get()
-        .fireNewUnverifiedForkchoiceEvent(
+        .fireNewUnverifiedForkChoiceEvent(
             forkChoice.getHeadBlockHash(),
             forkChoice.getSafeBlockHash(),
             forkChoice.getFinalizedBlockHash());

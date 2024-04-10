@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.ForkChoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -866,8 +866,8 @@ public abstract class AbstractBlockPropagationManagerTest {
   public void shouldStopWhenFinalized() {
     blockPropagationManager.start();
     // syncState.setReachedTerminalDifficulty(true);
-    blockPropagationManager.onNewUnverifiedForkchoice(
-        new ForkchoiceEvent(null, null, this.finalizedHash));
+    blockPropagationManager.onNewUnverifiedForkChoice(
+        new ForkChoiceEvent(null, null, this.finalizedHash));
     assertThat(blockPropagationManager.isRunning()).isFalse();
     assertThat(ethProtocolManager.ethContext().getEthMessages().messageCodesHandled())
         .doesNotContain(EthPV62.NEW_BLOCK_HASHES, EthPV62.NEW_BLOCK);
@@ -877,8 +877,8 @@ public abstract class AbstractBlockPropagationManagerTest {
   public void shouldRestartWhenTTDReachedReturnsFalseAfterFinalizing() {
     blockPropagationManager.start();
     syncState.setReachedTerminalDifficulty(true);
-    blockPropagationManager.onNewUnverifiedForkchoice(
-        new ForkchoiceEvent(null, null, this.finalizedHash));
+    blockPropagationManager.onNewUnverifiedForkChoice(
+        new ForkChoiceEvent(null, null, this.finalizedHash));
     assertThat(blockPropagationManager.isRunning()).isFalse();
     syncState.setReachedTerminalDifficulty(false);
     assertThat(blockPropagationManager.isRunning()).isTrue();
@@ -904,7 +904,7 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     syncState.setReachedTerminalDifficulty(true);
     blockPropagationManager.onNewUnverifiedForkchoice(
-        new ForkchoiceEvent(null, null, this.finalizedHash));
+        new ForkChoiceEvent(null, null, this.finalizedHash));
     // Broadcast message
     EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
@@ -931,7 +931,7 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     syncState.setReachedTerminalDifficulty(true);
     blockPropagationManager.onNewUnverifiedForkchoice(
-        new ForkchoiceEvent(null, null, this.finalizedHash));
+        new ForkChoiceEvent(null, null, this.finalizedHash));
     // Broadcast message
     EthProtocolManagerTestUtil.broadcastMessage(ethProtocolManager, peer, nextAnnouncement);
     peer.respondWhile(responder, peer::hasOutstandingRequests);
@@ -948,7 +948,7 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     syncState.setReachedTerminalDifficulty(true);
     blockPropagationManager.onNewUnverifiedForkchoice(
-        new ForkchoiceEvent(null, null, this.finalizedHash));
+        new ForkChoiceEvent(null, null, this.finalizedHash));
     blockchainUtil.importBlockAtIndex(2);
 
     assertThat(blockPropagationManager.isRunning()).isFalse();

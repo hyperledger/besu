@@ -77,15 +77,15 @@ public interface MergeContext extends ConsensusContext {
    * @param unverifiedForkchoiceListener the unverified forkchoice listener
    * @return the long
    */
-  long addNewUnverifiedForkchoiceListener(
-      final UnverifiedForkchoiceListener unverifiedForkchoiceListener);
+  long addNewUnverifiedForkChoiceListener(
+      final UnverifiedForkChoiceListener unverifiedForkchoiceListener);
 
   /**
    * Remove new unverified forkchoice listener.
    *
    * @param subscriberId the subscriber id
    */
-  void removeNewUnverifiedForkchoiceListener(final long subscriberId);
+  void removeNewUnverifiedForkChoiceListener(final long subscriberId);
 
   /**
    * Fire new unverified forkchoice event.
@@ -94,7 +94,7 @@ public interface MergeContext extends ConsensusContext {
    * @param safeBlockHash the safe block hash
    * @param finalizedBlockHash the finalized block hash
    */
-  void fireNewUnverifiedForkchoiceEvent(
+  void fireNewUnverifiedForkChoiceEvent(
       final Hash headBlockHash, final Hash safeBlockHash, final Hash finalizedBlockHash);
 
   /**

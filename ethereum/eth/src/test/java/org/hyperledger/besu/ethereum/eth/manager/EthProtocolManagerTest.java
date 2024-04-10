@@ -25,7 +25,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.ForkChoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -248,10 +248,10 @@ public final class EthProtocolManagerTest {
 
       mergePeerFilter.mergeStateChanged(
           true, Optional.empty(), Optional.of(blockchain.getChainHead().getTotalDifficulty()));
-      mergePeerFilter.onNewUnverifiedForkchoice(
-          new ForkchoiceEvent(Hash.EMPTY, Hash.EMPTY, Hash.hash(Bytes.of(1))));
-      mergePeerFilter.onNewUnverifiedForkchoice(
-          new ForkchoiceEvent(Hash.EMPTY, Hash.EMPTY, Hash.hash(Bytes.of(2))));
+      mergePeerFilter.onNewUnverifiedForkChoice(
+          new ForkChoiceEvent(Hash.EMPTY, Hash.EMPTY, Hash.hash(Bytes.of(1))));
+      mergePeerFilter.onNewUnverifiedForkChoice(
+          new ForkChoiceEvent(Hash.EMPTY, Hash.EMPTY, Hash.hash(Bytes.of(2))));
 
       ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(workPeer, workPeerStatus));
       assertThat(workPeer.isDisconnected()).isTrue();

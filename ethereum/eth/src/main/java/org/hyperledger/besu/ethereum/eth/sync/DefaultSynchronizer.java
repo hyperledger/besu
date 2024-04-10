@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
-import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
+import org.hyperledger.besu.consensus.merge.ForkChoiceEvent;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkChoiceListener;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -58,7 +58,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceListener {
+public class DefaultSynchronizer implements Synchronizer, UnverifiedForkChoiceListener {
 
   private static final Logger LOG = LoggerFactory.getLogger(DefaultSynchronizer.class);
 
@@ -380,9 +380,9 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   }
 
   @Override
-  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
+  public void onNewUnverifiedForkChoice(final ForkChoiceEvent event) {
     if (this.blockPropagationManager.isPresent()) {
-      this.blockPropagationManager.get().onNewUnverifiedForkchoice(event);
+      this.blockPropagationManager.get().onNewUnverifiedForkChoice(event);
     }
   }
 }

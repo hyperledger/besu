@@ -17,7 +17,7 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.datatypes.Hash;
 
 /** The Forkchoice event. */
-public class ForkchoiceEvent {
+public class ForkChoiceEvent {
 
   private final Hash headBlockHash;
   private final Hash safeBlockHash;
@@ -30,7 +30,7 @@ public class ForkchoiceEvent {
    * @param safeBlockHash the safe block hash
    * @param finalizedBlockHash the finalized block hash
    */
-  public ForkchoiceEvent(
+  public ForkChoiceEvent(
       final Hash headBlockHash, final Hash safeBlockHash, final Hash finalizedBlockHash) {
     this.headBlockHash = headBlockHash;
     this.finalizedBlockHash = finalizedBlockHash;
@@ -84,7 +84,7 @@ public class ForkchoiceEvent {
 
   @Override
   public String toString() {
-    return "ForkchoiceEvent{"
+    return "ForkChoiceEvent{"
         + "headBlockHash="
         + headBlockHash
         + ", safeBlockHash="

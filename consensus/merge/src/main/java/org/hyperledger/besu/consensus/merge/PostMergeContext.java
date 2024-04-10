@@ -59,8 +59,8 @@ public class PostMergeContext implements MergeContext {
       new AtomicReference<>(Optional.empty());
   private final Subscribers<MergeStateHandler> newMergeStateCallbackSubscribers =
       Subscribers.create();
-  private final Subscribers<UnverifiedForkchoiceListener>
-      newUnverifiedForkchoiceCallbackSubscribers = Subscribers.create();
+  private final Subscribers<UnverifiedForkChoiceListener>
+      newUnverifiedForkChoiceCallbackSubscribers = Subscribers.create();
 
   private final EvictingQueue<PayloadWrapper> blocksInProgress =
       EvictingQueue.create(MAX_BLOCKS_IN_PROGRESS);
@@ -166,22 +166,22 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public long addNewUnverifiedForkchoiceListener(
-      final UnverifiedForkchoiceListener unverifiedForkchoiceListener) {
-    return newUnverifiedForkchoiceCallbackSubscribers.subscribe(unverifiedForkchoiceListener);
+  public long addNewUnverifiedForkChoiceListener(
+      final UnverifiedForkChoiceListener unverifiedForkchoiceListener) {
+    return newUnverifiedForkChoiceCallbackSubscribers.subscribe(unverifiedForkchoiceListener);
   }
 
   @Override
-  public void removeNewUnverifiedForkchoiceListener(final long subscriberId) {
-    newUnverifiedForkchoiceCallbackSubscribers.unsubscribe(subscriberId);
+  public void removeNewUnverifiedForkChoiceListener(final long subscriberId) {
+    newUnverifiedForkChoiceCallbackSubscribers.unsubscribe(subscriberId);
   }
 
   @Override
-  public void fireNewUnverifiedForkchoiceEvent(
+  public void fireNewUnverifiedForkChoiceEvent(
       final Hash headBlockHash, final Hash safeBlockHash, final Hash finalizedBlockHash) {
-    final ForkchoiceEvent event =
-        new ForkchoiceEvent(headBlockHash, safeBlockHash, finalizedBlockHash);
-    newUnverifiedForkchoiceCallbackSubscribers.forEach(cb -> cb.onNewUnverifiedForkchoice(event));
+    final ForkChoiceEvent event =
+        new ForkChoiceEvent(headBlockHash, safeBlockHash, finalizedBlockHash);
+    newUnverifiedForkChoiceCallbackSubscribers.forEach(cb -> cb.onNewUnverifiedForkChoice(event));
   }
 
   @Override

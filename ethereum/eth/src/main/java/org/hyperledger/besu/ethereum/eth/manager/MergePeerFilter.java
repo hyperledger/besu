@@ -16,9 +16,9 @@
 
 package org.hyperledger.besu.ethereum.eth.manager;
 
-import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.ForkChoiceEvent;
 import org.hyperledger.besu.consensus.merge.MergeStateHandler;
-import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
+import org.hyperledger.besu.consensus.merge.UnverifiedForkChoiceListener;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.StatusMessage;
@@ -32,7 +32,7 @@ import java.util.concurrent.locks.StampedLock;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceListener {
+public class MergePeerFilter implements MergeStateHandler, UnverifiedForkChoiceListener {
 
   private Optional<Difficulty> powTerminalDifficulty = Optional.of(Difficulty.MAX_VALUE);
   private final StampedLock powTerminalDifficultyLock = new StampedLock();
@@ -73,7 +73,7 @@ public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceL
   }
 
   @Override
-  public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
+  public void onNewUnverifiedForkChoice(final ForkChoiceEvent event) {
     if (event
         .hasValidFinalizedBlockHash()) { // forkchoices send finalized as 0 after ttd, but before an
       // epoch is

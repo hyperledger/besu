@@ -724,7 +724,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     // assert that listeners are always notified
     verify(mergeContext)
-        .fireNewUnverifiedForkchoiceEvent(
+        .fireNewUnverifiedForkChoiceEvent(
             fcuParam.getHeadBlockHash(),
             fcuParam.getSafeBlockHash(),
             fcuParam.getFinalizedBlockHash());

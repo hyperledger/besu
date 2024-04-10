@@ -239,7 +239,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
           "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
       protocolContext
           .getConsensusContext(MergeContext.class)
-          .addNewUnverifiedForkchoiceListener(sync);
+          .addNewUnverifiedForkChoiceListener(sync);
     }
 
     return sync;

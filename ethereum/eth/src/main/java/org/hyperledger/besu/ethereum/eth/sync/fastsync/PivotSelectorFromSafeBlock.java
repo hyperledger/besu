@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
+import org.hyperledger.besu.consensus.merge.ForkChoiceEvent;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -41,7 +41,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
   private final EthContext ethContext;
   private final MetricsSystem metricsSystem;
   private final GenesisConfigOptions genesisConfig;
-  private final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier;
+  private final Supplier<Optional<ForkChoiceEvent>> forkchoiceStateSupplier;
   private final Runnable cleanupAction;
 
   private long lastNoFcuReceivedInfoLog = System.currentTimeMillis();
@@ -54,7 +54,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final GenesisConfigOptions genesisConfig,
-      final Supplier<Optional<ForkchoiceEvent>> forkchoiceStateSupplier,
+      final Supplier<Optional<ForkChoiceEvent>> forkchoiceStateSupplier,
       final Runnable cleanupAction) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
@@ -67,7 +67,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
 
   @Override
   public Optional<FastSyncState> selectNewPivotBlock() {
-    final Optional<ForkchoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
+    final Optional<ForkChoiceEvent> maybeForkchoice = forkchoiceStateSupplier.get();
     if (maybeForkchoice.isPresent() && maybeForkchoice.get().hasValidSafeBlockHash()) {
       return Optional.of(selectLastSafeBlockAsPivot(maybeForkchoice.get().getSafeBlockHash()));
     }
@@ -108,7 +108,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
     return Math.max(
         forkchoiceStateSupplier
             .get()
-            .map(ForkchoiceEvent::getHeadBlockHash)
+            .map(ForkChoiceEvent::getHeadBlockHash)
             .map(
                 headBlockHash ->
                     maybeCachedHeadBlockHeader
