@@ -144,7 +144,7 @@ public class PrivateTransactionProcessor {
                 .address(privateContractAddress)
                 .contract(privateContractAddress)
                 .inputData(Bytes.EMPTY)
-                .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
+                .code(contractCreationProcessor.getCodeFromEVMUncached(initCodeBytes))
                 .build();
       } else {
         final Address to = transaction.getTo().get();

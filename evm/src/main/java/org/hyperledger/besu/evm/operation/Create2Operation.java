@@ -15,11 +15,17 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.crypto.Hash.keccak256;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -40,20 +46,34 @@ public class Create2Operation extends AbstractCreateOperation {
   }
 
   @Override
-  public Address targetContractAddress(final MessageFrame frame) {
+  public long cost(final MessageFrame frame, final Supplier<Code> unused) {
+    final int inputOffset = clampedToInt(frame.getStackItem(1));
+    final int inputSize = clampedToInt(frame.getStackItem(2));
+    return clampedAdd(
+        clampedAdd(
+            gasCalculator().txCreateCost(),
+            gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputSize)),
+        clampedAdd(
+            gasCalculator().createKeccakCost(inputSize), gasCalculator().initcodeCost(inputSize)));
+  }
+
+  @Override
+  public Address targetContractAddress(final MessageFrame frame, final Code initcode) {
     final Address sender = frame.getRecipientAddress();
-    final long offset = clampedToLong(frame.getStackItem(1));
-    final long length = clampedToLong(frame.getStackItem(2));
     final Bytes32 salt = Bytes32.leftPad(frame.getStackItem(3));
-    final Bytes initCode = frame.readMutableMemory(offset, length);
-    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, keccak256(initCode)));
+    final Bytes32 hash = keccak256(Bytes.concatenate(PREFIX, sender, salt, initcode.getCodeHash()));
     final Address address = Address.extract(hash);
     frame.warmUpAddress(address);
     return address;
   }
 
   @Override
-  public long cost(final MessageFrame frame) {
-    return gasCalculator().create2OperationGasCost(frame);
+  protected Code getInitCode(final MessageFrame frame, final EVM evm) {
+    final long inputOffset = clampedToLong(frame.getStackItem(1));
+    final long inputSize = clampedToLong(frame.getStackItem(2));
+    final Bytes inputData = frame.readMemory(inputOffset, inputSize);
+    // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
+    // addresses disk loading delay, and we already have the code.
+    return evm.getCodeUncached(inputData);
   }
 }
