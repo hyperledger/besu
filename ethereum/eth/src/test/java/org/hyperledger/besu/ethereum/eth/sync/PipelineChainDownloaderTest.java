@@ -320,7 +320,8 @@ public class PipelineChainDownloaderTest {
     }
     selectTargetFuture.completeExceptionally(InvalidBlockException.create("Failed"));
 
-    verify(syncState, times(1)).disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL);
+    verify(syncState, times(1))
+        .disconnectSyncTarget(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_BLOCK);
   }
 
   private CompletableFuture<Void> expectPipelineStarted(final SyncTarget syncTarget) {
