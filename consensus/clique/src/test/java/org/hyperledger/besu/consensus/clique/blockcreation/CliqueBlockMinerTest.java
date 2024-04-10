@@ -34,6 +34,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
@@ -93,7 +94,8 @@ class CliqueBlockMinerTest {
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(
-            new BlockCreator.BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+            new BlockCreator.BlockCreationResult(
+                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -148,7 +150,8 @@ class CliqueBlockMinerTest {
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(
-            new BlockCreator.BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+            new BlockCreator.BlockCreationResult(
+                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);

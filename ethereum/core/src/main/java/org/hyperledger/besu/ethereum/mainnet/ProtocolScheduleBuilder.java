@@ -396,15 +396,18 @@ public class ProtocolScheduleBuilder {
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
 
     switch (milestoneType) {
-      case BLOCK_NUMBER -> protocolSchedule.putBlockNumberMilestone(
-          blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
-      case TIMESTAMP -> protocolSchedule.putTimestampMilestone(
-          blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
-      default -> throw new IllegalStateException(
-          "Unexpected milestoneType: "
-              + milestoneType
-              + " for milestone: "
-              + blockNumberOrTimestamp);
+      case BLOCK_NUMBER ->
+          protocolSchedule.putBlockNumberMilestone(
+              blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+      case TIMESTAMP ->
+          protocolSchedule.putTimestampMilestone(
+              blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+      default ->
+          throw new IllegalStateException(
+              "Unexpected milestoneType: "
+                  + milestoneType
+                  + " for milestone: "
+                  + blockNumberOrTimestamp);
     }
   }
 

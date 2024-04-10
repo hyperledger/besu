@@ -25,12 +25,16 @@ public final class CodeSection {
 
   /** The length. */
   final int length;
+
   /** The Inputs. */
   final int inputs;
+
   /** The Outputs. */
   final int outputs;
+
   /** The Max stack height. */
   final int maxStackHeight;
+
   /** The byte offset from the beginning of the container that the section starts at */
   final int entryPoint;
 

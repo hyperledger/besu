@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static com.google.common.base.Preconditions.checkArgument;
-import static com.google.common.collect.Streams.stream;
 import static org.apache.tuweni.net.tls.VertxTrustOptions.allowlistClients;
 
 import org.hyperledger.besu.ethereum.api.handlers.HandlerFactory;
@@ -55,8 +54,6 @@ import java.util.concurrent.atomic.AtomicInteger;
 import javax.annotation.Nullable;
 
 import com.google.common.annotations.VisibleForTesting;
-import com.google.common.base.Splitter;
-import com.google.common.collect.Iterables;
 import io.opentelemetry.api.OpenTelemetry;
 import io.opentelemetry.api.baggage.propagation.W3CBaggagePropagator;
 import io.opentelemetry.api.trace.Span;
@@ -74,12 +71,12 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxException;
 import io.vertx.core.http.ClientAuth;
 import io.vertx.core.http.HttpConnection;
-import io.vertx.core.http.HttpHeaders;
 import io.vertx.core.http.HttpMethod;
 import io.vertx.core.http.HttpServer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import io.vertx.core.http.HttpServerResponse;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.core.net.PfxOptions;
 import io.vertx.core.net.SocketAddress;
 import io.vertx.ext.web.Route;
@@ -137,6 +134,7 @@ public class JsonRpcHttpService {
   private HttpServer httpServer;
   private final HealthService livenessService;
   private final HealthService readinessService;
+  private final MetricsSystem metricsSystem;
 
   /**
    * Construct a JsonRpcHttpService handler
@@ -207,6 +205,7 @@ public class JsonRpcHttpService {
     if (metricsSystem instanceof OpenTelemetrySystem) {
       this.tracerProvider = ((OpenTelemetrySystem) metricsSystem).getTracerProvider();
     }
+    this.metricsSystem = metricsSystem;
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -347,7 +346,8 @@ public class JsonRpcHttpService {
               new JsonRpcExecutor(
                   new AuthenticatedJsonRpcProcessor(
                       new TimedJsonRpcProcessor(
-                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), metricsSystem),
+                          requestTimer),
                       authenticationService.get(),
                       config.getNoAuthRpcApis()),
                   rpcMethods),
@@ -359,7 +359,8 @@ public class JsonRpcHttpService {
           HandlerFactory.jsonRpcExecutor(
               new JsonRpcExecutor(
                   new TimedJsonRpcProcessor(
-                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), metricsSystem),
+                      requestTimer),
                   rpcMethods),
               tracer,
               config),
@@ -507,19 +508,8 @@ public class JsonRpcHttpService {
   }
 
   private Optional<String> getAndValidateHostHeader(final RoutingContext event) {
-    String hostname =
-        event.request().getHeader(HttpHeaders.HOST) != null
-            ? event.request().getHeader(HttpHeaders.HOST)
-            : event.request().host();
-    final Iterable<String> splitHostHeader = Splitter.on(':').split(hostname);
-    final long hostPieces = stream(splitHostHeader).count();
-    if (hostPieces > 1) {
-      // If the host contains a colon, verify the host is correctly formed - host [ ":" port ]
-      if (hostPieces > 2 || !Iterables.get(splitHostHeader, 1).matches("\\d{1,5}+")) {
-        return Optional.empty();
-      }
-    }
-    return Optional.ofNullable(Iterables.get(splitHostHeader, 0));
+    final HostAndPort hostAndPort = event.request().authority();
+    return Optional.ofNullable(hostAndPort).map(HostAndPort::host);
   }
 
   private boolean hostIsInAllowlist(final String hostHeader) {

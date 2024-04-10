@@ -80,6 +80,7 @@ public class ProtocolSpec {
 
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
+
   /**
    * Creates a new protocol specification instance.
    *
