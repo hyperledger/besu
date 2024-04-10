@@ -138,7 +138,8 @@ public class DeFramerTest {
 
     deFramer.exceptionCaught(ctx, new DecoderException(new FramingException("Test")));
 
-    verify(peerConnection).disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    verify(peerConnection)
+        .disconnect(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_MESSAGE_RECEIVED_CAUGHT_EXCEPTION);
   }
 
   @Test
@@ -148,7 +149,8 @@ public class DeFramerTest {
 
     deFramer.exceptionCaught(ctx, new DecoderException(new RLPException("Test")));
 
-    verify(peerConnection).disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    verify(peerConnection)
+        .disconnect(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_MESSAGE_RECEIVED_CAUGHT_EXCEPTION);
   }
 
   @Test

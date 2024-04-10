@@ -130,7 +130,10 @@ public class NetworkRunner implements AutoCloseable {
                     cap.getVersion(),
                     code,
                     message.getConnection().getPeerInfo().getNodeId());
-                message.getConnection().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+                message
+                    .getConnection()
+                    .disconnect(
+                        DisconnectReason.BREACH_OF_PROTOCOL_INVALID_MESSAGE_CODE_FOR_PROTOCOL);
                 return;
               }
               inboundMessageCounter
