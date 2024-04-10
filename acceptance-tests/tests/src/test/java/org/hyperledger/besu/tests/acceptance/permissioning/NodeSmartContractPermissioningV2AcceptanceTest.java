@@ -48,7 +48,6 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
     permissionedNode.execute(allowNode(permissionedNode));
     permissionedNode.verify(connectionIsAllowed(permissionedNode));
-
   }
 
   @Test
