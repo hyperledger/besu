@@ -50,11 +50,13 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
 
   /** The Curve. */
   protected final ECDomainParameters curve;
+
   /** The Half curve order. */
   protected final BigInteger halfCurveOrder;
 
   /** The Key pair generator. */
   protected final KeyPairGenerator keyPairGenerator;
+
   /** The Curve order. */
   protected final BigInteger curveOrder;
 

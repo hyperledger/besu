@@ -93,14 +93,6 @@ class NodeSmartContractPermissioningV2AcceptanceTestBase extends AcceptanceTestB
     }
   }
 
-  protected Node miner(final String name) {
-    try {
-      return besu.createCustomGenesisNode(name, GENESIS_FILE, false, true);
-    } catch (IOException e) {
-      throw new RuntimeException("Error creating node", e);
-    }
-  }
-
   @Override
   public void tearDownAcceptanceTestBase() {
     permissionedCluster.stop();

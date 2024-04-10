@@ -34,6 +34,7 @@ public class SECPPublicKey implements java.security.PublicKey {
 
   /** Encoded Bytes */
   private final Bytes encoded;
+
   /** Algorithm */
   private final String algorithm;
 

@@ -39,6 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 public class CliqueExtraData implements ParsedExtraData {
   private static final Logger LOG = LoggerFactory.getLogger(CliqueExtraData.class);
+
   /** The constant EXTRA_VANITY_LENGTH. */
   public static final int EXTRA_VANITY_LENGTH = 32;
 

@@ -28,11 +28,13 @@ abstract class AbstractFixedCostOperation extends AbstractOperation {
 
   /** The Success response. */
   protected final OperationResult successResponse;
+
   /** The Out of gas response. */
   protected final OperationResult outOfGasResponse;
 
   private final OperationResult underflowResponse;
   private final OperationResult overflowResponse;
+
   /** The Gas cost. */
   protected final long gasCost;
 
