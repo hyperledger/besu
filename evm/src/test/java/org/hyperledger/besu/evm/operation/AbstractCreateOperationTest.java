@@ -134,7 +134,7 @@ class AbstractCreateOperationTest {
       final long inputOffset = clampedToLong(frame.getStackItem(1));
       final long inputSize = clampedToLong(frame.getStackItem(2));
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
-      return evm.getCodeUsingCache(null, inputData);
+      return evm.getCodeUncached(inputData);
     }
 
     @Override

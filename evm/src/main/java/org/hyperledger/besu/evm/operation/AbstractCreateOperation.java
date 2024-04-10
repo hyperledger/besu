@@ -103,7 +103,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
       // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
       // addresses disk loading delay, and we already have the code.
-      Code code = evm.getCodeUsingCache(null, inputData);
+      Code code = evm.getCodeUncached(inputData);
 
       if (code.isValid() && frame.getCode().getEofVersion() <= code.getEofVersion()) {
         frame.decrementRemainingGas(cost);

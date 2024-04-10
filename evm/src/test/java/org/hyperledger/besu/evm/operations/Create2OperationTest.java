@@ -173,7 +173,7 @@ public class Create2OperationTest {
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
-    when(evm.getCodeUsingCache(any(), any()))
+    when(evm.getCode(any(), any()))
         .thenAnswer(invocation -> CodeFactory.createCode(invocation.getArgument(1), 0, true));
   }
 

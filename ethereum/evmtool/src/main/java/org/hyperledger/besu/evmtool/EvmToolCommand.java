@@ -366,7 +366,7 @@ public class EvmToolCommand implements Runnable {
       if (codeBytes.isEmpty()) {
         codeBytes = component.getWorldState().get(receiver).getCode();
       }
-      Code code = evm.getCodeUsingCache(Hash.hash(codeBytes), codeBytes);
+      Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
       if (!code.isValid()) {
         out.println(((CodeInvalid) code).getInvalidReason());
         return;

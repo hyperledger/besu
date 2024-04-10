@@ -238,6 +238,6 @@ public abstract class AbstractMessageProcessor {
    * @return the code from evm
    */
   public Code getCodeFromEVM(final Hash codeHash, final Bytes codeBytes) {
-    return evm.getCodeUsingCache(codeHash, codeBytes);
+    return evm.getCode(codeHash, codeBytes);
   }
 }
