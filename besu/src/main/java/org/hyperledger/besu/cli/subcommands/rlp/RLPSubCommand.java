@@ -281,9 +281,7 @@ public class RLPSubCommand implements Runnable {
         try (Scanner scanner = new Scanner(parentCommand.in, UTF_8.name())) {
           inputData = scanner.nextLine();
         } catch (NoSuchElementException e) {
-          throw new ParameterException(
-              spec.commandLine(),
-              "Unable to read input data." + e);
+          throw new ParameterException(spec.commandLine(), "Unable to read input data." + e);
         }
       }
 

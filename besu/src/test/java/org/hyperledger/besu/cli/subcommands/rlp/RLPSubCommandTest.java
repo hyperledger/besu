@@ -264,8 +264,8 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   public void decodeWithoutPathMustWriteToStandardOutput() {
 
     final String inputData =
-    "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
-    + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
+        "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
+            + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
 
     // set stdin
     final ByteArrayInputStream stdIn = new ByteArrayInputStream(inputData.getBytes(UTF_8));
@@ -273,7 +273,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
     parseCommand(stdIn, RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME);
 
     final String expectedValidatorString =
-    "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
+        "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
     assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -282,8 +282,8 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   public void decodeQBFTWithoutPathMustWriteToStandardOutput() {
 
     final String inputData =
-    "0xf84fa00000000000000000000000000000000000000000000000000000000000000000ea94241f804efb46f71acaa" 
-    + "5be94a62f7798e89c3724946cdf72da457453063ea92e7fa5ac30afbcec28cdc080c0";
+        "0xf84fa00000000000000000000000000000000000000000000000000000000000000000ea94241f804efb46f71acaa"
+            + "5be94a62f7798e89c3724946cdf72da457453063ea92e7fa5ac30afbcec28cdc080c0";
 
     // set stdin
     final ByteArrayInputStream stdIn = new ByteArrayInputStream(inputData.getBytes(UTF_8));
@@ -291,7 +291,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
     parseCommand(stdIn, RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME, "--type", RLP_QBFT_TYPE);
 
     final String expectedValidatorString =
-    "[0x241f804efb46f71acaa5be94a62f7798e89c3724, 0x6cdf72da457453063ea92e7fa5ac30afbcec28cd]";
+        "[0x241f804efb46f71acaa5be94a62f7798e89c3724, 0x6cdf72da457453063ea92e7fa5ac30afbcec28cd]";
     assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -302,8 +302,8 @@ public class RLPSubCommandTest extends CommandTestAbstract {
     final File file = File.createTempFile("ibftValidators", "rlp");
 
     final String inputData =
-    "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
-    + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
+        "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
+            + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
 
     // set stdin
     final ByteArrayInputStream stdIn = new ByteArrayInputStream(inputData.getBytes(UTF_8));
@@ -311,7 +311,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
     parseCommand(stdIn, RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME, "--to", file.getPath());
 
     final String expectedValidatorString =
-    "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
+        "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
 
     assertThat(contentOf(file)).contains(expectedValidatorString);
 
@@ -326,7 +326,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
     try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile, UTF_8)) {
 
       fileWriter.write(
-        "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0");
+          "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0");
 
       fileWriter.flush();
 
@@ -337,7 +337,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
           tempJsonFile.toFile().getAbsolutePath());
 
       final String expectedValidatorString =
-        "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
+          "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
 
       assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
       assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -345,14 +345,13 @@ public class RLPSubCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void decodeWithInputFilePathToOutputFile(final @TempDir Path dir)
-      throws Exception {
+  public void decodeWithInputFilePathToOutputFile(final @TempDir Path dir) throws Exception {
     final Path tempInputFile = Files.createTempFile(dir, "input", "json");
     final File tempOutputFile = File.createTempFile("ibftValidators", "rlp");
     try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempInputFile, UTF_8)) {
 
       fileWriter.write(
-        "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0");
+          "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0");
 
       fileWriter.flush();
 
@@ -362,12 +361,11 @@ public class RLPSubCommandTest extends CommandTestAbstract {
           "--from",
           tempInputFile.toFile().getAbsolutePath(),
           "--to",
-          tempOutputFile.getPath()
-          );
+          tempOutputFile.getPath());
 
       final String expectedValidatorString =
-      "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
-      
+          "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
+
       assertThat(contentOf(tempOutputFile)).contains(expectedValidatorString);
       assertThat(commandOutput.toString(UTF_8)).isEmpty();
       assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -384,26 +382,19 @@ public class RLPSubCommandTest extends CommandTestAbstract {
     parseCommand(stdIn, RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .startsWith("Unable to read input data.");
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith("Unable to read input data.");
   }
 
   @Test
   public void decodeWithInputFilePathMustThrowErrorFileNotExist(final @TempDir Path dir)
       throws Exception {
 
-      final String nonExistingFileName = "/incorrectPath/wrongFile.json";
+    final String nonExistingFileName = "/incorrectPath/wrongFile.json";
 
-      parseCommand(
-          RLP_SUBCOMMAND_NAME,
-          RLP_DECODE_SUBCOMMAND_NAME,
-          "--from",
-          nonExistingFileName);
+    parseCommand(RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME, "--from", nonExistingFileName);
 
-      assertThat(commandOutput.toString(UTF_8)).isEmpty();
-      assertThat(commandErrorOutput.toString(UTF_8))
-        .contains(
-              "Unable to read input file");
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Unable to read input file");
   }
 
   @Test
