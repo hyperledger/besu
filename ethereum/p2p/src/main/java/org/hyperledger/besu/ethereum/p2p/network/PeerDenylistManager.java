@@ -66,7 +66,6 @@ public class PeerDenylistManager implements DisconnectCallback {
   }
 
   private boolean shouldBlock(final DisconnectReason reason, final boolean initiatedByPeer) {
-    // locally
     return (!initiatedByPeer && locallyTriggeredDisconnectReasons.contains(reason))
         || (initiatedByPeer && remotelyTriggeredDisconnectReasons.contains(reason));
   }
