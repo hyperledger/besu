@@ -439,7 +439,7 @@ subprojects {
       repositories {
         maven {
           name = "cloudsmith"
-          url = "https://api-g.cloudsmith.io/maven/consensys/linea-besu/"
+          url = "https://api.cloudsmith.io/maven/consensys/linea-besu/"
           credentials {
             username = cloudsmithUser
             password = cloudsmithKey
