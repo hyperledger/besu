@@ -102,10 +102,12 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
   }
 
   private void verifyAllNodesHaveFinishedSyncing() {
-    allowedNode.verify(eth.syncingStatus(false));
-    bootnode.verify(eth.syncingStatus(false));
-    permissionedNode.verify(eth.syncingStatus(false));
-    forbiddenNode.verify(eth.syncingStatus(false));
+    // verify the miner (permissionedNode) started producing blocks and other nodes are syncing
+    // from it
+    waitForBlockHeight(permissionedNode, 1);
+    final var minerChainHead = permissionedNode.execute(ethTransactions.block());
+    bootnode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
+    allowedNode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
   }
 
   @Test
