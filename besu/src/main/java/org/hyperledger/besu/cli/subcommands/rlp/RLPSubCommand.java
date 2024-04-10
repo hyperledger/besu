@@ -32,6 +32,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
@@ -273,12 +274,16 @@ public class RLPSubCommand implements Runnable {
           // Read only the first line if there are many lines
           inputData = reader.readLine();
         } catch (IOException e) {
-          throw new ExecutionException(spec.commandLine(), "Unable to read JSON file.");
+          throw new ExecutionException(spec.commandLine(), "Unable to read input file.");
         }
       } else {
         // get data from standard input
         try (Scanner scanner = new Scanner(parentCommand.in, UTF_8.name())) {
           inputData = scanner.nextLine();
+        } catch (NoSuchElementException e) {
+          throw new ParameterException(
+              spec.commandLine(),
+              "Unable to read input data." + e);
         }
       }
 
