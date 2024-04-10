@@ -38,6 +38,8 @@
 - Add `tx-pool-blob-price-bump` option to configure the price bump percentage required to replace blob transactions (by default 100%) [#6874](https://github.com/hyperledger/besu/pull/6874)
 - Log detailed timing of block creation steps [#6880](https://github.com/hyperledger/besu/pull/6880)
 - Expose transaction count by type metrics for the layered txpool [#6903](https://github.com/hyperledger/besu/pull/6903)
+- Expose bad block events via the BesuEvents plugin API  [#6848](https://github.com/hyperledger/besu/pull/6848)
+- Add RPC errors metric [#6919](https://github.com/hyperledger/besu/pull/6919/)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
