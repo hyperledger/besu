@@ -207,17 +207,9 @@ public class Transaction
         int initcodeCount = initcodes.get().size();
         checkArgument(
             initcodeCount > 0, "Initcode transactions must contain at least one initcode");
-        checkArgument(
-            initcodeCount <= MAX_INITCODE_COUNT,
-            "Initcode transactions must contain no more than %s initcode entries",
-            MAX_INITCODE_COUNT);
         for (Bytes initcode : initcodes.get()) {
           checkArgument(
               initcode != null && !initcode.isEmpty(), "Initcode entries cannot be zero length");
-          checkArgument(
-              initcode.size() <= MAX_INITCODE_SIZE,
-              "Initcode entries cannot be larger than %s bytes",
-              MAX_INITCODE_SIZE);
         }
       }
     }
@@ -1097,7 +1089,7 @@ public class Transaction
             withCommitments ->
                 blobsWithCommitmentsDetachedCopy(withCommitments, detachedVersionedHashes.get()));
     final Optional<List<Bytes>> detatchedInitcodes =
-        initcodes.map(initcodes -> initcodes.stream().map(Bytes::copy).toList());
+        initcodes.map(ic -> ic.stream().map(Bytes::copy).toList());
 
     final var copiedTx =
         new Transaction(
@@ -1298,7 +1290,9 @@ public class Transaction
     }
 
     public Builder guessType() {
-      if (versionedHashes != null && !versionedHashes.isEmpty()) {
+      if (initcodes != null && !initcodes.isEmpty()) {
+        transactionType = TransactionType.INITCODE;
+      } else if (versionedHashes != null && !versionedHashes.isEmpty()) {
         transactionType = TransactionType.BLOB;
       } else if (maxPriorityFeePerGas != null || maxFeePerGas != null) {
         transactionType = TransactionType.EIP1559;

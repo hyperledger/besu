@@ -62,7 +62,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
 
   private final int maxInitcodeSize;
 
-  private final int MAX_INITCODE_COUNT = 256;
+  private static final int MAX_INITCODE_COUNT = 256;
 
   public MainnetTransactionValidator(
       final GasCalculator gasCalculator,
@@ -420,17 +420,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
           TransactionInvalidReason.INVALID_INITCODE_TX_TARGET,
           "Initcode transactions cannot have an empty 'to' field");
     }
-    if (transaction.getInitCodes().isEmpty()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_INITCODE_LIST,
-          "Initcode transactions must have initcodes");
-    }
     List<Bytes> initCodes = transaction.getInitCodes().get();
-    if (initCodes.isEmpty()) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.INVALID_INITCODE_LIST,
-          "Initcode transactions must have initcodes");
-    }
     if (initCodes.size() > MAX_INITCODE_COUNT) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INVALID_INITCODE_LIST,
@@ -439,11 +429,6 @@ public class MainnetTransactionValidator implements TransactionValidator {
               + " initcode entries");
     }
     for (Bytes initcode : initCodes) {
-      if (initcode == null || initcode.isEmpty()) {
-        return ValidationResult.invalid(
-            TransactionInvalidReason.INVALID_INITCODE_LIST,
-            "Initcode entries cannot have zero length");
-      }
       if (initcode.size() > maxInitcodeSize) {
         return ValidationResult.invalid(
             TransactionInvalidReason.INVALID_INITCODE_LIST,

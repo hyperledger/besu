@@ -14,15 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-
-import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
 public class InitcodeTransactionEncoder {
+
+  private InitcodeTransactionEncoder() {}
 
   public static void encode(final Transaction transaction, final RLPOutput out) {
     out.startList();
@@ -38,10 +37,5 @@ public class InitcodeTransactionEncoder {
     out.writeList(transaction.getInitCodes().orElseThrow(), (val, o) -> o.writeBytes(val));
     TransactionEncoder.writeSignatureAndRecoveryId(transaction, out);
     out.endList();
-  }
-
-  public static void writeBlobVersionedHashes(
-      final RLPOutput rlpOutput, final List<VersionedHash> versionedHashes) {
-    rlpOutput.writeList(versionedHashes, (h, out) -> out.writeBytes(h.toBytes()));
   }
 }
