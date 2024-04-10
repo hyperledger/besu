@@ -127,7 +127,7 @@ public class FullSyncChainDownloaderForkTest {
     // We should have disconnected from our peer on the invalid chain
     assertThat(peer.getEthPeer().isDisconnected()).isTrue();
     assertThat(peer.getPeerConnection().getDisconnectReason())
-        .contains(DisconnectReason.BREACH_OF_PROTOCOL);
+        .contains(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_BLOCK);
     assertThat(syncState.syncTarget()).isEmpty();
   }
 }

@@ -339,7 +339,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
           "Malformed NEW_BLOCK message received from peer (BREACH_OF_PROTOCOL), disconnecting: {}",
           message.getPeer(),
           e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
   }
 
@@ -402,7 +402,7 @@ public class BlockPropagationManager implements UnverifiedForkchoiceListener {
           "Malformed NEW_BLOCK_HASHES message received from peer (BREACH_OF_PROTOCOL), disconnecting: {}",
           message.getPeer(),
           e);
-      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      message.getPeer().disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
   }
 
