@@ -352,7 +352,7 @@ public class EVM {
     checkNotNull(codeHash);
     Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = getCodeUncached(codeHash);
+      result = getCodeUncached(codeBytes);
       codeCache.put(codeHash, result);
     }
     return result;
