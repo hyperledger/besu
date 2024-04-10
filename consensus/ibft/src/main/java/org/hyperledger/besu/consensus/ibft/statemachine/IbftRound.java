@@ -57,6 +57,7 @@ public class IbftRound {
   private final Subscribers<MinedBlockObserver> observers;
   private final RoundState roundState;
   private final BlockCreator blockCreator;
+
   /** The protocol context. */
   protected final ProtocolContext protocolContext;
 

@@ -32,6 +32,7 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
@@ -148,9 +149,13 @@ public class PkiQbftBlockCreatorTest {
             blockHeaderWithExtraData,
             new BlockBody(Collections.emptyList(), Collections.emptyList()));
     when(blockCreator.createBlock(eq(1L)))
-        .thenReturn(new BlockCreationResult(block, new TransactionSelectionResults()));
+        .thenReturn(
+            new BlockCreationResult(
+                block, new TransactionSelectionResults(), new BlockCreationTiming()));
     when(blockCreator.createEmptyWithdrawalsBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(block, new TransactionSelectionResults()));
+        .thenReturn(
+            new BlockCreationResult(
+                block, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     return block;
   }

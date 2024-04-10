@@ -132,6 +132,7 @@ public class JsonTestParameters<S, T> {
 
   // The type to which the json file is directly mapped
   private final Class<S> jsonFileMappedType;
+
   // The final type of the test case spec, which may or may not not be same than jsonFileMappedType
   // Note that we don't really use this field as of now, but as this is the actual type of the final
   // spec used by tests, it feels "right" to have it passed explicitly at construction and having it

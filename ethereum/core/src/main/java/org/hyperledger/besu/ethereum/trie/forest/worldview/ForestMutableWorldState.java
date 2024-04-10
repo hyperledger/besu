@@ -216,6 +216,7 @@ public class ForestMutableWorldState implements MutableWorldState {
     return Optional.ofNullable(newAccountKeyPreimages.get(trieKey))
         .or(() -> preimageStorage.getAccountTrieKeyPreimage(trieKey));
   }
+
   // An immutable class that represents an individual account as stored in
   // the world state's underlying merkle patricia trie.
   protected class WorldStateAccount implements Account {

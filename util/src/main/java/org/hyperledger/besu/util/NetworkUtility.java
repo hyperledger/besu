@@ -35,14 +35,19 @@ import org.slf4j.LoggerFactory;
 public class NetworkUtility {
   /** The constant INADDR_ANY. */
   public static final String INADDR_ANY = "0.0.0.0";
+
   /** The constant INADDR_NONE. */
   public static final String INADDR_NONE = "255.255.255.255";
+
   /** The constant INADDR6_ANY. */
   public static final String INADDR6_ANY = "0:0:0:0:0:0:0:0";
+
   /** The constant INADDR6_NONE. */
   public static final String INADDR6_NONE = "::";
+
   /** The constant INADDR_LOCALHOST. */
   public static final String INADDR_LOCALHOST = "127.0.0.1";
+
   /** The constant INADDR6_LOCALHOST. */
   public static final String INADDR6_LOCALHOST = "::1";
 
