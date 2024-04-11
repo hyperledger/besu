@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
+import java.util.Locale;
 import java.util.Set;
 
 import picocli.CommandLine;
@@ -34,6 +35,7 @@ public class LoggingLevelOption {
 
   private static final Set<String> ACCEPTED_VALUES =
       Set.of("OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL");
+
   /** The Picocli CommandSpec. Visible for testing. Injected by Picocli framework at runtime. */
   @Spec CommandSpec spec;
 
@@ -52,8 +54,8 @@ public class LoggingLevelOption {
     if ("FATAL".equalsIgnoreCase(logLevel)) {
       System.out.println("FATAL level is deprecated");
       this.logLevel = "ERROR";
-    } else if (ACCEPTED_VALUES.contains(logLevel.toUpperCase())) {
-      this.logLevel = logLevel.toUpperCase();
+    } else if (ACCEPTED_VALUES.contains(logLevel.toUpperCase(Locale.ROOT))) {
+      this.logLevel = logLevel.toUpperCase(Locale.ROOT);
     } else {
       throw new CommandLine.ParameterException(
           spec.commandLine(), "Unknown logging value: " + logLevel);

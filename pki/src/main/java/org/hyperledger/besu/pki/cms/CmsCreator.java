@@ -134,8 +134,9 @@ public class CmsCreator {
       case "RSA" -> {
         return "SHA256WithRSAEncryption";
       }
-      default -> throw new UnsupportedOperationException(
-          "Private key algorithm not supported: " + pub.getAlgorithm());
+      default ->
+          throw new UnsupportedOperationException(
+              "Private key algorithm not supported: " + pub.getAlgorithm());
     }
   }
 }

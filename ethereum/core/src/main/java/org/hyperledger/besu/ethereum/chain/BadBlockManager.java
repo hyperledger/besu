@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.chain;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.plugin.services.BesuEvents.BadBlockListener;
+import org.hyperledger.besu.util.Subscribers;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -37,6 +39,7 @@ public class BadBlockManager {
       CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
   private final Cache<Hash, Hash> latestValidHashes =
       CacheBuilder.newBuilder().maximumSize(MAX_BAD_BLOCKS_SIZE).concurrencyLevel(1).build();
+  private final Subscribers<BadBlockListener> badBlockSubscribers = Subscribers.create(true);
 
   /**
    * Add a new invalid block.
@@ -45,9 +48,9 @@ public class BadBlockManager {
    * @param cause the cause detailing why the block is considered invalid
    */
   public void addBadBlock(final Block badBlock, final BadBlockCause cause) {
-    // TODO(#6301) Expose bad block with cause through BesuEvents
     LOG.debug("Register bad block {} with cause: {}", badBlock.toLogString(), cause);
     this.badBlocks.put(badBlock.getHash(), badBlock);
+    badBlockSubscribers.forEach(s -> s.onBadBlockAdded(badBlock.getHeader(), cause));
   }
 
   public void reset() {
@@ -81,9 +84,9 @@ public class BadBlockManager {
   }
 
   public void addBadHeader(final BlockHeader header, final BadBlockCause cause) {
-    // TODO(#6301) Expose bad block header with cause through BesuEvents
     LOG.debug("Register bad block header {} with cause: {}", header.toLogString(), cause);
     badHeaders.put(header.getHash(), header);
+    badBlockSubscribers.forEach(s -> s.onBadBlockAdded(header, cause));
   }
 
   public boolean isBadBlock(final Hash blockHash) {
@@ -96,5 +99,13 @@ public class BadBlockManager {
 
   public Optional<Hash> getLatestValidHash(final Hash blockHash) {
     return Optional.ofNullable(latestValidHashes.getIfPresent(blockHash));
+  }
+
+  public long subscribeToBadBlocks(final BadBlockListener listener) {
+    return badBlockSubscribers.subscribe(listener);
+  }
+
+  public void unsubscribeFromBadBlocks(final long id) {
+    badBlockSubscribers.unsubscribe(id);
   }
 }

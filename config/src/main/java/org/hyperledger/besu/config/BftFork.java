@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
 import java.util.OptionalInt;
 
@@ -32,12 +33,16 @@ public class BftFork implements Fork {
 
   /** The constant FORK_BLOCK_KEY. */
   public static final String FORK_BLOCK_KEY = "block";
+
   /** The constant VALIDATORS_KEY. */
   public static final String VALIDATORS_KEY = "validators";
+
   /** The constant BLOCK_PERIOD_SECONDS_KEY. */
   public static final String BLOCK_PERIOD_SECONDS_KEY = "blockperiodseconds";
+
   /** The constant BLOCK_REWARD_KEY. */
   public static final String BLOCK_REWARD_KEY = "blockreward";
+
   /** The constant MINING_BENEFICIARY_KEY. */
   public static final String MINING_BENEFICIARY_KEY = "miningbeneficiary";
 
@@ -89,7 +94,7 @@ public class BftFork implements Fork {
       return Optional.empty();
     }
     final String weiStr = configFileContent.get();
-    if (weiStr.toLowerCase().startsWith("0x")) {
+    if (weiStr.toLowerCase(Locale.ROOT).startsWith("0x")) {
       return Optional.of(new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe()));
     }
     return Optional.of(new BigInteger(weiStr));

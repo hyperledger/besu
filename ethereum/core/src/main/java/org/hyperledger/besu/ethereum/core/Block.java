@@ -63,6 +63,7 @@ public class Block {
     out.writeList(body.getOmmers(), BlockHeader::writeTo);
     body.getWithdrawals().ifPresent(withdrawals -> out.writeList(withdrawals, Withdrawal::writeTo));
     body.getDeposits().ifPresent(deposits -> out.writeList(deposits, Deposit::writeTo));
+    body.getExits().ifPresent(exits -> out.writeList(exits, ValidatorExit::writeTo));
 
     out.endList();
   }
@@ -76,9 +77,13 @@ public class Block {
         in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readList(Withdrawal::readFrom));
     final Optional<List<Deposit>> deposits =
         in.isEndOfCurrentList() ? Optional.empty() : Optional.of(in.readList(Deposit::readFrom));
+    final Optional<List<ValidatorExit>> exits =
+        in.isEndOfCurrentList()
+            ? Optional.empty()
+            : Optional.of(in.readList(ValidatorExit::readFrom));
     in.leaveList();
 
-    return new Block(header, new BlockBody(transactions, ommers, withdrawals, deposits));
+    return new Block(header, new BlockBody(transactions, ommers, withdrawals, deposits, exits));
   }
 
   @Override

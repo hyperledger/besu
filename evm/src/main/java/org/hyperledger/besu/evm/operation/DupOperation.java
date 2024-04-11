@@ -24,8 +24,10 @@ public class DupOperation extends AbstractFixedCostOperation {
 
   /** The constant DUP_BASE. */
   public static final int DUP_BASE = 0x7F;
+
   /** The Dup success operation result. */
   static final OperationResult dupSuccess = new OperationResult(3, null);
+
   /** The Underflow response. */
   protected final Operation.OperationResult underflowResponse;
 

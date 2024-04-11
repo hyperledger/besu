@@ -292,7 +292,9 @@ public class TransactionPoolFactory {
       final MiningParameters miningParameters) {
 
     final TransactionPoolReplacementHandler transactionReplacementHandler =
-        new TransactionPoolReplacementHandler(transactionPoolConfiguration.getPriceBump());
+        new TransactionPoolReplacementHandler(
+            transactionPoolConfiguration.getPriceBump(),
+            transactionPoolConfiguration.getBlobPriceBump());
 
     final BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester =
         (t1, t2) ->

@@ -142,6 +142,9 @@ public class DataStoreModule {
       @Named("variables") final KeyValueStorage variablesKeyValueStorage,
       final BlockHeaderFunctions blockHashFunction) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        keyValueStorage, new VariablesKeyValueStorage(variablesKeyValueStorage), blockHashFunction);
+        keyValueStorage,
+        new VariablesKeyValueStorage(variablesKeyValueStorage),
+        blockHashFunction,
+        false);
   }
 }

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.MAX_RANGE;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
@@ -31,7 +31,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;

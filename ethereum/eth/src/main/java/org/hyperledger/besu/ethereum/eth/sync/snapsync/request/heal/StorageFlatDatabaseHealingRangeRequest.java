@@ -14,20 +14,20 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.getRangeCount;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.STORAGE_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.getRangeCount;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -36,6 +36,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.function.Function;
 import java.util.stream.Stream;
@@ -56,7 +57,7 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
   private final Bytes32 storageRoot;
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
-  private TreeMap<Bytes32, Bytes> slots;
+  private NavigableMap<Bytes32, Bytes> slots;
   private boolean isProofValid;
 
   public StorageFlatDatabaseHealingRangeRequest(
@@ -120,10 +121,10 @@ public class StorageFlatDatabaseHealingRangeRequest extends SnapDataRequest {
 
   public void addLocalData(
       final WorldStateProofProvider worldStateProofProvider,
-      final TreeMap<Bytes32, Bytes> slots,
+      final NavigableMap<Bytes32, Bytes> slots,
       final ArrayDeque<Bytes> proofs) {
     if (!slots.isEmpty() && !proofs.isEmpty()) {
-      // very proof in order to check if the local flat database is valid or not
+      // verify proof in order to check if the local flat database is valid or not
       isProofValid =
           worldStateProofProvider.isValidRangeProof(
               startKeyHash, endKeyHash, storageRoot, proofs, slots);

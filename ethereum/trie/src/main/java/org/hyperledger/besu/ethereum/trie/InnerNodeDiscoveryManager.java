@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.trie;
 
+import static org.hyperledger.besu.ethereum.trie.RangeManager.createPath;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.isInRange;
+
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.patricia.BranchNode;
 import org.hyperledger.besu.ethereum.trie.patricia.ExtensionNode;
@@ -21,7 +24,6 @@ import org.hyperledger.besu.ethereum.trie.patricia.LeafNode;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -37,7 +39,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
 
   private final List<InnerNode> innerNodes = new ArrayList<>();
 
-  private final Bytes startKeyHash, endKeyHash;
+  private final Bytes startKeyPath, endKeyPath;
 
   private final boolean allowMissingElementInRange;
 
@@ -49,8 +51,8 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
       final Bytes32 endKeyHash,
       final boolean allowMissingElementInRange) {
     super(nodeLoader, valueSerializer, valueDeserializer);
-    this.startKeyHash = createPath(startKeyHash);
-    this.endKeyHash = createPath(endKeyHash);
+    this.startKeyPath = createPath(startKeyHash);
+    this.endKeyPath = createPath(endKeyHash);
     this.allowMissingElementInRange = allowMissingElementInRange;
   }
 
@@ -62,7 +64,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
       final Supplier<String> errMessage) {
     final ExtensionNode<V> vNode =
         (ExtensionNode<V>) super.decodeExtension(location, path, valueRlp, errMessage);
-    if (isInRange(Bytes.concatenate(location, Bytes.of(0)))) {
+    if (isInRange(Bytes.concatenate(location, Bytes.of(0)), startKeyPath, endKeyPath)) {
       innerNodes.add(
           ImmutableInnerNode.builder()
               .location(location)
@@ -78,7 +80,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
     final BranchNode<V> vBranchNode = super.decodeBranch(location, nodeRLPs, errMessage);
     final List<Node<V>> children = vBranchNode.getChildren();
     for (int i = 0; i < children.size(); i++) {
-      if (isInRange(Bytes.concatenate(location, Bytes.of(i)))) {
+      if (isInRange(Bytes.concatenate(location, Bytes.of(i)), startKeyPath, endKeyPath)) {
         innerNodes.add(
             ImmutableInnerNode.builder()
                 .location(location)
@@ -97,7 +99,7 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
       final Supplier<String> errMessage) {
     final LeafNode<V> vLeafNode = super.decodeLeaf(location, path, valueRlp, errMessage);
     final Bytes concatenatePath = Bytes.concatenate(location, path);
-    if (isInRange(concatenatePath.slice(0, concatenatePath.size() - 1))) {
+    if (isInRange(concatenatePath.slice(0, concatenatePath.size() - 1), startKeyPath, endKeyPath)) {
       innerNodes.add(ImmutableInnerNode.builder().location(location).path(path).build());
     }
     return vLeafNode;
@@ -106,10 +108,16 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
   @Override
   public Optional<Node<V>> retrieve(final Bytes location, final Bytes32 hash)
       throws MerkleTrieException {
+
     return super.retrieve(location, hash)
+        .map(
+            vNode -> {
+              vNode.markDirty();
+              return vNode;
+            })
         .or(
             () -> {
-              if (!allowMissingElementInRange && isInRange(location)) {
+              if (!allowMissingElementInRange && isInRange(location, startKeyPath, endKeyPath)) {
                 return Optional.empty();
               }
               return Optional.of(new MissingNode<>(hash, location));
@@ -118,23 +126,6 @@ public class InnerNodeDiscoveryManager<V> extends StoredNodeFactory<V> {
 
   public List<InnerNode> getInnerNodes() {
     return List.copyOf(innerNodes);
-  }
-
-  private boolean isInRange(final Bytes location) {
-    return !location.isEmpty()
-        && Arrays.compare(location.toArrayUnsafe(), startKeyHash.toArrayUnsafe()) >= 0
-        && Arrays.compare(location.toArrayUnsafe(), endKeyHash.toArrayUnsafe()) <= 0;
-  }
-
-  private Bytes createPath(final Bytes bytes) {
-    final MutableBytes path = MutableBytes.create(bytes.size() * 2);
-    int j = 0;
-    for (int i = 0; i < bytes.size(); i += 1, j += 2) {
-      final byte b = bytes.get(i);
-      path.set(j, (byte) ((b >>> 4) & 0x0f));
-      path.set(j + 1, (byte) (b & 0x0f));
-    }
-    return path;
   }
 
   public static Bytes32 decodePath(final Bytes bytes) {

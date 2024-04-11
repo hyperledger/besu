@@ -84,7 +84,7 @@ public class Capability {
   }
 
   @Override
-  /** Returned string is sanitized since it contains user input */
+  // Returned string is sanitized since it contains user input
   public String toString() {
     return Encode.forJava(name) + "/" + version;
   }

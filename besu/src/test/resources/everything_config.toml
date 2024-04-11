@@ -55,6 +55,7 @@ discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPR
 # chain
 network="MAINNET"
 genesis-file="~/genesis.json"
+genesis-state-hash-cache-enabled=false
 sync-mode="fast"
 fast-sync-min-peers=5
 network-id=303
@@ -151,11 +152,6 @@ Xminer-remote-sealers-limit=1000
 Xminer-remote-sealers-hashrate-ttl=10
 Xpos-block-creation-max-time=5
 
-# Pruning
-pruning-enabled=true
-pruning-blocks-retained=1024
-pruning-block-confirmations=10
-
 # Permissioning
 permissions-nodes-config-file-enabled=false
 permissions-nodes-config-file="./permissions_config.toml"
@@ -179,6 +175,7 @@ privacy-flexible-groups-enabled=false
 # Transaction Pool
 tx-pool="layered"
 tx-pool-price-bump=13
+tx-pool-blob-price-bump=100
 rpc-tx-feecap=2000000000000000000
 strict-tx-replay-protection-enabled=true
 tx-pool-no-local-priority=false
@@ -215,6 +212,7 @@ ethstats-cacert-file="./root.cert"
 # Data storage
 data-storage-format="BONSAI"
 bonsai-historical-block-limit=512
+receipt-compaction-enabled=true
 
 # feature flags
 Xsecp256k1-native-enabled=false

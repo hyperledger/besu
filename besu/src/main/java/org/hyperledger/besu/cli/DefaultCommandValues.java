@@ -36,63 +36,92 @@ public interface DefaultCommandValues {
 
   /** The constant MANDATORY_PATH_FORMAT_HELP. */
   String MANDATORY_PATH_FORMAT_HELP = "<PATH>";
+
   /** The constant MANDATORY_FILE_FORMAT_HELP. */
   String MANDATORY_FILE_FORMAT_HELP = "<FILE>";
+
   /** The constant MANDATORY_DIRECTORY_FORMAT_HELP. */
   String MANDATORY_DIRECTORY_FORMAT_HELP = "<DIRECTORY>";
+
   /** The constant BESU_HOME_PROPERTY_NAME. */
   String BESU_HOME_PROPERTY_NAME = "besu.home";
+
   /** The constant DEFAULT_DATA_DIR_PATH. */
   String DEFAULT_DATA_DIR_PATH = "./build/data";
+
   /** The constant MANDATORY_INTEGER_FORMAT_HELP. */
   String MANDATORY_INTEGER_FORMAT_HELP = "<INTEGER>";
+
   /** The constant MANDATORY_DOUBLE_FORMAT_HELP. */
   String MANDATORY_DOUBLE_FORMAT_HELP = "<DOUBLE>";
+
   /** The constant MANDATORY_LONG_FORMAT_HELP. */
   String MANDATORY_LONG_FORMAT_HELP = "<LONG>";
+
   /** The constant MANDATORY_MODE_FORMAT_HELP. */
   String MANDATORY_MODE_FORMAT_HELP = "<MODE>";
+
   /** The constant MANDATORY_NETWORK_FORMAT_HELP. */
   String MANDATORY_NETWORK_FORMAT_HELP = "<NETWORK>";
+
   /** The constant PROFILE_OPTION_NAME. */
   String PROFILE_OPTION_NAME = "--profile";
+
   /** The constant PROFILE_FORMAT_HELP. */
   String PROFILE_FORMAT_HELP = "<PROFILE>";
+
   /** The constant MANDATORY_NODE_ID_FORMAT_HELP. */
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";
+
   /** The constant PERMISSIONING_CONFIG_LOCATION. */
   String PERMISSIONING_CONFIG_LOCATION = "permissions_config.toml";
+
   /** The constant MANDATORY_HOST_FORMAT_HELP. */
   String MANDATORY_HOST_FORMAT_HELP = "<HOST>";
+
   /** The constant MANDATORY_PORT_FORMAT_HELP. */
   String MANDATORY_PORT_FORMAT_HELP = "<PORT>";
+
   /** The constant DEFAULT_NAT_METHOD. */
   NatMethod DEFAULT_NAT_METHOD = NatMethod.AUTO;
+
   /** The constant DEFAULT_JWT_ALGORITHM. */
   JwtAlgorithm DEFAULT_JWT_ALGORITHM = JwtAlgorithm.RS256;
+
   /** The constant SYNC_MIN_PEER_COUNT. */
   int SYNC_MIN_PEER_COUNT = 5;
+
   /** The constant DEFAULT_MAX_PEERS. */
   int DEFAULT_MAX_PEERS = 25;
+
   /** The constant DEFAULT_HTTP_MAX_CONNECTIONS. */
   int DEFAULT_HTTP_MAX_CONNECTIONS = 80;
+
   /** The constant DEFAULT_HTTP_MAX_BATCH_SIZE. */
   int DEFAULT_HTTP_MAX_BATCH_SIZE = 1024;
+
   /** The constant DEFAULT_MAX_REQUEST_CONTENT_LENGTH. */
   long DEFAULT_MAX_REQUEST_CONTENT_LENGTH = 5 * 1024 * 1024; // 5MB
+
   /** The constant DEFAULT_WS_MAX_CONNECTIONS. */
   int DEFAULT_WS_MAX_CONNECTIONS = 80;
+
   /** The constant DEFAULT_WS_MAX_FRAME_SIZE. */
   int DEFAULT_WS_MAX_FRAME_SIZE = 1024 * 1024;
+
   /** The constant DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED. */
   float DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED =
       RlpxConfiguration.DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED;
+
   /** The constant DEFAULT_KEY_VALUE_STORAGE_NAME. */
   String DEFAULT_KEY_VALUE_STORAGE_NAME = "rocksdb";
+
   /** The constant DEFAULT_SECURITY_MODULE. */
   String DEFAULT_SECURITY_MODULE = "localfile";
+
   /** The constant DEFAULT_KEYSTORE_TYPE. */
   String DEFAULT_KEYSTORE_TYPE = "JKS";
+
   /** The Default tls protocols. */
   List<String> DEFAULT_TLS_PROTOCOLS = List.of("TLSv1.3", "TLSv1.2");
 

@@ -27,6 +27,7 @@ public class HostBasedIpDetector implements IpDetector {
   private static final String HOSTNAME = "HOST_IP";
 
   @Override
+  @SuppressWarnings("AddressSelection")
   public Optional<String> detectAdvertisedIp() {
     try {
       return Optional.of(InetAddress.getByName(HOSTNAME).getHostAddress());

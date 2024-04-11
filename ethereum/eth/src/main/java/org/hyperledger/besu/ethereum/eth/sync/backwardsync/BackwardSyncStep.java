@@ -61,7 +61,8 @@ public class BackwardSyncStep {
         context.getProtocolContext().getBlockchain().getBlockHeader(hash);
     if (blockHeader.isPresent()) {
       LOG.debug(
-          "Hash {} already present in local blockchain no need to request headers to peers", hash);
+          "Hash {} already present in local blockchain no need to request headers from peers",
+          hash);
       return CompletableFuture.completedFuture(List.of(blockHeader.get()));
     }
 

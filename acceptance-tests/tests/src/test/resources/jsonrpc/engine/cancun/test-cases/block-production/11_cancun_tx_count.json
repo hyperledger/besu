@@ -14,5 +14,6 @@
       "remoteCount": 0
     }
   },
-  "statusCode": 200
+  "statusCode": 200,
+  "waitTime": 2000
 }

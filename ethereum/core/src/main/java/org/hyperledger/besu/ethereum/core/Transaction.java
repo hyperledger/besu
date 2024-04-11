@@ -495,10 +495,14 @@ public class Transaction
 
   @Override
   public BigInteger getV() {
-    if (transactionType != null && transactionType != TransactionType.FRONTIER) {
-      // EIP-2718 typed transaction, use yParity:
+    if (transactionType != null
+        && transactionType != TransactionType.FRONTIER
+        && transactionType != TransactionType.ACCESS_LIST
+        && transactionType != TransactionType.EIP1559) {
+      // Newer transaction type lacks V, so return null
       return null;
     } else {
+      // Mandatory for legacy, optional for EIP-2930 and EIP-1559 TXes, prohibited for all others.
       final BigInteger recId = BigInteger.valueOf(signature.getRecId());
       return chainId
           .map(bigInteger -> recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(bigInteger)))
@@ -699,40 +703,43 @@ public class Transaction
     final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
-          case EIP1559 -> eip1559Preimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList);
-          case BLOB -> blobPreimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              maxFeePerBlobGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList,
-              versionedHashes);
-          case ACCESS_LIST -> accessListPreimage(
-              nonce,
-              gasPrice,
-              gasLimit,
-              to,
-              value,
-              payload,
-              accessList.orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Developer error: the transaction should be guaranteed to have an access list here")),
-              chainId);
+          case EIP1559 ->
+              eip1559Preimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList);
+          case BLOB ->
+              blobPreimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  maxFeePerBlobGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  versionedHashes);
+          case ACCESS_LIST ->
+              accessListPreimage(
+                  nonce,
+                  gasPrice,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  accessList.orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "Developer error: the transaction should be guaranteed to have an access list here")),
+                  chainId);
         };
     return keccak256(preimage);
   }

@@ -179,6 +179,7 @@ public class RocksDBSnapshotTransaction
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
   }
+
   /**
    * Returns a stream of key-value pairs starting from the specified key. This method is used to
    * retrieve a stream of data reading through the transaction, starting from the given key. If no

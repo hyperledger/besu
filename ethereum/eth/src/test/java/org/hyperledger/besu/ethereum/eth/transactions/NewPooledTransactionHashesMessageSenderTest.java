@@ -78,9 +78,9 @@ public class NewPooledTransactionHashesMessageSenderTest {
   @Test
   public void shouldSendPendingTransactionsToEachPeer() throws Exception {
 
-    transactionTracker.addToPeerSendQueue(peer1, transaction1);
-    transactionTracker.addToPeerSendQueue(peer1, transaction2);
-    transactionTracker.addToPeerSendQueue(peer2, transaction3);
+    transactionTracker.addToPeerHashSendQueue(peer1, transaction1);
+    transactionTracker.addToPeerHashSendQueue(peer1, transaction2);
+    transactionTracker.addToPeerHashSendQueue(peer2, transaction3);
 
     List.of(peer1, peer2).forEach(messageSender::sendTransactionHashesToPeer);
 
@@ -96,7 +96,8 @@ public class NewPooledTransactionHashesMessageSenderTest {
     final Set<Transaction> transactions =
         generator.transactions(6000).stream().collect(Collectors.toSet());
 
-    transactions.forEach(transaction -> transactionTracker.addToPeerSendQueue(peer1, transaction));
+    transactions.forEach(
+        transaction -> transactionTracker.addToPeerHashSendQueue(peer1, transaction));
 
     messageSender.sendTransactionHashesToPeer(peer1);
     final ArgumentCaptor<MessageData> messageDataArgumentCaptor =
