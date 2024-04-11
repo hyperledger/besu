@@ -34,10 +34,12 @@ public class CachingTaskCollection<T> implements TaskCollection<T> {
 
   // The underlying collection
   private final TaskCollection<T> wrappedCollection;
+
   /**
    * A cache of tasks to operate on before going to {@link CachingTaskCollection#wrappedCollection}
    */
   private final Queue<Task<T>> cache = new ArrayDeque<>();
+
   // Tasks that have been removed, but not marked completed yet
   private final Set<Task<T>> outstandingTasks = new HashSet<>();
 

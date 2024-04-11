@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.subcommands.rlp;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.ibft.IbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Address;
 
@@ -42,5 +43,14 @@ public class IbftExtraDataCLIAdapter implements JSONToRLP {
     final Collection<String> validatorAddresses = MAPPER.readValue(jsonAddresses, TYPE_REF);
     return IbftExtraDataCodec.encodeFromAddresses(
         validatorAddresses.stream().map(Address::fromHexString).collect(Collectors.toList()));
+  }
+
+  @Override
+  public BftExtraData decode(final String rlpInput) throws IOException {
+    return fromRLPInput(rlpInput);
+  }
+
+  private BftExtraData fromRLPInput(final String rlpInput) throws IOException {
+    return new IbftExtraDataCodec().decodeRaw(Bytes.fromHexString(rlpInput));
   }
 }

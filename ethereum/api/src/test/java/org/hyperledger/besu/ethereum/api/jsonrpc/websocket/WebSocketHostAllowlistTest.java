@@ -41,12 +41,15 @@ import io.vertx.core.Vertx;
 import io.vertx.core.http.HttpClient;
 import io.vertx.core.http.HttpClientOptions;
 import io.vertx.core.http.HttpMethod;
+import io.vertx.core.net.HostAndPort;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 @ExtendWith(VertxExtension.class)
 public class WebSocketHostAllowlistTest {
@@ -104,49 +107,60 @@ public class WebSocketHostAllowlistTest {
 
   @Test
   public void websocketRequestWithDefaultHeaderAndDefaultConfigIsAccepted() {
-    boolean result = websocketService.hasAllowedHostnameHeader(Optional.of("localhost:50012"));
+    final Optional<String> host =
+        Optional.of(HostAndPort.parseAuthority("localhost", 50012)).map(HostAndPort::host);
+    boolean result = websocketService.checkHostInAllowlist(host);
     assertThat(result).isTrue();
   }
 
   @Test
-  public void httpRequestWithDefaultHeaderAndDefaultConfigIsAccepted() throws InterruptedException {
+  public void httpRequestWithDefaultHeaderAndDefaultConfigIsAccepted() throws Throwable {
     doHttpRequestAndVerify(testContext, "localhost:50012", 400);
   }
 
   @Test
   public void websocketRequestWithEmptyHeaderAndDefaultConfigIsRejected() {
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of(""))).isFalse();
+    final Optional<String> host =
+        Optional.ofNullable(HostAndPort.parseAuthority("", 50012)).map(HostAndPort::host);
+    boolean result = websocketService.checkHostInAllowlist(host);
+    assertThat(result).isFalse();
   }
 
   @Test
-  public void httpRequestWithEmptyHeaderAndDefaultConfigIsRejected() throws InterruptedException {
+  public void httpRequestWithEmptyHeaderAndDefaultConfigIsRejected() throws Throwable {
     doHttpRequestAndVerify(testContext, "", 403);
   }
 
-  @Test
-  public void websocketRequestWithAnyHostnameAndWildcardConfigIsAccepted() {
+  @ParameterizedTest
+  @ValueSource(strings = {"ally", "foe"})
+  public void websocketRequestWithAnyHostnameAndWildcardConfigIsAccepted(final String hostname) {
     webSocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally"))).isTrue();
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("foe"))).isTrue();
+
+    final Optional<String> host =
+        Optional.ofNullable(HostAndPort.parseAuthority(hostname, -1)).map(HostAndPort::host);
+    boolean result = websocketService.checkHostInAllowlist(host);
+    assertThat(result).isTrue();
   }
 
   @Test
-  public void httpRequestWithAnyHostnameAndWildcardConfigIsAccepted() throws InterruptedException {
+  public void httpRequestWithAnyHostnameAndWildcardConfigIsAccepted() throws Throwable {
     webSocketConfiguration.setHostsAllowlist(Collections.singletonList("*"));
     doHttpRequestAndVerify(testContext, "ally", 400);
     doHttpRequestAndVerify(testContext, "foe", 400);
   }
 
-  @Test
-  public void websocketRequestWithAllowedHostIsAccepted() {
+  @ParameterizedTest
+  @ValueSource(strings = {"ally", "ally:12345", "friend"})
+  public void websocketRequestWithAllowedHostIsAccepted(final String hostname) {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally"))).isTrue();
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally:12345"))).isTrue();
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("friend"))).isTrue();
+    final Optional<String> host =
+        Optional.ofNullable(HostAndPort.parseAuthority(hostname, -1)).map(HostAndPort::host);
+    boolean result = websocketService.checkHostInAllowlist(host);
+    assertThat(result).isTrue();
   }
 
   @Test
-  public void httpRequestWithAllowedHostIsAccepted() throws InterruptedException {
+  public void httpRequestWithAllowedHostIsAccepted() throws Throwable {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     doHttpRequestAndVerify(testContext, "ally", 400);
     doHttpRequestAndVerify(testContext, "ally:12345", 400);
@@ -156,37 +170,40 @@ public class WebSocketHostAllowlistTest {
   @Test
   public void websocketRequestWithUnknownHostIsRejected() {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("foe"))).isFalse();
+    final Optional<String> host =
+        Optional.ofNullable(HostAndPort.parseAuthority("foe", -1)).map(HostAndPort::host);
+    assertThat(websocketService.checkHostInAllowlist(host)).isFalse();
   }
 
   @Test
-  public void httpRequestWithUnknownHostIsRejected() throws InterruptedException {
+  public void httpRequestWithUnknownHostIsRejected() throws Throwable {
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
     doHttpRequestAndVerify(testContext, "foe", 403);
   }
 
-  @Test
-  public void websocketRequestWithMalformedHostIsRejected() {
+  @ParameterizedTest
+  @ValueSource(strings = {"ally:friend", "ally:123456", "ally:friend:1234"})
+  public void websocketRequestWithMalformedHostIsRejected(final String hostname) {
     webSocketConfiguration.setAuthenticationEnabled(false);
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally:friend"))).isFalse();
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally:123456"))).isFalse();
-    assertThat(websocketService.hasAllowedHostnameHeader(Optional.of("ally:friend:1234")))
-        .isFalse();
+    final Optional<String> host =
+        Optional.ofNullable(HostAndPort.parseAuthority(hostname, -1)).map(HostAndPort::host);
+    final boolean result = websocketService.checkHostInAllowlist(host);
+    assertThat(result).isFalse();
   }
 
   @Test
-  public void httpRequestWithMalformedHostIsRejected() throws InterruptedException {
+  public void httpRequestWithMalformedHostIsRejected() throws Throwable {
     webSocketConfiguration.setAuthenticationEnabled(false);
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    doHttpRequestAndVerify(testContext, "ally:friend", 400);
+    doHttpRequestAndVerify(testContext, "ally:friend", 403);
     doHttpRequestAndVerify(testContext, "ally:123456", 403);
     doHttpRequestAndVerify(testContext, "ally:friend:1234", 403);
   }
 
   private void doHttpRequestAndVerify(
       final VertxTestContext testContext, final String hostname, final int expectedResponse)
-      throws InterruptedException {
+      throws Throwable {
 
     httpClient.request(
         HttpMethod.POST,
@@ -200,10 +217,18 @@ public class WebSocketHostAllowlistTest {
               .result()
               .send(
                   response -> {
-                    assertThat(response.result().statusCode()).isEqualTo(expectedResponse);
-                    testContext.completeNow();
+                    if (response.succeeded()) {
+                      assertThat(response.result().statusCode()).isEqualTo(expectedResponse);
+                      testContext.completeNow();
+                    } else {
+                      testContext.failNow(response.cause());
+                    }
                   });
         });
-    testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS);
+    assertThat(testContext.awaitCompletion(VERTX_AWAIT_TIMEOUT_MILLIS, TimeUnit.MILLISECONDS))
+        .isTrue();
+    if (testContext.failed()) {
+      throw testContext.causeOfFailure();
+    }
   }
 }

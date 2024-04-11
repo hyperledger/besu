@@ -120,6 +120,11 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
+  public Optional<? extends Hash> getExitsRoot() {
+    return Optional.empty();
+  }
+
+  @Override
   public Hash getBlockHash() {
     return blockHash;
   }

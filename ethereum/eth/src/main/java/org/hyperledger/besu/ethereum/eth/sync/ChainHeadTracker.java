@@ -93,7 +93,8 @@ public class ChainHeadTracker {
                 .addArgument(peer::getLoggableId)
                 .addArgument(error)
                 .log();
-            peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+            peer.disconnect(
+                DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_STATE);
             future.complete(null);
           }
         });

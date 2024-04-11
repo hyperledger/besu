@@ -212,7 +212,7 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void recordRequestTimeout(final int requestCode) {
     LOG.atDebug()
-        .setMessage("Timed out while waiting for response from peer {}...")
+        .setMessage("Timed out while waiting for response from peer {}")
         .addArgument(this::getLoggableId)
         .log();
     LOG.trace("Timed out while waiting for response from peer {}", this);
@@ -221,7 +221,7 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void recordUselessResponse(final String requestType) {
     LOG.atTrace()
-        .setMessage("Received useless response for request type {} from peer {}...")
+        .setMessage("Received useless response for request type {} from peer {}")
         .addArgument(requestType)
         .addArgument(this::getLoggableId)
         .log();
@@ -263,7 +263,7 @@ public class EthPeer implements Comparable<EthPeer> {
     if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
       LOG.atDebug()
-          .setMessage("Protocol {} unavailable for this peer {}...")
+          .setMessage("Protocol {} unavailable for this peer {}")
           .addArgument(protocolName)
           .addArgument(this.getLoggableId())
           .log();
@@ -273,7 +273,7 @@ public class EthPeer implements Comparable<EthPeer> {
         .anyMatch(
             p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
-          "Permissioning blocked sending of message code {} to {}...",
+          "Permissioning blocked sending of message code {} to {}",
           messageData.getCode(),
           this.getLoggableId());
       if (LOG.isDebugEnabled()) {
@@ -446,7 +446,7 @@ public class EthPeer implements Comparable<EthPeer> {
         localRequestManager -> localRequestManager.dispatchResponse(ethMessage),
         () ->
             LOG.debug(
-                "Message {} not expected has just been received for protocol {}, peer {} ",
+                "Message {} not expected has just been received for protocol {}, {} ",
                 messageCode,
                 protocolName,
                 this));

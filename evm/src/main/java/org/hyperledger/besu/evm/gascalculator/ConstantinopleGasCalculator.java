@@ -15,14 +15,12 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.function.Supplier;
 
-import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Constantinople gas calculator. */
@@ -39,12 +37,25 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
   private static final long EXTCODE_HASH_COST = 400L;
 
+  /**
+   * Returns the amount of gas the CREATE2 operation will consume.
+   *
+   * @param frame The current frame
+   * @return the amount of gas the CREATE2 operation will consume
+   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
+   *     #memoryExpansionGasCost(MessageFrame, long, long)}, {@link #createKeccakCost(int)}, and
+   *     {@link #initcodeCost(int)}. As done in {@link
+   *     org.hyperledger.besu.evm.operation.Create2Operation#cost(MessageFrame, Supplier)}
+   */
+  @SuppressWarnings("removal")
   @Override
+  @Deprecated(since = "24.4.1", forRemoval = true)
   public long create2OperationGasCost(final MessageFrame frame) {
-    final long initCodeLength = clampedToLong(frame.getStackItem(2));
-    final long numWords = clampedAdd(initCodeLength, 31) / Bytes32.SIZE;
-    final long initCodeHashCost = clampedMultiply(KECCAK256_OPERATION_WORD_GAS_COST, numWords);
-    return clampedAdd(createOperationGasCost(frame), initCodeHashCost);
+    final int inputOffset = clampedToInt(frame.getStackItem(1));
+    final int inputSize = clampedToInt(frame.getStackItem(2));
+    return clampedAdd(
+        clampedAdd(txCreateCost(), memoryExpansionGasCost(frame, inputOffset, inputSize)),
+        clampedAdd(createKeccakCost(inputSize), initcodeCost(inputSize)));
   }
 
   @Override

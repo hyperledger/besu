@@ -84,9 +84,9 @@ public class CliqueBlockSchedulerTest {
 
     final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
-    assertThat(result.getTimestampForHeader())
+    assertThat(result.timestampForHeader())
         .isEqualTo(currentSecondsSinceEpoch + secondsBetweenBlocks);
-    assertThat(result.getMillisecondsUntilValid()).isEqualTo(secondsBetweenBlocks * 1000);
+    assertThat(result.millisecondsUntilValid()).isEqualTo(secondsBetweenBlocks * 1000);
   }
 
   @Test
@@ -117,16 +117,16 @@ public class CliqueBlockSchedulerTest {
     BlockHeader parentHeader =
         blockHeaderBuilder.number(2).timestamp(currentSecondsSinceEpoch).buildHeader();
     BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
-    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 5);
-    assertThat(result.getMillisecondsUntilValid()).isGreaterThan(5 * 1000);
+    assertThat(result.timestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 5);
+    assertThat(result.millisecondsUntilValid()).isGreaterThan(5 * 1000);
 
     // getNextTimestamp for transition block
     // There are 2 validators, therefore block 4 will put localAddr as the in-turn voter, therefore
     // parent block should be number 3.
     parentHeader = blockHeaderBuilder.number(3).timestamp(currentSecondsSinceEpoch).buildHeader();
     result = scheduler.getNextTimestamp(parentHeader);
-    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
-    assertThat(result.getMillisecondsUntilValid()).isEqualTo(1000);
+    assertThat(result.timestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
+    assertThat(result.millisecondsUntilValid()).isEqualTo(1000);
 
     // getNextTimestamp for block after transition
     // There are 2 validators, therefore block 5 will put localAddr as the out-of-turn voter,
@@ -134,8 +134,8 @@ public class CliqueBlockSchedulerTest {
     // parent block should be number 4.
     parentHeader = blockHeaderBuilder.number(4).timestamp(currentSecondsSinceEpoch).buildHeader();
     result = scheduler.getNextTimestamp(parentHeader);
-    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
-    assertThat(result.getMillisecondsUntilValid()).isGreaterThan(1000);
+    assertThat(result.timestampForHeader()).isEqualTo(currentSecondsSinceEpoch + 1);
+    assertThat(result.millisecondsUntilValid()).isGreaterThan(1000);
   }
 
   @Test
@@ -154,9 +154,9 @@ public class CliqueBlockSchedulerTest {
     final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
     long secondsBetweenBlocks = 5L;
-    assertThat(result.getTimestampForHeader())
+    assertThat(result.timestampForHeader())
         .isEqualTo(currentSecondsSinceEpoch + secondsBetweenBlocks);
-    assertThat(result.getMillisecondsUntilValid()).isGreaterThan(secondsBetweenBlocks * 1000);
+    assertThat(result.millisecondsUntilValid()).isGreaterThan(secondsBetweenBlocks * 1000);
   }
 
   @Test
@@ -178,7 +178,7 @@ public class CliqueBlockSchedulerTest {
 
     final BlockCreationTimeResult result = scheduler.getNextTimestamp(parentHeader);
 
-    assertThat(result.getTimestampForHeader()).isEqualTo(currentSecondsSinceEpoch);
-    assertThat(result.getMillisecondsUntilValid()).isEqualTo(0);
+    assertThat(result.timestampForHeader()).isEqualTo(currentSecondsSinceEpoch);
+    assertThat(result.millisecondsUntilValid()).isEqualTo(0);
   }
 }

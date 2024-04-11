@@ -68,6 +68,7 @@ public class RLPSubCommandTest extends CommandTestAbstract {
 
   private static final String RLP_SUBCOMMAND_NAME = "rlp";
   private static final String RLP_ENCODE_SUBCOMMAND_NAME = "encode";
+  private static final String RLP_DECODE_SUBCOMMAND_NAME = "decode";
   private static final String RLP_QBFT_TYPE = "QBFT_EXTRA_DATA";
 
   // RLP sub-command
@@ -257,6 +258,157 @@ public class RLPSubCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .startsWith("An error occurred while trying to read the JSON data.");
+  }
+
+  @Test
+  public void decodeWithoutPathMustWriteToStandardOutput() {
+
+    final String inputData =
+        "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
+            + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
+
+    // set stdin
+    final ByteArrayInputStream stdIn = new ByteArrayInputStream(inputData.getBytes(UTF_8));
+
+    parseCommand(stdIn, RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME);
+
+    final String expectedValidatorString =
+        "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
+    assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void decodeQBFTWithoutPathMustWriteToStandardOutput() {
+
+    final String inputData =
+        "0xf84fa00000000000000000000000000000000000000000000000000000000000000000ea94241f804efb46f71acaa"
+            + "5be94a62f7798e89c3724946cdf72da457453063ea92e7fa5ac30afbcec28cdc080c0";
+
+    // set stdin
+    final ByteArrayInputStream stdIn = new ByteArrayInputStream(inputData.getBytes(UTF_8));
+
+    parseCommand(stdIn, RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME, "--type", RLP_QBFT_TYPE);
+
+    final String expectedValidatorString =
+        "[0x241f804efb46f71acaa5be94a62f7798e89c3724, 0x6cdf72da457453063ea92e7fa5ac30afbcec28cd]";
+    assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void decodeWithOutputFileMustWriteInThisFile() throws Exception {
+
+    final File file = File.createTempFile("ibftValidators", "rlp");
+
+    final String inputData =
+        "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d"
+            + "46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0";
+
+    // set stdin
+    final ByteArrayInputStream stdIn = new ByteArrayInputStream(inputData.getBytes(UTF_8));
+
+    parseCommand(stdIn, RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME, "--to", file.getPath());
+
+    final String expectedValidatorString =
+        "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
+
+    assertThat(contentOf(file)).contains(expectedValidatorString);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void decodeWithInputFilePathMustReadFromThisFile(final @TempDir Path dir)
+      throws Exception {
+    final Path tempJsonFile = Files.createTempFile(dir, "input", "json");
+    try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempJsonFile, UTF_8)) {
+
+      fileWriter.write(
+          "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0");
+
+      fileWriter.flush();
+
+      parseCommand(
+          RLP_SUBCOMMAND_NAME,
+          RLP_DECODE_SUBCOMMAND_NAME,
+          "--from",
+          tempJsonFile.toFile().getAbsolutePath());
+
+      final String expectedValidatorString =
+          "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
+
+      assertThat(commandOutput.toString(UTF_8)).contains(expectedValidatorString);
+      assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    }
+  }
+
+  @Test
+  public void decodeWithInputFilePathToOutputFile(final @TempDir Path dir) throws Exception {
+    final Path tempInputFile = Files.createTempFile(dir, "input", "json");
+    final File tempOutputFile = File.createTempFile("ibftValidators", "rlp");
+    try (final BufferedWriter fileWriter = Files.newBufferedWriter(tempInputFile, UTF_8)) {
+
+      fileWriter.write(
+          "0xf853a00000000000000000000000000000000000000000000000000000000000000000ea94be068f726a13c8d46c44be6ce9d275600e1735a4945ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193808400000000c0");
+
+      fileWriter.flush();
+
+      parseCommand(
+          RLP_SUBCOMMAND_NAME,
+          RLP_DECODE_SUBCOMMAND_NAME,
+          "--from",
+          tempInputFile.toFile().getAbsolutePath(),
+          "--to",
+          tempOutputFile.getPath());
+
+      final String expectedValidatorString =
+          "[0xbe068f726a13c8d46c44be6ce9d275600e1735a4, 0x5ff6f4b66a46a2b2310a6f3a93aaddc0d9a1c193]";
+
+      assertThat(contentOf(tempOutputFile)).contains(expectedValidatorString);
+      assertThat(commandOutput.toString(UTF_8)).isEmpty();
+      assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+    }
+  }
+
+  @Test
+  public void decodeWithEmptyStdInputMustRaiseAnError() throws Exception {
+
+    // set empty stdin
+    final String jsonInput = "";
+    final ByteArrayInputStream stdIn = new ByteArrayInputStream(jsonInput.getBytes(UTF_8));
+
+    parseCommand(stdIn, RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).startsWith("Unable to read input data.");
+  }
+
+  @Test
+  public void decodeWithInputFilePathMustThrowErrorFileNotExist(final @TempDir Path dir)
+      throws Exception {
+
+    final String nonExistingFileName = "/incorrectPath/wrongFile.json";
+
+    parseCommand(RLP_SUBCOMMAND_NAME, RLP_DECODE_SUBCOMMAND_NAME, "--from", nonExistingFileName);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains("Unable to read input file");
+  }
+
+  @Test
+  public void decodeWithEmptyInputMustRaiseAnError(final @TempDir Path dir) throws Exception {
+    final Path emptyFile = Files.createTempFile(dir, "empty", "json");
+    parseCommand(
+        RLP_SUBCOMMAND_NAME,
+        RLP_DECODE_SUBCOMMAND_NAME,
+        "--from",
+        emptyFile.toFile().getAbsolutePath());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .startsWith("An error occurred while trying to read the input data.");
   }
 
   @AfterEach

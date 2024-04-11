@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -127,13 +128,33 @@ public final class GenesisState {
     return new GenesisState(block, genesisAccounts);
   }
 
+  /**
+   * Construct a {@link GenesisState} from a JSON object.
+   *
+   * @param genesisStateHash The hash of the genesis state.
+   * @param config A {@link GenesisConfigFile} describing the genesis block.
+   * @param protocolSchedule A protocol Schedule associated with
+   * @return A new {@link GenesisState}.
+   */
+  public static GenesisState fromConfig(
+      final Hash genesisStateHash,
+      final GenesisConfigFile config,
+      final ProtocolSchedule protocolSchedule) {
+    final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
+    final Block block =
+        new Block(buildHeader(config, genesisStateHash, protocolSchedule), buildBody(config));
+    return new GenesisState(block, genesisAccounts);
+  }
+
   private static BlockBody buildBody(final GenesisConfigFile config) {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
     final Optional<List<Deposit>> deposits =
         isExperimentalEipsTimeAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+    final Optional<List<ValidatorExit>> exits =
+        isPragueAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
 
-    return new BlockBody(emptyList(), emptyList(), withdrawals, deposits);
+    return new BlockBody(emptyList(), emptyList(), withdrawals, deposits, exits);
   }
 
   public Block getBlock() {

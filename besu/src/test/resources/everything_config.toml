@@ -55,6 +55,7 @@ discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPR
 # chain
 network="MAINNET"
 genesis-file="~/genesis.json"
+genesis-state-hash-cache-enabled=false
 sync-mode="fast"
 fast-sync-min-peers=5
 network-id=303
@@ -174,6 +175,7 @@ privacy-flexible-groups-enabled=false
 # Transaction Pool
 tx-pool="layered"
 tx-pool-price-bump=13
+tx-pool-blob-price-bump=100
 rpc-tx-feecap=2000000000000000000
 strict-tx-replay-protection-enabled=true
 tx-pool-no-local-priority=false

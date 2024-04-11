@@ -257,8 +257,7 @@ public final class EthProtocolManagerTest {
       assertThat(workPeer.isDisconnected()).isTrue();
       assertThat(workPeer.getDisconnectReason()).isPresent();
       assertThat(workPeer.getDisconnectReason())
-          .get()
-          .isEqualTo(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+          .hasValue(DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY);
       assertThat(stakePeer.isDisconnected()).isFalse();
     }
   }
