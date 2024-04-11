@@ -1,6 +1,6 @@
 # Changelog
 
-## 24.3.2
+## 24.3.3
 
 ### Breaking Changes
 
@@ -16,6 +16,10 @@
 - Fix to avoid broadcasting full blob txs, instead of only the tx announcement, to a subset of nodes [#6835](https://github.com/hyperledger/besu/pull/6835)
 
 ### Download Links
+
+## 24.3.2
+
+- Was not released due to CI bug
 
 ## 24.3.1
 
