@@ -408,11 +408,15 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       if (ethPeers.shouldConnect(peer, incoming)) {
         return true;
       }
+    } else {
+      LOG.atDebug()
+          .setMessage("ForkId check failed for peer {} our fork id {} theirs {}")
+          .addArgument(peer::getLoggableId)
+          .addArgument(forkIdManager.getForkIdForChainHead())
+          .addArgument(peer.getForkId())
+          .log();
+      return false;
     }
-    LOG.atDebug()
-        .setMessage("ForkId check failed for peer {}")
-        .addArgument(peer::getLoggableId)
-        .log();
     return false;
   }
 
