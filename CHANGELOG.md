@@ -10,7 +10,7 @@
 
 ### Additions and Improvements
 - Upgrade Reference Tests to 13.2 [#6854](https://github.com/hyperledger/besu/pull/6854)
-- Add holesky DNS server [#6824](https://github.com/hyperledger/besu/pull/6824) [#6867](https://github.com/hyperledger/besu/pull/6867)
+- Add holesky DNS server [#6824](https://github.com/hyperledger/besu/pull/6824), [#6867](https://github.com/hyperledger/besu/pull/6867)
 
 ### Bug fixes
 - Fix to avoid broadcasting full blob txs, instead of only the tx announcement, to a subset of nodes [#6835](https://github.com/hyperledger/besu/pull/6835)
