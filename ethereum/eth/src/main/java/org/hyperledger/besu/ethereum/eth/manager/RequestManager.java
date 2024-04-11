@@ -95,7 +95,8 @@ public class RequestManager {
           peer,
           e);
 
-      peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+      peer.disconnect(
+          DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
 
     if (count == 0) {
