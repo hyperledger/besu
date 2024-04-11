@@ -61,6 +61,13 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionsLayer.class);
   private static final NavigableMap<Long, PendingTransaction> EMPTY_SENDER_TXS = new TreeMap<>();
+  private static final int[] UNLIMITED_PROMOTIONS_PER_TYPE =
+      new int[TransactionType.values().length];
+
+  static {
+    Arrays.fill(UNLIMITED_PROMOTIONS_PER_TYPE, Integer.MAX_VALUE);
+  }
+
   protected final TransactionPoolConfiguration poolConfig;
   protected final TransactionsLayer nextLayer;
   protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
@@ -425,9 +432,13 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
     if (freeSlots > 0 && freeSpace > 0) {
       nextLayer
-          .promote(this::promotionFilter, cacheFreeSpace(), freeSlots)
+          .promote(this::promotionFilter, cacheFreeSpace(), freeSlots, getMaxPromotionsPerType())
           .forEach(this::processAdded);
     }
+  }
+
+  protected int[] getMaxPromotionsPerType() {
+    return UNLIMITED_PROMOTIONS_PER_TYPE;
   }
 
   private void confirmed(final Address sender, final long maxConfirmedNonce) {

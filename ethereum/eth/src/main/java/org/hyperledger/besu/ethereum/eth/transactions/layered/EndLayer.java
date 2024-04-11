@@ -122,7 +122,8 @@ public class EndLayer implements TransactionsLayer {
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] maxPromotionsPerType) {
     return List.of();
   }
 

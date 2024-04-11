@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -123,8 +124,23 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] maxPromotionsPerType) {
     return List.of();
+  }
+
+  @Override
+  protected int[] getMaxPromotionsPerType() {
+    final var allTypes = TransactionType.values();
+    final var maxPromotionsPerType = new int[allTypes.length];
+    for (int i = 0; i < allTypes.length; i++) {
+      maxPromotionsPerType[i] =
+          poolConfig
+                  .getMaxPrioritizedTransactionsByType()
+                  .getOrDefault(allTypes[i], Integer.MAX_VALUE)
+              - txCountByType[i];
+    }
+    return maxPromotionsPerType;
   }
 
   @Override

@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.PROMOTED;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
@@ -146,19 +147,25 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] maxPromotionsPerType) {
     long accumulatedSpace = 0;
     final List<PendingTransaction> promotedTxs = new ArrayList<>();
+    final int[] promotedCountByType = new int[maxPromotionsPerType.length];
+    final Predicate<TransactionType> thereIsSpaceForType =
+        txType -> promotedCountByType[txType.ordinal()] < maxPromotionsPerType[txType.ordinal()];
 
     // first find all txs that can be promoted
     search:
     for (final var senderFirstTx : orderByMaxFee.descendingSet()) {
       final var senderTxs = txsBySender.get(senderFirstTx.getSender());
       for (final var candidateTx : senderTxs.values()) {
-        if (promotionFilter.test(candidateTx)) {
+        final var txType = candidateTx.getTransaction().getType();
+        if (promotionFilter.test(candidateTx) && thereIsSpaceForType.test(txType)) {
           accumulatedSpace += candidateTx.memorySize();
           if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
             promotedTxs.add(candidateTx);
+            ++promotedCountByType[txType.ordinal()];
           } else {
             // no room for more txs the search is over exit the loops
             break search;
