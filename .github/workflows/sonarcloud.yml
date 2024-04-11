@@ -30,10 +30,12 @@ jobs:
           restore-keys: ${{ runner.os }}-sonar
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: Build and analyze
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Needed to get PR information, if any
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
-          SONAR_ORGANIZATION: ${{ env.SONAR_ORGANIZATION }}
-          SONAR_PROJECT_KEY: $ {{ env.SONAR_PROJECT_KEY }}
+          SONAR_ORGANIZATION: ${{ vars.SONAR_ORGANIZATION }}
+          SONAR_PROJECT_KEY: ${{ vars.SONAR_PROJECT_KEY }}
         run: ./gradlew build sonarqube --continue --info -Dorg.gradle.parallel=true -Dorg.gradle.caching=true

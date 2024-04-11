@@ -1,6 +1,5 @@
 name: release besu
 on:
-  workflow_dispatch:
   release:
     types: [released]
 env:
@@ -23,7 +22,9 @@ jobs:
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: Docker upload
-        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" dockerUploadRelease
+        run: ./gradlew "-Prelease.releaseVersion=${{ github.event.release.name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" dockerUploadRelease
       - name: Docker manifest
-        run: ./gradlew "-Prelease.releaseVersion=${{ github.ref_name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" manifestDockerRelease
+        run: ./gradlew "-Prelease.releaseVersion=${{ github.event.release.name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" manifestDockerRelease
