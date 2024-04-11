@@ -128,6 +128,24 @@ public final class GenesisState {
     return new GenesisState(block, genesisAccounts);
   }
 
+  /**
+   * Construct a {@link GenesisState} from a JSON object.
+   *
+   * @param genesisStateHash The hash of the genesis state.
+   * @param config A {@link GenesisConfigFile} describing the genesis block.
+   * @param protocolSchedule A protocol Schedule associated with
+   * @return A new {@link GenesisState}.
+   */
+  public static GenesisState fromConfig(
+      final Hash genesisStateHash,
+      final GenesisConfigFile config,
+      final ProtocolSchedule protocolSchedule) {
+    final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
+    final Block block =
+        new Block(buildHeader(config, genesisStateHash, protocolSchedule), buildBody(config));
+    return new GenesisState(block, genesisAccounts);
+  }
+
   private static BlockBody buildBody(final GenesisConfigFile config) {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();

@@ -400,7 +400,7 @@ public class MainnetTransactionProcessor {
                 .address(contractAddress)
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
-                .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
+                .code(contractCreationProcessor.getCodeFromEVMUncached(initCodeBytes))
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
