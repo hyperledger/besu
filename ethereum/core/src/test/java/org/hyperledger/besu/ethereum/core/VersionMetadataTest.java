@@ -82,7 +82,7 @@ class VersionMetadataTest {
 
   @ParameterizedTest
   @MethodSource("versionTestProvider")
-  public void assertCompatibilityChecks(
+  public void assertComparableChecks(
       final String runtimeVersion,
       final String metadataVersion,
       final int expectedComparisonResult) {
