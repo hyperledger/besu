@@ -37,8 +37,6 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
   private static final String METADATA_FILENAME = "VERSION_METADATA.json";
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private final String besuVersion;
-  private static final VersionMetadata RUNTIME_VERSION =
-      new VersionMetadata(getRuntimeVersionString());
 
   /**
    * Get the version of Besu that is running.
@@ -52,7 +50,7 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
   }
 
   public static VersionMetadata getRuntimeVersion() {
-    return RUNTIME_VERSION;
+    return new VersionMetadata(getRuntimeVersionString());
   }
 
   @JsonCreator
@@ -111,34 +109,35 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
   public static void versionCompatibilityChecks(
       final boolean enforceCompatibilityProtection, final Path dataDir) throws IOException {
     final VersionMetadata metadataVersion = VersionMetadata.lookUpFrom(dataDir);
+    final VersionMetadata runtimeVersion = getRuntimeVersion();
     if (metadataVersion.getBesuVersion().equals(VersionMetadata.BESU_VERSION_UNKNOWN)) {
       // The version isn't known, potentially because the file doesn't exist. Write the latest
       // version to the metadata file.
       LOG.info(
           "No version data detected. Writing Besu version {} to metadata file",
-          RUNTIME_VERSION.getBesuVersion());
-      RUNTIME_VERSION.writeToDirectory(dataDir);
+          runtimeVersion.getBesuVersion());
+      runtimeVersion.writeToDirectory(dataDir);
     } else {
       // Check the runtime version against the most recent version as recorded in the version
       // metadata file
-      final int versionComparison = RUNTIME_VERSION.compareTo(metadataVersion);
+      final int versionComparison = runtimeVersion.compareTo(metadataVersion);
       if (versionComparison == 0) {
         // Versions match - no-op
       } else if (versionComparison < 0) {
         if (!enforceCompatibilityProtection) {
           LOG.warn(
               "Besu version {} is lower than version {} that last started. Allowing startup because --version-compatibility-protection has been disabled.",
-              RUNTIME_VERSION.getBesuVersion(),
+              runtimeVersion.getBesuVersion(),
               metadataVersion.getBesuVersion());
           // We've allowed startup at an older version of Besu. Since the version in the metadata
           // file records the latest version of
           // Besu to write to the database we'll update the metadata version to this
           // downgraded-version.
-          RUNTIME_VERSION.writeToDirectory(dataDir);
+          runtimeVersion.writeToDirectory(dataDir);
         } else {
           final String message =
               "Besu version "
-                  + RUNTIME_VERSION.getBesuVersion()
+                  + runtimeVersion.getBesuVersion()
                   + " is lower than version "
                   + metadataVersion.getBesuVersion()
                   + " that last started. Remove --version-compatibility-protection option to allow Besu to start at "
@@ -149,9 +148,9 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
       } else {
         LOG.info(
             "Besu version {} is higher than version {} that last started. Updating version metadata.",
-            RUNTIME_VERSION.getBesuVersion(),
+            runtimeVersion.getBesuVersion(),
             metadataVersion.getBesuVersion());
-        RUNTIME_VERSION.writeToDirectory(dataDir);
+        runtimeVersion.writeToDirectory(dataDir);
       }
     }
   }
