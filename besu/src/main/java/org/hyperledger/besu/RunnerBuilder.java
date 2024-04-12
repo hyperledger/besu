@@ -705,7 +705,7 @@ public class RunnerBuilder {
             .ethPeersShouldConnect(ethPeers::shouldTryToConnect)
             .build();
 
-    besuController.getEthPeers().setRlpxAgent(networkRunner.getRlpxAgent());
+    ethPeers.setRlpxAgent(networkRunner.getRlpxAgent());
 
     final P2PNetwork network = networkRunner.getNetwork();
     // ForkId in Ethereum Node Record needs updating when we transition to a new protocol spec
