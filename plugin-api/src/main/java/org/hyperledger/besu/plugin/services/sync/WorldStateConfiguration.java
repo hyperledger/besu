@@ -12,16 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.common;
+package org.hyperledger.besu.plugin.services.sync;
 
-public interface StorageSubscriber {
-  default void onClearStorage() {}
+/** interface for worldstate configuration * */
+public interface WorldStateConfiguration {
 
-  default void onClearFlatDatabaseStorage() {}
-
-  default void onClearTrieLog() {}
-
-  default void onClearTrie() {}
-
-  default void onCloseStorage() {}
+  /**
+   * Returns whether the trie is disabled.
+   *
+   * @return true if the trie is disabled, false otherwise.
+   */
+  boolean isTrieDisabled();
 }

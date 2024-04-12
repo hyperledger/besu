@@ -476,6 +476,15 @@ public class JsonRpcHttpOptions {
   }
 
   /**
+   * Returns the host for RPC over HTTP.
+   *
+   * @return The port number
+   */
+  public String getRpcHttpHost() {
+    return rpcHttpHost;
+  }
+
+  /**
    * Returns the port for RPC over HTTP.
    *
    * @return The port number

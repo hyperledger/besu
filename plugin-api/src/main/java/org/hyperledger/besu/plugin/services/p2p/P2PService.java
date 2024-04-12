@@ -12,16 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.common;
+package org.hyperledger.besu.plugin.services.p2p;
 
-public interface StorageSubscriber {
-  default void onClearStorage() {}
+import org.hyperledger.besu.plugin.services.BesuService;
 
-  default void onClearFlatDatabaseStorage() {}
+/** Service to enable and disable P2P service. */
+public interface P2PService extends BesuService {
 
-  default void onClearTrieLog() {}
+  /** Enables P2P discovery. */
+  void enableDiscovery();
 
-  default void onClearTrie() {}
-
-  default void onCloseStorage() {}
+  /** Disables P2P discovery. */
+  void disableDiscovery();
 }

@@ -48,6 +48,7 @@ public class ChainDataPrunerTest {
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             512,
             0,
+            // completed
             new BlockingExecutor());
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
@@ -87,6 +88,7 @@ public class ChainDataPrunerTest {
             new ChainDataPrunerStorage(new InMemoryKeyValueStorage()),
             512,
             0,
+            // completed
             new BlockingExecutor());
     Block genesisBlock = gen.genesisBlock();
     final MutableBlockchain blockchain =
