@@ -142,10 +142,10 @@ public class QbftRound {
   /**
    * Send proposal message.
    *
-   * @param headerTimeStampSeconds the header time stamp seconds
+   * @param block to send
    */
   public void sendProposalMessage(final Block block) {
-    LOG.trace(
+    LOG.debug(
             "Creating proposed block blockHeader={}",
             block.getHeader());
     updateStateWithProposalAndTransmit(block, emptyList(), emptyList());

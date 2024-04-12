@@ -307,7 +307,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
   @Test
   public void posBlockCreationMaxTimeOutOfAllowedRange() {
     internalTestFailure(
-        "--Xpos-block-creation-max-time must be positive and ≤ 12000",
+        "--Xpos-block-creation-max-time must be positive and less or equal 12000",
         "--Xpos-block-creation-max-time",
         "17000");
   }
