@@ -19,8 +19,10 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.DefaultCommandValues;
+import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand.DecodeSubCommand;
 import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand.EncodeSubCommand;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
@@ -30,6 +32,7 @@ import java.io.InputStream;
 import java.io.PrintWriter;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 import com.fasterxml.jackson.databind.exc.MismatchedInputException;
@@ -48,7 +51,7 @@ import picocli.CommandLine.Spec;
     description = "This command provides RLP data related actions.",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
-    subcommands = {EncodeSubCommand.class})
+    subcommands = {EncodeSubCommand.class, DecodeSubCommand.class})
 public class RLPSubCommand implements Runnable {
 
   /** The constant COMMAND_NAME. */
@@ -204,6 +207,130 @@ public class RLPSubCommand implements Runnable {
         }
       } else {
         parentCommand.out.println(rlpEncodedOutput);
+      }
+    }
+  }
+
+  /**
+   * RLP decode sub-command
+   *
+   * <p>Decode a RLP hex string into a validator list.
+   */
+  @Command(
+      name = "decode",
+      description = "This command decodes a JSON typed RLP hex string into validator list.",
+      mixinStandardHelpOptions = true,
+      versionProvider = VersionProvider.class)
+  static class DecodeSubCommand implements Runnable {
+
+    @SuppressWarnings("unused")
+    @ParentCommand
+    private RLPSubCommand parentCommand; // Picocli injects reference to parent command
+
+    @SuppressWarnings("unused")
+    @Spec
+    private CommandSpec spec;
+
+    @Option(
+        names = "--type",
+        description =
+            "Type of the RLP data to Decode, possible values are ${COMPLETION-CANDIDATES}. (default: ${DEFAULT-VALUE})",
+        arity = "1..1")
+    private final RLPType type = RLPType.IBFT_EXTRA_DATA;
+
+    @Option(
+        names = "--from",
+        paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+        description = "File containing JSON object to decode",
+        arity = "1..1")
+    private final File jsonSourceFile = null;
+
+    @Option(
+        names = "--to",
+        paramLabel = DefaultCommandValues.MANDATORY_FILE_FORMAT_HELP,
+        description = "File to write decoded RLP string to.",
+        arity = "1..1")
+    private final File rlpTargetFile = null;
+
+    @Override
+    public void run() {
+      checkNotNull(parentCommand);
+      readInput();
+    }
+
+    /**
+     * Reads the stdin or from a file if one is specified by {@link #jsonSourceFile} then goes to
+     * {@link #decode(String)} this data
+     */
+    private void readInput() {
+      // if we have an output file defined, print to it
+      // otherwise print to defined output, usually standard output.
+      final String inputData;
+
+      if (jsonSourceFile != null) {
+        try {
+          BufferedReader reader = Files.newBufferedReader(jsonSourceFile.toPath(), UTF_8);
+
+          // Read only the first line if there are many lines
+          inputData = reader.readLine();
+        } catch (IOException e) {
+          throw new ExecutionException(spec.commandLine(), "Unable to read input file.");
+        }
+      } else {
+        // get data from standard input
+        try (Scanner scanner = new Scanner(parentCommand.in, UTF_8.name())) {
+          inputData = scanner.nextLine();
+        } catch (NoSuchElementException e) {
+          throw new ParameterException(spec.commandLine(), "Unable to read input data." + e);
+        }
+      }
+
+      decode(inputData);
+    }
+
+    /**
+     * Decodes the string input into an validator data based on the {@link #type} then goes to
+     * {@link #writeOutput(BftExtraData)} this data to file or stdout
+     *
+     * @param inputData the string data to decode
+     */
+    private void decode(final String inputData) {
+      if (inputData == null || inputData.isEmpty()) {
+        throw new ParameterException(
+            spec.commandLine(), "An error occurred while trying to read the input data.");
+      } else {
+        try {
+          // decode and write the value
+          writeOutput(type.getAdapter().decode(inputData));
+        } catch (MismatchedInputException e) {
+          throw new ParameterException(
+              spec.commandLine(),
+              "Unable to map the input data with selected type. Please check input format. " + e);
+        } catch (IOException e) {
+          throw new ParameterException(
+              spec.commandLine(), "Unable to load the input data. Please check input format. " + e);
+        }
+      }
+    }
+
+    /**
+     * write the decoded result to stdout or a file if the option is specified
+     *
+     * @param bftExtraDataOutput the BFT extra data output to write to file or stdout
+     */
+    private void writeOutput(final BftExtraData bftExtraDataOutput) {
+      if (rlpTargetFile != null) {
+        final Path targetPath = rlpTargetFile.toPath();
+
+        try (final BufferedWriter fileWriter = Files.newBufferedWriter(targetPath, UTF_8)) {
+          fileWriter.write(bftExtraDataOutput.getValidators().toString());
+        } catch (final IOException e) {
+          throw new ParameterException(
+              spec.commandLine(),
+              "An error occurred while trying to write the validator list. " + e.getMessage());
+        }
+      } else {
+        parentCommand.out.println(bftExtraDataOutput.getValidators().toString());
       }
     }
   }
