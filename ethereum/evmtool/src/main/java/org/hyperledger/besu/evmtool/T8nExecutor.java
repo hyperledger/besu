@@ -50,7 +50,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -63,7 +62,7 @@ import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
-import java.util.NavigableMap;
+import java.util.Map;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
@@ -332,7 +331,8 @@ public class T8nExecutor {
         ObjectNode receiptObject = receiptsArray.addObject();
         receiptObject.put(
             "root", receipt.getStateRoot() == null ? "0x" : receipt.getStateRoot().toHexString());
-        receiptObject.put("status", "0x" + receipt.getStatus());
+        int status = receipt.getStatus();
+        receiptObject.put("status", "0x" + (status < 0 ? 0 : status));
         receiptObject.put("cumulativeGasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
         receiptObject.put("logsBloom", receipt.getBloomFilter().toHexString());
         if (result.getLogs().isEmpty()) {
@@ -428,23 +428,29 @@ public class T8nExecutor {
         .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
         .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
         .forEach(
-            account -> {
-              ObjectNode accountObject =
-                  allocObject.putObject(
-                      account.getAddress().map(Address::toHexString).orElse("0x"));
+            a -> {
+              var account = worldState.get(a.getAddress().get());
+              ObjectNode accountObject = allocObject.putObject(account.getAddress().toHexString());
               if (account.getCode() != null && !account.getCode().isEmpty()) {
                 accountObject.put("code", account.getCode().toHexString());
               }
-              NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
-                  account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              var storageEntries =
+                  account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE).values().stream()
+                      .map(
+                          e ->
+                              Map.entry(
+                                  e.getKey().get(),
+                                  account.getStorageValue(UInt256.fromBytes(e.getKey().get()))))
+                      .filter(e -> !e.getValue().isZero())
+                      .sorted(Map.Entry.comparingByKey())
+                      .toList();
               if (!storageEntries.isEmpty()) {
                 ObjectNode storageObject = accountObject.putObject("storage");
-                storageEntries.values().stream()
-                    .sorted(Comparator.comparing(a -> a.getKey().get()))
+                storageEntries.stream()
                     .forEach(
                         accountStorageEntry ->
                             storageObject.put(
-                                accountStorageEntry.getKey().map(UInt256::toHexString).orElse("0x"),
+                                accountStorageEntry.getKey().toHexString(),
                                 accountStorageEntry.getValue().toHexString()));
               }
               accountObject.put("balance", account.getBalance().toShortHexString());
