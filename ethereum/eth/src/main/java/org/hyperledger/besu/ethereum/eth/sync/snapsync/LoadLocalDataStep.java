@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.sync.StorageExceptionManager.get
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
+import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -102,6 +103,11 @@ public class LoadLocalDataStep {
       } else {
         throw storageException;
       }
+    } catch (MerkleTrieException merkleTrieException) {
+      // We reset the task by setting it to null. This way, it is considered as failed by the
+      // pipeline, and it will attempt to execute it again later.
+      LOG.info("Encountered error loading trie nodes", merkleTrieException);
+      task.getData().clear();
     }
     return Stream.of(task);
   }
