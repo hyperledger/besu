@@ -149,14 +149,6 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
   @Override
   protected boolean promotionFilter(final PendingTransaction pendingTransaction) {
-    // check if there is space for that tx type
-    final var txType = pendingTransaction.getTransaction().getType();
-    if (txCountByType[txType.ordinal()]
-        >= poolConfig
-            .getMaxPrioritizedTransactionsByType()
-            .getOrDefault(txType, Integer.MAX_VALUE)) {
-      return false;
-    }
 
     // check if the tx is willing to pay at least the base fee
     if (nextBlockBaseFee

@@ -88,6 +88,15 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   private boolean hasPriority(final PendingTransaction pendingTransaction) {
+    // check if there is space for that tx type
+    final var txType = pendingTransaction.getTransaction().getType();
+    if (txCountByType[txType.ordinal()]
+        >= poolConfig
+            .getMaxPrioritizedTransactionsByType()
+            .getOrDefault(txType, Integer.MAX_VALUE)) {
+      return false;
+    }
+
     // if it does not pass the promotion filter, then has not priority
     if (!promotionFilter(pendingTransaction)) {
       return false;
@@ -129,6 +138,13 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
     return List.of();
   }
 
+  /**
+   * Here the max number of txs of a specific type that can be promoted, is defined by the
+   * configuration, so we return the difference between the configured max and the current count of
+   * txs for each type
+   *
+   * @return an array containing the max amount of txs that can be promoted for each type
+   */
   @Override
   protected int[] getMaxPromotionsPerType() {
     final var allTypes = TransactionType.values();

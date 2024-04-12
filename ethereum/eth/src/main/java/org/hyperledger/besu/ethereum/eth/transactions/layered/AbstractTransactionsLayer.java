@@ -437,6 +437,14 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     }
   }
 
+  /**
+   * How many txs of a specified type can be promoted? This make sense when a max number of txs of a
+   * type can be included in a single block (ex. blob txs), to avoid filling the layer with more txs
+   * than the useful ones. By default, there are no limits, but each layer can define its own
+   * policy.
+   *
+   * @return an array containing the max amount of txs that can be promoted for each type
+   */
   protected int[] getMaxPromotionsPerType() {
     return UNLIMITED_PROMOTIONS_PER_TYPE;
   }
