@@ -412,6 +412,10 @@ public class EthPeers {
 
     final Bytes id = peer.getId();
     if (alreadyConnectedOrConnecting(inbound, id)) {
+      LOG.atTrace()
+          .setMessage("not connecting to peer {} - too many peers")
+          .addArgument(peer.getLoggableId())
+          .log();
       return false;
     }
 
@@ -421,6 +425,10 @@ public class EthPeers {
   private boolean alreadyConnectedOrConnecting(final boolean inbound, final Bytes id) {
     final EthPeer ethPeer = activeConnections.get(id);
     if (ethPeer != null && !ethPeer.isDisconnected()) {
+      LOG.atTrace()
+          .setMessage("not connecting to peer {} - already disconnected")
+          .addArgument(ethPeer.getLoggableId())
+          .log();
       return true;
     }
     final List<PeerConnection> incompleteConnections = getIncompleteConnections(id);
