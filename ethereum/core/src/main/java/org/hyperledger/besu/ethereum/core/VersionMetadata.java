@@ -158,8 +158,6 @@ public class VersionMetadata implements Comparable<VersionMetadata> {
 
   @Override
   public int compareTo(@Nonnull final VersionMetadata versionMetadata) {
-    // Check the runtime version against the most recent version as recorded in the version
-    // metadata file
     final String thisVersion = this.getBesuVersion().split("-", 2)[0];
     final String metadataVersion = versionMetadata.getBesuVersion().split("-", 2)[0];
     return new ComparableVersion(thisVersion).compareTo(new ComparableVersion(metadataVersion));
