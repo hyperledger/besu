@@ -113,10 +113,11 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
   }
 
   @Test
-  @Ignore("flaky with timeout - see https://github.com/hyperledger/besu/issues/6914")
   public void onchainPermissioningAllowlistShouldPersistAcrossRestarts() {
     permissionedCluster.stop();
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
+
+    verifyAllNodesAreInSyncWithMiner();
 
     permissionedNode.verify(connectionIsAllowed(allowedNode));
     permissionedNode.verify(connectionIsAllowed(bootnode));
