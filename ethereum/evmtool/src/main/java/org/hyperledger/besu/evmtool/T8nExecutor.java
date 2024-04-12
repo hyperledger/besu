@@ -448,7 +448,7 @@ public class T8nExecutor {
                                 accountStorageEntry.getValue().toHexString()));
               }
               accountObject.put("balance", account.getBalance().toShortHexString());
-              if (account.getNonce() > 0) {
+              if (account.getNonce() != 0) {
                 accountObject.put(
                     "nonce", Bytes.ofUnsignedLong(account.getNonce()).toShortHexString());
               }
