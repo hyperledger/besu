@@ -177,7 +177,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
       if (!maybeFull()) {
         // if there is space try to see if the added tx filled some gaps
-        tryFillGap(addStatus, pendingTransaction);
+        tryFillGap(addStatus, pendingTransaction, getRemainingPromotionsPerType());
       }
 
       notifyTransactionAdded(pendingTransaction);
@@ -214,16 +214,21 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   private void tryFillGap(
-      final TransactionAddedResult addStatus, final PendingTransaction pendingTransaction) {
+      final TransactionAddedResult addStatus,
+      final PendingTransaction pendingTransaction,
+      final int[] remainingPromotionsPerType) {
     // it makes sense to fill gaps only if the add is not a replacement and this layer does not
     // allow gaps
     if (!addStatus.isReplacement() && !gapsAllowed()) {
       final PendingTransaction promotedTx =
-          nextLayer.promoteFor(pendingTransaction.getSender(), pendingTransaction.getNonce());
+          nextLayer.promoteFor(
+              pendingTransaction.getSender(),
+              pendingTransaction.getNonce(),
+              remainingPromotionsPerType);
       if (promotedTx != null) {
         processAdded(promotedTx);
         if (!maybeFull()) {
-          tryFillGap(ADDED, promotedTx);
+          tryFillGap(ADDED, promotedTx, remainingPromotionsPerType);
         }
       }
     }
@@ -258,22 +263,30 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final PendingTransaction pendingTransaction);
 
   @Override
-  public PendingTransaction promoteFor(final Address sender, final long nonce) {
+  public PendingTransaction promoteFor(
+      final Address sender, final long nonce, final int[] remainingPromotionsPerType) {
     final var senderTxs = txsBySender.get(sender);
     if (senderTxs != null) {
       long expectedNonce = nonce + 1;
       if (senderTxs.firstKey() == expectedNonce) {
-        final PendingTransaction promotedTx = senderTxs.pollFirstEntry().getValue();
-        processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
-        metrics.incrementRemoved(promotedTx, "promoted", name());
+        final var candidateTx = senderTxs.firstEntry().getValue();
+        final var txType = candidateTx.getTransaction().getType();
 
-        if (senderTxs.isEmpty()) {
-          txsBySender.remove(sender);
+        if (remainingPromotionsPerType[txType.ordinal()] > 0) {
+          senderTxs.pollFirstEntry();
+          processRemove(senderTxs, candidateTx.getTransaction(), PROMOTED);
+          metrics.incrementRemoved(candidateTx, "promoted", name());
+
+          if (senderTxs.isEmpty()) {
+            txsBySender.remove(sender);
+          }
+          --remainingPromotionsPerType[txType.ordinal()];
+          return candidateTx;
         }
-        return promotedTx;
+        return null;
       }
     }
-    return nextLayer.promoteFor(sender, nonce);
+    return nextLayer.promoteFor(sender, nonce, remainingPromotionsPerType);
   }
 
   private TransactionAddedResult addToNextLayer(
@@ -432,7 +445,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
     if (freeSlots > 0 && freeSpace > 0) {
       nextLayer
-          .promote(this::promotionFilter, cacheFreeSpace(), freeSlots, getMaxPromotionsPerType())
+          .promote(
+              this::promotionFilter, cacheFreeSpace(), freeSlots, getRemainingPromotionsPerType())
           .forEach(this::processAdded);
     }
   }
@@ -445,8 +459,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
    *
    * @return an array containing the max amount of txs that can be promoted for each type
    */
-  protected int[] getMaxPromotionsPerType() {
-    return UNLIMITED_PROMOTIONS_PER_TYPE;
+  protected int[] getRemainingPromotionsPerType() {
+    return Arrays.copyOf(UNLIMITED_PROMOTIONS_PER_TYPE, UNLIMITED_PROMOTIONS_PER_TYPE.length);
   }
 
   private void confirmed(final Address sender, final long maxConfirmedNonce) {

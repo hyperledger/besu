@@ -134,7 +134,7 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
       final int freeSlots,
-      final int[] maxPromotionsPerType) {
+      final int[] remainingPromotionsPerType) {
     return List.of();
   }
 
@@ -146,17 +146,17 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
    * @return an array containing the max amount of txs that can be promoted for each type
    */
   @Override
-  protected int[] getMaxPromotionsPerType() {
+  protected int[] getRemainingPromotionsPerType() {
     final var allTypes = TransactionType.values();
-    final var maxPromotionsPerType = new int[allTypes.length];
+    final var remainingPromotionsPerType = new int[allTypes.length];
     for (int i = 0; i < allTypes.length; i++) {
-      maxPromotionsPerType[i] =
+      remainingPromotionsPerType[i] =
           poolConfig
                   .getMaxPrioritizedTransactionsByType()
                   .getOrDefault(allTypes[i], Integer.MAX_VALUE)
               - txCountByType[i];
     }
-    return maxPromotionsPerType;
+    return remainingPromotionsPerType;
   }
 
   @Override

@@ -123,7 +123,7 @@ public class EndLayer implements TransactionsLayer {
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
       final int freeSlots,
-      final int[] maxPromotionsPerType) {
+      final int[] remainingPromotionsPerType) {
     return List.of();
   }
 
@@ -153,7 +153,8 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public PendingTransaction promoteFor(final Address sender, final long nonce) {
+  public PendingTransaction promoteFor(
+      final Address sender, final long nonce, final int[] remainingPromotionsPerType) {
     return null;
   }
 

@@ -1230,6 +1230,13 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedPrioritizedForSender(S1, 1)
                 .expectedReadyForSender(S1, 2)),
         Arguments.of(
+            new Scenario("filling gaps respect prioritized count limit")
+                .addForSender(S1, BLOB, 1)
+                .expectedSparseForSender(S1, 1)
+                .addForSender(S1, BLOB, 0)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedSparseForSender(S1, 1)),
+        Arguments.of(
             new Scenario("promoting to ready is unbounded")
                 .addForSender(S1, BLOB, 0, 1, 2, 3, 4, 5, 6)
                 .expectedPrioritizedForSender(S1, 0)
