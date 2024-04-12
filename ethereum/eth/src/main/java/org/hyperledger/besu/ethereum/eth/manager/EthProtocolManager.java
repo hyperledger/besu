@@ -160,41 +160,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
-  //  public EthProtocolManager(
-  //      final Blockchain blockchain,
-  //      final BigInteger networkId,
-  //      final WorldStateArchive worldStateArchive,
-  //      final TransactionPool transactionPool,
-  //      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-  //      final EthPeers ethPeers,
-  //      final EthMessages ethMessages,
-  //      final EthContext ethContext,
-  //      final List<PeerValidator> peerValidators,
-  //      final Optional<MergePeerFilter> mergePeerFilter,
-  //      final SynchronizerConfiguration synchronizerConfiguration,
-  //      final EthScheduler scheduler,
-  //      final List<Long> blockNumberForks,
-  //      final List<Long> timestampForks) {
-  //    this(
-  //        blockchain,
-  //        networkId,
-  //        worldStateArchive,
-  //        transactionPool,
-  //        ethereumWireProtocolConfiguration,
-  //        ethPeers,
-  //        ethMessages,
-  //        ethContext,
-  //        peerValidators,
-  //        mergePeerFilter,
-  //        synchronizerConfiguration,
-  //        scheduler,
-  //        new ForkIdManager(
-  //            blockchain,
-  //            blockNumberForks,
-  //            timestampForks,
-  //            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
-  //  }
-
   public EthContext ethContext() {
     return ethContext;
   }
