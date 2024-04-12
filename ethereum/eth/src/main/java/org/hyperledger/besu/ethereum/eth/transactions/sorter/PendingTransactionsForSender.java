@@ -42,7 +42,7 @@ public class PendingTransactionsForSender {
     synchronized (pendingTransactions) {
       if (!pendingTransactions.isEmpty()) {
         final long expectedNext = pendingTransactions.lastKey() + 1;
-        if (nonce > (expectedNext) && nextGap.isEmpty()) {
+        if (Long.compareUnsigned(nonce, expectedNext) > 0 && nextGap.isEmpty()) {
           nextGap = OptionalLong.of(expectedNext);
         }
       }
