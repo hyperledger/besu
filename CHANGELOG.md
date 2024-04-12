@@ -41,6 +41,7 @@
 - Expose bad block events via the BesuEvents plugin API  [#6848](https://github.com/hyperledger/besu/pull/6848)
 - Add RPC errors metric [#6919](https://github.com/hyperledger/besu/pull/6919/)
 - Add `rlp decode` subcommand to decode IBFT/QBFT extraData to validator list [#6895](https://github.com/hyperledger/besu/pull/6895)
+- Layered txpool tuning for blob transactions [#6940](https://github.com/hyperledger/besu/pull/6940)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
