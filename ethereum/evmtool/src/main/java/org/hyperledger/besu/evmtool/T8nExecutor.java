@@ -332,7 +332,7 @@ public class T8nExecutor {
         receiptObject.put(
             "root", receipt.getStateRoot() == null ? "0x" : receipt.getStateRoot().toHexString());
         int status = receipt.getStatus();
-        receiptObject.put("status", "0x" + (status < 0 ? 0 : status));
+        receiptObject.put("status", "0x" + Math.max(status, 0));
         receiptObject.put("cumulativeGasUsed", Bytes.ofUnsignedLong(gasUsed).toQuantityHexString());
         receiptObject.put("logsBloom", receipt.getBloomFilter().toHexString());
         if (result.getLogs().isEmpty()) {
@@ -366,19 +366,19 @@ public class T8nExecutor {
           .incrementBalance(reward);
     }
 
+    worldStateUpdater.commit();
     // Invoke the withdrawal processor to handle CL withdrawals.
     if (!referenceTestEnv.getWithdrawals().isEmpty()) {
       try {
         protocolSpec
             .getWithdrawalsProcessor()
             .ifPresent(
-                p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldStateUpdater));
+                p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldState.updater()));
       } catch (RuntimeException re) {
         resultObject.put("exception", re.getMessage());
       }
     }
 
-    worldStateUpdater.commit();
     worldState.persist(blockHeader);
 
     resultObject.put("stateRoot", worldState.rootHash().toHexString());
@@ -446,12 +446,11 @@ public class T8nExecutor {
                       .toList();
               if (!storageEntries.isEmpty()) {
                 ObjectNode storageObject = accountObject.putObject("storage");
-                storageEntries.stream()
-                    .forEach(
-                        accountStorageEntry ->
-                            storageObject.put(
-                                accountStorageEntry.getKey().toHexString(),
-                                accountStorageEntry.getValue().toHexString()));
+                storageEntries.forEach(
+                    accountStorageEntry ->
+                        storageObject.put(
+                            accountStorageEntry.getKey().toHexString(),
+                            accountStorageEntry.getValue().toHexString()));
               }
               accountObject.put("balance", account.getBalance().toShortHexString());
               if (account.getNonce() != 0) {
