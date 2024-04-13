@@ -180,7 +180,7 @@ public class T8nServerSubCommand implements Runnable {
                 public OperationTracer getManagedTracer(final int txIndex, final Hash txHash)
                     throws Exception {
                   outDir.toFile().mkdirs();
-                    var traceDest =
+                  var traceDest =
                       new FileOutputStream(
                           outDir
                               .resolve(
