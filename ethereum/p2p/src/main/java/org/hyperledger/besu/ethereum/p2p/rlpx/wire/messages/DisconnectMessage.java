@@ -108,7 +108,21 @@ public final class DisconnectMessage extends AbstractMessageData {
     UNKNOWN(null),
     REQUESTED((byte) 0x00),
     TCP_SUBSYSTEM_ERROR((byte) 0x01),
+
     BREACH_OF_PROTOCOL((byte) 0x02),
+    BREACH_OF_PROTOCOL_RECEIVED_OTHER_MESSAGE_BEFORE_STATUS(
+        (byte) 0x02, "Message other than status received first"),
+    BREACH_OF_PROTOCOL_UNSOLICITED_MESSAGE_RECEIVED((byte) 0x02, "Unsolicited message received"),
+    BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED((byte) 0x02, "Malformed message received"),
+    BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS((byte) 0x02, "Non-sequential headers received"),
+    BREACH_OF_PROTOCOL_INVALID_BLOCK((byte) 0x02, "Invalid block detected"),
+    BREACH_OF_PROTOCOL_INVALID_HEADERS((byte) 0x02, "Invalid headers detected"),
+    BREACH_OF_PROTOCOL_INVALID_MESSAGE_CODE_FOR_PROTOCOL(
+        (byte) 0x02, "Invalid message code for specified protocol"),
+    BREACH_OF_PROTOCOL_MESSAGE_RECEIVED_BEFORE_HELLO_EXCHANGE(
+        (byte) 0x02, "A message was received before hello's exchanged"),
+    BREACH_OF_PROTOCOL_INVALID_MESSAGE_RECEIVED_CAUGHT_EXCEPTION(
+        (byte) 0x02, "An exception was caught decoding message"),
     USELESS_PEER((byte) 0x03),
     USELESS_PEER_USELESS_RESPONSES((byte) 0x03, "Useless responses: exceeded threshold"),
     USELESS_PEER_TRAILING_PEER((byte) 0x03, "Trailing peer requirement"),

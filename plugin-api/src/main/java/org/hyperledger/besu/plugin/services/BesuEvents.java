@@ -17,6 +17,8 @@ package org.hyperledger.besu.plugin.services;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.plugin.data.AddedBlockContext;
+import org.hyperledger.besu.plugin.data.BadBlockCause;
+import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.LogWithMetadata;
 import org.hyperledger.besu.plugin.data.PropagatedBlockContext;
 import org.hyperledger.besu.plugin.data.SyncStatus;
@@ -156,6 +158,22 @@ public interface BesuEvents extends BesuService {
    */
   void removeLogListener(long listenerIdentifier);
 
+  /**
+   * Add listener to track bad blocks. These are intrinsically bad blocks that have failed
+   * validation or descend from a bad block that has failed validation.
+   *
+   * @param listener The listener that will receive bad block events.
+   * @return The id of the listener to be used to remove the listener.
+   */
+  long addBadBlockListener(BadBlockListener listener);
+
+  /**
+   * Remove the bad block listener with the associated id.
+   *
+   * @param listenerIdentifier The id of the listener that was returned from addBadBlockListener.
+   */
+  void removeBadBlockListener(long listenerIdentifier);
+
   /** The listener interface for receiving new block propagated events. */
   interface BlockPropagatedListener {
 
@@ -258,5 +276,17 @@ public interface BesuEvents extends BesuService {
 
     /** Emitted when initial sync restarts */
     void onInitialSyncRestart();
+  }
+
+  /** The interface defining bad block listeners */
+  interface BadBlockListener {
+
+    /**
+     * Fires when a bad block is encountered on the network
+     *
+     * @param badBlockHeader The bad block's header
+     * @param cause The reason why the block was marked bad
+     */
+    void onBadBlockAdded(BlockHeader badBlockHeader, BadBlockCause cause);
   }
 }
