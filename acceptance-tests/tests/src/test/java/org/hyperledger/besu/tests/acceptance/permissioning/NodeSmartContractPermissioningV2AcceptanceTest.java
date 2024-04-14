@@ -116,6 +116,8 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
     permissionedCluster.stop();
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
 
+    verifyAllNodesAreInSyncWithMiner();
+
     permissionedNode.verify(connectionIsAllowed(allowedNode));
     permissionedNode.verify(connectionIsAllowed(bootnode));
     permissionedNode.verify(connectionIsAllowed(permissionedNode));
