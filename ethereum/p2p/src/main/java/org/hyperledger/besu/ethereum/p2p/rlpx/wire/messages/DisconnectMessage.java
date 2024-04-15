@@ -174,6 +174,14 @@ public final class DisconnectMessage extends AbstractMessageData {
       return BY_ID[code];
     }
 
+    public static DisconnectReason forCode(final Bytes codeBytes) {
+      if (codeBytes == null || codeBytes.isEmpty()) {
+        return UNKNOWN;
+      } else {
+        return forCode(codeBytes.get(0));
+      }
+    }
+
     DisconnectReason(final Byte code) {
       this.code = Optional.ofNullable(code);
       this.message = Optional.empty();

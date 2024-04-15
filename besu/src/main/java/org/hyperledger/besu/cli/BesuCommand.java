@@ -2679,7 +2679,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Boolean getDefaultVersionCompatibilityProtectionIfNotSet() {
     // Version compatibility protection is enabled by default for non-named networks
     return Optional.ofNullable(versionCompatibilityProtection)
-        .orElse(commandLine.getParseResult().hasMatchedOption("network") ? false : true);
+        // if we have a specific genesis file or custom network id, we are not using a named network
+        .orElse(genesisFile != null || networkId != null);
   }
 
   private String generateConfigurationOverview() {
