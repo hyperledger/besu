@@ -101,7 +101,9 @@ public class SparseTransactions extends AbstractTransactionsLayer {
             orderByGap.get(gap).add(pendingTransaction);
             return gap;
           }
-          if (pendingTransaction.getNonce() < txsBySender.get(sender).firstKey()) {
+          if (Long.compareUnsigned(
+                  pendingTransaction.getNonce(), txsBySender.get(sender).firstKey())
+              < 0) {
             orderByGap.get(currGap).remove(sender);
             orderByGap.get(gap).add(pendingTransaction);
             return gap;
@@ -431,7 +433,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
               while (itNonce.hasNext()) {
                 final long currNonce = itNonce.next().getKey();
-                assert prevNonce < currNonce : "non incremental nonce";
+                assert Long.compareUnsigned(prevNonce, currNonce) < 0 : "non incremental nonce";
                 prevNonce = currNonce;
               }
             });
