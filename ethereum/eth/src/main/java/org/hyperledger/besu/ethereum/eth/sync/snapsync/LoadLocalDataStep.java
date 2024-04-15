@@ -104,10 +104,10 @@ public class LoadLocalDataStep {
         throw storageException;
       }
     } catch (MerkleTrieException merkleTrieException) {
-      // We reset the task by setting it to null. This way, it is considered as failed by the
-      // pipeline, and it will attempt to execute it again later.
-      LOG.info("Encountered error loading trie nodes", merkleTrieException);
-      task.getData().clear();
+      LOG.info(
+          "Encountered error loading trie nodes triggering reload of trie heal",
+          merkleTrieException);
+      downloadState.reloadTrieHeal();
     }
     return Stream.of(task);
   }
