@@ -519,7 +519,7 @@ public class EvmToolCommand implements Runnable {
                 out.println("  },");
               }
               out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
-              if (account.getNonce() > 0) {
+              if (account.getNonce() != 0) {
                 out.println(",");
                 out.println(
                     "  \"nonce\": \""
