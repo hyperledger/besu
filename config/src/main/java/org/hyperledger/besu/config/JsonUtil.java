@@ -16,6 +16,7 @@ package org.hyperledger.besu.config;
 
 import org.hyperledger.besu.util.number.PositiveNumber;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Locale;
 import java.util.Map;
@@ -23,8 +24,11 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -322,6 +326,47 @@ public class JsonUtil {
   }
 
   /**
+   * Object node from string without some field.
+   *
+   * @param jsonData the json data
+   * @param allowComments true to allow comments
+   * @param withoutField the without field
+   * @return the object node
+   */
+  public static ObjectNode objectNodeFromStringWithout(
+      final String jsonData, final boolean allowComments, final String withoutField) {
+    final ObjectMapper objectMapper = new ObjectMapper();
+    JsonFactory jsonFactory =
+        JsonFactory.builder()
+            .configure(JsonFactory.Feature.INTERN_FIELD_NAMES, false)
+            .configure(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES, false)
+            .build();
+    jsonFactory.configure(JsonParser.Feature.ALLOW_COMMENTS, allowComments);
+
+    ObjectNode root = objectMapper.createObjectNode();
+
+    try (JsonParser jp = jsonFactory.createParser(jsonData)) {
+      if (jp.nextToken() != JsonToken.START_OBJECT) {
+        throw new RuntimeException("Expected data to start with an Object");
+      }
+
+      while (jp.nextToken() != JsonToken.END_OBJECT) {
+        String fieldName = jp.getCurrentName();
+        if (withoutField.equals(fieldName)) {
+          jp.nextToken();
+          jp.skipChildren();
+        } else {
+          jp.nextToken();
+          root.set(fieldName, objectMapper.readTree(jp));
+        }
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    return root;
+  }
+
+  /**
    * Gets json.
    *
    * @param objectNode the object node
@@ -465,5 +510,95 @@ public class JsonUtil {
       throw new IllegalArgumentException("Cannot convert value to integer: " + node.toString());
     }
     return true;
+  }
+
+  /**
+   * Get the JSON representation of a genesis file without a specific field.
+   *
+   * @param genesisFile The genesis file to read.
+   * @param excludedFieldName The field to exclude from the JSON representation.
+   * @return The JSON representation of the genesis file without the excluded field.
+   */
+  public static String getJsonFromFileWithout(
+      final File genesisFile, final String excludedFieldName) {
+    StringBuilder jsonBuilder = new StringBuilder();
+    JsonFactory jsonFactory =
+        JsonFactory.builder()
+            .configure(JsonFactory.Feature.INTERN_FIELD_NAMES, false)
+            .configure(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES, false)
+            .build();
+    try (JsonParser parser = jsonFactory.createParser(genesisFile)) {
+      JsonToken token;
+      while ((token = parser.nextToken()) != null) {
+        if (token == JsonToken.START_OBJECT) {
+          jsonBuilder.append(handleObject(parser, excludedFieldName));
+        }
+      }
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
+    return jsonBuilder.toString();
+  }
+
+  private static String handleObject(final JsonParser parser, final String excludedFieldName)
+      throws IOException {
+    StringBuilder objectBuilder = new StringBuilder();
+    objectBuilder.append("{");
+    String fieldName;
+    boolean isFirstField = true;
+    while (parser.nextToken() != JsonToken.END_OBJECT) {
+      fieldName = parser.getCurrentName();
+      if (fieldName != null && fieldName.equals(excludedFieldName)) {
+        parser.skipChildren(); // Skip this field
+        continue;
+      }
+      if (!isFirstField) objectBuilder.append(", ");
+      parser.nextToken(); // move to value
+      objectBuilder
+          .append("\"")
+          .append(fieldName)
+          .append("\":")
+          .append(handleValue(parser, excludedFieldName));
+      isFirstField = false;
+    }
+    objectBuilder.append("}");
+    return objectBuilder.toString();
+  }
+
+  private static String handleValue(final JsonParser parser, final String excludedFieldName)
+      throws IOException {
+    JsonToken token = parser.getCurrentToken();
+    switch (token) {
+      case START_OBJECT:
+        return handleObject(parser, excludedFieldName);
+      case START_ARRAY:
+        return handleArray(parser, excludedFieldName);
+      case VALUE_STRING:
+        return "\"" + parser.getText() + "\"";
+      case VALUE_NUMBER_INT:
+      case VALUE_NUMBER_FLOAT:
+        return parser.getNumberValue().toString();
+      case VALUE_TRUE:
+      case VALUE_FALSE:
+        return parser.getBooleanValue() ? "true" : "false";
+      case VALUE_NULL:
+        return "null";
+      default:
+        throw new IllegalStateException("Unrecognized token: " + token);
+    }
+  }
+
+  private static String handleArray(final JsonParser parser, final String excludedFieldName)
+      throws IOException {
+    StringBuilder arrayBuilder = new StringBuilder();
+    arrayBuilder.append("[");
+    boolean isFirstElement = true;
+    while (parser.nextToken() != JsonToken.END_ARRAY) {
+      if (!isFirstElement) arrayBuilder.append(", ");
+      arrayBuilder.append(handleValue(parser, excludedFieldName));
+      isFirstElement = false;
+    }
+    arrayBuilder.append("]");
+    return arrayBuilder.toString();
   }
 }

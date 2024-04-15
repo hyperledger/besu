@@ -138,7 +138,7 @@ public class EthNetworkConfig {
   public static EthNetworkConfig getNetworkConfig(final NetworkName networkName) {
     final String genesisContent = jsonConfig(networkName.getGenesisFile());
     final GenesisConfigOptions genesisConfigOptions =
-        GenesisConfigFile.fromConfig(genesisContent).getConfigOptions();
+        GenesisConfigFile.fromConfigWithoutAccounts(genesisContent).getConfigOptions();
     final Optional<List<String>> rawBootNodes =
         genesisConfigOptions.getDiscoveryOptions().getBootNodes();
     final List<EnodeURL> bootNodes =

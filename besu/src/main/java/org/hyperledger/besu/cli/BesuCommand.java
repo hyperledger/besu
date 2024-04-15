@@ -91,6 +91,7 @@ import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
@@ -117,6 +118,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.chain.VariablesStorage;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParametersMetrics;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -1598,7 +1600,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private GenesisConfigOptions readGenesisConfigOptions() {
 
     try {
-      final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisConfig());
+      final GenesisConfigFile genesisConfigFile =
+          GenesisConfigFile.fromConfigWithoutAccounts(genesisConfig());
       genesisConfigOptions = genesisConfigFile.getConfigOptions(genesisConfigOverrides);
     } catch (final Exception e) {
       throw new ParameterException(
@@ -2352,16 +2355,46 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GenesisConfigFile getGenesisConfigFile() {
-    return GenesisConfigFile.fromConfig(genesisConfig());
+    return GenesisConfigFile.fromConfigWithoutAccounts(genesisConfig());
   }
 
+  private String genesisConfigString = "";
+
   private String genesisConfig() {
-    try {
-      return Resources.toString(genesisFile.toURI().toURL(), UTF_8);
-    } catch (final IOException e) {
-      throw new ParameterException(
-          this.commandLine, String.format("Unable to load genesis URL %s.", genesisFile), e);
+    if (!genesisConfigString.isEmpty()) {
+      return genesisConfigString;
     }
+    if (genesisStateHashCacheEnabled) {
+      // If the genesis state hash is present in the database, we can use the genesis file without
+      pluginCommonConfiguration.init(
+          dataDir(),
+          dataDir().resolve(DATABASE_PATH),
+          getDataStorageConfiguration(),
+          getMiningParameters());
+      final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
+      if (storageProvider != null) {
+        boolean isGenesisStateHashPresent;
+        try {
+          // A null pointer exception may be thrown here if the database is not initialized.
+          VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
+          Optional<Hash> genesisStateHash = variablesStorage.getGenesisStateHash();
+          isGenesisStateHashPresent = genesisStateHash.isPresent();
+        } catch (Exception ignored) {
+          isGenesisStateHashPresent = false;
+        }
+        if (isGenesisStateHashPresent) {
+          genesisConfigString = JsonUtil.getJsonFromFileWithout(genesisFile, "alloc");
+        }
+      }
+    }
+    if (genesisConfigString.isEmpty()) {
+      try {
+        genesisConfigString = Resources.toString(genesisFile.toURI().toURL(), UTF_8);
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return genesisConfigString;
   }
 
   private static String genesisConfig(final NetworkName networkName) {
@@ -2607,7 +2640,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return Optional.ofNullable(genesisConfigOptions)
         .orElseGet(
             () ->
-                GenesisConfigFile.fromConfig(
+                GenesisConfigFile.fromConfigWithoutAccounts(
                         genesisConfig(Optional.ofNullable(network).orElse(MAINNET)))
                     .getConfigOptions(genesisConfigOverrides));
   }

@@ -333,6 +333,25 @@ public class BesuController implements java.io.Closeable {
     }
 
     /**
+     * From eth network config without alloc besu controller builder.
+     *
+     * @param ethNetworkConfig the eth network config
+     * @param genesisConfigOverrides the genesis config overrides
+     * @param syncMode The sync mode
+     * @return the besu controller builder
+     */
+    public BesuControllerBuilder fromEthNetworkConfigWithoutAccounts(
+        final EthNetworkConfig ethNetworkConfig,
+        final Map<String, String> genesisConfigOverrides,
+        final SyncMode syncMode) {
+      return fromGenesisConfig(
+              GenesisConfigFile.fromConfigWithoutAccounts(ethNetworkConfig.getGenesisConfig()),
+              genesisConfigOverrides,
+              syncMode)
+          .networkId(ethNetworkConfig.getNetworkId());
+    }
+
+    /**
      * From genesis config besu controller builder.
      *
      * @param genesisConfig the genesis config
@@ -390,8 +409,9 @@ public class BesuController implements java.io.Closeable {
           return new TransitionBesuControllerBuilder(builder, new MergeBesuControllerBuilder())
               .genesisConfigFile(genesisConfig);
         }
-
-      } else return builder.genesisConfigFile(genesisConfig);
+      } else {
+        return builder.genesisConfigFile(genesisConfig);
+      }
     }
 
     private BesuControllerBuilder createConsensusScheduleBesuControllerBuilder(

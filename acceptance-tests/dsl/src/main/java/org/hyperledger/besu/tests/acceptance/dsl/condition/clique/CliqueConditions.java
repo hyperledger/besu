@@ -89,7 +89,7 @@ public class CliqueConditions {
 
   private int cliqueBlockPeriod(final BesuNode node) {
     final String config = node.getGenesisConfigProvider().create(emptyList()).get();
-    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(config);
+    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfigWithoutAccounts(config);
     final CliqueConfigOptions cliqueConfigOptions =
         genesisConfigFile.getConfigOptions().getCliqueConfigOptions();
     return cliqueConfigOptions.getBlockPeriodSeconds();
