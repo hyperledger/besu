@@ -140,7 +140,10 @@ public class EthPeers {
     LOG.trace("MaxPeers: {}, Max Remote: {}", peerUpperBound, maxRemotelyInitiatedConnections);
     this.syncMode = syncMode;
     this.forkIdManager = forkIdManager;
-    if (syncMode == SyncMode.X_CHECKPOINT || syncMode == SyncMode.X_SNAP) {
+    if (syncMode == SyncMode.X_CHECKPOINT
+        || syncMode == SyncMode.X_SNAP
+        || syncMode == SyncMode.CHECKPOINT
+        || syncMode == SyncMode.X_SNAP) {
       snapServerTargetNumber =
           peerUpperBound / 2; // hardcoded for now. 50% of peers should be snap servers
     } else {
@@ -515,11 +518,15 @@ public class EthPeers {
                 "Failed to retrieve chain head info. Disconnecting {}... {}",
                 peer.getLoggableId(),
                 error);
-            peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+            peer.disconnect(
+                DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_STATE);
           } else {
             peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
             CompletableFuture<Void> isServingSnapFuture;
-            if (syncMode == SyncMode.X_CHECKPOINT || syncMode == SyncMode.X_SNAP) {
+            if (syncMode == SyncMode.X_CHECKPOINT
+                || syncMode == SyncMode.X_SNAP
+                || syncMode == SyncMode.CHECKPOINT
+                || syncMode == SyncMode.SNAP) {
               isServingSnapFuture =
                   CompletableFuture.runAsync(
                       () -> {
