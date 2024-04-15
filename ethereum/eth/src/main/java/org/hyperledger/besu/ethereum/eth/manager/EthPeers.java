@@ -582,7 +582,7 @@ public class EthPeers {
         } else if (!simpleCheck && isServer) {
           LOG.info(
               "ZZZZZZZZZZ Found a peer {} that is NOT Geth but is a snap server: {}",
-                  peer.getConnection().getPeerInfo().getClientId(),
+              peer.getConnection().getPeerInfo().getClientId(),
               peer.getLoggableId());
         }
       }
