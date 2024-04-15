@@ -168,13 +168,15 @@ public class DatabaseMetadata {
     } else {
       versionedStorageFormat =
           switch (v1.privacyVersion().getAsInt()) {
-            case 1 -> switch (v1.version()) {
-              case 1 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
-              case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
-              default -> throw new StorageException("Unsupported db version: " + v1.version());
-            };
-            default -> throw new StorageException(
-                "Unsupported db privacy version: " + v1.privacyVersion().getAsInt());
+            case 1 ->
+                switch (v1.version()) {
+                  case 1 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
+                  case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+                  default -> throw new StorageException("Unsupported db version: " + v1.version());
+                };
+            default ->
+                throw new StorageException(
+                    "Unsupported db privacy version: " + v1.privacyVersion().getAsInt());
           };
     }
 
@@ -227,22 +229,26 @@ public class DatabaseMetadata {
   public DatabaseMetadata upgradeToPrivacy() {
     return new DatabaseMetadata(
         switch (versionedStorageFormat.getFormat()) {
-          case FOREST -> switch (versionedStorageFormat.getVersion()) {
-            case 1 -> PrivacyVersionedStorageFormat.FOREST_ORIGINAL;
-            case 2 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
-            case 3 -> PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
-            default -> throw new StorageException(
-                "Unsupported database with format FOREST and version "
-                    + versionedStorageFormat.getVersion());
-          };
-          case BONSAI -> switch (versionedStorageFormat.getVersion()) {
-            case 1 -> PrivacyVersionedStorageFormat.BONSAI_ORIGINAL;
-            case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
-            case 3 -> PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION;
-            default -> throw new StorageException(
-                "Unsupported database with format BONSAI and version "
-                    + versionedStorageFormat.getVersion());
-          };
+          case FOREST ->
+              switch (versionedStorageFormat.getVersion()) {
+                case 1 -> PrivacyVersionedStorageFormat.FOREST_ORIGINAL;
+                case 2 -> PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES;
+                case 3 -> PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
+                default ->
+                    throw new StorageException(
+                        "Unsupported database with format FOREST and version "
+                            + versionedStorageFormat.getVersion());
+              };
+          case BONSAI ->
+              switch (versionedStorageFormat.getVersion()) {
+                case 1 -> PrivacyVersionedStorageFormat.BONSAI_ORIGINAL;
+                case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+                case 3 -> PrivacyVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION;
+                default ->
+                    throw new StorageException(
+                        "Unsupported database with format BONSAI and version "
+                            + versionedStorageFormat.getVersion());
+              };
         });
   }
 

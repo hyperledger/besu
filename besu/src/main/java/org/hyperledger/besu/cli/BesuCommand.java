@@ -360,6 +360,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final File genesisFile = null;
 
   @Option(
+      names = {"--genesis-state-hash-cache-enabled"},
+      description = "Use genesis state hash from data on startup if specified")
+  private final Boolean genesisStateHashCacheEnabled = false;
+
+  @Option(
       names = "--identity",
       paramLabel = "<String>",
       description = "Identification for this node in the Client ID",
@@ -1293,7 +1298,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolContext().getBlockchain(),
             besuController.getProtocolManager().getBlockBroadcaster(),
             besuController.getTransactionPool(),
-            besuController.getSyncState()));
+            besuController.getSyncState(),
+            besuController.getProtocolContext().getBadBlockManager()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
     besuPluginContext.addService(
@@ -1816,7 +1822,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
         .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
-        .cacheLastBlocks(numberOfblocksToCache);
+        .cacheLastBlocks(numberOfblocksToCache)
+        .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled);
   }
 
   private JsonRpcConfiguration createEngineJsonRpcConfiguration(
@@ -2672,7 +2679,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Boolean getDefaultVersionCompatibilityProtectionIfNotSet() {
     // Version compatibility protection is enabled by default for non-named networks
     return Optional.ofNullable(versionCompatibilityProtection)
-        .orElse(commandLine.getParseResult().hasMatchedOption("network") ? false : true);
+        // if we have a specific genesis file or custom network id, we are not using a named network
+        .orElse(genesisFile != null || networkId != null);
   }
 
   private String generateConfigurationOverview() {

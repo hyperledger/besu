@@ -44,7 +44,8 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
    * @return the amount of gas the CREATE2 operation will consume
    * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
    *     #memoryExpansionGasCost(MessageFrame, long, long)}, {@link #createKeccakCost(int)}, and
-   *     {@link #initcodeCost(int)}
+   *     {@link #initcodeCost(int)}. As done in {@link
+   *     org.hyperledger.besu.evm.operation.Create2Operation#cost(MessageFrame, Supplier)}
    */
   @SuppressWarnings("removal")
   @Override

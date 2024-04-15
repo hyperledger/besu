@@ -312,7 +312,8 @@ public class FrontierGasCalculator implements GasCalculator {
    * @param frame The current frame
    * @return the amount of gas the CREATE operation will consume
    * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
-   *     #memoryExpansionGasCost(MessageFrame, long, long)}, and {@link #initcodeCost(int)}
+   *     #memoryExpansionGasCost(MessageFrame, long, long)}, and {@link #initcodeCost(int)} As done
+   *     in {@link org.hyperledger.besu.evm.operation.CreateOperation#cost(MessageFrame, Supplier)}
    */
   @SuppressWarnings("removal")
   @Override

@@ -24,6 +24,7 @@ public class JumpFOperation extends AbstractOperation {
 
   /** The constant OPCODE. */
   public static final int OPCODE = 0xe5;
+
   /** The Jump F success operation result. */
   static final OperationResult jumpfSuccess = new OperationResult(3, null);
 

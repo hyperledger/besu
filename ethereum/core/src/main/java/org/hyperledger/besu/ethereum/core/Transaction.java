@@ -77,9 +77,6 @@ public class Transaction
 
   public static final BigInteger TWO = BigInteger.valueOf(2);
 
-  public static final int MAX_INITCODE_COUNT = 256;
-  public static final int MAX_INITCODE_SIZE = 2 * 24 * 1024;
-
   private static final Cache<Hash, Address> senderCache =
       CacheBuilder.newBuilder().recordStats().maximumSize(100_000L).build();
 
@@ -277,51 +274,55 @@ public class Transaction
     final Bytes preimage =
         switch (transactionType) {
           case FRONTIER -> frontierPreimage(nonce, gasPrice, gasLimit, to, value, payload, chainId);
-          case ACCESS_LIST -> accessListPreimage(
-              nonce,
-              gasPrice,
-              gasLimit,
-              to,
-              value,
-              payload,
-              accessList.orElseThrow(
-                  () ->
-                      new IllegalStateException(
-                          "Developer error: the transaction should be guaranteed to have an access list here")),
-              chainId);
-          case EIP1559 -> eip1559Preimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList);
-          case BLOB -> blobPreimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              maxFeePerBlobGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList,
-              versionedHashes);
-          case INITCODE -> initcodePreimage(
-              nonce,
-              maxPriorityFeePerGas,
-              maxFeePerGas,
-              gasLimit,
-              to,
-              value,
-              payload,
-              chainId,
-              accessList,
-              initcodes);
+          case ACCESS_LIST ->
+              accessListPreimage(
+                  nonce,
+                  gasPrice,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  accessList.orElseThrow(
+                      () ->
+                          new IllegalStateException(
+                              "Developer error: the transaction should be guaranteed to have an access list here")),
+                  chainId);
+          case EIP1559 ->
+              eip1559Preimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList);
+          case BLOB ->
+              blobPreimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  maxFeePerBlobGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  versionedHashes);
+          case INITCODE ->
+              initcodePreimage(
+                  nonce,
+                  maxPriorityFeePerGas,
+                  maxFeePerGas,
+                  gasLimit,
+                  to,
+                  value,
+                  payload,
+                  chainId,
+                  accessList,
+                  initcodes);
         };
     return keccak256(preimage);
   }

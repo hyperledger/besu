@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 /** The Post merge context. */
 public class PostMergeContext implements MergeContext {
   private static final Logger LOG = LoggerFactory.getLogger(PostMergeContext.class);
+
   /** The Max blocks in progress. */
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 

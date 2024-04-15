@@ -127,58 +127,83 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
               .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
               .orElseThrow();
 
+  /** The is genesis state hash from data. */
+  protected boolean genesisStateHashCacheEnabled;
+
   /** The Sync config. */
   protected SynchronizerConfiguration syncConfig;
+
   /** The Ethereum wire protocol configuration. */
   protected EthProtocolConfiguration ethereumWireProtocolConfiguration;
+
   /** The Transaction pool configuration. */
   protected TransactionPoolConfiguration transactionPoolConfiguration;
+
   /** The Network id. */
   protected BigInteger networkId;
+
   /** The Mining parameters. */
   protected MiningParameters miningParameters;
+
   /** The Metrics system. */
   protected ObservableMetricsSystem metricsSystem;
+
   /** The Privacy parameters. */
   protected PrivacyParameters privacyParameters;
+
   /** The Pki block creation configuration. */
   protected Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration =
       Optional.empty();
+
   /** The Data directory. */
   protected Path dataDirectory;
+
   /** The Clock. */
   protected Clock clock;
+
   /** The Node key. */
   protected NodeKey nodeKey;
+
   /** The Is revert reason enabled. */
   protected boolean isRevertReasonEnabled;
+
   /** The Gas limit calculator. */
   GasLimitCalculator gasLimitCalculator;
+
   /** The Storage provider. */
   protected StorageProvider storageProvider;
+
   /** The Required blocks. */
   protected Map<Long, Hash> requiredBlocks = Collections.emptyMap();
+
   /** The Reorg logging threshold. */
   protected long reorgLoggingThreshold;
+
   /** The Data storage configuration. */
   protected DataStorageConfiguration dataStorageConfiguration =
       DataStorageConfiguration.DEFAULT_CONFIG;
+
   /** The Message permissioning providers. */
   protected List<NodeMessagePermissioningProvider> messagePermissioningProviders =
       Collections.emptyList();
+
   /** The Evm configuration. */
   protected EvmConfiguration evmConfiguration;
+
   /** The Max peers. */
   protected int maxPeers;
+
   /** Manages a cache of bad blocks globally */
   protected final BadBlockManager badBlockManager = new BadBlockManager();
 
   private int maxRemotelyInitiatedPeers;
+
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
   private NetworkingConfiguration networkingConfiguration;
   private Boolean randomPeerPriority;
+
   /** the Dagger configured context that can provide dependencies */
   protected Optional<BesuComponent> besuComponent = Optional.empty();
 
@@ -214,6 +239,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    */
   public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
     this.genesisConfig = genesisConfig;
+    return this;
+  }
+
+  /**
+   * Genesis state hash from data besu controller builder.
+   *
+   * @param genesisStateHashCacheEnabled the is genesis state hash from data
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder genesisStateHashCacheEnabled(
+      final Boolean genesisStateHashCacheEnabled) {
+    this.genesisStateHashCacheEnabled = genesisStateHashCacheEnabled;
     return this;
   }
 
@@ -526,10 +563,29 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
-    final GenesisState genesisState =
-        GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
+    final GenesisState genesisState;
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
+
+    Optional<Hash> genesisStateHash = Optional.empty();
+    if (variablesStorage != null && this.genesisStateHashCacheEnabled) {
+      genesisStateHash = variablesStorage.getGenesisStateHash();
+    }
+
+    if (genesisStateHash.isPresent()) {
+      genesisState =
+          GenesisState.fromConfig(genesisStateHash.get(), genesisConfig, protocolSchedule);
+    } else {
+      genesisState =
+          GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
+      if (variablesStorage != null) {
+        VariablesStorage.Updater updater = variablesStorage.updater();
+        if (updater != null) {
+          updater.setGenesisStateHash(genesisState.getBlock().getHeader().getStateRoot());
+          updater.commit();
+        }
+      }
+    }
 
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration);
@@ -1022,8 +1078,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         yield new ForestWorldStateArchive(
             worldStateStorageCoordinator, preimageStorage, evmConfiguration);
       }
-      default -> throw new IllegalStateException(
-          "Unexpected value: " + dataStorageConfiguration.getDataStorageFormat());
+      default ->
+          throw new IllegalStateException(
+              "Unexpected value: " + dataStorageConfiguration.getDataStorageFormat());
     };
   }
 
