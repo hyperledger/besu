@@ -52,7 +52,7 @@ jobs:
           fi
 
           # Get the current date and time in the format YY.MM
-          DATE_TIME=$(date +"%y.%m")
+          DATE_TIME=$(date +"%y.%-m")
           # Get the short SHA of the merge commit
           SHORT_SHA=${GITHUB_SHA::7}
           # Construct the build target name
