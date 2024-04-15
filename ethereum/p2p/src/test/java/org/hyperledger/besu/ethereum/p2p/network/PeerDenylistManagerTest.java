@@ -111,6 +111,15 @@ public class PeerDenylistManagerTest {
     checkPermissions(denylist, peer.getPeer(), false);
   }
 
+  @Test
+  public void disconnectReasonWithEmptyValue_doesNotAddToDenylist() {
+    final PeerConnection peer = generatePeerConnection();
+
+    checkPermissions(denylist, peer.getPeer(), true);
+    peerDenylistManager.onDisconnect(peer, DisconnectReason.UNKNOWN, false);
+    checkPermissions(denylist, peer.getPeer(), true);
+  }
+
   private void checkPermissions(
       final PeerPermissionsDenylist denylist, final Peer remotePeer, final boolean expectedResult) {
     for (PeerPermissions.Action action : PeerPermissions.Action.values()) {
