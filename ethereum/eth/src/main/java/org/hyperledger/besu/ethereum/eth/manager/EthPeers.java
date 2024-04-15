@@ -384,7 +384,7 @@ public class EthPeers {
           .anyMatch(c -> !c.isDisconnected() && (!inbound || (inbound && c.inboundInitiated())))) {
         LOG.atTrace()
             .setMessage("not connecting to peer {} - new connection already in process")
-            .addArgument(ethPeer.getLoggableId())
+            .addArgument(peer.getLoggableId())
             .log();
         return false;
       }
