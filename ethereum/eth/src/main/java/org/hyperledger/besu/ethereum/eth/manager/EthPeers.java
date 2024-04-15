@@ -569,18 +569,20 @@ public class EthPeers {
           return;
         }
         peer.setIsServingSnap(isServer);
-        LOG.info("Peer {} is a snap server: {}", peer.getLoggableId(), isServer);
+        LOG.info("Peer {} snap server? {}", peer.getLoggableId(), isServer);
 
         // TODO: remove the following code. Just here for testing
         final boolean simpleCheck =
             peer.getConnection().getPeerInfo().getClientId().contains("Geth");
         if (simpleCheck && !isServer) {
           LOG.info(
-              "YYYYYYYYYY Found a peer that is Geth but not a snap server: {}",
+              "YYYYYYYYYY Found a peer {} that is Geth but not a snap server: {}",
+              peer.getConnection().getPeerInfo().getClientId(),
               peer.getLoggableId());
         } else if (!simpleCheck && isServer) {
           LOG.info(
-              "ZZZZZZZZZZ Found a peer that is NOT Geth but is a snap server: {}",
+              "ZZZZZZZZZZ Found a peer {} that is NOT Geth but is a snap server: {}",
+                  peer.getConnection().getPeerInfo().getClientId(),
               peer.getLoggableId());
         }
       }

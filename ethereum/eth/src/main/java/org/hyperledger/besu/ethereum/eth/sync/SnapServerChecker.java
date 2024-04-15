@@ -59,10 +59,6 @@ public class SnapServerChecker {
           if (peerResult != null) {
             if (!peerResult.getResult().accounts().isEmpty()
                 || !peerResult.getResult().proofs().isEmpty()) {
-              //              LOG.atDebug()
-              //                  .setMessage("Peer {} is a snap server ...")
-              //                  .addArgument(peer::getLoggableId)
-              //                  .log();
               LOG.atInfo()
                   .setMessage("Peer {} is a snap server! getAccountRangeResult: {}")
                   .addArgument(peer::getLoggableId)
