@@ -46,8 +46,9 @@ public class DupNOperation extends AbstractFixedCostOperation {
     }
     int pc = frame.getPC();
 
-    int depth = code.readBigEndianU16(pc + 1);
-    frame.pushStackItem(frame.getStackItem(depth - 1));
+    int depth = code.readU8(pc + 1);
+    frame.pushStackItem(frame.getStackItem(depth));
+    frame.setPC(pc + 1);
 
     return dupSuccess;
   }

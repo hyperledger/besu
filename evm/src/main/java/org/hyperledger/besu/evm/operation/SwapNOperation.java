@@ -47,11 +47,12 @@ public class SwapNOperation extends AbstractFixedCostOperation {
       return InvalidOperation.INVALID_RESULT;
     }
     int pc = frame.getPC();
-    int index = code.readBigEndianU16(pc + 1);
+    int index = code.readU8(pc + 1);
 
     final Bytes tmp = frame.getStackItem(0);
-    frame.setStackItem(0, frame.getStackItem(index));
+    frame.setStackItem(0, frame.getStackItem(index + 1));
     frame.setStackItem(index, tmp);
+    frame.setPC(pc + 1);
 
     return swapSuccess;
   }
