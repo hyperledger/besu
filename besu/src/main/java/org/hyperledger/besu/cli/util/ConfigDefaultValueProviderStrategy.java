@@ -63,6 +63,7 @@ public class ConfigDefaultValueProviderStrategy implements IExecutionStrategy {
    *
    * @param commandLine the command line
    * @param configFile the config file
+   * @param profile the profile file
    * @return the default value provider
    */
   @VisibleForTesting

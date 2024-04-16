@@ -1046,16 +1046,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     initializeCommandLineSettings(in);
 
     // Create the execution strategy chain.
-    final IExecutionStrategy executeStrategy = createExecuteStrategy(resultHandler);
-    final IExecutionStrategy pluginRegistrationTask = createPluginRegistrationTask(executeStrategy);
-    final IExecutionStrategy configStrategy =
-        new ConfigDefaultValueProviderStrategy(pluginRegistrationTask, environment);
+    final IExecutionStrategy executeTask = createExecuteTask(resultHandler);
+    final IExecutionStrategy pluginRegistrationTask = createPluginRegistrationTask(executeTask);
+    final IExecutionStrategy setDefaultValueProviderTask =
+        createDefaultValueProviderTask(pluginRegistrationTask);
 
     // 1- Config default value provider
     // 2- Register plugins
     // 3- Execute command
     return executeCommandLine(
-        configStrategy, parameterExceptionHandler, executionExceptionHandler, args);
+        setDefaultValueProviderTask, parameterExceptionHandler, executionExceptionHandler, args);
   }
 
   private void initializeCommandLineSettings(final InputStream in) {
@@ -1070,24 +1070,27 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     preparePlugins();
   }
 
-  private IExecutionStrategy createExecuteStrategy(final IExecutionStrategy resultHandler) {
+  private IExecutionStrategy createExecuteTask(final IExecutionStrategy nextStep) {
     return parseResult -> {
-      commandLine.setExecutionStrategy(resultHandler);
-      // At this point we don't allow unmatched options
-      commandLine.setStopAtUnmatched(true);
+      commandLine.setExecutionStrategy(nextStep);
+      // At this point we don't allow unmatched options since plugins were already registered
+      commandLine.setUnmatchedArgumentsAllowed(false);
       return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
     };
   }
 
-  private IExecutionStrategy createPluginRegistrationTask(
-      final IExecutionStrategy executeStrategy) {
+  private IExecutionStrategy createPluginRegistrationTask(final IExecutionStrategy nextStep) {
     return parseResult -> {
       PluginConfiguration configuration =
           PluginsConfigurationOptions.fromCommandLine(parseResult.commandSpec().commandLine());
       besuPluginContext.registerPlugins(configuration);
-      commandLine.setExecutionStrategy(executeStrategy);
+      commandLine.setExecutionStrategy(nextStep);
       return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
     };
+  }
+
+  private IExecutionStrategy createDefaultValueProviderTask(final IExecutionStrategy nextStep) {
+    return new ConfigDefaultValueProviderStrategy(nextStep, environment);
   }
 
   /**
@@ -1108,7 +1111,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .setExecutionExceptionHandler(executionExceptionHandler)
         // As this happens before the plugins registration and plugins can add options, we must
         // allow unmatched options
-        .setStopAtUnmatched(false)
+        .setUnmatchedArgumentsAllowed(true)
         .execute(args);
   }
 
