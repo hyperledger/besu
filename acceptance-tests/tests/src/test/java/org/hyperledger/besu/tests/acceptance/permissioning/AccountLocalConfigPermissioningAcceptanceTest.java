@@ -22,8 +22,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.account.TransferTra
 import java.math.BigInteger;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AccountLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBase {
 
@@ -31,7 +31,7 @@ public class AccountLocalConfigPermissioningAcceptanceTest extends AcceptanceTes
   private Account senderA;
   private Account senderB;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     senderA = accounts.getPrimaryBenefactor();
     senderB = accounts.getSecondaryBenefactor();
