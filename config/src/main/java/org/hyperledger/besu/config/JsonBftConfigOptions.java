@@ -142,7 +142,7 @@ public class JsonBftConfigOptions implements BftConfigOptions {
       builder.put("blockPeriodSeconds", getBlockPeriodSeconds());
     }
     if (bftConfigRoot.has("emptyblockperiodseconds")) {
-      builder.put("emptyblockperiodseconds", getBlockPeriodSeconds());
+      builder.put("emptyblockperiodseconds", getEmptyBlockPeriodSeconds());
     }
     if (bftConfigRoot.has("requesttimeoutseconds")) {
       builder.put("requestTimeoutSeconds", getRequestTimeoutSeconds());

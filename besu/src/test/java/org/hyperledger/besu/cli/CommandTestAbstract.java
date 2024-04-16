@@ -139,8 +139,7 @@ public abstract class CommandTestAbstract {
   private static final Logger TEST_LOGGER = LoggerFactory.getLogger(CommandTestAbstract.class);
 
   protected static final int POA_BLOCK_PERIOD_SECONDS = 5;
-  protected static final int POA_EMPTY_BLOCK_PERIOD_SECONDS =
-      50; // TODO: IS THIS APPLICABLE FOR POA?
+  protected static final int POA_EMPTY_BLOCK_PERIOD_SECONDS = 50;
   protected static final JsonObject VALID_GENESIS_QBFT_POST_LONDON =
       (new JsonObject())
           .put(

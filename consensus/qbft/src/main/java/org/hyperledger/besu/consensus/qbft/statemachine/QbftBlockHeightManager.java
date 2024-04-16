@@ -153,10 +153,10 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
     if (blockHasTransactions) {
       if (isProposer) {
-        LOG.debug("Block Has Transactions and I AM proposer so send proposal");
+        LOG.debug("Block has transactions and this node is a proposer so it will send a proposal");
         qbftRound.sendProposalMessage(block);
       }else{
-        LOG.debug("Block Has Transactions and I am NOT proposer");
+        LOG.debug("Block has transactions but this node is not a proposer so it will not send a proposal");
       }
     } else {
       final long emptyBlockPeriodSeconds = finalState.getBlockTimer().getEmptyBlockPeriodSeconds();
@@ -164,10 +164,10 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final long nowInSeconds = finalState.getClock().millis() / 1000;
       if (nowInSeconds >= emptyBlockPeriodExpiryTime) {
         if (isProposer) {
-          LOG.debug("Block Do Not Have Transactions and I AM proposer so send proposal");
+          LOG.debug("Block has no transactions and this node is a proposer so it will send a proposal");
           qbftRound.sendProposalMessage(block);
         } else {
-          LOG.debug("Block Do Not Have Transactions and I am NOT proposer");
+          LOG.debug("Block has no transactions but this node is not a proposer so it will not send a proposal");
         }
       } else {
         finalState.getRoundTimer().cancelTimer();
