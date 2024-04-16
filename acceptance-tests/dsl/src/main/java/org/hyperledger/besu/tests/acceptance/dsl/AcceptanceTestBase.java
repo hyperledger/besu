@@ -56,12 +56,15 @@ import java.math.BigInteger;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
-import org.junit.jupiter.api.AfterEach;
+import org.junit.After;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** Superclass for acceptance tests. */
+/**
+ * Superclass for acceptance tests. For now (transition to junit5 is ongoing) this class supports
+ * junit4 format.
+ */
 @ExtendWith(AcceptanceTestBaseTestWatcher.class)
 public class AcceptanceTestBase {
 
@@ -128,7 +131,7 @@ public class AcceptanceTestBase {
     exitedSuccessfully = new ExitedWithCode(0);
   }
 
-  @AfterEach
+  @After
   public void tearDownAcceptanceTestBase() {
     reportMemory();
     cluster.close();
