@@ -23,10 +23,13 @@ public class RunnableCounter implements Counter {
 
   /** The Backed counter. */
   protected final Counter backedCounter;
+
   /** The Task. */
   protected final Runnable task;
+
   /** The Step. */
   protected final int step;
+
   /** The Step counter. */
   protected final AtomicLong stepCounter;
 

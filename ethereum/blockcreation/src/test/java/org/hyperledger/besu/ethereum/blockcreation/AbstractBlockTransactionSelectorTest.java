@@ -167,7 +167,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-                new MainnetBlockHeaderFunctions()),
+                new MainnetBlockHeaderFunctions(),
+                false),
             new NoOpMetricsSystem(),
             0);
 
@@ -221,6 +222,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         FixedDifficultyProtocolSchedule.create(
             GenesisConfigFile.development().getConfigOptions(),
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeader(0)).getTransactionProcessor();

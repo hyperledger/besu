@@ -28,13 +28,26 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
   private static final TransactionPriceCalculator EIP1559_CALCULATOR =
       TransactionPriceCalculator.eip1559();
   private final Percentage priceBump;
+  private final Percentage blobPriceBump;
 
-  public TransactionReplacementByFeeMarketRule(final Percentage priceBump) {
+  public TransactionReplacementByFeeMarketRule(
+      final Percentage priceBump, final Percentage blobPriceBump) {
     this.priceBump = priceBump;
+    this.blobPriceBump = blobPriceBump;
   }
 
   @Override
   public boolean shouldReplace(
+      final PendingTransaction existingPendingTransaction,
+      final PendingTransaction newPendingTransaction,
+      final Optional<Wei> maybeBaseFee) {
+
+    return validExecutionPriceReplacement(
+            existingPendingTransaction, newPendingTransaction, maybeBaseFee)
+        && validBlobPriceReplacement(existingPendingTransaction, newPendingTransaction);
+  }
+
+  private boolean validExecutionPriceReplacement(
       final PendingTransaction existingPendingTransaction,
       final PendingTransaction newPendingTransaction,
       final Optional<Wei> maybeBaseFee) {
@@ -63,6 +76,37 @@ public class TransactionReplacementByFeeMarketRule implements TransactionPoolRep
       return isBumpedBy(curEffPriority, newEffPriority, priceBump);
     }
     return false;
+  }
+
+  private boolean validBlobPriceReplacement(
+      final PendingTransaction existingPendingTransaction,
+      final PendingTransaction newPendingTransaction) {
+
+    final var existingType = existingPendingTransaction.getTransaction().getType();
+    final var newType = newPendingTransaction.getTransaction().getType();
+
+    if (existingType.supportsBlob() || newType.supportsBlob()) {
+      if (existingType.supportsBlob() && newType.supportsBlob()) {
+        final Wei replacementThreshold =
+            existingPendingTransaction
+                .getTransaction()
+                .getMaxFeePerBlobGas()
+                .orElseThrow()
+                .multiply(100 + blobPriceBump.getValue())
+                .divide(100);
+        return newPendingTransaction
+                .getTransaction()
+                .getMaxFeePerBlobGas()
+                .orElseThrow()
+                .compareTo(replacementThreshold)
+            >= 0;
+      }
+      // blob tx can only replace and be replaced by blob tx
+      return false;
+    }
+
+    // in case no blob tx, then we are fine
+    return true;
   }
 
   private Wei priceOf(final Transaction transaction, final Optional<Wei> maybeBaseFee) {

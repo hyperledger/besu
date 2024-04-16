@@ -61,6 +61,7 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -69,6 +70,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
@@ -156,7 +158,9 @@ public class IbftBlockHeightManagerTest {
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
     lenient()
         .when(blockCreator.createBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(createdBlock, new TransactionSelectionResults()));
+        .thenReturn(
+            new BlockCreationResult(
+                createdBlock, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     lenient()
         .when(futureRoundProposalMessageValidator.validateProposalMessage(any()))
@@ -179,6 +183,7 @@ public class IbftBlockHeightManagerTest {
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     ProtocolSchedule protocolSchedule =

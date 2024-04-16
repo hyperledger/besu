@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
 
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
@@ -55,7 +57,11 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
   private static final EnumSet<BaseVersionedStorageFormat> SUPPORTED_VERSIONED_FORMATS =
-      EnumSet.of(FOREST_WITH_VARIABLES, BONSAI_WITH_VARIABLES);
+      EnumSet.of(
+          FOREST_WITH_VARIABLES,
+          FOREST_WITH_RECEIPT_COMPACTION,
+          BONSAI_WITH_VARIABLES,
+          BONSAI_WITH_RECEIPT_COMPACTION);
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private DatabaseMetadata databaseMetadata;
@@ -220,12 +226,13 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       if (!metadata
           .getVersionedStorageFormat()
           .getFormat()
-          .equals(commonConfiguration.getDatabaseFormat())) {
+          .equals(commonConfiguration.getDataStorageConfiguration().getDatabaseFormat())) {
         handleFormatMismatch(commonConfiguration, dataDir, metadata);
       }
 
       final var runtimeVersion =
-          BaseVersionedStorageFormat.defaultForNewDB(commonConfiguration.getDatabaseFormat());
+          BaseVersionedStorageFormat.defaultForNewDB(
+              commonConfiguration.getDataStorageConfiguration());
 
       if (metadata.getVersionedStorageFormat().getVersion() > runtimeVersion.getVersion()) {
         final var maybeDowngradedMetadata =
@@ -247,7 +254,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
       LOG.info("Existing database at {}. Metadata {}. Processing WAL...", dataDir, metadata);
     } else {
 
-      metadata = DatabaseMetadata.defaultForNewDb(commonConfiguration.getDatabaseFormat());
+      metadata = DatabaseMetadata.defaultForNewDb(commonConfiguration);
       LOG.info(
           "No existing database at {}. Using default metadata for new db {}", dataDir, metadata);
       if (!dataDirExists) {
@@ -275,7 +282,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                 + "Please check your config.",
             dataDir,
             existingMetadata.getVersionedStorageFormat().getFormat().name(),
-            commonConfiguration.getDatabaseFormat());
+            commonConfiguration.getDataStorageConfiguration().getDatabaseFormat());
 
     throw new StorageException(error);
   }
@@ -289,6 +296,15 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     // recognize the newer version.
     // In case we do an automated downgrade, then we also need to update the metadata on disk to
     // reflect the change to the runtime version, and return it.
+
+    // Besu supports both formats of receipts so no downgrade is needed
+    if (runtimeVersion == BONSAI_WITH_VARIABLES || runtimeVersion == FOREST_WITH_VARIABLES) {
+      LOG.warn(
+          "Database contains compacted receipts but receipt compaction is not enabled, new receipts  will "
+              + "be not stored in the compacted format. If you want to remove compacted receipts from the "
+              + "database it is necessary to resync Besu. Besu can support both compacted and non-compacted receipts.");
+      return Optional.empty();
+    }
 
     // for the moment there are supported automated downgrades, so we just fail.
     String error =
@@ -311,6 +327,18 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
     // database.
     // In case we do an automated upgrade, then we also need to update the metadata on disk to
     // reflect the change to the runtime version, and return it.
+
+    // Besu supports both formats of receipts so no upgrade is needed other than updating metadata
+    if (runtimeVersion == BONSAI_WITH_RECEIPT_COMPACTION
+        || runtimeVersion == FOREST_WITH_RECEIPT_COMPACTION) {
+      final DatabaseMetadata metadata = new DatabaseMetadata(runtimeVersion);
+      try {
+        metadata.writeToDirectory(dataDir);
+        return Optional.of(metadata);
+      } catch (IOException e) {
+        throw new StorageException("Database upgrade to use receipt compaction failed", e);
+      }
+    }
 
     // for the moment there are no planned automated upgrades, so we just fail.
     String error =

@@ -198,6 +198,6 @@ public class GetHeadersFromPeerByHashTaskTest extends PeerMessageTaskTest<List<B
     assertThat(optionalBlockHeaders).isEmpty();
     assertThat(peer.isDisconnected()).isTrue();
     assertThat(((MockPeerConnection) peer.getConnection()).getDisconnectReason().get())
-        .isEqualTo(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+        .isEqualTo(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS);
   }
 }

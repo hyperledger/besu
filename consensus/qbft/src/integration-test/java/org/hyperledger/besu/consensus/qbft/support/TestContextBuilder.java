@@ -150,6 +150,7 @@ public class TestContextBuilder {
   private boolean useLondonMilestone = false;
   private boolean useShanghaiMilestone = false;
   private boolean useZeroBaseFee = false;
+  private boolean useFixedBaseFee = false;
   public static final int EPOCH_LENGTH = 10_000;
   public static final int BLOCK_TIMER_SEC = 3;
   public static final int ROUND_TIMER_SEC = 12;
@@ -227,6 +228,11 @@ public class TestContextBuilder {
     return this;
   }
 
+  public TestContextBuilder useFixedBaseFee(final boolean useFixedBaseFee) {
+    this.useFixedBaseFee = useFixedBaseFee;
+    return this;
+  }
+
   public TestContextBuilder qbftForks(final List<QbftFork> qbftForks) {
     this.qbftForks = qbftForks;
     return this;
@@ -294,6 +300,7 @@ public class TestContextBuilder {
             useLondonMilestone,
             useShanghaiMilestone,
             useZeroBaseFee,
+            useFixedBaseFee,
             qbftForks);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
@@ -375,6 +382,7 @@ public class TestContextBuilder {
       final boolean useLondonMilestone,
       final boolean useShanghaiMilestone,
       final boolean useZeroBaseFee,
+      final boolean useFixedBaseFee,
       final List<QbftFork> qbftForks) {
 
     final MiningParameters miningParams =
@@ -407,6 +415,9 @@ public class TestContextBuilder {
     if (useZeroBaseFee) {
       genesisConfigOptions.zeroBaseFee(true);
     }
+    if (useFixedBaseFee) {
+      genesisConfigOptions.fixedBaseFee(true);
+    }
     genesisConfigOptions.qbftConfigOptions(
         new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
     genesisConfigOptions.transitions(TestTransitions.createQbftTestTransitions(qbftForks));
@@ -425,6 +436,7 @@ public class TestContextBuilder {
             forksSchedule,
             BFT_EXTRA_DATA_ENCODER,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);

@@ -17,6 +17,10 @@
 pluginManagement {
   repositories {
     gradlePluginPortal()
+    maven {
+      url 'https://artifacts.consensys.net/public/maven/maven/'
+      content { includeGroupByRegex('tech\\.pegasys(\\..*)?') }
+    }
   }
 }
 
@@ -37,7 +41,6 @@ include 'crypto:services'
 include 'datatypes'
 include 'enclave'
 include 'evm'
-include 'errorprone-checks'
 include 'ethereum:api'
 include 'ethereum:blockcreation'
 include 'ethereum:core'

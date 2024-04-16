@@ -67,6 +67,7 @@ public class EthProtocolVersion {
           EthPV63.NODE_DATA,
           EthPV63.GET_RECEIPTS,
           EthPV63.RECEIPTS);
+
   /**
    * eth/65 (EIP-2464, January 2020)
    *

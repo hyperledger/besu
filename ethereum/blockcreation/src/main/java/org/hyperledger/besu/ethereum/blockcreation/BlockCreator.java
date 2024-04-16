@@ -26,11 +26,15 @@ public interface BlockCreator {
   class BlockCreationResult {
     private final Block block;
     private final TransactionSelectionResults transactionSelectionResults;
+    private final BlockCreationTiming blockCreationTiming;
 
     public BlockCreationResult(
-        final Block block, final TransactionSelectionResults transactionSelectionResults) {
+        final Block block,
+        final TransactionSelectionResults transactionSelectionResults,
+        final BlockCreationTiming timings) {
       this.block = block;
       this.transactionSelectionResults = transactionSelectionResults;
+      this.blockCreationTiming = timings;
     }
 
     public Block getBlock() {
@@ -40,9 +44,15 @@ public interface BlockCreator {
     public TransactionSelectionResults getTransactionSelectionResults() {
       return transactionSelectionResults;
     }
+
+    public BlockCreationTiming getBlockCreationTimings() {
+      return blockCreationTiming;
+    }
   }
 
   BlockCreationResult createBlock(final long timestamp);
+
+  BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp);
 
   BlockCreationResult createBlock(
       final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp);

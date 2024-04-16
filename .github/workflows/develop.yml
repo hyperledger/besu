@@ -1,64 +1,121 @@
-
-name: develop pre-release
+name: docker develop
 
 on:
   push:
     branches:
       - main
 env:
-  GRADLE_OPTS: "-Dorg.gradle.parallel=true -Dorg.gradle.caching=true"
+  registry: docker.io
 
 jobs:
-  artifacts:
+  hadolint:
     runs-on: ubuntu-22.04
-    permissions:
-      contents: write
     steps:
-      - name: checkout
+      - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 17
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
-      - name: assemble release
-        run:
-          ./gradlew assemble
-      - name: upload tarball
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
-        with:
-          path: 'build/distributions/besu*.tar.gz'
-          name: besu-develop.tar.gz
-          compression-level: 0
-      - name: hashes
-        id: hashes
+
+      - name: hadoLint
+        run: docker run --rm -i hadolint/hadolint < docker/Dockerfile
+  buildDocker:
+    needs: hadolint
+    permissions:
+      contents: read
+      packages: write
+
+    strategy:
+      fail-fast: false
+      matrix:
+        platform:
+          - ubuntu-22.04
+          - [self-hosted, ARM64]
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - name: Prepare
+        id: prep
         run: |
-          cd build/distributions
-          echo "zipSha=$(shasum -a 256 besu*.zip)" >> $GITHUB_OUTPUT
-          echo "tarSha=$(shasum -a 256 besu*.tar.gz)" >> $GITHUB_OUTPUT
-      - name: upload zipfile
-        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+          platform=${{ matrix.platform }}
+          if [ "$platform" = 'ubuntu-22.04' ]; then 
+            echo "PLATFORM_PAIR=linux-amd64" >> $GITHUB_OUTPUT
+            echo "ARCH=amd64" >> $GITHUB_OUTPUT
+          else
+            echo "PLATFORM_PAIR=linux-arm64" >> $GITHUB_OUTPUT
+            echo "ARCH=arm64" >> $GITHUB_OUTPUT
+          fi
+
+          # Get the current date and time in the format YY.MM
+          DATE_TIME=$(date +"%y.%-m")
+          # Get the short SHA of the merge commit
+          SHORT_SHA=${GITHUB_SHA::7}
+          # Construct the build target name
+          BUILD_TARGET_NAME="${DATE_TIME}-develop-${SHORT_SHA}"
+          echo "Build Target Name: $BUILD_TARGET_NAME"
+          # Set the build target name as an environment variable
+          echo "BUILD_TARGET_NAME=${BUILD_TARGET_NAME}" >> $GITHUB_ENV
+
+      - name: Checkout Repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Java
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
-          path: 'build/distributions/besu*.zip'
-          name: besu-develop.zip
-          compression-level: 0
-      - name: Upload Release assets
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
+          distribution: temurin
+          java-version: 17
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
-          prerelease: true
-          name: develop
-          tag_name: develop
-          fail_on_unmatched_files: true
-          append_body: false
-          files: |
-            build/distributions/besu*.tar.gz
-            build/distributions/besu*.zip
-          body: |
-            This is an automated, bleeding edge build from the tip of ${{ github.ref_name }}. No promises. YOLO.
-            
-            ${{steps.hashes.outputs.tarSha}}
-            ${{steps.hashes.outputs.zipSha}}
+          cache-disabled: true
+      - name: install goss
+        run: |
+          mkdir -p docker/reports
+          curl -L https://github.com/aelsabbahy/goss/releases/download/v0.4.4/goss-${{ steps.prep.outputs.PLATFORM_PAIR }} -o ./docker/tests/goss-${{ steps.prep.outputs.PLATFORM_PAIR }}
+      - name: login to ${{ env.registry }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
+      - name: build and test docker
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        env:
+          architecture: ${{ steps.prep.outputs.ARCH }}
+        with:
+          cache-disabled: true
+          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME}} -Prelease.releaseVersion=develop
+      - name: publish
+        env:
+          architecture: ${{ steps.prep.outputs.ARCH }}
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
+  multiArch:
+    needs: buildDocker
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Set up Java
+        uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
+        with:
+          distribution: temurin
+          java-version: 17
+      - name: setup gradle
+        uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
+      - name: login to ${{ env.registry }}
+        uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
+        with:
+          registry: ${{ env.registry }}
+          username: ${{ secrets.DOCKER_USER_RW }}
+          password: ${{ secrets.DOCKER_PASSWORD_RW }}
+      - name: multi-arch docker
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop

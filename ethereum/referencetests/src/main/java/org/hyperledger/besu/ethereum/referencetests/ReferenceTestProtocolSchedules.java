@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -75,6 +76,7 @@ public class ReferenceTestProtocolSchedules {
     builder.put("ArrowGlacier", createSchedule(genesisStub.clone().arrowGlacierBlock(0)));
     builder.put("GrayGlacier", createSchedule(genesisStub.clone().grayGlacierBlock(0)));
     builder.put("Merge", createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
+    builder.put("Paris", createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
     builder.put("Shanghai", createSchedule(genesisStub.clone().shanghaiTime(0)));
     builder.put(
         "ShanghaiToCancunAtTime15k",
@@ -106,6 +108,7 @@ public class ReferenceTestProtocolSchedules {
             PrivacyParameters.DEFAULT,
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager())
         .createProtocolSchedule();
   }

@@ -400,7 +400,7 @@ public class MainnetTransactionProcessor {
                 .address(contractAddress)
                 .contract(contractAddress)
                 .inputData(Bytes.EMPTY)
-                .code(contractCreationProcessor.getCodeFromEVM(null, initCodeBytes))
+                .code(contractCreationProcessor.getCodeFromEVMUncached(initCodeBytes))
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
@@ -513,6 +513,18 @@ public class MainnetTransactionProcessor {
             initialFrame.getOutputData(),
             validationResult);
       } else {
+        if (initialFrame.getExceptionalHaltReason().isPresent()) {
+          LOG.debug(
+              "Transaction {} processing halted: {}",
+              transaction.getHash(),
+              initialFrame.getExceptionalHaltReason().get());
+        }
+        if (initialFrame.getRevertReason().isPresent()) {
+          LOG.debug(
+              "Transaction {} reverted: {}",
+              transaction.getHash(),
+              initialFrame.getRevertReason().get());
+        }
         return TransactionProcessingResult.failed(
             gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
       }

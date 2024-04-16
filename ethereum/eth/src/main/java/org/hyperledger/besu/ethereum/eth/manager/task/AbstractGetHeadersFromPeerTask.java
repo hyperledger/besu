@@ -111,7 +111,8 @@ public abstract class AbstractGetHeadersFromPeerTask
           LOG.debug(
               "Sequential headers must form a chain through hashes (BREACH_OF_PROTOCOL), disconnecting peer: {}",
               peer.getLoggableId());
-          peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+          peer.disconnect(
+              DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS);
           return Optional.empty();
         }
       }
@@ -126,7 +127,7 @@ public abstract class AbstractGetHeadersFromPeerTask
     }
 
     LOG.atTrace()
-        .setMessage("Received {} of {} headers requested from peer {}...")
+        .setMessage("Received {} of {} headers requested from peer {}")
         .addArgument(headersList::size)
         .addArgument(count)
         .addArgument(peer::getLoggableId)
@@ -137,7 +138,7 @@ public abstract class AbstractGetHeadersFromPeerTask
   private void updatePeerChainState(final EthPeer peer, final BlockHeader blockHeader) {
     if (blockHeader.getNumber() > peer.chainState().getEstimatedHeight()) {
       LOG.atTrace()
-          .setMessage("Updating chain state for peer {}... to block header {}")
+          .setMessage("Updating chain state for peer {} to block header {}")
           .addArgument(peer::getLoggableId)
           .addArgument(blockHeader::toLogString)
           .log();

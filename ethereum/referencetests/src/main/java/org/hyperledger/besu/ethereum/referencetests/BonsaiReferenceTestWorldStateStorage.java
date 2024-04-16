@@ -16,15 +16,16 @@ package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiAccount;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiPreImageProxy;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateLayerStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldView;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiPreImageProxy;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateLayerStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldView;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.Comparator;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -53,7 +54,7 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
         .stream()
         .collect(
             Collectors.toMap(
-                e -> e.getKey(),
+                Map.Entry::getKey,
                 e ->
                     AccountStorageEntry.create(
                         UInt256.fromBytes(RLP.decodeValue(e.getValue())),
@@ -64,7 +65,7 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
   }
 
   public Stream<WorldState.StreamableAccount> streamAccounts(
-      final BonsaiWorldView context, final Bytes32 startKeyHash, final int limit) {
+      final DiffBasedWorldView context, final Bytes32 startKeyHash, final int limit) {
     return streamFlatAccounts(startKeyHash, UInt256.MAX_VALUE, limit)
         .entrySet()
         // map back to addresses using preImage provider:
@@ -80,6 +81,7 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
                                 BonsaiAccount.fromRLP(context, address, entry.getValue(), false))))
         .filter(Optional::isPresent)
         .map(Optional::get)
+        .filter(acct -> context.updater().getAccount(acct.getAddress().orElse(null)) != null)
         .sorted(Comparator.comparing(account -> account.getAddress().orElse(Address.ZERO)));
   }
 }

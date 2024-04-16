@@ -30,10 +30,13 @@ public class MessageDigestFactory {
 
   /** Keccak-256 */
   public static final String KECCAK256_ALG = "KECCAK-256";
+
   /** SHA-256 */
   public static final String SHA256_ALG = "SHA-256";
+
   /** RipeMD-160 */
   public static final String RIPEMD160_ALG = "RIPEMD160";
+
   /** Blake2b F Function */
   public static final String BLAKE2BF_ALG = "BLAKE2BF";
 

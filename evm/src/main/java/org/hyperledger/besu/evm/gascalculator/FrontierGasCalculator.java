@@ -16,13 +16,14 @@ package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedMultiply;
+import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.internal.Words.numWords;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 
 import java.util.function.Supplier;
@@ -150,7 +151,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long idPrecompiledContractGasCost(final Bytes input) {
-    return ID_PRECOMPILED_WORD_GAS_COST * Words.numWords(input) + ID_PRECOMPILED_BASE_GAS_COST;
+    return ID_PRECOMPILED_WORD_GAS_COST * numWords(input) + ID_PRECOMPILED_BASE_GAS_COST;
   }
 
   @Override
@@ -160,13 +161,12 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long sha256PrecompiledContractGasCost(final Bytes input) {
-    return SHA256_PRECOMPILED_WORD_GAS_COST * Words.numWords(input)
-        + SHA256_PRECOMPILED_BASE_GAS_COST;
+    return SHA256_PRECOMPILED_WORD_GAS_COST * numWords(input) + SHA256_PRECOMPILED_BASE_GAS_COST;
   }
 
   @Override
   public long ripemd160PrecompiledContractGasCost(final Bytes input) {
-    return RIPEMD160_PRECOMPILED_WORD_GAS_COST * Words.numWords(input)
+    return RIPEMD160_PRECOMPILED_WORD_GAS_COST * numWords(input)
         + RIPEMD160_PRECOMPILED_BASE_GAS_COST;
   }
 
@@ -305,13 +305,57 @@ public class FrontierGasCalculator implements GasCalculator {
     }
   }
 
+  /**
+   * Returns the amount of gas the CREATE operation will consume.
+   *
+   * @param frame The current frame
+   * @return the amount of gas the CREATE operation will consume
+   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
+   *     #memoryExpansionGasCost(MessageFrame, long, long)}, and {@link #initcodeCost(int)} As done
+   *     in {@link org.hyperledger.besu.evm.operation.CreateOperation#cost(MessageFrame, Supplier)}
+   */
+  @SuppressWarnings("removal")
   @Override
+  @Deprecated(since = "24.4.1", forRemoval = true)
   public long createOperationGasCost(final MessageFrame frame) {
     final long initCodeOffset = clampedToLong(frame.getStackItem(1));
-    final long initCodeLength = clampedToLong(frame.getStackItem(2));
+    final int initCodeLength = clampedToInt(frame.getStackItem(2));
 
-    final long memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
-    return clampedAdd(CREATE_OPERATION_GAS_COST, memoryGasCost);
+    return clampedAdd(
+        clampedAdd(txCreateCost(), memoryExpansionGasCost(frame, initCodeOffset, initCodeLength)),
+        initcodeCost(initCodeLength));
+  }
+
+  /**
+   * Returns the amount of gas the CREATE2 operation will consume.
+   *
+   * @param frame The current frame
+   * @return the amount of gas the CREATE2 operation will consume
+   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
+   *     #memoryExpansionGasCost(MessageFrame, long, long)}, {@link #createKeccakCost(int)}, and
+   *     {@link #initcodeCost(int)}
+   */
+  @SuppressWarnings("removal")
+  @Override
+  @Deprecated(since = "24.4.1", forRemoval = true)
+  public long create2OperationGasCost(final MessageFrame frame) {
+    throw new UnsupportedOperationException(
+        "CREATE2 operation not supported by " + getClass().getSimpleName());
+  }
+
+  @Override
+  public long txCreateCost() {
+    return CREATE_OPERATION_GAS_COST;
+  }
+
+  @Override
+  public long createKeccakCost(final int initCodeLength) {
+    return clampedMultiply(KECCAK256_OPERATION_WORD_GAS_COST, numWords(initCodeLength));
+  }
+
+  @Override
+  public long initcodeCost(final int initCodeLength) {
+    return 0;
   }
 
   @Override
@@ -438,12 +482,6 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long create2OperationGasCost(final MessageFrame frame) {
-    throw new UnsupportedOperationException(
-        "CREATE2 operation not supported by " + getClass().getSimpleName());
-  }
-
-  @Override
   public long getSloadOperationGasCost() {
     return SLOAD_OPERATION_GAS_COST;
   }
@@ -487,9 +525,8 @@ public class FrontierGasCalculator implements GasCalculator {
       final long wordGasCost,
       final long offset,
       final long length) {
-    final long numWords = length / 32 + (length % 32 == 0 ? 0 : 1);
-
-    final long copyCost = clampedAdd(clampedMultiply(wordGasCost, numWords), baseGasCost);
+    final long copyCost =
+        clampedAdd(clampedMultiply(wordGasCost, numWords(clampedToInt(length))), baseGasCost);
     final long memoryCost = memoryExpansionGasCost(frame, offset, length);
 
     return clampedAdd(copyCost, memoryCost);

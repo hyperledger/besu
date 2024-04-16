@@ -16,7 +16,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 4,
-    "error":{"code":-32603,"message":"Internal error"}
+    "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
   },
   "statusCode": 200
 }

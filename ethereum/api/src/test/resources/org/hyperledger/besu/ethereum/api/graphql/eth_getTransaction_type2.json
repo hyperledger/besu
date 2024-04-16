@@ -1,5 +1,5 @@
 {
-  "request": "{transaction (hash : \"0x3ecd2ca6cf26c864d0ea5f038a58d4cd4a46a3e242fe92f446f392fdc232dd98\") { accessList { address storageKeys } maxFeePerGas maxPriorityFeePerGas nonce type status } } ",
+  "request": "{transaction (hash : \"0x3ecd2ca6cf26c864d0ea5f038a58d4cd4a46a3e242fe92f446f392fdc232dd98\") { accessList { address storageKeys } maxFeePerGas maxPriorityFeePerGas nonce type status yParity v} } ",
   "response": {
     "data": {
       "transaction": {
@@ -15,7 +15,9 @@
         "maxPriorityFeePerGas": "0x3b9aca00",
         "nonce": "0x20",
         "type": "0x2",
-        "status": "0x1"
+        "status": "0x1",
+        "yParity": "0x0",
+        "v": "0x25"
       }
     }
   },

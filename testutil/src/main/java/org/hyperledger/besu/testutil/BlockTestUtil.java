@@ -146,6 +146,7 @@ public final class BlockTestUtil {
   public static ChainResources getUpgradedForkResources() {
     return forkUpgradedSupplier.get();
   }
+
   /**
    * Gets Eth Ref Test resources.
    *
