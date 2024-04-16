@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
+import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
@@ -222,7 +223,6 @@ public class MessageFrame {
 
   // Transaction state fields.
   private final List<Log> logs = new ArrayList<>();
-  private long gasRefund = 0L;
   private final Map<Address, Wei> refunds = new HashMap<>();
 
   // Execution Environment fields.
@@ -419,7 +419,8 @@ public class MessageFrame {
    * @return the amount of gas available, after deductions.
    */
   public long decrementRemainingGas(final long amount) {
-    return this.gasRemaining -= amount;
+    this.gasRemaining -= amount;
+    return this.gasRemaining;
   }
 
   /**
@@ -924,12 +925,12 @@ public class MessageFrame {
    * @param amount The amount to increment the refund
    */
   public void incrementGasRefund(final long amount) {
-    this.gasRefund += amount;
+    this.txValues.gasRefunds().set(this.txValues.gasRefunds().get() + amount);
   }
 
   /** Clear the accumulated gas refund. */
   public void clearGasRefund() {
-    gasRefund = 0L;
+    this.txValues.gasRefunds().set(0L);
   }
 
   /**
@@ -938,7 +939,7 @@ public class MessageFrame {
    * @return accumulated gas refund
    */
   public long getGasRefund() {
-    return gasRefund;
+    return txValues.gasRefunds().get();
   }
 
   /**
@@ -1799,7 +1800,8 @@ public class MessageFrame {
                 initcodes,
                 UndoTable.of(HashBasedTable.create()),
                 UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)));
+                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
+                new UndoScalar<>(0L));
         updater = worldUpdater;
         newStatic = isStatic;
       } else {

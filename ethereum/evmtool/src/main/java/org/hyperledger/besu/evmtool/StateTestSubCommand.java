@@ -86,6 +86,11 @@ public class StateTestSubCommand implements Runnable {
   private String fork = null;
 
   @Option(
+      names = {"--test-name"},
+      description = "Limit execution to one named test.")
+  private String testName = null;
+
+  @Option(
       names = {"--data-index"},
       description = "Limit execution to one data variable.")
   private Integer dataIndex = null;
@@ -173,10 +178,12 @@ public class StateTestSubCommand implements Runnable {
   private void executeStateTest(final Map<String, GeneralStateTestCaseSpec> generalStateTests) {
     for (final Map.Entry<String, GeneralStateTestCaseSpec> generalStateTestEntry :
         generalStateTests.entrySet()) {
-      generalStateTestEntry
-          .getValue()
-          .finalStateSpecs()
-          .forEach((__, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
+      if (testName == null || testName.equals(generalStateTestEntry.getKey())) {
+        generalStateTestEntry
+            .getValue()
+            .finalStateSpecs()
+            .forEach((__, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
+      }
     }
   }
 

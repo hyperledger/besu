@@ -101,12 +101,13 @@ public class BlockchainReferenceTestTools {
     return params.generate(filePath);
   }
 
+  @SuppressWarnings("java:S5960") // this is actually test code
   public static void executeTest(final BlockchainReferenceTestCaseSpec spec) {
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
         spec.getWorldStateArchive()
             .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
-            .get();
+            .orElseThrow();
 
     final ProtocolSchedule schedule =
         REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
@@ -126,18 +127,7 @@ public class BlockchainReferenceTestTools {
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
 
-        EVM evm = protocolSpec.getEvm();
-        if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
-          assumeThat(
-                  worldState
-                      .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-                      .anyMatch(AccountState::isEmpty))
-              .withFailMessage("Journaled account configured and empty account detected")
-              .isFalse();
-          assumeThat(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0)
-              .withFailMessage("Journaled account configured and fork prior to the merge specified")
-              .isFalse();
-        }
+        verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
 
         final HeaderValidationMode validationMode =
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
@@ -153,5 +143,21 @@ public class BlockchainReferenceTestTools {
     }
 
     Assertions.assertThat(blockchain.getChainHeadHash()).isEqualTo(spec.getLastBlockHash());
+  }
+
+  static void verifyJournaledEVMAccountCompatability(
+      final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
+    EVM evm = protocolSpec.getEvm();
+    if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
+      assumeThat(
+              worldState
+                  .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+                  .anyMatch(AccountState::isEmpty))
+          .withFailMessage("Journaled account configured and empty account detected")
+          .isFalse();
+      assumeThat(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0)
+          .withFailMessage("Journaled account configured and fork prior to the merge specified")
+          .isFalse();
+    }
   }
 }

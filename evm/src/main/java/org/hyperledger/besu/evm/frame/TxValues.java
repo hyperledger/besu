@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.frame;
 
+import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
@@ -68,7 +69,8 @@ public record TxValues(
     Optional<List<Bytes>> initcodeHashes,
     UndoTable<Address, Bytes32, Bytes32> transientStorage,
     UndoSet<Address> creates,
-    UndoSet<Address> selfDestructs) {
+    UndoSet<Address> selfDestructs,
+    UndoScalar<Long> gasRefunds) {
 
   /**
    * Preferred constructor for TX data
@@ -104,7 +106,8 @@ public record TxValues(
       final Optional<List<Bytes>> initcodes,
       final UndoTable<Address, Bytes32, Bytes32> transientStorage,
       final UndoSet<Address> creates,
-      final UndoSet<Address> selfDestructs) {
+      final UndoSet<Address> selfDestructs,
+      final UndoScalar<Long> gasRefunds) {
     this(
         blockHashLookup,
         maxStackSize,
@@ -121,7 +124,8 @@ public record TxValues(
         initcodes.map(l -> new ArrayList<>(l.size())),
         transientStorage,
         creates,
-        selfDestructs);
+        selfDestructs,
+        gasRefunds);
   }
 
   /**
@@ -135,6 +139,7 @@ public record TxValues(
     transientStorage.undo(mark);
     creates.undo(mark);
     selfDestructs.undo(mark);
+    gasRefunds.undo(mark);
   }
 
   /**

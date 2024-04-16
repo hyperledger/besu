@@ -789,21 +789,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       nodeRequests.shutdown();
       nodeRequests = null;
     }
-
-    deleteRuntimeFiles();
-  }
-
-  private void deleteRuntimeFiles() {
-    try {
-      Files.deleteIfExists(homeDirectory.resolve("besu.networks"));
-    } catch (IOException e) {
-      LOG.error("Failed to clean up besu.networks file in {}", homeDirectory, e);
-    }
-    try {
-      Files.deleteIfExists(homeDirectory.resolve("besu.ports"));
-    } catch (IOException e) {
-      LOG.error("Failed to clean up besu.ports file in {}", homeDirectory, e);
-    }
   }
 
   @Override
