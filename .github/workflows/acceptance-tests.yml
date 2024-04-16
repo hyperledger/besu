@@ -35,6 +35,8 @@ jobs:
         with:
           distribution: temurin
           java-version: 17
+      - name: Install required packages
+        run:  sudo apt-get install -y xmlstarlet
       - name: get acceptance test report
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         with:
@@ -48,19 +50,16 @@ jobs:
         with:
           cache-disabled: true
       - name: Split tests
-        id: split-tests
-        uses: r7kamura/split-tests-by-timings@9322bd292d9423e2bc5a65bec548901801341e3f
+        run: .github/workflows/splitTestsByTime.sh tmp/junit-xml-reports-downloaded ${{env.total-runners}} ${{ matrix.runner_index }} > testList.txt
+      - name: Upload Timing
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        if: matrix.runner_index == 0
         with:
-          reports: tmp/junit-xml-reports-downloaded
-          glob: 'acceptance-tests/tests/src/test/java/org/hyperledger/besu/tests/acceptance/**/*Test.java'
-          total: ${{env.total-runners}}
-          index: ${{ matrix.runner_index }}
-      - name: write out test list
-        run: echo "${{ steps.split-tests.outputs.paths }}" >> testList.txt
+          name: acceptance-tests-timing
+          path: 'tmp/timing.tsv'
       - name: format gradle args
-        #regex means: first truncate file paths to align with package name, then swap path delimiter with package delimiter,
-        #then drop file extension, then insert --tests option between each.
-        run: cat testList.txt | sed -e 's@acceptance-tests/tests/src/test/java/@--tests\ @g;s@/@.@g;s/\.java//g'  > gradleArgs.txt
+        # insert --tests option between each.
+        run:  cat testList.txt | sed -e 's/^\| / --tests /g' | tee gradleArgs.txt
       - name: run acceptance tests
         run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: cleanup tempfiles
