@@ -170,7 +170,6 @@ public abstract class MiningParameters {
     };
   }
 
-  @Value.Derived
   public long getBlockTxsSelectionMaxTime() {
     final var maybeBlockPeriodSeconds = getMutableRuntimeValues().blockPeriodSeconds;
     if (maybeBlockPeriodSeconds.isPresent()) {

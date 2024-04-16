@@ -191,7 +191,6 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       frame.addLogs(childFrame.getLogs());
       frame.addSelfDestructs(childFrame.getSelfDestructs());
       frame.addCreates(childFrame.getCreates());
-      frame.incrementGasRefund(childFrame.getGasRefund());
 
       if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         Address createdAddress = childFrame.getContractAddress();

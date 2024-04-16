@@ -2154,7 +2154,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     new MiningParametersMetrics(getMetricsSystem(), miningParameters);
   }
 
-
   private OptionalInt getGenesisBlockPeriodSeconds(
       final GenesisConfigOptions genesisConfigOptions) {
     if (genesisConfigOptions.isClique()) {
