@@ -148,7 +148,6 @@ public class FlatDbStrategyProvider {
   public void upgradeToFullFlatDbMode(final SegmentedKeyValueStorage composedWorldStateStorage) {
     final SegmentedKeyValueStorageTransaction transaction =
         composedWorldStateStorage.startTransaction();
-    // TODO: consider ARCHIVE mode
     transaction.put(
         TRIE_BRANCH_STORAGE, FLAT_DB_MODE, FlatDbMode.FULL.getVersion().toArrayUnsafe());
     transaction.commit();
