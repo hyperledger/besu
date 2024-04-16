@@ -2358,12 +2358,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return GenesisConfigFile.fromConfigWithoutAccounts(genesisConfig());
   }
 
-  private String genesisConfigString = "";
+  private final Supplier<String> genesisConfigSupplier = Suppliers.memoize(this::loadGenesisConfig);
 
-  private String genesisConfig() {
-    if (!genesisConfigString.isEmpty()) {
-      return genesisConfigString;
-    }
+  private String loadGenesisConfig() {
     if (genesisStateHashCacheEnabled) {
       // If the genesis state hash is present in the database, we can use the genesis file without
       pluginCommonConfiguration.init(
@@ -2383,18 +2380,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           isGenesisStateHashPresent = false;
         }
         if (isGenesisStateHashPresent) {
-          genesisConfigString = JsonUtil.getJsonFromFileWithout(genesisFile, "alloc");
+          return JsonUtil.getJsonFromFileWithout(genesisFile, "alloc");
         }
       }
     }
-    if (genesisConfigString.isEmpty()) {
-      try {
-        genesisConfigString = Resources.toString(genesisFile.toURI().toURL(), UTF_8);
-      } catch (Exception e) {
-        throw new RuntimeException(e);
-      }
+    try {
+      return Resources.toString(genesisFile.toURI().toURL(), UTF_8);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
     }
-    return genesisConfigString;
+  }
+
+  private String genesisConfig() {
+    return genesisConfigSupplier.get();
   }
 
   private static String genesisConfig(final NetworkName networkName) {
