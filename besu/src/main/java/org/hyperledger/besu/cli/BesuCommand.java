@@ -86,7 +86,7 @@ import org.hyperledger.besu.cli.subcommands.rlp.RLPSubCommand;
 import org.hyperledger.besu.cli.subcommands.storage.StorageSubCommand;
 import org.hyperledger.besu.cli.util.BesuCommandCustomFactory;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
-import org.hyperledger.besu.cli.util.ConfigOptionSearchAndRunHandler;
+import org.hyperledger.besu.cli.util.ConfigDefaultValueProviderStrategy;
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
@@ -1045,6 +1045,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param args arguments to Besu command
    * @return success or failure exit code.
    */
+  /**
+   * Parses command line arguments and configures the application accordingly.
+   *
+   * @param resultHandler The strategy to handle the execution result.
+   * @param parameterExceptionHandler Handler for exceptions related to command line parameters.
+   * @param executionExceptionHandler Handler for exceptions during command execution.
+   * @param in The input stream for commands.
+   * @param args The command line arguments.
+   * @return The execution result status code.
+   */
   public int parse(
       final IExecutionStrategy resultHandler,
       final BesuParameterExceptionHandler parameterExceptionHandler,
@@ -1052,9 +1062,24 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final InputStream in,
       final String... args) {
 
-    toCommandLine();
+    initializeCommandLineSettings(in);
 
-    // use terminal width for usage message
+    // Create the execution strategy chain.
+    final IExecutionStrategy executeStrategy = createExecuteStrategy(resultHandler);
+    final IExecutionStrategy pluginRegistrationTask = createPluginRegistrationTask(executeStrategy);
+    final IExecutionStrategy configStrategy =
+        new ConfigDefaultValueProviderStrategy(pluginRegistrationTask, environment);
+
+    // 1- Config default value provider
+    // 2- Register plugins
+    // 3- Execute command
+    return executeCommandLine(
+        configStrategy, parameterExceptionHandler, executionExceptionHandler, args);
+  }
+
+  private void initializeCommandLineSettings(final InputStream in) {
+    toCommandLine();
+    // Automatically adjust the width of usage messages to the terminal width.
     commandLine.getCommandSpec().usageMessage().autoWidth(true);
 
     handleStableOptions();
@@ -1062,40 +1087,48 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     registerConverters();
     handleUnstableOptions();
     preparePlugins();
+  }
 
-    final ConfigOptionSearchAndRunHandler configParsingHandler =
-        getConfigOptionSearchAndRunHandler(resultHandler, parameterExceptionHandler);
+  private IExecutionStrategy createExecuteStrategy(final IExecutionStrategy resultHandler) {
+    return parseResult -> {
+      commandLine.setExecutionStrategy(resultHandler);
+      // At this point we don't allow unmatched options
+      commandLine.setStopAtUnmatched(true);
+      return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
+    };
+  }
 
-    return commandLine
-        .setExecutionStrategy(configParsingHandler)
-        .setParameterExceptionHandler(parameterExceptionHandler)
-        .setExecutionExceptionHandler(executionExceptionHandler)
-        .execute(args);
+  private IExecutionStrategy createPluginRegistrationTask(
+      final IExecutionStrategy executeStrategy) {
+    return parseResult -> {
+      PluginConfiguration configuration =
+          PluginsConfigurationOptions.fromCommandLine(parseResult.commandSpec().commandLine());
+      besuPluginContext.registerPlugins(configuration);
+      commandLine.setExecutionStrategy(executeStrategy);
+      return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
+    };
   }
 
   /**
-   * Creates a handler for searching and running configuration options with plugin registration.
+   * Executes the command line with the provided execution strategy and exception handlers.
    *
-   * @param nextHandler The next execution strategy to be used after plugin registration.
-   * @param parameterExceptionHandler The parameterExceptionHandler
-   * @return A {@link ConfigOptionSearchAndRunHandler} configured to register plugins and then
-   *     delegate to the next handler.
+   * @param executionStrategy The execution strategy to use.
+   * @param args The command line arguments.
+   * @return The execution result status code.
    */
-  private ConfigOptionSearchAndRunHandler getConfigOptionSearchAndRunHandler(
-      final IExecutionStrategy nextHandler,
-      final BesuParameterExceptionHandler parameterExceptionHandler) {
-    final IExecutionStrategy pluginRegistrationTask =
-        parseResult -> {
-          // Extract PluginConfiguration from command line arguments and register plugins.
-          PluginConfiguration configuration =
-              PluginsConfigurationOptions.fromCommandLine(parseResult.commandSpec().commandLine());
-          besuPluginContext.registerPlugins(configuration);
-
-          commandLine.setExecutionStrategy(nextHandler);
-          return commandLine.execute(parseResult.originalArgs().toArray(new String[0]));
-        };
-    return new ConfigOptionSearchAndRunHandler(
-        pluginRegistrationTask, parameterExceptionHandler, environment);
+  private int executeCommandLine(
+      final IExecutionStrategy executionStrategy,
+      final BesuParameterExceptionHandler parameterExceptionHandler,
+      final BesuExecutionExceptionHandler executionExceptionHandler,
+      final String... args) {
+    return commandLine
+        .setExecutionStrategy(executionStrategy)
+        .setParameterExceptionHandler(parameterExceptionHandler)
+        .setExecutionExceptionHandler(executionExceptionHandler)
+        // As this happens before the plugins registration and plugins can add options, we must
+        // allow unmatched options
+        .setStopAtUnmatched(false)
+        .execute(args);
   }
 
   /** Used by Dagger to parse all options into a commandline instance. */
