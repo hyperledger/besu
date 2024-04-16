@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.StorageRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.heal.TrieNodeHealingRequest;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -43,9 +44,14 @@ public class CompleteTaskStep {
 
   public synchronized void markAsCompleteOrFailed(
       final SnapWorldDownloadState downloadState, final Task<SnapDataRequest> task) {
-    if (task.getData().isResponseReceived()
-        || (task.getData() instanceof TrieNodeHealingRequest
-            && task.getData().isExpired(snapSyncState))) {
+    final boolean isResponseReceived = task.getData().isResponseReceived();
+    final boolean canBeExpiredRequest =
+        task.getData() instanceof TrieNodeHealingRequest
+            || task.getData()
+                instanceof
+                StorageRangeDataRequest; // can be expired is when we are replacing a new one
+    // by the old one when we are changing pivot block
+    if (isResponseReceived || (canBeExpiredRequest && task.getData().isExpired(snapSyncState))) {
       completedRequestsCounter.inc();
       task.markCompleted();
       downloadState.checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());
