@@ -152,8 +152,9 @@ public abstract class AbstractIsolationTests {
   @BeforeEach
   public void createStorage() {
     worldStateKeyValueStorage =
+        // TODO: this is a temporary fix for BonsaiSnapShotIsolationTests assertions
         createKeyValueStorageProvider()
-            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_PARTIAL_DB_CONFIG);
     archive =
         new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,

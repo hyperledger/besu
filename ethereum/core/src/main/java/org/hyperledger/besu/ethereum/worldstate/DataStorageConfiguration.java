@@ -38,6 +38,13 @@ public interface DataStorageConfiguration {
           .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
           .build();
 
+  DataStorageConfiguration DEFAULT_BONSAI_PARTIAL_DB_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.BONSAI)
+          .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .unstable(Unstable.DEFAULT_PARTIAL)
+          .build();
+
   DataStorageConfiguration DEFAULT_FOREST_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.FOREST)
@@ -70,6 +77,9 @@ public interface DataStorageConfiguration {
 
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();
+
+    DataStorageConfiguration.Unstable DEFAULT_PARTIAL =
+        ImmutableDataStorageConfiguration.Unstable.builder().bonsaiFullFlatDbEnabled(false).build();
 
     @Value.Default
     default boolean getBonsaiLimitTrieLogsEnabled() {

@@ -150,6 +150,8 @@ public class BonsaiSnapshotIsolationTests extends AbstractIsolationTests {
       assertThat(res.isSuccessful()).isTrue();
       shouldCloseSnapshot.persist(oneTx.getHeader());
 
+      // TODO: full flat strategy will not be updated with these values, only the trie
+      //       determine how we want to make this assertion for full flat
       assertThat(shouldCloseSnapshot.get(testAddress)).isNotNull();
       assertThat(shouldCloseSnapshot.get(testAddress).getBalance())
           .isEqualTo(Wei.of(1_000_000_000_000_000_000L));
