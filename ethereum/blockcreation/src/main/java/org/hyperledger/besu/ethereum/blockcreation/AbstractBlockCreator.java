@@ -258,7 +258,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final ValidatorExitsValidator exitsValidator = newProtocolSpec.getExitsValidator();
       Optional<List<ValidatorExit>> maybeExits = Optional.empty();
-      if (exitsValidator instanceof ValidatorExitsValidator.AllowedExits) {
+      if (exitsValidator.allowValidatorExits()) {
         maybeExits =
             Optional.of(ValidatorExitContractHelper.popExitsFromQueue(disposableWorldState));
       }

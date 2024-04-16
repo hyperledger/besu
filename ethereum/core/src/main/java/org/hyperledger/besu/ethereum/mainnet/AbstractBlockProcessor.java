@@ -198,7 +198,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     }
 
     final ValidatorExitsValidator exitsValidator = protocolSpec.getExitsValidator();
-    if (exitsValidator instanceof ValidatorExitsValidator.AllowedExits) {
+    if (exitsValidator.allowValidatorExits()) {
       // Performing system-call logic
       ValidatorExitContractHelper.popExitsFromQueue(worldState);
     }
