@@ -64,7 +64,7 @@ public class ValidatorExit implements org.hyperledger.besu.plugin.data.Validator
     return "ValidatorExit{"
         + "sourceAddress="
         + sourceAddress
-        + "validatorPubKey="
+        + " validatorPubKey="
         + validatorPubKey
         + '}';
   }
