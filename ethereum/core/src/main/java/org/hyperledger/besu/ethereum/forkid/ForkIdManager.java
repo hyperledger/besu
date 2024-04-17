@@ -105,7 +105,7 @@ public class ForkIdManager {
       }
     }
     return allForkIds.isEmpty()
-        ? new ForkId(genesisHashCrc, 1707215340)
+        ? new ForkId(genesisHashCrc, 0)
         : allForkIds.get(allForkIds.size() - 1);
   }
 

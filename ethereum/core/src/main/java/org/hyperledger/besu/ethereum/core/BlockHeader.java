@@ -169,8 +169,6 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       out.writeBytes(withdrawalsRoot);
     }
-
-    // TODO REACTIVATE
     /*if (excessBlobGas != null && blobGasUsed != null) {
       out.writeLongScalar(blobGasUsed);
       out.writeUInt64Scalar(excessBlobGas);
@@ -240,11 +238,11 @@ public class BlockHeader extends SealableBlockHeader
         mixHashOrPrevRandao,
         nonce,
         withdrawalHashRoot,
-        null, // TODO REACTIVATE
-        null, // TODO REACTIVATE
-        null, // TODO REACTIVATE
-        null, // TODO REACTIVATE
-        null, // TODO REACTIVATE
+        null,
+        null,
+        null,
+        null,
+        null,
         executionWitness,
         blockHeaderFunctions);
   }

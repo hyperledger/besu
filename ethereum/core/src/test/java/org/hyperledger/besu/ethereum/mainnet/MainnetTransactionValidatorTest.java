@@ -81,6 +81,7 @@ public class MainnetTransactionValidatorTest {
 
   private final Transaction basicTransaction =
       new TransactionTestFixture()
+          .nonce(30)
           .chainId(Optional.of(BigInteger.ONE))
           .createTransaction(senderKeys);
 

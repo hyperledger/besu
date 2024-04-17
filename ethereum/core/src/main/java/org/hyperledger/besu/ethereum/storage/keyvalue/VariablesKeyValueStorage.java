@@ -68,6 +68,11 @@ public class VariablesKeyValueStorage implements VariablesStorage {
   }
 
   @Override
+  public Optional<Hash> getGenesisStateHash() {
+    return getVariable(Keys.GENESIS_STATE_HASH).map(this::bytesToHash);
+  }
+
+  @Override
   public Updater updater() {
     return new Updater(variables.startTransaction());
   }
@@ -113,6 +118,11 @@ public class VariablesKeyValueStorage implements VariablesStorage {
     @Override
     public void setLocalEnrSeqno(final Bytes nodeRecord) {
       setVariable(SEQ_NO_STORE, nodeRecord);
+    }
+
+    @Override
+    public void setGenesisStateHash(final Hash genesisStateHash) {
+      setVariable(Keys.GENESIS_STATE_HASH, genesisStateHash);
     }
 
     @Override

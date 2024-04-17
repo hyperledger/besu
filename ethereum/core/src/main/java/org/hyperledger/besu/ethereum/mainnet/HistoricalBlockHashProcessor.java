@@ -28,7 +28,7 @@ public class HistoricalBlockHashProcessor {
   public static final Address HISTORICAL_BLOCKHASH_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
 
-  private static final long HISTORY_SERVE_WINDOW = 256;
+  private static final long HISTORY_SAVE_WINDOW = 8192;
 
   private final long forkTimestamp;
 
@@ -46,17 +46,18 @@ public class HistoricalBlockHashProcessor {
     // If this is not the genesis block
     if (currentBlockHeader.getNumber() > 0) {
       account.setStorageValue(
-          UInt256.valueOf((currentBlockHeader.getNumber() - 1) % HISTORY_SERVE_WINDOW),
+          UInt256.valueOf((currentBlockHeader.getNumber() - 1) % HISTORY_SAVE_WINDOW),
           UInt256.fromBytes(currentBlockHeader.getParentHash()));
 
       BlockHeader ancestor =
           blockchain.getBlockHeader(currentBlockHeader.getNumber() - 1).orElseThrow();
-      // If this is the first fork block, add the parent's direct 255 ancestors as well
+      // If this is the first fork block, add the parent's direct HISTORY_SAVE_WINDOW ancestors as
+      // well
       if (ancestor.getTimestamp() < forkTimestamp) {
-        for (int i = 0; i < HISTORY_SERVE_WINDOW && ancestor.getNumber() > 0; i++) {
+        for (int i = 0; i < HISTORY_SAVE_WINDOW && ancestor.getNumber() > 0; i++) {
           ancestor = blockchain.getBlockHeader(ancestor.getNumber() - 1).orElseThrow();
           account.setStorageValue(
-              UInt256.valueOf(ancestor.getNumber() % HISTORY_SERVE_WINDOW),
+              UInt256.valueOf(ancestor.getNumber() % HISTORY_SAVE_WINDOW),
               UInt256.fromBytes(ancestor.getHash()));
         }
       }

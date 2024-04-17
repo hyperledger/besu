@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BALANCE_
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KECCAK_LEAF_KEY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.internal.Words.numWords;
 
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
@@ -58,7 +59,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreation) {
     long intrinsicGasCost = super.transactionIntrinsicGasCost(payload, isContractCreation);
     if (isContractCreation) {
-      return clampedAdd(intrinsicGasCost, calculateInitGasCost(payload.size()));
+      return clampedAdd(intrinsicGasCost, initcodeCost(payload.size()));
     } else {
       return intrinsicGasCost;
     }
@@ -109,7 +110,9 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
             .touchCodeChunksUponContractCreation(frame.getContractAddress(), codeSize));
   }
 
+  @SuppressWarnings("removal")
   @Override
+  @Deprecated(since = "24.4.1", forRemoval = true)
   public long createOperationGasCost(final MessageFrame frame) {
 
     final long initCodeOffset = clampedToLong(frame.getStackItem(1));
@@ -124,6 +127,11 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   private static long calculateInitGasCost(final long initCodeLength) {
     final int dataLength = (int) Math.ceil(initCodeLength / 32.0);
     return dataLength * INIT_CODE_COST;
+  }
+
+  @Override
+  public long initcodeCost(final int initCodeLength) {
+    return numWords(initCodeLength) * INIT_CODE_COST;
   }
 
   @Override

@@ -304,7 +304,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .addArgument(code)
           .addArgument(ethPeer::toString)
           .log();
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_RECEIVED_OTHER_MESSAGE_BEFORE_STATUS);
       return;
     }
 
@@ -324,9 +324,10 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
 
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
       LOG.debug(
-          "Unsolicited message received (BREACH_OF_PROTOCOL), disconnecting from EthPeer: {}",
+          "Unsolicited message received {} (BREACH_OF_PROTOCOL), disconnecting from EthPeer: {}",
+          ethMessage.getData().getCode(),
           ethPeer);
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_UNSOLICITED_MESSAGE_RECEIVED);
       return;
     }
 
@@ -354,7 +355,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .addArgument(e::toString)
           .log();
 
-      ethPeer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+      ethPeer.disconnect(
+          DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
     maybeResponseData.ifPresent(
         responseData -> {
@@ -406,11 +408,15 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       if (ethPeers.shouldConnect(peer, incoming)) {
         return true;
       }
+    } else {
+      LOG.atDebug()
+          .setMessage("ForkId check failed for peer {} our fork id {} theirs {}")
+          .addArgument(peer::getLoggableId)
+          .addArgument(forkIdManager.getForkIdForChainHead())
+          .addArgument(peer.getForkId())
+          .log();
+      return false;
     }
-    LOG.atDebug()
-        .setMessage("ForkId check failed for peer {}")
-        .addArgument(peer::getLoggableId)
-        .log();
     return false;
   }
 
@@ -419,16 +425,18 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final PeerConnection connection,
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
-    if (ethPeers.registerDisconnect(connection)) {
-      LOG.atDebug()
-          .setMessage("Disconnect - {} - {} - {} - {} peers left")
-          .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
-          .addArgument(reason::toString)
-          .addArgument(() -> connection.getPeer().getLoggableId())
-          .addArgument(ethPeers::peerCount)
-          .log();
-      LOG.atTrace().setMessage("{}").addArgument(ethPeers::toString).log();
-    }
+    final boolean wasActiveConnection = ethPeers.registerDisconnect(connection);
+    LOG.atDebug()
+        .setMessage("Disconnect - active Connection? {} - {} - {} {} - {} {} - {} peers left")
+        .addArgument(wasActiveConnection)
+        .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
+        .addArgument(reason::getValue)
+        .addArgument(reason::name)
+        .addArgument(() -> connection.getPeer().getLoggableId())
+        .addArgument(() -> connection.getPeerInfo().getClientId())
+        .addArgument(ethPeers::peerCount)
+        .log();
+    LOG.atTrace().setMessage("{}").addArgument(ethPeers::toString).log();
   }
 
   private void handleStatusMessage(final EthPeer peer, final Message message) {

@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.util.Comparator;
+import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.TreeMap;
@@ -53,7 +54,7 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
         .stream()
         .collect(
             Collectors.toMap(
-                e -> e.getKey(),
+                Map.Entry::getKey,
                 e ->
                     AccountStorageEntry.create(
                         UInt256.fromBytes(RLP.decodeValue(e.getValue())),
@@ -80,6 +81,7 @@ public class BonsaiReferenceTestWorldStateStorage extends BonsaiWorldStateLayerS
                                 BonsaiAccount.fromRLP(context, address, entry.getValue(), false))))
         .filter(Optional::isPresent)
         .map(Optional::get)
+        .filter(acct -> context.updater().getAccount(acct.getAddress().orElse(null)) != null)
         .sorted(Comparator.comparing(account -> account.getAddress().orElse(Address.ZERO)));
   }
 }
