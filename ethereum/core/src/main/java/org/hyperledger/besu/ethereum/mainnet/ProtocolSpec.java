@@ -77,7 +77,7 @@ public class ProtocolSpec {
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
   private final DepositsValidator depositsValidator;
   private final ValidatorExitsValidator exitsValidator;
-
+  private final Optional<HistoricalBlockHashProcessor> historicalBlockHashProcessor;
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
 
@@ -109,6 +109,7 @@ public class ProtocolSpec {
    * @param withdrawalsValidator the withdrawals validator to use
    * @param withdrawalsProcessor the Withdrawals processor to use
    * @param depositsValidator the withdrawals validator to use
+   * @param historicalBlockHashProcessor  the historicalBlockHash processor to use
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
@@ -140,6 +141,7 @@ public class ProtocolSpec {
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final DepositsValidator depositsValidator,
       final ValidatorExitsValidator exitsValidator,
+      final Optional<HistoricalBlockHashProcessor> historicalBlockHashProcessor,
       final boolean isPoS,
       final boolean isReplayProtectionSupported) {
     this.name = name;
@@ -168,6 +170,7 @@ public class ProtocolSpec {
     this.withdrawalsProcessor = withdrawalsProcessor;
     this.depositsValidator = depositsValidator;
     this.exitsValidator = exitsValidator;
+    this.historicalBlockHashProcessor = historicalBlockHashProcessor;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
   }
@@ -375,6 +378,10 @@ public class ProtocolSpec {
 
   public ValidatorExitsValidator getExitsValidator() {
     return exitsValidator;
+  }
+
+  public Optional<HistoricalBlockHashProcessor> getHistoricalBlockHashProcessor() {
+    return historicalBlockHashProcessor;
   }
 
   /**

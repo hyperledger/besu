@@ -765,6 +765,8 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
         .exitsValidator(new ValidatorExitsValidator.AllowedExits())
+        .historicalBlockHashProcessor(
+          new HistoricalBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
         .name("Prague");
   }
 

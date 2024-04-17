@@ -76,6 +76,7 @@ public class ProtocolSpecBuilder {
   private WithdrawalsProcessor withdrawalsProcessor;
   private DepositsValidator depositsValidator = new DepositsValidator.ProhibitedDeposits();
   private ValidatorExitsValidator exitsValidator = new ValidatorExitsValidator.ProhibitedExits();
+  protected HistoricalBlockHashProcessor historicalBlockHashProcessor;
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -270,6 +271,12 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder historicalBlockHashProcessor(
+      final HistoricalBlockHashProcessor historicalBlockHashProcessor) {
+    this.historicalBlockHashProcessor = historicalBlockHashProcessor;
+    return this;
+  }
+
   public ProtocolSpecBuilder isPoS(final boolean isPoS) {
     this.isPoS = isPoS;
     return this;
@@ -390,6 +397,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(withdrawalsProcessor),
         depositsValidator,
         exitsValidator,
+        Optional.ofNullable(historicalBlockHashProcessor),
         isPoS,
         isReplayProtectionSupported);
   }

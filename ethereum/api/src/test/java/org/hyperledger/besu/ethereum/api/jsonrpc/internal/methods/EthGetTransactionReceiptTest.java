@@ -147,6 +147,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           null,
           null,
+          null,
           true,
           true);
   private final ProtocolSpec statusTransactionTypeSpec =
@@ -175,6 +176,7 @@ public class EthGetTransactionReceiptTest {
           Optional.of(PoWHasher.ETHASH_LIGHT),
           null,
           Optional.empty(),
+          null,
           null,
           null,
           true,
