@@ -22,7 +22,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import java.io.IOException;
 import java.util.Optional;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractPermissioningIbft2StallAcceptanceTest
     extends NodeSmartContractPermissioningAcceptanceTestBase {

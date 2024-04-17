@@ -20,8 +20,8 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NodeLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBase {
 
@@ -31,7 +31,7 @@ public class NodeLocalConfigPermissioningAcceptanceTest extends AcceptanceTestBa
   private Node allowedNode;
   private Node permissionedNode;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     final ClusterConfiguration clusterConfiguration =
         new ClusterConfigurationBuilder().awaitPeerDiscovery(false).build();
