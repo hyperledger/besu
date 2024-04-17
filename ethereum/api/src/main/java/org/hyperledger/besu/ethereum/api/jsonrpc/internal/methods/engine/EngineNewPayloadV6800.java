@@ -46,7 +46,7 @@ public class EngineNewPayloadV6800 extends AbstractEngineNewPayload {
 
   @Override
   public String getName() {
-    return RpcMethod.ENGINE_NEW_PAYLOAD_V6800.getMethodName();
+    return RpcMethod.ENGINE_NEW_PAYLOAD_V2.getMethodName();
   }
 
   @Override

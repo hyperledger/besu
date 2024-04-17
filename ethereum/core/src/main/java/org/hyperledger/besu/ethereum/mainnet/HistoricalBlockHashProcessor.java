@@ -50,12 +50,12 @@ public class HistoricalBlockHashProcessor {
           UInt256.fromBytes(currentBlockHeader.getParentHash()));
 
       BlockHeader ancestor =
-          blockchain.getBlockHeader(currentBlockHeader.getNumber() - 1).orElseThrow();
+          blockchain.getBlockHeader(currentBlockHeader.getParentHash()).orElseThrow();
       // If this is the first fork block, add the parent's direct HISTORY_SAVE_WINDOW ancestors as
       // well
       if (ancestor.getTimestamp() < forkTimestamp) {
         for (int i = 0; i < HISTORY_SAVE_WINDOW && ancestor.getNumber() > 0; i++) {
-          ancestor = blockchain.getBlockHeader(ancestor.getNumber() - 1).orElseThrow();
+          ancestor = blockchain.getBlockHeader(ancestor.getParentHash()).orElseThrow();
           account.setStorageValue(
               UInt256.valueOf(ancestor.getNumber() % HISTORY_SAVE_WINDOW),
               UInt256.fromBytes(ancestor.getHash()));
