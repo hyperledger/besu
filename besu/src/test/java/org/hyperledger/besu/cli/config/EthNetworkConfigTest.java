@@ -21,6 +21,8 @@ import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfigura
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
 
+import org.hyperledger.besu.config.GenesisConfigFile;
+
 import java.math.BigInteger;
 
 import org.junit.jupiter.api.Test;
@@ -75,7 +77,9 @@ public class EthNetworkConfigTest {
     EthNetworkConfig config =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfig("{\"config\":{\"chainId\":\"1234567\"}")
+            .setGenesisConfig(
+                GenesisConfigFile.fromConfig("{\"config\":{\"chainId\":\"1234567\"}")
+                    .getConfigOptions())
             .build();
     assertThat(config.getGenesisConfig()).isEqualTo("{\"config\":{\"chainId\":\"1234567\"}");
     assertThat(config.getDnsDiscoveryUrl()).isNotNull();

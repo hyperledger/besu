@@ -14,26 +14,28 @@
  */
 package org.hyperledger.besu.cli.config;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
-import java.io.InputStream;
 import java.math.BigInteger;
+import java.net.URISyntaxException;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+import com.google.common.io.Resources;
+
 /** The Eth network config. */
 public class EthNetworkConfig {
 
-  private final String genesisConfig;
+  private final GenesisConfigOptions genesisConfig;
   private final BigInteger networkId;
   private final List<EnodeURL> bootNodes;
   private final String dnsDiscoveryUrl;
@@ -47,7 +49,7 @@ public class EthNetworkConfig {
    * @param dnsDiscoveryUrl the dns discovery url
    */
   public EthNetworkConfig(
-      final String genesisConfig,
+      final GenesisConfigOptions genesisConfig,
       final BigInteger networkId,
       final List<EnodeURL> bootNodes,
       final String dnsDiscoveryUrl) {
@@ -64,7 +66,7 @@ public class EthNetworkConfig {
    *
    * @return the genesis config
    */
-  public String getGenesisConfig() {
+  public GenesisConfigOptions getGenesisConfig() {
     return genesisConfig;
   }
 
@@ -136,9 +138,9 @@ public class EthNetworkConfig {
    * @return the network config
    */
   public static EthNetworkConfig getNetworkConfig(final NetworkName networkName) {
-    final String genesisContent = jsonConfig(networkName.getGenesisFile());
-    final GenesisConfigOptions genesisConfigOptions =
-        GenesisConfigFile.fromConfig(genesisContent).getConfigOptions();
+    final URL genesisSource = jsonConfigSource(networkName.getGenesisFile());
+    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromConfig(genesisSource);
+    final GenesisConfigOptions genesisConfigOptions = genesisConfigFile.getConfigOptions();
     final Optional<List<String>> rawBootNodes =
         genesisConfigOptions.getDiscoveryOptions().getBootNodes();
     final List<EnodeURL> bootNodes =
@@ -148,19 +150,14 @@ public class EthNetworkConfig {
                     strings.stream().map(EnodeURLImpl::fromString).collect(Collectors.toList()))
             .orElse(Collections.emptyList());
     return new EthNetworkConfig(
-        genesisContent,
+        genesisConfigOptions,
         networkName.getNetworkId(),
         bootNodes,
         genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl().orElse(null));
   }
 
-  private static String jsonConfig(final String resourceName) {
-    try (final InputStream genesisFileInputStream =
-        EthNetworkConfig.class.getResourceAsStream(resourceName)) {
-      return new String(genesisFileInputStream.readAllBytes(), UTF_8);
-    } catch (IOException | NullPointerException e) {
-      throw new IllegalStateException(e);
-    }
+  private static URL jsonConfigSource(final String resourceName) {
+    return EthNetworkConfig.class.getResource(resourceName);
   }
 
   /**
@@ -169,15 +166,24 @@ public class EthNetworkConfig {
    * @param network the network
    * @return the string
    */
+  public static URL jsonConfigSource(final NetworkName network) {
+    return jsonConfigSource(network.getGenesisFile());
+  }
+
   public static String jsonConfig(final NetworkName network) {
-    return jsonConfig(network.getGenesisFile());
+    try {
+      return Resources.toString(
+          Resources.getResource(network.getGenesisFile()).toURI().toURL(), StandardCharsets.UTF_8);
+    } catch (IOException | URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   /** The type Builder. */
   public static class Builder {
 
     private String dnsDiscoveryUrl;
-    private String genesisConfig;
+    private GenesisConfigOptions genesisConfig;
     private BigInteger networkId;
     private List<EnodeURL> bootNodes;
 
@@ -199,7 +205,7 @@ public class EthNetworkConfig {
      * @param genesisConfig the genesis config
      * @return the genesis config
      */
-    public Builder setGenesisConfig(final String genesisConfig) {
+    public Builder setGenesisConfig(final GenesisConfigOptions genesisConfig) {
       this.genesisConfig = genesisConfig;
       return this;
     }

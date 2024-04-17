@@ -96,9 +96,9 @@ public class TransitionControllerBuilderTest {
                 preMergeProtocolSchedule, postMergeProtocolSchedule, mergeContext));
     transitionProtocolSchedule.setProtocolContext(protocolContext);
     cliqueBuilder.nodeKey(NodeKeyUtils.generate());
-    cliqueBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
-    powBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
-    postMergeBuilder.genesisConfigFile(GenesisConfigFile.DEFAULT);
+    cliqueBuilder.genesisConfigOptions(GenesisConfigFile.DEFAULT);
+    powBuilder.genesisConfigOptions(GenesisConfigFile.DEFAULT);
+    postMergeBuilder.genesisConfigOptions(GenesisConfigFile.DEFAULT);
     postMergeBuilder.storageProvider(storageProvider);
     lenient().when(protocolContext.getBlockchain()).thenReturn(mockBlockchain);
     lenient()
@@ -265,7 +265,7 @@ public class TransitionControllerBuilderTest {
   TransitionCoordinator buildTransitionCoordinator(
       final BesuControllerBuilder preMerge, final MergeBesuControllerBuilder postMerge) {
     var builder = new TransitionBesuControllerBuilder(preMerge, postMerge);
-    builder.genesisConfigFile(GenesisConfigFile.mainnet());
+    builder.genesisConfigOptions(GenesisConfigFile.mainnet());
     builder.storageProvider(storageProvider);
     builder.metricsSystem(new NoOpMetricsSystem());
     var coordinator =

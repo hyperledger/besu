@@ -16,7 +16,6 @@ package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.BftValidatorOverrides;
 import org.hyperledger.besu.consensus.common.EpochManager;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -102,9 +101,9 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    bftConfig = configOptionsSupplier.get().getBftConfigOptions();
+    bftConfig = genesisConfigOptions.getBftConfigOptions();
     bftEventQueue = new BftEventQueue(bftConfig.getMessageQueueLimit());
-    forksSchedule = IbftForksSchedulesFactory.create(configOptionsSupplier.get());
+    forksSchedule = IbftForksSchedulesFactory.create(genesisConfigOptions);
   }
 
   @Override
@@ -280,7 +279,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return IbftProtocolScheduleBuilder.create(
-        configOptionsSupplier.get(),
+        genesisConfigOptions,
         forksSchedule,
         privacyParameters,
         isRevertReasonEnabled,
@@ -304,12 +303,11 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final ProtocolSchedule protocolSchedule) {
-    final GenesisConfigOptions configOptions = configOptionsSupplier.get();
-    final BftConfigOptions ibftConfig = configOptions.getBftConfigOptions();
+    final BftConfigOptions ibftConfig = genesisConfigOptions.getBftConfigOptions();
     final EpochManager epochManager = new EpochManager(ibftConfig.getEpochLength());
 
     final BftValidatorOverrides validatorOverrides =
-        convertIbftForks(configOptions.getTransitions().getIbftForks());
+        convertIbftForks(genesisConfigOptions.getTransitions().getIbftForks());
 
     return new BftContext(
         BlockValidatorProvider.forkingValidatorProvider(

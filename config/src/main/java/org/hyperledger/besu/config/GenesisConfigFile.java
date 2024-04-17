@@ -20,6 +20,7 @@ import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,22 +89,27 @@ public class GenesisConfigFile {
    * @return the genesis config file
    */
   public static GenesisConfigFile genesisFileFromResources(final String resourceName) {
-    try {
-      return fromConfig(
-          Resources.toString(GenesisConfigFile.class.getResource(resourceName), UTF_8));
-    } catch (final IOException e) {
-      throw new IllegalStateException(e);
-    }
+    return fromConfig(GenesisConfigFile.class.getResource(resourceName));
   }
 
   /**
    * From config genesis config file.
    *
-   * @param jsonString the json string
+   * @param jsonSource the json string
    * @return the genesis config file
    */
-  public static GenesisConfigFile fromConfig(final String jsonString) {
-    return fromConfig(JsonUtil.objectNodeFromString(jsonString, false));
+  public static GenesisConfigFile fromConfig(final URL jsonSource) {
+    return fromConfig(JsonUtil.objectNodeFromString(jsonSource, false));
+  }
+
+  /**
+   * From config genesis config file.
+   *
+   * @param json the json string
+   * @return the genesis config file
+   */
+  public static GenesisConfigFile fromConfig(final String json) {
+    return fromConfig(JsonUtil.objectNodeFromString(json, false));
   }
 
   /**

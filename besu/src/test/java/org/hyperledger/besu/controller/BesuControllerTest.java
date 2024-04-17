@@ -21,7 +21,6 @@ package org.hyperledger.besu.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.fail;
-import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -31,7 +30,6 @@ import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.Locale;
 import java.util.Map;
 import java.util.OptionalLong;
@@ -40,21 +38,20 @@ import com.google.common.io.Resources;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class BesuControllerTest {
 
-  @Spy private GenesisConfigFile genesisConfigFile = GenesisConfigFile.mainnet();
-  @Mock private GenesisConfigOptions genesisConfigOptions;
+  @Mock GenesisConfigOptions genesisConfigOptions;
   @Mock private QbftConfigOptions qbftConfigOptions;
 
   @Test
   public void missingQbftStartBlock() {
     mockGenesisConfigForMigration("ibft2", OptionalLong.empty());
     assertThatThrownBy(
-            () -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL))
+            () ->
+                new BesuController.Builder().fromGenesisConfig(genesisConfigOptions, SyncMode.FULL))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Missing QBFT startBlock config in genesis file");
   }
@@ -63,19 +60,20 @@ public class BesuControllerTest {
   public void invalidQbftStartBlock() {
     mockGenesisConfigForMigration("ibft2", OptionalLong.of(-1L));
     assertThatThrownBy(
-            () -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL))
+            () ->
+                new BesuController.Builder().fromGenesisConfig(genesisConfigOptions, SyncMode.FULL))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage("Invalid QBFT startBlock config in genesis file");
   }
 
   @Test
   public void invalidConsensusCombination() {
-    when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
     // explicitly not setting isIbft2() for genesisConfigOptions
 
     assertThatThrownBy(
-            () -> new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL))
+            () ->
+                new BesuController.Builder().fromGenesisConfig(genesisConfigOptions, SyncMode.FULL))
         .isInstanceOf(IllegalStateException.class)
         .hasMessage(
             "Invalid genesis migration config. Migration is supported from IBFT (legacy) or IBFT2 to QBFT)");
@@ -87,7 +85,7 @@ public class BesuControllerTest {
     mockGenesisConfigForMigration("ibft2", OptionalLong.of(qbftStartBlock));
 
     final BesuControllerBuilder besuControllerBuilder =
-        new BesuController.Builder().fromGenesisConfig(genesisConfigFile, SyncMode.FULL);
+        new BesuController.Builder().fromGenesisConfig(genesisConfigOptions, SyncMode.FULL);
 
     assertThat(besuControllerBuilder).isInstanceOf(ConsensusScheduleBesuControllerBuilder.class);
 
@@ -103,7 +101,6 @@ public class BesuControllerTest {
 
   private void mockGenesisConfigForMigration(
       final String consensus, final OptionalLong startBlock) {
-    when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     when(genesisConfigOptions.isConsensusMigration()).thenReturn(true);
 
     switch (consensus.toLowerCase(Locale.ROOT)) {
@@ -130,7 +127,7 @@ public class BesuControllerTest {
 
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(postMergeGenesisFile, Collections.emptyMap(), SyncMode.CHECKPOINT);
+            .fromGenesisConfig(postMergeGenesisFile.getConfigOptions(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(MergeBesuControllerBuilder.class);
   }
@@ -147,7 +144,7 @@ public class BesuControllerTest {
 
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(mergeAtGenesisFile, Collections.emptyMap(), SyncMode.CHECKPOINT);
+            .fromGenesisConfig(mergeAtGenesisFile.getConfigOptions(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
@@ -156,7 +153,7 @@ public class BesuControllerTest {
   public void preMergeCheckpointSyncUsesTransitionControllerBuilder() {
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.CHECKPOINT);
+            .fromGenesisConfig(GenesisConfigFile.mainnet().getConfigOptions(), SyncMode.CHECKPOINT);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }
@@ -165,7 +162,7 @@ public class BesuControllerTest {
   public void nonCheckpointSyncUsesTransitionControllerBuild() {
     final BesuControllerBuilder besuControllerBuilder =
         new BesuController.Builder()
-            .fromGenesisConfig(genesisConfigFile, Collections.emptyMap(), SyncMode.SNAP);
+            .fromGenesisConfig(GenesisConfigFile.mainnet().getConfigOptions(), SyncMode.SNAP);
 
     assertThat(besuControllerBuilder).isInstanceOf(TransitionBesuControllerBuilder.class);
   }

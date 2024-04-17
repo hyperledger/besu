@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -313,6 +314,26 @@ public class JsonUtil {
     objectMapper.configure(Feature.ALLOW_COMMENTS, allowComments);
     try {
       final JsonNode jsonNode = objectMapper.readTree(jsonData);
+      validateType(jsonNode, JsonNodeType.OBJECT);
+      return (ObjectNode) jsonNode;
+    } catch (final IOException e) {
+      // Reading directly from a string should not raise an IOException, just catch and rethrow
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Object node from string object node.
+   *
+   * @param jsonSource the json data
+   * @param allowComments true to allow comments
+   * @return the object node
+   */
+  public static ObjectNode objectNodeFromString(final URL jsonSource, final boolean allowComments) {
+    final ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(Feature.ALLOW_COMMENTS, allowComments);
+    try {
+      final JsonNode jsonNode = objectMapper.readTree(jsonSource);
       validateType(jsonNode, JsonNodeType.OBJECT);
       return (ObjectNode) jsonNode;
     } catch (final IOException e) {

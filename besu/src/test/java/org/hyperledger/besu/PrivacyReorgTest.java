@@ -181,7 +181,8 @@ public class PrivacyReorgTest {
     besuController =
         new BesuController.Builder()
             .fromGenesisConfig(
-                GenesisConfigFile.genesisFileFromResources("/privacy_reorg_genesis.json"),
+                GenesisConfigFile.genesisFileFromResources("/privacy_reorg_genesis.json")
+                    .getConfigOptions(),
                 SyncMode.FULL)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())

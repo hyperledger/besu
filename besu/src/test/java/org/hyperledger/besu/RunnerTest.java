@@ -242,7 +242,7 @@ public final class RunnerTest {
       final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              EthNetworkConfig.jsonConfig(DEV),
+              GenesisConfigFile.genesisFileFromResources(DEV.getGenesisFile()).getConfigOptions(),
               DEV.getNetworkId(),
               Collections.singletonList(aheadEnode),
               null);
@@ -457,7 +457,7 @@ public final class RunnerTest {
       final ObservableMetricsSystem metricsSystem,
       final MiningParameters miningParameters) {
     return new MainnetBesuControllerBuilder()
-        .genesisConfigFile(genesisConfig)
+        .genesisConfigOptions(genesisConfig)
         .synchronizerConfiguration(syncConfig)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .dataDirectory(dataDir)

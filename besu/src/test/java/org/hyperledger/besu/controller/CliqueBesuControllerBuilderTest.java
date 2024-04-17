@@ -175,7 +175,7 @@ public class CliqueBesuControllerBuilderTest {
 
     cliqueBesuControllerBuilder =
         new CliqueBesuControllerBuilder()
-            .genesisConfigFile(genesisConfigFile)
+            .genesisConfigOptions(genesisConfigFile)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .networkId(networkId)

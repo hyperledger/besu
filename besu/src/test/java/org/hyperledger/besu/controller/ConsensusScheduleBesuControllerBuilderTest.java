@@ -109,7 +109,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
     final ConsensusScheduleBesuControllerBuilder consensusScheduleBesuControllerBuilder =
         new ConsensusScheduleBesuControllerBuilder(
             besuControllerBuilderSchedule, combinedProtocolScheduleFactory);
-    consensusScheduleBesuControllerBuilder.genesisConfigFile(genesisConfigFile);
+    consensusScheduleBesuControllerBuilder.genesisConfigOptions(genesisConfigFile);
     consensusScheduleBesuControllerBuilder.createProtocolSchedule();
 
     final NavigableSet<ForkSpec<ProtocolSchedule>> expectedProtocolSchedulesSpecs =

@@ -142,7 +142,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
 
     bftBesuControllerBuilder =
         createBftControllerBuilder()
-            .genesisConfigFile(genesisConfigFile)
+            .genesisConfigOptions(genesisConfigFile)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .networkId(networkId)

@@ -40,6 +40,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
+import java.net.URL;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
@@ -64,6 +65,10 @@ public final class GenesisState {
     this.genesisAccounts = genesisAccounts;
   }
 
+  private GenesisState(final Block block) {
+    this(block, null);
+  }
+
   /**
    * Construct a {@link GenesisState} from a JSON string.
    *
@@ -71,6 +76,10 @@ public final class GenesisState {
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
+  public static GenesisState fromJson(final URL json, final ProtocolSchedule protocolSchedule) {
+    return fromConfig(GenesisConfigFile.fromConfig(json), protocolSchedule);
+  }
+
   public static GenesisState fromJson(final String json, final ProtocolSchedule protocolSchedule) {
     return fromConfig(GenesisConfigFile.fromConfig(json), protocolSchedule);
   }
@@ -86,7 +95,7 @@ public final class GenesisState {
    */
   public static GenesisState fromJson(
       final DataStorageConfiguration dataStorageConfiguration,
-      final String json,
+      final URL json,
       final ProtocolSchedule protocolSchedule) {
     return fromConfig(
         dataStorageConfiguration, GenesisConfigFile.fromConfig(json), protocolSchedule);
@@ -140,10 +149,9 @@ public final class GenesisState {
       final Hash genesisStateHash,
       final GenesisConfigFile config,
       final ProtocolSchedule protocolSchedule) {
-    final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
     final Block block =
         new Block(buildHeader(config, genesisStateHash, protocolSchedule), buildBody(config));
-    return new GenesisState(block, genesisAccounts);
+    return new GenesisState(block);
   }
 
   private static BlockBody buildBody(final GenesisConfigFile config) {
@@ -167,6 +175,9 @@ public final class GenesisState {
    * @param target WorldView to write genesis state to
    */
   public void writeStateTo(final MutableWorldState target) {
+    if (genesisAccounts == null) {
+      throw new IllegalStateException("Accounts not loaded from genesis file");
+    }
     writeAccountsTo(target, genesisAccounts, block.getHeader());
   }
 
@@ -345,7 +356,7 @@ public final class GenesisState {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("block", block)
-        .add("genesisAccounts", genesisAccounts)
+        .add("genesisAccounts", genesisAccounts == null ? "not loaded" : genesisAccounts)
         .toString();
   }
 

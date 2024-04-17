@@ -117,15 +117,8 @@ import org.slf4j.LoggerFactory;
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
-  private GenesisConfigFile genesisConfig;
-  private Map<String, String> genesisConfigOverrides = Collections.emptyMap();
-
-  /** The Config options supplier. */
-  protected Supplier<GenesisConfigOptions> configOptionsSupplier =
-      () ->
-          Optional.ofNullable(genesisConfig)
-              .map(conf -> conf.getConfigOptions(genesisConfigOverrides))
-              .orElseThrow();
+  protected GenesisConfigOptions genesisConfigOptions;
+  protected GenesisConfigFile genesisConfigFile;
 
   /** The is genesis state hash from data. */
   protected boolean genesisStateHashCacheEnabled;
@@ -237,8 +230,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param genesisConfig the genesis config
    * @return the besu controller builder
    */
-  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
-    this.genesisConfig = genesisConfig;
+  public BesuControllerBuilder genesisConfigOptions(final GenesisConfigOptions genesisConfig) {
+    this.genesisConfigOptions = genesisConfig;
+    return this;
+  }
+
+  /**
+   * Genesis config file besu controller builder.
+   *
+   * @param genesisConfigFile the genesis config
+   * @return the besu controller builder
+   */
+  public BesuControllerBuilder genesisConfigOptions(final GenesisConfigFile genesisConfigFile) {
+    this.genesisConfigFile = genesisConfigFile;
     return this;
   }
 
@@ -403,18 +407,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Genesis config overrides besu controller builder.
-   *
-   * @param genesisConfigOverrides the genesis config overrides
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder genesisConfigOverrides(
-      final Map<String, String> genesisConfigOverrides) {
-    this.genesisConfigOverrides = genesisConfigOverrides;
-    return this;
-  }
-
-  /**
    * Gas limit calculator besu controller builder.
    *
    * @param gasLimitCalculator the gas limit calculator
@@ -544,7 +536,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller
    */
   public BesuController build() {
-    checkNotNull(genesisConfig, "Missing genesis config");
+    checkNotNull(genesisConfigOptions, "Missing genesis config");
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
     checkNotNull(networkId, "Missing network ID");
@@ -563,29 +555,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
-    final GenesisState genesisState;
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
-    Optional<Hash> genesisStateHash = Optional.empty();
-    if (variablesStorage != null && this.genesisStateHashCacheEnabled) {
-      genesisStateHash = variablesStorage.getGenesisStateHash();
-    }
-
-    if (genesisStateHash.isPresent()) {
-      genesisState =
-          GenesisState.fromConfig(genesisStateHash.get(), genesisConfig, protocolSchedule);
-    } else {
-      genesisState =
-          GenesisState.fromConfig(dataStorageConfiguration, genesisConfig, protocolSchedule);
-      if (variablesStorage != null) {
-        VariablesStorage.Updater updater = variablesStorage.updater();
-        if (updater != null) {
-          updater.setGenesisStateHash(genesisState.getBlock().getHeader().getStateRoot());
-          updater.commit();
-        }
-      }
-    }
+    final GenesisState genesisState = getGenesisState(variablesStorage, protocolSchedule);
 
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration);
@@ -660,20 +633,18 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncConfig.getComputationParallelism(),
             metricsSystem);
 
-    final GenesisConfigOptions configOptions =
-        genesisConfig.getConfigOptions(genesisConfigOverrides);
-
     Optional<Checkpoint> checkpoint = Optional.empty();
-    if (configOptions.getCheckpointOptions().isValid()) {
+    if (genesisConfigOptions.getCheckpointOptions().isValid()) {
       checkpoint =
           Optional.of(
               ImmutableCheckpoint.builder()
                   .blockHash(
-                      Hash.fromHexString(configOptions.getCheckpointOptions().getHash().get()))
-                  .blockNumber(configOptions.getCheckpointOptions().getNumber().getAsLong())
+                      Hash.fromHexString(
+                          genesisConfigOptions.getCheckpointOptions().getHash().get()))
+                  .blockNumber(genesisConfigOptions.getCheckpointOptions().getNumber().getAsLong())
                   .totalDifficulty(
                       Difficulty.fromHexString(
-                          configOptions.getCheckpointOptions().getTotalDifficulty().get()))
+                          genesisConfigOptions.getCheckpointOptions().getTotalDifficulty().get()))
                   .build());
     }
 
@@ -768,7 +739,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         protocolSchedule,
         protocolContext,
         ethProtocolManager,
-        configOptionsSupplier.get(),
+        genesisConfigOptions,
         subProtocolConfiguration,
         synchronizer,
         syncState,
@@ -785,11 +756,30 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         dataStorageConfiguration);
   }
 
+  private GenesisState getGenesisState(
+      final VariablesStorage variablesStorage, final ProtocolSchedule protocolSchedule) {
+    Optional<Hash> genesisStateHash = Optional.empty();
+    if (this.genesisStateHashCacheEnabled) {
+      genesisStateHash = variablesStorage.getGenesisStateHash();
+    }
+
+    if (genesisStateHash.isPresent()) {
+      return GenesisState.fromConfig(genesisStateHash.get(), genesisConfigFile, protocolSchedule);
+    }
+    final var genesisState =
+        GenesisState.fromConfig(dataStorageConfiguration, genesisConfigFile, protocolSchedule);
+    VariablesStorage.Updater updater = variablesStorage.updater();
+    if (updater != null) {
+      updater.setGenesisStateHash(genesisState.getBlock().getHeader().getStateRoot());
+      updater.commit();
+    }
+    return genesisState;
+  }
+
   private TrieLogPruner createTrieLogPruner(
       final WorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
       final EthScheduler scheduler) {
-    final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
     final boolean isProofOfStake = genesisConfigOptions.getTerminalTotalDifficulty().isPresent();
 
     final TrieLogPruner trieLogPruner =
@@ -849,8 +839,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final SyncState syncState,
       final MetricsSystem metricsSystem) {
 
-    final GenesisConfigOptions genesisConfigOptions = configOptionsSupplier.get();
-
     if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
@@ -887,8 +875,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the full sync termination condition
    */
   protected SyncTerminationCondition getFullSyncTerminationCondition(final Blockchain blockchain) {
-    return configOptionsSupplier
-        .get()
+    return genesisConfigOptions
         .getTerminalTotalDifficulty()
         .map(difficulty -> SyncTerminationCondition.difficulty(difficulty, blockchain))
         .orElse(SyncTerminationCondition.never());
@@ -1020,8 +1007,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        genesisConfig.getForkBlockNumbers(),
-        genesisConfig.getForkTimestamps());
+        genesisConfigOptions.getForkBlockNumbers(),
+        genesisConfigOptions.getForkBlockTimestamps());
   }
 
   /**
@@ -1109,14 +1096,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   protected List<PeerValidator> createPeerValidators(final ProtocolSchedule protocolSchedule) {
     final List<PeerValidator> validators = new ArrayList<>();
 
-    final OptionalLong daoBlock = configOptionsSupplier.get().getDaoForkBlock();
+    final OptionalLong daoBlock = genesisConfigOptions.getDaoForkBlock();
     if (daoBlock.isPresent()) {
       // Setup dao validator
       validators.add(
           new DaoForkPeerValidator(protocolSchedule, metricsSystem, daoBlock.getAsLong()));
     }
 
-    final OptionalLong classicBlock = configOptionsSupplier.get().getClassicForkBlock();
+    final OptionalLong classicBlock = genesisConfigOptions.getClassicForkBlock();
     // setup classic validator
     if (classicBlock.isPresent()) {
       validators.add(
@@ -1130,7 +1117,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     }
 
     final CheckpointConfigOptions checkpointConfigOptions =
-        genesisConfig.getConfigOptions(genesisConfigOverrides).getCheckpointOptions();
+        genesisConfigOptions.getCheckpointOptions();
     if (SyncMode.isCheckpointSync(syncConfig.getSyncMode()) && checkpointConfigOptions.isValid()) {
       validators.add(
           new CheckpointBlocksPeerValidator(

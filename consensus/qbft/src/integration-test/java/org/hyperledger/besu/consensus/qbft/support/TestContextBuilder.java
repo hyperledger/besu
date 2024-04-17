@@ -115,7 +115,6 @@ import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
@@ -365,8 +364,8 @@ public class TestContextBuilder {
   }
 
   private GenesisState createGenesisBlock(final String genesisFile) throws IOException {
-    final String json = Files.readString(Path.of(genesisFile));
-    return GenesisState.fromJson(json, ProtocolScheduleFixture.MAINNET);
+    return GenesisState.fromJson(
+        Path.of(genesisFile).toUri().toURL(), ProtocolScheduleFixture.MAINNET);
   }
 
   private static ControllerAndState createControllerAndFinalState(
