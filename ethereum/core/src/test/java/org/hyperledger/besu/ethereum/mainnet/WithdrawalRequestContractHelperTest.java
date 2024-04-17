@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
-import static org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper.EXCESS_EXITS_STORAGE_SLOT;
-import static org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper.EXIT_COUNT_STORAGE_SLOT;
-import static org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper.EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT;
-import static org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper.EXIT_MESSAGE_QUEUE_TAIL_STORAGE_SLOT;
-import static org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper.VALIDATOR_EXIT_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.WITHDRAWAL_REQUEST_QUEUE_TAIL_STORAGE_SLOT;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
@@ -40,7 +40,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-class ValidatorExitContractHelperTest {
+class WithdrawalRequestContractHelperTest {
 
   private MutableWorldState worldState;
   private MutableAccount contract;
@@ -56,7 +56,7 @@ class ValidatorExitContractHelperTest {
     loadContractStorage(worldState, validatorExits);
 
     final List<ValidatorExit> poppedExits =
-        ValidatorExitContractHelper.popExitsFromQueue(worldState);
+        WithdrawalRequestContractHelper.popExitsFromQueue(worldState);
 
     assertThat(poppedExits).isEqualTo(validatorExits);
   }
@@ -65,10 +65,10 @@ class ValidatorExitContractHelperTest {
   public void popExitsFromQueue_whenContractCodeIsEmpty_ReturnsEmptyListOfExits() {
     // Create account with empty code
     final WorldUpdater updater = worldState.updater();
-    updater.createAccount(VALIDATOR_EXIT_ADDRESS);
+    updater.createAccount(WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS);
     updater.commit();
 
-    assertThat(ValidatorExitContractHelper.popExitsFromQueue(worldState)).isEmpty();
+    assertThat(WithdrawalRequestContractHelper.popExitsFromQueue(worldState)).isEmpty();
   }
 
   @Test
@@ -78,21 +78,21 @@ class ValidatorExitContractHelperTest {
         IntStream.range(0, 30).mapToObj(__ -> createExit()).collect(Collectors.toList());
     loadContractStorage(worldState, validatorExits);
     // After loading the contract, the exit count since last block should match the size of the list
-    assertContractStorageValue(EXIT_COUNT_STORAGE_SLOT, validatorExits.size());
+    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, validatorExits.size());
 
     final List<ValidatorExit> poppedExits =
-        ValidatorExitContractHelper.popExitsFromQueue(worldState);
+        WithdrawalRequestContractHelper.popExitsFromQueue(worldState);
     assertThat(poppedExits).hasSize(16);
 
     // Check that queue pointers were updated successfully (head advanced to index 16)
-    assertContractStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT, 16);
-    assertContractStorageValue(EXIT_MESSAGE_QUEUE_TAIL_STORAGE_SLOT, 30);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT, 16);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_TAIL_STORAGE_SLOT, 30);
 
     // We had 30 exits in the queue, and target per block is 2, so we have 28 excess
-    assertContractStorageValue(EXCESS_EXITS_STORAGE_SLOT, 28);
+    assertContractStorageValue(EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT, 28);
 
     // We always reset the exit count after processing the queue
-    assertContractStorageValue(EXIT_COUNT_STORAGE_SLOT, 0);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, 0);
   }
 
   @Test
@@ -100,22 +100,22 @@ class ValidatorExitContractHelperTest {
     final List<ValidatorExit> validatorExits = List.of(createExit(), createExit(), createExit());
     loadContractStorage(worldState, validatorExits);
     // After loading the contract, the exit count since last block should match the size of the list
-    assertContractStorageValue(EXIT_COUNT_STORAGE_SLOT, validatorExits.size());
+    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, validatorExits.size());
 
     final List<ValidatorExit> poppedExits =
-        ValidatorExitContractHelper.popExitsFromQueue(worldState);
+        WithdrawalRequestContractHelper.popExitsFromQueue(worldState);
     assertThat(poppedExits).hasSize(3);
 
     // Check that queue pointers were updated successfully (head and tail zero because queue is
     // empty)
-    assertContractStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT, 0);
-    assertContractStorageValue(EXIT_MESSAGE_QUEUE_TAIL_STORAGE_SLOT, 0);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT, 0);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_TAIL_STORAGE_SLOT, 0);
 
     // We had 3 exits in the queue, target per block is 2, so we have 1 excess
-    assertContractStorageValue(EXCESS_EXITS_STORAGE_SLOT, 1);
+    assertContractStorageValue(EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT, 1);
 
     // We always reset the exit count after processing the queue
-    assertContractStorageValue(EXIT_COUNT_STORAGE_SLOT, 0);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, 0);
   }
 
   @Test
@@ -123,21 +123,21 @@ class ValidatorExitContractHelperTest {
     // Loading contract with 0 exits
     loadContractStorage(worldState, List.of());
     // After loading storage, we have the exit count as zero because no exits were aded
-    assertContractStorageValue(EXIT_COUNT_STORAGE_SLOT, 0);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, 0);
 
     final List<ValidatorExit> poppedExits =
-        ValidatorExitContractHelper.popExitsFromQueue(worldState);
+        WithdrawalRequestContractHelper.popExitsFromQueue(worldState);
     assertThat(poppedExits).hasSize(0);
 
     // Check that queue pointers are correct (head and tail are zero)
-    assertContractStorageValue(EXIT_MESSAGE_QUEUE_HEAD_STORAGE_SLOT, 0);
-    assertContractStorageValue(EXIT_MESSAGE_QUEUE_TAIL_STORAGE_SLOT, 0);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT, 0);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_TAIL_STORAGE_SLOT, 0);
 
     // We had 0 exits in the queue, and target per block is 2, so we have 0 excess
-    assertContractStorageValue(EXCESS_EXITS_STORAGE_SLOT, 0);
+    assertContractStorageValue(EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT, 0);
 
     // We always reset the exit count after processing the queue
-    assertContractStorageValue(EXIT_COUNT_STORAGE_SLOT, 0);
+    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, 0);
   }
 
   private void assertContractStorageValue(final UInt256 slot, final int expectedValue) {
@@ -145,14 +145,14 @@ class ValidatorExitContractHelperTest {
   }
 
   private void assertContractStorageValue(final UInt256 slot, final UInt256 expectedValue) {
-    assertThat(worldState.get(VALIDATOR_EXIT_ADDRESS).getStorageValue(slot))
+    assertThat(worldState.get(WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS).getStorageValue(slot))
         .isEqualTo(expectedValue);
   }
 
   private void loadContractStorage(
       final MutableWorldState worldState, final List<ValidatorExit> exits) {
     final WorldUpdater updater = worldState.updater();
-    contract = updater.getOrCreate(VALIDATOR_EXIT_ADDRESS);
+    contract = updater.getOrCreate(WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS);
 
     contract.setCode(
         Bytes.fromHexString(

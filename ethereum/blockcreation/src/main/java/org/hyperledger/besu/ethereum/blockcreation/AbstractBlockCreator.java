@@ -50,7 +50,7 @@ import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper;
 import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -260,7 +260,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       Optional<List<ValidatorExit>> maybeExits = Optional.empty();
       if (exitsValidator.allowValidatorExits()) {
         maybeExits =
-            Optional.of(ValidatorExitContractHelper.popExitsFromQueue(disposableWorldState));
+            Optional.of(WithdrawalRequestContractHelper.popExitsFromQueue(disposableWorldState));
       }
 
       throwIfStopped();

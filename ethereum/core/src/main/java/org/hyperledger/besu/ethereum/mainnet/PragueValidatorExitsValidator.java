@@ -56,7 +56,7 @@ public class PragueValidatorExitsValidator implements ValidatorExitsValidator {
 
     final List<ValidatorExit> exitsInBlock = block.getBody().getExits().get();
     // TODO Do we need to allow for customization? (e.g. if the value changes in the next fork)
-    if (exitsInBlock.size() > ValidatorExitContractHelper.MAX_EXITS_PER_BLOCK) {
+    if (exitsInBlock.size() > WithdrawalRequestContractHelper.MAX_WITHDRAWAL_REQUESTS_PER_BLOCK) {
       LOG.warn("Block {} has more than the allowed maximum number of exits", blockHash);
       return false;
     }

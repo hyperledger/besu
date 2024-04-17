@@ -15,7 +15,7 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper.MAX_EXITS_PER_BLOCK;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.MAX_WITHDRAWAL_REQUESTS_PER_BLOCK;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
@@ -105,7 +105,7 @@ public class ValidatorExitsValidatorTestFixtures {
 
   static ValidateExitTestParameter blockWithMoreThanMaximumExits() {
     final List<ValidatorExit> validatorExits =
-        IntStream.range(0, MAX_EXITS_PER_BLOCK + 1).mapToObj(__ -> createExit()).toList();
+        IntStream.range(0, MAX_WITHDRAWAL_REQUESTS_PER_BLOCK + 1).mapToObj(__ -> createExit()).toList();
     final Optional<List<ValidatorExit>> maybeExits = Optional.of(validatorExits);
 
     final BlockDataGenerator.BlockOptions blockOptions =
