@@ -48,7 +48,7 @@ public class QbftController extends BaseBftController {
    * @param gossiper the gossiper
    * @param duplicateMessageTracker the duplicate message tracker
    * @param futureMessageBuffer the future message buffer
-   * @param sychronizerUpdater the sychronizer updater
+   * @param sychronizerUpdater the synchronizer updater
    * @param bftExtraDataCodec the bft extra data codec
    */
   public QbftController(

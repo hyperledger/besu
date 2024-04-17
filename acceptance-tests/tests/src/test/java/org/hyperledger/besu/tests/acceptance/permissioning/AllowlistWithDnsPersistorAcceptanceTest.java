@@ -31,8 +31,8 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase {
 
@@ -48,7 +48,7 @@ public class AllowlistWithDnsPersistorAcceptanceTest extends AcceptanceTestBase 
   private Account senderA;
   private Path tempFile;
 
-  @Before
+  @BeforeEach
   public void setUp() throws Exception {
     ENODE_LOCALHOST_DNS = ENODE_PREFIX + InetAddress.getLocalHost().getHostName() + PORT_SUFFIX;
     ENODE_LOCALHOST_IP = ENODE_PREFIX + "127.0.0.1" + PORT_SUFFIX;
