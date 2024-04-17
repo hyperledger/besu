@@ -69,7 +69,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   @Test
   public void toSize() {
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), 10, 0);
+        prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), Wei.ZERO, 10, 0);
     Transaction txTo =
         preparedTx.to(Optional.of(Address.extract(Bytes32.random()))).createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
@@ -115,7 +115,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   public void payloadSize() {
 
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), 10, 0);
+        prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), Wei.ZERO, 10, 0);
     Transaction txPayload = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     txPayload.writeTo(rlpOut);
@@ -207,7 +207,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
       final long containerSize,
       final long itemSize) {
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), 10, 1);
+        prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1);
     Transaction txBlob = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     TransactionEncoder.encodeRLP(txBlob, rlpOut, EncodingContext.POOLED_TRANSACTION);
@@ -239,7 +239,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   @Test
   public void blobsWithCommitmentsSize() {
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), 10, 1);
+        prepareTransaction(TransactionType.BLOB, 10, Wei.of(500), Wei.of(50), 10, 1);
     Transaction txBlob = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     TransactionEncoder.encodeRLP(txBlob, rlpOut, EncodingContext.POOLED_TRANSACTION);
@@ -268,7 +268,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
   public void pendingTransactionSize() {
 
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), 10, 0);
+        prepareTransaction(TransactionType.ACCESS_LIST, 10, Wei.of(500), Wei.ZERO, 10, 0);
     Transaction txPayload = preparedTx.createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     txPayload.writeTo(rlpOut);
@@ -300,7 +300,7 @@ public class PendingTransactionEstimatedMemorySizeTest extends BaseTransactionPo
     final List<AccessListEntry> ales = List.of(ale1);
 
     TransactionTestFixture preparedTx =
-        prepareTransaction(TransactionType.ACCESS_LIST, 0, Wei.of(500), 0, 0);
+        prepareTransaction(TransactionType.ACCESS_LIST, 0, Wei.of(500), Wei.ZERO, 0, 0);
     Transaction txAccessList = preparedTx.accessList(ales).createTransaction(KEYS1);
     BytesValueRLPOutput rlpOut = new BytesValueRLPOutput();
     txAccessList.writeTo(rlpOut);
