@@ -138,7 +138,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
-              blockchain,
               worldStateUpdater,
               blockHeader,
               transaction,
