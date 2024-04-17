@@ -110,7 +110,7 @@ public class BlockTimer {
     startTimer(round, expiryTime);
   }
 
-  public synchronized void startTimer(final ConsensusRoundIdentifier round, final long expiryTime) {
+  private synchronized void startTimer(final ConsensusRoundIdentifier round, final long expiryTime) {
     cancelTimer();
     final long now = clock.millis();
 
