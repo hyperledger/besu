@@ -746,7 +746,6 @@ public class TransactionSimulatorTest {
     when(transactionProcessor.processTransaction(
             any(),
             any(),
-            any(),
             eq(transaction),
             any(),
             any(),
@@ -760,7 +759,6 @@ public class TransactionSimulatorTest {
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
         .processTransaction(
-            any(),
             any(),
             any(),
             eq(expectedTransaction),

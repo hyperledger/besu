@@ -141,7 +141,7 @@ class EVMExecutorTest {
         EVMExecutor.evm(EvmSpecVersion.SHANGHAI)
             .worldUpdater(createSimpleWorld().updater())
             .execute(
-                CodeFactory.createCode(Bytes.fromHexString("0x6001600255"), 1, false),
+                CodeFactory.createCode(Bytes.fromHexString("0x6001600255"), 1),
                 Bytes.EMPTY,
                 Wei.ZERO,
                 Address.ZERO);
@@ -180,7 +180,7 @@ class EVMExecutorTest {
             .blobGasPrice(Wei.ONE)
             .callData(Bytes.fromHexString("0x12345678"))
             .ethValue(Wei.fromEth(1))
-            .code(CodeFactory.createCode(Bytes.fromHexString("0x6001600255"), 0, false))
+            .code(CodeFactory.createCode(Bytes.fromHexString("0x6001600255"), 0))
             .blockValues(new SimpleBlockValues())
             .difficulty(Bytes.ofUnsignedLong(1L))
             .mixHash(Bytes32.ZERO)

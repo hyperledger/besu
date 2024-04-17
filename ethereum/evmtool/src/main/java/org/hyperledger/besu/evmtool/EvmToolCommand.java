@@ -144,6 +144,11 @@ public class EvmToolCommand implements Runnable {
   private final Address receiver = Address.ZERO;
 
   @Option(
+      names = {"--create"},
+      description = "Run call should be a create instead of a call operation.")
+  private final Boolean createTransaction = false;
+
+  @Option(
       names = {"--contract"},
       paramLabel = "<address>",
       description = "The address holding the contract code.")
@@ -343,7 +348,7 @@ public class EvmToolCommand implements Runnable {
               .nonce(0)
               .gasPrice(Wei.ZERO)
               .gasLimit(Long.MAX_VALUE)
-              .to(receiver)
+              .to(createTransaction ? null : receiver)
               .value(Wei.ZERO)
               .payload(callData)
               .sender(sender)
@@ -364,10 +369,10 @@ public class EvmToolCommand implements Runnable {
       }
 
       final EVM evm = protocolSpec.getEvm();
-      if (codeBytes.isEmpty()) {
+      if (codeBytes.isEmpty() && !createTransaction) {
         codeBytes = component.getWorldState().get(receiver).getCode();
       }
-      Code code = evm.getCode(Hash.hash(codeBytes), codeBytes);
+      Code code = evm.getCodeForCreation(codeBytes);
       if (!code.isValid()) {
         out.println(((CodeInvalid) code).getInvalidReason());
         return;
@@ -384,7 +389,9 @@ public class EvmToolCommand implements Runnable {
 
         WorldUpdater updater = component.getWorldUpdater();
         updater.getOrCreate(sender);
-        updater.getOrCreate(receiver);
+        if (!createTransaction) {
+          updater.getOrCreate(receiver);
+        }
         var contractAccount = updater.getOrCreate(contract);
         contractAccount.setCode(codeBytes);
 
@@ -415,18 +422,23 @@ public class EvmToolCommand implements Runnable {
                 .baseFee(component.getBlockchain().getChainHeadHeader().getBaseFee().orElse(null))
                 .buildBlockHeader();
 
+        Address contractAddress =
+            createTransaction ? Address.contractAddress(receiver, 0) : receiver;
         MessageFrame initialMessageFrame =
             MessageFrame.builder()
-                .type(MessageFrame.Type.MESSAGE_CALL)
+                .type(
+                    createTransaction
+                        ? MessageFrame.Type.CONTRACT_CREATION
+                        : MessageFrame.Type.MESSAGE_CALL)
                 .worldUpdater(updater.updater())
                 .initialGas(txGas)
-                .contract(Address.ZERO)
-                .address(receiver)
+                .contract(contractAddress)
+                .address(contractAddress)
                 .originator(sender)
                 .sender(sender)
                 .gasPrice(gasPriceGWei)
                 .blobGasPrice(blobGasPrice)
-                .inputData(callData)
+                .inputData(createTransaction ? codeBytes.slice(code.getSize()) : callData)
                 .value(ethValue)
                 .apparentValue(ethValue)
                 .code(code)

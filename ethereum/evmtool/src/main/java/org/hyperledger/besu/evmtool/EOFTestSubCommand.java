@@ -209,7 +209,7 @@ public class EOFTestSubCommand implements Runnable {
       return failed("layout - " + layout.invalidReason());
     }
 
-    var code = CodeFactory.createCode(codeBytes, 1, true);
+    var code = CodeFactory.createCode(codeBytes, 1);
     if (!code.isValid()) {
       return failed("validate " + ((CodeInvalid) code).getInvalidReason());
     }

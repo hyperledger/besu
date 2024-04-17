@@ -79,7 +79,7 @@ public class SelfDestructOperationTest {
             .sender(beneficiaryAddress)
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SELFDESTRUCT_CODE, 0, true))
+            .code(CodeFactory.createCode(SELFDESTRUCT_CODE, 0))
             .completer(__ -> {})
             .address(originatorAddress)
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))

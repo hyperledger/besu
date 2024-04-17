@@ -121,6 +121,18 @@ public record EOFLayout(
    * @return the eof layout
    */
   public static EOFLayout parseEOF(final Bytes container) {
+    return parseEOF(container, true);
+  }
+
+  /**
+   * Parse EOF.
+   *
+   * @param container the container
+   * @param strictSize Require the container to fill all bytes, a validation error will result if
+   *     strict and excess data is in the container
+   * @return the eof layout
+   */
+  public static EOFLayout parseEOF(final Bytes container, final boolean strictSize) {
     final ByteArrayInputStream inputStream = new ByteArrayInputStream(container.toArrayUnsafe());
 
     if (inputStream.available() < 3) {
@@ -311,11 +323,18 @@ public record EOFLayout(
     long loadedDataCount = inputStream.skip(dataSize);
     Bytes data = container.slice(pos, (int) loadedDataCount);
 
+    Bytes completeContainer;
     if (inputStream.read() != -1) {
-      return invalidLayout(container, version, "Dangling data after end of all sections");
+      if (strictSize) {
+        return invalidLayout(container, version, "Dangling data after end of all sections");
+      } else {
+        completeContainer = container.slice(0, pos + dataSize);
+      }
+    } else {
+      completeContainer = container;
     }
 
-    return new EOFLayout(container, version, codeSections, subContainers, dataSize, data);
+    return new EOFLayout(completeContainer, version, codeSections, subContainers, dataSize, data);
   }
 
   /**

@@ -102,7 +102,7 @@ public class TestMessageFrameBuilder {
     return this;
   }
 
-  TestMessageFrameBuilder inputData(final Bytes inputData) {
+  public TestMessageFrameBuilder inputData(final Bytes inputData) {
     this.inputData = inputData;
     return this;
   }

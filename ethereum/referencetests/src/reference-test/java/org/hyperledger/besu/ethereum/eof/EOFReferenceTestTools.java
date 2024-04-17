@@ -96,7 +96,7 @@ public class EOFReferenceTestTools {
       EOFLayout layout = EOFLayout.parseEOF(code);
 
       if (layout.isValid()) {
-        Code parsedCode = CodeFactory.createCode(code, evmVersion.getMaxEofVersion(), true);
+        Code parsedCode = CodeFactory.createCode(code, evmVersion.getMaxEofVersion());
         assertThat(parsedCode.isValid())
             .withFailMessage(
                 () ->

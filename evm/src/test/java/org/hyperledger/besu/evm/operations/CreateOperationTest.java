@@ -228,7 +228,7 @@ class CreateOperationTest {
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder()
-            .code(CodeFactory.createCode(SIMPLE_EOF, 1, true))
+            .code(CodeFactory.createCode(SIMPLE_EOF, 1))
             .pushStackItem(memoryLength)
             .pushStackItem(memoryOffset)
             .pushStackItem(Bytes.EMPTY)
@@ -260,7 +260,7 @@ class CreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
+            .code(CodeFactory.createCode(SIMPLE_CREATE, 0))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))

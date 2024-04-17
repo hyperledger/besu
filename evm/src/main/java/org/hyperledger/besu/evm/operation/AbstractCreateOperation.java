@@ -222,7 +222,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     Code outputCode =
         (childFrame.getCreatedCode() != null)
             ? childFrame.getCreatedCode()
-            : CodeFactory.createCode(childFrame.getOutputData(), evm.getMaxEOFVersion(), true);
+            : CodeFactory.createCode(childFrame.getOutputData(), evm.getMaxEOFVersion());
     frame.popStackItems(getStackItemsConsumed());
 
     if (outputCode.isValid()) {

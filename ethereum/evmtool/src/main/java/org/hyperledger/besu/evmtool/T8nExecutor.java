@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
@@ -253,7 +252,6 @@ public class T8nExecutor {
     final BlockHeader blockHeader = referenceTestEnv.updateFromParentValues(protocolSpec);
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
     final WorldUpdater worldStateUpdater = worldState.updater();
-    final ReferenceTestBlockchain blockchain = new ReferenceTestBlockchain(blockHeader.getNumber());
 
     final Wei blobGasPrice =
         protocolSpec
@@ -297,7 +295,6 @@ public class T8nExecutor {
         tracer.traceStartTransaction(worldStateUpdater, transaction);
         result =
             processor.processTransaction(
-                blockchain,
                 worldStateUpdater,
                 blockHeader,
                 transaction,

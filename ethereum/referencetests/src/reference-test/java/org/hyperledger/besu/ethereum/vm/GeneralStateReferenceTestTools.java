@@ -153,8 +153,7 @@ public class GeneralStateReferenceTestTools {
             .blobGasPricePerGas(blockHeader.getExcessBlobGas().orElse(BlobGas.ZERO));
     final TransactionProcessingResult result =
         processor.processTransaction(
-            blockchain,
-            worldStateUpdater,
+                worldStateUpdater,
             blockHeader,
             transaction,
             blockHeader.getCoinbase(),

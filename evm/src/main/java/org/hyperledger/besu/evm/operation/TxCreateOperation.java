@@ -84,7 +84,7 @@ public class TxCreateOperation extends AbstractCreateOperation {
     if (bytes == null) {
       return null;
     }
-    Code code = CodeFactory.createCode(bytes, eofVersion, true);
+    Code code = CodeFactory.createCode(bytes, eofVersion);
     if (code.isValid() && code.getEofVersion() > 0) {
       return code;
     } else {

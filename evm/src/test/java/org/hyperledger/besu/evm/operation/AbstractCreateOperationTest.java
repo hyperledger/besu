@@ -79,7 +79,7 @@ class AbstractCreateOperationTest {
   public static final Bytes INVALID_EOF =
       Bytes.fromHexString(
           "0x"
-              + "73EF99010100040200010001030000000000000000" // PUSH20 contract
+              + "73EF00990100040200010001030000000000000000" // PUSH20 contract
               + "6000" // PUSH1 0x00
               + "52" // MSTORE
               + "6014" // PUSH1 20
@@ -167,7 +167,7 @@ class AbstractCreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
+            .code(CodeFactory.createCode(SIMPLE_CREATE, 0))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))

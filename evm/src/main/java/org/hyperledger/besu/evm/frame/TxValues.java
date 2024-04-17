@@ -90,6 +90,7 @@ public record TxValues(
    * @param transientStorage Transient storage map of maps
    * @param creates Journaled list of addresses created in this transaction
    * @param selfDestructs List of addresses self-destructed within the current transaction
+   * @param gasRefunds the amount of gas refund pending
    */
   public TxValues(
       final Function<Long, Hash> blockHashLookup,

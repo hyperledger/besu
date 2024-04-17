@@ -31,12 +31,12 @@ class CodeValidationSubCommandTest {
   static final String CODE_BAD_MAGIC = "0xefffff 010004 020001-0001 040000 00 00800000 e4";
   static final String CODE_INTERIOR_COMMENTS =
       """
-                  0xef0001 010008 020002-000c-0002 040000 00
+                  0xef0001 010008 020002-0009-0002 040000 00
                   # 7 inputs 1 output,
-                  00800007-07010007
-                  59-59-59-59-59-59-59-e30001-50-00
+                  00800004-04010004
+                  59-59-59-59-e30001-50-00
                   # No immediate data
-                  f1-e4""";
+                  f8-e4""";
   static final String CODE_MULTIPLE =
       CODE_STOP_ONLY + "\n" + CODE_BAD_MAGIC + "\n" + CODE_RETURN_ONLY + "\n";
 
@@ -139,7 +139,7 @@ class CodeValidationSubCommandTest {
     final CommandLine cmd = new CommandLine(codeValidateSubCommand);
     cmd.parseArgs(CODE_INTERIOR_COMMENTS);
     codeValidateSubCommand.run();
-    assertThat(baos.toString(UTF_8)).contains("OK 59595959595959e300015000,f1e4\n");
+    assertThat(baos.toString(UTF_8)).contains("OK 59595959e300015000,f8e4\n");
   }
 
   @Test

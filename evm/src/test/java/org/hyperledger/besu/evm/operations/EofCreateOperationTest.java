@@ -17,6 +17,8 @@ package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
+import static org.hyperledger.besu.evm.EOFTestConstants.EOF_CREATE_CONTRACT;
+import static org.hyperledger.besu.evm.EOFTestConstants.INNER_CONTRACT;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -54,59 +56,17 @@ class EofCreateOperationTest {
   private final MutableAccount account = mock(MutableAccount.class);
   private final MutableAccount newAccount = mock(MutableAccount.class);
 
-  private static final Bytes CALL_DATA =
+  static final Bytes CALL_DATA =
       Bytes.fromHexString(
           "cafebaba600dbaadc0de57aff60061e5cafebaba600dbaadc0de57aff60061e5"); // 32 bytes
-  public static final Bytes INNER_CONTRACT =
-      bytesFromPrettyPrint(
-          """
-         # EOF
-         ef0001 # Magic and Version ( 1 )
-         010004 # Types length ( 4 )
-         020001 # Total code sections ( 1 )
-           0009 # Code section 0 , 9 bytes
-         030001 # Total subcontainers ( 1 )
-           0014 # Sub container 0, 20 byte
-         040000 # Data section length(  0 )
-             00 # Terminator (end of header)
-                # Code section 0 types
-             00 # 0 inputs\s
-             80 # 0 outputs  (Non-returning function)
-           0003 # max stack:  3
-                # Code section 0
-             5f # [0] PUSH0
-             35 # [1] CALLDATALOAD
-             5f # [2] PUSH0
-             5f # [3] PUSH0
-             a1 # [4] LOG1
-             5f # [5] PUSH0
-             5f # [6] PUSH0
-           ee00 # [7] RETURNCONTRACT(0)
-                    # Subcontainer 0 starts here
-             ef0001 # Magic and Version ( 1 )
-             010004 # Types length ( 4 )
-             020001 # Total code sections ( 1 )
-               0001 # Code section 0 , 1 bytes
-             040000 # Data section length(  0 )
-                 00 # Terminator (end of header)
-                    # Code section 0 types
-                 00 # 0 inputs
-                 80 # 0 outputs  (Non-returning function)
-               0000 # max stack:  0
-                    # Code section 0
-                 00 # [0] STOP
-         """);
+
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
 
   //  private static final int SHANGHAI_CREATE_GAS = 41240;
 
-  private static Bytes bytesFromPrettyPrint(final String prettyPrint) {
-    return Bytes.fromHexString(prettyPrint.replaceAll("#.*?\n", "").replaceAll("\\s", ""));
-  }
-
   @Test
   void innerContractIsCorrect() {
-    Code code = CodeFactory.createCode(INNER_CONTRACT, 1, true);
+    Code code = CodeFactory.createCode(INNER_CONTRACT, 1);
     assertThat(code.isValid()).isTrue();
 
     final MessageFrame messageFrame = testMemoryFrame(code, CALL_DATA);
@@ -134,37 +94,9 @@ class EofCreateOperationTest {
 
   @Test
   void eofCreatePassesInCallData() {
-    Bytes outerContract =
-        bytesFromPrettyPrint(
-            String.format(
-                """
-                  ef0001 # Magic and Version ( 1 )
-                  010004 # Types length ( 4 )
-                  020001 # Total code sections ( 1 )
-                    000e # Code section 0 , 14 bytes
-                  030001 # Total subcontainers ( 1 )
-                  %04x # Subcontainer 0 size ?
-                  040000 # Data section length(  0 )
-                      00 # Terminator (end of header)
-                         # Code section 0 types
-                      00 # 0 inputs\s
-                      80 # 0 outputs  (Non-returning function)
-                    0004 # max stack:  4
-                         # Code section 0
-                  61c0de # [0] PUSH2(0xc0de)
-                      5f # [3] PUSH0
-                      52 # [4] MSTORE
-                    6002 # [5] PUSH1(2)
-                    601e # [7] PUSH0
-                      5f # [9] PUSH0
-                      5f # [10] PUSH0
-                      ec00 # [11] EOFCREATE(0)
-                      00 # [13] STOP
-                         # Data section (empty)
-                      %s # subcontainer
-                  """,
-                INNER_CONTRACT.size(), INNER_CONTRACT.toUnprefixedHexString()));
-    Code code = CodeFactory.createCode(outerContract, 1, true);
+    Bytes outerContract = EOF_CREATE_CONTRACT;
+
+    Code code = CodeFactory.createCode(outerContract, 1);
     if (!code.isValid()) {
       System.out.println(outerContract);
       fail(((CodeInvalid) code).getInvalidReason());
@@ -190,6 +122,7 @@ class EofCreateOperationTest {
         new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
     while (!createFrame.getMessageFrameStack().isEmpty()) {
       var frame = createFrame.getMessageFrameStack().peek();
+      assert frame != null;
       (switch (frame.getType()) {
             case CONTRACT_CREATION -> ccp;
             case MESSAGE_CALL -> mcp;

@@ -20,6 +20,7 @@ import org.hyperledger.besu.evm.Code;
 
 import javax.annotation.Nonnull;
 
+import com.google.errorprone.annotations.InlineMe;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Code factory. */
@@ -37,24 +38,57 @@ public final class CodeFactory {
    *
    * @param bytes the bytes
    * @param maxEofVersion the max eof version
-   * @param inCreateOperation the in create operation
+   * @return the code
+   */
+  public static Code createCode(final Bytes bytes, final int maxEofVersion) {
+    return createCode(bytes, maxEofVersion, false, false);
+  }
+
+  /**
+   * Create Code.
+   *
+   * @param bytes the bytes
+   * @param maxEofVersion the max eof version
+   * @param legacyCreation Allow some corner cases. `EF` and not `EF00` code
+   * @deprecated use the no boolean or two boolean variant
+   * @return the code
+   */
+  @Deprecated(since = "24.4.1")
+  @InlineMe(
+      replacement = "CodeFactory.createCode(bytes, maxEofVersion, legacyCreation, false)",
+      imports = "org.hyperledger.besu.evm.code.CodeFactory")
+  public static Code createCode(
+      final Bytes bytes, final int maxEofVersion, final boolean legacyCreation) {
+    return createCode(bytes, maxEofVersion, legacyCreation, false);
+  }
+
+  /**
+   * Create Code.
+   *
+   * @param bytes the bytes
+   * @param maxEofVersion the max eof version
+   * @param legacyCreation Allow some corner cases. `EF` and not `EF00` code
+   * @param createTransaction This is in a create transaction, allow dangling data
    * @return the code
    */
   public static Code createCode(
-      final Bytes bytes, final int maxEofVersion, final boolean inCreateOperation) {
+      final Bytes bytes,
+      final int maxEofVersion,
+      final boolean legacyCreation,
+      final boolean createTransaction) {
     if (maxEofVersion == 0) {
       return new CodeV0(bytes);
     } else if (maxEofVersion == 1) {
       int codeSize = bytes.size();
       if (codeSize > 0 && bytes.get(0) == EOF_LEAD_BYTE) {
-        if (codeSize == 1 && !inCreateOperation) {
+        if (codeSize == 1 && !legacyCreation) {
           return new CodeV0(bytes);
         }
         if (codeSize < 3) {
           return new CodeInvalid(bytes, "EOF Container too short");
         }
         if (bytes.get(1) != 0) {
-          if (inCreateOperation) {
+          if (legacyCreation) {
             // because some 0xef code made it to mainnet, this is only an error at contract create
             return new CodeInvalid(bytes, "Incorrect second byte");
           } else {
@@ -66,7 +100,7 @@ public final class CodeFactory {
           return new CodeInvalid(bytes, "Unsupported EOF Version: " + version);
         }
 
-        final EOFLayout layout = EOFLayout.parseEOF(bytes);
+        final EOFLayout layout = EOFLayout.parseEOF(bytes, !createTransaction);
         return createCode(layout);
       } else {
         return new CodeV0(bytes);

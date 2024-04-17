@@ -154,7 +154,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(codeBytes, 0, true))
+            .code(CodeFactory.createCode(codeBytes, 0))
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
@@ -176,7 +176,7 @@ public class Create2OperationTest {
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
     when(evm.getCode(any(), any()))
-        .thenAnswer(invocation -> CodeFactory.createCode(invocation.getArgument(1), 0, true));
+        .thenAnswer(invocation -> CodeFactory.createCode(invocation.getArgument(1), 0));
   }
 
   @ParameterizedTest
@@ -190,7 +190,7 @@ public class Create2OperationTest {
     setUp(sender, salt, code);
     final Address targetContractAddress =
         operation.targetContractAddress(
-            messageFrame, CodeFactory.createCode(Bytes.fromHexString(code), 0, true));
+            messageFrame, CodeFactory.createCode(Bytes.fromHexString(code), 0));
     assertThat(targetContractAddress).isEqualTo(Address.fromHexString(expectedAddress));
   }
 
@@ -266,7 +266,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
+            .code(CodeFactory.createCode(SIMPLE_CREATE, 0))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
@@ -296,7 +296,7 @@ public class Create2OperationTest {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
 
-    Code eofCode = CodeFactory.createCode(SIMPLE_EOF, 1, true);
+    Code eofCode = CodeFactory.createCode(SIMPLE_EOF, 1);
     assertThat(eofCode.isValid()).isTrue();
 
     final MessageFrame messageFrame =

@@ -118,7 +118,7 @@ public class CodeValidateSubCommand implements Runnable {
       return "err: layout - " + layout.invalidReason() + "\n";
     }
 
-    var code = CodeFactory.createCode(codeBytes, 1, true);
+    var code = CodeFactory.createCode(codeBytes, 1);
     if (!code.isValid()) {
       return "err: " + ((CodeInvalid) code).getInvalidReason() + "\n";
     }

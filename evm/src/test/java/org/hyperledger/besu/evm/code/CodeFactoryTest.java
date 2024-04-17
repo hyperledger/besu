@@ -26,12 +26,12 @@ class CodeFactoryTest {
 
   @Test
   void invalidCodeIncompleteMagic() {
-    invalidCode("0xEF");
+    invalidCode("0xEF", true);
   }
 
   @Test
   void invalidCodeInvalidMagic() {
-    invalidCode("0xEFFF0101000302000400600000AABBCCDD");
+    invalidCode("0xEFFF0101000302000400600000AABBCCDD", true);
   }
 
   @Test
@@ -180,7 +180,12 @@ class CodeFactoryTest {
   }
 
   private static void invalidCode(final String str) {
-    Code code = CodeFactory.createCode(Bytes.fromHexString(str), 1, true);
+    Code code = CodeFactory.createCode(Bytes.fromHexString(str), 1);
+    assertThat(code.isValid()).isFalse();
+  }
+
+  private static void invalidCode(final String str, final boolean legacy) {
+    Code code = CodeFactory.createCode(Bytes.fromHexString(str), 1, legacy, false);
     assertThat(code.isValid()).isFalse();
   }
 }
