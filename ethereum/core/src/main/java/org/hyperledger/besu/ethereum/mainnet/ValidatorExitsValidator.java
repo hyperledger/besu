@@ -16,17 +16,32 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.ValidatorExit;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 public interface ValidatorExitsValidator {
+
+  boolean allowValidatorExits();
 
   boolean validateValidatorExitParameter(Optional<List<ValidatorExit>> validatorExits);
 
+  boolean validateExitsInBlock(Block block, List<ValidatorExit> validatorExits);
+
   /** Used before Prague */
   class ProhibitedExits implements ValidatorExitsValidator {
+
+    private static final Logger LOG = LoggerFactory.getLogger(ProhibitedExits.class);
+
+    @Override
+    public boolean allowValidatorExits() {
+      return false;
+    }
 
     /**
      * Before Prague we do not expect to have execution layer triggered exits, so it is expected the
@@ -40,17 +55,22 @@ public interface ValidatorExitsValidator {
         final Optional<List<ValidatorExit>> validatorExits) {
       return validatorExits.isEmpty();
     }
-  }
-
-  /** Used after Prague */
-  class AllowedExits implements ValidatorExitsValidator {
 
     @Override
-    public boolean validateValidatorExitParameter(
-        final Optional<List<ValidatorExit>> validatorExits) {
-      // TODO implement any extra required validation (see
-      // https://github.com/hyperledger/besu/issues/6800)
-      return validatorExits.isPresent();
+    public boolean validateExitsInBlock(
+        final Block block, final List<ValidatorExit> validatorExits) {
+      final Optional<List<ValidatorExit>> maybeExits = block.getBody().getExits();
+      if (maybeExits.isPresent()) {
+        LOG.warn("Block {} contains exits but exits are prohibited", block.getHash());
+        return false;
+      }
+
+      if (block.getHeader().getExitsRoot().isPresent()) {
+        LOG.warn("Block {} header contains exits_root but exits are prohibited", block.getHash());
+        return false;
+      }
+
+      return true;
     }
   }
 }

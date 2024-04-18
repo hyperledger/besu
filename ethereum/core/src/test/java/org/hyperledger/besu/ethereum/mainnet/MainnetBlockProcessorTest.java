@@ -48,6 +48,8 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
   @BeforeEach
   public void setup() {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    when(protocolSpec.getExitsValidator())
+        .thenReturn(new ValidatorExitsValidator.ProhibitedExits());
   }
 
   @Test
