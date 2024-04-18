@@ -30,6 +30,7 @@ import java.util.List;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt64;
 
 /**
  * Helper for interacting with the Validator Withdrawal Request Contract
@@ -112,6 +113,26 @@ public class WithdrawalRequestContractHelper {
     return withdrawalRequests;
   }
 
+  /*
+  ;; Each stack element has the following layout:
+  ;;
+  ;; A: addr
+  ;;  0x00 | 00 00 00 00 00 00 00 00 00 00 00 00 aa aa aa aa
+  ;;  0x10 | aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa aa
+  ;;
+  ;; B: pk[0:32]
+  ;;  0x00 | bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb
+  ;;  0x10 | bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb bb
+  ;;
+  ;; C: pk[32:48] ++ am[0:8] -> pk2_am
+  ;;  0x00 | cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc cc
+  ;;  0x10 | dd dd dd dd dd dd dd dd 00 00 00 00 00 00 00 00
+  ;;
+  ;; To get these three stack elements into the correct contiguous format, it is
+  ;; necessary to combine them in the follow form:
+  ;;
+  ;;  (A[12:32] ++ B[0:12], B[12:32] ++ C[0:12], C[12:24])
+   */
   private static List<WithdrawalRequest> peekExpectedWithdrawalRequests(
       final Account account, final UInt256 queueHeadIndex, final UInt256 queueTailIndex) {
     final long numRequestsInQueue = queueTailIndex.subtract(queueHeadIndex).toLong();
@@ -134,9 +155,11 @@ public class WithdrawalRequestContractHelper {
                       .toBytes()
                       .slice(0, 32), // no need to slice
                   account.getStorageValue(queueStorageSlot.plus(2)).toBytes().slice(0, 16)));
+      final UInt64 amount =
+          UInt64.fromBytes(account.getStorageValue(queueStorageSlot.plus(2)).slice(16, 8));
 
-      // TODO-lucas fix
-      withdrawalRequests.add(new WithdrawalRequest(sourceAddress, validatorPubKey, GWei.ZERO));
+      withdrawalRequests.add(
+          new WithdrawalRequest(sourceAddress, validatorPubKey, GWei.of(amount)));
     }
 
     return withdrawalRequests;

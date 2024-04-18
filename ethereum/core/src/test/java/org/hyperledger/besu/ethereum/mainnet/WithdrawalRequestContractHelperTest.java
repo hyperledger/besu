@@ -154,42 +154,43 @@ class WithdrawalRequestContractHelperTest {
   }
 
   private void loadContractStorage(
-      final MutableWorldState worldState, final List<WithdrawalRequest> exits) {
+      final MutableWorldState worldState, final List<WithdrawalRequest> withdrawalRequests) {
     final WorldUpdater updater = worldState.updater();
     contract = updater.getOrCreate(WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS);
 
     contract.setCode(
         Bytes.fromHexString(
             "0x61013680600a5f395ff33373fffffffffffffffffffffffffffffffffffffffe146090573615156028575f545f5260205ff35b36603014156101325760115f54600182026001905f5b5f82111560595781019083028483029004916001019190603e565b90939004341061013257600154600101600155600354806003026004013381556001015f3581556001016020359055600101600355005b6003546002548082038060101160a4575060105b5f5b81811460ed5780604402838201600302600401805490600101805490600101549160601b8160a01c17835260601b8160a01c17826020015260601b906040015260010160a6565b910180921460fe5790600255610109565b90505f6002555f6003555b5f546001546002828201116101205750505f610126565b01600290035b5f555f6001556044025ff35b5f5ffd"));
-    // excess exits
+    // excess requests
     contract.setStorageValue(UInt256.valueOf(0), UInt256.valueOf(0));
-    // exits count
-    contract.setStorageValue(UInt256.valueOf(1), UInt256.valueOf(exits.size()));
-    // exits queue head pointer
+    // requests count
+    contract.setStorageValue(UInt256.valueOf(1), UInt256.valueOf(withdrawalRequests.size()));
+    // requests queue head pointer
     contract.setStorageValue(UInt256.valueOf(2), UInt256.valueOf(0));
-    // exits queue tail pointer
-    contract.setStorageValue(UInt256.valueOf(3), UInt256.valueOf(exits.size()));
+    // requests queue tail pointer
+    contract.setStorageValue(UInt256.valueOf(3), UInt256.valueOf(withdrawalRequests.size()));
 
     int offset = 4;
-    for (int i = 0; i < exits.size(); i++) {
-      final WithdrawalRequest exit = exits.get(i);
+    for (int i = 0; i < withdrawalRequests.size(); i++) {
+      final WithdrawalRequest request = withdrawalRequests.get(i);
       // source_account
       contract.setStorageValue(
           // set account to slot, with 12 bytes padding on the left
           UInt256.valueOf(offset++),
           UInt256.fromBytes(
               Bytes.concatenate(
-                  Bytes.fromHexString("0x000000000000000000000000"), exit.getSourceAddress())));
+                  Bytes.fromHexString("0x000000000000000000000000"), request.getSourceAddress())));
       // validator_pubkey
       contract.setStorageValue(
-          UInt256.valueOf(offset++), UInt256.fromBytes(exit.getValidatorPubKey().slice(0, 32)));
+          UInt256.valueOf(offset++), UInt256.fromBytes(request.getValidatorPubKey().slice(0, 32)));
       contract.setStorageValue(
           // set public key to slot, with 16 bytes padding on the right
           UInt256.valueOf(offset++),
           UInt256.fromBytes(
               Bytes.concatenate(
-                  exit.getValidatorPubKey().slice(32, 16),
-                  Bytes.fromHexString("0x00000000000000000000000000000000"))));
+                  request.getValidatorPubKey().slice(32, 16),
+                  request.getAmount().toBytes(), // 8 bytes for amount
+                  Bytes.fromHexString("0x0000000000000000"))));
     }
     updater.commit();
   }
