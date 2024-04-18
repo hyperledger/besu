@@ -106,7 +106,6 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
                 .getTerminalTotalDifficulty()
                 .map(Difficulty::of)
                 .orElseThrow());
-    ethPeers.setBestChainComparator(mergeBestPeerComparator);
     mergeContext.observeNewIsPostMergeState(mergeBestPeerComparator);
 
     Optional<MergePeerFilter> filterToUse = Optional.of(new MergePeerFilter());
