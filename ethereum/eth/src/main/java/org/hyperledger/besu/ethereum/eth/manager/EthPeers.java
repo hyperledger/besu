@@ -363,9 +363,6 @@ public class EthPeers {
 
   public boolean shouldConnect(final Peer peer, final boolean inbound) {
     final Bytes id = peer.getId();
-    if (canExceedPeerLimits(id)) {
-      return true;
-    }
     final EthPeer ethPeer = completeConnections.get(id);
     if (ethPeer != null && !ethPeer.isDisconnected()) {
       LOG.atTrace()
