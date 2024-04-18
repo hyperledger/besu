@@ -18,14 +18,15 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT;
+import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.WITHDRAWAL_REQUEST_QUEUE_TAIL_STORAGE_SLOT;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper.WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -51,37 +52,39 @@ class WithdrawalRequestContractHelperTest {
   }
 
   @Test
-  public void popExitsFromQueue_ReadExitsCorrectly() {
-    final List<ValidatorExit> validatorExits = List.of(createExit(), createExit(), createExit());
+  public void popExitsFromQueue_ReadWithdrawalRequestsCorrectly() {
+    final List<WithdrawalRequest> validatorExits =
+        List.of(createExit(), createExit(), createExit());
     loadContractStorage(worldState, validatorExits);
 
-    final List<ValidatorExit> poppedExits =
-        WithdrawalRequestContractHelper.popExitsFromQueue(worldState);
+    final List<WithdrawalRequest> poppedExits =
+        WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
 
     assertThat(poppedExits).isEqualTo(validatorExits);
   }
 
   @Test
-  public void popExitsFromQueue_whenContractCodeIsEmpty_ReturnsEmptyListOfExits() {
+  public void popExitsFromQueue_whenContractCodeIsEmpty_ReturnsEmptyListOfWithdrawalRequests() {
     // Create account with empty code
     final WorldUpdater updater = worldState.updater();
     updater.createAccount(WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS);
     updater.commit();
 
-    assertThat(WithdrawalRequestContractHelper.popExitsFromQueue(worldState)).isEmpty();
+    assertThat(WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState))
+        .isEmpty();
   }
 
   @Test
-  public void popExitsFromQueue_WhenMoreExits_UpdatesQueuePointers() {
+  public void popExitsFromQueue_WhenMoreWithdrawalRequests_UpdatesQueuePointers() {
     // Loading contract with more than 16 exits
-    final List<ValidatorExit> validatorExits =
+    final List<WithdrawalRequest> validatorExits =
         IntStream.range(0, 30).mapToObj(__ -> createExit()).collect(Collectors.toList());
     loadContractStorage(worldState, validatorExits);
     // After loading the contract, the exit count since last block should match the size of the list
     assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, validatorExits.size());
 
-    final List<ValidatorExit> poppedExits =
-        WithdrawalRequestContractHelper.popExitsFromQueue(worldState);
+    final List<WithdrawalRequest> poppedExits =
+        WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
     assertThat(poppedExits).hasSize(16);
 
     // Check that queue pointers were updated successfully (head advanced to index 16)
@@ -96,14 +99,15 @@ class WithdrawalRequestContractHelperTest {
   }
 
   @Test
-  public void popExitsFromQueue_WhenNoMoreExits_ZeroQueuePointers() {
-    final List<ValidatorExit> validatorExits = List.of(createExit(), createExit(), createExit());
+  public void popExitsFromQueue_WhenNoMoreWithdrawalRequests_ZeroQueuePointers() {
+    final List<WithdrawalRequest> validatorExits =
+        List.of(createExit(), createExit(), createExit());
     loadContractStorage(worldState, validatorExits);
     // After loading the contract, the exit count since last block should match the size of the list
     assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, validatorExits.size());
 
-    final List<ValidatorExit> poppedExits =
-        WithdrawalRequestContractHelper.popExitsFromQueue(worldState);
+    final List<WithdrawalRequest> poppedExits =
+        WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
     assertThat(poppedExits).hasSize(3);
 
     // Check that queue pointers were updated successfully (head and tail zero because queue is
@@ -119,14 +123,14 @@ class WithdrawalRequestContractHelperTest {
   }
 
   @Test
-  public void popExitsFromQueue_WhenNoExits_DoesNothing() {
+  public void popExitsFromQueue_WhenNoWithdrawalRequests_DoesNothing() {
     // Loading contract with 0 exits
     loadContractStorage(worldState, List.of());
     // After loading storage, we have the exit count as zero because no exits were aded
     assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, 0);
 
-    final List<ValidatorExit> poppedExits =
-        WithdrawalRequestContractHelper.popExitsFromQueue(worldState);
+    final List<WithdrawalRequest> poppedExits =
+        WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
     assertThat(poppedExits).hasSize(0);
 
     // Check that queue pointers are correct (head and tail are zero)
@@ -150,7 +154,7 @@ class WithdrawalRequestContractHelperTest {
   }
 
   private void loadContractStorage(
-      final MutableWorldState worldState, final List<ValidatorExit> exits) {
+      final MutableWorldState worldState, final List<WithdrawalRequest> exits) {
     final WorldUpdater updater = worldState.updater();
     contract = updater.getOrCreate(WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS);
 
@@ -168,7 +172,7 @@ class WithdrawalRequestContractHelperTest {
 
     int offset = 4;
     for (int i = 0; i < exits.size(); i++) {
-      final ValidatorExit exit = exits.get(i);
+      final WithdrawalRequest exit = exits.get(i);
       // source_account
       contract.setStorageValue(
           // set account to slot, with 12 bytes padding on the left
@@ -190,8 +194,8 @@ class WithdrawalRequestContractHelperTest {
     updater.commit();
   }
 
-  private ValidatorExit createExit() {
-    return new ValidatorExit(
-        Address.extract(Bytes32.random()), BLSPublicKey.wrap(Bytes48.random()));
+  private WithdrawalRequest createExit() {
+    return new WithdrawalRequest(
+        Address.extract(Bytes32.random()), BLSPublicKey.wrap(Bytes48.random()), GWei.ONE);
   }
 }
