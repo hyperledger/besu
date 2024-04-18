@@ -16,7 +16,9 @@
 
 package org.hyperledger.besu.evm.code;
 
-record OpcodeInfo(
+import com.google.common.base.Preconditions;
+
+public record OpcodeInfo(
     String name,
     int opcode,
     boolean valid,
@@ -49,6 +51,11 @@ record OpcodeInfo(
       final int outputs,
       final int pcAdvance) {
     return new OpcodeInfo(name, opcode, true, false, inputs, outputs, outputs - inputs, pcAdvance);
+  }
+
+  public static OpcodeInfo getOpcode(final int i) {
+    Preconditions.checkArgument(i >= 0 && i <= 255);
+    return V1_OPCODES[i];
   }
 
   static final OpcodeInfo[] V1_OPCODES = {

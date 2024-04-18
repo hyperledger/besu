@@ -18,6 +18,7 @@ package org.hyperledger.besu.evm.tracing;
 
 import static com.google.common.base.Strings.padStart;
 
+import org.hyperledger.besu.evm.code.OpcodeInfo;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.AbstractCallOperation;
@@ -183,10 +184,22 @@ public class StandardJsonTracer implements OperationTracer {
     final StringBuilder sb = new StringBuilder(1024);
     sb.append("{");
     sb.append("\"pc\":").append(pc).append(",");
-    if (messageFrame.getCode().getEofVersion() > 0) {
+    boolean eofContract = messageFrame.getCode().getEofVersion() > 0;
+    if (eofContract) {
       sb.append("\"section\":").append(section).append(",");
     }
     sb.append("\"op\":").append(opcode).append(",");
+    OpcodeInfo opInfo = OpcodeInfo.getOpcode(opcode);
+    if (eofContract && opInfo.pcAdvance() > 1) {
+      var immediate =
+          messageFrame
+              .getCode()
+              .getBytes()
+              .slice(
+                  pc + messageFrame.getCode().getCodeSection(0).getEntryPoint() + 1,
+                  opInfo.pcAdvance() - 1);
+      sb.append("\"immediate\":\"").append(immediate.toHexString()).append("\",");
+    }
     sb.append("\"gas\":\"").append(gas).append("\",");
     sb.append("\"gasCost\":\"").append(shortNumber(thisGasCost)).append("\",");
     if (memory != null) {
