@@ -46,7 +46,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
-import java.time.Duration;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -64,8 +63,6 @@ import org.slf4j.LoggerFactory;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
-  private static final Duration DEFAULT_ETH_PEERS_REFRESH_TIMEOUT = Duration.ofSeconds(10);
-
   private final EthScheduler scheduler;
   private final CountDownLatch shutdown;
   private final AtomicBoolean stopped = new AtomicBoolean(false);
@@ -127,14 +124,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
         transactionPool,
         ethMessages,
         ethereumWireProtocolConfiguration);
-    scheduleEthPeersEvictionCheck(ethPeers);
-  }
-
-  private void scheduleEthPeersEvictionCheck(final EthPeers ethPeers) {
-    LOG.info(
-        "scheduling periodic check for max eth peers every {}", DEFAULT_ETH_PEERS_REFRESH_TIMEOUT);
-    this.scheduler.scheduleFutureTask(
-        () -> ethPeers.disconnectWorstUselessPeerIfAtCapacity(), DEFAULT_ETH_PEERS_REFRESH_TIMEOUT);
   }
 
   @VisibleForTesting

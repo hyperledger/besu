@@ -400,7 +400,8 @@ public class EthPeers {
                     .addArgument(this::getMaxPeers)
                     .log();
                 peer.disconnect(
-                    DisconnectMessage.DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
+                    DisconnectMessage.DisconnectReason
+                        .USELESS_PEER_BY_REPUTATION); // TODO is this too granular
               });
     }
   }
