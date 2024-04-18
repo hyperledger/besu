@@ -71,6 +71,7 @@ public class SpuriousDragonGasCalculator extends TangerineWhistleGasCalculator {
   public long selfDestructOperationGasCost(
       final MessageFrame frame,
       final Account recipient,
+      final Address recipientAddress,
       final Wei inheritance,
       final Address originatorAddress) {
     if ((recipient == null || recipient.isEmpty()) && !inheritance.isZero()) {

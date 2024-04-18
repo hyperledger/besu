@@ -43,6 +43,7 @@ import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -350,7 +351,7 @@ public interface GasCalculator {
    *
    * @return the cost for executing the external code hash operation
    */
-  long extCodeHashOperationGasCost(MessageFrame frame);
+  long extCodeHashOperationGasCost(final MessageFrame frame, Optional<Address> address);
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.
@@ -409,12 +410,17 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @param recipient The recipient of the self destructed inheritance (may be null)
+   * @param recipientAddress The address of the self destructed account
    * @param inheritance The amount the recipient will receive
    * @param originatorAddress The address of the self destructing account
    * @return the cost for executing the self destruct operation
    */
   long selfDestructOperationGasCost(
-      MessageFrame frame, Account recipient, Wei inheritance, Address originatorAddress);
+      MessageFrame frame,
+      Account recipient,
+      final Address recipientAddress,
+      Wei inheritance,
+      Address originatorAddress);
 
   /**
    * Returns the cost for executing a {@link Keccak256Operation}.

@@ -361,6 +361,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .mapToInt(List::size)
               .sum(),
           (System.currentTimeMillis() - startTimeMs) / 1000.0);
+      // TODO Added this line to accelerate block import, should be removed later
+      mergeCoordinator.updateForkChoice(
+          newBlockHeader, newBlockHeader.getBlockHash(), newBlockHeader.getBlockHash());
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {

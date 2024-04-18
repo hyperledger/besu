@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -134,7 +136,8 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
-  public long extCodeHashOperationGasCost(final MessageFrame frame) {
+  public long extCodeHashOperationGasCost(
+      final MessageFrame frame, final Optional<Address> address) {
     return EXTCODE_HASH_COST;
   }
 

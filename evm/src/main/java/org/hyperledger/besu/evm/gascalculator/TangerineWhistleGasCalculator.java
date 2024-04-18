@@ -120,6 +120,7 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   public long selfDestructOperationGasCost(
       final MessageFrame frame,
       final Account recipient,
+      final Address recipientAddress,
       final Wei inheritance,
       final Address originatorAddress) {
     if (recipient == null) {

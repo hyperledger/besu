@@ -17,8 +17,10 @@ package org.hyperledger.besu.evm.gascalculator;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToInt;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -125,7 +127,8 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost(final MessageFrame frame) {
+  public long extCodeHashOperationGasCost(
+      final MessageFrame frame, final Optional<Address> address) {
     return EXTCODE_HASH_COST;
   }
 }

@@ -27,6 +27,7 @@ import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -129,7 +130,8 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost(final MessageFrame frame) {
+  public long extCodeHashOperationGasCost(
+      final MessageFrame frame, final Optional<Address> address) {
     return 0L;
   }
 

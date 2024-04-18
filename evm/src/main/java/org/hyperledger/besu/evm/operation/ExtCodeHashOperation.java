@@ -24,6 +24,8 @@ import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code hash operation. */
@@ -42,11 +44,13 @@ public class ExtCodeHashOperation extends AbstractOperation {
    * Cost of Ext code hash operation.
    *
    * @param frame the current frame
+   * @param maybeAddress the address to use
    * @param accountIsWarm the account is warm
    * @return the long
    */
-  protected long cost(final MessageFrame frame, final boolean accountIsWarm) {
-    return gasCalculator().extCodeHashOperationGasCost(frame)
+  protected long cost(
+      final MessageFrame frame, final Optional<Address> maybeAddress, final boolean accountIsWarm) {
+    return gasCalculator().extCodeHashOperationGasCost(frame, maybeAddress)
         + (accountIsWarm
             ? gasCalculator().getWarmStorageReadCost()
             : gasCalculator().getColdAccountAccessCost());
@@ -58,7 +62,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
       final Address address = Words.toAddress(frame.popStackItem());
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(frame, accountIsWarm);
+      final long cost = cost(frame, Optional.of(address), accountIsWarm);
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
@@ -71,9 +75,15 @@ public class ExtCodeHashOperation extends AbstractOperation {
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {
-      return new OperationResult(cost(frame, true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+      // TODO not sure about this case, we need to check what is the gas cost in case of underflow
+      // exception
+      return new OperationResult(
+          cost(frame, Optional.empty(), true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
-      return new OperationResult(cost(frame, true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+      // TODO not sure about this case, we need to check what is the gas cost in case of overflow
+      // exception
+      return new OperationResult(
+          cost(frame, Optional.empty(), true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

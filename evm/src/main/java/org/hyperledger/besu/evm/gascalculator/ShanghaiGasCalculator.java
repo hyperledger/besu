@@ -29,6 +29,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -230,11 +231,15 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   }
 
   @Override
-  public long extCodeHashOperationGasCost(final MessageFrame frame) {
-    return frame
-        .getAccessWitness()
-        .touchAddressOnReadAndComputeGas(
-            frame.getContractAddress(), UInt256.ZERO, CODE_KECCAK_LEAF_KEY);
+  public long extCodeHashOperationGasCost(
+      final MessageFrame frame, final Optional<Address> maybeAddress) {
+    return maybeAddress
+        .map(
+            add ->
+                frame
+                    .getAccessWitness()
+                    .touchAddressOnReadAndComputeGas(add, UInt256.ZERO, CODE_KECCAK_LEAF_KEY))
+        .orElse(0L);
   }
 
   @Override
@@ -249,10 +254,12 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   public long selfDestructOperationGasCost(
       final MessageFrame frame,
       final Account recipient,
+      final Address recipientAddress,
       final Wei inheritance,
       final Address originatorAddress) {
     long cost =
-        super.selfDestructOperationGasCost(frame, recipient, inheritance, originatorAddress);
+        super.selfDestructOperationGasCost(
+            frame, recipient, recipientAddress, inheritance, originatorAddress);
     cost =
         clampedAdd(
             cost,
@@ -260,15 +267,12 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
                 .getAccessWitness()
                 .touchAddressOnReadAndComputeGas(
                     originatorAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
-    if (recipient != null) {
-      cost =
-          clampedAdd(
-              cost,
-              frame
-                  .getAccessWitness()
-                  .touchAddressOnReadAndComputeGas(
-                      recipient.getAddress(), UInt256.ZERO, BALANCE_LEAF_KEY));
-    }
+    cost =
+        clampedAdd(
+            cost,
+            frame
+                .getAccessWitness()
+                .touchAddressOnReadAndComputeGas(recipientAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
     return cost;
   }
 }
