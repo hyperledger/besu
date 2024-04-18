@@ -32,7 +32,7 @@ import org.apache.tuweni.bytes.Bytes;
 public class ExtCodeHashOperation extends AbstractOperation {
 
   // // 0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5
-  static final Hash EOF_HASH = Hash.hash(Bytes.fromHexString("0xef00"));
+  static final Hash EOF_REPLACEMENT_HASH = Hash.hash(ExtCodeCopyOperation.EOF_REPLACEMENT_CODE);
 
   /**
    * Instantiates a new Ext code hash operation.
@@ -72,7 +72,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
         } else {
           final Bytes code = account.getCode();
           if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
-            frame.pushStackItem(EOF_HASH);
+            frame.pushStackItem(EOF_REPLACEMENT_HASH);
           } else {
             frame.pushStackItem(account.getCodeHash());
           }

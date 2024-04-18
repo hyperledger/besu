@@ -31,6 +31,8 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Ext code copy operation. */
 public class ExtCodeCopyOperation extends AbstractOperation {
 
+  public static Bytes EOF_REPLACEMENT_CODE = Bytes.fromHexString("0xef00");
+
   /**
    * Instantiates a new Ext code copy operation.
    *
@@ -80,7 +82,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
-      frame.writeMemory(memOffset, sourceOffset, numBytes, Bytes.EMPTY);
+      frame.writeMemory(memOffset, sourceOffset, numBytes, EOF_REPLACEMENT_CODE);
     } else {
       frame.writeMemory(memOffset, sourceOffset, numBytes, code);
     }
