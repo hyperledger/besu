@@ -24,14 +24,20 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Class for starting and keeping organised block timers */
 public class BlockTimer {
 
+  private static final Logger LOG = LoggerFactory.getLogger(BlockTimer.class);
   private final ForksSchedule<? extends BftConfigOptions> forksSchedule;
   private final BftExecutors bftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
   private final BftEventQueue queue;
   private final Clock clock;
+  private long blockPeriodSeconds;
+  private long emptyBlockPeriodSeconds;
 
   /**
    * Construct a BlockTimer with primed executor service ready to start timers
@@ -51,6 +57,8 @@ public class BlockTimer {
     this.bftExecutors = bftExecutors;
     this.currentTimerTask = Optional.empty();
     this.clock = clock;
+    this.blockPeriodSeconds = forksSchedule.getFork(0).getValue().getBlockPeriodSeconds();
+    this.emptyBlockPeriodSeconds = forksSchedule.getFork(0).getValue().getEmptyBlockPeriodSeconds();
   }
 
   /** Cancels the current running round timer if there is one */
@@ -76,15 +84,35 @@ public class BlockTimer {
    */
   public synchronized void startTimer(
       final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
-    cancelTimer();
-
-    final long now = clock.millis();
 
     // absolute time when the timer is supposed to expire
-    final int blockPeriodSeconds =
+    final int currentBlockPeriodSeconds =
         forksSchedule.getFork(round.getSequenceNumber()).getValue().getBlockPeriodSeconds();
-    final long minimumTimeBetweenBlocksMillis = blockPeriodSeconds * 1000L;
+    final long minimumTimeBetweenBlocksMillis = currentBlockPeriodSeconds * 1000L;
     final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
+
+    setBlockTimes(round, false);
+
+    startTimer(round, expiryTime);
+  }
+
+  public synchronized void startEmptyBlockTimer(
+          final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
+
+    // absolute time when the timer is supposed to expire
+    final int currentBlockPeriodSeconds =
+            forksSchedule.getFork(round.getSequenceNumber()).getValue().getEmptyBlockPeriodSeconds();
+    final long minimumTimeBetweenBlocksMillis = currentBlockPeriodSeconds * 1000L;
+    final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
+
+    setBlockTimes(round, true);
+
+    startTimer(round, expiryTime);
+  }
+
+  private synchronized void startTimer(final ConsensusRoundIdentifier round, final long expiryTime) {
+    cancelTimer();
+    final long now = clock.millis();
 
     if (expiryTime > now) {
       final long delay = expiryTime - now;
@@ -97,5 +125,28 @@ public class BlockTimer {
     } else {
       queue.add(new BlockTimerExpiry(round));
     }
+  }
+
+  private synchronized void setBlockTimes(final ConsensusRoundIdentifier round, final boolean isEmpty) {
+    final BftConfigOptions currentConfigOptions =  forksSchedule.getFork(round.getSequenceNumber()).getValue();
+    this.blockPeriodSeconds = currentConfigOptions.getBlockPeriodSeconds();
+    this.emptyBlockPeriodSeconds = currentConfigOptions.getEmptyBlockPeriodSeconds();
+
+    long currentBlockPeriodSeconds = isEmpty && this.emptyBlockPeriodSeconds > 0
+            ? this.emptyBlockPeriodSeconds
+            : this.blockPeriodSeconds;
+
+    LOG.debug(
+            "NEW CURRENTBLOCKPERIODSECONDS SET TO {}:  {}"
+            , isEmpty?"EMPTYBLOCKPERIODSECONDS":"BLOCKPERIODSECONDS"
+            , currentBlockPeriodSeconds);
+  }
+
+  public synchronized long getBlockPeriodSeconds(){
+    return blockPeriodSeconds;
+  }
+
+  public synchronized long getEmptyBlockPeriodSeconds(){
+    return emptyBlockPeriodSeconds;
   }
 }

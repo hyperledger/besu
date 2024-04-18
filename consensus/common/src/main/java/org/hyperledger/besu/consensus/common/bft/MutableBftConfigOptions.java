@@ -24,13 +24,19 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * A mutable {@link BftConfigOptions} that is used for building config for transitions in the {@link
  * ForksSchedule}*.
  */
 public class MutableBftConfigOptions implements BftConfigOptions {
+
+  private static final Logger LOG = LoggerFactory.getLogger(MutableBftConfigOptions.class);
   private long epochLength;
   private int blockPeriodSeconds;
+  private int emptyBlockPeriodSeconds;
   private int requestTimeoutSeconds;
   private int gossipedHistoryLimit;
   private int messageQueueLimit;
@@ -48,6 +54,7 @@ public class MutableBftConfigOptions implements BftConfigOptions {
   public MutableBftConfigOptions(final BftConfigOptions bftConfigOptions) {
     this.epochLength = bftConfigOptions.getEpochLength();
     this.blockPeriodSeconds = bftConfigOptions.getBlockPeriodSeconds();
+    this.emptyBlockPeriodSeconds = bftConfigOptions.getEmptyBlockPeriodSeconds();
     this.requestTimeoutSeconds = bftConfigOptions.getRequestTimeoutSeconds();
     this.gossipedHistoryLimit = bftConfigOptions.getGossipedHistoryLimit();
     this.messageQueueLimit = bftConfigOptions.getMessageQueueLimit();
@@ -65,7 +72,14 @@ public class MutableBftConfigOptions implements BftConfigOptions {
 
   @Override
   public int getBlockPeriodSeconds() {
+    LOG.debug("GET BLOCKPERIODSECONDS: " + blockPeriodSeconds);
     return blockPeriodSeconds;
+  }
+
+  @Override
+  public int getEmptyBlockPeriodSeconds() {
+    LOG.debug("GET EMPTYBLOCKPERIODSECONDS: " + emptyBlockPeriodSeconds);
+    return emptyBlockPeriodSeconds;
   }
 
   @Override
@@ -128,7 +142,18 @@ public class MutableBftConfigOptions implements BftConfigOptions {
    * @param blockPeriodSeconds the block period seconds
    */
   public void setBlockPeriodSeconds(final int blockPeriodSeconds) {
+    LOG.info("SET BLOCKPERIODSECONDS: " + blockPeriodSeconds);
     this.blockPeriodSeconds = blockPeriodSeconds;
+  }
+
+  /**
+   * Sets empty block period seconds.
+   *
+   * @param emptyBlockPeriodSeconds the empty block period seconds
+   */
+  public void setEmptyBlockPeriodSeconds(final int emptyBlockPeriodSeconds) {
+    LOG.info("SET EMPTYBLOCKPERIODSECONDS: " + emptyBlockPeriodSeconds);
+    this.emptyBlockPeriodSeconds = emptyBlockPeriodSeconds;
   }
 
   /**
