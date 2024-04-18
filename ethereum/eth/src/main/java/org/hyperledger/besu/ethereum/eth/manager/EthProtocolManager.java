@@ -131,7 +131,8 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   private void scheduleEthPeersEvictionCheck(final EthPeers ethPeers) {
-    // schedule a periodic check on ethPeers to evict worst peer if at capacity
+    LOG.info(
+        "scheduling periodic check for max eth peers every {}", DEFAULT_ETH_PEERS_REFRESH_TIMEOUT);
     this.scheduler.scheduleFutureTask(
         () -> ethPeers.disconnectWorstUselessPeerIfAtCapacity(), DEFAULT_ETH_PEERS_REFRESH_TIMEOUT);
   }
