@@ -171,7 +171,7 @@ public final class GetBlockHeadersMessage extends AbstractMessageData {
 
     public static GetBlockHeadersData create(
         final Hash hash, final int maxHeaders, final int skip, final boolean reverse) {
-      System.out.println("create " + hash + " " + maxHeaders);
+      //System.out.println("create " + hash + " " + maxHeaders);
       return new GetBlockHeadersData(
           Optional.of(hash), OptionalLong.empty(), maxHeaders, skip, reverse);
     }
