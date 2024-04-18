@@ -37,7 +37,7 @@ public class ForksScheduleFactoryTest {
   @SuppressWarnings("unchecked")
   public void throwsErrorIfHasForkForGenesisBlock() {
     final BftConfigOptions genesisConfigOptions = JsonBftConfigOptions.DEFAULT;
-    final BftFork fork = createFork(0, 10);
+    final BftFork fork = createFork(0, 10, 30);
     final SpecCreator<BftConfigOptions, BftFork> specCreator = Mockito.mock(SpecCreator.class);
 
     assertThatThrownBy(
@@ -49,9 +49,9 @@ public class ForksScheduleFactoryTest {
   @SuppressWarnings("unchecked")
   public void throwsErrorIfHasForksWithDuplicateBlock() {
     final BftConfigOptions genesisConfigOptions = JsonBftConfigOptions.DEFAULT;
-    final BftFork fork1 = createFork(1, 10);
-    final BftFork fork2 = createFork(1, 20);
-    final BftFork fork3 = createFork(2, 30);
+    final BftFork fork1 = createFork(1, 10, 30);
+    final BftFork fork2 = createFork(1, 20, 60);
+    final BftFork fork3 = createFork(2, 30, 90);
     final SpecCreator<BftConfigOptions, BftFork> specCreator = Mockito.mock(SpecCreator.class);
 
     assertThatThrownBy(
@@ -82,18 +82,20 @@ public class ForksScheduleFactoryTest {
     assertThat(schedule.getFork(2)).isEqualTo(new ForkSpec<>(2, configOptions2));
   }
 
-  private MutableBftConfigOptions createBftConfigOptions(final int blockPeriodSeconds) {
+  private MutableBftConfigOptions createBftConfigOptions(final int blockPeriodSeconds, final int emptyBlockPeriodSeconds) {
     final MutableBftConfigOptions bftConfigOptions =
         new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
     bftConfigOptions.setBlockPeriodSeconds(blockPeriodSeconds);
+    bftConfigOptions.setEmptyBlockPeriodSeconds(emptyBlockPeriodSeconds);
     return bftConfigOptions;
   }
 
-  private BftFork createFork(final long block, final long blockPeriodSeconds) {
+  private BftFork createFork(final long block, final long blockPeriodSeconds, final long emptyBlockPeriodSeconds) {
     return new BftFork(
         JsonUtil.objectNodeFromMap(
             Map.of(
                 BftFork.FORK_BLOCK_KEY, block,
-                BftFork.BLOCK_PERIOD_SECONDS_KEY, blockPeriodSeconds)));
+                    BftFork.BLOCK_PERIOD_SECONDS_KEY, blockPeriodSeconds,
+                    BftFork.EMPTY_BLOCK_PERIOD_SECONDS_KEY, emptyBlockPeriodSeconds)));
   }
 }
