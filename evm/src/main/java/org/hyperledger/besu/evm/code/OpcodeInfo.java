@@ -18,6 +18,19 @@ package org.hyperledger.besu.evm.code;
 
 import com.google.common.base.Preconditions;
 
+/**
+ * Information about opcodes. Currently merges Legacy and EOFv1
+ *
+ * @param name formal name of the opcode, such as STOP
+ * @param opcode the number of the opcode
+ * @param valid Is this a valid opcode (from an EOFV1 perspective)
+ * @param terminal Is this opcode terminal? (i.e. can it end a code section)
+ * @param inputs How many stack inputs are required/consumed?
+ * @param outputs How many stack items will be output?
+ * @param stackDelta What is the net difference in stack height from this operation
+ * @param pcAdvance How far should the PC advance (0 for terminal only, 1 for most, 2+ for opcodes
+ *     with immediates)
+ */
 public record OpcodeInfo(
     String name,
     int opcode,
@@ -53,6 +66,12 @@ public record OpcodeInfo(
     return new OpcodeInfo(name, opcode, true, false, inputs, outputs, outputs - inputs, pcAdvance);
   }
 
+  /**
+   * Gets the opcode info for a specific opcode
+   *
+   * @param i opcode
+   * @return the OpcodeInfo object describing that opcode
+   */
   public static OpcodeInfo getOpcode(final int i) {
     Preconditions.checkArgument(i >= 0 && i <= 255);
     return V1_OPCODES[i];

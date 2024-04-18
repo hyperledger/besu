@@ -19,7 +19,7 @@
     {"pc":4,"section":0,"op":161,"gas":"0x2540be3f7","gasCost":"0x2ee","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0","0x0"],"depth":1,"refund":0,"opName":"LOG1"},
     {"pc":5,"section":0,"op":95,"gas":"0x2540be109","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
     {"pc":6,"section":0,"op":95,"gas":"0x2540be107","gasCost":"0x2","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
-    {"pc":7,"section":0,"op":238,"gas":"0x2540be105","gasCost":"0x0","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNCONTRACT"},
+    {"pc":7,"section":0,"op":238,"immediate":"0x00","gas":"0x2540be105","gasCost":"0x0","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNCONTRACT"},
     {"gasUser":"0x129b","gasTotal":"0x129b","output":"0x"}
   ]
 }

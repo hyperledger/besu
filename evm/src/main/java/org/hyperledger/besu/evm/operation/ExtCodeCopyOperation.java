@@ -31,7 +31,8 @@ import org.apache.tuweni.bytes.Bytes;
 /** The Ext code copy operation. */
 public class ExtCodeCopyOperation extends AbstractOperation {
 
-  public static Bytes EOF_REPLACEMENT_CODE = Bytes.fromHexString("0xef00");
+  /** This is the "code" legacy contracts see when copying code from an EOF contract. */
+  public static final Bytes EOF_REPLACEMENT_CODE = Bytes.fromHexString("0xef00");
 
   /**
    * Instantiates a new Ext code copy operation.

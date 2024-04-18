@@ -89,7 +89,7 @@ public class BlockchainReferenceTestTools {
     // Perfectly valid test pre-merge.
     params.ignore("UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
 
-    // EOF tests are written against an older version of the spec
+    // EOF tests don't have Prague stuff like deopsits right now
     params.ignore("/stEOF/");
   }
 

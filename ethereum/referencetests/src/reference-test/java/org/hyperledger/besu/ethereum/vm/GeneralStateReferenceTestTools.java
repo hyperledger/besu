@@ -103,9 +103,6 @@ public class GeneralStateReferenceTestTools {
     // Don't do time-consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul-.*");
-
-    // EOF tests are written against an older version of the spec
-    params.ignore("/stEOF/");
   }
 
   private GeneralStateReferenceTestTools() {

@@ -43,9 +43,7 @@ import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.util.Arrays;
 import java.util.List;
-import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -138,8 +136,7 @@ class EofCreateOperationTest {
         .containsExactly(Address.fromHexString("0x8c308e96997a8052e3aaab5af624cb827218687a"));
   }
 
-  private MessageFrame testMemoryFrame(
-      final Code code, final Bytes initData, final Bytes... txInitCode) {
+  private MessageFrame testMemoryFrame(final Code code, final Bytes initData) {
     return MessageFrame.builder()
         .type(MessageFrame.Type.MESSAGE_CALL)
         .contract(Address.ZERO)
@@ -157,8 +154,6 @@ class EofCreateOperationTest {
         .originator(Address.ZERO)
         .initialGas(100000L)
         .worldUpdater(worldUpdater)
-        .initcodes(
-            txInitCode.length == 0 ? Optional.empty() : Optional.of(Arrays.asList(txInitCode)))
         .build();
   }
 }
