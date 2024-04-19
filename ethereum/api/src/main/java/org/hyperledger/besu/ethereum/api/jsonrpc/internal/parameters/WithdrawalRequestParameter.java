@@ -60,7 +60,8 @@ public class WithdrawalRequestParameter {
   public JsonObject asJsonObject() {
     return new JsonObject()
         .put("sourceAddress", sourceAddress)
-        .put("validatorPubKey", validatorPubKey);
+        .put("validatorPubKey", validatorPubKey)
+        .put("amount", amount);
   }
 
   @JsonGetter
@@ -71,6 +72,11 @@ public class WithdrawalRequestParameter {
   @JsonGetter
   public String getValidatorPubKey() {
     return validatorPubKey;
+  }
+
+  @JsonGetter
+  public String getAmount() {
+    return amount;
   }
 
   @Override

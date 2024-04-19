@@ -83,16 +83,16 @@ abstract class AbstractJsonRpcTest {
         testsContext.mapper.readValue(testCaseFileURI.toURL(), JsonRpcTestCase.class);
 
     final String rpcMethod = String.valueOf(testCase.getRequest().get("method"));
-    OkHttpClient client = testsContext.httpClient;
-    if (System.getenv("BESU_DEBUG_CHILD_PROCESS_PORT") != null) {
-      // if running in debug mode, set a longer timeout
-      client =
-          testsContext
-              .httpClient
-              .newBuilder()
-              .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
-              .build();
-    }
+    OkHttpClient client =
+        testsContext
+            .httpClient
+            .newBuilder()
+            .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
+            .build();
+    //    if (System.getenv("BESU_DEBUG_CHILD_PROCESS_PORT") != null) {
+    // if running in debug mode, set a longer timeout
+
+    //    }
 
     if (testCase.getWaitTime() > 0L) {
       waitForMillis(testCase.getWaitTime());
