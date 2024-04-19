@@ -100,6 +100,10 @@ public class FastSyncActionsTest {
             EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
     ethPeers = ethContext.getEthPeers();
+
+    // for tests use the heaviest chain comparator
+    ethPeers.setBestChainComparator(EthPeers.HEAVIEST_CHAIN);
+
     syncState = new SyncState(blockchain, ethPeers);
     metricsSystem = new NoOpMetricsSystem();
     fastSyncActions =

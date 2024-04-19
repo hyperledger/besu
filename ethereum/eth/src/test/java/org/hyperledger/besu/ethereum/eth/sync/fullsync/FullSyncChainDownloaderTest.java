@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManagerTestUtil;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -102,6 +103,8 @@ public class FullSyncChainDownloaderTest {
             localBlockchainSetup.getTransactionPool(),
             EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
+    // for tests use the heaviest chain comparator
+    ethContext.getEthPeers().setBestChainComparator(EthPeers.HEAVIEST_CHAIN);
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }
 
