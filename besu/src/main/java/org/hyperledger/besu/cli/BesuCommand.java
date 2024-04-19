@@ -513,6 +513,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       return autoDiscoveredDefaultIP;
     }
+
+    @Option(
+        names = {"--net-restrict"},
+        arity = "1..*",
+        split = ",",
+        description =
+            "Comma-separated list of allowed IP subnets (e.g., '192.168.1.0/24,10.0.0.0/8').")
+    private List<String> allowedSubnets;
   }
 
   @Option(
@@ -2233,6 +2241,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
+            .allowedSubnets(p2PDiscoveryOptionGroup.allowedSubnets)
             .build();
 
     addShutdownHook(runner);

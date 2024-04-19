@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.p2p.config;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.util.NetworkUtility;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -28,6 +29,8 @@ public class RlpxConfiguration {
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
   private List<SubProtocol> supportedProtocols = Collections.emptyList();
+
+  private List<String> allowSubnets = new ArrayList<>();
 
   public static RlpxConfiguration create() {
     return new RlpxConfiguration();
@@ -72,6 +75,15 @@ public class RlpxConfiguration {
   public RlpxConfiguration setClientId(final String clientId) {
     this.clientId = clientId;
     return this;
+  }
+
+  public RlpxConfiguration setAllowSubnets(final List<String> allowSubnets) {
+    this.allowSubnets = allowSubnets;
+    return this;
+  }
+
+  public List<String> getAllowSubnets() {
+    return allowSubnets;
   }
 
   @Override
