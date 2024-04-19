@@ -20,7 +20,6 @@ package org.hyperledger.besu.controller;
 
 import static org.hyperledger.besu.ethereum.core.BlockHeader.GENESIS_BLOCK_NUMBER;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.common.CombinedProtocolScheduleFactory;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
@@ -264,12 +263,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   public BesuControllerBuilder storageProvider(final StorageProvider storageProvider) {
     besuControllerBuilderSchedule.values().forEach(b -> b.storageProvider(storageProvider));
     return super.storageProvider(storageProvider);
-  }
-
-  @Override
-  public BesuControllerBuilder genesisConfigOptions(final GenesisConfigFile genesisConfig) {
-    besuControllerBuilderSchedule.values().forEach(b -> b.genesisConfigOptions(genesisConfig));
-    return super.genesisConfigOptions(genesisConfig);
   }
 
   @Override

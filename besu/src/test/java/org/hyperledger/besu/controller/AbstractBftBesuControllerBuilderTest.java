@@ -107,12 +107,13 @@ public abstract class AbstractBftBesuControllerBuilderTest {
     lenient().when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
+    final var variableStorage = new VariablesKeyValueStorage(new InMemoryKeyValueStorage());
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
-                new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+                variableStorage,
                 new MainnetBlockHeaderFunctions(),
                 false));
     lenient()
@@ -120,6 +121,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             storageProvider.createWorldStateStorageCoordinator(
                 DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
         .thenReturn(worldStateStorageCoordinator);
+    lenient().when(storageProvider.createVariablesStorage()).thenReturn(variableStorage);
     lenient().when(worldStateKeyValueStorage.isWorldStateAvailable(any())).thenReturn(true);
     lenient()
         .when(worldStateKeyValueStorage.updater())
@@ -138,11 +140,11 @@ public abstract class AbstractBftBesuControllerBuilderTest {
         .when(synchronizerConfiguration.getBlockPropagationRange())
         .thenReturn(Range.closed(1L, 2L));
 
-    setupBftGenesisConfigOptions();
+    setupBftGenesisConfigFile();
 
     bftBesuControllerBuilder =
         createBftControllerBuilder()
-            .genesisConfigOptions(genesisConfigFile)
+            .genesisConfigFile(genesisConfigFile)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .networkId(networkId)
@@ -160,7 +162,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             .networkConfiguration(NetworkingConfiguration.create());
   }
 
-  protected abstract void setupBftGenesisConfigOptions() throws JsonProcessingException;
+  protected abstract void setupBftGenesisConfigFile() throws JsonProcessingException;
 
   protected abstract BesuControllerBuilder createBftControllerBuilder();
 

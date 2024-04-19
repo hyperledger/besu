@@ -116,14 +116,16 @@ public class CliqueBesuControllerBuilderTest {
     lenient().when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
+    final var variableStorage = new VariablesKeyValueStorage(new InMemoryKeyValueStorage());
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
-                new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
+                variableStorage,
                 new MainnetBlockHeaderFunctions(),
                 false));
+    lenient().when(storageProvider.createVariablesStorage()).thenReturn(variableStorage);
     lenient()
         .when(
             storageProvider.createWorldStateStorageCoordinator(
@@ -175,7 +177,7 @@ public class CliqueBesuControllerBuilderTest {
 
     cliqueBesuControllerBuilder =
         new CliqueBesuControllerBuilder()
-            .genesisConfigOptions(genesisConfigFile)
+            .genesisConfigFile(genesisConfigFile)
             .synchronizerConfiguration(synchronizerConfiguration)
             .ethProtocolConfiguration(ethProtocolConfiguration)
             .networkId(networkId)

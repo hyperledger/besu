@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.config;
 
 import java.math.BigInteger;
+import java.net.URL;
 import java.util.Locale;
 import java.util.Optional;
 
@@ -111,5 +112,14 @@ public enum NetworkName {
    */
   public Optional<String> getDeprecationDate() {
     return Optional.ofNullable(deprecationDate);
+  }
+
+  /**
+   * Return the genesis resource
+   *
+   * @return the resource URL
+   */
+  public URL getGenesisFileResource() {
+    return NetworkName.class.getResource(genesisFile);
   }
 }

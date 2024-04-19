@@ -78,10 +78,17 @@ public class EthNetworkConfigTest {
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
             .setGenesisConfig(
-                GenesisConfigFile.fromConfig("{\"config\":{\"chainId\":\"1234567\"}")
-                    .getConfigOptions())
+                GenesisConfigFile.fromConfig(
+                    """
+            {
+              "config":{
+                "chainId":"1234567"
+              }
+            }
+            """))
             .build();
-    assertThat(config.getGenesisConfig()).isEqualTo("{\"config\":{\"chainId\":\"1234567\"}");
+    assertThat(config.getGenesisConfig().getConfigOptions().getChainId())
+        .contains(BigInteger.valueOf(1234567));
     assertThat(config.getDnsDiscoveryUrl()).isNotNull();
     assertThat(config.getBootNodes()).isNotEmpty();
     assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(42));

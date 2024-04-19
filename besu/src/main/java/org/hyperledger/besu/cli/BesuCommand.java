@@ -321,8 +321,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
   private final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider;
-  private GenesisConfigFile genesisConfigFile;
-  private GenesisConfigOptions genesisConfigOptions;
+  private final Supplier<GenesisConfigFile> genesisConfigFileSupplier =
+      Suppliers.memoize(this::readGenesisConfigFile);
+  private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
+      Suppliers.memoize(this::readGenesisConfigOptions);
 
   private RocksDBPlugin rocksDBPlugin;
 
@@ -1059,10 +1061,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     try {
       configureLogging(true);
 
-      genesisConfigFile = readGenesisConfigFile();
-
-      genesisConfigOptions = readGenesisConfigOptions(genesisConfigFile);
-
       // set merge config on the basis of genesis config
       setMergeConfigOptions();
 
@@ -1422,8 +1420,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.info("Using the Java implementation of the blake2bf algorithm");
     }
 
-    if (genesisConfigOptions.getCancunTime().isPresent()
-        || genesisConfigOptions.getPragueTime().isPresent()) {
+    if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
+        || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -1460,9 +1458,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void validateConsensusSyncCompatibilityOptions() {
     // snap and checkpoint can't be used with BFT but can for clique
-    if (genesisConfigOptions.isIbftLegacy()
-        || genesisConfigOptions.isIbft2()
-        || genesisConfigOptions.isQbft()) {
+    if (genesisConfigOptionsSupplier.get().isIbftLegacy()
+        || genesisConfigOptionsSupplier.get().isIbft2()
+        || genesisConfigOptionsSupplier.get().isQbft()) {
       final String errorSuffix = "can't be used with BFT networks";
       if (SyncMode.CHECKPOINT.equals(syncMode) || SyncMode.X_CHECKPOINT.equals(syncMode)) {
         throw new ParameterException(
@@ -1479,7 +1477,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateTransactionPoolOptions() {
-    transactionPoolOptions.validate(commandLine, genesisConfigOptions);
+    transactionPoolOptions.validate(commandLine, genesisConfigOptionsSupplier.get());
   }
 
   private void validateDataStorageOptions() {
@@ -1500,7 +1498,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateMiningParams() {
-    miningOptions.validate(commandLine, genesisConfigOptions, isMergeEnabled(), logger);
+    miningOptions.validate(
+        commandLine, genesisConfigOptionsSupplier.get(), isMergeEnabled(), logger);
   }
 
   /**
@@ -1614,12 +1613,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return GenesisConfigFile.fromConfig(
         genesisFile != null
             ? genesisConfigSource(genesisFile)
-            : genesisConfigSource(Optional.ofNullable(network).orElse(MAINNET)));
+            : Optional.ofNullable(network).orElse(MAINNET).getGenesisFileResource());
   }
 
-  private GenesisConfigOptions readGenesisConfigOptions(final GenesisConfigFile genesisConfigFile) {
+  private GenesisConfigOptions readGenesisConfigOptions() {
     try {
-      return genesisConfigFile.getConfigOptions(genesisConfigOverrides);
+      return genesisConfigFileSupplier.get().getConfigOptions(genesisConfigOverrides);
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
@@ -1815,7 +1814,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
         .storageProvider(storageProvider)
-        //        .genesisConfigOverrides(genesisConfigOverrides)
         .gasLimitCalculator(
             getMiningParameters().getTargetGasLimit().isPresent()
                 ? new FrontierTargetingGasLimitCalculator()
@@ -2104,7 +2102,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .from(txPoolConf)
             .saveFile((dataPath.resolve(txPoolConf.getSaveFile().getPath()).toFile()));
 
-    if (genesisConfigOptions.isZeroBaseFee()) {
+    if (genesisConfigOptionsSupplier.get().isZeroBaseFee()) {
       logger.info(
           "Forcing price bump for transaction replacement to 0, since we are on a zero basefee network");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
@@ -2141,7 +2139,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (miningParameters == null) {
       miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
       miningParameters = miningOptions.toDomainObject();
-      getGenesisBlockPeriodSeconds(genesisConfigOptions)
+      getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
           .ifPresent(miningParameters::setBlockPeriodSeconds);
       initMiningParametersMetrics(miningParameters);
     }
@@ -2297,7 +2295,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         // If no chain id is found in the genesis, use mainnet network id
         try {
           builder.setNetworkId(
-              genesisConfigOptions
+              genesisConfigOptionsSupplier
+                  .get()
                   .getChainId()
                   .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
         } catch (final DecodeException e) {
@@ -2315,17 +2314,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         builder.setBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
-    } else {
-      builder.setNetworkId(networkId);
     }
 
-    builder.setGenesisConfig(genesisConfigOptions);
+    builder.setGenesisConfig(genesisConfigFileSupplier.get());
+
+    if (networkId != null) {
+      builder.setNetworkId(networkId);
+    }
 
     if (p2PDiscoveryOptionGroup.discoveryDnsUrl != null) {
       builder.setDnsDiscoveryUrl(p2PDiscoveryOptionGroup.discoveryDnsUrl);
     } else {
       final Optional<String> discoveryDnsUrlFromGenesis =
-          genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl();
+          genesisConfigOptionsSupplier.get().getDiscoveryOptions().getDiscoveryDnsUrl();
       discoveryDnsUrlFromGenesis.ifPresent(builder::setDnsDiscoveryUrl);
     }
 
@@ -2338,7 +2339,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     } else {
       final Optional<List<String>> bootNodesFromGenesis =
-          genesisConfigOptions.getDiscoveryOptions().getBootNodes();
+          genesisConfigOptionsSupplier.get().getDiscoveryOptions().getBootNodes();
       if (bootNodesFromGenesis.isPresent()) {
         listBootNodes = buildEnodes(bootNodesFromGenesis.get(), getEnodeDnsConfiguration());
       }
@@ -2360,10 +2361,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       throw new ParameterException(
           this.commandLine, String.format("Unable to load genesis URL %s.", genesisFile), e);
     }
-  }
-
-  private static URL genesisConfigSource(final NetworkName networkName) {
-    return EthNetworkConfig.class.getResource(networkName.getGenesisFile());
   }
 
   /**
@@ -2588,16 +2585,21 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisFile == null) {
       return Optional.empty();
     }
-    return genesisConfigOptions.getEcCurve();
+    return genesisConfigOptionsSupplier.get().getEcCurve();
   }
 
+  /**
+   * Return the genesis config options
+   *
+   * @return the genesis config options
+   */
   protected GenesisConfigOptions getGenesisConfigOptions() {
-    return genesisConfigOptions;
+    return genesisConfigOptionsSupplier.get();
   }
 
   private void setMergeConfigOptions() {
     MergeConfigOptions.setMergeEnabled(
-        genesisConfigOptions.getTerminalTotalDifficulty().isPresent());
+        genesisConfigOptionsSupplier.get().getTerminalTotalDifficulty().isPresent());
   }
 
   /** Set ignorable segments in RocksDB Storage Provider plugin. */
@@ -2611,9 +2613,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final SynchronizerConfiguration synchronizerConfiguration =
         unstableSynchronizerOptions.toDomainObject().build();
     final Optional<UInt256> terminalTotalDifficulty =
-        genesisConfigOptions.getTerminalTotalDifficulty();
+        genesisConfigOptionsSupplier.get().getTerminalTotalDifficulty();
     final CheckpointConfigOptions checkpointConfigOptions =
-        genesisConfigOptions.getCheckpointOptions();
+        genesisConfigOptionsSupplier.get().getCheckpointOptions();
     if (synchronizerConfiguration.isCheckpointPostMergeEnabled()) {
       if (!checkpointConfigOptions.isValid()) {
         throw new InvalidConfigurationException(
@@ -2621,15 +2623,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
       terminalTotalDifficulty.ifPresentOrElse(
           ttd -> {
-            if (UInt256.fromHexString(
-                        genesisConfigOptions.getCheckpointOptions().getTotalDifficulty().get())
+            if (UInt256.fromHexString(checkpointConfigOptions.getTotalDifficulty().get())
                     .equals(UInt256.ZERO)
                 && ttd.equals(UInt256.ZERO)) {
               throw new InvalidConfigurationException(
                   "PoS checkpoint sync can't be used with TTD = 0 and checkpoint totalDifficulty = 0");
             }
-            if (UInt256.fromHexString(
-                    genesisConfigOptions.getCheckpointOptions().getTotalDifficulty().get())
+            if (UInt256.fromHexString(checkpointConfigOptions.getTotalDifficulty().get())
                 .lessThan(ttd)) {
               throw new InvalidConfigurationException(
                   "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");

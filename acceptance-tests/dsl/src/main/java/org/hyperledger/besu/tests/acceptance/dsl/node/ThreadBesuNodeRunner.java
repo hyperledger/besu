@@ -214,7 +214,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     node.getConfiguration()
         .getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
-        .map(GenesisConfigFile::getConfigOptions)
         .ifPresent(networkConfigBuilder::setGenesisConfig);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
     final SynchronizerConfiguration synchronizerConfiguration =
@@ -264,7 +263,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
-        .ifPresent(builder::genesisConfigOptions);
+        .ifPresent(builder::genesisConfigFile);
 
     final BesuController besuController = builder.build();
 

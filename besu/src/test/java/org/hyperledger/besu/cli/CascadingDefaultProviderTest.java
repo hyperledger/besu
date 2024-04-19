@@ -128,9 +128,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     final EthNetworkConfig networkConfig =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfig(
-                GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON))
-                    .getConfigOptions())
+            .setGenesisConfig(GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)))
             .setBootNodes(nodes)
             .setDnsDiscoveryUrl(null)
             .build();
@@ -167,8 +165,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
-                GenesisConfigFile.fromConfig(Resources.getResource(MAINNET.getGenesisFile()))
-                    .getConfigOptions(),
+                GenesisConfigFile.fromConfig(MAINNET.getGenesisFileResource()),
                 MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));

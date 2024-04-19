@@ -50,6 +50,7 @@ import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -76,33 +77,30 @@ public final class GenesisState {
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromJson(final URL json, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(GenesisConfigFile.fromConfig(json), protocolSchedule);
-  }
-
   public static GenesisState fromJson(final String json, final ProtocolSchedule protocolSchedule) {
     return fromConfig(GenesisConfigFile.fromConfig(json), protocolSchedule);
   }
 
   /**
-   * Construct a {@link GenesisState} from a JSON string.
+   * Construct a {@link GenesisState} from a URL
    *
    * @param dataStorageConfiguration A {@link DataStorageConfiguration} describing the storage
    *     configuration
-   * @param json A JSON string describing the genesis block
+   * @param jsonSource A URL pointing to JSON genesis file
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromJson(
+  @VisibleForTesting
+  static GenesisState fromJsonSource(
       final DataStorageConfiguration dataStorageConfiguration,
-      final URL json,
+      final URL jsonSource,
       final ProtocolSchedule protocolSchedule) {
     return fromConfig(
-        dataStorageConfiguration, GenesisConfigFile.fromConfig(json), protocolSchedule);
+        dataStorageConfiguration, GenesisConfigFile.fromConfig(jsonSource), protocolSchedule);
   }
 
   /**
-   * Construct a {@link GenesisState} from a JSON object.
+   * Construct a {@link GenesisState} from a genesis file object.
    *
    * @param config A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
@@ -145,7 +143,7 @@ public final class GenesisState {
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromConfig(
+  public static GenesisState fromStorage(
       final Hash genesisStateHash,
       final GenesisConfigFile config,
       final ProtocolSchedule protocolSchedule) {

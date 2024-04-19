@@ -25,6 +25,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Stream;
 
@@ -340,5 +341,18 @@ public class GenesisConfigFile {
    */
   public List<Long> getForkTimestamps() {
     return getConfigOptions().getForkBlockTimestamps();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final GenesisConfigFile that = (GenesisConfigFile) o;
+    return Objects.equals(genesisRoot, that.genesisRoot);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(genesisRoot);
   }
 }

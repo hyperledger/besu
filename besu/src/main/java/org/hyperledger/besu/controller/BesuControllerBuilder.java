@@ -117,8 +117,11 @@ import org.slf4j.LoggerFactory;
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
-  protected GenesisConfigOptions genesisConfigOptions;
+  /** The genesis file */
   protected GenesisConfigFile genesisConfigFile;
+
+  /** The genesis config options; */
+  protected GenesisConfigOptions genesisConfigOptions;
 
   /** The is genesis state hash from data. */
   protected boolean genesisStateHashCacheEnabled;
@@ -230,19 +233,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param genesisConfig the genesis config
    * @return the besu controller builder
    */
-  public BesuControllerBuilder genesisConfigOptions(final GenesisConfigOptions genesisConfig) {
-    this.genesisConfigOptions = genesisConfig;
-    return this;
-  }
-
-  /**
-   * Genesis config file besu controller builder.
-   *
-   * @param genesisConfigFile the genesis config
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder genesisConfigOptions(final GenesisConfigFile genesisConfigFile) {
-    this.genesisConfigFile = genesisConfigFile;
+  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
+    this.genesisConfigFile = genesisConfig;
+    this.genesisConfigOptions = genesisConfig.getConfigOptions();
     return this;
   }
 
@@ -536,7 +529,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller
    */
   public BesuController build() {
-    checkNotNull(genesisConfigOptions, "Missing genesis config");
+    checkNotNull(genesisConfigFile, "Missing genesis config file");
+    checkNotNull(genesisConfigOptions, "Missing genesis config options");
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
     checkNotNull(networkId, "Missing network ID");
@@ -759,12 +753,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private GenesisState getGenesisState(
       final VariablesStorage variablesStorage, final ProtocolSchedule protocolSchedule) {
     Optional<Hash> genesisStateHash = Optional.empty();
-    if (this.genesisStateHashCacheEnabled) {
+    if (genesisStateHashCacheEnabled) {
       genesisStateHash = variablesStorage.getGenesisStateHash();
     }
 
     if (genesisStateHash.isPresent()) {
-      return GenesisState.fromConfig(genesisStateHash.get(), genesisConfigFile, protocolSchedule);
+      return GenesisState.fromStorage(genesisStateHash.get(), genesisConfigFile, protocolSchedule);
     }
     final var genesisState =
         GenesisState.fromConfig(dataStorageConfiguration, genesisConfigFile, protocolSchedule);

@@ -69,6 +69,13 @@ public class JsonUtil {
     return normalized;
   }
 
+  /**
+   * Converts the key to lowercase for easier lookup. This is useful in cases such as the
+   * 'genesis.json' file where all keys are assumed to be case insensitive.
+   *
+   * @param key the key to be normalized
+   * @return key in lower case.
+   */
   public static String normalizeKey(final String key) {
     return key.toLowerCase(Locale.US);
   }
@@ -316,6 +323,7 @@ public class JsonUtil {
    *
    * @param jsonData the json data
    * @param allowComments true to allow comments
+   * @param excludeFields names of the fields to not read
    * @return the object node
    */
   public static ObjectNode objectNodeFromString(
@@ -333,6 +341,7 @@ public class JsonUtil {
    *
    * @param jsonSource the json data
    * @param allowComments true to allow comments
+   * @param excludeFields names of the fields to not read
    * @return the object node
    */
   public static ObjectNode objectNodeFromURL(
@@ -528,6 +537,16 @@ public class JsonUtil {
         return null;
       }
       return this;
+    }
+
+    @Override
+    public boolean includeEmptyObject(final boolean contentsFiltered) {
+      return true;
+    }
+
+    @Override
+    public boolean includeEmptyArray(final boolean contentsFiltered) {
+      return true;
     }
   }
 }

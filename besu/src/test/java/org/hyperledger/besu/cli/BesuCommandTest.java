@@ -205,8 +205,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
-                GenesisConfigFile.fromConfig(Resources.getResource(MAINNET.getGenesisFile()))
-                    .getConfigOptions(),
+                GenesisConfigFile.fromConfig(MAINNET.getGenesisFileResource()),
                 MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
@@ -414,7 +413,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue().getGenesisConfig())
-        .isEqualTo(encodeJsonGenesis(GENESIS_VALID_JSON));
+        .isEqualTo(GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -580,7 +579,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue().getGenesisConfig())
-        .isEqualTo(encodeJsonGenesis(GENESIS_VALID_JSON));
+        .isEqualTo(GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)));
     assertThat(networkArg.getValue().getBootNodes()).isEmpty();
     assertThat(networkArg.getValue().getNetworkId()).isEqualTo(GENESIS_CONFIG_TEST_CHAINID);
 
@@ -601,7 +600,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     assertThat(networkArg.getValue().getGenesisConfig())
-        .isEqualTo(encodeJsonGenesis(GENESIS_INVALID_DATA));
+        .isEqualTo(GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_INVALID_DATA)));
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -614,7 +613,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     // id
     // in this network genesis file.
 
-    final var genesisConfig = EthNetworkConfig.getNetworkConfig(MAINNET).getGenesisConfig();
+    final var genesisConfig =
+        EthNetworkConfig.getNetworkConfig(MAINNET).getGenesisConfig().getConfigOptions();
     assertThat(genesisConfig.getChainId().isPresent()).isTrue();
     assertThat(genesisConfig.getChainId().get())
         .isEqualTo(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId());
