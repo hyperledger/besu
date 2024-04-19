@@ -385,27 +385,6 @@ public class EthPeers {
     return true;
   }
 
-  public void disconnectWorstUselessPeerIfAtCapacity() {
-    if (peerCount() >= getMaxPeers()) {
-      streamAvailablePeers()
-          .filter(p -> !canExceedPeerLimits(p.getId()))
-          .min(getBestChainComparator())
-          .ifPresent(
-              peer -> {
-                LOG.atDebug()
-                    .setMessage(
-                        "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                    .addArgument(peer::getLoggableId)
-                    .addArgument(this::peerCount)
-                    .addArgument(this::getMaxPeers)
-                    .log();
-                peer.disconnect(
-                    DisconnectMessage.DisconnectReason
-                        .USELESS_PEER_BY_REPUTATION); // TODO is this too granular
-              });
-    }
-  }
-
   public void disconnectWorstUselessPeerIfAtCapacityIncludingConnectingPeer(
       final EthPeer connectingPeer) {
     if (peerCount() >= getMaxPeers()) {
