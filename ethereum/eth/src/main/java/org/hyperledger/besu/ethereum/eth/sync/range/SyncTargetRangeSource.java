@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -53,6 +54,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
   private boolean reachedEndOfRanges = false;
   private Optional<CompletableFuture<List<BlockHeader>>> pendingRequests = Optional.empty();
   private int requestFailureCount = 0;
+  private int emptyHeaderFailureCount = 0;
 
   public SyncTargetRangeSource(
       final RangeHeadersFetcher fetcher,
@@ -148,13 +150,22 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
           pendingRequest.get(newHeaderWaitDuration.toMillis(), MILLISECONDS);
       this.pendingRequests = Optional.empty();
       if (newHeaders.isEmpty()) {
-        requestFailureCount++;
+        emptyHeaderFailureCount++;
+        if (emptyHeaderFailureCount > 5) {
+          LOG.atDebug()
+              .setMessage(
+                  "Disconnecting target peer for providing useless or empty range header: {}.")
+              .addArgument(peer)
+              .log();
+          peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
+        }
       } else {
         requestFailureCount = 0;
-      }
-      for (final BlockHeader header : newHeaders) {
-        retrievedRanges.add(new SyncTargetRange(peer, lastRangeEnd, header));
-        lastRangeEnd = header;
+        emptyHeaderFailureCount = 0;
+        for (final BlockHeader header : newHeaders) {
+          retrievedRanges.add(new SyncTargetRange(peer, lastRangeEnd, header));
+          lastRangeEnd = header;
+        }
       }
       return retrievedRanges.poll();
     } catch (final InterruptedException e) {
