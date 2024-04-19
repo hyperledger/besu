@@ -23,9 +23,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.Set;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.filter.FilteringParserDelegate;
+import com.fasterxml.jackson.core.filter.TokenFilter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
@@ -34,6 +39,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /** The Json util class. */
 public class JsonUtil {
+  private static final JsonFactory JSON_FACTORY = new JsonFactory();
 
   /**
    * Converts all the object keys (but none of the string values) to lowercase for easier lookup.
@@ -51,7 +57,7 @@ public class JsonUtil {
             entry -> {
               final String key = entry.getKey();
               final JsonNode value = entry.getValue();
-              final String normalizedKey = key.toLowerCase(Locale.US);
+              final String normalizedKey = normalizeKey(key);
               if (value instanceof ObjectNode) {
                 normalized.set(normalizedKey, normalizeKeys((ObjectNode) value));
               } else if (value instanceof ArrayNode) {
@@ -61,6 +67,10 @@ public class JsonUtil {
               }
             });
     return normalized;
+  }
+
+  public static String normalizeKey(final String key) {
+    return key.toLowerCase(Locale.US);
   }
 
   private static ArrayNode normalizeKeysInArray(final ArrayNode arrayNode) {
@@ -288,7 +298,7 @@ public class JsonUtil {
    * @return the object node
    */
   public static ObjectNode objectNodeFromMap(final Map<String, Object> map) {
-    return (ObjectNode) getObjectMapper().valueToTree(map);
+    return getObjectMapper().valueToTree(map);
   }
 
   /**
@@ -309,15 +319,11 @@ public class JsonUtil {
    * @return the object node
    */
   public static ObjectNode objectNodeFromString(
-      final String jsonData, final boolean allowComments) {
-    final ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.configure(Feature.ALLOW_COMMENTS, allowComments);
+      final String jsonData, final boolean allowComments, final String... excludeFields) {
     try {
-      final JsonNode jsonNode = objectMapper.readTree(jsonData);
-      validateType(jsonNode, JsonNodeType.OBJECT);
-      return (ObjectNode) jsonNode;
-    } catch (final IOException e) {
-      // Reading directly from a string should not raise an IOException, just catch and rethrow
+      return objectNodeFromParser(
+          JSON_FACTORY.createParser(jsonData), allowComments, excludeFields);
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
@@ -329,15 +335,36 @@ public class JsonUtil {
    * @param allowComments true to allow comments
    * @return the object node
    */
-  public static ObjectNode objectNodeFromString(final URL jsonSource, final boolean allowComments) {
-    final ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.configure(Feature.ALLOW_COMMENTS, allowComments);
+  public static ObjectNode objectNodeFromURL(
+      final URL jsonSource, final boolean allowComments, final String... excludeFields) {
     try {
-      final JsonNode jsonNode = objectMapper.readTree(jsonSource);
+      return objectNodeFromParser(
+          JSON_FACTORY.createParser(jsonSource).enable(Feature.AUTO_CLOSE_SOURCE),
+          allowComments,
+          excludeFields);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static ObjectNode objectNodeFromParser(
+      final JsonParser baseParser, final boolean allowComments, final String... excludeFields) {
+    try {
+      final var parser =
+          excludeFields.length > 0
+              ? new FilteringParserDelegate(
+                  baseParser,
+                  new NameExcludeFilter(excludeFields),
+                  TokenFilter.Inclusion.INCLUDE_ALL_AND_PATH,
+                  true)
+              : baseParser;
+      parser.configure(Feature.ALLOW_COMMENTS, allowComments);
+
+      final ObjectMapper objectMapper = new ObjectMapper();
+      final JsonNode jsonNode = objectMapper.readTree(parser);
       validateType(jsonNode, JsonNodeType.OBJECT);
       return (ObjectNode) jsonNode;
     } catch (final IOException e) {
-      // Reading directly from a string should not raise an IOException, just catch and rethrow
       throw new RuntimeException(e);
     }
   }
@@ -486,5 +513,21 @@ public class JsonUtil {
       throw new IllegalArgumentException("Cannot convert value to integer: " + node.toString());
     }
     return true;
+  }
+
+  private static class NameExcludeFilter extends TokenFilter {
+    private final Set<String> names;
+
+    public NameExcludeFilter(final String... names) {
+      this.names = Set.of(names);
+    }
+
+    @Override
+    public TokenFilter includeProperty(final String name) {
+      if (names.contains(name)) {
+        return null;
+      }
+      return this;
+    }
   }
 }

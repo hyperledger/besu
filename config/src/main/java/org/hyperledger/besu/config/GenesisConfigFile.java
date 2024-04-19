@@ -15,7 +15,6 @@
 package org.hyperledger.besu.config;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
-import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
 import org.hyperledger.besu.datatypes.Wei;
 
@@ -30,7 +29,6 @@ import java.util.Optional;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.Streams;
 import com.google.common.io.Resources;
 
 /** The Genesis config file. */
@@ -38,15 +36,17 @@ public class GenesisConfigFile {
 
   /** The constant DEFAULT. */
   public static final GenesisConfigFile DEFAULT =
-      new GenesisConfigFile(JsonUtil.createEmptyObjectNode());
+      new GenesisConfigFile(new GenesisReader.FromObjectNode(JsonUtil.createEmptyObjectNode()));
 
   /** The constant BASEFEE_AT_GENESIS_DEFAULT_VALUE. */
   public static final Wei BASEFEE_AT_GENESIS_DEFAULT_VALUE = Wei.of(1_000_000_000L);
 
-  private final ObjectNode configRoot;
+  private final GenesisReader loader;
+  private final ObjectNode genesisRoot;
 
-  private GenesisConfigFile(final ObjectNode config) {
-    this.configRoot = config;
+  private GenesisConfigFile(final GenesisReader loader) {
+    this.loader = loader;
+    this.genesisRoot = loader.getRoot();
   }
 
   /**
@@ -99,7 +99,7 @@ public class GenesisConfigFile {
    * @return the genesis config file
    */
   public static GenesisConfigFile fromConfig(final URL jsonSource) {
-    return fromConfig(JsonUtil.objectNodeFromString(jsonSource, false));
+    return new GenesisConfigFile(new GenesisReader.FromURL(jsonSource));
   }
 
   /**
@@ -119,7 +119,7 @@ public class GenesisConfigFile {
    * @return the genesis config file
    */
   public static GenesisConfigFile fromConfig(final ObjectNode config) {
-    return new GenesisConfigFile(normalizeKeys(config));
+    return new GenesisConfigFile(new GenesisReader.FromObjectNode(config));
   }
 
   /**
@@ -138,8 +138,7 @@ public class GenesisConfigFile {
    * @return the config options
    */
   public GenesisConfigOptions getConfigOptions(final Map<String, String> overrides) {
-    final ObjectNode config =
-        JsonUtil.getObjectNode(configRoot, "config").orElse(JsonUtil.createEmptyObjectNode());
+    final ObjectNode config = loader.getConfig();
 
     Map<String, String> overridesRef = overrides;
 
@@ -160,14 +159,7 @@ public class GenesisConfigFile {
    * @return the stream
    */
   public Stream<GenesisAllocation> streamAllocations() {
-    return JsonUtil.getObjectNode(configRoot, "alloc").stream()
-        .flatMap(
-            allocations ->
-                Streams.stream(allocations.fieldNames())
-                    .map(
-                        key ->
-                            new GenesisAllocation(
-                                key, JsonUtil.getObjectNode(allocations, key).get())));
+    return loader.streamAllocations();
   }
 
   /**
@@ -176,7 +168,7 @@ public class GenesisConfigFile {
    * @return the parent hash
    */
   public String getParentHash() {
-    return JsonUtil.getString(configRoot, "parenthash", "");
+    return JsonUtil.getString(genesisRoot, "parenthash", "");
   }
 
   /**
@@ -194,7 +186,7 @@ public class GenesisConfigFile {
    * @return the extra data
    */
   public String getExtraData() {
-    return JsonUtil.getString(configRoot, "extradata", "");
+    return JsonUtil.getString(genesisRoot, "extradata", "");
   }
 
   /**
@@ -212,7 +204,7 @@ public class GenesisConfigFile {
    * @return the base fee per gas
    */
   public Optional<Wei> getBaseFeePerGas() {
-    return JsonUtil.getString(configRoot, "basefeepergas")
+    return JsonUtil.getString(genesisRoot, "basefeepergas")
         .map(baseFeeStr -> Wei.of(parseLong("baseFeePerGas", baseFeeStr)));
   }
 
@@ -241,7 +233,7 @@ public class GenesisConfigFile {
    * @return the mix hash
    */
   public String getMixHash() {
-    return JsonUtil.getString(configRoot, "mixhash", "");
+    return JsonUtil.getString(genesisRoot, "mixhash", "");
   }
 
   /**
@@ -250,7 +242,7 @@ public class GenesisConfigFile {
    * @return the nonce
    */
   public String getNonce() {
-    return JsonUtil.getValueAsString(configRoot, "nonce", "0x0");
+    return JsonUtil.getValueAsString(genesisRoot, "nonce", "0x0");
   }
 
   /**
@@ -259,7 +251,7 @@ public class GenesisConfigFile {
    * @return the excess blob gas
    */
   public String getExcessBlobGas() {
-    return JsonUtil.getValueAsString(configRoot, "excessblobgas", "0x0");
+    return JsonUtil.getValueAsString(genesisRoot, "excessblobgas", "0x0");
   }
 
   /**
@@ -268,7 +260,7 @@ public class GenesisConfigFile {
    * @return the blob gas used
    */
   public String getBlobGasUsed() {
-    return JsonUtil.getValueAsString(configRoot, "blobgasused", "0x0");
+    return JsonUtil.getValueAsString(genesisRoot, "blobgasused", "0x0");
   }
 
   /**
@@ -278,7 +270,7 @@ public class GenesisConfigFile {
    */
   public String getParentBeaconBlockRoot() {
     return JsonUtil.getValueAsString(
-        configRoot,
+        genesisRoot,
         "parentbeaconblockroot",
         "0x0000000000000000000000000000000000000000000000000000000000000000");
   }
@@ -289,7 +281,7 @@ public class GenesisConfigFile {
    * @return the coinbase
    */
   public Optional<String> getCoinbase() {
-    return JsonUtil.getString(configRoot, "coinbase");
+    return JsonUtil.getString(genesisRoot, "coinbase");
   }
 
   /**
@@ -298,7 +290,7 @@ public class GenesisConfigFile {
    * @return the timestamp
    */
   public long getTimestamp() {
-    return parseLong("timestamp", JsonUtil.getValueAsString(configRoot, "timestamp", "0x0"));
+    return parseLong("timestamp", JsonUtil.getValueAsString(genesisRoot, "timestamp", "0x0"));
   }
 
   private String getRequiredString(final String key) {
@@ -308,9 +300,9 @@ public class GenesisConfigFile {
   private String getFirstRequiredString(final String... keys) {
     List<String> keysList = Arrays.asList(keys);
     return keysList.stream()
-        .filter(configRoot::has)
+        .filter(genesisRoot::has)
         .findFirst()
-        .map(key -> configRoot.get(key).asText())
+        .map(key -> genesisRoot.get(key).asText())
         .orElseThrow(
             () ->
                 new IllegalArgumentException(
