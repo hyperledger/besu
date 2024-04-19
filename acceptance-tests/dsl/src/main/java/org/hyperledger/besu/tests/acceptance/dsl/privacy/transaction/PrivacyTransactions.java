@@ -117,7 +117,7 @@ public class PrivacyTransactions {
     return new PrivGetLogsTransaction(privacyGroupId, filterParameter);
   }
 
-  public PrivTraceTransaction privTraceTrasnaction(
+  public PrivTraceTransaction privTraceTransaction(
       final String privacyGroupId, final Hash transactionHash) {
     return new PrivTraceTransaction(privacyGroupId, transactionHash);
   }
