@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.nio.charset.StandardCharsets;
@@ -179,6 +180,7 @@ public class BackwardSyncAlgSpec {
     when(context.getSyncState().subscribeTTDReached(any())).thenReturn(88L);
     when(context.getSyncState().subscribeCompletionReached(any())).thenReturn(99L);
     when(context.getEthContext().getEthPeers().peerCount()).thenReturn(1);
+    when(context.getEthContext().getEthPeers().getBestChainComparator()).thenReturn(EthPeers.HEAVIEST_CHAIN);
 
     final CompletableFuture<Void> voidCompletableFuture = algorithm.waitForReady();
     Thread.sleep(50);
