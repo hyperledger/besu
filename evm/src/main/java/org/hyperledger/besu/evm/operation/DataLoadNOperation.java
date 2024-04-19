@@ -47,6 +47,7 @@ public class DataLoadNOperation extends AbstractFixedCostOperation {
     int index = code.readBigEndianU16(pc + 1);
     final Bytes data = code.getData(index, 32);
     frame.pushStackItem(data);
+    frame.setPC(pc + 2);
 
     return successResponse;
   }

@@ -30,6 +30,7 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /** The CodeV1. */
 public class CodeV1 implements Code {
@@ -132,11 +133,20 @@ public class CodeV1 implements Code {
     if (offset > dataLen) {
       return Bytes.EMPTY;
     } else if ((offset + length) > dataLen) {
-      return data.slice(offset);
+      byte[] result = new byte[length];
+      MutableBytes mbytes = MutableBytes.wrap(result);
+      data.slice(offset).copyTo(mbytes, 0);
+      return Bytes.wrap(result);
     } else {
       return data.slice(offset, length);
     }
   }
+
+  @Override
+  public int getDataSize() {
+    return eofLayout.data().size();
+  }
+
 
   @Override
   public int readBigEndianI16(final int index) {
