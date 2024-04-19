@@ -69,7 +69,7 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
         Hash.fromHexString(doTransaction(privacyGroupId, simpleStorageContract, 1));
 
     final String result =
-        node.execute(privacyTransactions.privTraceTrasnaction(privacyGroupId, transactionHash));
+        node.execute(privacyTransactions.privTraceTransaction(privacyGroupId, transactionHash));
 
     System.out.println("privTransactionTrace = " + result);
     assertThat(result).isNotNull();
