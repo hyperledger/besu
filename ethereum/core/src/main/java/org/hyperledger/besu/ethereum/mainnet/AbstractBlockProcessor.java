@@ -197,6 +197,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
+    final ValidatorExitsValidator exitsValidator = protocolSpec.getExitsValidator();
+    if (exitsValidator.allowValidatorExits()) {
+      // Performing system-call logic
+      ValidatorExitContractHelper.popExitsFromQueue(worldState);
+    }
+
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
       if (worldState instanceof BonsaiWorldState) {
