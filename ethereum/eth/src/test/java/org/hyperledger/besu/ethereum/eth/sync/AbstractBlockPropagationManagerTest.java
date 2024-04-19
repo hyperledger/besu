@@ -623,10 +623,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     when(ethScheduler.scheduleSyncWorkerTask(any(Supplier.class)))
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
-        new EthContext(
-            setupEthPeersWithHeaviestChainComparator(),
-            new EthMessages(),
-            ethScheduler);
+        new EthContext(setupEthPeersWithHeaviestChainComparator(), new EthMessages(), ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
@@ -751,10 +748,7 @@ public abstract class AbstractBlockPropagationManagerTest {
             });
 
     final EthContext ethContext =
-        new EthContext(
-                setupEthPeersWithHeaviestChainComparator(),
-            new EthMessages(),
-            ethScheduler);
+        new EthContext(setupEthPeersWithHeaviestChainComparator(), new EthMessages(), ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
@@ -985,7 +979,8 @@ public abstract class AbstractBlockPropagationManagerTest {
   }
 
   private EthPeers setupEthPeersWithHeaviestChainComparator() {
-    final EthPeers ethPeers = new EthPeers(
+    final EthPeers ethPeers =
+        new EthPeers(
             "eth",
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
             TestClock.fixed(),

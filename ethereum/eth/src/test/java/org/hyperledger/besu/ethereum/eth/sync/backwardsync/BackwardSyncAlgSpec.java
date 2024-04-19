@@ -180,7 +180,8 @@ public class BackwardSyncAlgSpec {
     when(context.getSyncState().subscribeTTDReached(any())).thenReturn(88L);
     when(context.getSyncState().subscribeCompletionReached(any())).thenReturn(99L);
     when(context.getEthContext().getEthPeers().peerCount()).thenReturn(1);
-    when(context.getEthContext().getEthPeers().getBestChainComparator()).thenReturn(EthPeers.HEAVIEST_CHAIN);
+    when(context.getEthContext().getEthPeers().getBestChainComparator())
+        .thenReturn(EthPeers.HEAVIEST_CHAIN);
 
     final CompletableFuture<Void> voidCompletableFuture = algorithm.waitForReady();
     Thread.sleep(50);
