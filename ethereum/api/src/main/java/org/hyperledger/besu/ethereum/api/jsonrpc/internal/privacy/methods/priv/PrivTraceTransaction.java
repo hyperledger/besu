@@ -34,7 +34,7 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PrivTraceTransaction extends PrivateAbstractTraceByHash implements JsonRpcMethod {
+public class PrivTraceTransaction extends AbstractPrivateTraceByHash implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceTransaction.class);
 
   public PrivTraceTransaction(

@@ -45,7 +45,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
-public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
+public abstract class AbstractPrivateTraceByHash implements JsonRpcMethod {
 
   protected final Supplier<PrivateBlockTracer> blockTracerSupplier;
   protected final BlockchainQueries blockchainQueries;
@@ -55,7 +55,7 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
   protected final PrivacyParameters privacyParameters;
   protected final PrivacyIdProvider privacyIdProvider;
 
-  protected PrivateAbstractTraceByHash(
+  protected AbstractPrivateTraceByHash(
       final Supplier<PrivateBlockTracer> blockTracerSupplier,
       final BlockchainQueries blockchainQueries,
       final PrivacyQueries privacyQueries,
@@ -137,7 +137,7 @@ public abstract class PrivateAbstractTraceByHash implements JsonRpcMethod {
                     .trace(
                         mutableWorldState,
                         block,
-                        new DebugOperationTracer(new TraceOptions(false, false, true)),
+                        new DebugOperationTracer(new TraceOptions(false, false, true), true),
                         enclaveKey,
                         privacyGroupId,
                         privateBlockMetadata)
