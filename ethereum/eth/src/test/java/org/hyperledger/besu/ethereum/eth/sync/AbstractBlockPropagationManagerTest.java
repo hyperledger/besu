@@ -58,6 +58,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -562,6 +563,8 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     blockPropagationManager.start();
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 2);
     final NewBlockMessage blockAnnouncementMsg =
         NewBlockMessage.create(blockToPurge, Difficulty.ZERO);
 
@@ -573,6 +576,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     // Check that we pushed our block into the pending collection
     assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
     assertThat(pendingBlocksManager.contains(blockToPurge.getHash())).isTrue();
+    secondPeer.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
 
     // Import blocks until we bury the target block far enough to be cleaned up
     for (int i = 0; i < oldBlocksToImport; i++) {
@@ -946,6 +950,10 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     final RespondingEthPeer firstPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    // second peer responds
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 2);
+
     final NewBlockHashesMessage nextAnnouncement =
         NewBlockHashesMessage.create(
             Collections.singletonList(
@@ -958,9 +966,6 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
-    // second peer responds
-    final RespondingEthPeer secondPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final Responder goodResponder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
 
     secondPeer.respondWhile(goodResponder, secondPeer::hasOutstandingRequests);
