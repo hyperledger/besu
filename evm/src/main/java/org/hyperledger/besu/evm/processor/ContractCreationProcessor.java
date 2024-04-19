@@ -140,7 +140,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   @Override
   public void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     final Bytes contractCode = frame.getOutputData();
-
     final long depositFee = gasCalculator.codeDepositGasCost(frame, contractCode.size());
 
     if (frame.getRemainingGas() < depositFee) {
@@ -186,7 +185,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
           final MutableAccount contract =
               frame.getWorldUpdater().getOrCreate(frame.getContractAddress());
           contract.setCode(contractCode);
-          LOG.info(
+          LOG.trace(
               "Successful creation of contract {} with code of size {} (Gas remaining: {})",
               frame.getContractAddress(),
               contractCode.size(),

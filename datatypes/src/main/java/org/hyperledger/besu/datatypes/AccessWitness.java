@@ -33,4 +33,6 @@ public interface AccessWitness {
   List<UInt256> getStorageSlotTreeIndexes(UInt256 storageKey);
 
   long touchCodeChunksUponContractCreation(Address address, long codeLength);
+
+  long touchCodeChunks(Address address, long offset, long readSize, long codeLength);
 }

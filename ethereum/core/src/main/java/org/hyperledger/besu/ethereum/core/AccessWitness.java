@@ -177,8 +177,25 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
       gas +=
           touchAddressOnWriteAndComputeGas(
               address,
-              CODE_OFFSET.subtract(i).divide(VERKLE_NODE_WIDTH),
-              CODE_OFFSET.subtract(i).mod(VERKLE_NODE_WIDTH));
+              CODE_OFFSET.add(i).divide(VERKLE_NODE_WIDTH),
+              CODE_OFFSET.add(i).mod(VERKLE_NODE_WIDTH));
+    }
+    return gas;
+  }
+
+  @Override
+  public long touchCodeChunks(
+      final Address address, final long offset, final long readSize, final long codeLength) {
+    long gas = 0;
+    if (readSize == 0 || codeLength == 0 || offset > codeLength) {
+      return 0;
+    }
+    for (long i = offset / 31; i <= (Math.min(offset + readSize, codeLength) - 1) / 31; i++) {
+      gas +=
+          touchAddressOnReadAndComputeGas(
+              address,
+              CODE_OFFSET.add(i).divide(VERKLE_NODE_WIDTH),
+              CODE_OFFSET.add(i).mod(VERKLE_NODE_WIDTH));
     }
     return gas;
   }

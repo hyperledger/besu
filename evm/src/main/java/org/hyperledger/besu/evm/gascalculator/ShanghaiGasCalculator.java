@@ -16,6 +16,8 @@ package org.hyperledger.besu.evm.gascalculator;
  */
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BALANCE_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KECCAK_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_SIZE_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERSION_LEAF_KEY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.hyperledger.besu.evm.internal.Words.numWords;
@@ -103,12 +105,9 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   @Override
   public long codeDepositGasCost(final MessageFrame frame, final int codeSize) {
-    long cost = super.codeDepositGasCost(frame, codeSize);
-    return clampedAdd(
-        cost,
-        frame
-            .getAccessWitness()
-            .touchCodeChunksUponContractCreation(frame.getContractAddress(), codeSize));
+    return frame
+        .getAccessWitness()
+        .touchCodeChunksUponContractCreation(frame.getContractAddress(), codeSize);
   }
 
   @SuppressWarnings("removal")
@@ -133,6 +132,11 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   @Override
   public long initcodeCost(final int initCodeLength) {
     return numWords(initCodeLength) * INIT_CODE_COST;
+  }
+
+  @Override
+  public long txCreateCost() {
+    return CREATE_OPERATION_GAS_COST;
   }
 
   @Override
@@ -200,10 +204,6 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
             .getAccessWitness()
             .touchAddressOnWriteAndComputeGas(
                 frame.getRecipientAddress(), treeIndexes.get(0), treeIndexes.get(1));
-
-    if (gasCost == 0) {
-      gasCost = WARM_STORAGE_READ_COST;
-    }
     return gasCost;
   }
 
@@ -216,9 +216,6 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
             .getAccessWitness()
             .touchAddressOnReadAndComputeGas(
                 frame.getContractAddress(), treeIndexes.get(0), treeIndexes.get(1));
-    if (gasCost == 0) {
-      gasCost = WARM_STORAGE_READ_COST;
-    }
     return gasCost;
   }
 
@@ -235,11 +232,62 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
       final MessageFrame frame, final Optional<Address> maybeAddress) {
     return maybeAddress
         .map(
-            add ->
+            address ->
                 frame
                     .getAccessWitness()
-                    .touchAddressOnReadAndComputeGas(add, UInt256.ZERO, CODE_KECCAK_LEAF_KEY))
+                    .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_KECCAK_LEAF_KEY))
         .orElse(0L);
+  }
+
+  @Override
+  public long extCodeCopyOperationGasCost(
+      final MessageFrame frame,
+      final Address address,
+      final long memOffset,
+      final long codeOffset,
+      final long readSize,
+      final long codeSize) {
+    long gasCost =
+        super.extCodeCopyOperationGasCost(
+            frame, address, memOffset, codeOffset, readSize, codeSize);
+    gasCost =
+        clampedAdd(
+            gasCost,
+            frame
+                .getAccessWitness()
+                .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, VERSION_LEAF_KEY));
+    gasCost =
+        clampedAdd(
+            gasCost,
+            frame
+                .getAccessWitness()
+                .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_SIZE_LEAF_KEY));
+    if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
+      gasCost =
+          clampedAdd(
+              gasCost,
+              frame.getAccessWitness().touchCodeChunks(address, codeOffset, readSize, codeSize));
+    }
+    return gasCost;
+  }
+
+  @Override
+  public long codeCopyOperationGasCost(
+      final MessageFrame frame,
+      final long memOffset,
+      final long codeOffset,
+      final long readSize,
+      final long codeSize) {
+    long gasCost = super.dataCopyOperationGasCost(frame, memOffset, readSize);
+    if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
+      gasCost =
+          clampedAdd(
+              gasCost,
+              frame
+                  .getAccessWitness()
+                  .touchCodeChunks(frame.getContractAddress(), codeOffset, readSize, codeSize));
+    }
+    return gasCost;
   }
 
   @Override

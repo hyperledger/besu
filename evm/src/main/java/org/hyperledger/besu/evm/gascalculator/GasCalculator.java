@@ -297,10 +297,23 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @param offset The offset in memory to copy the data to
-   * @param length The length of the data being copied into memory
+   * @param readSize The length of the data being copied into memory
    * @return the amount of gas consumed by the data copy operation
    */
-  long dataCopyOperationGasCost(MessageFrame frame, long offset, long length);
+  long dataCopyOperationGasCost(MessageFrame frame, long offset, long readSize);
+
+  /**
+   * Returns the amount of gas consumed by the code copy operation.
+   *
+   * @param frame The current frame
+   * @param memOffset The offset in memory to copy the code to
+   * @param codeOffset The starting offset within the code from which to begin copying
+   * @param readSize The length of the code being copied into memory
+   * @param codeSize The size of the code to copy
+   * @return the amount of gas consumed by the code copy operation
+   */
+  long codeCopyOperationGasCost(
+      MessageFrame frame, long memOffset, long codeOffset, long readSize, final long codeSize);
 
   /**
    * Returns the cost of expanding memory for the specified access.
@@ -340,11 +353,20 @@ public interface GasCalculator {
    * Returns the cost for executing a {@link ExtCodeCopyOperation}.
    *
    * @param frame The current frame
-   * @param offset The offset in memory to external code copy the data to
-   * @param length The length of the code being copied into memory
+   * @param address The address to use for the gas cost computation
+   * @param memOffset The offset in memory to external code copy the data to
+   * @param codeOffset The starting offset within the code from which to begin copying
+   * @param readSize The length of the code being copied into memory
+   * @param codeSize The size of the code to copy
    * @return the cost for executing the external code size operation
    */
-  long extCodeCopyOperationGasCost(MessageFrame frame, long offset, long length);
+  long extCodeCopyOperationGasCost(
+      MessageFrame frame,
+      final Address address,
+      long memOffset,
+      long codeOffset,
+      long readSize,
+      final long codeSize);
 
   /**
    * Returns the cost for executing a {@link ExtCodeHashOperation}.

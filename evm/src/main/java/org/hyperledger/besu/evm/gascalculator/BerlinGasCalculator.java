@@ -203,8 +203,13 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   // defined in Frontier, but re-implemented with no base cost.
   @Override
   public long extCodeCopyOperationGasCost(
-      final MessageFrame frame, final long offset, final long length) {
-    return copyWordsToMemoryGasCost(frame, 0L, COPY_WORD_GAS_COST, offset, length);
+      final MessageFrame frame,
+      final Address address,
+      final long memOffset,
+      final long codeOffset,
+      final long readSize,
+      final long codeSize) {
+    return copyWordsToMemoryGasCost(frame, 0L, COPY_WORD_GAS_COST, memOffset, readSize);
   }
 
   // defined in Istanbul, but re-implemented with new constants
