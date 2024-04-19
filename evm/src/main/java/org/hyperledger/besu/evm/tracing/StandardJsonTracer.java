@@ -51,6 +51,7 @@ public class StandardJsonTracer implements OperationTracer {
   private Bytes memory;
   private int memorySize;
   private int depth;
+  private int subdepth;
   private String storageString;
 
   /**
@@ -138,6 +139,7 @@ public class StandardJsonTracer implements OperationTracer {
       memory = null;
     }
     depth = messageFrame.getMessageStackSize();
+    subdepth = messageFrame.returnStackSize();
 
     StringBuilder sb = new StringBuilder();
     if (showStorage) {
@@ -213,6 +215,9 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     }
     sb.append("\"depth\":").append(depth).append(",");
+    if (subdepth > 0) {
+      sb.append("\"subdepth\":").append(subdepth).append(",");
+    }
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
     sb.append("\"opName\":\"").append(currentOp.getName()).append("\"");
     if (executeResult.getHaltReason() != null) {
