@@ -147,7 +147,6 @@ public class CodeV1 implements Code {
     return eofLayout.data().size();
   }
 
-
   @Override
   public int readBigEndianI16(final int index) {
     return Words.readBigEndianI16(index, eofLayout.container().toArrayUnsafe());
