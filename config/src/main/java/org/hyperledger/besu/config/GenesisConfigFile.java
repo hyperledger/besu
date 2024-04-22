@@ -27,6 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -159,7 +160,7 @@ public class GenesisConfigFile {
    *
    * @return the stream
    */
-  public Stream<GenesisAllocation> streamAllocations() {
+  public Stream<GenesisAccount> streamAllocations() {
     return loader.streamAllocations();
   }
 
@@ -354,5 +355,15 @@ public class GenesisConfigFile {
   @Override
   public int hashCode() {
     return Objects.hashCode(genesisRoot);
+  }
+
+  @Override
+  public String toString() {
+    return "GenesisConfigFile{"
+        + "genesisRoot="
+        + genesisRoot
+        + ", allocations="
+        + loader.streamAllocations().map(GenesisAccount::toString).collect(Collectors.joining(","))
+        + '}';
   }
 }

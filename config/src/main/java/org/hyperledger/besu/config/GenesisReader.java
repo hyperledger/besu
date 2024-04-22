@@ -17,51 +17,78 @@ package org.hyperledger.besu.config;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKey;
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+
+import java.io.IOException;
+import java.math.BigInteger;
 import java.net.URL;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.collect.Streams;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 interface GenesisReader {
-  String CONFIG_FILED = "config";
+  String CONFIG_FIELD = "config";
   String ALLOCATION_FIELD = "alloc";
 
   ObjectNode getRoot();
 
   ObjectNode getConfig();
 
-  Stream<GenesisAllocation> streamAllocations();
+  Stream<GenesisAccount> streamAllocations();
 
   class FromObjectNode implements GenesisReader {
-    private final ObjectNode root;
+    private final ObjectNode allocations;
+    private final ObjectNode rootWithoutAllocations;
 
     public FromObjectNode(final ObjectNode root) {
-      this.root = root;
+      final var removedAllocations = root.remove(ALLOCATION_FIELD);
+      this.allocations =
+          removedAllocations != null
+              ? (ObjectNode) removedAllocations
+              : JsonUtil.createEmptyObjectNode();
+      this.rootWithoutAllocations = root;
     }
 
     @Override
     public ObjectNode getRoot() {
-      return normalizeKeys(root);
+      return normalizeKeys(rootWithoutAllocations);
     }
 
     @Override
     public ObjectNode getConfig() {
       return normalizeKeys(
-          JsonUtil.getObjectNode(root, CONFIG_FILED).orElse(JsonUtil.createEmptyObjectNode()));
+          JsonUtil.getObjectNode(rootWithoutAllocations, CONFIG_FIELD)
+              .orElse(JsonUtil.createEmptyObjectNode()));
     }
 
     @Override
-    public Stream<GenesisAllocation> streamAllocations() {
-      return JsonUtil.getObjectNode(root, ALLOCATION_FIELD).stream()
-          .flatMap(
-              allocations ->
-                  Streams.stream(allocations.fieldNames())
-                      .map(
-                          key ->
-                              new GenesisAllocation(
-                                  normalizeKey(key),
-                                  normalizeKeys(JsonUtil.getObjectNode(allocations, key).get()))));
+    public Stream<GenesisAccount> streamAllocations() {
+      return Streams.stream(allocations.fields())
+          .map(
+              entry -> {
+                final var on = (ObjectNode) entry.getValue();
+                return new GenesisAccount(
+                    Address.fromHexString(entry.getKey()),
+                    JsonUtil.getString(on, "nonce").map(ParserUtils::parseUnsignedLong).orElse(0L),
+                    JsonUtil.getString(on, "balance")
+                        .map(ParserUtils::parseBalance)
+                        .orElse(Wei.ZERO),
+                    JsonUtil.getBytes(on, "code", null),
+                    ParserUtils.getStorageMap(on, "storage"),
+                    JsonUtil.getBytes(on, "privatekey").map(Bytes32::wrap).orElse(null));
+              });
     }
   }
 
@@ -82,22 +109,130 @@ interface GenesisReader {
     @Override
     public ObjectNode getConfig() {
       return normalizeKeys(
-          JsonUtil.getObjectNode(rootWithoutAllocations, CONFIG_FILED)
+          JsonUtil.getObjectNode(rootWithoutAllocations, CONFIG_FIELD)
               .orElse(JsonUtil.createEmptyObjectNode()));
     }
 
     @Override
-    public Stream<GenesisAllocation> streamAllocations() {
-      final var root = JsonUtil.objectNodeFromURL(url, false);
-      return JsonUtil.getObjectNode(root, ALLOCATION_FIELD).stream()
-          .flatMap(
-              allocations ->
-                  Streams.stream(allocations.fieldNames())
-                      .map(
-                          key ->
-                              new GenesisAllocation(
-                                  normalizeKey(key),
-                                  normalizeKeys(JsonUtil.getObjectNode(allocations, key).get()))));
+    public Stream<GenesisAccount> streamAllocations() {
+      final var parser = JsonUtil.jsonParserFromURL(url, false);
+
+      try {
+        parser.nextToken();
+        while (parser.nextToken() != JsonToken.END_OBJECT) {
+          if (ALLOCATION_FIELD.equals(parser.getCurrentName())) {
+            parser.nextToken();
+            parser.nextToken();
+            break;
+          } else {
+            parser.skipChildren();
+          }
+        }
+      } catch (final IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      return Streams.stream(new AllocationIterator(parser));
+    }
+
+    private static class AllocationIterator implements Iterator<GenesisAccount> {
+      final JsonParser parser;
+
+      public AllocationIterator(final JsonParser parser) {
+        this.parser = parser;
+      }
+
+      @Override
+      public boolean hasNext() {
+        final var end = parser.currentToken() == JsonToken.END_OBJECT;
+        if (end) {
+          try {
+            parser.close();
+          } catch (IOException e) {
+            throw new RuntimeException(e);
+          }
+        }
+        return !end;
+      }
+
+      @Override
+      public GenesisAccount next() {
+        try {
+          final Address address = Address.fromHexString(parser.currentName());
+          long nonce = 0;
+          Wei balance = Wei.ZERO;
+          Bytes code = null;
+          Map<UInt256, UInt256> storage = Map.of();
+          Bytes32 privateKey = null;
+          while (parser.nextToken() != JsonToken.END_OBJECT) {
+            switch (normalizeKey(parser.currentName())) {
+              case "nonce":
+                parser.nextToken();
+                nonce = ParserUtils.parseUnsignedLong(parser.getText());
+                break;
+              case "balance":
+                parser.nextToken();
+                balance = ParserUtils.parseBalance(parser.getText());
+                break;
+              case "code":
+                parser.nextToken();
+                code = Bytes.fromHexStringLenient(parser.getText());
+                break;
+              case "privatekey":
+                parser.nextToken();
+                code = Bytes32.fromHexStringLenient(parser.getText());
+                break;
+              case "storage":
+                parser.nextToken();
+                storage = new HashMap<>();
+                while (parser.nextToken() != JsonToken.END_OBJECT) {
+                  final var key = UInt256.fromHexString(parser.currentName());
+                  parser.nextToken();
+                  final var value = UInt256.fromHexString(parser.getText());
+                  storage.put(key, value);
+                }
+                break;
+            }
+          }
+          parser.nextToken();
+          return new GenesisAccount(address, nonce, balance, code, storage, privateKey);
+        } catch (IOException e) {
+          throw new RuntimeException(e);
+        }
+      }
+    }
+  }
+
+  class ParserUtils {
+    static long parseUnsignedLong(final String value) {
+      String v = value.toLowerCase(Locale.US);
+      if (v.startsWith("0x")) {
+        v = v.substring(2);
+      }
+      return Long.parseUnsignedLong(v, 16);
+    }
+
+    static Wei parseBalance(final String balance) {
+      final BigInteger val;
+      if (balance.startsWith("0x")) {
+        val = new BigInteger(1, Bytes.fromHexStringLenient(balance).toArrayUnsafe());
+      } else {
+        val = new BigInteger(balance);
+      }
+
+      return Wei.of(val);
+    }
+
+    static Map<UInt256, UInt256> getStorageMap(final ObjectNode json, final String key) {
+      return JsonUtil.getObjectNode(json, key)
+          .map(
+              storageMap ->
+                  Streams.stream(storageMap.fields())
+                      .collect(
+                          Collectors.toMap(
+                              e -> UInt256.fromHexString(e.getKey()),
+                              e -> UInt256.fromHexString(e.getValue().asText()))))
+          .orElse(Map.of());
     }
   }
 }

@@ -16,7 +16,7 @@ package org.hyperledger.besu.consensus.merge.blockcreation;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
-import org.hyperledger.besu.config.GenesisAllocation;
+import org.hyperledger.besu.config.GenesisAccount;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
 import org.hyperledger.besu.datatypes.Address;
@@ -52,10 +52,7 @@ public interface MergeGenesisConfigHelper {
   }
 
   default Stream<Address> genesisAllocations(final GenesisConfigFile configFile) {
-    return configFile
-        .streamAllocations()
-        .map(GenesisAllocation::getAddress)
-        .map(Address::fromHexString);
+    return configFile.streamAllocations().map(GenesisAccount::address);
   }
 
   default ProtocolSchedule getMergeProtocolSchedule() {

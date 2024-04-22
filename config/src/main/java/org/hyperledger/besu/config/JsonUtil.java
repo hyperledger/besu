@@ -24,6 +24,7 @@ import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
 import java.util.Set;
+import java.util.function.Function;
 
 import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
@@ -36,6 +37,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.tuweni.bytes.Bytes;
 
 /** The Json util class. */
 public class JsonUtil {
@@ -279,6 +281,35 @@ public class JsonUtil {
   }
 
   /**
+   * Gets Bytes.
+   *
+   * @param json the json
+   * @param key the key
+   * @return the Bytes
+   */
+  public static Optional<Bytes> getBytes(final ObjectNode json, final String key) {
+    return getParsedValue(json, key, Bytes::fromHexString);
+  }
+
+  /**
+   * Gets Wei.
+   *
+   * @param json the json
+   * @param key the key
+   * @param defaultValue the default value
+   * @return the Wei
+   */
+  public static Bytes getBytes(final ObjectNode json, final String key, final Bytes defaultValue) {
+    return getBytes(json, key).orElse(defaultValue);
+  }
+
+  private static <T> Optional<T> getParsedValue(
+      final ObjectNode json, final String name, final Function<String, T> parser) {
+
+    return getValue(json, name).map(JsonNode::asText).map(parser);
+  }
+
+  /**
    * Create empty object node object node.
    *
    * @return the object node
@@ -351,6 +382,24 @@ public class JsonUtil {
           JSON_FACTORY.createParser(jsonSource).enable(Feature.AUTO_CLOSE_SOURCE),
           allowComments,
           excludeFields);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Get a JsonParser to parse JSON from URL.
+   *
+   * @param jsonSource the json source
+   * @param allowComments true to allow comments
+   * @return the json parser
+   */
+  public static JsonParser jsonParserFromURL(final URL jsonSource, final boolean allowComments) {
+    try {
+      return JSON_FACTORY
+          .createParser(jsonSource)
+          .enable(Feature.AUTO_CLOSE_SOURCE)
+          .configure(Feature.ALLOW_COMMENTS, allowComments);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
@@ -512,14 +561,14 @@ public class JsonUtil {
 
   private static boolean validateLong(final JsonNode node) {
     if (!node.canConvertToLong()) {
-      throw new IllegalArgumentException("Cannot convert value to long: " + node.toString());
+      throw new IllegalArgumentException("Cannot convert value to long: " + node);
     }
     return true;
   }
 
   private static boolean validateInt(final JsonNode node) {
     if (!node.canConvertToInt()) {
-      throw new IllegalArgumentException("Cannot convert value to integer: " + node.toString());
+      throw new IllegalArgumentException("Cannot convert value to integer: " + node);
     }
     return true;
   }
@@ -541,12 +590,12 @@ public class JsonUtil {
 
     @Override
     public boolean includeEmptyObject(final boolean contentsFiltered) {
-      return true;
+      return !contentsFiltered;
     }
 
     @Override
     public boolean includeEmptyArray(final boolean contentsFiltered) {
-      return true;
+      return !contentsFiltered;
     }
   }
 }
