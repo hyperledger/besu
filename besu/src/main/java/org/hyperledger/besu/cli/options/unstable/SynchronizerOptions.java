@@ -293,6 +293,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       names = SNAP_SERVER_ENABLED_FLAG,
       hidden = true,
       paramLabel = "<Boolean>",
+      arity = "0..1",
       description = "Snap sync server enabled (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
@@ -363,6 +364,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.snapsyncFlatStorageHealedCountPerRequest =
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
+    options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
     return options;
   }
 
