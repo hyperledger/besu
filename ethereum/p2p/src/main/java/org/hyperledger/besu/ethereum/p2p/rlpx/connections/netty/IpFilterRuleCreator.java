@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import java.net.InetAddress;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
@@ -37,7 +36,7 @@ public class IpFilterRuleCreator {
    */
   public static RuleBasedIpFilter createIpRestrictionHandler(final List<String> allowedSubnets) {
     IpSubnetFilterRule[] rules = parseSubnetRules(allowedSubnets);
-    return new RuleBasedIpFilter(rules);
+    return new RuleBasedIpFilter(false, rules);
   }
 
   /**
@@ -59,9 +58,6 @@ public class IpFilterRuleCreator {
         LOG.trace("Skipping invalid subnet: {} subnet ({})", subnet, e.getMessage());
       }
     }
-
-    // Add a "reject all" rule at the end
-    rulesList.add(new IpSubnetFilterRule("0.0.0.0", 0, IpFilterRuleType.REJECT));
     return rulesList.toArray(new IpSubnetFilterRule[0]);
   }
 
@@ -77,9 +73,6 @@ public class IpFilterRuleCreator {
 
     String ipAddress = parts.get(0);
     int cidrPrefix = Integer.parseInt(parts.get(1));
-
-    // Validate IP address format
-    InetAddress.getByName(ipAddress); // This will throw UnknownHostException for invalid IPs
 
     return new IpSubnetFilterRule(ipAddress, cidrPrefix, IpFilterRuleType.ACCEPT);
   }

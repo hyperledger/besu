@@ -209,9 +209,7 @@ public class NettyConnectionInitializer
     return new ChannelInitializer<SocketChannel>() {
       @Override
       protected void initChannel(final SocketChannel ch) throws Exception {
-        if (!config.getAllowSubnets().isEmpty()) {
-          ch.pipeline().addFirst(ipRestrictionHandler());
-        }
+        ch.pipeline().addFirst(ipRestrictionHandler());
         ch.pipeline()
             .addLast(
                 timeoutHandler(
@@ -233,9 +231,7 @@ public class NettyConnectionInitializer
         final CompletableFuture<PeerConnection> connectionFuture = new CompletableFuture<>();
         connectionFuture.thenAccept(
             connection -> connectSubscribers.forEach(c -> c.onConnect(connection)));
-        if (!config.getAllowSubnets().isEmpty()) {
-          ch.pipeline().addFirst(ipRestrictionHandler());
-        }
+        ch.pipeline().addFirst(ipRestrictionHandler());
         ch.pipeline()
             .addLast(
                 timeoutHandler(

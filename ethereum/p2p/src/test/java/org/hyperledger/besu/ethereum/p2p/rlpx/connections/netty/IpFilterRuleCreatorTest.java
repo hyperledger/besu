@@ -15,14 +15,14 @@ public class IpFilterRuleCreatorTest {
   void testCreateIpRestrictionHandlerWithValidSubnets() {
     List<String> allowedSubnets = Arrays.asList("192.168.1.0/24", "10.0.0.0/8");
     IpFilterRule[] rules = IpFilterRuleCreator.parseSubnetRules(allowedSubnets);
-    assertEquals(3, rules.length); // 2 accept rules +  Reject all only
+    assertEquals(2, rules.length);
   }
 
   @Test
   void testCreateIpRestrictionHandlerWithInvalidSubnetFormat() {
     List<String> allowedSubnets = Collections.singletonList("192.168.1.0"); // Missing CIDR prefix
     IpFilterRule[] rules = IpFilterRuleCreator.parseSubnetRules(allowedSubnets);
-    assertEquals(1, rules.length); // Reject all only
+    assertEquals(0, rules.length);
   }
 
   @Test
