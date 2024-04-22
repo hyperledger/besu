@@ -63,6 +63,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class LayersTest extends BaseTransactionPoolTest {
   private static final int MAX_PRIO_TRANSACTIONS = 3;
   private static final int MAX_FUTURE_FOR_SENDER = 10;
+  private static final Wei BASE_FEE = Wei.ONE;
+  private static final Wei MIN_GAS_PRICE = BASE_FEE;
 
   private static final TransactionPoolConfiguration DEFAULT_TX_POOL_CONFIG =
       ImmutableTransactionPoolConfiguration.builder()
@@ -188,7 +190,7 @@ public class LayersTest extends BaseTransactionPoolTest {
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
             FeeMarket.london(0L),
             new BlobCache(),
-            MiningParameters.newDefault());
+            MiningParameters.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE));
 
     final LayeredPendingTransactions pendingTransactions =
         new LayeredPendingTransactions(poolConfig, prioritizedTransactions);
@@ -1250,7 +1252,7 @@ public class LayersTest extends BaseTransactionPoolTest {
 
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(BASE_FEE));
     return blockHeader;
   }
 
