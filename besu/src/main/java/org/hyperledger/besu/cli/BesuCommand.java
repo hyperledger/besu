@@ -798,6 +798,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private static Boolean colorEnabled = null;
 
   @Option(
+      names = {"--log-file"},
+      description = "Log file to output logs")
+  private static Path logFile = null;
+
+  @Option(
       names = {"--reorg-logging-threshold"},
       description =
           "How deep a chain reorganization must be in order for it to be logged (default: ${DEFAULT-VALUE})")
@@ -1438,6 +1443,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public static Optional<Boolean> getColorEnabled() {
     return Optional.ofNullable(colorEnabled);
+  }
+
+  /**
+   * Logging file.
+   *
+   * @return Optional string representing logging file. If set, log to that file.
+   */
+  public static Optional<Path> getLogFile() {
+    return Optional.ofNullable(logFile);
   }
 
   private void configureNativeLibs() {

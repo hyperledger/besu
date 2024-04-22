@@ -21,6 +21,7 @@ import java.util.stream.Stream;
 
 import org.apache.logging.log4j.core.LoggerContext;
 import org.apache.logging.log4j.core.appender.ConsoleAppender;
+import org.apache.logging.log4j.core.appender.FileAppender;
 import org.apache.logging.log4j.core.config.AbstractConfiguration;
 import org.apache.logging.log4j.core.config.Configuration;
 import org.apache.logging.log4j.core.config.ConfigurationSource;
@@ -48,6 +49,7 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
     super.doConfigure();
 
     createConsoleAppender();
+    createFileAppender();
   }
 
   @Override
@@ -63,6 +65,7 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
                 refreshedParent.getLoggerContext(),
                 refreshedParent.getConfigurationSource().resetInputStream());
         createConsoleAppender();
+        createFileAppender();
         return refreshed;
       } catch (final IOException e) {
         LoggerFactory.getLogger(Logger.ROOT_LOGGER_NAME)
@@ -86,7 +89,7 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
   private final String SEP = dim(" | ");
 
   private void createConsoleAppender() {
-    if (customLog4jConfigFilePresent()) {
+    if (customLog4jConfigFilePresent() || logFileEnabled()) {
       return;
     }
 
@@ -110,8 +113,45 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
     this.getRootLogger().addAppender(consoleAppender, null, null);
   }
 
+  private void createFileAppender() {
+    if (customLog4jConfigFilePresent() || !logFileEnabled()) {
+      return;
+    }
+
+    final String logFile = BesuCommand.getLogFile().get().toString();
+    System.out.println("Logging to file " + logFile);
+
+    final PatternLayout patternLayout =
+        PatternLayout.newBuilder()
+            .withConfiguration(this)
+            .withDisableAnsi(!BesuCommand.getColorEnabled().orElse(!noColorSet()))
+            .withNoConsoleNoAnsi(!BesuCommand.getColorEnabled().orElse(false))
+            .withPattern(
+                String.join(
+                    SEP,
+                    dim("%d{yyyy-MM-dd HH:mm:ss.SSSZZZ}"),
+                    dim("%t"),
+                    colorize("%-5level"),
+                    dim("%c{1}"),
+                    colorize("%msg%n%throwable")))
+            .build();
+
+    final FileAppender fileAppender =
+        FileAppender.newBuilder()
+            .withFileName(logFile)
+            .setName("File")
+            .setLayout(patternLayout)
+            .build();
+    fileAppender.start();
+    this.getRootLogger().addAppender(fileAppender, null, null);
+  }
+
   private static boolean noColorSet() {
     return System.getenv("NO_COLOR") != null;
+  }
+
+  private boolean logFileEnabled() {
+    return BesuCommand.getLogFile().isPresent();
   }
 
   private boolean customLog4jConfigFilePresent() {
