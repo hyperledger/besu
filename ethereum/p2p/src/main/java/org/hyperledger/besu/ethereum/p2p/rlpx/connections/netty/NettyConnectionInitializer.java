@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
+import static org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.IpFilterRuleCreator.createIpRestrictionHandler;
+
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
@@ -38,8 +40,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.security.GeneralSecurityException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -47,7 +47,6 @@ import java.util.function.IntSupplier;
 import java.util.stream.StreamSupport;
 import javax.annotation.Nonnull;
 
-import com.google.common.base.Splitter;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -59,8 +58,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.ipfilter.IpFilterRuleType;
-import io.netty.handler.ipfilter.IpSubnetFilterRule;
 import io.netty.handler.ipfilter.RuleBasedIpFilter;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 
@@ -290,27 +287,7 @@ public class NettyConnectionInitializer
   }
 
   private RuleBasedIpFilter ipRestrictionHandler() {
-    IpSubnetFilterRule[] rules = parseSubnetRules(config.getAllowSubnets());
-    return new RuleBasedIpFilter(rules);
-  }
-
-  private IpSubnetFilterRule[] parseSubnetRules(final List<String> allowedSubnets) {
-    if (allowedSubnets == null || allowedSubnets.isEmpty()) {
-      return new IpSubnetFilterRule[0]; // No restrictions
-    }
-    List<IpSubnetFilterRule> rulesList = new ArrayList<>();
-    for (String subnet : allowedSubnets) {
-      List<String> parts = Splitter.on('/').splitToList(subnet.trim());
-      if (parts.size() == 2) {
-        String ipAddress = parts.get(0);
-        int cidrPrefix = Integer.parseInt(parts.get(1));
-        rulesList.add(new IpSubnetFilterRule(ipAddress, cidrPrefix, IpFilterRuleType.ACCEPT));
-      } else {
-        System.err.println("Invalid subnet format: " + subnet);
-      }
-    }
-    rulesList.add(new IpSubnetFilterRule("0.0.0.0", 0, IpFilterRuleType.REJECT));
-    return rulesList.toArray(new IpSubnetFilterRule[0]);
+    return createIpRestrictionHandler(config.getAllowSubnets());
   }
 
   void addAdditionalOutboundHandlers(final Channel ch, final Peer peer)
