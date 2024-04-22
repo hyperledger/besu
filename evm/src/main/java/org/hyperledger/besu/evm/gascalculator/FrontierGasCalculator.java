@@ -229,6 +229,17 @@ public class FrontierGasCalculator implements GasCalculator {
     return NEW_ACCOUNT_GAS_COST;
   }
 
+  @Override
+  public long pushOperationGasCost(
+      final MessageFrame frame, final long codeOffset, final long readSize, final long codeSize) {
+    return getVeryLowTierGasCost();
+  }
+
+  @Override
+  public long extCodeSizeOperationGasCost(final MessageFrame frame) {
+    return getBaseTierGasCost();
+  }
+
   @SuppressWarnings("removal")
   @Override
   public long callOperationGasCost(

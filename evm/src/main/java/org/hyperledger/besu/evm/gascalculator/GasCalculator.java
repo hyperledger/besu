@@ -315,6 +315,11 @@ public interface GasCalculator {
   long codeCopyOperationGasCost(
       MessageFrame frame, long memOffset, long codeOffset, long readSize, final long codeSize);
 
+  long pushOperationGasCost(MessageFrame frame, long codeOffset, long readSize, long codeSize);
+
+
+  long extCodeSizeOperationGasCost(MessageFrame frame);
+
   /**
    * Returns the cost of expanding memory for the specified access.
    *
@@ -675,4 +680,5 @@ public interface GasCalculator {
       final MutableAccount sender) {
     return 0L;
   }
+
 }

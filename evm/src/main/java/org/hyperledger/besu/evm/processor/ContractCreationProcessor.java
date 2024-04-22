@@ -107,6 +107,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       LOG.trace("Executing contract-creation");
     }
     try {
+      System.out.println("start contract creation ");
       final MutableAccount sender = frame.getWorldUpdater().getSenderAccount(frame);
       sender.decrementBalance(frame.getValue());
 
