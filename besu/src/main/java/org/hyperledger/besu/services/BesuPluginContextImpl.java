@@ -269,7 +269,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         "BesuContext should be in state %s but it was in %s",
         Lifecycle.BEFORE_MAIN_LOOP_FINISHED,
         state);
-    final Iterator<BesuPlugin> pluginsIterator = plugins.iterator();
+    final Iterator<BesuPlugin> pluginsIterator = registeredPlugins.iterator();
 
     while (pluginsIterator.hasNext()) {
       final BesuPlugin plugin = pluginsIterator.next();
