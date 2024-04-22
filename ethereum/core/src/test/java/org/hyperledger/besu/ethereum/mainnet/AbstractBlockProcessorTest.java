@@ -66,6 +66,9 @@ abstract class AbstractBlockProcessorTest {
   @BeforeEach
   void baseSetup() {
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    lenient()
+        .when(protocolSpec.getExitsValidator())
+        .thenReturn(new ValidatorExitsValidator.ProhibitedExits());
     blockProcessor =
         new TestBlockProcessor(
             transactionProcessor,

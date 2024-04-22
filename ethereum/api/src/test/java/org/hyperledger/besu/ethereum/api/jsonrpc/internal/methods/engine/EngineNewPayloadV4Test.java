@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.PragueValidatorExitsValidator;
 import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
@@ -196,7 +197,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnInvalidIfExitsIsNull_WhenExitsAllowed() {
-    when(protocolSpec.getExitsValidator()).thenReturn(new ValidatorExitsValidator.AllowedExits());
+    when(protocolSpec.getExitsValidator()).thenReturn(new PragueValidatorExitsValidator());
 
     var resp =
         resp(
@@ -216,7 +217,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     final List<ValidatorExitParameter> validatorExitsParams = List.of(VALIDATOR_EXIT_PARAMETER_1);
     final List<ValidatorExit> validatorExits =
         List.of(VALIDATOR_EXIT_PARAMETER_1.toValidatorExit());
-    when(protocolSpec.getExitsValidator()).thenReturn(new ValidatorExitsValidator.AllowedExits());
+    when(protocolSpec.getExitsValidator()).thenReturn(new PragueValidatorExitsValidator());
 
     BlockHeader mockHeader =
         setupValidPayload(
