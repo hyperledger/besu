@@ -125,6 +125,9 @@ public interface DefaultCommandValues {
   /** The Default tls protocols. */
   List<String> DEFAULT_TLS_PROTOCOLS = List.of("TLSv1.3", "TLSv1.2");
 
+  /** The constant DEFAULT_PLUGINS_OPTION_NAME. */
+  String DEFAULT_PLUGINS_OPTION_NAME = "--plugins";
+
   /**
    * Gets default besu data path.
    *
