@@ -277,7 +277,6 @@ public class TransactionSimulator {
     final Transaction transaction = maybeTransaction.get();
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
-            blockchain,
             updater,
             blockHeaderToProcess,
             transaction,

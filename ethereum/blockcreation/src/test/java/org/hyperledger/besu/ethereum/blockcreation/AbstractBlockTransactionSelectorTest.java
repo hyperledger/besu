@@ -1345,7 +1345,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final long gasRemaining,
       final long processingTime) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {
@@ -1370,7 +1370,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final TransactionInvalidReason invalidReason,
       final long processingTime) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {
