@@ -46,7 +46,7 @@ public class CompleteTaskStep {
     final boolean isResponseReceived = task.getData().isResponseReceived();
     final boolean isExpiredRequest =
         task.getData() instanceof TrieNodeHealingRequest && task.getData().isExpired(snapSyncState);
-    // by the old one when we are changing pivot block
+    // if pivot block has changed, the request is expired and we mark this one completed
     if (isResponseReceived || isExpiredRequest) {
       completedRequestsCounter.inc();
       task.markCompleted();
