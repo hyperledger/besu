@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 /** A helper class to store the historical block hash (eip-2935) */
 public class HistoricalBlockHashProcessor {
@@ -39,7 +40,7 @@ public class HistoricalBlockHashProcessor {
   public void storeHistoricalBlockHashes(
       final Blockchain blockchain,
       final WorldUpdater worldUpdater,
-      final BlockHeader currentBlockHeader) {
+      final ProcessableBlockHeader currentBlockHeader) {
 
     final MutableAccount account = worldUpdater.getOrCreate(HISTORICAL_BLOCKHASH_ADDRESS);
 
