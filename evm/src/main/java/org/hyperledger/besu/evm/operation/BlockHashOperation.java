@@ -32,6 +32,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
 
   private static final int MAX_RELATIVE_BLOCK = 256;
 
+  /** The HISTORICAL_BLOCKHASH_ADDRESS */
   public static final Address HISTORICAL_BLOCKHASH_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
 
@@ -53,6 +54,12 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
         false);
   }
 
+  /**
+   * Instantiates a new Block hash operation.
+   *
+   * @param gasCalculator the gas calculator
+   * @param readFromState whether readFromState
+   */
   public BlockHashOperation(final GasCalculator gasCalculator, final boolean readFromState) {
     this(
         0x40,
@@ -64,7 +71,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
         readFromState);
   }
 
-  public BlockHashOperation(
+  private BlockHashOperation(
       final int opcode,
       final String name,
       final int stackItemsConsumed,
