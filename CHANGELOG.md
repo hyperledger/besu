@@ -42,7 +42,7 @@
 - Add RPC errors metric [#6919](https://github.com/hyperledger/besu/pull/6919/)
 - Add `rlp decode` subcommand to decode IBFT/QBFT extraData to validator list [#6895](https://github.com/hyperledger/besu/pull/6895)
 - Allow users to specify which plugins are registered [#6700](https://github.com/hyperledger/besu/pull/6700)
-
+- Layered txpool tuning for blob transactions [#6940](https://github.com/hyperledger/besu/pull/6940)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
