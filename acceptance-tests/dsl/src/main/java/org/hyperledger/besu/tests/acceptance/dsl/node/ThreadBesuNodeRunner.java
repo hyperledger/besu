@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -140,7 +141,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
 
-    besuPluginContext.registerPlugins(pluginsPath);
+    besuPluginContext.registerPlugins(new PluginConfiguration(pluginsPath));
+
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
     // register built-in plugins

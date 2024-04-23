@@ -185,6 +185,7 @@ tx-pool-save-file="txpool.dump"
 ## Layered
 tx-pool-layer-max-capacity=12345678
 tx-pool-max-prioritized=9876
+tx-pool-max-prioritized-by-type=["BLOB=10","FRONTIER=100"]
 tx-pool-max-future-by-sender=321
 ## Legacy/Sequenced
 tx-pool-retention-hours=999
