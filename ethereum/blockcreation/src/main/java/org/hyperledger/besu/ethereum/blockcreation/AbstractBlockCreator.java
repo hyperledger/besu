@@ -214,14 +214,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   disposableWorldState.updater(), timestamp, bytes32));
 
       newProtocolSpec
-        .getHistoricalBlockHashProcessor()
-        .ifPresent(
-          historicalBlockHashProcessor -> {
-            final WorldUpdater updater = disposableWorldState.updater();
-            historicalBlockHashProcessor.storeHistoricalBlockHashes(
-              protocolContext.getBlockchain(), updater, processableBlockHeader);
-            updater.commit();
-          });
+          .getHistoricalBlockHashProcessor()
+          .ifPresent(
+              historicalBlockHashProcessor -> {
+                final WorldUpdater updater = disposableWorldState.updater();
+                historicalBlockHashProcessor.storeHistoricalBlockHashes(
+                    protocolContext.getBlockchain(), updater, processableBlockHeader);
+                updater.commit();
+              });
 
       throwIfStopped();
 

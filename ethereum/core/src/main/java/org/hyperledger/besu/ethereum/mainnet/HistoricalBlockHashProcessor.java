@@ -19,9 +19,9 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 /** A helper class to store the historical block hash (eip-2935) */
 public class HistoricalBlockHashProcessor {
