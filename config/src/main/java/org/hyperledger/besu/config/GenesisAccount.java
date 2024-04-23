@@ -30,29 +30,3 @@ public record GenesisAccount(
     Bytes code,
     Map<UInt256, UInt256> storage,
     Bytes32 privateKey) {}
-
-//  static GenesisAccount fromAllocation(final GenesisAllocation allocation) {
-//    return new GenesisAccount(
-//        allocation.getNonce(),
-//        allocation.getAddress(),
-//        allocation.getBalance(),
-//        allocation.getStorage(),
-//        allocation.getCode());
-//  }
-//
-//  private GenesisAccount(
-//      final String hexNonce,
-//      final String hexAddress,
-//      final String balance,
-//      final Map<String, String> storage,
-//      final String hexCode) {
-//    this.nonce = GenesisState.withNiceErrorMessage("nonce", hexNonce,
-// GenesisState::parseUnsignedLong);
-//    this.address = GenesisState.withNiceErrorMessage("address", hexAddress,
-// Address::fromHexString);
-//    this.balance = GenesisState.withNiceErrorMessage("balance", balance, this::parseBalance);
-//    this.code = hexCode != null ? Bytes.fromHexString(hexCode) : null;
-//    this.storage = parseStorage(storage);
-//  }
-
-// }
