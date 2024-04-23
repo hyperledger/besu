@@ -58,19 +58,18 @@ interface GenesisReader {
           removedAllocations != null
               ? (ObjectNode) removedAllocations
               : JsonUtil.createEmptyObjectNode();
-      this.rootWithoutAllocations = root;
+      this.rootWithoutAllocations = normalizeKeys(root);
     }
 
     @Override
     public ObjectNode getRoot() {
-      return normalizeKeys(rootWithoutAllocations);
+      return rootWithoutAllocations;
     }
 
     @Override
     public ObjectNode getConfig() {
-      return normalizeKeys(
-          JsonUtil.getObjectNode(rootWithoutAllocations, CONFIG_FIELD)
-              .orElse(JsonUtil.createEmptyObjectNode()));
+      return JsonUtil.getObjectNode(rootWithoutAllocations, CONFIG_FIELD)
+          .orElse(JsonUtil.createEmptyObjectNode());
     }
 
     @Override
@@ -98,19 +97,19 @@ interface GenesisReader {
 
     public FromURL(final URL url) {
       this.url = url;
-      this.rootWithoutAllocations = JsonUtil.objectNodeFromURL(url, false, ALLOCATION_FIELD);
+      this.rootWithoutAllocations =
+          normalizeKeys(JsonUtil.objectNodeFromURL(url, false, ALLOCATION_FIELD));
     }
 
     @Override
     public ObjectNode getRoot() {
-      return normalizeKeys(rootWithoutAllocations);
+      return rootWithoutAllocations;
     }
 
     @Override
     public ObjectNode getConfig() {
-      return normalizeKeys(
-          JsonUtil.getObjectNode(rootWithoutAllocations, CONFIG_FIELD)
-              .orElse(JsonUtil.createEmptyObjectNode()));
+      return JsonUtil.getObjectNode(rootWithoutAllocations, CONFIG_FIELD)
+          .orElse(JsonUtil.createEmptyObjectNode());
     }
 
     @Override
@@ -180,7 +179,7 @@ interface GenesisReader {
                 break;
               case "privatekey":
                 parser.nextToken();
-                code = Bytes32.fromHexStringLenient(parser.getText());
+                privateKey = Bytes32.fromHexStringLenient(parser.getText());
                 break;
               case "storage":
                 parser.nextToken();
