@@ -109,7 +109,7 @@ public class ProtocolSpec {
    * @param withdrawalsValidator the withdrawals validator to use
    * @param withdrawalsProcessor the Withdrawals processor to use
    * @param depositsValidator the withdrawals validator to use
-   * @param historicalBlockHashProcessor  the historicalBlockHash processor to use
+   * @param historicalBlockHashProcessor the historicalBlockHash processor to use
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection

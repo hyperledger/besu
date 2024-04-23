@@ -22,13 +22,19 @@ import java.util.List;
 
 public class WithdrawalsProcessor {
 
+  final ClearEmptyAccountStrategy clearEmptyAccountStrategy;
+
+  public WithdrawalsProcessor(final ClearEmptyAccountStrategy clearEmptyAccountStrategy) {
+    this.clearEmptyAccountStrategy = clearEmptyAccountStrategy;
+  }
+
   public void processWithdrawals(
       final List<Withdrawal> withdrawals, final WorldUpdater worldUpdater) {
     for (final Withdrawal withdrawal : withdrawals) {
       final MutableAccount account = worldUpdater.getOrCreate(withdrawal.getAddress());
       account.incrementBalance(withdrawal.getAmount().getAsWei());
     }
-    worldUpdater.clearAccountsThatAreEmpty();
+    clearEmptyAccountStrategy.process(worldUpdater);
     worldUpdater.commit();
   }
 }
