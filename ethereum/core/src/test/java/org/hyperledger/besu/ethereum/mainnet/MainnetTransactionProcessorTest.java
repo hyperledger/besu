@@ -25,6 +25,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccount;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -82,7 +83,7 @@ class MainnetTransactionProcessorTest {
         transactionValidatorFactory,
         contractCreationProcessor,
         messageCallProcessor,
-        false,
+        new ClearEmptyAccount(),
         warmCoinbase,
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
