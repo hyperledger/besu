@@ -23,6 +23,16 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * Genesis account
+ *
+ * @param address of the account
+ * @param nonce nonce of the account at genesis
+ * @param balance balance of the account at genesis
+ * @param code code of the account at genesis, can be null
+ * @param storage storage of the account at genesis
+ * @param privateKey of the account, only use for testing
+ */
 public record GenesisAccount(
     Address address,
     long nonce,
