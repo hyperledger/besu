@@ -132,8 +132,8 @@ public class EngineGetPayloadResultV4 {
       this.exits =
           exits
               .map(
-                  ds ->
-                      ds.stream()
+                  exit ->
+                      exit.stream()
                           .map(ValidatorExitParameter::fromValidatorExit)
                           .collect(Collectors.toList()))
               .orElse(null);

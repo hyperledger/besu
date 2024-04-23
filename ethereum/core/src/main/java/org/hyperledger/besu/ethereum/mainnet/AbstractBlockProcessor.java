@@ -148,7 +148,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
-              blockchain,
               worldStateUpdater,
               blockHeader,
               transaction,
@@ -205,6 +204,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         LOG.error("failed processing withdrawals", e);
         return new BlockProcessingResult(Optional.empty(), e);
       }
+    }
+
+    final ValidatorExitsValidator exitsValidator = protocolSpec.getExitsValidator();
+    if (exitsValidator.allowValidatorExits()) {
+      // Performing system-call logic
+      ValidatorExitContractHelper.popExitsFromQueue(worldState);
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {

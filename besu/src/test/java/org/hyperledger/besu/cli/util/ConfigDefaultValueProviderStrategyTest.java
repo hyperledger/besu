@@ -52,7 +52,7 @@ import picocli.CommandLine.ParseResult;
 import picocli.CommandLine.RunLast;
 
 @ExtendWith(MockitoExtension.class)
-public class ConfigOptionSearchAndRunHandlerTest {
+public class ConfigDefaultValueProviderStrategyTest {
 
   private static final String CONFIG_FILE_OPTION_NAME = "--config-file";
   @TempDir public Path temp;
@@ -61,7 +61,7 @@ public class ConfigOptionSearchAndRunHandlerTest {
   private final IExecutionStrategy resultHandler = new RunLast();
 
   private final Map<String, String> environment = singletonMap("BESU_LOGGING", "ERROR");
-  private ConfigOptionSearchAndRunHandler configParsingHandler;
+  private ConfigDefaultValueProviderStrategy configParsingHandler;
 
   @Mock ParseResult mockParseResult;
   @Mock CommandSpec mockCommandSpec;
@@ -84,60 +84,52 @@ public class ConfigOptionSearchAndRunHandlerTest {
     lenient().when(mockConfigOptionSpec.getter()).thenReturn(mockConfigOptionGetter);
     levelOption = new LoggingLevelOption();
     levelOption.setLogLevel("INFO");
-    configParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
-            resultHandler, mockParameterExceptionHandler, environment);
+    configParsingHandler = new ConfigDefaultValueProviderStrategy(resultHandler, environment);
   }
 
   @Test
   public void handleWithCommandLineOption() throws Exception {
     when(mockConfigOptionGetter.get()).thenReturn(Files.createTempFile("tmp", "txt").toFile());
-    final List<Object> result = configParsingHandler.handle(mockParseResult);
+    configParsingHandler.execute(mockParseResult);
     verify(mockCommandLine).setDefaultValueProvider(any(IDefaultValueProvider.class));
     verify(mockCommandLine).setExecutionStrategy(eq(resultHandler));
-    verify(mockCommandLine).setParameterExceptionHandler(eq(mockParameterExceptionHandler));
     verify(mockCommandLine).execute(anyString());
-
-    assertThat(result).isEmpty();
   }
 
   @Test
   public void handleWithEnvironmentVariable() throws IOException {
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(false);
 
-    final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
+    final ConfigDefaultValueProviderStrategy environmentConfigFileParsingHandler =
+        new ConfigDefaultValueProviderStrategy(
             resultHandler,
-            mockParameterExceptionHandler,
             singletonMap(
                 "BESU_CONFIG_FILE",
                 Files.createFile(temp.resolve("tmp")).toFile().getAbsolutePath()));
 
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(false);
 
-    environmentConfigFileParsingHandler.handle(mockParseResult);
+    environmentConfigFileParsingHandler.execute(mockParseResult);
   }
 
   @Test
   public void handleWithCommandLineOptionShouldRaiseExceptionIfNoFileParam() throws Exception {
     final String error_message = "an error occurred during get";
     when(mockConfigOptionGetter.get()).thenThrow(new Exception(error_message));
-    assertThatThrownBy(() -> configParsingHandler.handle(mockParseResult))
+    assertThatThrownBy(() -> configParsingHandler.execute(mockParseResult))
         .isInstanceOf(Exception.class)
         .hasMessage(error_message);
   }
 
   @Test
   public void handleWithEnvironmentVariableOptionShouldRaiseExceptionIfNoFileParam() {
-    final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
-            resultHandler,
-            mockParameterExceptionHandler,
-            singletonMap("BESU_CONFIG_FILE", "not_found.toml"));
+    final ConfigDefaultValueProviderStrategy environmentConfigFileParsingHandler =
+        new ConfigDefaultValueProviderStrategy(
+            resultHandler, singletonMap("BESU_CONFIG_FILE", "not_found.toml"));
 
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(false);
 
-    assertThatThrownBy(() -> environmentConfigFileParsingHandler.handle(mockParseResult))
+    assertThatThrownBy(() -> environmentConfigFileParsingHandler.execute(mockParseResult))
         .isInstanceOf(CommandLine.ParameterException.class);
   }
 
@@ -163,15 +155,14 @@ public class ConfigOptionSearchAndRunHandlerTest {
   public void handleThrowsErrorWithWithEnvironmentVariableAndCommandLineSpecified()
       throws IOException {
 
-    final ConfigOptionSearchAndRunHandler environmentConfigFileParsingHandler =
-        new ConfigOptionSearchAndRunHandler(
+    final ConfigDefaultValueProviderStrategy environmentConfigFileParsingHandler =
+        new ConfigDefaultValueProviderStrategy(
             resultHandler,
-            mockParameterExceptionHandler,
             singletonMap("BESU_CONFIG_FILE", temp.resolve("tmp").toFile().getAbsolutePath()));
 
     when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(true);
 
-    assertThatThrownBy(() -> environmentConfigFileParsingHandler.handle(mockParseResult))
+    assertThatThrownBy(() -> environmentConfigFileParsingHandler.execute(mockParseResult))
         .isInstanceOf(CommandLine.ParameterException.class);
   }
 }

@@ -98,7 +98,6 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
       final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
       result =
           transactionProcessor.processTransaction(
-              blockchain,
               chainUpdater.getNextUpdater(),
               header,
               transactionTrace.getTransaction(),
