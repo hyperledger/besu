@@ -41,7 +41,11 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Json util class. */
 public class JsonUtil {
-  private static final JsonFactory JSON_FACTORY = new JsonFactory();
+  private static final JsonFactory JSON_FACTORY =
+      JsonFactory.builder()
+          .disable(JsonFactory.Feature.INTERN_FIELD_NAMES)
+          .disable(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES)
+          .build();
 
   /**
    * Converts all the object keys (but none of the string values) to lowercase for easier lookup.
