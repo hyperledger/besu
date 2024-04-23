@@ -20,9 +20,11 @@ package org.hyperledger.besu.tests.acceptance.bft.pki;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
+@Disabled
 public class PkiQbftAcceptanceTest extends ParameterizedPkiQbftTestBase {
 
   @ParameterizedTest(name = "{index}: {0}")

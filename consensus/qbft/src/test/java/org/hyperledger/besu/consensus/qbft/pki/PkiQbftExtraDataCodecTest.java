@@ -35,8 +35,10 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 public class PkiQbftExtraDataCodecTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =

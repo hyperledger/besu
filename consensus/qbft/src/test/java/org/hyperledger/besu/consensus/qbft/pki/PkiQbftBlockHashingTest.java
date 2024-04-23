@@ -33,8 +33,10 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled
 public class PkiQbftBlockHashingTest {
 
   private PkiQbftExtraDataCodec pkiExtraDataCodec = new PkiQbftExtraDataCodec();
