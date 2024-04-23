@@ -70,7 +70,10 @@ public interface TransactionsLayer {
   OptionalLong getCurrentNonceFor(Address sender);
 
   List<PendingTransaction> promote(
-      Predicate<PendingTransaction> promotionFilter, final long freeSpace, final int freeSlots);
+      Predicate<PendingTransaction> promotionFilter,
+      final long freeSpace,
+      final int freeSlots,
+      final int[] remainingPromotionsPerType);
 
   long subscribeToAdded(PendingTransactionAddedListener listener);
 
@@ -80,7 +83,7 @@ public interface TransactionsLayer {
 
   void unsubscribeFromDropped(long id);
 
-  PendingTransaction promoteFor(Address sender, long nonce);
+  PendingTransaction promoteFor(Address sender, long nonce, final int[] remainingPromotionsPerType);
 
   void notifyAdded(PendingTransaction pendingTransaction);
 
