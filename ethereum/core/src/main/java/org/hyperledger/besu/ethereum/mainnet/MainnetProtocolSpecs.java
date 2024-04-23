@@ -31,6 +31,8 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccount;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccountWithException;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.NotClearEmptyAccount;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
@@ -139,7 +141,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    new ClearEmptyAccount(),
+                    new NotClearEmptyAccount(),
                     false,
                     stackSizeLimit,
                     FeeMarket.legacy(),
@@ -737,7 +739,7 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
-        new ClearEmptyAccountStrategy.ClearEmptyAccountWithException(
+        new ClearEmptyAccountWithException(
             List.of(HistoricalBlockHashProcessor.HISTORICAL_BLOCKHASH_ADDRESS));
 
     final int contractSizeLimit =
