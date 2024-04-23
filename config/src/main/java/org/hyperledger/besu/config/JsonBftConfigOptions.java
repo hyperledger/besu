@@ -34,8 +34,8 @@ public class JsonBftConfigOptions implements BftConfigOptions {
 
   private static final long DEFAULT_EPOCH_LENGTH = 30_000;
   private static final int DEFAULT_BLOCK_PERIOD_SECONDS = 1;
-  private static final int DEFAULT_EMPTY_BLOCK_PERIOD_SECONDS = 0;
   // 0 keeps working as before, increase to activate it
+  private static final int DEFAULT_EMPTY_BLOCK_PERIOD_SECONDS = 0;
   private static final int DEFAULT_ROUND_EXPIRY_SECONDS = 1;
   // In a healthy network this can be very small. This default limit will allow for suitable
   // protection for on a typical 20 node validator network with multiple rounds

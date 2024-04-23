@@ -66,12 +66,12 @@ public class ForksScheduleFactoryTest {
   public void createsScheduleUsingSpecCreator() {
     final BftConfigOptions genesisConfigOptions = JsonBftConfigOptions.DEFAULT;
     final ForkSpec<BftConfigOptions> genesisForkSpec = new ForkSpec<>(0, genesisConfigOptions);
-    final BftFork fork1 = createFork(1, 10);
-    final BftFork fork2 = createFork(2, 20);
+    final BftFork fork1 = createFork(1, 10, 20);
+    final BftFork fork2 = createFork(2, 20, 40);
     final SpecCreator<BftConfigOptions, BftFork> specCreator = Mockito.mock(SpecCreator.class);
 
-    final BftConfigOptions configOptions1 = createBftConfigOptions(10);
-    final BftConfigOptions configOptions2 = createBftConfigOptions(20);
+    final BftConfigOptions configOptions1 = createBftConfigOptions(10, 30);
+    final BftConfigOptions configOptions2 = createBftConfigOptions(20, 60);
     when(specCreator.create(genesisForkSpec, fork1)).thenReturn(configOptions1);
     when(specCreator.create(new ForkSpec<>(1, configOptions1), fork2)).thenReturn(configOptions2);
 
