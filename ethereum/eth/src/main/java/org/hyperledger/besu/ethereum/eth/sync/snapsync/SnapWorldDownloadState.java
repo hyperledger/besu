@@ -111,7 +111,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.snapSyncState = snapSyncState;
     this.metricsManager = metricsManager;
     this.blockObserverId = blockchain.observeBlockAdded(createBlockchainObserver());
-    // Register blockchain observer if not already registered
 
     metricsManager
         .getMetricsSystem()
@@ -438,7 +437,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           snapSyncState.isWaitingBlockchain() && !pivotBlockSelector.isBlockchainBehind();
 
       if (snapSyncState.isHealTrieInProgress() && (isNewPivotBlockFound || isBlockchainCaughtUp)) {
-        // head again
         snapSyncState.setWaitingBlockchain(false);
         reloadTrieHeal();
       }
