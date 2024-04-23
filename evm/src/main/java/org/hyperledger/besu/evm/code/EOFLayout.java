@@ -25,10 +25,13 @@ public class EOFLayout {
 
   /** The Section Terminator. */
   static final int SECTION_TERMINATOR = 0x00;
+
   /** The Section types. */
   static final int SECTION_TYPES = 0x01;
+
   /** The Section code. */
   static final int SECTION_CODE = 0x02;
+
   /** The Section data. */
   static final int SECTION_DATA = 0x03;
 

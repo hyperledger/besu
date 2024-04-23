@@ -111,7 +111,8 @@ public abstract class AbstractGetHeadersFromPeerTask
           LOG.debug(
               "Sequential headers must form a chain through hashes (BREACH_OF_PROTOCOL), disconnecting peer: {}",
               peer.getLoggableId());
-          peer.disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+          peer.disconnect(
+              DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL_NON_SEQUENTIAL_HEADERS);
           return Optional.empty();
         }
       }

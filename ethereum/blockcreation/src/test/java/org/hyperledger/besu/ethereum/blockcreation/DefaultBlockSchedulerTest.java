@@ -47,8 +47,8 @@ public class DefaultBlockSchedulerTest {
     final AbstractBlockScheduler.BlockCreationTimeResult result =
         scheduler.getNextTimestamp(parentBlock);
 
-    assertThat(result.getTimestampForHeader()).isEqualTo(parentTimeStamp + interBlockSeconds);
-    assertThat(result.getMillisecondsUntilValid()).isEqualTo(0);
+    assertThat(result.timestampForHeader()).isEqualTo(parentTimeStamp + interBlockSeconds);
+    assertThat(result.millisecondsUntilValid()).isEqualTo(0);
   }
 
   @Test
@@ -64,7 +64,7 @@ public class DefaultBlockSchedulerTest {
     final AbstractBlockScheduler.BlockCreationTimeResult result =
         scheduler.getNextTimestamp(parentBlock);
 
-    assertThat(result.getMillisecondsUntilValid()).isEqualTo(0);
+    assertThat(result.millisecondsUntilValid()).isEqualTo(0);
   }
 
   @Test
@@ -81,7 +81,7 @@ public class DefaultBlockSchedulerTest {
     final AbstractBlockScheduler.BlockCreationTimeResult result =
         scheduler.getNextTimestamp(parentBlock);
 
-    assertThat(result.getMillisecondsUntilValid()).isEqualTo(interBlockSeconds * 1000);
+    assertThat(result.millisecondsUntilValid()).isEqualTo(interBlockSeconds * 1000);
   }
 
   @Test
@@ -99,6 +99,6 @@ public class DefaultBlockSchedulerTest {
     final AbstractBlockScheduler.BlockCreationTimeResult result =
         scheduler.getNextTimestamp(parentBlock);
 
-    assertThat(result.getTimestampForHeader()).isEqualTo(secondsSinceEpoch);
+    assertThat(result.timestampForHeader()).isEqualTo(secondsSinceEpoch);
   }
 }

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.cli.subcommands.rlp;
 
+import org.hyperledger.besu.consensus.common.bft.BftExtraData;
+
 import java.io.IOException;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -29,4 +31,13 @@ interface JSONToRLP {
    * @throws IOException if an error occurs while reading data
    */
   Bytes encode(String json) throws IOException;
+
+  /**
+   * Decodes the input RLP value into a validators list Object.
+   *
+   * @param inputData the RLP hex string to convert to validators list
+   * @return the decoded BFT ExtraData object.
+   * @throws IOException if an error occurs while reading data
+   */
+  BftExtraData decode(String inputData) throws IOException;
 }

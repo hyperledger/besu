@@ -25,6 +25,7 @@ public class PushOperation extends AbstractFixedCostOperation {
 
   /** The constant PUSH_BASE. */
   public static final int PUSH_BASE = 0x5F;
+
   /** The constant PUSH_MAX. */
   public static final int PUSH_MAX = 0x7F;
 

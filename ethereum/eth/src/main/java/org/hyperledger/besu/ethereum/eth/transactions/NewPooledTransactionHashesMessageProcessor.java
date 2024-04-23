@@ -129,7 +129,7 @@ public class NewPooledTransactionHashesMessageProcessor {
             peer,
             ex);
         LOG.trace("Message data: {}", transactionsMessage.getData());
-        peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+        peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
       }
     }
   }

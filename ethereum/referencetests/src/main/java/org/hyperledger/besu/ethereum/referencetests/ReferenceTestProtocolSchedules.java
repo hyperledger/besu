@@ -76,6 +76,7 @@ public class ReferenceTestProtocolSchedules {
     builder.put("ArrowGlacier", createSchedule(genesisStub.clone().arrowGlacierBlock(0)));
     builder.put("GrayGlacier", createSchedule(genesisStub.clone().grayGlacierBlock(0)));
     builder.put("Merge", createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
+    builder.put("Paris", createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
     builder.put("Shanghai", createSchedule(genesisStub.clone().shanghaiTime(0)));
     builder.put(
         "ShanghaiToCancunAtTime15k",

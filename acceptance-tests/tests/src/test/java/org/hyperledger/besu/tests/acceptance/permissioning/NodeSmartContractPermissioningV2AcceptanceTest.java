@@ -16,8 +16,8 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractPermissioningV2AcceptanceTest
     extends NodeSmartContractPermissioningV2AcceptanceTestBase {
@@ -27,7 +27,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
   private Node allowedNode;
   private Node forbiddenNode;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     bootnode = bootnode("bootnode");
     forbiddenNode = node("forbidden-node");
@@ -35,6 +35,8 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
     permissionedNode = permissionedNode("permissioned-node");
 
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
+
+    verifyAllNodesAreInSyncWithMiner();
 
     // updating permissioning smart contract with allowed nodes
 
@@ -46,8 +48,6 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
     permissionedNode.execute(allowNode(permissionedNode));
     permissionedNode.verify(connectionIsAllowed(permissionedNode));
-
-    verifyAllNodesHaveFinishedSyncing();
   }
 
   @Test
@@ -76,6 +76,8 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 
+    verifyAllNodesAreInSyncWithMiner();
+
     permissionedNode.execute(allowNode(forbiddenNode));
     permissionedNode.verify(connectionIsAllowed(forbiddenNode));
     permissionedNode.verify(admin.addPeer(forbiddenNode));
@@ -89,7 +91,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 
-    verifyAllNodesHaveFinishedSyncing();
+    verifyAllNodesAreInSyncWithMiner();
 
     // permissioning changes in peer should propagate to permissioned node
     allowedNode.execute(allowNode(forbiddenNode));
@@ -100,17 +102,21 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
     permissionedNode.verify(net.awaitPeerCount(3));
   }
 
-  private void verifyAllNodesHaveFinishedSyncing() {
-    allowedNode.verify(eth.syncingStatus(false));
-    bootnode.verify(eth.syncingStatus(false));
-    permissionedNode.verify(eth.syncingStatus(false));
-    forbiddenNode.verify(eth.syncingStatus(false));
+  private void verifyAllNodesAreInSyncWithMiner() {
+    // verify the miner (permissionedNode) started producing blocks and other nodes are syncing
+    // from it
+    waitForBlockHeight(permissionedNode, 1);
+    final var minerChainHead = permissionedNode.execute(ethTransactions.block());
+    bootnode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
+    allowedNode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
   }
 
   @Test
   public void onchainPermissioningAllowlistShouldPersistAcrossRestarts() {
     permissionedCluster.stop();
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
+
+    verifyAllNodesAreInSyncWithMiner();
 
     permissionedNode.verify(connectionIsAllowed(allowedNode));
     permissionedNode.verify(connectionIsAllowed(bootnode));

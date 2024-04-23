@@ -23,6 +23,7 @@ public class IbftSubProtocol implements SubProtocol {
 
   /** The constant NAME. */
   public static String NAME = "IBF";
+
   /** The constant IBFV1. */
   public static final Capability IBFV1 = Capability.create(NAME, 1);
 

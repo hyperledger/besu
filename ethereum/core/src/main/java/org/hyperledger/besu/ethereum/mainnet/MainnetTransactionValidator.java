@@ -233,7 +233,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
               upfrontCost.toQuantityHexString(), senderBalance.toQuantityHexString()));
     }
 
-    if (transaction.getNonce() < senderNonce) {
+    if (Long.compareUnsigned(transaction.getNonce(), senderNonce) < 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.NONCE_TOO_LOW,
           String.format(

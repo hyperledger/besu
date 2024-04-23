@@ -139,7 +139,7 @@ tasks.register('dockerUpload', Exec) {
     additionalTags.add('develop')
   }
 
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/ || dockerBuildVersion ==~/.*develop.*/)) {
     additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }
