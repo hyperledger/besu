@@ -150,7 +150,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       this.pendingRequests = Optional.empty();
       if (newHeaders.isEmpty()) {
         retryCount++;
-        if (retryCount > 5) {
+        if (retryCount >= retriesPermitted) {
           LOG.atDebug()
               .setMessage(
                   "Disconnecting target peer for providing useless or empty range header: {}.")
