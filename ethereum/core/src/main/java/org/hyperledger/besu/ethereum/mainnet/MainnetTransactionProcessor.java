@@ -462,11 +462,11 @@ public class MainnetTransactionProcessor {
       final Wei balancePriorToRefund = sender.getBalance();
       sender.incrementBalance(refundedWei);
       LOG.atTrace()
-          .setMessage("refunded sender {}  {} wei ({} -> {})")
+          .setMessage("refunded sender {}  {} wei (balance before:{} -> after:{})")
           .addArgument(senderAddress)
-          .addArgument(refundedWei)
-          .addArgument(balancePriorToRefund)
-          .addArgument(sender.getBalance())
+          .addArgument(refundedWei.toShortHexString())
+          .addArgument(balancePriorToRefund.toShortHexString())
+          .addArgument(sender.getBalance().toShortHexString())
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
       LOG.info(

@@ -183,11 +183,17 @@ public class EVM {
 
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
+
+
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
       int opcode;
       int pc = frame.getPC();
+
+      if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
+          frame.getAccessWitness().touchCodeChunks(frame.getContractAddress(), pc, 1, code.length);
+      }
       try {
         opcode = code[pc] & 0xff;
         currentOperation = operationArray[opcode];
@@ -278,7 +284,6 @@ public class EVM {
       } catch (final UnderflowException ue) {
         result = UNDERFLOW_RESPONSE;
       }
-        System.out.println("operation "+currentOperation.getName()+" "+result.getGasCost()+" "+frame.getRemainingGas());
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);

@@ -26,7 +26,7 @@ import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
  *   <LI>TBD
  * </UL>
  */
-public class PragueGasCalculator extends CancunGasCalculator {
+public class PragueGasCalculator extends ShanghaiGasCalculator {
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {

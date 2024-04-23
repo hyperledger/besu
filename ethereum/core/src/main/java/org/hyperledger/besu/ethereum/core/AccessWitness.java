@@ -9,6 +9,7 @@ import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.MAIN_STO
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.NONCE_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERSION_LEAF_KEY;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
 import org.hyperledger.besu.datatypes.Address;
 
@@ -114,7 +115,6 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     if (createSendsValue) {
       gas += touchAddressOnWriteAndComputeGas(address, zeroTreeIndex, BALANCE_LEAF_KEY);
     }
-
     return gas;
   }
 
@@ -185,17 +185,24 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
 
   @Override
   public long touchCodeChunks(
-      final Address address, final long offset, final long readSize, final long codeLength) {
+      final Address address, final long startPc, final long readSize, final long codeLength) {
     long gas = 0;
-    if (readSize == 0 || codeLength == 0 || offset > codeLength) {
+    if ((readSize == 0 && codeLength == 0) || startPc > codeLength) {
       return 0;
     }
-    for (long i = offset / 31; i <= (Math.min(offset + readSize, codeLength) - 1) / 31; i++) {
-      gas +=
+    long endPc = startPc+readSize;
+    if(endPc>codeLength){
+      endPc = codeLength;
+    }
+    if(endPc>0){
+      endPc-=1;
+    }
+    for (long i = startPc / 31; i <= endPc/31; i++) {
+      gas = clampedAdd(gas,
           touchAddressOnReadAndComputeGas(
               address,
               CODE_OFFSET.add(i).divide(VERKLE_NODE_WIDTH),
-              CODE_OFFSET.add(i).mod(VERKLE_NODE_WIDTH));
+              CODE_OFFSET.add(i).mod(VERKLE_NODE_WIDTH)));
     }
     return gas;
   }

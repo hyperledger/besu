@@ -295,32 +295,27 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
       final MessageFrame frame, final long codeOffset, final long readSize, final long codeSize) {
     long gasCost = super.pushOperationGasCost(frame, codeOffset, readSize, codeSize);
     if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
-      gasCost =
-          clampedAdd(
-              gasCost,
-              frame
-                  .getAccessWitness()
-                  .touchCodeChunks(frame.getContractAddress(), codeOffset, readSize, codeSize));
-      System.out.println("push "+isPrecompile(frame.getContractAddress())+" "+frame.getContractAddress()+" "+codeOffset+" "+readSize+" "+codeSize+" "+gasCost);
+      if(readSize==1){
+        if( (codeOffset%31==0)){
+          gasCost =
+                  clampedAdd(
+                          gasCost,
+                          frame
+                                  .getAccessWitness()
+                                  .touchCodeChunks(frame.getContractAddress(), codeOffset+1, readSize, codeSize));
+
+        }
+      } else {
+        gasCost =
+                clampedAdd(
+                        gasCost,
+                        frame
+                                .getAccessWitness()
+                                .touchCodeChunks(frame.getContractAddress(), codeOffset, readSize, codeSize));
+
+      }
     }
     return gasCost;
-  }
-
-  @Override
-  public long extCodeSizeOperationGasCost(final MessageFrame frame) {
-    if(!isPrecompile(frame.getContractAddress())) {
-      long gasCost =
-                      frame
-                              .getAccessWitness()
-                              .touchAddressOnReadAndComputeGas(frame.getContractAddress(), UInt256.ZERO, VERSION_LEAF_KEY);
-      return
-              clampedAdd(
-                      gasCost,
-                      frame
-                              .getAccessWitness()
-                              .touchAddressOnReadAndComputeGas(frame.getContractAddress(), UInt256.ZERO, CODE_SIZE_LEAF_KEY));
-    }
-    return 0;
   }
 
   @Override
