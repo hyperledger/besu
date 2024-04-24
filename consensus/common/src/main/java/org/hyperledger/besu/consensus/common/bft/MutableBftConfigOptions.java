@@ -32,8 +32,7 @@ import org.slf4j.LoggerFactory;
  * ForksSchedule}*.
  */
 public class MutableBftConfigOptions implements BftConfigOptions {
-
-  private static final Logger LOG = LoggerFactory.getLogger(MutableBftConfigOptions.class);
+  
   private long epochLength;
   private int blockPeriodSeconds;
   private int emptyBlockPeriodSeconds;
