@@ -191,8 +191,13 @@ public class EVM {
       int opcode;
       int pc = frame.getPC();
 
+      long statelessGas = 0;
       if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
-          frame.getAccessWitness().touchCodeChunks(frame.getContractAddress(), pc, 1, code.length);
+        statelessGas =
+            frame
+                .getAccessWitness()
+                .touchCodeChunks(frame.getContractAddress(), pc, 1, code.length);
+        frame.decrementRemainingGas(statelessGas);
       }
       try {
         opcode = code[pc] & 0xff;
