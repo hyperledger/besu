@@ -39,7 +39,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory.CliqueOptions;
-import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PkiKeystoreConfigurationFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,8 +56,6 @@ import io.vertx.core.Vertx;
 public class BesuNodeFactory {
 
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
-  private final PkiKeystoreConfigurationFactory pkiKeystoreConfigurationFactory =
-      new PkiKeystoreConfigurationFactory();
 
   public BesuNode create(final BesuNodeConfiguration config) throws IOException {
     return new BesuNode(
@@ -94,7 +91,6 @@ public class BesuNodeFactory {
         config.getPrivacyParameters(),
         config.getRunCommand(),
         config.getKeyPair(),
-        config.getPkiKeyStoreConfiguration(),
         config.isStrictTxReplayProtectionEnabled(),
         config.getEnvironment());
   }
@@ -517,31 +513,6 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createPkiQbftJKSNode(final String name) throws IOException {
-    return createPkiQbftNode(KeyStoreWrapper.KEYSTORE_TYPE_JKS, name);
-  }
-
-  public BesuNode createPkiQbftPKCS11Node(final String name) throws IOException {
-    return createPkiQbftNode(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, name);
-  }
-
-  public BesuNode createPkiQbftPKCS12Node(final String name) throws IOException {
-    return createPkiQbftNode(KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, name);
-  }
-
-  public BesuNode createPkiQbftNode(final String type, final String name) throws IOException {
-    return create(
-        new BesuNodeConfigurationBuilder()
-            .name(name)
-            .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
-            .webSocketConfiguration(node.createWebSocketEnabledConfig())
-            .devMode(false)
-            .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig)
-            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig(type, name))
-            .build());
-  }
-
   public BesuNode createCustomGenesisNode(
       final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
     return createCustomGenesisNode(name, genesisPath, canBeBootnode, false);
@@ -696,41 +667,6 @@ public class BesuNodeFactory {
                         asList(validators),
                         nodes,
                         GenesisConfigurationFactory::createQbftValidatorContractGenesisConfig))
-            .build());
-  }
-
-  public BesuNode createPkiQbftJKSNodeWithValidators(final String name, final String... validators)
-      throws IOException {
-    return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_JKS, name, validators);
-  }
-
-  public BesuNode createPkiQbftPKCS11NodeWithValidators(
-      final String name, final String... validators) throws IOException {
-    return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, name, validators);
-  }
-
-  public BesuNode createPkiQbftPKCS12NodeWithValidators(
-      final String name, final String... validators) throws IOException {
-    return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, name, validators);
-  }
-
-  public BesuNode createPkiQbftNodeWithValidators(
-      final String type, final String name, final String... validators) throws IOException {
-
-    return create(
-        new BesuNodeConfigurationBuilder()
-            .name(name)
-            .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
-            .webSocketConfiguration(node.createWebSocketEnabledConfig())
-            .devMode(false)
-            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig(type, name))
-            .genesisConfigProvider(
-                nodes ->
-                    node.createGenesisConfigForValidators(
-                        asList(validators),
-                        nodes,
-                        GenesisConfigurationFactory::createQbftGenesisConfig))
             .build());
   }
 
