@@ -1,11 +1,16 @@
 name: release besu
 on:
+  workflow_run:
+    workflows: ["docker"]
+    types:
+      - completed
   release:
     types: [released]
 env:
   registry: docker.io
 jobs:
   dockerPromoteX64:
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
