@@ -163,6 +163,7 @@ interface GenesisReader {
           Bytes code = null;
           Map<UInt256, UInt256> storage = Map.of();
           Bytes32 privateKey = null;
+          parser.nextToken(); // consume start object
           while (parser.nextToken() != JsonToken.END_OBJECT) {
             switch (normalizeKey(parser.currentName())) {
               case "nonce":
@@ -191,6 +192,10 @@ interface GenesisReader {
                   storage.put(key, value);
                 }
                 break;
+            }
+            if (parser.currentToken() == JsonToken.START_OBJECT) {
+              // ignore any unknown nested object
+              parser.skipChildren();
             }
           }
           parser.nextToken();

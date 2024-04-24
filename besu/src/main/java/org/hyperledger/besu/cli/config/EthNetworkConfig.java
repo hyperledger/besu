@@ -21,7 +21,6 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
@@ -168,8 +167,7 @@ public class EthNetworkConfig {
    */
   public static String jsonConfig(final NetworkName network) {
     try {
-      return Resources.toString(
-          network.getGenesisFileResource(), StandardCharsets.UTF_8);
+      return Resources.toString(network.getGenesisFileResource(), StandardCharsets.UTF_8);
     } catch (IOException e) {
       throw new RuntimeException(e);
     }
