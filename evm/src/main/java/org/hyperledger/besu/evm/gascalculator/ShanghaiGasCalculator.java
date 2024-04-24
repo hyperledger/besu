@@ -174,7 +174,7 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
     if (!transferValue.isZero()) {
       cost =
           clampedAdd(
-              baseCost,
+              cost,
               frame.getAccessWitness().touchAndChargeValueTransfer(recipient.getAddress(), to));
     }
     return cost;
