@@ -148,7 +148,7 @@ public class QbftRound {
     LOG.debug(
             "Creating proposed block blockHeader={}",
             block.getHeader());
-    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
+    updateStateWithProposalAndTransmit(block);
   }
 
   /**
@@ -188,6 +188,17 @@ public class QbftRound {
         blockToPublish,
         roundChangeArtifacts.getRoundChanges(),
         bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
+  }
+
+  /**
+   * Update state with proposal and transmit.
+   *
+   * @param block the block
+   */
+  protected void updateStateWithProposalAndTransmit(
+          final Block block) {
+
+    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
 
   /**
