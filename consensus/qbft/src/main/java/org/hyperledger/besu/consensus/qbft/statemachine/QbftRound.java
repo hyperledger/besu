@@ -158,10 +158,9 @@ public class QbftRound {
    */
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
+    final Block block = createBlock(headerTimeStampSeconds);
 
-    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
-    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
+    sendProposalMessage(block);
   }
 
   /**
@@ -178,7 +177,7 @@ public class QbftRound {
     final Block blockToPublish;
     if (bestPreparedCertificate.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
+      blockToPublish = createBlock(headerTimestamp);
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
