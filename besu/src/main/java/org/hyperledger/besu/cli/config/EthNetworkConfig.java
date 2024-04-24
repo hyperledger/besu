@@ -169,8 +169,8 @@ public class EthNetworkConfig {
   public static String jsonConfig(final NetworkName network) {
     try {
       return Resources.toString(
-          Resources.getResource(network.getGenesisFile()).toURI().toURL(), StandardCharsets.UTF_8);
-    } catch (IOException | URISyntaxException e) {
+          network.getGenesisFileResource(), StandardCharsets.UTF_8);
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
