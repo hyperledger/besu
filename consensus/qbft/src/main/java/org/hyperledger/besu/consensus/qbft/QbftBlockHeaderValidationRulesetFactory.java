@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.ConstantField
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasLimitRangeAndDeltaValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.GasUsageValidationRule;
 import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampBoundedByFutureParameter;
+import org.hyperledger.besu.ethereum.mainnet.headervalidationrules.TimestampMoreRecentThanParent;
 
 import java.util.Optional;
 
@@ -57,8 +58,7 @@ public class QbftBlockHeaderValidationRulesetFactory {
             new GasLimitRangeAndDeltaValidationRule(
                 DEFAULT_MIN_GAS_LIMIT, DEFAULT_MAX_GAS_LIMIT, baseFeeMarket))
         .addRule(new TimestampBoundedByFutureParameter(1))
-        //.addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
-        // removed because of conflict with emptyblockperiodseconds
+        .addRule(new TimestampMoreRecentThanParent(secondsBetweenBlocks))
         .addRule(
             new ConstantFieldValidationRule<>(
                 "MixHash", BlockHeader::getMixHash, BftHelpers.EXPECTED_MIX_HASH))
