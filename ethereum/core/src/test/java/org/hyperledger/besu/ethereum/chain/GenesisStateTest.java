@@ -64,7 +64,7 @@ final class GenesisStateTest {
   @ArgumentsSource(GenesisStateTestArguments.class)
   public void createFromJsonWithAllocs(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis1.json"),
             ProtocolScheduleFixture.MAINNET);
@@ -94,7 +94,7 @@ final class GenesisStateTest {
   @ArgumentsSource(GenesisStateTestArguments.class)
   void createFromJsonNoAllocs(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis2.json"),
             ProtocolScheduleFixture.MAINNET);
@@ -112,7 +112,7 @@ final class GenesisStateTest {
       final String sourceFile,
       final String blockHash) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource(sourceFile),
             ProtocolScheduleFixture.MAINNET);
@@ -147,7 +147,7 @@ final class GenesisStateTest {
   @ArgumentsSource(GenesisStateTestArguments.class)
   void createFromJsonWithNonce(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesisNonce.json"),
             ProtocolScheduleFixture.MAINNET);
@@ -162,7 +162,7 @@ final class GenesisStateTest {
   @ArgumentsSource(GenesisStateTestArguments.class)
   void encodeOlympicBlock(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis-olympic.json"),
             ProtocolScheduleFixture.MAINNET);
@@ -182,7 +182,7 @@ final class GenesisStateTest {
   @ArgumentsSource(GenesisStateTestArguments.class)
   void genesisFromShanghai(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis_shanghai.json"),
             ProtocolScheduleFixture.MAINNET);
@@ -231,7 +231,7 @@ final class GenesisStateTest {
   @ArgumentsSource(GenesisStateTestArguments.class)
   void genesisFromCancun(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis_cancun.json"),
             ProtocolScheduleFixture.MAINNET);
@@ -280,7 +280,7 @@ final class GenesisStateTest {
   @ArgumentsSource(GenesisStateTestArguments.class)
   void genesisFromPrague(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
             GenesisStateTest.class.getResource("genesis_prague.json"),
             ProtocolScheduleFixture.MAINNET);

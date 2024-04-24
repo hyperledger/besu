@@ -35,7 +35,7 @@ import com.google.common.io.Resources;
 /** The Eth network config. */
 public class EthNetworkConfig {
 
-  private final GenesisConfigOptions genesisConfig;
+  private final GenesisConfigFile genesisConfig;
   private final BigInteger networkId;
   private final List<EnodeURL> bootNodes;
   private final String dnsDiscoveryUrl;
@@ -49,7 +49,7 @@ public class EthNetworkConfig {
    * @param dnsDiscoveryUrl the dns discovery url
    */
   public EthNetworkConfig(
-      final GenesisConfigOptions genesisConfig,
+      final GenesisConfigFile genesisConfig,
       final BigInteger networkId,
       final List<EnodeURL> bootNodes,
       final String dnsDiscoveryUrl) {
@@ -66,7 +66,7 @@ public class EthNetworkConfig {
    *
    * @return the genesis config
    */
-  public GenesisConfigOptions getGenesisConfig() {
+  public GenesisConfigFile getGenesisConfig() {
     return genesisConfig;
   }
 
@@ -150,7 +150,7 @@ public class EthNetworkConfig {
                     strings.stream().map(EnodeURLImpl::fromString).collect(Collectors.toList()))
             .orElse(Collections.emptyList());
     return new EthNetworkConfig(
-        genesisConfigOptions,
+        genesisConfigFile,
         networkName.getNetworkId(),
         bootNodes,
         genesisConfigOptions.getDiscoveryOptions().getDiscoveryDnsUrl().orElse(null));
@@ -163,13 +163,9 @@ public class EthNetworkConfig {
   /**
    * Json config string.
    *
-   * @param network the network
+   * @param network the named network
    * @return the string
    */
-  public static URL jsonConfigSource(final NetworkName network) {
-    return jsonConfigSource(network.getGenesisFile());
-  }
-
   public static String jsonConfig(final NetworkName network) {
     try {
       return Resources.toString(
@@ -183,7 +179,7 @@ public class EthNetworkConfig {
   public static class Builder {
 
     private String dnsDiscoveryUrl;
-    private GenesisConfigOptions genesisConfig;
+    private GenesisConfigFile genesisConfig;
     private BigInteger networkId;
     private List<EnodeURL> bootNodes;
 
@@ -205,7 +201,7 @@ public class EthNetworkConfig {
      * @param genesisConfig the genesis config
      * @return the genesis config
      */
-    public Builder setGenesisConfig(final GenesisConfigOptions genesisConfig) {
+    public Builder setGenesisConfig(final GenesisConfigFile genesisConfig) {
       this.genesisConfig = genesisConfig;
       return this;
     }

@@ -23,17 +23,29 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
+import java.util.Set;
+import java.util.function.Function;
 
+import com.fasterxml.jackson.core.JsonFactory;
+import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.filter.FilteringParserDelegate;
+import com.fasterxml.jackson.core.filter.TokenFilter;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.JsonNodeType;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.apache.tuweni.bytes.Bytes;
 
 /** The Json util class. */
 public class JsonUtil {
+  private static final JsonFactory JSON_FACTORY =
+      JsonFactory.builder()
+          .disable(JsonFactory.Feature.INTERN_FIELD_NAMES)
+          .disable(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES)
+          .build();
 
   /**
    * Converts all the object keys (but none of the string values) to lowercase for easier lookup.
@@ -51,7 +63,7 @@ public class JsonUtil {
             entry -> {
               final String key = entry.getKey();
               final JsonNode value = entry.getValue();
-              final String normalizedKey = key.toLowerCase(Locale.US);
+              final String normalizedKey = normalizeKey(key);
               if (value instanceof ObjectNode) {
                 normalized.set(normalizedKey, normalizeKeys((ObjectNode) value));
               } else if (value instanceof ArrayNode) {
@@ -61,6 +73,17 @@ public class JsonUtil {
               }
             });
     return normalized;
+  }
+
+  /**
+   * Converts the key to lowercase for easier lookup. This is useful in cases such as the
+   * 'genesis.json' file where all keys are assumed to be case insensitive.
+   *
+   * @param key the key to be normalized
+   * @return key in lower case.
+   */
+  public static String normalizeKey(final String key) {
+    return key.toLowerCase(Locale.US);
   }
 
   private static ArrayNode normalizeKeysInArray(final ArrayNode arrayNode) {
@@ -262,6 +285,35 @@ public class JsonUtil {
   }
 
   /**
+   * Gets Bytes.
+   *
+   * @param json the json
+   * @param key the key
+   * @return the Bytes
+   */
+  public static Optional<Bytes> getBytes(final ObjectNode json, final String key) {
+    return getParsedValue(json, key, Bytes::fromHexString);
+  }
+
+  /**
+   * Gets Wei.
+   *
+   * @param json the json
+   * @param key the key
+   * @param defaultValue the default value
+   * @return the Wei
+   */
+  public static Bytes getBytes(final ObjectNode json, final String key, final Bytes defaultValue) {
+    return getBytes(json, key).orElse(defaultValue);
+  }
+
+  private static <T> Optional<T> getParsedValue(
+      final ObjectNode json, final String name, final Function<String, T> parser) {
+
+    return getValue(json, name).map(JsonNode::asText).map(parser);
+  }
+
+  /**
    * Create empty object node object node.
    *
    * @return the object node
@@ -288,7 +340,7 @@ public class JsonUtil {
    * @return the object node
    */
   public static ObjectNode objectNodeFromMap(final Map<String, Object> map) {
-    return (ObjectNode) getObjectMapper().valueToTree(map);
+    return getObjectMapper().valueToTree(map);
   }
 
   /**
@@ -306,18 +358,15 @@ public class JsonUtil {
    *
    * @param jsonData the json data
    * @param allowComments true to allow comments
+   * @param excludeFields names of the fields to not read
    * @return the object node
    */
   public static ObjectNode objectNodeFromString(
-      final String jsonData, final boolean allowComments) {
-    final ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.configure(Feature.ALLOW_COMMENTS, allowComments);
+      final String jsonData, final boolean allowComments, final String... excludeFields) {
     try {
-      final JsonNode jsonNode = objectMapper.readTree(jsonData);
-      validateType(jsonNode, JsonNodeType.OBJECT);
-      return (ObjectNode) jsonNode;
-    } catch (final IOException e) {
-      // Reading directly from a string should not raise an IOException, just catch and rethrow
+      return objectNodeFromParser(
+          JSON_FACTORY.createParser(jsonData), allowComments, excludeFields);
+    } catch (IOException e) {
       throw new RuntimeException(e);
     }
   }
@@ -327,17 +376,57 @@ public class JsonUtil {
    *
    * @param jsonSource the json data
    * @param allowComments true to allow comments
+   * @param excludeFields names of the fields to not read
    * @return the object node
    */
-  public static ObjectNode objectNodeFromString(final URL jsonSource, final boolean allowComments) {
-    final ObjectMapper objectMapper = new ObjectMapper();
-    objectMapper.configure(Feature.ALLOW_COMMENTS, allowComments);
+  public static ObjectNode objectNodeFromURL(
+      final URL jsonSource, final boolean allowComments, final String... excludeFields) {
     try {
-      final JsonNode jsonNode = objectMapper.readTree(jsonSource);
+      return objectNodeFromParser(
+          JSON_FACTORY.createParser(jsonSource).enable(Feature.AUTO_CLOSE_SOURCE),
+          allowComments,
+          excludeFields);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Get a JsonParser to parse JSON from URL.
+   *
+   * @param jsonSource the json source
+   * @param allowComments true to allow comments
+   * @return the json parser
+   */
+  public static JsonParser jsonParserFromURL(final URL jsonSource, final boolean allowComments) {
+    try {
+      return JSON_FACTORY
+          .createParser(jsonSource)
+          .enable(Feature.AUTO_CLOSE_SOURCE)
+          .configure(Feature.ALLOW_COMMENTS, allowComments);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private static ObjectNode objectNodeFromParser(
+      final JsonParser baseParser, final boolean allowComments, final String... excludeFields) {
+    try {
+      final var parser =
+          excludeFields.length > 0
+              ? new FilteringParserDelegate(
+                  baseParser,
+                  new NameExcludeFilter(excludeFields),
+                  TokenFilter.Inclusion.INCLUDE_ALL_AND_PATH,
+                  true)
+              : baseParser;
+      parser.configure(Feature.ALLOW_COMMENTS, allowComments);
+
+      final ObjectMapper objectMapper = new ObjectMapper();
+      final JsonNode jsonNode = objectMapper.readTree(parser);
       validateType(jsonNode, JsonNodeType.OBJECT);
       return (ObjectNode) jsonNode;
     } catch (final IOException e) {
-      // Reading directly from a string should not raise an IOException, just catch and rethrow
       throw new RuntimeException(e);
     }
   }
@@ -476,15 +565,41 @@ public class JsonUtil {
 
   private static boolean validateLong(final JsonNode node) {
     if (!node.canConvertToLong()) {
-      throw new IllegalArgumentException("Cannot convert value to long: " + node.toString());
+      throw new IllegalArgumentException("Cannot convert value to long: " + node);
     }
     return true;
   }
 
   private static boolean validateInt(final JsonNode node) {
     if (!node.canConvertToInt()) {
-      throw new IllegalArgumentException("Cannot convert value to integer: " + node.toString());
+      throw new IllegalArgumentException("Cannot convert value to integer: " + node);
     }
     return true;
+  }
+
+  private static class NameExcludeFilter extends TokenFilter {
+    private final Set<String> names;
+
+    public NameExcludeFilter(final String... names) {
+      this.names = Set.of(names);
+    }
+
+    @Override
+    public TokenFilter includeProperty(final String name) {
+      if (names.contains(name)) {
+        return null;
+      }
+      return this;
+    }
+
+    @Override
+    public boolean includeEmptyObject(final boolean contentsFiltered) {
+      return !contentsFiltered;
+    }
+
+    @Override
+    public boolean includeEmptyArray(final boolean contentsFiltered) {
+      return !contentsFiltered;
+    }
   }
 }

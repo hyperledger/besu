@@ -21,7 +21,7 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisAllocation;
+import org.hyperledger.besu.config.GenesisAccount;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
@@ -86,7 +86,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -99,10 +98,10 @@ public abstract class AbstractIsolationTests {
   protected ProtocolContext protocolContext;
   protected EthContext ethContext;
   protected EthScheduler ethScheduler = new DeterministicEthScheduler();
-  final Function<String, KeyPair> asKeyPair =
+  final Function<Bytes32, KeyPair> asKeyPair =
       key ->
           SignatureAlgorithmFactory.getInstance()
-              .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
+              .createKeyPair(SECPPrivateKey.create(key, "ECDSA"));
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           GenesisConfigFile.development().getConfigOptions(),
@@ -139,13 +138,13 @@ public abstract class AbstractIsolationTests {
               new BlobCache(),
               MiningParameters.newDefault()));
 
-  protected final List<GenesisAllocation> accounts =
+  protected final List<GenesisAccount> accounts =
       GenesisConfigFile.development()
           .streamAllocations()
-          .filter(ga -> ga.getPrivateKey().isPresent())
-          .collect(Collectors.toList());
+          .filter(ga -> ga.privateKey() != null)
+          .toList();
 
-  KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
+  KeyPair sender1 = Optional.ofNullable(accounts.get(0).privateKey()).map(asKeyPair).orElseThrow();
   TransactionPool transactionPool;
 
   @TempDir private Path tempData;

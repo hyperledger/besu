@@ -33,7 +33,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class IbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuilderTest {
 
   @Override
-  public void setupBftGenesisConfigOptions() throws JsonProcessingException {
+  public void setupBftGenesisConfigFile() throws JsonProcessingException {
 
     // Ibft prepForBuild setup
     lenient()

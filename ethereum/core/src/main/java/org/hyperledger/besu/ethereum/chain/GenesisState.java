@@ -17,12 +17,11 @@ package org.hyperledger.besu.ethereum.chain;
 import static java.util.Collections.emptyList;
 import static org.hyperledger.besu.ethereum.trie.common.GenesisWorldStateProvider.createGenesisWorldState;
 
-import org.hyperledger.besu.config.GenesisAllocation;
+import org.hyperledger.besu.config.GenesisAccount;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -39,34 +38,37 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
-import java.math.BigInteger;
 import java.net.URL;
-import java.util.HashMap;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.MoreObjects;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.units.bigints.UInt256;
 
 public final class GenesisState {
 
   private final Block block;
-  private final List<GenesisAccount> genesisAccounts;
+  private final GenesisConfigFile genesisConfigFile;
+  private final Optional<GenesisStateData> maybeGenesisStateData;
 
-  private GenesisState(final Block block, final List<GenesisAccount> genesisAccounts) {
-    this.block = block;
-    this.genesisAccounts = genesisAccounts;
+  private GenesisState(final Block block, final GenesisConfigFile genesisConfigFile) {
+    this(block, genesisConfigFile, Optional.empty());
   }
 
-  private GenesisState(final Block block) {
-    this(block, null);
+  private GenesisState(
+      final Block block,
+      final GenesisConfigFile genesisConfigFile,
+      final Optional<GenesisStateData> genesisStateData) {
+    this.block = block;
+    this.maybeGenesisStateData = genesisStateData;
+    this.genesisConfigFile = genesisConfigFile;
   }
 
   /**
@@ -76,33 +78,30 @@ public final class GenesisState {
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromJson(final URL json, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(GenesisConfigFile.fromConfig(json), protocolSchedule);
-  }
-
   public static GenesisState fromJson(final String json, final ProtocolSchedule protocolSchedule) {
     return fromConfig(GenesisConfigFile.fromConfig(json), protocolSchedule);
   }
 
   /**
-   * Construct a {@link GenesisState} from a JSON string.
+   * Construct a {@link GenesisState} from a URL
    *
    * @param dataStorageConfiguration A {@link DataStorageConfiguration} describing the storage
    *     configuration
-   * @param json A JSON string describing the genesis block
+   * @param jsonSource A URL pointing to JSON genesis file
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromJson(
+  @VisibleForTesting
+  static GenesisState fromJsonSource(
       final DataStorageConfiguration dataStorageConfiguration,
-      final URL json,
+      final URL jsonSource,
       final ProtocolSchedule protocolSchedule) {
     return fromConfig(
-        dataStorageConfiguration, GenesisConfigFile.fromConfig(json), protocolSchedule);
+        dataStorageConfiguration, GenesisConfigFile.fromConfig(jsonSource), protocolSchedule);
   }
 
   /**
-   * Construct a {@link GenesisState} from a JSON object.
+   * Construct a {@link GenesisState} from a genesis file object.
    *
    * @param config A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
@@ -118,40 +117,40 @@ public final class GenesisState {
    *
    * @param dataStorageConfiguration A {@link DataStorageConfiguration} describing the storage
    *     configuration
-   * @param config A {@link GenesisConfigFile} describing the genesis block.
+   * @param genesisConfigFile A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
       final DataStorageConfiguration dataStorageConfiguration,
-      final GenesisConfigFile config,
+      final GenesisConfigFile genesisConfigFile,
       final ProtocolSchedule protocolSchedule) {
-    final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
+    final var genesisStateData =
+        calculateGenesisStateData(dataStorageConfiguration, genesisConfigFile);
     final Block block =
         new Block(
-            buildHeader(
-                config,
-                calculateGenesisStateHash(dataStorageConfiguration, genesisAccounts),
-                protocolSchedule),
-            buildBody(config));
-    return new GenesisState(block, genesisAccounts);
+            buildHeader(genesisConfigFile, genesisStateData.rootHash(), protocolSchedule),
+            buildBody(genesisConfigFile));
+    return new GenesisState(block, genesisConfigFile, Optional.of(genesisStateData));
   }
 
   /**
    * Construct a {@link GenesisState} from a JSON object.
    *
    * @param genesisStateHash The hash of the genesis state.
-   * @param config A {@link GenesisConfigFile} describing the genesis block.
+   * @param genesisConfigFile A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
-  public static GenesisState fromConfig(
+  public static GenesisState fromStorage(
       final Hash genesisStateHash,
-      final GenesisConfigFile config,
+      final GenesisConfigFile genesisConfigFile,
       final ProtocolSchedule protocolSchedule) {
     final Block block =
-        new Block(buildHeader(config, genesisStateHash, protocolSchedule), buildBody(config));
-    return new GenesisState(block);
+        new Block(
+            buildHeader(genesisConfigFile, genesisStateHash, protocolSchedule),
+            buildBody(genesisConfigFile));
+    return new GenesisState(block, genesisConfigFile);
   }
 
   private static BlockBody buildBody(final GenesisConfigFile config) {
@@ -175,35 +174,42 @@ public final class GenesisState {
    * @param target WorldView to write genesis state to
    */
   public void writeStateTo(final MutableWorldState target) {
-    if (genesisAccounts == null) {
-      throw new IllegalStateException("Accounts not loaded from genesis file");
-    }
-    writeAccountsTo(target, genesisAccounts, block.getHeader());
+    writeAccountsTo(target, getGenesisAccountsStream(), block.getHeader());
+  }
+
+  private Stream<GenesisAccount> getGenesisAccountsStream() {
+    return maybeGenesisStateData
+        .map(GenesisStateData::genesisAccounts)
+        .map(List::stream)
+        .orElseGet(() -> genesisConfigFile.streamAllocations());
   }
 
   private static void writeAccountsTo(
       final MutableWorldState target,
-      final List<GenesisAccount> genesisAccounts,
+      final Stream<GenesisAccount> genesisAccounts,
       final BlockHeader rootHeader) {
     final WorldUpdater updater = target.updater();
     genesisAccounts.forEach(
         genesisAccount -> {
-          final MutableAccount account = updater.getOrCreate(genesisAccount.address);
-          account.setNonce(genesisAccount.nonce);
-          account.setBalance(genesisAccount.balance);
-          account.setCode(genesisAccount.code);
-          genesisAccount.storage.forEach(account::setStorageValue);
+          final MutableAccount account = updater.createAccount(genesisAccount.address());
+          account.setNonce(genesisAccount.nonce());
+          account.setBalance(genesisAccount.balance());
+          account.setCode(genesisAccount.code());
+          genesisAccount.storage().forEach(account::setStorageValue);
         });
     updater.commit();
     target.persist(rootHeader);
   }
 
-  private static Hash calculateGenesisStateHash(
+  private static GenesisStateData calculateGenesisStateData(
       final DataStorageConfiguration dataStorageConfiguration,
-      final List<GenesisAccount> genesisAccounts) {
+      final GenesisConfigFile genesisConfigFile) {
     try (var worldState = createGenesisWorldState(dataStorageConfiguration)) {
-      writeAccountsTo(worldState, genesisAccounts, null);
-      return worldState.rootHash();
+      final var cachedGenesisAccounts = new ArrayList<GenesisAccount>();
+      final var cachingGenesisAccountsStream =
+          genesisConfigFile.streamAllocations().peek(ga -> cachedGenesisAccounts.add(ga));
+      writeAccountsTo(worldState, cachingGenesisAccountsStream, null);
+      return new GenesisStateData(worldState.rootHash(), cachedGenesisAccounts);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -279,10 +285,6 @@ public final class GenesisState {
     return withNiceErrorMessage("mixHash", genesis.getMixHash(), Hash::fromHexStringLenient);
   }
 
-  private static Stream<GenesisAccount> parseAllocations(final GenesisConfigFile genesis) {
-    return genesis.streamAllocations().map(GenesisAccount::fromAllocation);
-  }
-
   private static long parseNonce(final GenesisConfigFile genesis) {
     return withNiceErrorMessage("nonce", genesis.getNonce(), GenesisState::parseUnsignedLong);
   }
@@ -356,73 +358,9 @@ public final class GenesisState {
   public String toString() {
     return MoreObjects.toStringHelper(this)
         .add("block", block)
-        .add("genesisAccounts", genesisAccounts == null ? "not loaded" : genesisAccounts)
+        .add("genesisStateDate", maybeGenesisStateData)
         .toString();
   }
 
-  private static final class GenesisAccount {
-
-    final long nonce;
-    final Address address;
-    final Wei balance;
-    final Map<UInt256, UInt256> storage;
-    final Bytes code;
-
-    static GenesisAccount fromAllocation(final GenesisAllocation allocation) {
-      return new GenesisAccount(
-          allocation.getNonce(),
-          allocation.getAddress(),
-          allocation.getBalance(),
-          allocation.getStorage(),
-          allocation.getCode());
-    }
-
-    private GenesisAccount(
-        final String hexNonce,
-        final String hexAddress,
-        final String balance,
-        final Map<String, String> storage,
-        final String hexCode) {
-      this.nonce = withNiceErrorMessage("nonce", hexNonce, GenesisState::parseUnsignedLong);
-      this.address = withNiceErrorMessage("address", hexAddress, Address::fromHexString);
-      this.balance = withNiceErrorMessage("balance", balance, this::parseBalance);
-      this.code = hexCode != null ? Bytes.fromHexString(hexCode) : null;
-      this.storage = parseStorage(storage);
-    }
-
-    private Wei parseBalance(final String balance) {
-      final BigInteger val;
-      if (balance.startsWith("0x")) {
-        val = new BigInteger(1, Bytes.fromHexStringLenient(balance).toArrayUnsafe());
-      } else {
-        val = new BigInteger(balance);
-      }
-
-      return Wei.of(val);
-    }
-
-    private Map<UInt256, UInt256> parseStorage(final Map<String, String> storage) {
-      final Map<UInt256, UInt256> parsedStorage = new HashMap<>();
-      storage.forEach(
-          (key1, value1) -> {
-            final UInt256 key = withNiceErrorMessage("storage key", key1, UInt256::fromHexString);
-            final UInt256 value =
-                withNiceErrorMessage("storage value", value1, UInt256::fromHexString);
-            parsedStorage.put(key, value);
-          });
-
-      return parsedStorage;
-    }
-
-    @Override
-    public String toString() {
-      return MoreObjects.toStringHelper(this)
-          .add("address", address)
-          .add("nonce", nonce)
-          .add("balance", balance)
-          .add("storage", storage)
-          .add("code", code)
-          .toString();
-    }
-  }
+  private record GenesisStateData(Hash rootHash, List<GenesisAccount> genesisAccounts) {}
 }

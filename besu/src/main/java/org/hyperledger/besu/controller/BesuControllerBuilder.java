@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -117,8 +118,11 @@ import org.slf4j.LoggerFactory;
 public abstract class BesuControllerBuilder implements MiningParameterOverrides {
   private static final Logger LOG = LoggerFactory.getLogger(BesuControllerBuilder.class);
 
-  protected GenesisConfigOptions genesisConfigOptions;
+  /** The genesis file */
   protected GenesisConfigFile genesisConfigFile;
+
+  /** The genesis config options; */
+  protected GenesisConfigOptions genesisConfigOptions;
 
   /** The is genesis state hash from data. */
   protected boolean genesisStateHashCacheEnabled;
@@ -230,19 +234,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param genesisConfig the genesis config
    * @return the besu controller builder
    */
-  public BesuControllerBuilder genesisConfigOptions(final GenesisConfigOptions genesisConfig) {
-    this.genesisConfigOptions = genesisConfig;
-    return this;
-  }
-
-  /**
-   * Genesis config file besu controller builder.
-   *
-   * @param genesisConfigFile the genesis config
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder genesisConfigOptions(final GenesisConfigFile genesisConfigFile) {
-    this.genesisConfigFile = genesisConfigFile;
+  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
+    this.genesisConfigFile = genesisConfig;
+    this.genesisConfigOptions = genesisConfig.getConfigOptions();
     return this;
   }
 
@@ -536,7 +530,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @return the besu controller
    */
   public BesuController build() {
-    checkNotNull(genesisConfigOptions, "Missing genesis config");
+    checkNotNull(genesisConfigFile, "Missing genesis config file");
+    checkNotNull(genesisConfigOptions, "Missing genesis config options");
     checkNotNull(syncConfig, "Missing sync config");
     checkNotNull(ethereumWireProtocolConfiguration, "Missing ethereum protocol configuration");
     checkNotNull(networkId, "Missing network ID");
@@ -558,14 +553,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
 
-    final GenesisState genesisState = getGenesisState(variablesStorage, protocolSchedule);
-
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration);
 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(
             protocolSchedule, variablesStorage, dataStorageConfiguration);
+
+    final var maybeStoredGenesisBlockHash = blockchainStorage.getBlockHash(0L);
+
+    final var genesisState =
+        getGenesisState(
+            maybeStoredGenesisBlockHash.flatMap(blockchainStorage::getBlockHeader),
+            protocolSchedule);
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -575,7 +575,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString(),
             numberOfBlocksToCache);
-
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
@@ -585,7 +584,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createWorldStateArchive(
             worldStateStorageCoordinator, blockchain, bonsaiCachedMerkleTrieLoader);
 
-    if (blockchain.getChainHeadBlockNumber() < 1) {
+    if (maybeStoredGenesisBlockHash.isEmpty()) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
     }
 
@@ -757,23 +756,17 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   private GenesisState getGenesisState(
-      final VariablesStorage variablesStorage, final ProtocolSchedule protocolSchedule) {
+      final Optional<BlockHeader> maybeGenesisBlockHeader,
+      final ProtocolSchedule protocolSchedule) {
     Optional<Hash> genesisStateHash = Optional.empty();
-    if (this.genesisStateHashCacheEnabled) {
-      genesisStateHash = variablesStorage.getGenesisStateHash();
+    if (genesisStateHashCacheEnabled) {
+      genesisStateHash = maybeGenesisBlockHeader.map(BlockHeader::getStateRoot);
     }
 
     if (genesisStateHash.isPresent()) {
-      return GenesisState.fromConfig(genesisStateHash.get(), genesisConfigFile, protocolSchedule);
+      return GenesisState.fromStorage(genesisStateHash.get(), genesisConfigFile, protocolSchedule);
     }
-    final var genesisState =
-        GenesisState.fromConfig(dataStorageConfiguration, genesisConfigFile, protocolSchedule);
-    VariablesStorage.Updater updater = variablesStorage.updater();
-    if (updater != null) {
-      updater.setGenesisStateHash(genesisState.getBlock().getHeader().getStateRoot());
-      updater.commit();
-    }
-    return genesisState;
+    return GenesisState.fromConfig(dataStorageConfiguration, genesisConfigFile, protocolSchedule);
   }
 
   private TrieLogPruner createTrieLogPruner(
