@@ -72,13 +72,11 @@ public class MutableBftConfigOptions implements BftConfigOptions {
 
   @Override
   public int getBlockPeriodSeconds() {
-    LOG.debug("GET BLOCKPERIODSECONDS: " + blockPeriodSeconds);
     return blockPeriodSeconds;
   }
 
   @Override
   public int getEmptyBlockPeriodSeconds() {
-    LOG.debug("GET EMPTYBLOCKPERIODSECONDS: " + emptyBlockPeriodSeconds);
     return emptyBlockPeriodSeconds;
   }
 
@@ -142,7 +140,6 @@ public class MutableBftConfigOptions implements BftConfigOptions {
    * @param blockPeriodSeconds the block period seconds
    */
   public void setBlockPeriodSeconds(final int blockPeriodSeconds) {
-    LOG.info("SET BLOCKPERIODSECONDS: " + blockPeriodSeconds);
     this.blockPeriodSeconds = blockPeriodSeconds;
   }
 
@@ -152,7 +149,6 @@ public class MutableBftConfigOptions implements BftConfigOptions {
    * @param emptyBlockPeriodSeconds the empty block period seconds
    */
   public void setEmptyBlockPeriodSeconds(final int emptyBlockPeriodSeconds) {
-    LOG.info("SET EMPTYBLOCKPERIODSECONDS: " + emptyBlockPeriodSeconds);
     this.emptyBlockPeriodSeconds = emptyBlockPeriodSeconds;
   }
 
