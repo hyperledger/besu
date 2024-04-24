@@ -326,7 +326,6 @@ public class BlockTransactionSelector {
     final BlockHashLookup blockHashLookup =
         new CachingBlockHashLookup(blockSelectionContext.processableBlockHeader(), blockchain);
     return transactionProcessor.processTransaction(
-        blockchain,
         worldStateUpdater,
         blockSelectionContext.processableBlockHeader(),
         pendingTransaction.getTransaction(),

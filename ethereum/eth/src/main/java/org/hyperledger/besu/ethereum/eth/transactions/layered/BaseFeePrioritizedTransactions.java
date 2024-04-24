@@ -149,6 +149,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
   @Override
   protected boolean promotionFilter(final PendingTransaction pendingTransaction) {
+
     // check if the tx is willing to pay at least the base fee
     if (nextBlockBaseFee
         .map(pendingTransaction.getTransaction().getMaxGasPrice()::lessThan)

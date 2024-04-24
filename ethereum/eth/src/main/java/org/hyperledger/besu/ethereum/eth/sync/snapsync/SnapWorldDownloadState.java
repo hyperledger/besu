@@ -46,7 +46,6 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
@@ -86,7 +85,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   // blockchain
   private final Blockchain blockchain;
-  private OptionalLong blockObserverId;
+  private final Long blockObserverId;
 
   // metrics around the snapsync
   private final SnapSyncMetricsManager metricsManager;
@@ -111,7 +110,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.blockchain = blockchain;
     this.snapSyncState = snapSyncState;
     this.metricsManager = metricsManager;
-    this.blockObserverId = OptionalLong.empty();
+    this.blockObserverId = blockchain.observeBlockAdded(createBlockchainObserver());
+
     metricsManager
         .getMetricsSystem()
         .createLongGauge(
@@ -174,11 +174,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
       // if all snapsync tasks are completed and the healing process was not running
       if (!snapSyncState.isHealTrieInProgress()) {
-        // Register blockchain observer if not already registered
-        blockObserverId =
-            blockObserverId.isEmpty()
-                ? OptionalLong.of(blockchain.observeBlockAdded(createBlockchainObserver()))
-                : blockObserverId;
         // Start the healing process
         startTrieHeal();
       }
@@ -192,8 +187,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       // if all snapsync tasks are completed and the healing was running and the blockchain is not
       // behind the pivot block
       else {
-        // Remove the blockchain observer
-        blockObserverId.ifPresent(blockchain::removeObserver);
         // If the flat database healing process is not in progress and the flat database mode is
         // FULL
         if (!snapSyncState.isHealFlatDatabaseInProgress()
@@ -213,6 +206,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
               });
           updater.commit();
 
+          // Remove the blockchain observer
+          blockchain.removeObserver(blockObserverId);
           // Notify that the snap sync has completed
           metricsManager.notifySnapSyncCompleted();
           // Clear the snap context
@@ -441,9 +436,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final boolean isBlockchainCaughtUp =
           snapSyncState.isWaitingBlockchain() && !pivotBlockSelector.isBlockchainBehind();
 
-      if (isNewPivotBlockFound
-          || isBlockchainCaughtUp) { // restart heal if we found a new pivot block or if close to
-        // head again
+      if (snapSyncState.isHealTrieInProgress() && (isNewPivotBlockFound || isBlockchainCaughtUp)) {
         snapSyncState.setWaitingBlockchain(false);
         reloadTrieHeal();
       }

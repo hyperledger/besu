@@ -84,4 +84,24 @@ public interface BesuPlugin {
    * started.
    */
   void stop();
+
+  /**
+   * Retrieves the version information of the plugin. It constructs a version string using the
+   * implementation title and version from the package information. If either the title or version
+   * is not available, it defaults to the class's simple name and "Unknown Version", respectively.
+   *
+   * @return A string representing the plugin's version information, formatted as "Title/vVersion".
+   */
+  default String getVersion() {
+    Package pluginPackage = this.getClass().getPackage();
+    String implTitle =
+        Optional.ofNullable(pluginPackage.getImplementationTitle())
+            .filter(title -> !title.isBlank())
+            .orElseGet(() -> this.getClass().getSimpleName());
+    String implVersion =
+        Optional.ofNullable(pluginPackage.getImplementationVersion())
+            .filter(version -> !version.isBlank())
+            .orElse("<Unknown Version>");
+    return implTitle + "/v" + implVersion;
+  }
 }
