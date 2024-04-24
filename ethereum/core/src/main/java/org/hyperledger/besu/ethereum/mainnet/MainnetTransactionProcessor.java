@@ -487,7 +487,7 @@ public class MainnetTransactionProcessor {
 
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
-      clearEmptyAccountStrategy.process(worldUpdater);
+      clearEmptyAccountStrategy.process(worldState);
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         return TransactionProcessingResult.successful(
