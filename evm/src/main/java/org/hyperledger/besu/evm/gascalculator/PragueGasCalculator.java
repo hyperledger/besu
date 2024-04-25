@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+
 import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
 
 /**
@@ -27,7 +30,7 @@ import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
  * </UL>
  */
 public class PragueGasCalculator extends CancunGasCalculator {
-
+  private final int AUTH_OP_FIXED_FEE = 3100;
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
     this(KZG_POINT_EVAL.toArrayUnsafe()[19]);
@@ -40,5 +43,13 @@ public class PragueGasCalculator extends CancunGasCalculator {
    */
   protected PragueGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
+  }
+
+  @Override
+  public long authOperationGasCost(final MessageFrame frame, final long offset, final long length, final Address authority) {
+    final long memoryExpansionGasCost = memoryExpansionGasCost(frame, offset, length);
+    final long accessFee = frame.isAddressWarm(authority) ? 100 : 2600;
+    final long gasCost = AUTH_OP_FIXED_FEE + memoryExpansionGasCost + accessFee;
+    return gasCost;
   }
 }
