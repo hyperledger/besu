@@ -15,6 +15,10 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.TransactionType.ACCESS_LIST;
+import static org.hyperledger.besu.datatypes.TransactionType.BLOB;
+import static org.hyperledger.besu.datatypes.TransactionType.EIP1559;
+import static org.hyperledger.besu.datatypes.TransactionType.FRONTIER;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S1;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S2;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S3;
@@ -27,6 +31,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -51,7 +56,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -59,52 +63,32 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class LayersTest extends BaseTransactionPoolTest {
   private static final int MAX_PRIO_TRANSACTIONS = 3;
   private static final int MAX_FUTURE_FOR_SENDER = 10;
+  private static final Wei BASE_FEE = Wei.ONE;
+  private static final Wei MIN_GAS_PRICE = BASE_FEE;
 
-  private final TransactionPoolConfiguration poolConfig =
+  private static final TransactionPoolConfiguration DEFAULT_TX_POOL_CONFIG =
       ImmutableTransactionPoolConfiguration.builder()
           .maxPrioritizedTransactions(MAX_PRIO_TRANSACTIONS)
+          .maxPrioritizedTransactionsByType(Map.of(BLOB, 1))
           .maxFutureBySender(MAX_FUTURE_FOR_SENDER)
           .pendingTransactionsLayerMaxCapacityBytes(
-              new PendingTransaction.Remote(createEIP1559Transaction(0, KEYS1, 1)).memorySize() * 3)
+              new PendingTransaction.Remote(
+                          new BaseTransactionPoolTest().createEIP1559Transaction(0, KEYS1, 1))
+                      .memorySize()
+                  * 3L)
           .build();
 
-  private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
-
-  private final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
-  private final SparseTransactions sparseTransactions =
-      new SparseTransactions(
-          poolConfig,
-          evictCollector,
-          txPoolMetrics,
-          this::transactionReplacementTester,
-          new BlobCache());
-
-  private final ReadyTransactions readyTransactions =
-      new ReadyTransactions(
-          poolConfig,
-          sparseTransactions,
-          txPoolMetrics,
-          this::transactionReplacementTester,
-          new BlobCache());
-
-  private final BaseFeePrioritizedTransactions prioritizedTransactions =
-      new BaseFeePrioritizedTransactions(
-          poolConfig,
-          LayersTest::mockBlockHeader,
-          readyTransactions,
-          txPoolMetrics,
-          this::transactionReplacementTester,
-          FeeMarket.london(0L),
-          new BlobCache(),
-          MiningParameters.newDefault());
-
-  private final LayeredPendingTransactions pendingTransactions =
-      new LayeredPendingTransactions(poolConfig, prioritizedTransactions);
-
-  @AfterEach
-  void reset() {
-    pendingTransactions.reset();
-  }
+  private static final TransactionPoolConfiguration BLOB_TX_POOL_CONFIG =
+      ImmutableTransactionPoolConfiguration.builder()
+          .maxPrioritizedTransactions(MAX_PRIO_TRANSACTIONS)
+          .maxPrioritizedTransactionsByType(Map.of(BLOB, 1))
+          .maxFutureBySender(MAX_FUTURE_FOR_SENDER)
+          .pendingTransactionsLayerMaxCapacityBytes(
+              new PendingTransaction.Remote(
+                          new BaseTransactionPoolTest().createEIP4844Transaction(0, KEYS1, 1, 1))
+                      .memorySize()
+                  * 3L)
+          .build();
 
   @ParameterizedTest
   @MethodSource("providerAddTransactions")
@@ -166,7 +150,51 @@ public class LayersTest extends BaseTransactionPoolTest {
     assertScenario(scenario);
   }
 
+  @ParameterizedTest
+  @MethodSource("providerMaxPrioritizedByType")
+  void maxPrioritizedByType(final Scenario scenario) {
+    assertScenario(scenario, BLOB_TX_POOL_CONFIG);
+  }
+
   private void assertScenario(final Scenario scenario) {
+    assertScenario(scenario, DEFAULT_TX_POOL_CONFIG);
+  }
+
+  private void assertScenario(
+      final Scenario scenario, final TransactionPoolConfiguration poolConfig) {
+    final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
+
+    final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
+    final SparseTransactions sparseTransactions =
+        new SparseTransactions(
+            poolConfig,
+            evictCollector,
+            txPoolMetrics,
+            (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
+            new BlobCache());
+
+    final ReadyTransactions readyTransactions =
+        new ReadyTransactions(
+            poolConfig,
+            sparseTransactions,
+            txPoolMetrics,
+            (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
+            new BlobCache());
+
+    final BaseFeePrioritizedTransactions prioritizedTransactions =
+        new BaseFeePrioritizedTransactions(
+            poolConfig,
+            LayersTest::mockBlockHeader,
+            readyTransactions,
+            txPoolMetrics,
+            (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
+            FeeMarket.london(0L),
+            new BlobCache(),
+            MiningParameters.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE));
+
+    final LayeredPendingTransactions pendingTransactions =
+        new LayeredPendingTransactions(poolConfig, prioritizedTransactions);
+
     scenario.execute(
         pendingTransactions,
         prioritizedTransactions,
@@ -1178,15 +1206,54 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedDroppedForSender(S3, 0)));
   }
 
-  private static BlockHeader mockBlockHeader() {
-    final BlockHeader blockHeader = mock(BlockHeader.class);
-    when(blockHeader.getBaseFee()).thenReturn(Optional.of(Wei.ONE));
-    return blockHeader;
+  static Stream<Arguments> providerMaxPrioritizedByType() {
+    return Stream.of(
+        Arguments.of(
+            new Scenario("first blob tx is prioritized")
+                .addForSender(S1, BLOB, 0)
+                .expectedPrioritizedForSender(S1, 0)),
+        Arguments.of(
+            new Scenario("multiple senders only first blob tx is prioritized")
+                .addForSender(S1, BLOB, 0)
+                .addForSender(S2, BLOB, 0)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedReadyForSender(S2, 0)),
+        Arguments.of(
+            new Scenario("same sender following blob txs are moved to ready")
+                .addForSender(S1, BLOB, 0, 1, 2)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedReadyForSender(S1, 1, 2)),
+        Arguments.of(
+            new Scenario("promoting txs respect prioritized count limit")
+                .addForSender(S1, BLOB, 0, 1, 2)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedReadyForSender(S1, 1, 2)
+                .confirmedForSenders(S1, 0)
+                .expectedPrioritizedForSender(S1, 1)
+                .expectedReadyForSender(S1, 2)),
+        Arguments.of(
+            new Scenario("filling gaps respect prioritized count limit")
+                .addForSender(S1, BLOB, 1)
+                .expectedSparseForSender(S1, 1)
+                .addForSender(S1, BLOB, 0)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedSparseForSender(S1, 1)),
+        Arguments.of(
+            new Scenario("promoting to ready is unbounded")
+                .addForSender(S1, BLOB, 0, 1, 2, 3, 4, 5, 6)
+                .expectedPrioritizedForSender(S1, 0)
+                .expectedReadyForSender(S1, 1, 2, 3)
+                .expectedSparseForSender(S1, 4, 5, 6)
+                .confirmedForSenders(S1, 3)
+                .expectedPrioritizedForSender(S1, 4)
+                .expectedReadyForSender(S1, 5, 6)
+                .expectedSparseForSenders()));
   }
 
-  private boolean transactionReplacementTester(
-      final PendingTransaction pt1, final PendingTransaction pt2) {
-    return transactionReplacementTester(poolConfig, pt1, pt2);
+  private static BlockHeader mockBlockHeader() {
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(blockHeader.getBaseFee()).thenReturn(Optional.of(BASE_FEE));
+    return blockHeader;
   }
 
   private static boolean transactionReplacementTester(
@@ -1233,10 +1300,14 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
 
     Scenario addForSender(final Sender sender, final long... nonce) {
+      return addForSender(sender, EIP1559, nonce);
+    }
+
+    Scenario addForSender(final Sender sender, final TransactionType type, final long... nonce) {
       Arrays.stream(nonce)
           .forEach(
               n -> {
-                final var pendingTx = getOrCreate(sender, n);
+                final var pendingTx = getOrCreate(sender, type, n);
                 actions.add(
                     (pending, prio, ready, sparse, dropped) -> {
                       final Account mockSender = mock(Account.class);
@@ -1288,20 +1359,47 @@ public class LayersTest extends BaseTransactionPoolTest {
       assertExpectedDropped(dropped, lastExpectedDropped);
     }
 
-    private PendingTransaction getOrCreate(final Sender sender, final long nonce) {
+    private PendingTransaction getOrCreate(
+        final Sender sender, final TransactionType type, final long nonce) {
       return txsBySender
           .get(sender)
-          .computeIfAbsent(nonce, n -> createEIP1559PendingTransactions(sender, n));
+          .computeIfAbsent(
+              nonce,
+              n ->
+                  switch (type) {
+                    case FRONTIER -> createFrontierPendingTransaction(sender, n);
+                    case ACCESS_LIST -> createAccessListPendingTransaction(sender, n);
+                    case EIP1559 -> createEIP1559PendingTransaction(sender, n);
+                    case BLOB -> createBlobPendingTransaction(sender, n);
+                  });
     }
 
     private PendingTransaction get(final Sender sender, final long nonce) {
       return txsBySender.get(sender).get(nonce);
     }
 
-    private PendingTransaction createEIP1559PendingTransactions(
+    private PendingTransaction createFrontierPendingTransaction(
+        final Sender sender, final long nonce) {
+      return createRemotePendingTransaction(
+          createTransaction(FRONTIER, nonce, Wei.ONE, 0, sender.key), sender.hasPriority);
+    }
+
+    private PendingTransaction createAccessListPendingTransaction(
+        final Sender sender, final long nonce) {
+      return createRemotePendingTransaction(
+          createTransaction(ACCESS_LIST, nonce, Wei.ONE, 0, sender.key), sender.hasPriority);
+    }
+
+    private PendingTransaction createEIP1559PendingTransaction(
         final Sender sender, final long nonce) {
       return createRemotePendingTransaction(
           createEIP1559Transaction(nonce, sender.key, sender.gasFeeMultiplier), sender.hasPriority);
+    }
+
+    private PendingTransaction createBlobPendingTransaction(final Sender sender, final long nonce) {
+      return createRemotePendingTransaction(
+          createEIP4844Transaction(nonce, sender.key, sender.gasFeeMultiplier, 1),
+          sender.hasPriority);
     }
 
     public Scenario expectedPrioritizedForSender(final Sender sender, final long... nonce) {
@@ -1467,7 +1565,7 @@ public class LayersTest extends BaseTransactionPoolTest {
       Arrays.stream(nonce)
           .forEach(
               n -> {
-                final var pendingTx = getOrCreate(sender, n);
+                final var pendingTx = getOrCreate(sender, EIP1559, n);
                 actions.add(
                     (pending, prio, ready, sparse, dropped) -> prio.remove(pendingTx, INVALIDATED));
               });

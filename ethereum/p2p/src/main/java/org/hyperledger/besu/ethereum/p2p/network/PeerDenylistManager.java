@@ -52,7 +52,7 @@ public class PeerDenylistManager implements DisconnectCallback {
       final boolean initiatedByPeer) {
     // we have a number of reasons that use the same code, but with different message strings
     // so here we use the code of the reason param to ensure we get the no-message version
-    if (shouldBlock(DisconnectReason.forCode(reason.getValue().get(0)), initiatedByPeer)) {
+    if (shouldBlock(DisconnectReason.forCode(reason.getValue()), initiatedByPeer)) {
       if (maintainedPeers.contains(connection.getPeer())) {
         LOG.debug(
             "Skip adding maintained peer {} to peer denylist for reason {}",
