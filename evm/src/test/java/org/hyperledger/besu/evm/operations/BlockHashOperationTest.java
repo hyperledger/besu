@@ -15,7 +15,7 @@
 package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-  import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy;
 import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy.STATE_READ;
 import static org.hyperledger.besu.evm.operation.BlockHashOperation.HISTORICAL_BLOCKHASH_ADDRESS;
 import static org.mockito.Mockito.mock;
