@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm;
 
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy.STATE_READ;
+
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -948,7 +950,8 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerCancunOperations(registry, gasCalculator, chainID);
-    registry.put(new BlockHashOperation(gasCalculator, true));
+    // EIP-2935 Serve historical block hashes from state
+    registry.put(new BlockHashOperation(gasCalculator, STATE_READ));
   }
 
   /**

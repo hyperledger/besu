@@ -14,10 +14,12 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy.BLOCK_HASH_LOOKUP;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy.STATE_READ;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
@@ -30,13 +32,14 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The Block hash operation. */
 public class BlockHashOperation extends AbstractFixedCostOperation {
 
-  private static final int MAX_RELATIVE_BLOCK = 256;
-
   /** The HISTORICAL_BLOCKHASH_ADDRESS */
   public static final Address HISTORICAL_BLOCKHASH_ADDRESS =
       Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
 
-  private final boolean readFromState;
+  private static final int MAX_RELATIVE_BLOCK = 256;
+  private static final int MAX_BLOCK_ARG_SIZE = 8;
+
+  private final BlockHashRetrievalStrategy blockHashRetrievalStrategy;
 
   /**
    * Instantiates a new Block hash operation.
@@ -44,81 +47,78 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public BlockHashOperation(final GasCalculator gasCalculator) {
-    this(
-        0x40,
-        "BLOCKHASH",
-        1,
-        1,
-        gasCalculator,
-        gasCalculator.getBlockHashOperationGasCost(),
-        false);
+    this(gasCalculator, BLOCK_HASH_LOOKUP);
   }
 
   /**
    * Instantiates a new Block hash operation.
    *
    * @param gasCalculator the gas calculator
-   * @param readFromState whether readFromState
+   * @param blockHashRetrievalStrategy whether read from state (EIP-2935)
    */
-  public BlockHashOperation(final GasCalculator gasCalculator, final boolean readFromState) {
-    this(
-        0x40,
-        "BLOCKHASH",
-        1,
-        1,
-        gasCalculator,
-        gasCalculator.getBlockHashOperationGasCost(),
-        readFromState);
-  }
-
-  private BlockHashOperation(
-      final int opcode,
-      final String name,
-      final int stackItemsConsumed,
-      final int stackItemsProduced,
+  public BlockHashOperation(
       final GasCalculator gasCalculator,
-      final long fixedCost,
-      final boolean readFromState) {
-    super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator, fixedCost);
-    this.readFromState = readFromState;
+      final BlockHashRetrievalStrategy blockHashRetrievalStrategy) {
+    super(0x40, "BLOCKHASH", 1, 1, gasCalculator, gasCalculator.getBlockHashOperationGasCost());
+    this.blockHashRetrievalStrategy = blockHashRetrievalStrategy;
   }
 
   @Override
-  public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
     final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
 
-    // Short-circuit if value is unreasonably large
-    if (blockArg.size() > 8) {
+    if (blockArg.size() > MAX_BLOCK_ARG_SIZE) {
       frame.pushStackItem(UInt256.ZERO);
       return successResponse;
     }
 
     final long soughtBlock = blockArg.toLong();
-    final BlockValues blockValues = frame.getBlockValues();
-    final long currentBlockNumber = blockValues.getNumber();
+    final long currentBlockNumber = frame.getBlockValues().getNumber();
 
-    // If the current block is the genesis block or the sought block is
-    // not within the last 256 completed blocks, zero is returned.
-    if (soughtBlock < Math.max(currentBlockNumber - MAX_RELATIVE_BLOCK, 0)
-        || soughtBlock >= currentBlockNumber) {
-      frame.pushStackItem(Bytes32.ZERO);
+    if (!isBlockWithinLast256Blocks(soughtBlock, currentBlockNumber)) {
+      frame.pushStackItem(UInt256.ZERO);
     } else {
-      final Hash blockHash;
-      if (readFromState) {
-        blockHash =
-            Hash.wrap(
-                frame
-                    .getWorldUpdater()
-                    .get(HISTORICAL_BLOCKHASH_ADDRESS)
-                    .getStorageValue(UInt256.valueOf(soughtBlock % MAX_RELATIVE_BLOCK)));
-      } else {
-        final Function<Long, Hash> blockHashLookup = frame.getBlockHashLookup();
-        blockHash = blockHashLookup.apply(soughtBlock);
-      }
-      frame.pushStackItem(blockHash);
+      frame.pushStackItem(getBlockHash(frame, soughtBlock));
     }
 
     return successResponse;
+  }
+
+  private boolean isBlockWithinLast256Blocks(
+      final long soughtBlock, final long currentBlockNumber) {
+    return soughtBlock >= Math.max(currentBlockNumber - MAX_RELATIVE_BLOCK, 0)
+        && soughtBlock < currentBlockNumber;
+  }
+
+  private Bytes32 getBlockHash(final MessageFrame frame, final long soughtBlock) {
+    if (blockHashRetrievalStrategy == STATE_READ) {
+      return readBlockHashFromState(frame, soughtBlock);
+    } else {
+      return lookupBlockHash(frame, soughtBlock);
+    }
+  }
+
+  private Bytes32 readBlockHashFromState(final MessageFrame frame, final long soughtBlock) {
+    Hash blockHash =
+        Hash.wrap(
+            frame
+                .getWorldUpdater()
+                .get(HISTORICAL_BLOCKHASH_ADDRESS)
+                .getStorageValue(UInt256.valueOf(soughtBlock % MAX_RELATIVE_BLOCK)));
+    return Bytes32.wrap(blockHash);
+  }
+
+  private Bytes32 lookupBlockHash(final MessageFrame frame, final long soughtBlock) {
+    final Function<Long, Hash> blockHashLookup = frame.getBlockHashLookup();
+    Hash blockHash = blockHashLookup.apply(soughtBlock);
+    return Bytes32.wrap(blockHash);
+  }
+
+  /** Defines the strategies for retrieving a block hash. */
+  public enum BlockHashRetrievalStrategy {
+    /** Direct block hash lookup */
+    BLOCK_HASH_LOOKUP,
+    /** Block hash retrieval from state. (EIP-2935) */
+    STATE_READ,
   }
 }
