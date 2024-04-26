@@ -192,16 +192,18 @@ public class EVM {
       int pc = frame.getPC();
 
       long statelessGas = 0;
-      if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
-        statelessGas =
-            frame
-                .getAccessWitness()
-                .touchCodeChunks(frame.getContractAddress(), pc, 1, code.length);
-        frame.decrementRemainingGas(statelessGas);
-      }
       try {
         opcode = code[pc] & 0xff;
         currentOperation = operationArray[opcode];
+
+        if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
+          statelessGas =
+              frame
+                  .getAccessWitness()
+                  .touchCodeChunks(frame.getContractAddress(), pc, 1, code.length);
+          frame.decrementRemainingGas(statelessGas);
+        }
+
       } catch (ArrayIndexOutOfBoundsException aiiobe) {
         opcode = 0;
         currentOperation = endOfScriptStop;
