@@ -266,18 +266,18 @@ task listAcceptanceTestNotPrivacy {
     def testExecutionSpec = tasks.getByName("acceptanceTestNotPrivacy") as Test
 
     def processor = new org.gradle.api.internal.tasks.testing.TestClassProcessor() {
-      void startProcessing(org.gradle.api.internal.tasks.testing.TestResultProcessor processor) {}
-      void stop() {}
-      void stopNow() {}
+        void startProcessing(org.gradle.api.internal.tasks.testing.TestResultProcessor processor) {}
+        void stop() {}
+        void stopNow() {}
 
-      void processTestClass(org.gradle.api.internal.tasks.testing.TestClassRunInfo info) {
-        def splitName = info.getTestClassName().split("\\.");
-        def testClassName = splitName[splitName.length-1];
-        if(testClassName.endsWith("Test") && !testClassName.startsWith("Abstract")) {
-          println(info.getTestClassName())
+        void processTestClass(org.gradle.api.internal.tasks.testing.TestClassRunInfo info) {
+          def splitName = info.getTestClassName().split("\\.");
+          def testClassName = splitName[splitName.length-1];
+          if(testClassName.endsWith("Test") && !testClassName.startsWith("Abstract")) {
+            println(info.getTestClassName())
+          }
         }
       }
-    }
 
     def detector = new org.gradle.api.internal.tasks.testing.detection.DefaultTestClassScanner(testExecutionSpec.getCandidateClassFiles(), testExecutionSpec.getTestFramework().getDetector()?.tap {
       setTestClasses(testExecutionSpec.getTestClassesDirs().getFiles())
