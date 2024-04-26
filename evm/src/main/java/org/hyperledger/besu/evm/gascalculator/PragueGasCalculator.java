@@ -257,7 +257,7 @@ public class PragueGasCalculator extends ShanghaiGasCalculator {
                   .touchCodeChunks(frame.getContractAddress(), codeOffset, readSize, codeSize));
     }
     System.out.println("  4762 codeCopyOperationGasCost: " + gasCost);
-    return super.codeCopyOperationGasCost(frame, memOffset, codeOffset, readSize, codeSize);
+    return gasCost;
   }
 
   @Override
