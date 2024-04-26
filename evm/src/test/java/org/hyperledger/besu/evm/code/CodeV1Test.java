@@ -22,6 +22,7 @@ import static org.hyperledger.besu.evm.code.CodeV1Validation.validateStack;
 
 import java.util.Arrays;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
@@ -56,7 +57,15 @@ class CodeV1Test {
       CodeSection[] codeSections = new CodeSection[i];
       Arrays.fill(codeSections, new CodeSection(1, 0, returning ? 0 : 0x80, 1, 1));
       EOFLayout testLayout =
-          new EOFLayout(codeBytes, 1, codeSections, new EOFLayout[0], 0, Bytes.EMPTY, error);
+          new EOFLayout(
+              codeBytes,
+              1,
+              codeSections,
+              new EOFLayout[0],
+              0,
+              Bytes.EMPTY,
+              error,
+              new AtomicReference<>());
       assertValidation(error, codeBytes, codeSections[0], testLayout);
     }
   }

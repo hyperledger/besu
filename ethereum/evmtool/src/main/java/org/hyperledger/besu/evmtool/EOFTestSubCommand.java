@@ -26,6 +26,8 @@ import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec.TestResult;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.CodeV1;
+import org.hyperledger.besu.evm.code.CodeV1Validation;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.util.LogConfigurator;
 
@@ -212,6 +214,12 @@ public class EOFTestSubCommand implements Runnable {
     var code = CodeFactory.createCode(codeBytes, 1);
     if (!code.isValid()) {
       return failed("validate " + ((CodeInvalid) code).getInvalidReason());
+    }
+    if (code instanceof CodeV1 codeV1) {
+      var result = CodeV1Validation.validate(codeV1.getEofLayout(), true);
+      if (result != null) {
+        return (failed("deep validate error: " + result));
+      }
     }
 
     return passed();

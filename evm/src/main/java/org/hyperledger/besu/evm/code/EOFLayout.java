@@ -31,6 +31,7 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Arrays;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicReference;
 import javax.annotation.Nullable;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -54,7 +55,14 @@ public record EOFLayout(
     EOFLayout[] subContainers,
     int dataLength,
     Bytes data,
-    String invalidReason) {
+    String invalidReason,
+    AtomicReference<EOFContainerMode> createMode) {
+
+  enum EOFContainerMode {
+    UNKNOWN,
+    INITCODE,
+    RUNTIME
+  }
 
   /** The EOF prefix byte as a (signed) java byte. */
   public static final byte EOF_PREFIX_BYTE = (byte) 0xEF;
@@ -84,11 +92,20 @@ public record EOFLayout(
       final EOFLayout[] containers,
       final int dataSize,
       final Bytes data) {
-    this(container, version, codeSections, containers, dataSize, data, null);
+    this(
+        container,
+        version,
+        codeSections,
+        containers,
+        dataSize,
+        data,
+        null,
+        new AtomicReference<>(null));
   }
 
   private EOFLayout(final Bytes container, final int version, final String invalidReason) {
-    this(container, version, null, null, 0, Bytes.EMPTY, invalidReason);
+    this(
+        container, version, null, null, 0, Bytes.EMPTY, invalidReason, new AtomicReference<>(null));
   }
 
   private static EOFLayout invalidLayout(

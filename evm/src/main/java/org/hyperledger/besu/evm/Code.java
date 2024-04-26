@@ -109,7 +109,8 @@ public interface Code {
    * an empty result is returned. Legacy code always returns empty.
    *
    * @param index the index in the container to return
-   * @param auxData any Auxiliary data to append to the subcontainer code
+   * @param auxData any Auxiliary data to append to the subcontainer code. If fetching an initcode
+   *     container, pass null.
    * @return Either the subcontainer, or empty.
    */
   default Optional<Code> getSubContainer(final int index, final Bytes auxData) {
