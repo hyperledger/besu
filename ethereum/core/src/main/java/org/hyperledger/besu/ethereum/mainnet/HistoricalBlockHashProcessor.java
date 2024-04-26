@@ -15,15 +15,21 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
+import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** A helper class to store the historical block hash (eip-2935) */
+/**
+ * Processes and stores historical block hashes in accordance with EIP-2935. This class is
+ * responsible for managing the storage of block hashes to support EIP-2935, which introduces
+ * historical block hash access in smart contracts.
+ */
 public class HistoricalBlockHashProcessor {
 
   public static final Address HISTORICAL_BLOCKHASH_ADDRESS =
@@ -32,11 +38,39 @@ public class HistoricalBlockHashProcessor {
   private static final long HISTORY_SAVE_WINDOW = 8192;
 
   private final long forkTimestamp;
+  private final long historySaveWindow;
 
+  /**
+   * Constructs a HistoricalBlockHashProcessor with a specified fork timestamp.
+   *
+   * @param forkTimestamp The timestamp at which the fork becomes active.
+   */
   public HistoricalBlockHashProcessor(final long forkTimestamp) {
-    this.forkTimestamp = forkTimestamp;
+    this(forkTimestamp, HISTORY_SAVE_WINDOW);
   }
 
+  /**
+   * Constructs a HistoricalBlockHashProcessor with a specified fork timestamp and history save
+   * window. This constructor is primarily used for testing.
+   *
+   * @param forkTimestamp The timestamp at which the fork becomes active.
+   * @param historySaveWindow The number of blocks for which history should be saved.
+   */
+  @VisibleForTesting
+  public HistoricalBlockHashProcessor(final long forkTimestamp, final long historySaveWindow) {
+    this.forkTimestamp = forkTimestamp;
+    this.historySaveWindow = historySaveWindow;
+  }
+
+  /**
+   * Stores the historical block hashes based on the current block header. This method calculates
+   * the appropriate storage slot for the parent block hash and any additional ancestors within the
+   * history save window, then stores those hashes in the world state.
+   *
+   * @param blockchain The blockchain from which block headers are retrieved.
+   * @param worldUpdater The world state updater to store the block hashes.
+   * @param currentBlockHeader The current block header being processed.
+   */
   public void storeHistoricalBlockHashes(
       final Blockchain blockchain,
       final WorldUpdater worldUpdater,
@@ -44,24 +78,50 @@ public class HistoricalBlockHashProcessor {
 
     final MutableAccount account = worldUpdater.getOrCreate(HISTORICAL_BLOCKHASH_ADDRESS);
 
-    // If this is not the genesis block
     if (currentBlockHeader.getNumber() > 0) {
-      account.setStorageValue(
-          UInt256.valueOf((currentBlockHeader.getNumber() - 1) % HISTORY_SAVE_WINDOW),
-          UInt256.fromBytes(currentBlockHeader.getParentHash()));
+      storeParentHash(account, currentBlockHeader);
 
       BlockHeader ancestor =
           blockchain.getBlockHeader(currentBlockHeader.getParentHash()).orElseThrow();
-      // If this is the first fork block, add the parent's direct HISTORY_SAVE_WINDOW ancestors as
-      // well
+
+      // If fork block, add the parent's direct `HISTORY_SERVE_WINDOW - 1`
       if (ancestor.getTimestamp() < forkTimestamp) {
-        for (int i = 0; i < HISTORY_SAVE_WINDOW && ancestor.getNumber() > 0; i++) {
+        for (int i = 0; i < (historySaveWindow - 1) && ancestor.getNumber() > 0; i++) {
           ancestor = blockchain.getBlockHeader(ancestor.getParentHash()).orElseThrow();
-          account.setStorageValue(
-              UInt256.valueOf(ancestor.getNumber() % HISTORY_SAVE_WINDOW),
-              UInt256.fromBytes(ancestor.getHash()));
+          storeBlockHeaderHash(account, ancestor);
         }
       }
     }
+  }
+
+  /**
+   * Stores the hash of the parent block in the world state.
+   *
+   * @param account The account associated with the historical block hash storage.
+   * @param header The current block header being processed.
+   */
+  private void storeParentHash(final MutableAccount account, final ProcessableBlockHeader header) {
+    storeHash(account, header.getNumber() - 1, header.getParentHash());
+  }
+
+  /**
+   * Stores the hash of a block in the world state.
+   *
+   * @param account The account associated with the historical block hash storage.
+   * @param header The block header whose hash is to be stored.
+   */
+  private void storeBlockHeaderHash(final MutableAccount account, final BlockHeader header) {
+    storeHash(account, header.getNumber(), header.getHash());
+  }
+
+  /**
+   * Stores the hash in the world state.
+   *
+   * @param account The account associated with the historical block hash storage.
+   * @param number The slot to store.
+   * @param hash The hash to be stored.
+   */
+  private void storeHash(final MutableAccount account, final long number, final Hash hash) {
+    account.setStorageValue(UInt256.valueOf(number % historySaveWindow), UInt256.fromBytes(hash));
   }
 }
