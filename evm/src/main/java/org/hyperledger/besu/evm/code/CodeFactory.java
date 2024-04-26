@@ -16,6 +16,8 @@
 
 package org.hyperledger.besu.evm.code;
 
+import static org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode.INITCODE;
+
 import org.hyperledger.besu.evm.Code;
 
 import javax.annotation.Nonnull;
@@ -101,7 +103,10 @@ public final class CodeFactory {
         }
 
         final EOFLayout layout = EOFLayout.parseEOF(bytes, !createTransaction);
-        return createCode(layout);
+        if (createTransaction) {
+          layout.createMode().set(INITCODE);
+        }
+        return createCode(layout, createTransaction);
       } else {
         return new CodeV0(bytes);
       }
@@ -111,19 +116,14 @@ public final class CodeFactory {
   }
 
   @Nonnull
-  static Code createCode(final EOFLayout layout) {
+  static Code createCode(final EOFLayout layout, final boolean createTransaction) {
     if (!layout.isValid()) {
       return new CodeInvalid(layout.container(), "Invalid EOF Layout: " + layout.invalidReason());
     }
 
-    final String codeValidationError = CodeV1Validation.validateCode(layout);
-    if (codeValidationError != null) {
-      return new CodeInvalid(layout.container(), "EOF Code Invalid : " + codeValidationError);
-    }
-
-    final String stackValidationError = CodeV1Validation.validateStack(layout);
-    if (stackValidationError != null) {
-      return new CodeInvalid(layout.container(), "EOF Code Invalid : " + stackValidationError);
+    final String validationError = CodeV1Validation.validate(layout, createTransaction);
+    if (validationError != null) {
+      return new CodeInvalid(layout.container(), "EOF Code Invalid : " + validationError);
     }
 
     return new CodeV1(layout);

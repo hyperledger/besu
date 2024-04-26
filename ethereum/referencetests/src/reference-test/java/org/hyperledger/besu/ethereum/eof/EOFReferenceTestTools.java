@@ -27,6 +27,8 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.CodeV1;
+import org.hyperledger.besu.evm.code.CodeV1Validation;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
@@ -106,6 +108,18 @@ public class EOFReferenceTestTools {
                             ? null
                             : ((CodeInvalid) parsedCode).getInvalidReason()))
             .isEqualTo(results.result());
+        if (parsedCode instanceof CodeV1 codeV1) {
+          var deepValidate = CodeV1Validation.validate(codeV1.getEofLayout(), true);
+          assertThat(deepValidate)
+              .withFailMessage(
+                  () ->
+                      codeV1.prettyPrint()
+                          + "\nExpected exception :"
+                          + results.exception()
+                          + " actual exception :"
+                          + (parsedCode.isValid() ? null : deepValidate))
+              .isNull();
+        }
 
         if (results.result()) {
           System.out.println(code);

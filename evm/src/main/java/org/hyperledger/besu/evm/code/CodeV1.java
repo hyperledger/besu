@@ -106,7 +106,7 @@ public class CodeV1 implements Code {
       subcontainerLayout = EOFLayout.parseEOF(subcontainerWithAuxData);
     }
 
-    Code subContainerCode = CodeFactory.createCode(subcontainerLayout);
+    Code subContainerCode = CodeFactory.createCode(subcontainerLayout, auxData == null);
 
     return subContainerCode.isValid() && subContainerCode.getEofVersion() > 0
         ? Optional.of(subContainerCode)
@@ -167,6 +167,15 @@ public class CodeV1 implements Code {
     StringWriter sw = new StringWriter();
     eofLayout.prettyPrint(new PrintWriter(sw, true), "", "");
     return sw.toString();
+  }
+
+  /**
+   * The EOFLayout object for the code
+   *
+   * @return the EOFLayout object for the parsed code
+   */
+  public EOFLayout getEofLayout() {
+    return eofLayout;
   }
 
   /**

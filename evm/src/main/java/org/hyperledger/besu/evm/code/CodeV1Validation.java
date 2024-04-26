@@ -19,10 +19,13 @@ package org.hyperledger.besu.evm.code;
 import static java.lang.Math.max;
 import static java.lang.Math.min;
 import static java.lang.String.format;
+import static org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode.INITCODE;
+import static org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode.RUNTIME;
 import static org.hyperledger.besu.evm.code.OpcodeInfo.V1_OPCODES;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
 import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
 
+import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 import org.hyperledger.besu.evm.operation.CallFOperation;
 import org.hyperledger.besu.evm.operation.DataLoadNOperation;
 import org.hyperledger.besu.evm.operation.DupNOperation;
@@ -41,8 +44,11 @@ import org.hyperledger.besu.evm.operation.RevertOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SwapNOperation;
 
+import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.BitSet;
+import java.util.List;
+import java.util.Queue;
 import javax.annotation.Nullable;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -54,6 +60,38 @@ public final class CodeV1Validation {
 
   private CodeV1Validation() {
     // to prevent instantiation
+  }
+
+  /**
+   * Validates the code and stack for the EOF Layout, with optional deep consideration of the
+   * containers.
+   *
+   * @param layout The parsed EOFLayout of the code
+   * @param deep optional flag to see if we should validate deeply.
+   * @return either null, indicating no error, or a String describing the validation error.
+   */
+  public static String validate(final EOFLayout layout, final boolean deep) {
+    Queue<EOFLayout> workList = new ArrayDeque<>(layout.getSubcontainerCount());
+    workList.add(layout);
+
+    while (!workList.isEmpty()) {
+      EOFLayout container = workList.poll();
+      if (deep) {
+        workList.addAll(List.of(container.subContainers()));
+      }
+
+      final String codeValidationError = CodeV1Validation.validateCode(container);
+      if (codeValidationError != null) {
+        return codeValidationError;
+      }
+
+      final String stackValidationError = CodeV1Validation.validateStack(container);
+      if (stackValidationError != null) {
+        return stackValidationError;
+      }
+    }
+
+    return null;
   }
 
   /**
@@ -91,6 +129,7 @@ public final class CodeV1Validation {
     final byte[] rawCode = code.toArrayUnsafe();
     OpcodeInfo opcodeInfo = V1_OPCODES[0xfe];
     int pos = 0;
+    EOFContainerMode eofContainerMode = eofLayout.createMode().get();
     boolean hasReturningOpcode = false;
     while (pos < size) {
       final int operationNum = rawCode[pos] & 0xff;
@@ -102,6 +141,16 @@ public final class CodeV1Validation {
       pos += 1;
       int pcPostInstruction = pos;
       switch (operationNum) {
+        case StopOperation.OPCODE, ReturnOperation.OPCODE:
+          if (eofContainerMode == null) {
+            eofContainerMode = RUNTIME;
+            eofLayout.createMode().set(RUNTIME);
+          } else if (!eofContainerMode.equals(RUNTIME)) {
+            return format(
+                "%s is only a valid opcode in containers used for runtime operations.",
+                opcodeInfo.name());
+          }
+          break;
         case PushOperation.PUSH_BASE,
             PushOperation.PUSH_BASE + 1,
             PushOperation.PUSH_BASE + 2,
@@ -215,7 +264,7 @@ public final class CodeV1Validation {
           hasReturningOpcode |= eofLayout.getCodeSection(targetSection).isReturning();
           pcPostInstruction += 2;
           break;
-        case EOFCreateOperation.OPCODE, ReturnContractOperation.OPCODE:
+        case EOFCreateOperation.OPCODE:
           if (pos + 1 > size) {
             return format(
                 "Dangling immediate for %s at pc=%d",
@@ -228,12 +277,48 @@ public final class CodeV1Validation {
                 opcodeInfo.name(), subcontainerNum, pos - opcodeInfo.pcAdvance());
           }
           EOFLayout subContainer = eofLayout.getSubcontainer(subcontainerNum);
+          var subcontainerMode = subContainer.createMode().get();
+          if (subcontainerMode == null) {
+            subContainer.createMode().set(INITCODE);
+          } else if (subcontainerMode == RUNTIME) {
+            return format(
+                "subcontainer %d cannot be used both as initcode and runtime", subcontainerNum);
+          }
           if (subContainer.dataLength() != subContainer.data().size()) {
             return format(
                 "A subcontainer used for %s has a truncated data section, expected %d and is %d.",
                 V1_OPCODES[operationNum].name(),
                 subContainer.dataLength(),
                 subContainer.data().size());
+          }
+          pcPostInstruction += 1;
+          break;
+        case ReturnContractOperation.OPCODE:
+          if (eofContainerMode == null) {
+            eofContainerMode = INITCODE;
+            eofLayout.createMode().set(INITCODE);
+          } else if (!eofContainerMode.equals(INITCODE)) {
+            return format(
+                "%s is only a valid opcode in containers used for initcode", opcodeInfo.name());
+          }
+          if (pos + 1 > size) {
+            return format(
+                "Dangling immediate for %s at pc=%d",
+                opcodeInfo.name(), pos - opcodeInfo.pcAdvance());
+          }
+          int returnedContractNum = rawCode[pos] & 0xff;
+          if (returnedContractNum >= eofLayout.getSubcontainerCount()) {
+            return format(
+                "%s refers to non-existent subcontainer %d at pc=%d",
+                opcodeInfo.name(), returnedContractNum, pos - opcodeInfo.pcAdvance());
+          }
+          EOFLayout returnedContract = eofLayout.getSubcontainer(returnedContractNum);
+          var returnedContractMode = returnedContract.createMode().get();
+          if (returnedContractMode == null) {
+            returnedContract.createMode().set(RUNTIME);
+          } else if (returnedContractMode.equals(INITCODE)) {
+            return format(
+                "subcontainer %d cannot be used both as initcode and runtime", returnedContractNum);
           }
           pcPostInstruction += 1;
           break;
