@@ -714,6 +714,7 @@ public class PeerDiscoveryController {
   private class PeerInteractionState implements Predicate<Packet> {
 
     private static final int MAX_RETRIES = 5;
+
     /**
      * The action that led to the peer being in this state (e.g. sending a PING or NEIGHBORS
      * message), in case it needs to be retried.
@@ -721,12 +722,15 @@ public class PeerDiscoveryController {
     private final Consumer<PeerInteractionState> action;
 
     private final Bytes peerId;
+
     /** The expected type of the message that will transition the peer out of this state. */
     private final PacketType expectedType;
 
     private final Counter retryCounter;
+
     /** A custom filter to accept transitions out of this state. */
     private Predicate<Packet> filter;
+
     /** Timers associated with this entry. */
     private OptionalLong timerId = OptionalLong.empty();
 

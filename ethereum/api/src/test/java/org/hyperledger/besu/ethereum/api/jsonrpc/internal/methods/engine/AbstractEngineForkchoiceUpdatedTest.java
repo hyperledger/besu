@@ -454,7 +454,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   @Test
   public void shouldReturnInvalidIfPayloadTimestampNotGreaterThanHead() {
-    BlockHeader mockParent = blockHeaderBuilder.number(9L).buildHeader();
+    BlockHeader mockParent = blockHeaderBuilder.timestamp(99).number(9L).buildHeader();
     BlockHeader mockHeader =
         blockHeaderBuilder.number(10L).parentHash(mockParent.getHash()).buildHeader();
     setupValidForkchoiceUpdate(mockHeader);
@@ -475,7 +475,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
                 mockHeader.getHash(), Hash.ZERO, mockParent.getHash()),
             Optional.of(payloadParams));
 
-    assertInvalidForkchoiceState(resp, expectedInvalidPayloadError());
+    assertInvalidForkchoiceState(resp, RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES);
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 

@@ -142,10 +142,10 @@ public class EthGetTransactionReceiptTest {
           null,
           GasLimitCalculator.constant(),
           FeeMarket.legacy(),
-          null,
           Optional.of(PoWHasher.ETHASH_LIGHT),
           null,
           Optional.empty(),
+          null,
           null,
           true,
           true);
@@ -172,10 +172,10 @@ public class EthGetTransactionReceiptTest {
           null,
           GasLimitCalculator.constant(),
           FeeMarket.legacy(),
-          null,
           Optional.of(PoWHasher.ETHASH_LIGHT),
           null,
           Optional.empty(),
+          null,
           null,
           true,
           true);

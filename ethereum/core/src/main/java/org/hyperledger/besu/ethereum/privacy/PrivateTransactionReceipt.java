@@ -168,16 +168,14 @@ public class PrivateTransactionReceipt {
     if (obj == this) {
       return true;
     }
-    if (!(obj instanceof PrivateTransactionReceipt)) {
+    if (!(obj instanceof PrivateTransactionReceipt other)) {
       return false;
     }
-    final PrivateTransactionReceipt other = (PrivateTransactionReceipt) obj;
-    return logs.equals(other.getLogs())
-            && status == other.status
-            && output.equals(other.output)
-            && revertReason.isPresent()
-        ? revertReason.get().equals(other.revertReason.get())
-        : true;
+    return !logs.equals(other.getLogs())
+        || status != other.status
+        || !output.equals(other.output)
+        || revertReason.isEmpty()
+        || revertReason.get().equals(other.revertReason.get());
   }
 
   @Override

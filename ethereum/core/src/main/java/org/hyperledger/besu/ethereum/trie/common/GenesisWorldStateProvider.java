@@ -19,17 +19,17 @@ package org.hyperledger.besu.ethereum.trie.common;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.CachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.bonsai.cache.NoOpCachedWorldStorageManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.NoOpTrieLogManager;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoOpBonsaiCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
@@ -40,12 +40,13 @@ public class GenesisWorldStateProvider {
   /**
    * Creates a Genesis world state based on the provided data storage format.
    *
-   * @param dataStorageFormat the data storage format to use
+   * @param dataStorageConfiguration the data storage configuration to use
    * @return a mutable world state for the Genesis block
    */
   public static MutableWorldState createGenesisWorldState(
-      final DataStorageFormat dataStorageFormat) {
-    if (Objects.requireNonNull(dataStorageFormat) == DataStorageFormat.BONSAI) {
+      final DataStorageConfiguration dataStorageConfiguration) {
+    if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
+        == DataStorageFormat.BONSAI) {
       return createGenesisBonsaiWorldState();
     } else {
       return createGenesisForestWorldState();
@@ -58,8 +59,8 @@ public class GenesisWorldStateProvider {
    * @return a mutable world state for the Genesis block
    */
   private static MutableWorldState createGenesisBonsaiWorldState() {
-    final CachedMerkleTrieLoader cachedMerkleTrieLoader =
-        new CachedMerkleTrieLoader(new NoOpMetricsSystem());
+    final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
+        new BonsaiCachedMerkleTrieLoader(new NoOpMetricsSystem());
     final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
             new KeyValueStorageProvider(
@@ -67,11 +68,11 @@ public class GenesisWorldStateProvider {
                 new InMemoryKeyValueStorage(),
                 new NoOpMetricsSystem()),
             new NoOpMetricsSystem(),
-            DataStorageConfiguration.DEFAULT_CONFIG);
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     return new BonsaiWorldState(
         bonsaiWorldStateKeyValueStorage,
-        cachedMerkleTrieLoader,
-        new NoOpCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+        bonsaiCachedMerkleTrieLoader,
+        new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT);
   }

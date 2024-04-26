@@ -64,7 +64,6 @@ public class BlockTracer {
       chainedUpdater = chainedUpdater.updater();
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
-              blockchain,
               chainedUpdater,
               header,
               transaction,

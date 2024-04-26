@@ -55,7 +55,7 @@ public class DebugGetRawReceipts extends AbstractBlockParameterOrBlockHashMethod
 
   private String[] toRLP(final List<TransactionReceipt> receipts) {
     return receipts.stream()
-        .map(receipt -> RLP.encode(receipt::writeTo).toHexString())
+        .map(receipt -> RLP.encode(receipt::writeToForNetwork).toHexString())
         .toArray(String[]::new);
   }
 }

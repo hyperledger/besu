@@ -39,7 +39,6 @@ import java.util.NavigableSet;
 import java.util.Objects;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -102,7 +101,9 @@ public class SparseTransactions extends AbstractTransactionsLayer {
             orderByGap.get(gap).add(pendingTransaction);
             return gap;
           }
-          if (pendingTransaction.getNonce() < txsBySender.get(sender).firstKey()) {
+          if (Long.compareUnsigned(
+                  pendingTransaction.getNonce(), txsBySender.get(sender).firstKey())
+              < 0) {
             orderByGap.get(currGap).remove(sender);
             orderByGap.get(gap).add(pendingTransaction);
             return gap;
@@ -146,7 +147,8 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] remainingPromotionsPerType) {
     long accumulatedSpace = 0;
     final List<PendingTransaction> promotedTxs = new ArrayList<>();
 
@@ -157,11 +159,12 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       final var senderSeqTxs = getSequentialSubset(txsBySender.get(sender));
 
       for (final var candidateTx : senderSeqTxs.values()) {
-
-        if (promotionFilter.test(candidateTx)) {
+        final var txType = candidateTx.getTransaction().getType();
+        if (promotionFilter.test(candidateTx) && remainingPromotionsPerType[txType.ordinal()] > 0) {
           accumulatedSpace += candidateTx.memorySize();
           if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
             promotedTxs.add(candidateTx);
+            --remainingPromotionsPerType[txType.ordinal()];
           } else {
             // no room for more txs the search is over exit the loops
             break search;
@@ -404,7 +407,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
   @Override
   protected void internalConsistencyCheck(
-      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+      final Map<Address, NavigableMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     txsBySender.values().stream()
         .filter(senderTxs -> senderTxs.size() > 1)
         .map(NavigableMap::entrySet)
@@ -432,7 +435,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
               while (itNonce.hasNext()) {
                 final long currNonce = itNonce.next().getKey();
-                assert prevNonce < currNonce : "non incremental nonce";
+                assert Long.compareUnsigned(prevNonce, currNonce) < 0 : "non incremental nonce";
                 prevNonce = currNonce;
               }
             });

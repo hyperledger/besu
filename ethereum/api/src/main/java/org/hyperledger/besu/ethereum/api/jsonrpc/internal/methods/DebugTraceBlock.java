@@ -87,7 +87,10 @@ public class DebugTraceBlock implements JsonRpcMethod {
                   mutableWorldState ->
                       blockTracerSupplier
                           .get()
-                          .trace(mutableWorldState, block, new DebugOperationTracer(traceOptions))
+                          .trace(
+                              mutableWorldState,
+                              block,
+                              new DebugOperationTracer(traceOptions, true))
                           .map(BlockTrace::getTransactionTraces)
                           .map(DebugTraceTransactionResult::of))
               .orElse(null);

@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.manager.snap;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessage;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
-import org.hyperledger.besu.ethereum.eth.peervalidation.PeerValidator;
+import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -29,7 +30,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.math.BigInteger;
 import java.util.Comparator;
@@ -49,14 +50,15 @@ public class SnapProtocolManager implements ProtocolManager {
   private final EthMessages snapMessages;
 
   public SnapProtocolManager(
-      final List<PeerValidator> peerValidators,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final SnapSyncConfiguration snapConfig,
       final EthPeers ethPeers,
       final EthMessages snapMessages,
-      final WorldStateArchive worldStateArchive) {
+      final ProtocolContext protocolContext) {
     this.ethPeers = ethPeers;
     this.snapMessages = snapMessages;
     this.supportedCapabilities = calculateCapabilities();
-    new SnapServer(snapMessages, worldStateArchive);
+    new SnapServer(snapConfig, snapMessages, worldStateStorageCoordinator, protocolContext);
   }
 
   private List<Capability> calculateCapabilities() {
@@ -101,8 +103,11 @@ public class SnapProtocolManager implements ProtocolManager {
     }
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
-      LOG.debug("Unsolicited message received from, disconnecting: {}", ethPeer);
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      LOG.debug(
+          "Unsolicited message {} received from, disconnecting: {}",
+          ethMessage.getData().getCode(),
+          ethPeer);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_UNSOLICITED_MESSAGE_RECEIVED);
       return;
     }
 
@@ -121,7 +126,7 @@ public class SnapProtocolManager implements ProtocolManager {
     } catch (final RLPException e) {
       LOG.debug(
           "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
-      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+      ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
     maybeResponseData.ifPresent(
         responseData -> {

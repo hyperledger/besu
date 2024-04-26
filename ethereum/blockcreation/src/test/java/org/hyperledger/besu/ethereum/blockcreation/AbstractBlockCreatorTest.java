@@ -41,6 +41,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -362,7 +363,9 @@ abstract class AbstractBlockCreatorTest {
                         protocolSpecAdapters,
                         PrivacyParameters.DEFAULT,
                         false,
-                        EvmConfiguration.DEFAULT)
+                        EvmConfiguration.DEFAULT,
+                        MiningParameters.MINING_DISABLED,
+                        new BadBlockManager())
                     .createProtocolSchedule())
             .build();
 
@@ -384,8 +387,7 @@ abstract class AbstractBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
-            poolConf,
-            null);
+            poolConf);
     transactionPool.setEnabled();
 
     final MiningParameters miningParameters =

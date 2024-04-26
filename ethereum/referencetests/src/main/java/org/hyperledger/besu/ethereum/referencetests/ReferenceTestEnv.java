@@ -17,6 +17,7 @@
 package org.hyperledger.besu.ethereum.referencetests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.evm.internal.Words.decodeUnsignedLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -106,10 +107,8 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("currentBeaconRoot") final String currentBeaconRoot,
       @JsonProperty("currentBlobGasUsed") final String currentBlobGasUsed,
       @JsonProperty("currentCoinbase") final String coinbase,
-      @JsonProperty("currentDataGasUsed") final String currentDataGasUsed,
       @JsonProperty("currentDifficulty") final String difficulty,
       @JsonProperty("currentExcessBlobGas") final String currentExcessBlobGas,
-      @JsonProperty("currentExcessDataGas") final String currentExcessDataGas,
       @JsonProperty("currentGasLimit") final String gasLimit,
       @JsonProperty("currentNumber") final String number,
       @JsonProperty("currentRandom") final String random,
@@ -118,10 +117,8 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("currentWithdrawalsRoot") final String currentWithdrawalsRoot,
       @JsonProperty("parentBaseFee") final String parentBaseFee,
       @JsonProperty("parentBlobGasUsed") final String parentBlobGasUsed,
-      @JsonProperty("parentDataGasUsed") final String parentDataGasUsed,
       @JsonProperty("parentDifficulty") final String parentDifficulty,
       @JsonProperty("parentExcessBlobGas") final String parentExcessBlobGas,
-      @JsonProperty("parentExcessDataGas") final String parentExcessDataGas,
       @JsonProperty("parentGasLimit") final String parentGasLimit,
       @JsonProperty("parentGasUsed") final String parentGasUsed,
       @JsonProperty("parentTimestamp") final String parentTimestamp,
@@ -138,29 +135,25 @@ public class ReferenceTestEnv extends BlockHeader {
         number == null ? 0 : Long.decode(number),
         gasLimit == null ? 15_000_000L : Long.decode(gasLimit),
         0L,
-        timestamp == null ? 0L : Long.decode(timestamp),
+        timestamp == null ? 0L : decodeUnsignedLong(timestamp),
         Bytes.EMPTY,
         Optional.ofNullable(baseFee).map(Wei::fromHexString).orElse(null),
         Optional.ofNullable(random).map(Difficulty::fromHexString).orElse(Difficulty.ZERO),
         0L,
         currentWithdrawalsRoot == null ? null : Hash.fromHexString(currentWithdrawalsRoot),
-        currentBlobGasUsed == null
-            ? currentDataGasUsed == null ? null : Long.decode(currentDataGasUsed)
-            : Long.decode(currentBlobGasUsed),
-        currentExcessBlobGas == null
-            ? currentExcessDataGas == null ? null : BlobGas.fromHexString(currentExcessDataGas)
-            : BlobGas.fromHexString(currentExcessBlobGas),
+        currentBlobGasUsed == null ? null : Long.decode(currentBlobGasUsed),
+        currentExcessBlobGas == null ? null : BlobGas.of(Long.decode(currentExcessBlobGas)),
         beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
         null, // depositsRoot
+        null, // exitsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;
     this.parentGasUsed = parentGasUsed;
     this.parentGasLimit = parentGasLimit;
     this.parentTimestamp = parentTimestamp;
-    this.parentExcessBlobGas =
-        parentExcessBlobGas == null ? parentExcessDataGas : parentExcessBlobGas;
-    this.parentBlobGasUsed = parentBlobGasUsed == null ? parentDataGasUsed : parentBlobGasUsed;
+    this.parentExcessBlobGas = parentExcessBlobGas;
+    this.parentBlobGasUsed = parentBlobGasUsed;
     this.withdrawals =
         withdrawals == null
             ? List.of()
@@ -228,12 +221,8 @@ public class ReferenceTestEnv extends BlockHeader {
                       null)));
     }
     if (parentExcessBlobGas != null && parentBlobGasUsed != null) {
-      builder.excessBlobGas(
-          BlobGas.of(
-              protocolSpec
-                  .getGasCalculator()
-                  .computeExcessBlobGas(
-                      Long.decode(parentExcessBlobGas), Long.decode(parentBlobGasUsed))));
+      builder.excessBlobGas(BlobGas.of(Long.decode(parentExcessBlobGas)));
+      builder.blobGasUsed(Long.decode(parentBlobGasUsed));
     }
 
     return builder.buildBlockHeader();

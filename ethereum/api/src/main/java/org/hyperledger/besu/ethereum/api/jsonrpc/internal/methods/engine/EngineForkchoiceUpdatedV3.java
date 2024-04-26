@@ -56,16 +56,19 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
       final EngineForkchoiceUpdatedParameter fcuParameter,
       final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes) {
     if (fcuParameter.getHeadBlockHash() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing head block hash");
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing head block hash");
     } else if (fcuParameter.getSafeBlockHash() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing safe block hash");
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing safe block hash");
     } else if (fcuParameter.getFinalizedBlockHash() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing finalized block hash");
+      return ValidationResult.invalid(
+          getInvalidPayloadAttributesError(), "Missing finalized block hash");
     }
     if (maybePayloadAttributes.isPresent()) {
       if (maybePayloadAttributes.get().getParentBeaconBlockRoot() == null) {
         return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root hash");
+            getInvalidPayloadAttributesError(), "Missing parent beacon block root hash");
       }
     }
     return ValidationResult.valid();
@@ -93,7 +96,9 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
     if (payloadAttributes.getParentBeaconBlockRoot() == null) {
       LOG.error(
           "Parent beacon block root hash not present in payload attributes after cancun hardfork");
-      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
+    } else if (payloadAttributes.getTimestamp().longValue() == 0) {
+      return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     } else if (payloadAttributes.getTimestamp() < cancun.get().milestone()) {
       return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
     } else {

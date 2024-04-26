@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
@@ -31,6 +32,7 @@ public class MainnetProtocolSpecFactory {
   private final OptionalLong ecip1017EraRounds;
   private final EvmConfiguration evmConfiguration;
   private final boolean incrementPrivateTransaction;
+  private final MiningParameters miningParameters;
 
   public MainnetProtocolSpecFactory(
       final Optional<BigInteger> chainId,
@@ -39,7 +41,8 @@ public class MainnetProtocolSpecFactory {
       final boolean isRevertReasonEnabled,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final boolean incrementPrivateTransaction,
+      final MiningParameters miningParameters) {
     this.chainId = chainId;
     this.contractSizeLimit = contractSizeLimit;
     this.evmStackSize = evmStackSize;
@@ -47,6 +50,7 @@ public class MainnetProtocolSpecFactory {
     this.ecip1017EraRounds = ecip1017EraRounds;
     this.evmConfiguration = evmConfiguration;
     this.incrementPrivateTransaction = incrementPrivateTransaction;
+    this.miningParameters = miningParameters;
   }
 
   public ProtocolSpecBuilder frontierDefinition() {
@@ -147,7 +151,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction);
+        incrementPrivateTransaction,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder arrowGlacierDefinition(
@@ -159,7 +164,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction);
+        incrementPrivateTransaction,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder grayGlacierDefinition(
@@ -171,7 +177,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction);
+        incrementPrivateTransaction,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder parisDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -182,7 +189,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction);
+        incrementPrivateTransaction,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder shanghaiDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -193,7 +201,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction);
+        incrementPrivateTransaction,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder cancunDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -204,7 +213,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction);
+        incrementPrivateTransaction,
+        miningParameters);
   }
 
   public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -215,7 +225,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction);
+        incrementPrivateTransaction,
+        miningParameters);
   }
 
   /**
@@ -237,7 +248,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction);
+        incrementPrivateTransaction,
+        miningParameters);
   }
 
   /**
@@ -259,7 +271,8 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction);
+        incrementPrivateTransaction,
+        miningParameters);
   }
 
   ////////////////////////////////////////////////////////////////////////////////////////////////

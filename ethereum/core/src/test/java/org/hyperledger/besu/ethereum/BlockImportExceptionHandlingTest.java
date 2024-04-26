@@ -40,13 +40,14 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -80,9 +81,12 @@ class BlockImportExceptionHandlingTest {
   protected final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
-  private final WorldStateStorage worldStateStorage =
-      new BonsaiWorldStateKeyValueStorage(
-          storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator =
+      new WorldStateStorageCoordinator(
+          new BonsaiWorldStateKeyValueStorage(
+              storageProvider,
+              new NoOpMetricsSystem(),
+              DataStorageConfiguration.DEFAULT_BONSAI_CONFIG));
 
   private final WorldStateArchive worldStateArchive =
       // contains a BonsaiWorldState which we need to spy on.
@@ -93,7 +97,8 @@ class BlockImportExceptionHandlingTest {
       spy(
           new BonsaiWorldState(
               (BonsaiWorldStateProvider) worldStateArchive,
-              (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+              (BonsaiWorldStateKeyValueStorage)
+                  worldStateStorageCoordinator.worldStateKeyValueStorage(),
               EvmConfiguration.DEFAULT));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
@@ -105,6 +110,8 @@ class BlockImportExceptionHandlingTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    when(protocolSpec.getExitsValidator())
+        .thenReturn(new ValidatorExitsValidator.ProhibitedExits());
     mainnetBlockValidator =
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);

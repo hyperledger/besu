@@ -98,7 +98,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   private static boolean accountExists(final Account account) {
     // The account exists if it has sent a transaction
     // or already has its code initialized.
-    return account.getNonce() > 0 || !account.getCode().isEmpty();
+    return account.getNonce() != 0 || !account.getCode().isEmpty();
   }
 
   @Override
@@ -117,17 +117,16 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
         LOG.trace(
             "Contract creation error: account has already been created for address {}",
             contractAddress);
-        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+        frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
         frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
         operationTracer.traceAccountCreationResult(
-            frame, Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
+            frame, Optional.of(ExceptionalHaltReason.ILLEGAL_STATE_CHANGE));
       } else {
         frame.addCreate(contractAddress);
         contract.incrementBalance(frame.getValue());
         contract.setNonce(initialContractNonce);
         contract.clearStorage();
         frame.setState(MessageFrame.State.CODE_EXECUTING);
-        frame.addCreate(contractAddress);
       }
     } catch (final ModificationNotAllowedException ex) {
       LOG.trace("Contract creation error: attempt to mutate an immutable account");

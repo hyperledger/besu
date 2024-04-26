@@ -24,7 +24,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.BlockTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AllAcceptingTransactionSelector;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -37,6 +36,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -50,6 +50,8 @@ import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper;
+import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
@@ -60,7 +62,6 @@ import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModuleException;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
-import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -161,6 +162,26 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         true);
   }
 
+  @Override
+  public BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp) {
+    throw new UnsupportedOperationException("Only used by BFT block creators");
+  }
+
+  public BlockCreationResult createBlock(
+      final Optional<List<Transaction>> maybeTransactions,
+      final Optional<List<BlockHeader>> maybeOmmers,
+      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final long timestamp) {
+    return createBlock(
+        maybeTransactions,
+        maybeOmmers,
+        maybeWithdrawals,
+        Optional.empty(),
+        Optional.empty(),
+        timestamp,
+        true);
+  }
+
   protected BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
@@ -170,7 +191,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final long timestamp,
       boolean rewardCoinbase) {
 
+    final var timings = new BlockCreationTiming();
+
     try (final MutableWorldState disposableWorldState = duplicateWorldStateAtParent()) {
+      timings.register("duplicateWorldState");
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
 
@@ -192,16 +216,13 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throwIfStopped();
 
       final PluginTransactionSelector pluginTransactionSelector =
-          protocolContext
-              .getTransactionSelectorFactory()
-              .map(PluginTransactionSelectorFactory::create)
-              .orElseGet(() -> AllAcceptingTransactionSelector.INSTANCE);
+          miningParameters.getTransactionSelectionService().createPluginTransactionSelector();
 
       final BlockAwareOperationTracer operationTracer =
           pluginTransactionSelector.getOperationTracer();
 
       operationTracer.traceStartBlock(processableBlockHeader);
-
+      timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
           selectTransactions(
               processableBlockHeader,
@@ -210,9 +231,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               miningBeneficiary,
               newProtocolSpec,
               pluginTransactionSelector);
-
       transactionResults.logSelectionStats();
-
+      timings.register("txsSelection");
       throwIfStopped();
 
       final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
@@ -232,6 +252,15 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       if (depositsValidator instanceof DepositsValidator.AllowedDeposits
           && depositContractAddress.isPresent()) {
         maybeDeposits = Optional.of(findDepositsFromReceipts(transactionResults));
+      }
+
+      throwIfStopped();
+
+      final ValidatorExitsValidator exitsValidator = newProtocolSpec.getExitsValidator();
+      Optional<List<ValidatorExit>> maybeExits = Optional.empty();
+      if (exitsValidator.allowValidatorExits()) {
+        maybeExits =
+            Optional.of(ValidatorExitContractHelper.popExitsFromQueue(disposableWorldState));
       }
 
       throwIfStopped();
@@ -270,7 +299,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
-              .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null));
+              .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
+              .exitsRoot(maybeExits.map(BodyValidation::exitsRoot).orElse(null));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
@@ -283,12 +313,16 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
           new BlockBody(
-              transactionResults.getSelectedTransactions(), ommers, withdrawals, maybeDeposits);
+              transactionResults.getSelectedTransactions(),
+              ommers,
+              withdrawals,
+              maybeDeposits,
+              maybeExits);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
-
-      return new BlockCreationResult(block, transactionResults);
+      timings.register("blockAssembled");
+      return new BlockCreationResult(block, transactionResults, timings);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
     } catch (final CancellationException | StorageException ex) {

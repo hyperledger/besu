@@ -33,7 +33,11 @@ public interface FeeHistory {
 
   List<Wei> getBaseFeePerGas();
 
+  List<Wei> getBaseFeePerBlobGas();
+
   List<Double> getGasUsedRatio();
+
+  List<Double> getBlobGasUsedRatio();
 
   Optional<List<List<Wei>>> getReward();
 
@@ -47,8 +51,14 @@ public interface FeeHistory {
     @JsonProperty("baseFeePerGas")
     List<String> getBaseFeePerGas();
 
+    @JsonProperty("baseFeePerBlobGas")
+    List<String> getBaseFeePerBlobGas();
+
     @JsonProperty("gasUsedRatio")
     List<Double> getGasUsedRatio();
+
+    @JsonProperty("blobGasUsedRatio")
+    List<Double> getBlobGasUsedRatio();
 
     @Nullable
     @JsonProperty("reward")
@@ -60,7 +70,9 @@ public interface FeeHistory {
           feeHistory.getBaseFeePerGas().stream()
               .map(Quantity::create)
               .collect(toUnmodifiableList()),
+          feeHistory.getBaseFeePerBlobGas().stream().map(Quantity::create).toList(),
           feeHistory.getGasUsedRatio(),
+          feeHistory.getBlobGasUsedRatio(),
           feeHistory
               .getReward()
               .map(

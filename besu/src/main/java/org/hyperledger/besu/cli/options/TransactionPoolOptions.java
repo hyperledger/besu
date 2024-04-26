@@ -27,15 +27,18 @@ import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.io.File;
 import java.time.Duration;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import picocli.CommandLine;
@@ -43,6 +46,7 @@ import picocli.CommandLine;
 /** The Transaction pool Cli stable options. */
 public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfiguration> {
   private static final String TX_POOL_IMPLEMENTATION = "--tx-pool";
+
   /** Use TX_POOL_NO_LOCAL_PRIORITY instead */
   @Deprecated(forRemoval = true)
   private static final String TX_POOL_DISABLE_LOCALS = "--tx-pool-disable-locals";
@@ -51,11 +55,14 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private static final String TX_POOL_ENABLE_SAVE_RESTORE = "--tx-pool-enable-save-restore";
   private static final String TX_POOL_SAVE_FILE = "--tx-pool-save-file";
   private static final String TX_POOL_PRICE_BUMP = "--tx-pool-price-bump";
+  private static final String TX_POOL_BLOB_PRICE_BUMP = "--tx-pool-blob-price-bump";
   private static final String RPC_TX_FEECAP = "--rpc-tx-feecap";
   private static final String STRICT_TX_REPLAY_PROTECTION_ENABLED_FLAG =
       "--strict-tx-replay-protection-enabled";
   private static final String TX_POOL_PRIORITY_SENDERS = "--tx-pool-priority-senders";
   private static final String TX_POOL_MIN_GAS_PRICE = "--tx-pool-min-gas-price";
+
+  private TransactionPoolValidatorService transactionPoolValidatorService;
 
   @CommandLine.Option(
       names = {TX_POOL_IMPLEMENTATION},
@@ -100,6 +107,15 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   private Percentage priceBump = TransactionPoolConfiguration.DEFAULT_PRICE_BUMP;
 
   @CommandLine.Option(
+      names = {TX_POOL_BLOB_PRICE_BUMP},
+      paramLabel = "<Percentage>",
+      converter = PercentageConverter.class,
+      description =
+          "Blob price bump percentage to replace an already existing transaction blob tx (default: ${DEFAULT-VALUE})",
+      arity = "1")
+  private Percentage blobPriceBump = TransactionPoolConfiguration.DEFAULT_BLOB_PRICE_BUMP;
+
+  @CommandLine.Option(
       names = {RPC_TX_FEECAP},
       description =
           "Maximum transaction fees (in Wei) accepted for transaction submitted through RPC (default: ${DEFAULT-VALUE})",
@@ -141,6 +157,8 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   static class Layered {
     private static final String TX_POOL_LAYER_MAX_CAPACITY = "--tx-pool-layer-max-capacity";
     private static final String TX_POOL_MAX_PRIORITIZED = "--tx-pool-max-prioritized";
+    private static final String TX_POOL_MAX_PRIORITIZED_BY_TYPE =
+        "--tx-pool-max-prioritized-by-type";
     private static final String TX_POOL_MAX_FUTURE_BY_SENDER = "--tx-pool-max-future-by-sender";
 
     @CommandLine.Option(
@@ -160,6 +178,16 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         arity = "1")
     Integer txPoolMaxPrioritized =
         TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS;
+
+    @CommandLine.Option(
+        names = {TX_POOL_MAX_PRIORITIZED_BY_TYPE},
+        paramLabel = "MAP<TYPE,INTEGER>",
+        split = ",",
+        description =
+            "Max number of pending transactions, of a specific type, that are prioritized and thus kept sorted (default: ${DEFAULT-VALUE})",
+        arity = "1")
+    Map<TransactionType, Integer> txPoolMaxPrioritizedByType =
+        TransactionPoolConfiguration.DEFAULT_MAX_PRIORITIZED_TRANSACTIONS_BY_TYPE;
 
     @CommandLine.Option(
         names = {TX_POOL_MAX_FUTURE_BY_SENDER},
@@ -253,6 +281,16 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
   }
 
   /**
+   * Set the plugin txpool validator service
+   *
+   * @param transactionPoolValidatorService the plugin txpool validator service
+   */
+  public void setPluginTransactionValidatorService(
+      final TransactionPoolValidatorService transactionPoolValidatorService) {
+    this.transactionPoolValidatorService = transactionPoolValidatorService;
+  }
+
+  /**
    * Create Transaction Pool Options from Transaction Pool Configuration.
    *
    * @param config the Transaction Pool Configuration
@@ -264,6 +302,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.saveRestoreEnabled = config.getEnableSaveRestore();
     options.noLocalPriority = config.getNoLocalPriority();
     options.priceBump = config.getPriceBump();
+    options.blobPriceBump = config.getBlobPriceBump();
     options.txFeeCap = config.getTxFeeCap();
     options.saveFile = config.getSaveFile();
     options.strictTxReplayProtectionEnabled = config.getStrictTransactionReplayProtectionEnabled();
@@ -272,11 +311,14 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
     options.layeredOptions.txPoolLayerMaxCapacity =
         config.getPendingTransactionsLayerMaxCapacityBytes();
     options.layeredOptions.txPoolMaxPrioritized = config.getMaxPrioritizedTransactions();
+    options.layeredOptions.txPoolMaxPrioritizedByType =
+        config.getMaxPrioritizedTransactionsByType();
     options.layeredOptions.txPoolMaxFutureBySender = config.getMaxFutureBySender();
     options.sequencedOptions.txPoolLimitByAccountPercentage =
         config.getTxPoolLimitByAccountPercentage();
     options.sequencedOptions.txPoolMaxSize = config.getTxPoolMaxSize();
     options.sequencedOptions.pendingTxRetentionPeriod = config.getPendingTxRetentionPeriod();
+    options.transactionPoolValidatorService = config.getTransactionPoolValidatorService();
     options.unstableOptions.txMessageKeepAliveSeconds =
         config.getUnstable().getTxMessageKeepAliveSeconds();
     options.unstableOptions.eth65TrxAnnouncedBufferingPeriod =
@@ -320,6 +362,7 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .enableSaveRestore(saveRestoreEnabled)
         .noLocalPriority(noLocalPriority)
         .priceBump(priceBump)
+        .blobPriceBump(blobPriceBump)
         .txFeeCap(txFeeCap)
         .saveFile(saveFile)
         .strictTransactionReplayProtectionEnabled(strictTxReplayProtectionEnabled)
@@ -327,10 +370,12 @@ public class TransactionPoolOptions implements CLIOptions<TransactionPoolConfigu
         .minGasPrice(minGasPrice)
         .pendingTransactionsLayerMaxCapacityBytes(layeredOptions.txPoolLayerMaxCapacity)
         .maxPrioritizedTransactions(layeredOptions.txPoolMaxPrioritized)
+        .maxPrioritizedTransactionsByType(layeredOptions.txPoolMaxPrioritizedByType)
         .maxFutureBySender(layeredOptions.txPoolMaxFutureBySender)
         .txPoolLimitByAccountPercentage(sequencedOptions.txPoolLimitByAccountPercentage)
         .txPoolMaxSize(sequencedOptions.txPoolMaxSize)
         .pendingTxRetentionPeriod(sequencedOptions.pendingTxRetentionPeriod)
+        .transactionPoolValidatorService(transactionPoolValidatorService)
         .unstable(
             ImmutableTransactionPoolConfiguration.Unstable.builder()
                 .txMessageKeepAliveSeconds(unstableOptions.txMessageKeepAliveSeconds)

@@ -39,7 +39,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationFactory.CliqueOptions;
-import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PkiKeystoreConfigurationFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,6 +48,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.UnaryOperator;
 
 import io.vertx.core.Vertx;
@@ -56,8 +56,6 @@ import io.vertx.core.Vertx;
 public class BesuNodeFactory {
 
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
-  private final PkiKeystoreConfigurationFactory pkiKeystoreConfigurationFactory =
-      new PkiKeystoreConfigurationFactory();
 
   public BesuNode create(final BesuNodeConfiguration config) throws IOException {
     return new BesuNode(
@@ -72,6 +70,7 @@ public class BesuNodeFactory {
         config.getMetricsConfiguration(),
         config.getPermissioningConfiguration(),
         config.getApiConfiguration(),
+        config.getDataStorageConfiguration(),
         config.getKeyFilePath(),
         config.isDevMode(),
         config.getNetwork(),
@@ -92,7 +91,6 @@ public class BesuNodeFactory {
         config.getPrivacyParameters(),
         config.getRunCommand(),
         config.getKeyPair(),
-        config.getPkiKeyStoreConfiguration(),
         config.isStrictTxReplayProtectionEnabled(),
         config.getEnvironment());
   }
@@ -375,17 +373,27 @@ public class BesuNodeFactory {
 
   public BesuNode createCliqueNode(final String name, final CliqueOptions cliqueOptions)
       throws IOException {
-    return createCliqueNodeWithExtraCliOptions(name, cliqueOptions, List.of());
+    return createCliqueNodeWithExtraCliOptionsAndRpcApis(name, cliqueOptions, List.of());
   }
 
-  public BesuNode createCliqueNodeWithExtraCliOptions(
+  public BesuNode createCliqueNodeWithExtraCliOptionsAndRpcApis(
       final String name, final CliqueOptions cliqueOptions, final List<String> extraCliOptions)
+      throws IOException {
+    return createCliqueNodeWithExtraCliOptionsAndRpcApis(
+        name, cliqueOptions, extraCliOptions, Set.of());
+  }
+
+  public BesuNode createCliqueNodeWithExtraCliOptionsAndRpcApis(
+      final String name,
+      final CliqueOptions cliqueOptions,
+      final List<String> extraCliOptions,
+      final Set<String> extraRpcApis)
       throws IOException {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
+            .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig(extraRpcApis))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
             .jsonRpcTxPool()
@@ -505,31 +513,6 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createPkiQbftJKSNode(final String name) throws IOException {
-    return createPkiQbftNode(KeyStoreWrapper.KEYSTORE_TYPE_JKS, name);
-  }
-
-  public BesuNode createPkiQbftPKCS11Node(final String name) throws IOException {
-    return createPkiQbftNode(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, name);
-  }
-
-  public BesuNode createPkiQbftPKCS12Node(final String name) throws IOException {
-    return createPkiQbftNode(KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, name);
-  }
-
-  public BesuNode createPkiQbftNode(final String type, final String name) throws IOException {
-    return create(
-        new BesuNodeConfigurationBuilder()
-            .name(name)
-            .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
-            .webSocketConfiguration(node.createWebSocketEnabledConfig())
-            .devMode(false)
-            .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig)
-            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig(type, name))
-            .build());
-  }
-
   public BesuNode createCustomGenesisNode(
       final String name, final String genesisPath, final boolean canBeBootnode) throws IOException {
     return createCustomGenesisNode(name, genesisPath, canBeBootnode, false);
@@ -583,7 +566,7 @@ public class BesuNodeFactory {
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig())
+            .jsonRpcConfiguration(node.createJsonRpcWithCliqueEnabledConfig(Set.of()))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .jsonRpcTxPool()
             .devMode(false)
@@ -684,41 +667,6 @@ public class BesuNodeFactory {
                         asList(validators),
                         nodes,
                         GenesisConfigurationFactory::createQbftValidatorContractGenesisConfig))
-            .build());
-  }
-
-  public BesuNode createPkiQbftJKSNodeWithValidators(final String name, final String... validators)
-      throws IOException {
-    return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_JKS, name, validators);
-  }
-
-  public BesuNode createPkiQbftPKCS11NodeWithValidators(
-      final String name, final String... validators) throws IOException {
-    return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_PKCS11, name, validators);
-  }
-
-  public BesuNode createPkiQbftPKCS12NodeWithValidators(
-      final String name, final String... validators) throws IOException {
-    return createPkiQbftNodeWithValidators(KeyStoreWrapper.KEYSTORE_TYPE_PKCS12, name, validators);
-  }
-
-  public BesuNode createPkiQbftNodeWithValidators(
-      final String type, final String name, final String... validators) throws IOException {
-
-    return create(
-        new BesuNodeConfigurationBuilder()
-            .name(name)
-            .miningEnabled()
-            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
-            .webSocketConfiguration(node.createWebSocketEnabledConfig())
-            .devMode(false)
-            .pkiBlockCreationEnabled(pkiKeystoreConfigurationFactory.createPkiConfig(type, name))
-            .genesisConfigProvider(
-                nodes ->
-                    node.createGenesisConfigForValidators(
-                        asList(validators),
-                        nodes,
-                        GenesisConfigurationFactory::createQbftGenesisConfig))
             .build());
   }
 

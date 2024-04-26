@@ -28,6 +28,7 @@ import java.util.Optional;
 public class TransitionContext implements MergeContext {
   /** The Pre merge context. */
   final ConsensusContext preMergeContext;
+
   /** The Post merge context. */
   final MergeContext postMergeContext;
 
@@ -147,11 +148,6 @@ public class TransitionContext implements MergeContext {
   @Override
   public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
     return postMergeContext.retrieveBlockById(payloadId);
-  }
-
-  @Override
-  public boolean isCheckpointPostMergeSync() {
-    return false;
   }
 
   @Override

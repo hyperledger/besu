@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.util.List;
 import java.util.Optional;
@@ -210,11 +211,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   }
 
   @Override
-  public void addBadBlock(final Block block, final Optional<Throwable> maybeCause) {
-    mergeCoordinator.addBadBlock(block, maybeCause);
-  }
-
-  @Override
   public boolean isBadBlock(final Hash blockHash) {
     return mergeCoordinator.isBadBlock(blockHash);
   }
@@ -227,5 +223,15 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public void finalizeProposalById(final PayloadIdentifier payloadId) {
     mergeCoordinator.finalizeProposalById(payloadId);
+  }
+
+  /**
+   * returns the instance of ethScheduler
+   *
+   * @return get the Eth scheduler
+   */
+  @Override
+  public EthScheduler getEthScheduler() {
+    return mergeCoordinator.getEthScheduler();
   }
 }

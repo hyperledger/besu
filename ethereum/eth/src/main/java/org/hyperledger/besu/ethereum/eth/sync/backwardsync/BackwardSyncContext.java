@@ -125,11 +125,15 @@ public class BackwardSyncContext {
   }
 
   public synchronized CompletableFuture<Void> syncBackwardsUntil(final Hash newBlockHash) {
-    if (!isTrusted(newBlockHash)) {
-      backwardChain.addNewHash(newBlockHash);
-    }
-
     if (isReady()) {
+      if (!isTrusted(newBlockHash)) {
+        LOG.atDebug()
+            .setMessage("Appending new head block hash {} to backward sync")
+            .addArgument(newBlockHash::toHexString)
+            .log();
+        backwardChain.addNewHash(newBlockHash);
+      }
+
       final Status status = getOrStartSyncSession();
       backwardChain
           .getBlock(newBlockHash)
@@ -324,10 +328,9 @@ public class BackwardSyncContext {
                 HeaderValidationMode.NONE);
     if (optResult.isSuccessful()) {
       LOG.atTrace()
-          .setMessage("Block {} was validated, going to import it")
+          .setMessage("Block {} was validated, going to move the head")
           .addArgument(block::toLogString)
           .log();
-      optResult.getYield().get().getWorldState().persist(block.getHeader());
       this.getProtocolContext()
           .getBlockchain()
           .appendBlock(block, optResult.getYield().get().getReceipts());
@@ -409,7 +412,7 @@ public class BackwardSyncContext {
     final float completedPercentage = 100.0f * imported / estimatedTotal;
 
     if (completedPercentage < 100.0f) {
-      if (currentStatus.progressLogDue()) {
+      if (currentStatus.progressLogDue() && targetHeight > 0) {
         LOG.info(
             String.format(
                 "Backward sync phase 2 of 2, %.2f%% completed, imported %d blocks of at least %d (current head %d, target head %d). Peers: %d",

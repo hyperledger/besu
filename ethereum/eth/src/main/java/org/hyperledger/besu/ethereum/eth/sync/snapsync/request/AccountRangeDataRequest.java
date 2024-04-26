@@ -14,12 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync.request;
 
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MAX_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.MIN_RANGE;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager.findNewBeginElementInRange;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.RequestType.ACCOUNT_RANGE;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncMetricsManager.Step.DOWNLOAD;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.StackTrie.FlatDatabaseUpdater.noop;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.MAX_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.MIN_RANGE;
+import static org.hyperledger.besu.ethereum.trie.RangeManager.findNewBeginElementInRange;
+import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator.applyForStrategy;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
@@ -30,18 +31,19 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage.Updater;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.NavigableMap;
 import java.util.Optional;
-import java.util.TreeMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -104,8 +106,8 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   @Override
   protected int doPersist(
-      final WorldStateStorage worldStateStorage,
-      final Updater updater,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final WorldStateKeyValueStorage.Updater updater,
       final SnapWorldDownloadState downloadState,
       final SnapSyncProcessState snapSyncState,
       final SnapSyncConfiguration snapSyncConfiguration) {
@@ -120,19 +122,31 @@ public class AccountRangeDataRequest extends SnapDataRequest {
     final AtomicInteger nbNodesSaved = new AtomicInteger();
     final NodeUpdater nodeUpdater =
         (location, hash, value) -> {
-          updater.putAccountStateTrieNode(location, hash, value);
+          applyForStrategy(
+              updater,
+              onBonsai -> {
+                onBonsai.putAccountStateTrieNode(location, hash, value);
+              },
+              onForest -> {
+                onForest.putAccountStateTrieNode(hash, value);
+              });
           nbNodesSaved.getAndIncrement();
         };
 
-    StackTrie.FlatDatabaseUpdater flatDatabaseUpdater = noop();
-    if (worldStateStorage.getFlatDbMode().equals(FlatDbMode.FULL)) {
-      // we have a flat DB only with Bonsai
-      flatDatabaseUpdater =
-          (key, value) ->
-              ((BonsaiWorldStateKeyValueStorage.BonsaiUpdater) updater)
-                  .putAccountInfoState(Hash.wrap(key), value);
-    }
-    stackTrie.commit(flatDatabaseUpdater, nodeUpdater);
+    final AtomicReference<StackTrie.FlatDatabaseUpdater> flatDatabaseUpdater =
+        new AtomicReference<>(noop());
+
+    // we have a flat DB only with Bonsai
+    worldStateStorageCoordinator.applyOnMatchingFlatMode(
+        FlatDbMode.FULL,
+        bonsaiWorldStateStorageStrategy -> {
+          flatDatabaseUpdater.set(
+              (key, value) ->
+                  ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                      .putAccountInfoState(Hash.wrap(key), value));
+        });
+
+    stackTrie.commit(flatDatabaseUpdater.get(), nodeUpdater);
 
     downloadState.getMetricsManager().notifyAccountsDownloaded(stackTrie.getElementsCount().get());
 
@@ -141,11 +155,17 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   public void addResponse(
       final WorldStateProofProvider worldStateProofProvider,
-      final TreeMap<Bytes32, Bytes> accounts,
+      final NavigableMap<Bytes32, Bytes> accounts,
       final ArrayDeque<Bytes> proofs) {
     if (!accounts.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, getRootHash(), proofs, accounts)) {
+        // this happens on repivot and on bad proofs
+        LOG.atTrace()
+            .setMessage("invalid range proof received for account range {} {}")
+            .addArgument(accounts.firstKey())
+            .addArgument(accounts.lastKey())
+            .log();
         isProofValid = Optional.of(false);
       } else {
         stackTrie.addElement(startKeyHash, proofs, accounts);
@@ -162,7 +182,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   @Override
   public Stream<SnapDataRequest> getChildRequests(
       final SnapWorldDownloadState downloadState,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapSyncProcessState snapSyncState) {
     final List<SnapDataRequest> childRequests = new ArrayList<>();
 
@@ -212,7 +232,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
   }
 
   @VisibleForTesting
-  public TreeMap<Bytes32, Bytes> getAccounts() {
+  public NavigableMap<Bytes32, Bytes> getAccounts() {
     return stackTrie.getElement(startKeyHash).keys();
   }
 

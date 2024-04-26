@@ -120,8 +120,9 @@ tasks.register('distDocker', Exec) {
     }
   }
 
+  def gitDetails = getGitCommitDetails(10)
   executable "sh"
-  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
+  args "-c", "docker build --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
 }
 
 tasks.register('dockerUpload', Exec) {
@@ -138,7 +139,7 @@ tasks.register('dockerUpload', Exec) {
     additionalTags.add('develop')
   }
 
-  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/)) {
+  if (!(dockerBuildVersion ==~ /.*-SNAPSHOT/ || dockerBuildVersion ==~/.*develop.*/)) {
     additionalTags.add('latest')
     additionalTags.add(dockerBuildVersion.split(/\./)[0..1].join('.'))
   }

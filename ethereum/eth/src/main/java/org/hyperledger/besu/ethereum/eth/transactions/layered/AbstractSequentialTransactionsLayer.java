@@ -27,7 +27,6 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.function.BiFunction;
 
 public abstract class AbstractSequentialTransactionsLayer extends AbstractTransactionsLayer {
@@ -48,7 +47,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
 
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     final long invalidNonce = invalidatedTx.getNonce();
-    if (senderTxs != null && invalidNonce <= senderTxs.lastKey()) {
+    if (senderTxs != null && Long.compareUnsigned(invalidNonce, senderTxs.lastKey()) <= 0) {
       // on sequential layers we need to push to next layer all the txs following the invalid one,
       // even if it belongs to a previous layer
 
@@ -142,7 +141,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
 
   @Override
   protected void internalConsistencyCheck(
-      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+      final Map<Address, NavigableMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     txsBySender.values().stream()
         .filter(senderTxs -> senderTxs.size() > 1)
         .map(NavigableMap::entrySet)

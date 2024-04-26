@@ -16,9 +16,12 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
+import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.DROPPED;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -27,10 +30,11 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 
@@ -38,21 +42,31 @@ import org.junit.jupiter.api.Test;
 
 public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransactionPoolTest {
   protected static final int MAX_TRANSACTIONS = 5;
+  protected static final EnumMap<TransactionType, Integer> MAX_TRANSACTIONS_BY_TYPE =
+      new EnumMap<>(Map.of(TransactionType.BLOB, 2));
   protected final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
   protected final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
+  protected final MiningParameters miningParameters =
+      MiningParameters.newDefault()
+          .setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE)
+          .setMinPriorityFeePerGas(DEFAULT_MIN_PRIORITY_FEE);
   protected AbstractPrioritizedTransactions transactions =
       getSorter(
           ImmutableTransactionPoolConfiguration.builder()
               .maxPrioritizedTransactions(MAX_TRANSACTIONS)
+              .maxPrioritizedTransactionsByType(MAX_TRANSACTIONS_BY_TYPE)
               .maxFutureBySender(MAX_TRANSACTIONS)
-              .build());
+              .build(),
+          miningParameters);
 
-  private AbstractPrioritizedTransactions getSorter(final TransactionPoolConfiguration poolConfig) {
+  private AbstractPrioritizedTransactions getSorter(
+      final TransactionPoolConfiguration poolConfig, final MiningParameters miningParameters) {
     return getSorter(
         poolConfig,
         evictCollector,
         txPoolMetrics,
-        (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2));
+        (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
+        miningParameters);
   }
 
   abstract AbstractPrioritizedTransactions getSorter(
@@ -60,7 +74,8 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics txPoolMetrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-          transactionReplacementTester);
+          transactionReplacementTester,
+      final MiningParameters miningParameters);
 
   abstract BlockHeader mockBlockHeader();
 
@@ -69,7 +84,8 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
       final PendingTransaction pt1,
       final PendingTransaction pt2) {
     final TransactionPoolReplacementHandler transactionReplacementHandler =
-        new TransactionPoolReplacementHandler(poolConfig.getPriceBump());
+        new TransactionPoolReplacementHandler(
+            poolConfig.getPriceBump(), poolConfig.getBlobPriceBump());
     return transactionReplacementHandler.shouldReplace(pt1, pt2, mockBlockHeader());
   }
 
@@ -80,13 +96,13 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
     assertThat(prioritizeTransaction(localTransaction)).isEqualTo(ADDED);
 
     final List<PendingTransaction> remoteTxs = new ArrayList<>();
-    TransactionAddedResult prioritizeResult = null;
+    TransactionAddedResult prioritizeResult;
     for (int i = 0; i < MAX_TRANSACTIONS; i++) {
       final PendingTransaction highValueRemoteTx =
           createRemotePendingTransaction(
               createTransaction(
                   0,
-                  Wei.of(BigInteger.valueOf(100).pow(i)),
+                  Wei.of(DEFAULT_MIN_GAS_PRICE.multiply(2).toBigInteger().pow(i + 1)),
                   SIGNATURE_ALGORITHM.get().generateKeyPair()));
       remoteTxs.add(highValueRemoteTx);
       prioritizeResult = prioritizeTransaction(highValueRemoteTx);
@@ -121,6 +137,25 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
 
     localTransactions.forEach(this::assertTransactionPrioritized);
     assertTransactionNotPrioritized(lastLocalTransaction);
+  }
+
+  @Test
+  public void txBelowCurrentMineableMinGasPriceIsNotPrioritized() {
+    final PendingTransaction lowGasPriceTx =
+        createRemotePendingTransaction(
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.subtract(1), KEYS1));
+    assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(DROPPED);
+    assertEvicted(lowGasPriceTx);
+    assertTransactionNotPrioritized(lowGasPriceTx);
+  }
+
+  @Test
+  public void txWithPriorityBelowCurrentMineableMinGasPriceIsPrioritized() {
+    final PendingTransaction lowGasPriceTx =
+        createRemotePendingTransaction(
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.subtract(1), KEYS1), true);
+    assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(ADDED);
+    assertTransactionPrioritized(lowGasPriceTx);
   }
 
   protected void shouldPrioritizeValueThenTimeAddedToPool(

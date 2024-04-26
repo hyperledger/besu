@@ -43,7 +43,7 @@ public class DebugTraceCall extends AbstractTraceCall {
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionSimulator transactionSimulator) {
-    super(blockchainQueries, protocolSchedule, transactionSimulator);
+    super(blockchainQueries, protocolSchedule, transactionSimulator, true);
   }
 
   @Override
@@ -83,7 +83,7 @@ public class DebugTraceCall extends AbstractTraceCall {
 
               final TransactionTrace transactionTrace =
                   new TransactionTrace(
-                      result.getTransaction(), result.getResult(), tracer.getTraceFrames());
+                      result.transaction(), result.result(), tracer.getTraceFrames());
 
               return new DebugTraceTransactionResult(transactionTrace);
             });

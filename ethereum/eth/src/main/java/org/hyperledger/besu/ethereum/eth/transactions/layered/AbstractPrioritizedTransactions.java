@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
@@ -24,7 +26,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
-import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
@@ -36,6 +37,7 @@ import java.util.stream.Stream;
  */
 public abstract class AbstractPrioritizedTransactions extends AbstractSequentialTransactionsLayer {
   protected final TreeSet<PendingTransaction> orderByFee;
+  protected final MiningParameters miningParameters;
 
   public AbstractPrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
@@ -43,9 +45,11 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
-      final BlobCache blobCache) {
+      final BlobCache blobCache,
+      final MiningParameters miningParameters) {
     super(poolConfig, prioritizedTransactions, transactionReplacementTester, metrics, blobCache);
     this.orderByFee = new TreeSet<>(this::compareByFee);
+    this.miningParameters = miningParameters;
   }
 
   @Override
@@ -84,6 +88,15 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   private boolean hasPriority(final PendingTransaction pendingTransaction) {
+    // check if there is space for that tx type
+    final var txType = pendingTransaction.getTransaction().getType();
+    if (txCountByType[txType.ordinal()]
+        >= poolConfig
+            .getMaxPrioritizedTransactionsByType()
+            .getOrDefault(txType, Integer.MAX_VALUE)) {
+      return false;
+    }
+
     // if it does not pass the promotion filter, then has not priority
     if (!promotionFilter(pendingTransaction)) {
       return false;
@@ -120,8 +133,30 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] remainingPromotionsPerType) {
     return List.of();
+  }
+
+  /**
+   * Here the max number of txs of a specific type that can be promoted, is defined by the
+   * configuration, so we return the difference between the configured max and the current count of
+   * txs for each type
+   *
+   * @return an array containing the max amount of txs that can be promoted for each type
+   */
+  @Override
+  protected int[] getRemainingPromotionsPerType() {
+    final var allTypes = TransactionType.values();
+    final var remainingPromotionsPerType = new int[allTypes.length];
+    for (int i = 0; i < allTypes.length; i++) {
+      remainingPromotionsPerType[i] =
+          poolConfig
+                  .getMaxPrioritizedTransactionsByType()
+                  .getOrDefault(allTypes[i], Integer.MAX_VALUE)
+              - txCountByType[i];
+    }
+    return remainingPromotionsPerType;
   }
 
   @Override
@@ -136,7 +171,7 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
 
   @Override
   protected void internalConsistencyCheck(
-      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+      final Map<Address, NavigableMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     super.internalConsistencyCheck(prevLayerTxsBySender);
 
     final var controlOrderByFee = new TreeSet<>(this::compareByFee);

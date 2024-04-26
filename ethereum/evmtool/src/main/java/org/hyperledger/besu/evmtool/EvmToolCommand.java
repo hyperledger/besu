@@ -19,12 +19,14 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
+import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -32,13 +34,11 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -57,7 +57,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.NavigableMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -109,6 +109,13 @@ public class EvmToolCommand implements Runnable {
       description = "Amount of gas for this invocation.",
       paramLabel = "<int>")
   private final Long gas = 10_000_000_000L;
+
+  @Option(
+      names = {"--intrinsic-gas"},
+      description = "Calculate and charge intrinsic and tx content gas. Default is not to charge.",
+      scope = INHERIT,
+      negatable = true)
+  final Boolean chargeIntrinsicGas = false;
 
   @Option(
       names = {"--price"},
@@ -326,26 +333,6 @@ public class EvmToolCommand implements Runnable {
               .metricsSystemModule(new MetricsSystemModule())
               .build();
 
-      final BlockHeader blockHeader =
-          BlockHeaderBuilder.create()
-              .parentHash(Hash.EMPTY)
-              .coinbase(coinbase)
-              .difficulty(Difficulty.ONE)
-              .number(1)
-              .gasLimit(5000)
-              .timestamp(Instant.now().toEpochMilli())
-              .ommersHash(Hash.EMPTY_LIST_HASH)
-              .stateRoot(Hash.EMPTY_TRIE_HASH)
-              .transactionsRoot(Hash.EMPTY)
-              .receiptsRoot(Hash.EMPTY)
-              .logsBloom(LogsBloomFilter.empty())
-              .gasUsed(0)
-              .extraData(Bytes.EMPTY)
-              .mixHash(Hash.EMPTY)
-              .nonce(0)
-              .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
-              .buildBlockHeader();
-
       int remainingIters = this.repeat;
       final ProtocolSpec protocolSpec =
           component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
@@ -360,15 +347,19 @@ public class EvmToolCommand implements Runnable {
               .sender(sender)
               .build();
 
-      final long intrinsicGasCost =
-          protocolSpec
-              .getGasCalculator()
-              .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
-      final long accessListCost =
-          tx.getAccessList()
-              .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
-              .orElse(0L);
-      long txGas = gas - intrinsicGasCost - accessListCost;
+      long txGas = gas;
+      if (chargeIntrinsicGas) {
+        final long intrinsicGasCost =
+            protocolSpec
+                .getGasCalculator()
+                .transactionIntrinsicGasCost(tx.getPayload(), tx.isContractCreation());
+        txGas -= intrinsicGasCost;
+        final long accessListCost =
+            tx.getAccessList()
+                .map(list -> protocolSpec.getGasCalculator().accessListGasCost(list))
+                .orElse(0L);
+        txGas -= accessListCost;
+      }
 
       final EVM evm = protocolSpec.getEvm();
       if (codeBytes.isEmpty()) {
@@ -395,6 +386,33 @@ public class EvmToolCommand implements Runnable {
         var contractAccount = updater.getOrCreate(contract);
         contractAccount.setCode(codeBytes);
 
+        final Set<Address> addressList = new BytesTrieSet<>(Address.SIZE);
+        addressList.add(sender);
+        addressList.add(contract);
+        if (EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0) {
+          addressList.add(coinbase);
+        }
+        final BlockHeader blockHeader =
+            BlockHeaderBuilder.create()
+                .parentHash(Hash.EMPTY)
+                .coinbase(coinbase)
+                .difficulty(Difficulty.ONE)
+                .number(1)
+                .gasLimit(5000)
+                .timestamp(Instant.now().toEpochMilli())
+                .ommersHash(Hash.EMPTY_LIST_HASH)
+                .stateRoot(Hash.EMPTY_TRIE_HASH)
+                .transactionsRoot(Hash.EMPTY)
+                .receiptsRoot(Hash.EMPTY)
+                .logsBloom(LogsBloomFilter.empty())
+                .gasUsed(0)
+                .extraData(Bytes.EMPTY)
+                .mixHash(Hash.EMPTY)
+                .nonce(0)
+                .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
+                .baseFee(component.getBlockchain().getChainHeadHeader().getBaseFee().orElse(null))
+                .buildBlockHeader();
+
         MessageFrame initialMessageFrame =
             MessageFrame.builder()
                 .type(MessageFrame.Type.MESSAGE_CALL)
@@ -414,10 +432,7 @@ public class EvmToolCommand implements Runnable {
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
                 .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
-                .accessListWarmAddresses(
-                    EvmSpecVersion.SHANGHAI.compareTo(evm.getEvmVersion()) <= 0
-                        ? Set.of(coinbase)
-                        : Set.of())
+                .accessListWarmAddresses(addressList)
                 .build();
         Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
 
@@ -458,8 +473,9 @@ public class EvmToolCommand implements Runnable {
         lastTime = stopwatch.elapsed().toNanos();
         stopwatch.reset();
         if (showJsonAlloc && lastLoop) {
+          initialMessageFrame.getSelfDestructs().forEach(updater::deleteAccount);
           updater.commit();
-          WorldState worldState = component.getWorldState();
+          MutableWorldState worldState = component.getWorldState();
           dumpWorldState(worldState, out);
         }
       } while (remainingIters-- > 0);
@@ -470,40 +486,45 @@ public class EvmToolCommand implements Runnable {
     }
   }
 
-  public static void dumpWorldState(final WorldState worldState, final PrintWriter out) {
+  public static void dumpWorldState(final MutableWorldState worldState, final PrintWriter out) {
     out.println("{");
     worldState
         .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
         .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
         .forEach(
-            account -> {
-              out.println(
-                  " \"" + account.getAddress().map(Address::toHexString).orElse("-") + "\": {");
+            a -> {
+              var account = worldState.get(a.getAddress().get());
+              out.println(" \"" + account.getAddress().toHexString() + "\": {");
               if (account.getCode() != null && !account.getCode().isEmpty()) {
                 out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
               }
-              NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
-                  account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              var storageEntries =
+                  account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE).values().stream()
+                      .map(
+                          e ->
+                              Map.entry(
+                                  e.getKey().get(),
+                                  account.getStorageValue(UInt256.fromBytes(e.getKey().get()))))
+                      .filter(e -> !e.getValue().isZero())
+                      .sorted(Map.Entry.comparingByKey())
+                      .toList();
               if (!storageEntries.isEmpty()) {
                 out.println("  \"storage\": {");
                 out.println(
                     STORAGE_JOINER.join(
-                        storageEntries.values().stream()
+                        storageEntries.stream()
                             .map(
-                                accountStorageEntry ->
+                                e ->
                                     "   \""
-                                        + accountStorageEntry
-                                            .getKey()
-                                            .map(UInt256::toQuantityHexString)
-                                            .orElse("-")
+                                        + e.getKey().toQuantityHexString()
                                         + "\": \""
-                                        + accountStorageEntry.getValue().toQuantityHexString()
+                                        + e.getValue().toQuantityHexString()
                                         + "\"")
                             .toList()));
                 out.println("  },");
               }
               out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
-              if (account.getNonce() > 0) {
+              if (account.getNonce() != 0) {
                 out.println(",");
                 out.println(
                     "  \"nonce\": \""

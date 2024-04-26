@@ -52,10 +52,11 @@ import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -99,7 +100,6 @@ public class MergeBesuControllerBuilderTest {
   @Mock Clock clock;
   @Mock StorageProvider storageProvider;
   @Mock GasLimitCalculator gasLimitCalculator;
-  @Mock WorldStateStorage worldStateStorage;
   @Mock WorldStatePreimageStorage worldStatePreimageStorage;
 
   BigInteger networkId = BigInteger.ONE;
@@ -113,6 +113,12 @@ public class MergeBesuControllerBuilderTest {
 
   @BeforeEach
   public void setup() {
+
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
+        mock(ForestWorldStateKeyValueStorage.class);
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
     lenient().when(genesisConfigFile.getParentHash()).thenReturn(Hash.ZERO.toHexString());
     lenient().when(genesisConfigFile.getDifficulty()).thenReturn(Bytes.of(0).toHexString());
     lenient().when(genesisConfigFile.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
@@ -127,12 +133,13 @@ public class MergeBesuControllerBuilderTest {
     when(genesisConfigOptions.getTerminalBlockHash()).thenReturn(Optional.of(Hash.ZERO));
     lenient().when(genesisConfigOptions.getTerminalBlockNumber()).thenReturn(OptionalLong.of(1L));
     lenient()
-        .when(storageProvider.createBlockchainStorage(any(), any()))
+        .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-                new MainnetBlockHeaderFunctions()));
+                new MainnetBlockHeaderFunctions(),
+                false));
     lenient()
         .when(storageProvider.getStorageBySegmentIdentifier(any()))
         .thenReturn(new InMemoryKeyValueStorage());
@@ -145,17 +152,21 @@ public class MergeBesuControllerBuilderTest {
         .thenReturn(Range.closed(1L, 2L));
 
     lenient()
-        .when(storageProvider.createWorldStateStorage(DataStorageConfiguration.DEFAULT_CONFIG))
-        .thenReturn(worldStateStorage);
+        .when(
+            storageProvider.createWorldStateStorageCoordinator(
+                DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
+        .thenReturn(worldStateStorageCoordinator);
     lenient()
         .when(storageProvider.createWorldStatePreimageStorage())
         .thenReturn(worldStatePreimageStorage);
 
-    lenient().when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
+    lenient().when(worldStateKeyValueStorage.isWorldStateAvailable(any())).thenReturn(true);
     lenient()
         .when(worldStatePreimageStorage.updater())
         .thenReturn(mock(WorldStatePreimageStorage.Updater.class));
-    lenient().when(worldStateStorage.updater()).thenReturn(mock(WorldStateStorage.Updater.class));
+    lenient()
+        .when(worldStateKeyValueStorage.updater())
+        .thenReturn(mock(ForestWorldStateKeyValueStorage.Updater.class));
     lenient().when(miningParameters.getTargetGasLimit()).thenReturn(OptionalLong.empty());
 
     besuControllerBuilder = visitWithMockConfigs(new MergeBesuControllerBuilder());
@@ -174,6 +185,7 @@ public class MergeBesuControllerBuilderTest {
             .dataDirectory(tempDir)
             .clock(clock)
             .transactionPoolConfiguration(poolConfiguration)
+            .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
             .nodeKey(nodeKey)
             .storageProvider(storageProvider)
             .evmConfiguration(EvmConfiguration.DEFAULT)

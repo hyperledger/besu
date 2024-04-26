@@ -26,11 +26,12 @@ import com.google.common.annotations.VisibleForTesting;
 public class TransactionPoolReplacementHandler {
   private final List<TransactionPoolReplacementRule> rules;
 
-  public TransactionPoolReplacementHandler(final Percentage priceBump) {
+  public TransactionPoolReplacementHandler(
+      final Percentage priceBump, final Percentage blobPriceBump) {
     this(
         asList(
             new TransactionReplacementByGasPriceRule(priceBump),
-            new TransactionReplacementByFeeMarketRule(priceBump)));
+            new TransactionReplacementByFeeMarketRule(priceBump, blobPriceBump)));
   }
 
   @VisibleForTesting

@@ -103,7 +103,6 @@ public class PrivateMigrationBlockProcessor {
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
-              blockchain,
               worldStateUpdater,
               blockHeader,
               transaction,
