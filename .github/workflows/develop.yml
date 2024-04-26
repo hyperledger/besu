@@ -1,8 +1,9 @@
-name: docker
+name: docker develop
+
 on:
-  release:
-    types:
-      - prereleased
+  push:
+    branches:
+      - main
 env:
   registry: docker.io
 
@@ -21,6 +22,7 @@ jobs:
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
+
       - name: hadoLint
         run: docker run --rm -i hadolint/hadolint < docker/Dockerfile
   buildDocker:
@@ -40,19 +42,27 @@ jobs:
       - name: Prepare
         id: prep
         run: |
-            platform=${{ matrix.platform }}
-            if [ "$platform" = 'ubuntu-22.04' ]; then 
-              echo "PLATFORM_PAIR=linux-amd64" >> $GITHUB_OUTPUT
-              echo "ARCH=amd64" >> $GITHUB_OUTPUT
-            else
-              echo "PLATFORM_PAIR=linux-arm64" >> $GITHUB_OUTPUT
-              echo "ARCH=arm64" >> $GITHUB_OUTPUT
-            fi
+          platform=${{ matrix.platform }}
+          if [ "$platform" = 'ubuntu-22.04' ]; then 
+            echo "PLATFORM_PAIR=linux-amd64" >> $GITHUB_OUTPUT
+            echo "ARCH=amd64" >> $GITHUB_OUTPUT
+          else
+            echo "PLATFORM_PAIR=linux-arm64" >> $GITHUB_OUTPUT
+            echo "ARCH=arm64" >> $GITHUB_OUTPUT
+          fi
+
+          # Get the current date and time in the format YY.MM
+          DATE_TIME=$(date +"%y.%-m")
+          # Get the short SHA of the merge commit
+          SHORT_SHA=${GITHUB_SHA::7}
+          # Construct the build target name
+          BUILD_TARGET_NAME="${DATE_TIME}-develop-${SHORT_SHA}"
+          echo "Build Target Name: $BUILD_TARGET_NAME"
+          # Set the build target name as an environment variable
+          echo "BUILD_TARGET_NAME=${BUILD_TARGET_NAME}" >> $GITHUB_ENV
+
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-      - name: short sha
-        id: shortSha
-        run: echo "sha=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
@@ -78,11 +88,11 @@ jobs:
           architecture: ${{ steps.prep.outputs.ARCH }}
         with:
           cache-disabled: true
-          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.event.release.name}} -Prelease.releaseVersion=${{ github.event.release.name }}
+          arguments: testDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME}} -Prelease.releaseVersion=develop
       - name: publish
         env:
           architecture: ${{ steps.prep.outputs.ARCH }}
-        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.event.release.name}} -Prelease.releaseVersion=${{ github.event.release.name }}
+        run: ./gradlew --no-daemon dockerUpload -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
   multiArch:
     needs: buildDocker
     runs-on: ubuntu-22.04
@@ -108,16 +118,4 @@ jobs:
           username: ${{ secrets.DOCKER_USER_RW }}
           password: ${{ secrets.DOCKER_PASSWORD_RW }}
       - name: multi-arch docker
-        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{github.event.release.name}} -Prelease.releaseVersion=${{ github.event.release.name }}
-  amendNotes:
-    needs: multiArch
-    runs-on: ubuntu-22.04
-    permissions:
-      contents: write
-    steps:
-      - name: add pull command to release notes
-        uses: softprops/action-gh-release@de2c0eb89ae2a093876385947365aca7b0e5f844
-        with:
-          append_body: true
-          body: |
-            `docker pull ${{env.registry}}/${{secrets.DOCKER_ORG}}/besu:${{github.event.release.name}}`
+        run: ./gradlew manifestDocker -PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }} -Pversion=${{ env.BUILD_TARGET_NAME }} -Prelease.releaseVersion=develop
