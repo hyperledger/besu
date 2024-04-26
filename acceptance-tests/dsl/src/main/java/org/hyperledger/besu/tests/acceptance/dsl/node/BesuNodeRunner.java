@@ -34,8 +34,7 @@ public interface BesuNodeRunner {
   }
 
   static boolean isProcessBesuNodeRunner() {
-    //    return Boolean.getBoolean("acctests.runBesuAsProcess");
-    return false;
+    return Boolean.getBoolean("acctests.runBesuAsProcess");
   }
 
   void startNode(BesuNode node);
