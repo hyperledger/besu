@@ -180,7 +180,6 @@ public class TransactionTracerTest {
     final WorldUpdater updater = mock(WorldUpdater.class);
     when(mutableWorldState.updater()).thenReturn(updater);
     when(transactionProcessor.processTransaction(
-            eq(blockchain),
             eq(updater),
             eq(blockHeader),
             eq(transaction),
@@ -269,7 +268,6 @@ public class TransactionTracerTest {
     final WorldUpdater stackedUpdater = mock(StackedUpdater.class);
     when(updater.updater()).thenReturn(stackedUpdater);
     when(transactionProcessor.processTransaction(
-            eq(blockchain),
             eq(stackedUpdater),
             eq(blockHeader),
             eq(transaction),

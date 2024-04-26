@@ -146,7 +146,8 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] remainingPromotionsPerType) {
     long accumulatedSpace = 0;
     final List<PendingTransaction> promotedTxs = new ArrayList<>();
 
@@ -155,10 +156,12 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
     for (final var senderFirstTx : orderByMaxFee.descendingSet()) {
       final var senderTxs = txsBySender.get(senderFirstTx.getSender());
       for (final var candidateTx : senderTxs.values()) {
-        if (promotionFilter.test(candidateTx)) {
+        final var txType = candidateTx.getTransaction().getType();
+        if (promotionFilter.test(candidateTx) && remainingPromotionsPerType[txType.ordinal()] > 0) {
           accumulatedSpace += candidateTx.memorySize();
           if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
             promotedTxs.add(candidateTx);
+            --remainingPromotionsPerType[txType.ordinal()];
           } else {
             // no room for more txs the search is over exit the loops
             break search;
