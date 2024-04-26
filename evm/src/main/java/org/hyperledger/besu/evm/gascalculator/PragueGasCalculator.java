@@ -230,9 +230,8 @@ public class PragueGasCalculator extends ShanghaiGasCalculator {
     return gasCost;
   }
 
-  // TODO: @Override
-  @SuppressWarnings("unused")
-  public long codeCopyOperationGasCost_NOT_IMPLEMENTED(
+  @Override
+  public long codeCopyOperationGasCost(
       final MessageFrame frame,
       final long memOffset,
       final long codeOffset,
@@ -257,7 +256,8 @@ public class PragueGasCalculator extends ShanghaiGasCalculator {
                   .getAccessWitness()
                   .touchCodeChunks(frame.getContractAddress(), codeOffset, readSize, codeSize));
     }
-    return gasCost;
+    System.out.println("  4762 codeCopyOperationGasCost: " + gasCost);
+    return super.codeCopyOperationGasCost(frame, memOffset, codeOffset, readSize, codeSize);
   }
 
   @Override
