@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KEC
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_SIZE_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERSION_LEAF_KEY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 import static org.hyperledger.besu.evm.internal.Words.numWords;
 
 import org.hyperledger.besu.datatypes.AccessWitness;
@@ -41,8 +40,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class ShanghaiGasCalculator extends LondonGasCalculator {
 
   private static final long INIT_CODE_COST = 2L;
-
-  private static final long CREATE_OPERATION_GAS_COST = 1_000L;
 
   /**
    * Instantiates a new ShanghaiGasCalculator
@@ -90,13 +87,6 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
   }
 
   @Override
-  public long initCreateContractGasCost(final MessageFrame frame) {
-    return frame
-        .getAccessWitness()
-        .touchAndChargeContractCreateInit(frame.getContractAddress(), !frame.getValue().isZero());
-  }
-
-  @Override
   public long completedCreateContractGasCost(final MessageFrame frame) {
     return frame
         .getAccessWitness()
@@ -110,74 +100,9 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
         .touchCodeChunksUponContractCreation(frame.getContractAddress(), codeSize);
   }
 
-  @SuppressWarnings("removal")
-  @Override
-  @Deprecated(since = "24.4.1", forRemoval = true)
-  public long createOperationGasCost(final MessageFrame frame) {
-
-    final long initCodeOffset = clampedToLong(frame.getStackItem(1));
-    final long initCodeLength = clampedToLong(frame.getStackItem(2));
-
-    final long memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
-    long gasCost = clampedAdd(CREATE_OPERATION_GAS_COST, memoryGasCost);
-
-    return clampedAdd(gasCost, calculateInitGasCost(initCodeLength));
-  }
-
-  private static long calculateInitGasCost(final long initCodeLength) {
-    final int dataLength = (int) Math.ceil(initCodeLength / 32.0);
-    return dataLength * INIT_CODE_COST;
-  }
-
   @Override
   public long initcodeCost(final int initCodeLength) {
     return numWords(initCodeLength) * INIT_CODE_COST;
-  }
-
-  @Override
-  public long txCreateCost() {
-    return CREATE_OPERATION_GAS_COST;
-  }
-
-  @Override
-  public long callOperationGasCost(
-      final MessageFrame frame,
-      final long stipend,
-      final long inputDataOffset,
-      final long inputDataLength,
-      final long outputDataOffset,
-      final long outputDataLength,
-      final Wei transferValue,
-      final Account recipient,
-      final Address to) {
-
-    final long baseCost =
-        super.callOperationGasCost(
-            frame,
-            stipend,
-            inputDataOffset,
-            inputDataLength,
-            outputDataOffset,
-            outputDataLength,
-            transferValue,
-            recipient,
-            to);
-    long cost = baseCost;
-    if (frame.getWorldUpdater().get(to) == null) {
-      cost = clampedAdd(baseCost, frame.getAccessWitness().touchAndChargeProofOfAbsence(to));
-    } else {
-      if (!super.isPrecompile(to)) {
-        cost = clampedAdd(baseCost, frame.getAccessWitness().touchAndChargeMessageCall(to));
-      }
-    }
-
-    if (!transferValue.isZero()) {
-      cost =
-          clampedAdd(
-              cost,
-              frame.getAccessWitness().touchAndChargeValueTransfer(recipient.getAddress(), to));
-    }
-    return cost;
   }
 
   @Override
@@ -316,14 +241,6 @@ public class ShanghaiGasCalculator extends LondonGasCalculator {
       }
     }
     return gasCost;
-  }
-
-  @Override
-  public long calculateStorageRefundAmount(
-      final UInt256 newValue,
-      final Supplier<UInt256> currentValue,
-      final Supplier<UInt256> originalValue) {
-    return 0L;
   }
 
   @Override

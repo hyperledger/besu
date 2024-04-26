@@ -15,6 +15,12 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
+import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
+
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
 /**
  * Gas Calculator for Prague
@@ -27,6 +33,7 @@ import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
  * </UL>
  */
 public class PragueGasCalculator extends ShanghaiGasCalculator {
+  private static final long CREATE_OPERATION_GAS_COST = 1_000L;
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
@@ -50,5 +57,56 @@ public class PragueGasCalculator extends ShanghaiGasCalculator {
   @Override
   public long getColdAccountAccessCost() {
     return 0; // no cold gas cost after verkle
+  }
+
+  @Override
+  public long initcodeCost(final int initCodeLength) {
+    return super.initcodeCost(initCodeLength);
+  }
+
+  @Override
+  public long callOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address to,
+      final boolean accountIsWarm) {
+
+    long cost =
+        super.callOperationGasCost(
+            frame,
+            stipend,
+            inputDataOffset,
+            inputDataLength,
+            outputDataOffset,
+            outputDataLength,
+            transferValue,
+            recipient,
+            to,
+            true);
+    if (!super.isPrecompile(to)) {
+      if (frame.getWorldUpdater().get(to) == null) {
+        cost = clampedAdd(cost, frame.getAccessWitness().touchAndChargeProofOfAbsence(to));
+      } else {
+        cost = clampedAdd(cost, frame.getAccessWitness().touchAndChargeMessageCall(to));
+      }
+      if (!transferValue.isZero()) {
+        cost =
+            clampedAdd(
+                cost,
+                frame.getAccessWitness().touchAndChargeValueTransfer(recipient.getAddress(), to));
+      }
+    }
+    return cost;
+  }
+
+  @Override
+  public long txCreateCost() {
+    return CREATE_OPERATION_GAS_COST;
   }
 }

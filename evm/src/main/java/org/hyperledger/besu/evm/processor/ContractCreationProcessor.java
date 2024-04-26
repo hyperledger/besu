@@ -113,8 +113,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
       Address contractAddress = frame.getContractAddress();
 
-      frame.decrementRemainingGas(gasCalculator.initCreateContractGasCost(frame));
-
       final MutableAccount contract = frame.getWorldUpdater().getOrCreate(contractAddress);
       if (accountExists(contract)) {
         LOG.trace(

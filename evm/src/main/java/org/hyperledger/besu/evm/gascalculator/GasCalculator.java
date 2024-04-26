@@ -231,8 +231,6 @@ public interface GasCalculator {
    */
   long gasAvailableForChildCall(MessageFrame frame, long stipend, boolean transfersValue);
 
-  long initCreateContractGasCost(MessageFrame frame);
-
   long completedCreateContractGasCost(final MessageFrame frame);
 
   /**
@@ -281,6 +279,11 @@ public interface GasCalculator {
    * @return the gas cost for the create initcode
    */
   long initcodeCost(final int initCodeLength);
+
+  default long initcodeStatelessCost(
+      final MessageFrame frame, final Address address, final Wei value) {
+    return 0;
+  }
 
   /**
    * Returns the amount of gas parent will provide its child CREATE.
