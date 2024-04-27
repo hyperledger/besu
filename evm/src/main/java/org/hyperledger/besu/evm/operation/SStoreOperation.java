@@ -84,7 +84,6 @@ public class SStoreOperation extends AbstractOperation {
                 .calculateStorageCost(
                     frame, key, newValue, currentValueSupplier, originalValueSupplier)
             + (slotIsWarm ? 0L : gasCalculator().getColdSloadCost());
-    System.out.println("=> sstore gas cost: " + cost);
     final long remainingGas = frame.getRemainingGas();
     if (frame.isStatic()) {
       return new OperationResult(remainingGas, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);

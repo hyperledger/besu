@@ -107,7 +107,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
       LOG.trace("Executing contract-creation");
     }
     try {
-      System.out.println("start contract creation ");
       final MutableAccount sender = frame.getWorldUpdater().getSenderAccount(frame);
       sender.decrementBalance(frame.getValue());
 
@@ -140,10 +139,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   public void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
     final Bytes contractCode = frame.getOutputData();
     final long depositFee = gasCalculator.codeDepositGasCost(frame, contractCode.size());
-    System.out.println(
-        String.format(
-            "opcode CREATE deposit fee %d codeSize %d frame codeSize %d pc %d",
-            depositFee, contractCode.size(), frame.getCode().getSize(), frame.getPC()));
     if (frame.getRemainingGas() < depositFee) {
       LOG.trace(
           "Not enough gas to pay the code deposit fee for {}: "
@@ -171,7 +166,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
         final long statelessContractCompletionFee =
             gasCalculator.completedCreateContractGasCost(frame);
-        System.out.println("opcode CREATE completion " + statelessContractCompletionFee);
         if (frame.getRemainingGas() < statelessContractCompletionFee) {
           LOG.trace(
               "Not enough gas to pay the contract creation completion fee for {}: "

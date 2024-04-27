@@ -207,7 +207,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
               gasCost,
               frame.getAccessWitness().touchCodeChunks(address, codeOffset, readSize, codeSize));
     }
-    System.out.println("ext copy gas cost " + gasCost);
+
     return gasCost;
   }
 
@@ -219,16 +219,6 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
       final long readSize,
       final long codeSize) {
     long gasCost = super.dataCopyOperationGasCost(frame, memOffset, readSize);
-    System.out.println(
-        frame.getContractAddress()
-            + " "
-            + codeOffset
-            + " "
-            + readSize
-            + " "
-            + codeSize
-            + " "
-            + gasCost);
     if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
       gasCost =
           clampedAdd(
@@ -237,7 +227,6 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
                   .getAccessWitness()
                   .touchCodeChunks(frame.getContractAddress(), codeOffset, readSize, codeSize));
     }
-    System.out.println("  4762 codeCopyOperationGasCost: " + gasCost);
     return gasCost;
   }
 
@@ -264,15 +253,6 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
                     .getAccessWitness()
                     .touchCodeChunks(frame.getContractAddress(), codeOffset, readSize, codeSize));
       }
-      System.out.println(
-          String.format(
-              "push%d %s isPre? %b offset %d codeSize %d gas: %d",
-              readSize,
-              frame.getContractAddress(),
-              isPrecompile(frame.getContractAddress()),
-              codeOffset,
-              codeSize,
-              gasCost));
     }
     return gasCost;
   }

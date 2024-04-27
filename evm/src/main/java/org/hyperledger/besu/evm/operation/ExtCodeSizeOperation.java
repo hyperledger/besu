@@ -64,7 +64,6 @@ public class ExtCodeSizeOperation extends AbstractOperation {
         final Account account = frame.getWorldUpdater().get(address);
         frame.pushStackItem(
             account == null ? Bytes.EMPTY : Words.intBytes(account.getCode().size()));
-        System.out.println("code size "+gasCalculator().isPrecompile(address));
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {
