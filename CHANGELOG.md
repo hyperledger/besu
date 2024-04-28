@@ -44,6 +44,7 @@
 - Add `rlp decode` subcommand to decode IBFT/QBFT extraData to validator list [#6895](https://github.com/hyperledger/besu/pull/6895)
 - Allow users to specify which plugins are registered [#6700](https://github.com/hyperledger/besu/pull/6700)
 - Layered txpool tuning for blob transactions [#6940](https://github.com/hyperledger/besu/pull/6940)
+- Enable continuous profiling with default setting [#7006](https://github.com/hyperledger/besu/pull/7006)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
