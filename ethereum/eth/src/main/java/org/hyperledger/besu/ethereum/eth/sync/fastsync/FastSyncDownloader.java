@@ -163,7 +163,9 @@ public class FastSyncDownloader<REQUEST> {
   protected FastSyncState updateMaxTrailingPeers(final FastSyncState state) {
     if (state.getPivotBlockNumber().isPresent()) {
       trailingPeerRequirements =
-          Optional.of(new TrailingPeerRequirements(state.getPivotBlockNumber().getAsLong(), 5));
+          Optional.of(
+              new TrailingPeerRequirements(
+                  state.getPivotBlockNumber().getAsLong(), Long.MAX_VALUE));
     } else {
       trailingPeerRequirements = Optional.empty();
     }
