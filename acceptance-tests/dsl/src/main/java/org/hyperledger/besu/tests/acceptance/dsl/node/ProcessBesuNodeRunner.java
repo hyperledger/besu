@@ -52,7 +52,6 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import org.apache.commons.lang3.SystemUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -78,15 +77,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     final Path dataDir = node.homeDirectory();
 
-    final var workingDir =
-        new File(System.getProperty("user.dir")).getParentFile().getParentFile().toPath();
-
     final List<String> params = new ArrayList<>();
-    if (SystemUtils.IS_OS_WINDOWS) {
-      params.add(workingDir.resolve("build\\install\\besu\\bin\\besu.bat").toString());
-    } else {
-      params.add("build/install/besu/bin/besu");
-    }
+    params.add("build/install/besu/bin/besu");
 
     params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
@@ -385,33 +377,6 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
                       permissioningConfiguration.getNodeSmartContractInterfaceVersion()));
             });
 
-    node.getPkiKeyStoreConfiguration()
-        .ifPresent(
-            pkiConfig -> {
-              params.add("--Xpki-block-creation-enabled");
-
-              params.add("--Xpki-block-creation-keystore-certificate-alias");
-              params.add(pkiConfig.getCertificateAlias());
-
-              params.add("--Xpki-block-creation-keystore-type");
-              params.add(pkiConfig.getKeyStoreType());
-
-              params.add("--Xpki-block-creation-keystore-file");
-              params.add(pkiConfig.getKeyStorePath().toAbsolutePath().toString());
-
-              params.add("--Xpki-block-creation-keystore-password-file");
-              params.add(pkiConfig.getKeyStorePasswordPath().toAbsolutePath().toString());
-
-              params.add("--Xpki-block-creation-truststore-type");
-              params.add(pkiConfig.getTrustStoreType());
-
-              params.add("--Xpki-block-creation-truststore-file");
-              params.add(pkiConfig.getTrustStorePath().toAbsolutePath().toString());
-
-              params.add("--Xpki-block-creation-truststore-password-file");
-              params.add(pkiConfig.getTrustStorePasswordPath().toAbsolutePath().toString());
-            });
-
     params.addAll(node.getExtraCLIOptions());
 
     params.add("--key-value-storage");
@@ -430,13 +395,15 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     LOG.info("Creating besu process with params {}", params);
     final ProcessBuilder processBuilder =
         new ProcessBuilder(params)
-            .directory(workingDir.toFile())
+            .directory(new File(System.getProperty("user.dir")).getParentFile().getParentFile())
             .redirectErrorStream(true)
             .redirectInput(Redirect.INHERIT);
     if (!node.getPlugins().isEmpty()) {
       processBuilder
           .environment()
-          .put("BESU_OPTS", "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath());
+          .put(
+              "BESU_OPTS",
+              "-Dbesu.plugins.dir=" + dataDir.resolve("plugins").toAbsolutePath().toString());
     }
     // Use non-blocking randomness for acceptance tests
     processBuilder
@@ -578,7 +545,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
 
     LOG.info("Killing {} process, pid {}", name, process.pid());
 
-    process.descendants().forEach(ProcessHandle::destroy);
+    process.destroy();
     try {
       process.waitFor(30, TimeUnit.SECONDS);
     } catch (final InterruptedException e) {

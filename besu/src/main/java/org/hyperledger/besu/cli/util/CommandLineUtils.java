@@ -36,11 +36,14 @@ public class CommandLineUtils {
   /** The constant DEPENDENCY_WARNING_MSG. */
   public static final String DEPENDENCY_WARNING_MSG =
       "{} has been ignored because {} was not defined on the command line.";
+
   /** The constant MULTI_DEPENDENCY_WARNING_MSG. */
   public static final String MULTI_DEPENDENCY_WARNING_MSG =
       "{} ignored because none of {} was defined.";
+
   /** The constant DEPRECATION_WARNING_MSG. */
   public static final String DEPRECATION_WARNING_MSG = "{} has been deprecated, use {} instead.";
+
   /** The constant DEPRECATED_AND_USELESS_WARNING_MSG. */
   public static final String DEPRECATED_AND_USELESS_WARNING_MSG =
       "{} has been deprecated and is now useless, remove it.";
@@ -260,5 +263,62 @@ public class CommandLineUtils {
     return commandLine.getCommandSpec().options().stream()
         .filter(optionSpec -> Arrays.stream(optionSpec.names()).anyMatch(optionName::equals))
         .anyMatch(CommandLineUtils::isOptionSet);
+  }
+
+  /**
+   * Retrieves the value of a specified command line option, converting it to its appropriate type,
+   * or returns the default value if the option was not specified.
+   *
+   * @param <T> The type of the option value.
+   * @param commandLine The {@link CommandLine} instance containing the parsed command line options.
+   * @param optionName The name of the option whose value is to be retrieved.
+   * @param converter A converter that converts the option's string value to its appropriate type.
+   * @return The value of the specified option converted to its type, or the default value if the
+   *     option was not specified. Returns {@code null} if the option does not exist or if there is
+   *     no default value and the option was not specified.
+   */
+  public static <T> T getOptionValueOrDefault(
+      final CommandLine commandLine,
+      final String optionName,
+      final CommandLine.ITypeConverter<T> converter) {
+
+    return commandLine
+        .getParseResult()
+        .matchedOptionValue(optionName, getDefaultOptionValue(commandLine, optionName, converter));
+  }
+
+  /**
+   * Retrieves the default value for a specified command line option, converting it to its
+   * appropriate type.
+   *
+   * @param <T> The type of the option value.
+   * @param commandLine The {@link CommandLine} instance containing the parsed command line options.
+   * @param optionName The name of the option whose default value is to be retrieved.
+   * @param converter A converter that converts the option's default string value to its appropriate
+   *     type.
+   * @return The default value of the specified option converted to its type, or {@code null} if the
+   *     option does not exist, does not have a default value, or if an error occurs during
+   *     conversion.
+   * @throws RuntimeException if there is an error converting the default value string to its type.
+   */
+  private static <T> T getDefaultOptionValue(
+      final CommandLine commandLine,
+      final String optionName,
+      final CommandLine.ITypeConverter<T> converter) {
+
+    CommandLine.Model.OptionSpec optionSpec = commandLine.getCommandSpec().findOption(optionName);
+    if (optionSpec == null || commandLine.getDefaultValueProvider() == null) {
+      return null;
+    }
+
+    try {
+      String defaultValueString = commandLine.getDefaultValueProvider().defaultValue(optionSpec);
+      return defaultValueString != null
+          ? converter.convert(defaultValueString)
+          : optionSpec.getValue();
+    } catch (Exception e) {
+      throw new RuntimeException(
+          "Failed to convert default value for option " + optionName + ": " + e.getMessage(), e);
+    }
   }
 }

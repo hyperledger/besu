@@ -25,6 +25,7 @@ import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
 import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -172,6 +173,7 @@ public class PkiQbftBlockCreator implements BlockCreator {
 
     return new BlockCreationResult(
         new Block(newHeader, block.getBody()),
-        blockCreationResult.getTransactionSelectionResults());
+        blockCreationResult.getTransactionSelectionResults(),
+        new BlockCreationTiming());
   }
 }

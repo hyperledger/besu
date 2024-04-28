@@ -86,7 +86,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
     final BesuNode minerNode1 = besu.createCliqueNode("miner1");
     final BesuNode minerNode2 = besu.createCliqueNode("miner2");
     final BesuNode minerNode3 = besu.createCliqueNode("miner3");
-    cluster.start(minerNode1, minerNode2, minerNode3);
+    startClusterAndVerifyProducingBlocks(minerNode1, minerNode2, minerNode3);
 
     final Account sender = accounts.createAccount("account1");
     final Account receiver = accounts.createAccount("account2");
@@ -106,7 +106,7 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
     final BesuNode minerNode1 = besu.createCliqueNode("miner1");
     final BesuNode minerNode2 = besu.createCliqueNode("miner2");
     final BesuNode minerNode3 = besu.createCliqueNode("miner3");
-    cluster.start(minerNode1, minerNode2, minerNode3);
+    startClusterAndVerifyProducingBlocks(minerNode1, minerNode2, minerNode3);
 
     cluster.stopNode(minerNode2);
     cluster.stopNode(minerNode3);
@@ -116,12 +116,23 @@ public class CliqueMiningAcceptanceTest extends AcceptanceTestBaseJunit5 {
     minerNode1.verify(clique.noNewBlockCreated(minerNode1));
   }
 
+  private void startClusterAndVerifyProducingBlocks(
+      final BesuNode minerNode1, final BesuNode minerNode2, final BesuNode minerNode3) {
+    cluster.start(minerNode1, minerNode2, minerNode3);
+
+    // verify that we have started producing blocks
+    waitForBlockHeight(minerNode1, 1);
+    final var minerChainHead = minerNode1.execute(ethTransactions.block());
+    minerNode2.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
+    minerNode3.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
+  }
+
   @Test
   public void shouldStillMineWhenANodeFailsAndHasSufficientValidators() throws IOException {
     final BesuNode minerNode1 = besu.createCliqueNode("miner1");
     final BesuNode minerNode2 = besu.createCliqueNode("miner2");
     final BesuNode minerNode3 = besu.createCliqueNode("miner3");
-    cluster.start(minerNode1, minerNode2, minerNode3);
+    startClusterAndVerifyProducingBlocks(minerNode1, minerNode2, minerNode3);
 
     cluster.verifyOnActiveNodes(blockchain.reachesHeight(minerNode1, 1, 85));
 

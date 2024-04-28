@@ -364,16 +364,28 @@ public class EthPeers {
   public boolean shouldConnect(final Peer peer, final boolean inbound) {
     final Bytes id = peer.getId();
     if (peerCount() >= peerUpperBound && !canExceedPeerLimits(id)) {
+      LOG.atTrace()
+          .setMessage("not connecting to peer {} - too many peers")
+          .addArgument(peer.getLoggableId())
+          .log();
       return false;
     }
     final EthPeer ethPeer = completeConnections.get(id);
     if (ethPeer != null && !ethPeer.isDisconnected()) {
+      LOG.atTrace()
+          .setMessage("not connecting to peer {} - already disconnected")
+          .addArgument(ethPeer.getLoggableId())
+          .log();
       return false;
     }
     final List<PeerConnection> incompleteConnections = getIncompleteConnections(id);
     if (!incompleteConnections.isEmpty()) {
       if (incompleteConnections.stream()
           .anyMatch(c -> !c.isDisconnected() && (!inbound || (inbound && c.inboundInitiated())))) {
+        LOG.atTrace()
+            .setMessage("not connecting to peer {} - new connection already in process")
+            .addArgument(peer.getLoggableId())
+            .log();
         return false;
       }
     }

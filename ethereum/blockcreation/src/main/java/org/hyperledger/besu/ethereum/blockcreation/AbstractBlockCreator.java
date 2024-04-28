@@ -50,6 +50,7 @@ import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper;
 import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -190,7 +191,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final long timestamp,
       boolean rewardCoinbase) {
 
+    final var timings = new BlockCreationTiming();
+
     try (final MutableWorldState disposableWorldState = duplicateWorldStateAtParent()) {
+      timings.register("duplicateWorldState");
       final ProtocolSpec newProtocolSpec =
           protocolSchedule.getForNextBlockHeader(parentHeader, timestamp);
 
@@ -218,7 +222,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           pluginTransactionSelector.getOperationTracer();
 
       operationTracer.traceStartBlock(processableBlockHeader);
-
+      timings.register("preTxsSelection");
       final TransactionSelectionResults transactionResults =
           selectTransactions(
               processableBlockHeader,
@@ -227,9 +231,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               miningBeneficiary,
               newProtocolSpec,
               pluginTransactionSelector);
-
       transactionResults.logSelectionStats();
-
+      timings.register("txsSelection");
       throwIfStopped();
 
       final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
@@ -253,12 +256,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      // TODO implement logic to retrieve validator exits from precompile
-      // https://github.com/hyperledger/besu/issues/6800
       final ValidatorExitsValidator exitsValidator = newProtocolSpec.getExitsValidator();
       Optional<List<ValidatorExit>> maybeExits = Optional.empty();
-      if (exitsValidator instanceof ValidatorExitsValidator.AllowedExits) {
-        maybeExits = Optional.of(List.of());
+      if (exitsValidator.allowValidatorExits()) {
+        maybeExits =
+            Optional.of(ValidatorExitContractHelper.popExitsFromQueue(disposableWorldState));
       }
 
       throwIfStopped();
@@ -319,8 +321,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
-
-      return new BlockCreationResult(block, transactionResults);
+      timings.register("blockAssembled");
+      return new BlockCreationResult(block, transactionResults, timings);
     } catch (final SecurityModuleException ex) {
       throw new IllegalStateException("Failed to create block signature", ex);
     } catch (final CancellationException | StorageException ex) {

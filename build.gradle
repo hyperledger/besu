@@ -203,7 +203,7 @@ allprojects {
       target 'src/**/*.java'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
-      googleJavaFormat('1.15.0')
+      googleJavaFormat('1.22.0')
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
@@ -979,6 +979,7 @@ def getGitCommitDetails(length = 8) {
 def isInterimBuild(dockerBuildVersion) {
   return (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
   || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
+  || (dockerBuildVersion ==~ /.*develop.*/)
 }
 
 tasks.register("verifyDistributions") {

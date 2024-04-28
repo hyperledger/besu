@@ -56,14 +56,6 @@ public class ExecutionEngineCancunBlockBuildingAcceptanceTest extends AbstractJs
       final Call testRequest,
       final JsonRpcTestCase testCase,
       final URL url) {
-    if (url.toString().endsWith("10_cancun_build_on_genesis.json")) {
-      // if we just asked the node to build, give it some time to build
-      try {
-        Thread.sleep(2000);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
-      }
-    }
     if (url.toString().endsWith("12_cancun_get_built_block.json")) {
 
       // final ObjectNode rpcResponse = JsonUtil.objectNodeFromString(response.body().string());

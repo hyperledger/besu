@@ -69,6 +69,7 @@ import org.slf4j.LoggerFactory;
 /** The Merge coordinator. */
 public class MergeCoordinator implements MergeMiningCoordinator, BadChainListener {
   private static final Logger LOG = LoggerFactory.getLogger(MergeCoordinator.class);
+
   /**
    * On PoS you do not need to compete with other nodes for block production, since you have an
    * allocated slot for that, so in this case make sense to always try to fill the block, if there
@@ -79,18 +80,25 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private static final double TRY_FILL_BLOCK = 1.0;
 
   private static final long DEFAULT_TARGET_GAS_LIMIT = 30000000L;
+
   /** The Mining parameters. */
   protected final MiningParameters miningParameters;
+
   /** The Merge block creator factory. */
   protected final MergeBlockCreatorFactory mergeBlockCreatorFactory;
+
   /** The Merge context. */
   protected final MergeContext mergeContext;
+
   /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+
   /** The Block builder executor. */
   protected final EthScheduler ethScheduler;
+
   /** The Backward sync context. */
   protected final BackwardSyncContext backwardSyncContext;
+
   /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
 
@@ -866,6 +874,7 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   private static class BlockCreationTask {
     /** The Block creator. */
     final MergeBlockCreator blockCreator;
+
     /** The Cancelled. */
     final AtomicBoolean cancelled;
 

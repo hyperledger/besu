@@ -55,6 +55,7 @@ discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPR
 # chain
 network="MAINNET"
 genesis-file="~/genesis.json"
+genesis-state-hash-cache-enabled=false
 sync-mode="fast"
 fast-sync-min-peers=5
 network-id=303
@@ -184,6 +185,7 @@ tx-pool-save-file="txpool.dump"
 ## Layered
 tx-pool-layer-max-capacity=12345678
 tx-pool-max-prioritized=9876
+tx-pool-max-prioritized-by-type=["BLOB=10","FRONTIER=100"]
 tx-pool-max-future-by-sender=321
 ## Legacy/Sequenced
 tx-pool-retention-hours=999

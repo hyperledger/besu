@@ -75,6 +75,7 @@ public interface MerkleTrie<K, V> {
    * @param value The value to associate the key with.
    */
   void putPath(K path, V value);
+
   /**
    * Updates the value mapped to the specified key, creating the mapping if one does not already
    * exist.

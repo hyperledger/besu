@@ -26,6 +26,7 @@ public class SECPPrivateKey implements java.security.PrivateKey {
 
   /** Encoded Bytes */
   private final Bytes32 encoded;
+
   /** Algorithm */
   private final String algorithm;
 

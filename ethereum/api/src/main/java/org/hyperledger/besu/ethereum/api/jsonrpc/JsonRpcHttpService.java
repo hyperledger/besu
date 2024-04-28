@@ -134,6 +134,7 @@ public class JsonRpcHttpService {
   private HttpServer httpServer;
   private final HealthService livenessService;
   private final HealthService readinessService;
+  private final MetricsSystem metricsSystem;
 
   /**
    * Construct a JsonRpcHttpService handler
@@ -204,6 +205,7 @@ public class JsonRpcHttpService {
     if (metricsSystem instanceof OpenTelemetrySystem) {
       this.tracerProvider = ((OpenTelemetrySystem) metricsSystem).getTracerProvider();
     }
+    this.metricsSystem = metricsSystem;
   }
 
   private void validateConfig(final JsonRpcConfiguration config) {
@@ -310,7 +312,8 @@ public class JsonRpcHttpService {
     router
         .route()
         .handler(
-            CorsHandler.create(buildCorsRegexFromConfig())
+            CorsHandler.create()
+                .addRelativeOrigin(buildCorsRegexFromConfig())
                 .allowedHeader("*")
                 .allowedHeader("content-type"));
     router
@@ -344,7 +347,8 @@ public class JsonRpcHttpService {
               new JsonRpcExecutor(
                   new AuthenticatedJsonRpcProcessor(
                       new TimedJsonRpcProcessor(
-                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                          new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), metricsSystem),
+                          requestTimer),
                       authenticationService.get(),
                       config.getNoAuthRpcApis()),
                   rpcMethods),
@@ -356,7 +360,8 @@ public class JsonRpcHttpService {
           HandlerFactory.jsonRpcExecutor(
               new JsonRpcExecutor(
                   new TimedJsonRpcProcessor(
-                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor()), requestTimer),
+                      new TracedJsonRpcProcessor(new BaseJsonRpcProcessor(), metricsSystem),
+                      requestTimer),
                   rpcMethods),
               tracer,
               config),
@@ -565,7 +570,7 @@ public class JsonRpcHttpService {
       return "";
     }
     if (config.getCorsAllowedDomains().contains("*")) {
-      return ".*://.*";
+      return ".*://.*|.*";
     } else {
       final StringJoiner stringJoiner = new StringJoiner("|");
       config.getCorsAllowedDomains().stream().filter(s -> !s.isEmpty()).forEach(stringJoiner::add);

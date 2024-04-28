@@ -103,6 +103,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
   }
+
   /**
    * Create data storage options.
    *

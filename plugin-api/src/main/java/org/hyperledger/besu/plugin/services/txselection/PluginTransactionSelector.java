@@ -84,6 +84,7 @@ public interface PluginTransactionSelector {
   default void onTransactionSelected(
       final TransactionEvaluationContext<? extends PendingTransaction> evaluationContext,
       final TransactionProcessingResult processingResult) {}
+
   /**
    * Method called when a transaction is not selected to be added to a block.
    *

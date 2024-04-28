@@ -223,7 +223,8 @@ final class DeFramer extends ByteToMessageDecoder {
                 new OutboundMessage(
                     null,
                     DisconnectMessage.create(
-                        DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL)))
+                        DisconnectMessage.DisconnectReason
+                            .BREACH_OF_PROTOCOL_MESSAGE_RECEIVED_BEFORE_HELLO_EXCHANGE)))
             .addListener((f) -> ctx.close());
         connectFuture.completeExceptionally(
             new BreachOfProtocolException("Message received before HELLO's exchanged"));
@@ -260,7 +261,11 @@ final class DeFramer extends ByteToMessageDecoder {
         || cause instanceof IllegalArgumentException) {
       LOG.debug("Invalid incoming message (BREACH_OF_PROTOCOL)", throwable);
       if (connectFuture.isDone() && !connectFuture.isCompletedExceptionally()) {
-        connectFuture.get().disconnect(DisconnectMessage.DisconnectReason.BREACH_OF_PROTOCOL);
+        connectFuture
+            .get()
+            .disconnect(
+                DisconnectMessage.DisconnectReason
+                    .BREACH_OF_PROTOCOL_INVALID_MESSAGE_RECEIVED_CAUGHT_EXCEPTION);
         return;
       }
     } else if (cause instanceof IOException) {

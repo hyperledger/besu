@@ -212,7 +212,6 @@ public class TraceServiceImpl implements TraceService {
               final WorldUpdater worldUpdater = chainUpdater.getNextUpdater();
               final TransactionProcessingResult result =
                   transactionProcessor.processTransaction(
-                      blockchain,
                       worldUpdater,
                       header,
                       transaction,
