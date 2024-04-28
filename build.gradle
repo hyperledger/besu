@@ -614,7 +614,8 @@ startScripts {
   defaultJvmOpts = applicationDefaultJvmArgs + [
     "-XX:G1ConcRefinementThreads=2",
     "-XX:G1HeapWastePercent=15",
-    "-XX:MaxGCPauseMillis=100"
+    "-XX:MaxGCPauseMillis=100",
+    "-XX:StartFlightRecording:filename=recording.jfr,dumponexit=true,settings=default.jfc"
   ]
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
