@@ -57,7 +57,7 @@ public class EOFValidationCodeRule implements ContractValidationRule {
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     }
 
-    if (frame.getCode().getEofVersion() > code.getEofVersion()) {
+    if (frame.getCode().getEofVersion() != code.getEofVersion()) {
       LOG.trace(
           "Cannot deploy older eof versions: initcode version - {} runtime code version - {}",
           frame.getCode().getEofVersion(),

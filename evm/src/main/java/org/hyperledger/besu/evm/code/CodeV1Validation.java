@@ -215,7 +215,7 @@ public final class CodeV1Validation {
           hasReturningOpcode |= eofLayout.getCodeSection(targetSection).isReturning();
           pcPostInstruction += 2;
           break;
-        case EOFCreateOperation.OPCODE, ReturnContractOperation.OPCODE:
+        case EOFCreateOperation.OPCODE:
           if (pos + 1 > size) {
             return format(
                 "Dangling immediate for %s at pc=%d",
@@ -234,6 +234,20 @@ public final class CodeV1Validation {
                 V1_OPCODES[operationNum].name(),
                 subContainer.dataLength(),
                 subContainer.data().size());
+          }
+          pcPostInstruction += 1;
+          break;
+        case ReturnContractOperation.OPCODE:
+          if (pos + 1 > size) {
+            return format(
+                "Dangling immediate for %s at pc=%d",
+                opcodeInfo.name(), pos - opcodeInfo.pcAdvance());
+          }
+          int returnContractNum = rawCode[pos] & 0xff;
+          if (returnContractNum >= eofLayout.getSubcontainerCount()) {
+            return format(
+                "%s refers to non-existent subcontainer %d at pc=%d",
+                opcodeInfo.name(), returnContractNum, pos - opcodeInfo.pcAdvance());
           }
           pcPostInstruction += 1;
           break;

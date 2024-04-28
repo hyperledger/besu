@@ -102,33 +102,30 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     frame.clearReturnData();
 
+    Code code = codeSupplier.get();
+
     if (value.compareTo(account.getBalance()) > 0
         || frame.getDepth() >= 1024
         || account.getNonce() == -1
-        || codeSupplier.get() == null) {
+        || code == null
+        || code.getEofVersion() != frame.getCode().getEofVersion()) {
       fail(frame);
     } else {
       account.incrementNonce();
 
-      Code code = codeSupplier.get();
-
-      if (code == null) {
-        frame.popStackItems(getStackItemsConsumed());
-        return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE);
-      }
       if (code.getSize() > maxInitcodeSize) {
         frame.popStackItems(getStackItemsConsumed());
         return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
       }
       if (!code.isValid()) {
         fail(frame);
+      } else {
+
+        frame.decrementRemainingGas(cost);
+        spawnChildMessage(frame, code, evm);
+        frame.incrementRemainingGas(cost);
       }
-
-      frame.decrementRemainingGas(cost);
-      spawnChildMessage(frame, code, evm);
-      frame.incrementRemainingGas(cost);
     }
-
     return new OperationResult(cost, null, getPcIncrement());
   }
 
