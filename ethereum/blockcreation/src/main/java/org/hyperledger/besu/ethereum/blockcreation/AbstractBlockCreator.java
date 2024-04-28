@@ -127,7 +127,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
    * body, and will supply an empty Ommers list.
    *
    * <p>Once transactions have been selected and applied to a disposable/temporary world state, the
-   * block reward is paid to the relevant coinbase, and a sealable header is constucted.
+   * block reward is paid to the relevant coinbase, and a sealable header is constructed.
    *
    * <p>The sealableHeader is then provided to child instances for sealing (i.e. proof of work or
    * otherwise).

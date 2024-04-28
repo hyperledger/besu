@@ -49,7 +49,7 @@ public interface Undoable {
   }
 
   /**
-   * The last time this object was updated. Any undo requrests greater than this mark will result in
+   * The last time this object was updated. Any undo requests greater than this mark will result in
    * no changes.
    *
    * @return The most recent mark.
