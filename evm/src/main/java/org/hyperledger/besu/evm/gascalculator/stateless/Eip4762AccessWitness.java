@@ -1,4 +1,4 @@
-package org.hyperledger.besu.ethereum.core;
+package org.hyperledger.besu.evm.gascalculator.stateless;
 
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BALANCE_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KECCAK_LEAF_KEY;
@@ -20,7 +20,7 @@ import java.util.Objects;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitness {
+public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.AccessWitness {
 
   private static final long WITNESS_BRANCH_READ_COST = 1900;
   private static final long WITNESS_CHUNK_READ_COST = 200;
@@ -34,26 +34,14 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   private final Map<BranchAccessKey, Byte> branches;
   private final Map<ChunkAccessKey, Byte> chunks;
 
-  public AccessWitness() {
+  public Eip4762AccessWitness() {
     this(new HashMap<>(), new HashMap<>());
   }
 
-  public AccessWitness(
+  public Eip4762AccessWitness(
       final Map<BranchAccessKey, Byte> branches, final Map<ChunkAccessKey, Byte> chunks) {
     this.branches = branches;
     this.chunks = chunks;
-  }
-
-  @Override
-  public void merge(final org.hyperledger.besu.datatypes.AccessWitness other) {
-    // TODO VERKLE
-    //    for (BranchAccessKey k : other.getBranches.keySet()) {
-    //      this.branches.put(k, (byte) (this.branches.get(k) | other.getBranches.get(k)));
-    //    }
-    //    for (Map.Entry<ChunkAccessKey, Byte> entry : other.getChunks.entrySet()) {
-    //      this.chunks.put(entry.getKey(), (byte) (this.chunks.get(entry.getKey()) |
-    // entry.getValue()));
-    //    }
   }
 
   @Override
@@ -61,13 +49,6 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
     return this.chunks.keySet().stream()
         .map(chunkAccessKey -> chunkAccessKey.branchAccessKey().address())
         .toList();
-  }
-
-  @Override
-  public AccessWitness copy() {
-    AccessWitness naw = new AccessWitness();
-    naw.merge(this);
-    return naw;
   }
 
   @Override
@@ -359,7 +340,7 @@ public class AccessWitness implements org.hyperledger.besu.datatypes.AccessWitne
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    AccessWitness that = (AccessWitness) o;
+    Eip4762AccessWitness that = (Eip4762AccessWitness) o;
     return Objects.equals(branches, that.branches) && Objects.equals(chunks, that.chunks);
   }
 

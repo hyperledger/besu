@@ -29,6 +29,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.stateless.Eip4762AccessWitness;
 
 import java.util.List;
 import java.util.Optional;
@@ -258,11 +259,15 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
   }
 
   @Override
-  public long getBalanceOperationGasCost(final MessageFrame frame) {
-    return frame
-        .getAccessWitness()
-        .touchAddressOnWriteAndComputeGas(
-            frame.getContractAddress(), UInt256.ZERO, BALANCE_LEAF_KEY);
+  public long getBalanceOperationGasCost(
+      final MessageFrame frame, final Optional<Address> maybeAddress) {
+    return maybeAddress
+        .map(
+            address ->
+                frame
+                    .getAccessWitness()
+                    .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, BALANCE_LEAF_KEY))
+        .orElse(0L);
   }
 
   @Override
@@ -274,6 +279,28 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
                 frame
                     .getAccessWitness()
                     .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_KECCAK_LEAF_KEY))
+        .orElse(0L);
+  }
+
+  @Override
+  public long getExtCodeSizeOperationGasCost(
+      final MessageFrame frame, final Optional<Address> maybeAddress) {
+    return maybeAddress
+        .map(
+            address -> {
+              long gasCost =
+                  frame
+                      .getAccessWitness()
+                      .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, VERSION_LEAF_KEY);
+              gasCost =
+                  clampedAdd(
+                      gasCost,
+                      frame
+                          .getAccessWitness()
+                          .touchAddressOnReadAndComputeGas(
+                              address, UInt256.ZERO, CODE_SIZE_LEAF_KEY));
+              return gasCost;
+            })
         .orElse(0L);
   }
 
@@ -307,12 +334,10 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
   public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
     AccessWitness accessWitness = frame.getAccessWitness();
     List<UInt256> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
-    long gasCost =
-        frame
-            .getAccessWitness()
-            .touchAddressOnReadAndComputeGas(
-                frame.getContractAddress(), treeIndexes.get(0), treeIndexes.get(1));
-    return gasCost;
+    return frame
+        .getAccessWitness()
+        .touchAddressOnReadAndComputeGas(
+            frame.getContractAddress(), treeIndexes.get(0), treeIndexes.get(1));
   }
 
   @Override
@@ -341,5 +366,10 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
     return frame
         .getAccessWitness()
         .touchAndChargeContractCreateCompleted(frame.getContractAddress());
+  }
+
+  @Override
+  public AccessWitness newAccessWitness() {
+    return new Eip4762AccessWitness();
   }
 }
