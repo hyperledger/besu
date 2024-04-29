@@ -29,12 +29,16 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
 import org.web3j.utils.Restriction;
 
 public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTestBase {
 
   private final PrivacyNode node;
+
+  private final PrivacyNode wrongNode;
 
   public PrivTraceTransactionAcceptanceTest(
       final Restriction restriction,
@@ -54,7 +58,18 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
             false,
             restriction == UNRESTRICTED);
 
+    wrongNode =
+        privacyBesu.createPrivateTransactionEnabledMinerNode(
+            restriction + "-node",
+            PrivacyAccountResolver.BOB.resolve(enclaveEncryptorType),
+            enclaveType,
+            Optional.empty(),
+            false,
+            false,
+            restriction == UNRESTRICTED);
+
     privacyCluster.start(node);
+    privacyCluster.start(wrongNode);
   }
 
   @Test
@@ -66,17 +81,79 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
      Updating the contract value
     */
     Hash transactionHash =
-        Hash.fromHexString(doTransaction(privacyGroupId, simpleStorageContract, 1));
+        Hash.fromHexString(doTransaction(privacyGroupId, simpleStorageContract, 0));
 
     final String result =
         node.execute(privacyTransactions.privTraceTransaction(privacyGroupId, transactionHash));
 
-    System.out.println("privTransactionTrace = " + result);
     assertThat(result).isNotNull();
+    ObjectMapper mapper = new ObjectMapper();
+    try {
+      JsonNode rootNode = mapper.readTree(result);
+      JsonNode resultNode = rootNode.get("result");
+
+      assertThat(resultNode).isNotNull();
+      assertThat(resultNode.isArray()).isTrue();
+      assertThat(resultNode.size()).isGreaterThan(0);
+
+      JsonNode trace = resultNode.get(0);
+      assertThat(trace.get("action").get("callType").asText()).isEqualTo("call");
+      assertThat(trace.get("action").get("from").asText()).isEqualTo(node.getAddress().toString());
+      assertThat(trace.get("action").get("input").asText()).startsWith("0x60fe47b1");
+      assertThat(trace.get("action").get("to").asText())
+          .isEqualTo(simpleStorageContract.getContractAddress());
+      assertThat(trace.get("action").get("value").asText()).isEqualTo("0x0");
+      assertThat(trace.get("blockHash").asText()).isNotEmpty();
+      assertThat(trace.get("blockNumber").asInt()).isGreaterThan(0);
+      assertThat(trace.get("transactionHash").asText()).isEqualTo(transactionHash.toString());
+      assertThat(trace.get("type").asText()).isEqualTo("call");
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    final String wrongPrivacyGroupId = createWrongPrivacyGroup();
+
+    final String resultEmpty =
+        wrongNode.execute(
+            privacyTransactions.privTraceTransaction(wrongPrivacyGroupId, transactionHash));
+
+    ObjectMapper mapperEmpty = new ObjectMapper();
+    try {
+      JsonNode rootNode = mapperEmpty.readTree(resultEmpty);
+      JsonNode resultNode = rootNode.get("result");
+
+      assertThat(resultNode).isNotNull();
+      assertThat(resultNode.isArray()).isTrue();
+      assertThat(resultNode.isEmpty()).isTrue();
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
+
+    final String resultWrongHash =
+        wrongNode.execute(privacyTransactions.privTraceTransaction(privacyGroupId, Hash.EMPTY));
+
+    ObjectMapper mapperWrongHash = new ObjectMapper();
+    try {
+      JsonNode rootNode = mapperWrongHash.readTree(resultWrongHash);
+      JsonNode resultNode = rootNode.get("result");
+
+      assertThat(resultNode).isNotNull();
+      assertThat(resultNode.isArray()).isTrue();
+      assertThat(resultNode.isEmpty()).isTrue();
+
+    } catch (Exception e) {
+      e.printStackTrace();
+    }
   }
 
   private String createPrivacyGroup() {
     return node.execute(createPrivacyGroup("myGroupName", "my group description", node));
+  }
+
+  private String createWrongPrivacyGroup() {
+    return wrongNode.execute(createPrivacyGroup("myGroupName", "my group description", wrongNode));
   }
 
   private SimpleStorage deploySimpleStorageContract(final String privacyGroupId) {
