@@ -180,9 +180,8 @@ public class PrivacyReorgTest {
 
     besuController =
         new BesuController.Builder()
-            .fromGenesisConfig(
-                GenesisConfigFile.genesisFileFromResources("/privacy_reorg_genesis.json"),
-                SyncMode.FULL)
+            .fromGenesisFile(
+                GenesisConfigFile.fromResource("/privacy_reorg_genesis.json"), SyncMode.FULL)
             .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
             .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
             .storageProvider(new InMemoryKeyValueStorageProvider())

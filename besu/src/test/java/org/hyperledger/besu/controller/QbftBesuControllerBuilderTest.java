@@ -45,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuilderTest {
 
   @Override
-  public void setupBftGenesisConfigOptions() throws JsonProcessingException {
+  public void setupBftGenesisConfigFile() throws JsonProcessingException {
 
     // qbft prepForBuild setup
     lenient()

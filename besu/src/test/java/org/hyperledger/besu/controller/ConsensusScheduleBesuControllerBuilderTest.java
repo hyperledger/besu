@@ -20,7 +20,6 @@ package org.hyperledger.besu.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -104,11 +103,11 @@ public class ConsensusScheduleBesuControllerBuilderTest {
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.chainId(BigInteger.TEN);
-    when(genesisConfigFile.getConfigOptions(anyMap())).thenReturn(genesisConfigOptions);
 
     final ConsensusScheduleBesuControllerBuilder consensusScheduleBesuControllerBuilder =
         new ConsensusScheduleBesuControllerBuilder(
             besuControllerBuilderSchedule, combinedProtocolScheduleFactory);
+    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     consensusScheduleBesuControllerBuilder.genesisConfigFile(genesisConfigFile);
     consensusScheduleBesuControllerBuilder.createProtocolSchedule();
 
