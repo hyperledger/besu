@@ -21,7 +21,6 @@ import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -253,9 +252,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .isRevertReasonEnabled(node.isRevertReasonEnabled())
         .storageProvider(storageProvider)
         .gasLimitCalculator(GasLimitCalculator.constant())
-        .pkiBlockCreationConfiguration(
-            node.getPkiKeyStoreConfiguration()
-                .map(pkiConfig -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .maxPeers(maxPeers)
         .maxRemotelyInitiatedPeers(15)

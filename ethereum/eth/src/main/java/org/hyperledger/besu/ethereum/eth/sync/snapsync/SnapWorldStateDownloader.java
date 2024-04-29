@@ -214,7 +214,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           SnapWorldStateDownloadProcess.builder()
               .configuration(snapSyncConfiguration)
               .maxOutstandingRequests(maxOutstandingRequests)
-              .dynamicPivotBlockSelector(dynamicPivotBlockManager)
               .loadLocalDataStep(
                   new LoadLocalDataStep(
                       worldStateStorageCoordinator,
