@@ -121,7 +121,13 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                                   "Downloading chain head block header by hash {}", headBlockHash);
                               try {
                                 return waitForPeers(1)
-                                    .thenCompose(unused -> downloadBlockHeader(headBlockHash))// TODO: stefan: this is dangerous, as we are downloading the head block, not the safe block. Head block is reorged frequently!
+                                    .thenCompose(
+                                        unused ->
+                                            downloadBlockHeader(
+                                                headBlockHash)) // TODO: stefan: this is dangerous,
+                                    // as we are downloading the head
+                                    // block, not the safe block. Head
+                                    // block is reorged frequently!
                                     .thenApply(
                                         blockHeader -> {
                                           maybeCachedHeadBlockHeader = Optional.of(blockHeader);

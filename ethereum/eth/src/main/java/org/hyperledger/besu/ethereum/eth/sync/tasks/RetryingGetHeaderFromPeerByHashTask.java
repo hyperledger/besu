@@ -91,7 +91,8 @@ public class RetryingGetHeaderFromPeerByHashTask
                   peer,
                   peerResult.getResult());
               if (peerResult.getResult().isEmpty()) {
-                final String message = "No block header for hash "
+                final String message =
+                    "No block header for hash "
                         + referenceHash
                         + " returned by peer "
                         + peer.getLoggableId();
