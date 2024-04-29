@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccount;
-import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccountWithException;
 import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.NotClearEmptyAccount;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
@@ -50,6 +49,7 @@ import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.Eip4762GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -728,52 +728,6 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
-  // TODO FIX THAT TO HAVE CORRECT CONFIGURATION
-  static ProtocolSpecBuilder pragueDefinition(
-      final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final boolean enableRevertReason,
-      final GenesisConfigOptions genesisConfigOptions,
-      final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
-    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-
-    final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
-        new ClearEmptyAccountWithException(
-            List.of(HistoricalBlockHashProcessor.HISTORICAL_BLOCKHASH_ADDRESS));
-    return shanghaiDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
-        .gasCalculator(PragueGasCalculator::new)
-        .transactionProcessorBuilder(
-            (gasCalculator,
-                feeMarket,
-                transactionValidator,
-                contractCreationProcessor,
-                messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidator,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    clearEmptyAccountStrategy,
-                    true,
-                    stackSizeLimit,
-                    feeMarket,
-                    CoinbaseFeePriceCalculator.eip1559()))
-        .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
-        .historicalBlockHashProcessor(
-            new HistoricalBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
-        .name("Prague");
-  }
-
-  /* //TODO REACTIVATE
   static ProtocolSpecBuilder pragueDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
@@ -819,7 +773,55 @@ public abstract class MainnetProtocolSpecs {
         .exitsValidator(new ValidatorExitsValidator.AllowedExits())
         .name("Prague");
   }
-   */
+
+  static ProtocolSpecBuilder eip4762Definition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
+
+    // extra variables need to support flipping the warm coinbase flag.
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+    final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
+        new ClearEmptyAccountStrategy.ClearEmptyAccountWithException(
+            List.of(HistoricalBlockHashProcessor.HISTORICAL_BLOCKHASH_ADDRESS));
+    return shanghaiDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters)
+        .gasCalculator(Eip4762GasCalculator::new)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.eip4762(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidatorFactory,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidatorFactory,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    clearEmptyAccountStrategy,
+                    true,
+                    stackSizeLimit,
+                    feeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
+        .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
+        .historicalBlockHashProcessor(
+            new HistoricalBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
+        .name("eip4762");
+  }
 
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,

@@ -41,14 +41,4 @@ public class PragueGasCalculator extends CancunGasCalculator {
   protected PragueGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
   }
-
-  @Override
-  public long getColdSloadCost() {
-    return 0; // no cold gas cost after verkle
-  }
-
-  @Override
-  public long getColdAccountAccessCost() {
-    return 0; // no cold gas cost after verkle
-  }
 }

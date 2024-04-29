@@ -1088,6 +1088,57 @@ public class MainnetEVMs {
   }
 
   /**
+   * eip4762 evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM eip4762(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        eip4762Operations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.FUTURE_EIPS);
+  }
+
+  /**
+   * Operation registry for eip472's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry eip4762Operations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerEip4762Operations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register eip4762 operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerEip4762Operations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    // basing off of shanghai for devnet-6
+    registerShanghaiOperations(registry, gasCalculator, chainID);
+    registry.put(new BlockHashOperation(gasCalculator, true));
+    // mimic a weird behavior by geth that ignores eip-1706
+    registry.put(new SStoreOperation(gasCalculator, 272L));
+  }
+
+  /**
    * Future eips evm.
    *
    * @param evmConfiguration the evm configuration

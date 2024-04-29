@@ -229,6 +229,12 @@ public class FrontierGasCalculator implements GasCalculator {
     return NEW_ACCOUNT_GAS_COST;
   }
 
+  @Override
+  public long pushOperationGasCost(
+      final MessageFrame frame, final long codeOffset, final long readSize, final long codeSize) {
+    return getVeryLowTierGasCost();
+  }
+
   @SuppressWarnings("removal")
   @Override
   public long callOperationGasCost(
@@ -307,11 +313,6 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long initCreateContractGasCost(final MessageFrame frame) {
-    return 0;
-  }
-
-  @Override
   public long completedCreateContractGasCost(final MessageFrame frame) {
     return 0;
   }
@@ -376,9 +377,19 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long dataCopyOperationGasCost(
-      final MessageFrame frame, final long offset, final long length) {
+      final MessageFrame frame, final long offset, final long readSize) {
     return copyWordsToMemoryGasCost(
-        frame, VERY_LOW_TIER_GAS_COST, COPY_WORD_GAS_COST, offset, length);
+        frame, VERY_LOW_TIER_GAS_COST, COPY_WORD_GAS_COST, offset, readSize);
+  }
+
+  @Override
+  public long codeCopyOperationGasCost(
+      final MessageFrame frame,
+      final long memOffset,
+      final long codeOffset,
+      final long readSize,
+      final long codeSize) {
+    return dataCopyOperationGasCost(frame, memOffset, readSize);
   }
 
   @Override
@@ -394,7 +405,8 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getBalanceOperationGasCost(final MessageFrame frame) {
+  public long getBalanceOperationGasCost(
+      final MessageFrame frame, final Optional<Address> maybeAddress) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
@@ -428,9 +440,14 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long extCodeCopyOperationGasCost(
-      final MessageFrame frame, final long offset, final long length) {
+      final MessageFrame frame,
+      final Address address,
+      final long memOffset,
+      final long codeOffset,
+      final long readSize,
+      final long codeSize) {
     return copyWordsToMemoryGasCost(
-        frame, extCodeBaseGasCost(), COPY_WORD_GAS_COST, offset, length);
+        frame, extCodeBaseGasCost(), COPY_WORD_GAS_COST, memOffset, readSize);
   }
 
   @Override
@@ -441,7 +458,8 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getExtCodeSizeOperationGasCost() {
+  public long getExtCodeSizeOperationGasCost(
+      final MessageFrame frame, final Optional<Address> maybeAddress) {
     return extCodeBaseGasCost();
   }
 

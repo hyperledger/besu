@@ -179,7 +179,9 @@ public class MainnetProtocolSpecFactory {
   }
 
   public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.pragueDefinition(
+    // TODO: this is for VERKLE devnet
+    // return MainnetProtocolSpecs.pragueDefinition(
+    return MainnetProtocolSpecs.eip4762Definition(
         chainId,
         contractSizeLimit,
         evmStackSize,

@@ -6,11 +6,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public interface AccessWitness {
 
-  void merge(AccessWitness other);
-
   List<Address> keys();
-
-  AccessWitness copy();
 
   long touchAndChargeProofOfAbsence(Address address);
 
@@ -33,4 +29,11 @@ public interface AccessWitness {
   List<UInt256> getStorageSlotTreeIndexes(UInt256 storageKey);
 
   long touchCodeChunksUponContractCreation(Address address, long codeLength);
+
+  long touchCodeChunks(Address address, long offset, long readSize, long codeLength);
+
+  default long touchCodeChunksWithoutAccessCost(
+      final Address address, final long offset, final long readSize, final long codeLength) {
+    return touchCodeChunks(address, offset, readSize, codeLength);
+  }
 }

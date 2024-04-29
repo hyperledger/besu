@@ -21,10 +21,10 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSA
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.AccessWitness;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
@@ -337,7 +337,7 @@ public class MainnetTransactionProcessor {
       if (warmCoinbase) {
         addressList.add(miningBeneficiary);
       }
-      final AccessWitness accessWitness = new AccessWitness();
+      final AccessWitness accessWitness = gasCalculator.newAccessWitness();
       final long intrinsicGas =
           gasCalculator.transactionIntrinsicGasCost(
               transaction.getPayload(), transaction.isContractCreation());
@@ -462,11 +462,11 @@ public class MainnetTransactionProcessor {
       final Wei balancePriorToRefund = sender.getBalance();
       sender.incrementBalance(refundedWei);
       LOG.atTrace()
-          .setMessage("refunded sender {}  {} wei ({} -> {})")
+          .setMessage("refunded sender {}  {} wei (balance before:{} -> after:{})")
           .addArgument(senderAddress)
-          .addArgument(refundedWei)
-          .addArgument(balancePriorToRefund)
-          .addArgument(sender.getBalance())
+          .addArgument(refundedWei.toShortHexString())
+          .addArgument(balancePriorToRefund.toShortHexString())
+          .addArgument(sender.getBalance().toShortHexString())
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
       LOG.info(

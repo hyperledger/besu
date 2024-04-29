@@ -43,18 +43,25 @@ public class ExtCodeCopyOperation extends AbstractOperation {
    * Cost of Ext Code Copy operation.
    *
    * @param frame the frame
+   * @param address to use
    * @param memOffset the mem offset
-   * @param length the length
+   * @param sourceOffset the code offset
+   * @param codeSize the size of the code
    * @param accountIsWarm the account is warm
    * @return the long
    */
   protected long cost(
       final MessageFrame frame,
+      final Address address,
       final long memOffset,
-      final long length,
+      final long sourceOffset,
+      final long readSize,
+      final long codeSize,
       final boolean accountIsWarm) {
     return clampedAdd(
-        gasCalculator().extCodeCopyOperationGasCost(frame, memOffset, length),
+        gasCalculator()
+            .extCodeCopyOperationGasCost(
+                frame, address, memOffset, sourceOffset, readSize, codeSize),
         accountIsWarm
             ? gasCalculator().getWarmStorageReadCost()
             : gasCalculator().getColdAccountAccessCost());
@@ -65,20 +72,21 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     final Address address = Words.toAddress(frame.popStackItem());
     final long memOffset = clampedToLong(frame.popStackItem());
     final long sourceOffset = clampedToLong(frame.popStackItem());
-    final long numBytes = clampedToLong(frame.popStackItem());
+    final long readSize = clampedToLong(frame.popStackItem());
 
-    final boolean accountIsWarm =
-        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-    final long cost = cost(frame, memOffset, numBytes, accountIsWarm);
-
-    if (frame.getRemainingGas() < cost) {
-      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-    }
+    final boolean isPrecompiled = gasCalculator().isPrecompile(address);
+    final boolean accountIsWarm = frame.warmUpAddress(address) || isPrecompiled;
 
     final Account account = frame.getWorldUpdater().get(address);
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
-    frame.writeMemory(memOffset, sourceOffset, numBytes, code);
+    final long cost =
+        cost(frame, address, memOffset, sourceOffset, readSize, code.size(), accountIsWarm);
+    if (frame.getRemainingGas() < cost) {
+      return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
+    frame.writeMemory(memOffset, sourceOffset, readSize, code);
     return new OperationResult(cost, null);
   }
 }
