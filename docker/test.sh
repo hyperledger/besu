@@ -20,7 +20,7 @@ if [[ $i != 0 ]]; then exit $i; fi
 # we test that things listen on the right interface/port, not what interface the advertise
 # hence we dont set p2p-host=0.0.0.0 because this sets what its advertising to devp2p; the important piece is that it defaults to listening on all interfaces
 GOSS_FILES_PATH=$TEST_PATH/01 \
-bash $TEST_PATH/dgoss run $DOCKER_IMAGE \
+bash $TEST_PATH/dgoss run --sysctl net.ipv6.conf.all.disable_ipv6=1 $DOCKER_IMAGE \
 --network=dev \
 --rpc-http-enabled \
 --rpc-ws-enabled \

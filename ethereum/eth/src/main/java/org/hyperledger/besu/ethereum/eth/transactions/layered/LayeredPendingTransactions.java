@@ -339,7 +339,9 @@ public class LayeredPendingTransactions implements PendingTransactions {
                     .filter(
                         candidatePendingTx ->
                             !alreadyChecked.contains(candidatePendingTx.getHash())
-                                && candidatePendingTx.getNonce() <= highPrioPendingTx.getNonce())
+                                && Long.compareUnsigned(
+                                        candidatePendingTx.getNonce(), highPrioPendingTx.getNonce())
+                                    <= 0)
                     .forEach(
                         candidatePendingTx -> {
                           alreadyChecked.add(candidatePendingTx.getHash());

@@ -461,7 +461,7 @@ public class EthPeer implements Comparable<EthPeer> {
    *
    * @param protocolName the type of protocol the message is for
    * @param code the message code
-   * @return a request manager for the received response messsage, or Optional.empty() if this is a
+   * @return a request manager for the received response message, or Optional.empty() if this is a
    *     request message
    */
   private Optional<RequestManager> getRequestManager(final String protocolName, final int code) {
