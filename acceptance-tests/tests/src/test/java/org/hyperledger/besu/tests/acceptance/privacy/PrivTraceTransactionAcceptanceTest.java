@@ -29,6 +29,7 @@ import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Optional;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.Test;
@@ -73,7 +74,7 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
   }
 
   @Test
-  public void getTransactionTrace() {
+  public void getTransactionTrace() throws JsonProcessingException {
     final String privacyGroupId = createPrivacyGroup();
     final SimpleStorage simpleStorageContract = deploySimpleStorageContract(privacyGroupId);
 
@@ -88,29 +89,25 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
 
     assertThat(result).isNotNull();
     ObjectMapper mapper = new ObjectMapper();
-    try {
-      JsonNode rootNode = mapper.readTree(result);
-      JsonNode resultNode = rootNode.get("result");
 
-      assertThat(resultNode).isNotNull();
-      assertThat(resultNode.isArray()).isTrue();
-      assertThat(resultNode.size()).isGreaterThan(0);
+    JsonNode rootNode = mapper.readTree(result);
+    JsonNode resultNode = rootNode.get("result");
 
-      JsonNode trace = resultNode.get(0);
-      assertThat(trace.get("action").get("callType").asText()).isEqualTo("call");
-      assertThat(trace.get("action").get("from").asText()).isEqualTo(node.getAddress().toString());
-      assertThat(trace.get("action").get("input").asText()).startsWith("0x60fe47b1");
-      assertThat(trace.get("action").get("to").asText())
-          .isEqualTo(simpleStorageContract.getContractAddress());
-      assertThat(trace.get("action").get("value").asText()).isEqualTo("0x0");
-      assertThat(trace.get("blockHash").asText()).isNotEmpty();
-      assertThat(trace.get("blockNumber").asInt()).isGreaterThan(0);
-      assertThat(trace.get("transactionHash").asText()).isEqualTo(transactionHash.toString());
-      assertThat(trace.get("type").asText()).isEqualTo("call");
+    assertThat(resultNode).isNotNull();
+    assertThat(resultNode.isArray()).isTrue();
+    assertThat(resultNode.size()).isGreaterThan(0);
 
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    JsonNode trace = resultNode.get(0);
+    assertThat(trace.get("action").get("callType").asText()).isEqualTo("call");
+    assertThat(trace.get("action").get("from").asText()).isEqualTo(node.getAddress().toString());
+    assertThat(trace.get("action").get("input").asText()).startsWith("0x60fe47b1");
+    assertThat(trace.get("action").get("to").asText())
+        .isEqualTo(simpleStorageContract.getContractAddress());
+    assertThat(trace.get("action").get("value").asText()).isEqualTo("0x0");
+    assertThat(trace.get("blockHash").asText()).isNotEmpty();
+    assertThat(trace.get("blockNumber").asInt()).isGreaterThan(0);
+    assertThat(trace.get("transactionHash").asText()).isEqualTo(transactionHash.toString());
+    assertThat(trace.get("type").asText()).isEqualTo("call");
 
     final String wrongPrivacyGroupId = createWrongPrivacyGroup();
 
@@ -119,33 +116,25 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
             privacyTransactions.privTraceTransaction(wrongPrivacyGroupId, transactionHash));
 
     ObjectMapper mapperEmpty = new ObjectMapper();
-    try {
-      JsonNode rootNode = mapperEmpty.readTree(resultEmpty);
-      JsonNode resultNode = rootNode.get("result");
 
-      assertThat(resultNode).isNotNull();
-      assertThat(resultNode.isArray()).isTrue();
-      assertThat(resultNode.isEmpty()).isTrue();
+    JsonNode rootNode = mapperEmpty.readTree(resultEmpty);
+    JsonNode resultNode = rootNode.get("result");
 
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    assertThat(resultNode).isNotNull();
+    assertThat(resultNode.isArray()).isTrue();
+    assertThat(resultNode.isEmpty()).isTrue();
 
     final String resultWrongHash =
         wrongNode.execute(privacyTransactions.privTraceTransaction(privacyGroupId, Hash.EMPTY));
 
     ObjectMapper mapperWrongHash = new ObjectMapper();
-    try {
-      JsonNode rootNode = mapperWrongHash.readTree(resultWrongHash);
-      JsonNode resultNode = rootNode.get("result");
 
-      assertThat(resultNode).isNotNull();
-      assertThat(resultNode.isArray()).isTrue();
-      assertThat(resultNode.isEmpty()).isTrue();
+    JsonNode rootNode = mapperWrongHash.readTree(resultWrongHash);
+    JsonNode resultNode = rootNode.get("result");
 
-    } catch (Exception e) {
-      e.printStackTrace();
-    }
+    assertThat(resultNode).isNotNull();
+    assertThat(resultNode.isArray()).isTrue();
+    assertThat(resultNode.isEmpty()).isTrue();
   }
 
   private String createPrivacyGroup() {
