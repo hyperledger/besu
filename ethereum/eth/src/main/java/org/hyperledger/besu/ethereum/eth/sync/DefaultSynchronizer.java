@@ -179,6 +179,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
         "best_known_block_number",
         "The estimated highest block available",
         syncState::bestChainHeight);
+
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.SYNCHRONIZER,
         "in_sync",

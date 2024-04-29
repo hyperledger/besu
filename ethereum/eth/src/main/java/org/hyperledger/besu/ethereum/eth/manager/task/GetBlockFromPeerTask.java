@@ -64,7 +64,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
   @Override
   protected void executeTask() {
     final String blockIdentifier = blockNumber + " (" + hash + ")";
-    LOG.debug(
+    LOG.info(
         "Downloading block {} from peer {}.",
         blockIdentifier,
         assignedPeer.map(EthPeer::toString).orElse("<any>"));
@@ -73,7 +73,7 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
         .whenComplete(
             (r, t) -> {
               if (t != null) {
-                LOG.debug(
+                LOG.info(
                     "Failed to download block {} from peer {} with message '{}' and cause '{}'",
                     blockIdentifier,
                     assignedPeer.map(EthPeer::toString).orElse("<any>"),
@@ -82,13 +82,13 @@ public class GetBlockFromPeerTask extends AbstractPeerTask<Block> {
                 result.completeExceptionally(t);
               } else if (r.getResult().isEmpty()) {
                 r.getPeer().recordUselessResponse("Download block returned an empty result");
-                LOG.debug(
+                LOG.info(
                     "Failed to download block {} from peer {} with empty result.",
                     blockIdentifier,
                     r.getPeer());
                 result.completeExceptionally(new IncompleteResultsException());
               } else {
-                LOG.debug(
+                LOG.info(
                     "Successfully downloaded block {} from peer {}.", blockIdentifier, r.getPeer());
                 result.complete(new PeerTaskResult<>(r.getPeer(), r.getResult().get(0)));
               }

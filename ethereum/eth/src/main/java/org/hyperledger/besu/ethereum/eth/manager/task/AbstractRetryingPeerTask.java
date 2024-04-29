@@ -82,6 +82,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       return;
     }
     if (retryCount >= maxRetries) {
+      LOG.info("completing exceptionally due to max retries reached, retry count: {}", retryCount);
       result.completeExceptionally(new MaxRetriesReachedException());
       return;
     }
@@ -106,14 +107,16 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   protected void handleTaskError(final Throwable error) {
     final Throwable cause = ExceptionUtils.rootCause(error);
+    LOG.info("Cause of error: {}", cause.getMessage());
     if (!isRetryableError(cause)) {
       // Complete exceptionally
+      LOG.info("completing exceptionally due to error: {}", cause.getMessage());
       result.completeExceptionally(cause);
       return;
     }
 
     if (cause instanceof NoAvailablePeersException) {
-      LOG.debug(
+      LOG.info(
           "No useful peer found, wait max 5 seconds for new peer to connect: current peers {}",
           ethContext.getEthPeers().peerCount());
 
@@ -127,7 +130,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       return;
     }
 
-    LOG.debug(
+    LOG.info(
         "Retrying after recoverable failure from peer task {}: {}",
         this.getClass().getSimpleName(),
         cause.getMessage());

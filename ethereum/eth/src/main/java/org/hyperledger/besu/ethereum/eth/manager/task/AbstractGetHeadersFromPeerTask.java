@@ -74,19 +74,19 @@ public abstract class AbstractGetHeadersFromPeerTask
     final List<BlockHeader> headers = headersMessage.getHeaders(protocolSchedule);
     if (headers.isEmpty()) {
       // Message contains no data - nothing to do
-      LOG.debug("headers.isEmpty. Peer: {}", peer.getLoggableId());
+      LOG.info("headers.isEmpty. Peer: {}", peer.getLoggableId());
       return Optional.empty();
     }
     if (headers.size() > count) {
       // Too many headers - this isn't our response
-      LOG.debug("headers.size()>count. Peer: {}", peer.getLoggableId());
+      LOG.info("headers.size()>count. Peer: {}", peer.getLoggableId());
       return Optional.empty();
     }
 
     final BlockHeader firstHeader = headers.get(0);
     if (!matchesFirstHeader(firstHeader)) {
       // This isn't our message - nothing to do
-      LOG.debug("!matchesFirstHeader. Peer: {}", peer.getLoggableId());
+      LOG.info("!matchesFirstHeader. Peer: {}", peer.getLoggableId());
       return Optional.empty();
     }
 
@@ -100,7 +100,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       header = headers.get(i);
       if (header.getNumber() != prevBlockHeader.getNumber() + expectedDelta) {
         // Skip doesn't match, this isn't our data
-        LOG.debug("header not matching the expected number. Peer: {}", peer.getLoggableId());
+        LOG.info("header not matching the expected number. Peer: {}", peer.getLoggableId());
         return Optional.empty();
       }
       // if headers are supposed to be sequential check if a chain is formed
@@ -108,7 +108,7 @@ public abstract class AbstractGetHeadersFromPeerTask
         final BlockHeader parent = reverse ? header : prevBlockHeader;
         final BlockHeader child = reverse ? prevBlockHeader : header;
         if (!parent.getHash().equals(child.getParentHash())) {
-          LOG.debug(
+          LOG.info(
               "Sequential headers must form a chain through hashes (BREACH_OF_PROTOCOL), disconnecting peer: {}",
               peer.getLoggableId());
           peer.disconnect(
@@ -126,7 +126,7 @@ public abstract class AbstractGetHeadersFromPeerTask
       updatePeerChainState(peer, header);
     }
 
-    LOG.atTrace()
+    LOG.atInfo()
         .setMessage("Received {} of {} headers requested from peer {}")
         .addArgument(headersList::size)
         .addArgument(count)
@@ -144,7 +144,7 @@ public abstract class AbstractGetHeadersFromPeerTask
           .log();
       peer.chainState().update(blockHeader);
     }
-    LOG.trace("Peer chain state {}", peer.chainState());
+    LOG.info("Peer {} chain state {}", peer.getLoggableId(), peer.chainState());
   }
 
   protected abstract boolean matchesFirstHeader(BlockHeader firstHeader);

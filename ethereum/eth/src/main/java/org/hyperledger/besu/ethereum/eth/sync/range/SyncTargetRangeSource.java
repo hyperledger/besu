@@ -157,6 +157,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
               .addArgument(peer)
               .log();
           peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
+          // TODO: Exception
         }
       } else {
         retryCount = 0;

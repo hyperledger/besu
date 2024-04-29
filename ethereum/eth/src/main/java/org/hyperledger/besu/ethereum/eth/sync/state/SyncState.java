@@ -286,7 +286,7 @@ public class SyncState {
   }
 
   public long bestChainHeight(final long localChainHeight) {
-    return Math.max(
+    return Math.max( // TODO: bestChainHeight should come from our CL (newPayload)
         localChainHeight,
         ethPeers
             .bestPeerWithHeightEstimate()

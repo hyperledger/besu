@@ -76,7 +76,7 @@ public class DynamicPivotBlockSelector {
           .getPivotBlockNumber()
           .ifPresent(
               currentPivotBlockNumber -> {
-                final long bestChainHeight = syncActions.getBestChainHeight();
+                final long bestChainHeight = syncActions.getBestChainHeight();//TODO: this is where we get the potentially reorged head header
                 final long distanceNextPivotBlock =
                     bestChainHeight
                         - lastPivotBlockFound

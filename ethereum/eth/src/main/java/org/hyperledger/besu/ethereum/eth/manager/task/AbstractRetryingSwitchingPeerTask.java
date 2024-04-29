@@ -66,7 +66,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
             .orElseGet(this::selectNextPeer); // otherwise, select a new one from the pool
 
     if (maybePeer.isEmpty()) {
-      LOG.atTrace()
+      LOG.atInfo()
           .setMessage("No peer found to try to execute task at attempt {}, tried peers {}")
           .addArgument(this::getRetryCount)
           .addArgument(triedPeers)
@@ -78,7 +78,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     final EthPeer peerToUse = maybePeer.get();
     assignPeer(peerToUse);
 
-    LOG.atTrace()
+    LOG.atInfo()
         .setMessage("Trying to execute task on peer {}, attempt {}")
         .addArgument(this::getAssignedPeer)
         .addArgument(this::getRetryCount)
@@ -87,7 +87,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     return executeTaskOnCurrentPeer(peerToUse)
         .thenApply(
             peerResult -> {
-              LOG.atTrace()
+              LOG.atInfo()
                   .setMessage("Got result {} from peer {}, attempt {}")
                   .addArgument(peerResult)
                   .addArgument(peerToUse)
@@ -142,7 +142,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
           .or(() -> peers.streamAvailablePeers().min(EthPeers.MOST_USEFUL_PEER))
           .ifPresent(
               peer -> {
-                LOG.atDebug()
+                LOG.atInfo()
                     .setMessage(
                         "Refresh peers disconnecting peer {} Waiting for better peers. Current {} of max {}")
                     .addArgument(peer::getLoggableId)
