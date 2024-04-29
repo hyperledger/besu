@@ -31,7 +31,6 @@ public class PeerReputationTest {
   private final PeerReputation reputation = new PeerReputation(INITIAL_SCORE, MAX_SCORE);
   private final EthPeer mockEthPeer = mock(EthPeer.class);
 
-
   @Test
   public void shouldThrowOnInvalidInitialScore() {
     Assertions.assertThrows(IllegalArgumentException.class, () -> new PeerReputation(2, 1));
@@ -40,7 +39,8 @@ public class PeerReputationTest {
   @Test
   public void shouldOnlyDisconnectWhenTimeoutLimitReached() {
     sendRequestTimeouts(EthPV62.GET_BLOCK_HEADERS, PeerReputation.TIMEOUT_THRESHOLD - 1);
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS, mockEthPeer)).contains(TIMEOUT);
+    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS, mockEthPeer))
+        .contains(TIMEOUT);
   }
 
   @Test
@@ -48,8 +48,10 @@ public class PeerReputationTest {
     sendRequestTimeouts(EthPV62.GET_BLOCK_HEADERS, PeerReputation.TIMEOUT_THRESHOLD - 1);
     sendRequestTimeouts(EthPV62.GET_BLOCK_BODIES, PeerReputation.TIMEOUT_THRESHOLD - 1);
 
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS, mockEthPeer)).contains(TIMEOUT);
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES, mockEthPeer)).contains(TIMEOUT);
+    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS, mockEthPeer))
+        .contains(TIMEOUT);
+    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES, mockEthPeer))
+        .contains(TIMEOUT);
   }
 
   @Test
@@ -59,13 +61,15 @@ public class PeerReputationTest {
 
     reputation.resetTimeoutCount(EthPV62.GET_BLOCK_HEADERS);
     assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_HEADERS, mockEthPeer)).isEmpty();
-    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES, mockEthPeer)).contains(TIMEOUT);
+    assertThat(reputation.recordRequestTimeout(EthPV62.GET_BLOCK_BODIES, mockEthPeer))
+        .contains(TIMEOUT);
   }
 
   @Test
   public void shouldOnlyDisconnectWhenEmptyResponseThresholdReached() {
     sendUselessResponses(1001, PeerReputation.USELESS_RESPONSE_THRESHOLD - 1);
-    assertThat(reputation.recordUselessResponse(1005, mockEthPeer)).contains(USELESS_PEER_USELESS_RESPONSES);
+    assertThat(reputation.recordUselessResponse(1005, mockEthPeer))
+        .contains(USELESS_PEER_USELESS_RESPONSES);
   }
 
   @Test
