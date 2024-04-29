@@ -82,7 +82,8 @@ public class ForksScheduleFactoryTest {
     assertThat(schedule.getFork(2)).isEqualTo(new ForkSpec<>(2, configOptions2));
   }
 
-  private MutableBftConfigOptions createBftConfigOptions(final int blockPeriodSeconds, final int emptyBlockPeriodSeconds) {
+  private MutableBftConfigOptions createBftConfigOptions(
+      final int blockPeriodSeconds, final int emptyBlockPeriodSeconds) {
     final MutableBftConfigOptions bftConfigOptions =
         new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
     bftConfigOptions.setBlockPeriodSeconds(blockPeriodSeconds);
@@ -90,12 +91,16 @@ public class ForksScheduleFactoryTest {
     return bftConfigOptions;
   }
 
-  private BftFork createFork(final long block, final long blockPeriodSeconds, final long emptyBlockPeriodSeconds) {
+  private BftFork createFork(
+      final long block, final long blockPeriodSeconds, final long emptyBlockPeriodSeconds) {
     return new BftFork(
         JsonUtil.objectNodeFromMap(
             Map.of(
-                BftFork.FORK_BLOCK_KEY, block,
-                    BftFork.BLOCK_PERIOD_SECONDS_KEY, blockPeriodSeconds,
-                    BftFork.EMPTY_BLOCK_PERIOD_SECONDS_KEY, emptyBlockPeriodSeconds)));
+                BftFork.FORK_BLOCK_KEY,
+                block,
+                BftFork.BLOCK_PERIOD_SECONDS_KEY,
+                blockPeriodSeconds,
+                BftFork.EMPTY_BLOCK_PERIOD_SECONDS_KEY,
+                emptyBlockPeriodSeconds)));
   }
 }

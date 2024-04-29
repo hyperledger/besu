@@ -67,8 +67,12 @@ public class BlockTimerTest {
     final int MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS = 60;
 
     when(mockForksSchedule.getFork(anyLong()))
-            .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
-
+        .thenReturn(
+            new ForkSpec<>(
+                0,
+                createBftFork(
+                    MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
+                    MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
     // Starts with nothing running
@@ -88,7 +92,12 @@ public class BlockTimerTest {
     final long EXPECTED_DELAY = 10_000L;
 
     when(mockForksSchedule.getFork(anyLong()))
-            .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
+        .thenReturn(
+            new ForkSpec<>(
+                0,
+                createBftFork(
+                    MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
+                    MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
@@ -118,7 +127,12 @@ public class BlockTimerTest {
     final long EXPECTED_DELAY = 500;
 
     when(mockForksSchedule.getFork(anyLong()))
-            .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
+        .thenReturn(
+            new ForkSpec<>(
+                0,
+                createBftFork(
+                    MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
+                    MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
     when(mockClock.millis()).thenReturn(NOW_MILLIS);
 
     final BlockHeader header =
@@ -163,7 +177,12 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500;
 
     when(mockForksSchedule.getFork(anyLong()))
-            .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
+        .thenReturn(
+            new ForkSpec<>(
+                0,
+                createBftFork(
+                    MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
+                    MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
@@ -194,7 +213,12 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
 
     when(mockForksSchedule.getFork(anyLong()))
-            .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
+        .thenReturn(
+            new ForkSpec<>(
+                0,
+                createBftFork(
+                    MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
+                    MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
@@ -225,7 +249,12 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
 
     when(mockForksSchedule.getFork(anyLong()))
-            .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
+        .thenReturn(
+            new ForkSpec<>(
+                0,
+                createBftFork(
+                    MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
+                    MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
@@ -254,7 +283,12 @@ public class BlockTimerTest {
     final long BLOCK_TIME_STAMP = 500L;
 
     when(mockForksSchedule.getFork(anyLong()))
-            .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
+        .thenReturn(
+            new ForkSpec<>(
+                0,
+                createBftFork(
+                    MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
+                    MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
@@ -282,17 +316,24 @@ public class BlockTimerTest {
     final int MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS = 60;
 
     when(mockForksSchedule.getFork(anyLong()))
-            .thenReturn(new ForkSpec<>(0, createBftFork(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS, MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
+        .thenReturn(
+            new ForkSpec<>(
+                0,
+                createBftFork(
+                    MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
+                    MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
 
     assertThat(timer.getBlockPeriodSeconds()).isEqualTo(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS);
-    assertThat(timer.getEmptyBlockPeriodSeconds()).isEqualTo(MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS);
+    assertThat(timer.getEmptyBlockPeriodSeconds())
+        .isEqualTo(MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS);
   }
 
-  private BftConfigOptions createBftFork(final int blockPeriodSeconds, final int emptyBlockPeriodSeconds) {
+  private BftConfigOptions createBftFork(
+      final int blockPeriodSeconds, final int emptyBlockPeriodSeconds) {
     final MutableBftConfigOptions bftConfigOptions =
-            new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
+        new MutableBftConfigOptions(JsonBftConfigOptions.DEFAULT);
     bftConfigOptions.setBlockPeriodSeconds(blockPeriodSeconds);
     bftConfigOptions.setEmptyBlockPeriodSeconds(emptyBlockPeriodSeconds);
     return bftConfigOptions;

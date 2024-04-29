@@ -24,15 +24,12 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * A mutable {@link BftConfigOptions} that is used for building config for transitions in the {@link
  * ForksSchedule}*.
  */
 public class MutableBftConfigOptions implements BftConfigOptions {
-  
+
   private long epochLength;
   private int blockPeriodSeconds;
   private int emptyBlockPeriodSeconds;

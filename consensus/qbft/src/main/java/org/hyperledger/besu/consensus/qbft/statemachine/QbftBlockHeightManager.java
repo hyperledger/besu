@@ -135,18 +135,18 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       buildBlockAndMaybePropose(roundIdentifier, qbftRound);
     } else {
       LOG.trace(
-              "Block timer expired for a round ({}) other than current ({})",
-              roundIdentifier,
-              qbftRound.getRoundIdentifier());
+          "Block timer expired for a round ({}) other than current ({})",
+          roundIdentifier,
+          qbftRound.getRoundIdentifier());
     }
   }
 
   private void buildBlockAndMaybePropose(
-          final ConsensusRoundIdentifier roundIdentifier, final QbftRound qbftRound) {
+      final ConsensusRoundIdentifier roundIdentifier, final QbftRound qbftRound) {
 
     // mining will be checked against round 0 as the current round is initialised to 0 above
     final boolean isProposer =
-            finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
+        finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
 
     final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
     final Block block = qbftRound.createBlock(headerTimeStampSeconds);
@@ -155,8 +155,9 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       if (isProposer) {
         LOG.debug("Block has transactions and this node is a proposer so it will send a proposal");
         qbftRound.sendProposalMessage(block);
-      }else{
-        LOG.debug("Block has transactions but this node is not a proposer so it will not send a proposal");
+      } else {
+        LOG.debug(
+            "Block has transactions but this node is not a proposer so it will not send a proposal");
       }
     } else {
       final long emptyBlockPeriodSeconds = finalState.getBlockTimer().getEmptyBlockPeriodSeconds();
@@ -164,10 +165,12 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       final long nowInSeconds = finalState.getClock().millis() / 1000;
       if (nowInSeconds >= emptyBlockPeriodExpiryTime) {
         if (isProposer) {
-          LOG.debug("Block has no transactions and this node is a proposer so it will send a proposal");
+          LOG.debug(
+              "Block has no transactions and this node is a proposer so it will send a proposal");
           qbftRound.sendProposalMessage(block);
         } else {
-          LOG.debug("Block has no transactions but this node is not a proposer so it will not send a proposal");
+          LOG.debug(
+              "Block has no transactions but this node is not a proposer so it will not send a proposal");
         }
       } else {
         finalState.getRoundTimer().cancelTimer();

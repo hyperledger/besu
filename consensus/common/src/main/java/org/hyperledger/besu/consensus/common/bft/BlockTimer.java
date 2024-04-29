@@ -97,11 +97,11 @@ public class BlockTimer {
   }
 
   public synchronized void startEmptyBlockTimer(
-          final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
+      final ConsensusRoundIdentifier round, final BlockHeader chainHeadHeader) {
 
     // absolute time when the timer is supposed to expire
     final int currentBlockPeriodSeconds =
-            forksSchedule.getFork(round.getSequenceNumber()).getValue().getEmptyBlockPeriodSeconds();
+        forksSchedule.getFork(round.getSequenceNumber()).getValue().getEmptyBlockPeriodSeconds();
     final long minimumTimeBetweenBlocksMillis = currentBlockPeriodSeconds * 1000L;
     final long expiryTime = chainHeadHeader.getTimestamp() * 1_000 + minimumTimeBetweenBlocksMillis;
 
@@ -110,7 +110,8 @@ public class BlockTimer {
     startTimer(round, expiryTime);
   }
 
-  private synchronized void startTimer(final ConsensusRoundIdentifier round, final long expiryTime) {
+  private synchronized void startTimer(
+      final ConsensusRoundIdentifier round, final long expiryTime) {
     cancelTimer();
     final long now = clock.millis();
 
@@ -127,26 +128,29 @@ public class BlockTimer {
     }
   }
 
-  private synchronized void setBlockTimes(final ConsensusRoundIdentifier round, final boolean isEmpty) {
-    final BftConfigOptions currentConfigOptions =  forksSchedule.getFork(round.getSequenceNumber()).getValue();
+  private synchronized void setBlockTimes(
+      final ConsensusRoundIdentifier round, final boolean isEmpty) {
+    final BftConfigOptions currentConfigOptions =
+        forksSchedule.getFork(round.getSequenceNumber()).getValue();
     this.blockPeriodSeconds = currentConfigOptions.getBlockPeriodSeconds();
     this.emptyBlockPeriodSeconds = currentConfigOptions.getEmptyBlockPeriodSeconds();
 
-    long currentBlockPeriodSeconds = isEmpty && this.emptyBlockPeriodSeconds > 0
+    long currentBlockPeriodSeconds =
+        isEmpty && this.emptyBlockPeriodSeconds > 0
             ? this.emptyBlockPeriodSeconds
             : this.blockPeriodSeconds;
 
     LOG.debug(
-            "NEW CURRENTBLOCKPERIODSECONDS SET TO {}:  {}"
-            , isEmpty?"EMPTYBLOCKPERIODSECONDS":"BLOCKPERIODSECONDS"
-            , currentBlockPeriodSeconds);
+        "NEW CURRENTBLOCKPERIODSECONDS SET TO {}:  {}",
+        isEmpty ? "EMPTYBLOCKPERIODSECONDS" : "BLOCKPERIODSECONDS",
+        currentBlockPeriodSeconds);
   }
 
-  public synchronized long getBlockPeriodSeconds(){
+  public synchronized long getBlockPeriodSeconds() {
     return blockPeriodSeconds;
   }
 
-  public synchronized long getEmptyBlockPeriodSeconds(){
+  public synchronized long getEmptyBlockPeriodSeconds() {
     return emptyBlockPeriodSeconds;
   }
 }

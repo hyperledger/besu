@@ -91,7 +91,7 @@ public class JsonBftConfigOptionsTest {
   public void shouldGetDefaultEmptyBlockPeriodFromDefaultConfig() {
 
     assertThat(JsonBftConfigOptions.DEFAULT.getEmptyBlockPeriodSeconds())
-            .isEqualTo(EXPECTED_EMPTY_DEFAULT_BLOCK_PERIOD);
+        .isEqualTo(EXPECTED_EMPTY_DEFAULT_BLOCK_PERIOD);
   }
 
   @Test

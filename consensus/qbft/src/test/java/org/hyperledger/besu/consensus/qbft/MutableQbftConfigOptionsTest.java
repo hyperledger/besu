@@ -47,7 +47,7 @@ public class MutableQbftConfigOptionsTest {
     when(qbftConfigOptions.getBlockPeriodSeconds()).thenReturn(2);
 
     final MutableQbftConfigOptions mutableQbftConfigOptions =
-            new MutableQbftConfigOptions(qbftConfigOptions);
+        new MutableQbftConfigOptions(qbftConfigOptions);
 
     assertThat(mutableQbftConfigOptions.getBlockPeriodSeconds()).isEqualTo(2);
   }
@@ -57,7 +57,7 @@ public class MutableQbftConfigOptionsTest {
     when(qbftConfigOptions.getEmptyBlockPeriodSeconds()).thenReturn(60);
 
     final MutableQbftConfigOptions mutableQbftConfigOptions =
-            new MutableQbftConfigOptions(qbftConfigOptions);
+        new MutableQbftConfigOptions(qbftConfigOptions);
 
     assertThat(mutableQbftConfigOptions.getEmptyBlockPeriodSeconds()).isEqualTo(60);
   }

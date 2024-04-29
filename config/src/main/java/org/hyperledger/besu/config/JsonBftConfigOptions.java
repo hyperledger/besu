@@ -71,7 +71,7 @@ public class JsonBftConfigOptions implements BftConfigOptions {
   @Override
   public int getEmptyBlockPeriodSeconds() {
     return JsonUtil.getInt(
-            bftConfigRoot, "emptyblockperiodseconds", DEFAULT_EMPTY_BLOCK_PERIOD_SECONDS);
+        bftConfigRoot, "emptyblockperiodseconds", DEFAULT_EMPTY_BLOCK_PERIOD_SECONDS);
   }
 
   @Override
