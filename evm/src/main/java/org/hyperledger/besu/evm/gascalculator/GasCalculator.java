@@ -620,13 +620,15 @@ public interface GasCalculator {
 
   /**
    * Returns the gas cost of validating an auth commitment for an AUTHCALL
+   *
    * @param frame the current frame, with memory to be read from
    * @param offset start of memory read
    * @param length amount of memory read
    * @param authority address to check for warmup
    * @return total gas cost for the operation
    */
-  default long authOperationGasCost(final MessageFrame frame, final long offset, final long length, final Address authority) {
+  default long authOperationGasCost(
+      final MessageFrame frame, final long offset, final long length, final Address authority) {
     return 0L;
   }
 }

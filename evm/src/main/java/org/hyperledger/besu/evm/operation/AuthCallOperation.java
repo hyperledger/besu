@@ -15,6 +15,8 @@
 
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
@@ -23,71 +25,74 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
-
+/** Introduced via EIP-3074 to call another contract with a different authorization context. */
 public class AuthCallOperation extends AbstractCallOperation {
 
-      public AuthCallOperation(final GasCalculator gasCalculator) {
-              super(0xF7, "AUTHCALL", 7, 1, gasCalculator);
+  /**
+   * Instantiates a new AuthCallOperation.
+   *
+   * @param gasCalculator a Prague or later gas calculator
+   */
+  public AuthCallOperation(final GasCalculator gasCalculator) {
+    super(0xF7, "AUTHCALL", 7, 1, gasCalculator);
+  }
 
-      }
+  @Override
+  protected Address to(final MessageFrame frame) {
+    return Words.toAddress(frame.getStackItem(1));
+  }
 
-    @Override
-    protected Address to(final MessageFrame frame) {
-        return Words.toAddress(frame.getStackItem(1));
+  @Override
+  protected Wei value(final MessageFrame frame) {
+    return Wei.wrap(frame.getStackItem(2));
+  }
+
+  @Override
+  protected Wei apparentValue(final MessageFrame frame) {
+    return value(frame);
+  }
+
+  @Override
+  protected long inputDataOffset(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(3));
+  }
+
+  @Override
+  protected long inputDataLength(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(4));
+  }
+
+  @Override
+  protected long outputDataOffset(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(5));
+  }
+
+  @Override
+  protected long outputDataLength(final MessageFrame frame) {
+    return clampedToLong(frame.getStackItem(6));
+  }
+
+  @Override
+  protected Address address(final MessageFrame frame) {
+    return to(frame);
+  }
+
+  @Override
+  protected Address sender(final MessageFrame frame) {
+    return frame.getAuthorizedBy();
+  }
+
+  @Override
+  public long gasAvailableForChildCall(final MessageFrame frame) {
+    return gasCalculator().gasAvailableForChildCall(frame, gas(frame), !value(frame).isZero());
+  }
+
+  @Override
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.isStatic() && !value(frame).isZero()) {
+      return new OperationResult(cost(frame, true), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
+    } else {
+      return super.execute(frame, evm);
     }
-
-    @Override
-    protected Wei value(final MessageFrame frame) {
-        return Wei.wrap(frame.getStackItem(2));
-    }
-
-    @Override
-    protected Wei apparentValue(final MessageFrame frame) {
-        return value(frame);
-    }
-
-    @Override
-    protected long inputDataOffset(final MessageFrame frame) {
-        return clampedToLong(frame.getStackItem(3));
-    }
-
-    @Override
-    protected long inputDataLength(final MessageFrame frame) {
-        return clampedToLong(frame.getStackItem(4));
-    }
-
-    @Override
-    protected long outputDataOffset(final MessageFrame frame) {
-        return clampedToLong(frame.getStackItem(5));
-    }
-
-    @Override
-    protected long outputDataLength(final MessageFrame frame) {
-        return clampedToLong(frame.getStackItem(6));
-    }
-
-    @Override
-    protected Address address(final MessageFrame frame) {
-        return to(frame);
-    }
-
-    @Override
-    protected Address sender(final MessageFrame frame) {
-        return frame.getAuthorizedBy();
-    }
-
-    @Override
-    public long gasAvailableForChildCall(final MessageFrame frame) {
-        return gasCalculator().gasAvailableForChildCall(frame, gas(frame), !value(frame).isZero());
-    }
-
-    @Override
-    public OperationResult execute(final MessageFrame frame, final EVM evm) {
-        if (frame.isStatic() && !value(frame).isZero()) {
-            return new OperationResult(cost(frame, true), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-        } else {
-            return super.execute(frame, evm);
-        }
-    }
+  }
 }
