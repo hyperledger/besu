@@ -145,7 +145,6 @@ public interface WorldUpdater extends MutableWorldView {
    */
   void commitPrivateNonce();
 
-
   /**
    * The parent updater (if it exists).
    *

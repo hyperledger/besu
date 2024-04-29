@@ -210,9 +210,9 @@ public class ProtocolScheduleBuilder {
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
                       config.getContractSizeLimit(),
-                          config.getEvmStackSize(),
-                          evmConfiguration,
-                          privacyParameters.isPrivateNonceIncrementationEnabled()),
+                      config.getEvmStackSize(),
+                      evmConfiguration,
+                      privacyParameters.isPrivateNonceIncrementationEnabled()),
                   Function.identity());
               protocolSchedule.putBlockNumberMilestone(
                   classicBlockNumber + 1, originalProtocolSpec);

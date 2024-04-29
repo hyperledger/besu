@@ -233,7 +233,8 @@ public class PrivacyParameters {
     return privateNonceIncrementationEnabled;
   }
 
-  public void setPrivateNonceIncrementationEnabled(boolean privateNonceIncrementationEnabled) {
+  public void setPrivateNonceIncrementationEnabled(
+      final boolean privateNonceIncrementationEnabled) {
     this.privateNonceIncrementationEnabled = privateNonceIncrementationEnabled;
   }
 
@@ -325,7 +326,7 @@ public class PrivacyParameters {
     }
 
     public Builder setPrivateNonceIncrementationEnabled(
-        Boolean isPrivateNonceIncrementationEnabled) {
+        final boolean isPrivateNonceIncrementationEnabled) {
       this.privateNonceIncrementationEnabled = isPrivateNonceIncrementationEnabled;
       return this;
     }

@@ -695,8 +695,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
     @Option(
-            names = {"--privacy-nonce-incrementation-enabled"},
-            description = "Enable private nonce incrementation even if the transaction didn't succeeded (default: ${DEFAULT-VALUE})")
+        names = {"--privacy-nonce-incrementation-enabled"},
+        description =
+            "Enable private nonce incrementation even if the transaction didn't succeeded (default: ${DEFAULT-VALUE})")
     private final Boolean isPrivateNonceIncrementationEnabled = false;
   }
 
@@ -2022,7 +2023,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       privacyParametersBuilder.setPrivacyPluginEnabled(
           unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
       privacyParametersBuilder.setPrivateNonceIncrementationEnabled(
-              privacyOptionGroup.isPrivateNonceIncrementationEnabled);
+          privacyOptionGroup.isPrivateNonceIncrementationEnabled);
 
       final boolean hasPrivacyPublicKey = privacyOptionGroup.privacyPublicKeyFile != null;
 
