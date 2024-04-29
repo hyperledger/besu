@@ -24,6 +24,8 @@ import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code size operation. */
@@ -44,8 +46,9 @@ public class ExtCodeSizeOperation extends AbstractOperation {
    * @param accountIsWarm the account is warm
    * @return the long
    */
-  protected long cost(final boolean accountIsWarm) {
-    return gasCalculator().getExtCodeSizeOperationGasCost()
+  protected long cost(
+      final boolean accountIsWarm, final MessageFrame frame, final Optional<Address> maybeAddress) {
+    return gasCalculator().getExtCodeSizeOperationGasCost(frame, maybeAddress)
         + (accountIsWarm
             ? gasCalculator().getWarmStorageReadCost()
             : gasCalculator().getColdAccountAccessCost());
@@ -53,11 +56,17 @@ public class ExtCodeSizeOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    final Address address;
     try {
-      final Address address = Words.toAddress(frame.popStackItem());
+      address = Words.toAddress(frame.popStackItem());
+    } catch (final UnderflowException ufe) {
+      return new OperationResult(
+          cost(true, frame, Optional.empty()), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    try {
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(accountIsWarm);
+      final long cost = cost(accountIsWarm, frame, Optional.of(address));
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
@@ -66,10 +75,9 @@ public class ExtCodeSizeOperation extends AbstractOperation {
             account == null ? Bytes.EMPTY : Words.intBytes(account.getCode().size()));
         return new OperationResult(cost, null);
       }
-    } catch (final UnderflowException ufe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+      return new OperationResult(
+          cost(true, frame, Optional.of(address)), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

@@ -235,11 +235,6 @@ public class FrontierGasCalculator implements GasCalculator {
     return getVeryLowTierGasCost();
   }
 
-  @Override
-  public long extCodeSizeOperationGasCost(final MessageFrame frame) {
-    return getBaseTierGasCost();
-  }
-
   @SuppressWarnings("removal")
   @Override
   public long callOperationGasCost(
@@ -410,7 +405,8 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getBalanceOperationGasCost(final MessageFrame frame) {
+  public long getBalanceOperationGasCost(
+      final MessageFrame frame, final Optional<Address> maybeAddress) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
@@ -462,7 +458,8 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getExtCodeSizeOperationGasCost() {
+  public long getExtCodeSizeOperationGasCost(
+      final MessageFrame frame, final Optional<Address> maybeAddress) {
     return extCodeBaseGasCost();
   }
 

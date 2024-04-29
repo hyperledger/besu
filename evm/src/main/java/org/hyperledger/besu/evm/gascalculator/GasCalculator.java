@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
@@ -320,9 +321,6 @@ public interface GasCalculator {
 
   long pushOperationGasCost(MessageFrame frame, long codeOffset, long readSize, long codeSize);
 
-
-  long extCodeSizeOperationGasCost(MessageFrame frame);
-
   /**
    * Returns the cost of expanding memory for the specified access.
    *
@@ -338,9 +336,11 @@ public interface GasCalculator {
   /**
    * Returns the cost for executing a {@link BalanceOperation}.
    *
+   * @param frame The current frame
+   * @param maybeAddress targeted address
    * @return the cost for executing the balance operation
    */
-  long getBalanceOperationGasCost(MessageFrame frame);
+  long getBalanceOperationGasCost(MessageFrame frame, final Optional<Address> maybeAddress);
 
   /**
    * Returns the cost for executing a {@link BlockHashOperation}.
@@ -379,16 +379,20 @@ public interface GasCalculator {
   /**
    * Returns the cost for executing a {@link ExtCodeHashOperation}.
    *
+   * @param frame The current frame
+   * @param maybeAddress targeted address
    * @return the cost for executing the external code hash operation
    */
-  long extCodeHashOperationGasCost(final MessageFrame frame, Optional<Address> address);
+  long extCodeHashOperationGasCost(final MessageFrame frame, Optional<Address> maybeAddress);
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.
    *
+   * @param frame The current frame
+   * @param maybeAddress targeted address
    * @return the cost for executing the external code size operation
    */
-  long getExtCodeSizeOperationGasCost();
+  long getExtCodeSizeOperationGasCost(MessageFrame frame, Optional<Address> maybeAddress);
 
   /**
    * Returns the cost for executing a {@link JumpDestOperation}.
@@ -684,4 +688,7 @@ public interface GasCalculator {
     return 0L;
   }
 
+  default AccessWitness newAccessWitness() {
+    return new NoopAccessWitness();
+  }
 }

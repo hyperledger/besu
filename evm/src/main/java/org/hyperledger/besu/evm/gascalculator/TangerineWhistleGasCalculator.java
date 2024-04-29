@@ -22,6 +22,8 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
 
+import java.util.Optional;
+
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Tangerine whistle gas calculator. */
@@ -40,7 +42,8 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
   private static final long SLOAD_OPERATION_GAS_COST = 200L;
 
   @Override
-  public long getBalanceOperationGasCost(final MessageFrame frame) {
+  public long getBalanceOperationGasCost(
+      final MessageFrame frame, final Optional<Address> maybeAddress) {
     return BALANCE_OPERATION_GAS_COST;
   }
 

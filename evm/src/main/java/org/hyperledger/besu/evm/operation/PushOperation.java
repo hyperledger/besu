@@ -47,7 +47,6 @@ public class PushOperation extends AbstractOperation {
     final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
     int pc = frame.getPC();
 
-
     int copyStart = pc + 1;
 
     long gasCost = gasCalculator().pushOperationGasCost(frame, copyStart, length, code.length);

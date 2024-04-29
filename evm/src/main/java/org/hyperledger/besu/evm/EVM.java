@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -53,7 +52,6 @@ import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.operation.OrOperation;
 import org.hyperledger.besu.evm.operation.PopOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
-import org.hyperledger.besu.evm.operation.PushOperation;
 import org.hyperledger.besu.evm.operation.SDivOperation;
 import org.hyperledger.besu.evm.operation.SGtOperation;
 import org.hyperledger.besu.evm.operation.SLtOperation;
@@ -184,7 +182,6 @@ public class EVM {
     var operationTracer = tracing == OperationTracer.NO_TRACING ? null : tracing;
     byte[] code = frame.getCode().getBytes().toArrayUnsafe();
 
-
     Operation[] operationArray = operations.getOperations();
     while (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
       Operation currentOperation;
@@ -292,6 +289,7 @@ public class EVM {
       } catch (final UnderflowException ue) {
         result = UNDERFLOW_RESPONSE;
       }
+
       final ExceptionalHaltReason haltReason = result.getHaltReason();
       if (haltReason != null) {
         LOG.trace("MessageFrame evaluation halted because of {}", haltReason);

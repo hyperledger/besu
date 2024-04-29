@@ -6,11 +6,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public interface AccessWitness {
 
-  void merge(AccessWitness other);
-
   List<Address> keys();
-
-  AccessWitness copy();
 
   long touchAndChargeProofOfAbsence(Address address);
 

@@ -58,8 +58,16 @@ public class ExtCodeHashOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    final Address address;
     try {
-      final Address address = Words.toAddress(frame.popStackItem());
+      address = Words.toAddress(frame.popStackItem());
+    } catch (final UnderflowException ufe) {
+      // TODO not sure about this case, we need to check what is the gas cost in case of underflow
+      // exception
+      return new OperationResult(
+          cost(frame, Optional.empty(), true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    try {
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
       final long cost = cost(frame, Optional.of(address), accountIsWarm);
@@ -74,16 +82,11 @@ public class ExtCodeHashOperation extends AbstractOperation {
         }
         return new OperationResult(cost, null);
       }
-    } catch (final UnderflowException ufe) {
-      // TODO not sure about this case, we need to check what is the gas cost in case of underflow
-      // exception
-      return new OperationResult(
-          cost(frame, Optional.empty(), true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
       // TODO not sure about this case, we need to check what is the gas cost in case of overflow
       // exception
       return new OperationResult(
-          cost(frame, Optional.empty(), true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+          cost(frame, Optional.of(address), true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }
