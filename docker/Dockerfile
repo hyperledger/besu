@@ -2,16 +2,27 @@
 FROM ubuntu:23.10
 ARG VERSION="dev"
 
-RUN apt-get update && \
- apt-get install --no-install-recommends -q --assume-yes openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3* && \
- apt-get clean  && \
- rm -rf /var/lib/apt/lists/*  && \
- # Ubuntu 23.10 comes with an "ubuntu" user with uid 1000. We need 1000 for besu.
- userdel ubuntu 2>/dev/null || true && rm -rf /home/ubuntu && \
- # Ensure we use a stable UID for besu, as file permissions are tied to UIDs.
- adduser --uid 1000 --disabled-password --gecos "" --home /opt/besu besu && \
-    chown besu:besu /opt/besu && \
-    chmod 0755 /opt/besu
+# Clean apt cache
+RUN apt-get clean
+RUN rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/*
+RUN rm -rf /var/lib/apt/lists/*
+
+# Update and install dependencies without using any cache
+RUN apt-get update -o Acquire::BrokenProxy="true" \
+  -o Acquire::http::No-Cache="true" \
+  -o Acquire::http::Pipeline-Depth="0"
+RUN apt-get install -o Acquire::BrokenProxy="true" \
+  -o Acquire::http::No-Cache="true" \
+  -o Acquire::http::Pipeline-Depth="0" \
+  --no-install-recommends -q --assume-yes openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3*
+
+# Ubuntu 23.10 comes with an "ubuntu" user with uid 1000. We need 1000 for besu.
+RUN userdel ubuntu 2>/dev/null || true && rm -rf /home/ubuntu
+
+# Ensure we use a stable UID for besu, as file permissions are tied to UIDs.
+RUN adduser --uid 1000 --disabled-password --gecos "" --home /opt/besu besu
+RUN chown besu:besu /opt/besu
+RUN chmod 0755 /opt/besu
 
 USER besu
 WORKDIR /opt/besu
