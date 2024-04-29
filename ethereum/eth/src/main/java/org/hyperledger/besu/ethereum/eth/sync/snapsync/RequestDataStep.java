@@ -104,7 +104,7 @@ public class RequestDataStep {
                     worldStateProofProvider, response.accounts(), response.proofs());
               }
               if (error != null) {
-                LOG.atWarn()
+                LOG.atDebug()
                     .setMessage("Error handling account download accounts ({} - {}) task: {}")
                     .addArgument(accountDataRequest.getStartKeyHash())
                     .addArgument(accountDataRequest.getEndKeyHash())
@@ -175,7 +175,7 @@ public class RequestDataStep {
                 }
               }
               if (error != null) {
-                LOG.atWarn()
+                LOG.atDebug()
                     .setMessage("Error handling storage range request task: {}")
                     .addArgument(error)
                     .log();
@@ -213,7 +213,7 @@ public class RequestDataStep {
                 }
               }
               if (error != null) {
-                LOG.atWarn()
+                LOG.atDebug()
                     .setMessage("Error handling code request task: {}")
                     .addArgument(error)
                     .log();
@@ -258,7 +258,7 @@ public class RequestDataStep {
                 }
               }
               if (error != null) {
-                LOG.atWarn()
+                LOG.atDebug()
                     .setMessage("Error handling trie node request task: {}")
                     .addArgument(error)
                     .log();
