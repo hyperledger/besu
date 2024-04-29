@@ -137,7 +137,8 @@ public class JsonRpcMethodsFactory {
                   protocolSchedule,
                   transactionPool,
                   privacyParameters,
-                  filterManager),
+                  filterManager,
+                  protocolContext),
               new PrivxJsonRpcMethods(
                   blockchainQueries, protocolSchedule, transactionPool, privacyParameters),
               new Web3JsonRpcMethods(clientVersion),

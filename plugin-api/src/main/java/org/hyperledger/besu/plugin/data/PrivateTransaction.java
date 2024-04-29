@@ -95,6 +95,17 @@ public interface PrivateTransaction {
   Address getSender();
 
   /**
+   * An unlimited size byte array specifying the EVM-code for the account // initialisation
+   * procedure.
+   *
+   * <p>Only present if this is a contract creation transaction, which is only true if {@link
+   * #getTo} is empty.
+   *
+   * @return if present, the contract init code.
+   */
+  Optional<Bytes> getInit();
+
+  /**
    * The chainId, computed from the 'V' portion of the signature. Used for replay protection. If
    * replay protection is not enabled this value will not be present.
    *

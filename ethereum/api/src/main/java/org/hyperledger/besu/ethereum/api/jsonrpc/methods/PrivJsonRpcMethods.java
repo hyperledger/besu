@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
+import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -34,6 +35,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.P
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionCount;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivGetTransactionReceipt;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivNewFilter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv.PrivTraceTransaction;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockReplay;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockTracer;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -46,15 +50,18 @@ import java.util.Map;
 public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   private final FilterManager filterManager;
+  private final ProtocolContext protocolContext;
 
   public PrivJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters,
-      final FilterManager filterManager) {
+      final FilterManager filterManager,
+      final ProtocolContext protocolContext) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
     this.filterManager = filterManager;
+    this.protocolContext = protocolContext;
   }
 
   @Override
@@ -68,6 +75,12 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
       final PrivacyIdProvider privacyIdProvider,
       final PrivateMarkerTransactionFactory privateMarkerTransactionFactory) {
 
+    final PrivateBlockReplay blockReplay =
+        new PrivateBlockReplay(
+            getProtocolSchedule(),
+            getBlockchainQueries().getBlockchain(),
+            protocolContext,
+            privacyController);
     final Map<String, JsonRpcMethod> RPC_METHODS =
         mapOf(
             new PrivCall(getBlockchainQueries(), privacyController, privacyIdProvider),
@@ -89,7 +102,15 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
             new PrivGetFilterLogs(filterManager, privacyController, privacyIdProvider),
             new PrivGetFilterChanges(filterManager, privacyController, privacyIdProvider),
             new PrivNewFilter(filterManager, privacyController, privacyIdProvider),
-            new PrivUninstallFilter(filterManager, privacyController, privacyIdProvider));
+            new PrivUninstallFilter(filterManager, privacyController, privacyIdProvider),
+            new PrivTraceTransaction(
+                () -> new PrivateBlockTracer(blockReplay),
+                getBlockchainQueries(),
+                getProtocolSchedule(),
+                getPrivacyQueries(),
+                privacyController,
+                getPrivacyParameters(),
+                privacyIdProvider));
 
     if (!getPrivacyParameters().isFlexiblePrivacyGroupsEnabled()) {
       final Map<String, JsonRpcMethod> OFFCHAIN_METHODS =
