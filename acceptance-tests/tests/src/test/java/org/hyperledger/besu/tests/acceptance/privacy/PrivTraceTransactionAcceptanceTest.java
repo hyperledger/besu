@@ -117,24 +117,24 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
 
     ObjectMapper mapperEmpty = new ObjectMapper();
 
-    JsonNode rootNode = mapperEmpty.readTree(resultEmpty);
-    JsonNode resultNode = rootNode.get("result");
+    JsonNode rootNodeEmpty = mapperEmpty.readTree(resultEmpty);
+    JsonNode resultNodeEmpty = rootNodeEmpty.get("result");
 
-    assertThat(resultNode).isNotNull();
-    assertThat(resultNode.isArray()).isTrue();
-    assertThat(resultNode.isEmpty()).isTrue();
+    assertThat(resultNodeEmpty).isNotNull();
+    assertThat(resultNodeEmpty.isArray()).isTrue();
+    assertThat(resultNodeEmpty.isEmpty()).isTrue();
 
     final String resultWrongHash =
         wrongNode.execute(privacyTransactions.privTraceTransaction(privacyGroupId, Hash.EMPTY));
 
     ObjectMapper mapperWrongHash = new ObjectMapper();
 
-    JsonNode rootNode = mapperWrongHash.readTree(resultWrongHash);
-    JsonNode resultNode = rootNode.get("result");
+    JsonNode rootNodeWrongHash = mapperWrongHash.readTree(resultWrongHash);
+    JsonNode resultNodeWrongHash = rootNodeWrongHash.get("result");
 
-    assertThat(resultNode).isNotNull();
-    assertThat(resultNode.isArray()).isTrue();
-    assertThat(resultNode.isEmpty()).isTrue();
+    assertThat(resultNodeWrongHash).isNotNull();
+    assertThat(resultNodeWrongHash.isArray()).isTrue();
+    assertThat(resultNodeWrongHash.isEmpty()).isTrue();
   }
 
   private String createPrivacyGroup() {
