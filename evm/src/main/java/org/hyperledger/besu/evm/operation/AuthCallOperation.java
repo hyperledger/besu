@@ -91,8 +91,10 @@ public class AuthCallOperation extends AbstractCallOperation {
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     if (frame.isStatic() && !value(frame).isZero()) {
       return new OperationResult(cost(frame, true), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else {
+    } else if (frame.getAuthorizedBy() != null) {
       return super.execute(frame, evm);
+    } else {
+      return new OperationResult(cost(frame, true), null);
     }
   }
 }

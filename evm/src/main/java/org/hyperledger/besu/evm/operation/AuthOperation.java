@@ -39,7 +39,9 @@ import org.slf4j.LoggerFactory;
 /** The AUTH operation. */
 public class AuthOperation extends AbstractOperation {
 
+  /** The constant MAGIC defined by EIP-3074 */
   public static final byte MAGIC = 0x4;
+
   private static final Logger LOG = LoggerFactory.getLogger(AuthOperation.class);
 
   private static final SignatureAlgorithm signatureAlgorithm =
