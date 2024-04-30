@@ -102,9 +102,6 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
 
   @Override
   public void putBlockNumberMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
-    if (protocolSpec.getName().equals("Shanghai")) {
-      new Exception().printStackTrace();
-    }
     putMilestone(BlockNumberProtocolSpec.create(blockNumber, protocolSpec));
   }
 
