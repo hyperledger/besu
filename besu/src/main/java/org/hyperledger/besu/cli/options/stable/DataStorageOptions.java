@@ -104,7 +104,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         },
         arity = "1",
         description = "Enables bonsai full flat database strategy. (default: ${DEFAULT-VALUE})")
-    private boolean bonsaiFullFlatDbEnabled = DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED;
+    private Boolean bonsaiFullFlatDbEnabled = DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED;
 
     @CommandLine.Option(
         hidden = true,
