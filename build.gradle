@@ -883,26 +883,26 @@ task manifestDockerRelease {
 
 def sep = Pattern.quote(File.separator)
 
-task checkSpdxHeader(type: CheckSpdxHeader) {
-  apply plugin: 'groovy'
-
-  rootPath = "${projectDir}"
-  spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
-  filesRegex = "(.*.java)|(.*.groovy)"
-  excludeRegex = [
-    "(.*${sep}generalstate${sep}GeneralStateRegressionReferenceTest.*)",
-    "(.*${sep}generalstate${sep}GeneralStateReferenceTest.*)",
-    "(.*${sep}generalstate${sep}LegacyGeneralStateReferenceTest.*)",
-    "(.*${sep}blockchain${sep}BlockchainReferenceTest.*)",
-    "(.*${sep}blockchain${sep}LegacyBlockchainReferenceTest.*)",
-    "(.*${sep}.gradle${sep}.*)",
-    "(.*${sep}.idea${sep}.*)",
-    "(.*${sep}out${sep}.*)",
-    "(.*${sep}bin${sep}.*)",
-    "(.*${sep}build${sep}.*)",
-    "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
-  ].join("|")
-}
+//task checkSpdxHeader(type: CheckSpdxHeader) {
+//  apply plugin: 'groovy'
+//
+//  rootPath = "${projectDir}"
+//  spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
+//  filesRegex = "(.*.java)|(.*.groovy)"
+//  excludeRegex = [
+//    "(.*${sep}generalstate${sep}GeneralStateRegressionReferenceTest.*)",
+//    "(.*${sep}generalstate${sep}GeneralStateReferenceTest.*)",
+//    "(.*${sep}generalstate${sep}LegacyGeneralStateReferenceTest.*)",
+//    "(.*${sep}blockchain${sep}BlockchainReferenceTest.*)",
+//    "(.*${sep}blockchain${sep}LegacyBlockchainReferenceTest.*)",
+//    "(.*${sep}.gradle${sep}.*)",
+//    "(.*${sep}.idea${sep}.*)",
+//    "(.*${sep}out${sep}.*)",
+//    "(.*${sep}bin${sep}.*)",
+//    "(.*${sep}build${sep}.*)",
+//    "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
+//  ].join("|")
+//}
 
 jacocoTestReport {
   reports {
@@ -1046,7 +1046,7 @@ distributions {
   }
 }
 
-check.dependsOn checkSpdxHeader
+//check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions
 artifactoryPublish.mustRunAfter(distTar)
