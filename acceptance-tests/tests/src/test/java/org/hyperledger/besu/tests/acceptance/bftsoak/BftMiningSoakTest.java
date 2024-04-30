@@ -71,12 +71,10 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
     cluster.verify(blockchain.reachesHeight(minerNode1, 1, 85));
 
-    /*********************************************************************/
-    /* Setup                                                             */
-    /* Deploy a contract that we'll invoke periodically to ensure state  */
-    /* is correct during the test, especially after stopping nodes and   */
-    /* applying new forks.                                               */
-    /*********************************************************************/
+    // Setup
+    //    Deploy a contract that we'll invoke periodically to ensure state
+    //    is correct during the test, especially after stopping nodes and
+    //    applying new forks.
     final SimpleStorage simpleStorageContract =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorage.class));
 
@@ -95,11 +93,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     // during the test
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(101));
 
-    /*********************************************************************/
-    /* Step 1                                                            */
-    /* Run for the configured time period, periodically checking that    */
-    /* the chain is progressing as expected                              */
-    /*********************************************************************/
+    // Step 1
+    // Run for the configured time period, periodically checking that
+    // the chain is progressing as expected
     BigInteger chainHeight = minerNode1.execute(ethTransactions.blockNumber());
     assertThat(chainHeight.compareTo(BigInteger.ZERO)).isGreaterThanOrEqualTo(1);
     BigInteger lastChainHeight = chainHeight;
@@ -123,11 +119,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     }
     Instant previousStepEndTime = Instant.now();
 
-    /*********************************************************************/
-    /* Step 2                                                            */
-    /* Stop one of the nodes, check that the chain continues mining      */
-    /* blocks                                                            */
-    /*********************************************************************/
+    // Step 2
+    // Stop one of the nodes, check that the chain continues mining
+    // blocks
     cluster.stopNode(minerNode4);
 
     nextStepEndTime =
@@ -148,11 +142,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     }
     previousStepEndTime = Instant.now();
 
-    /*********************************************************************/
-    /* Step 3                                                            */
-    /* Stop another one of the nodes, check that the chain now stops     */
-    /* mining blocks                                                     */
-    /*********************************************************************/
+    // Step 3
+    // Stop another one of the nodes, check that the chain now stops
+    // mining blocks
     cluster.stopNode(minerNode3);
     try {
       Thread.sleep(TEN_SECONDS);
@@ -177,11 +169,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       }
     }
 
-    /*********************************************************************/
-    /* Step 4                                                            */
-    /* Restart both of the stopped nodes. Check that the chain resumes   */
-    /* mining blocks                                                     */
-    /*********************************************************************/
+    // Step 4
+    // Restart both of the stopped nodes. Check that the chain resumes
+    // mining blocks
     cluster.startNode(minerNode4);
 
     // Give it time to start
@@ -240,16 +230,12 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       }
     }
 
-    /*********************************************************************/
-    /* Update our smart contract before upgrading from berlin to london  */
-    /*********************************************************************/
+    // Update our smart contract before upgrading from berlin to london
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(101));
     simpleStorageContract.set(BigInteger.valueOf(201)).send();
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
-    /*********************************************************************/
-    /* Upgrade the chain from berlin to london                           */
-    /*********************************************************************/
+    // Upgrade the chain from berlin to london
     cluster.stopNode(minerNode1);
 
     // Give it time to stop
@@ -361,14 +347,10 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       }
     }
 
-    /*********************************************************************/
-    /* Check that the state of our smart contract is still correct       */
-    /*********************************************************************/
+    // Check that the state of our smart contract is still correct
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
-    /*********************************************************************/
-    /* Update it once more to check new transactions are mined OK        */
-    /*********************************************************************/
+    // Update it once more to check new transactions are mined OK
     simpleStorageContract.set(BigInteger.valueOf(301)).send();
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(301));
   }
