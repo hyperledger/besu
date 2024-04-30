@@ -208,8 +208,8 @@ allprojects {
       trimTrailingWhitespace()
       endWithNewline()
       // apply appropriate license header files.
-      licenseHeaderFile("${rootDir}/gradle/spotless.java.older.license").named("older").onlyIfContentMatches("Copyright(.*)ConsenSys AG\\.")
-      licenseHeaderFile("${rootDir}/gradle/spotless.java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\n \\* Copyright(.*)ConsenSys AG\\.\\n \\*)")
+      licenseHeaderFile("${rootDir}/gradle/spotless.java.older.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n \\* Copyright ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless.java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\* Copyright ConsenSys AG\\.)")
     }
     groovyGradle {
       target '*.gradle'
