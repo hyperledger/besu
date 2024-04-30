@@ -103,7 +103,6 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   @Override
   public void putBlockNumberMilestone(final long blockNumber, final ProtocolSpec protocolSpec) {
     if (protocolSpec.getName().equals("Shanghai")) {
-      // System.err.println("MRW: ERROR - WE SHOULD NOT ADD SHANGHAI AS A BLOCK NUMBER MILESTONE");
       new Exception().printStackTrace();
     }
     putMilestone(BlockNumberProtocolSpec.create(blockNumber, protocolSpec));

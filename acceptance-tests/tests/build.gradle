@@ -219,7 +219,8 @@ task acceptanceTestBftSoak(type: Test) {
   dependsOn(rootProject.installDist)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
-  systemProperty 'acctests.soakTimeMins', '20'
+  // Set to any time > 60 minutes to run the soak test for longer
+  // systemProperty 'acctests.soakTimeMins', '120'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs BFT soak test.'
