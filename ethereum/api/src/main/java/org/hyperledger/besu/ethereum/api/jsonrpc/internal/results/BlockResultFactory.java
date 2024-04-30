@@ -173,7 +173,7 @@ public class BlockResultFactory {
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
         blockWithReceipts.getBlock().getBody().getDeposits(),
-        blockWithReceipts.getBlock().getBody().getExits(),
+        blockWithReceipts.getBlock().getBody().getWithdrawalRequests(),
         Quantity.create(blockValue),
         blobsBundleV1);
   }
