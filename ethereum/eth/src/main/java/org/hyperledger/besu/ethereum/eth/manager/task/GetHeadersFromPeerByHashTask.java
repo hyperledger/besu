@@ -119,7 +119,7 @@ public class GetHeadersFromPeerByHashTask extends AbstractGetHeadersFromPeerTask
   protected PendingPeerRequest sendRequest() {
     return sendRequestToPeer(
         peer -> {
-          LOG.atTrace()
+          LOG.atInfo()
               .setMessage("Requesting {} headers (hash {}...) from peer {}")
               .addArgument(count)
               .addArgument(referenceHash.slice(0, 6))
