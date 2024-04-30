@@ -39,6 +39,7 @@ import org.web3j.abi.datatypes.Type;
 public class ValidatorContractController {
   /** The constant GET_VALIDATORS. */
   public static final String GET_VALIDATORS = "getValidators";
+
   /** The constant CONTRACT_ERROR_MSG. */
   public static final String CONTRACT_ERROR_MSG = "Failed validator smart contract call";
 
@@ -107,7 +108,7 @@ public class ValidatorContractController {
     if (result.isSuccessful()) {
       final List<Type> decodedList =
           FunctionReturnDecoder.decode(
-              result.getResult().getOutput().toHexString(), function.getOutputParameters());
+              result.result().getOutput().toHexString(), function.getOutputParameters());
 
       if (decodedList.isEmpty()) {
         throw new IllegalStateException(

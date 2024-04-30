@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -69,7 +70,10 @@ public interface TransactionsLayer {
   OptionalLong getCurrentNonceFor(Address sender);
 
   List<PendingTransaction> promote(
-      Predicate<PendingTransaction> promotionFilter, final long freeSpace, final int freeSlots);
+      Predicate<PendingTransaction> promotionFilter,
+      final long freeSpace,
+      final int freeSlots,
+      final int[] remainingPromotionsPerType);
 
   long subscribeToAdded(PendingTransactionAddedListener listener);
 
@@ -79,7 +83,7 @@ public interface TransactionsLayer {
 
   void unsubscribeFromDropped(long id);
 
-  PendingTransaction promoteFor(Address sender, long nonce);
+  PendingTransaction promoteFor(Address sender, long nonce, final int[] remainingPromotionsPerType);
 
   void notifyAdded(PendingTransaction pendingTransaction);
 
@@ -106,7 +110,7 @@ public interface TransactionsLayer {
     private final String label;
 
     RemovalReason() {
-      this.label = name().toLowerCase();
+      this.label = name().toLowerCase(Locale.ROOT);
     }
 
     public String label() {

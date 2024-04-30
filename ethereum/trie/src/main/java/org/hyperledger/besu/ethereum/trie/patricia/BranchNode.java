@@ -55,7 +55,7 @@ public class BranchNode<V> implements Node<V> {
 
   public BranchNode(
       final Bytes location,
-      final ArrayList<Node<V>> children,
+      final List<Node<V>> children,
       final Optional<V> value,
       final NodeFactory<V> nodeFactory,
       final Function<V, Bytes> valueSerializer) {

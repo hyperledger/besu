@@ -80,6 +80,7 @@ public interface RLPOutput {
   default void writeUInt64Scalar(final UInt64Value<?> v) {
     writeBytes(v.toBytes().trimLeadingZeros());
   }
+
   /**
    * Writes a scalar (encoded with no leading zeroes).
    *

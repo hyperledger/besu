@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthProtocolManager;
@@ -82,7 +83,7 @@ public class BackwardSyncContextTest {
   public static final int REMOTE_HEIGHT = 50;
   public static final int UNCLE_HEIGHT = 25 - 3;
 
-  public static final int NUM_OF_RETRIES = 100;
+  public static final int NUM_OF_RETRIES = 1;
   public static final int TEST_MAX_BAD_CHAIN_EVENT_ENTRIES = 25;
 
   private BackwardSyncContext context;
@@ -94,7 +95,8 @@ public class BackwardSyncContextTest {
 
   @Spy
   private ProtocolSchedule protocolSchedule =
-      MainnetProtocolSchedule.fromConfig(new StubGenesisConfigOptions(), new BadBlockManager());
+      MainnetProtocolSchedule.fromConfig(
+          new StubGenesisConfigOptions(), MiningParameters.MINING_DISABLED, new BadBlockManager());
 
   @Spy
   private ProtocolSpec protocolSpec =
@@ -184,13 +186,16 @@ public class BackwardSyncContextTest {
   }
 
   private Block createUncle(final int i, final Hash parentHash) {
+    return createBlock(i, parentHash);
+  }
+
+  private Block createBlock(final int i, final Hash parentHash) {
     final BlockDataGenerator.BlockOptions options =
         new BlockDataGenerator.BlockOptions()
             .setBlockNumber(i)
             .setParentHash(parentHash)
             .transactionTypes(TransactionType.ACCESS_LIST);
-    final Block block = blockDataGenerator.block(options);
-    return block;
+    return blockDataGenerator.block(options);
   }
 
   public static BackwardChain inMemoryBackwardChain() {
@@ -224,6 +229,20 @@ public class BackwardSyncContextTest {
 
     future.get();
     assertThat(localBlockchain.getChainHeadBlock()).isEqualTo(remoteBlockchain.getChainHeadBlock());
+  }
+
+  @Test
+  public void shouldNotSyncUntilHashWhenNotInSync() {
+    doReturn(false).when(context).isReady();
+    final Hash hash = getBlockByNumber(REMOTE_HEIGHT).getHash();
+    final CompletableFuture<Void> future = context.syncBackwardsUntil(hash);
+
+    respondUntilFutureIsDone(future);
+
+    assertThatThrownBy(future::get)
+        .isInstanceOf(ExecutionException.class)
+        .hasMessageContaining("Backward sync is not ready");
+    assertThat(backwardChain.getFirstHashToAppend()).isEmpty();
   }
 
   @Test
@@ -435,5 +454,52 @@ public class BackwardSyncContextTest {
             .contains("Max number of retries " + NUM_OF_RETRIES + " reached");
       }
     }
+  }
+
+  @Test
+  public void whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressInNextSession() {
+    // This scenario can happen due to a reorg
+    // Expectation we progress beyond the reorg block upon receiving the next FCU
+
+    // choose an intermediate remote block to create a reorg block from
+    int reorgBlockHeight = REMOTE_HEIGHT - 1; // 49
+    final Hash reorgBlockParentHash = getBlockByNumber(reorgBlockHeight - 1).getHash();
+    final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
+
+    // represents first FCU with a block that will become reorged away
+    final CompletableFuture<Void> fcuBeforeReorg = context.syncBackwardsUntil(reorgBlock.getHash());
+    respondUntilFutureIsDone(fcuBeforeReorg);
+    assertThat(localBlockchain.getChainHeadBlockNumber()).isLessThan(reorgBlockHeight);
+
+    // represents subsequent FCU with successfully reorged version of the same block
+    final CompletableFuture<Void> fcuAfterReorg =
+        context.syncBackwardsUntil(getBlockByNumber(reorgBlockHeight).getHash());
+    respondUntilFutureIsDone(fcuAfterReorg);
+    assertThat(localBlockchain.getChainHeadBlock())
+        .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
+  }
+
+  @Test
+  public void
+      whenBlockNotFoundInPeers_shouldRemoveBlockFromQueueAndProgressWithQueueInSameSession() {
+    // This scenario can happen due to a reorg
+    // Expectation we progress beyond the reorg block due to FCU we received during the same session
+
+    // choose an intermediate remote block to create a reorg block from
+    int reorgBlockHeight = REMOTE_HEIGHT - 1; // 49
+    final Hash reorgBlockParentHash = getBlockByNumber(reorgBlockHeight - 1).getHash();
+    final Block reorgBlock = createBlock(reorgBlockHeight, reorgBlockParentHash);
+
+    // represents first FCU with a block that will become reorged away
+    final CompletableFuture<Void> fcuBeforeReorg = context.syncBackwardsUntil(reorgBlock.getHash());
+    // represents subsequent FCU with successfully reorged version of the same block
+    // received during the first FCU's BWS session
+    final CompletableFuture<Void> fcuAfterReorg =
+        context.syncBackwardsUntil(getBlockByNumber(reorgBlockHeight).getHash());
+
+    respondUntilFutureIsDone(fcuBeforeReorg);
+    respondUntilFutureIsDone(fcuAfterReorg);
+    assertThat(localBlockchain.getChainHeadBlock())
+        .isEqualTo(remoteBlockchain.getBlockByNumber(reorgBlockHeight).orElseThrow());
   }
 }

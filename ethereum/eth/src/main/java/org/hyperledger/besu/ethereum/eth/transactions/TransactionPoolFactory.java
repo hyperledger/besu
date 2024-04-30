@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionValidatorFactory;
 
 import java.time.Clock;
 import java.util.function.BiFunction;
@@ -55,7 +54,6 @@ public class TransactionPoolFactory {
       final MetricsSystem metricsSystem,
       final SyncState syncState,
       final TransactionPoolConfiguration transactionPoolConfiguration,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
       final BlobCache blobCache,
       final MiningParameters miningParameters) {
 
@@ -79,7 +77,6 @@ public class TransactionPoolFactory {
         transactionTracker,
         transactionsMessageSender,
         newPooledTransactionHashesMessageSender,
-        pluginTransactionValidatorFactory,
         blobCache,
         miningParameters);
   }
@@ -95,7 +92,6 @@ public class TransactionPoolFactory {
       final PeerTransactionTracker transactionTracker,
       final TransactionsMessageSender transactionsMessageSender,
       final NewPooledTransactionHashesMessageSender newPooledTransactionHashesMessageSender,
-      final PluginTransactionValidatorFactory pluginTransactionValidatorFactory,
       final BlobCache blobCache,
       final MiningParameters miningParameters) {
 
@@ -119,8 +115,7 @@ public class TransactionPoolFactory {
                 newPooledTransactionHashesMessageSender),
             ethContext,
             metrics,
-            transactionPoolConfiguration,
-            pluginTransactionValidatorFactory);
+            transactionPoolConfiguration);
 
     final TransactionsMessageHandler transactionsMessageHandler =
         new TransactionsMessageHandler(
@@ -179,7 +174,7 @@ public class TransactionPoolFactory {
     syncState.subscribeInSync(
         isInSync -> {
           if (isInSync != transactionPool.isEnabled()) {
-            if (isInSync) {
+            if (isInSync && syncState.isInitialSyncPhaseDone()) {
               LOG.info("Node is in sync, enabling transaction handling");
               enableTransactionHandling(
                   transactionTracker,
@@ -187,9 +182,11 @@ public class TransactionPoolFactory {
                   transactionsMessageHandler,
                   pooledTransactionsMessageHandler);
             } else {
-              LOG.info("Node out of sync, disabling transaction handling");
-              disableTransactionHandling(
-                  transactionPool, transactionsMessageHandler, pooledTransactionsMessageHandler);
+              if (transactionPool.isEnabled()) {
+                LOG.info("Node out of sync, disabling transaction handling");
+                disableTransactionHandling(
+                    transactionPool, transactionsMessageHandler, pooledTransactionsMessageHandler);
+              }
             }
           }
         });
@@ -295,7 +292,9 @@ public class TransactionPoolFactory {
       final MiningParameters miningParameters) {
 
     final TransactionPoolReplacementHandler transactionReplacementHandler =
-        new TransactionPoolReplacementHandler(transactionPoolConfiguration.getPriceBump());
+        new TransactionPoolReplacementHandler(
+            transactionPoolConfiguration.getPriceBump(),
+            transactionPoolConfiguration.getBlobPriceBump());
 
     final BiFunction<PendingTransaction, PendingTransaction, Boolean> transactionReplacementTester =
         (t1, t2) ->

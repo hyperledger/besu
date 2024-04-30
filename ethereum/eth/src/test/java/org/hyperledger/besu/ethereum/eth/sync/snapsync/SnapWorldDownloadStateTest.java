@@ -38,10 +38,12 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePers
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -72,7 +74,9 @@ public class SnapWorldDownloadStateTest {
   private static final int MAX_REQUESTS_WITHOUT_PROGRESS = 10;
   private static final long MIN_MILLIS_BEFORE_STALLING = 50_000;
 
-  private WorldStateStorage worldStateStorage;
+  private WorldStateKeyValueStorage worldStateKeyValueStorage;
+
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();
   private final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests =
@@ -107,17 +111,20 @@ public class SnapWorldDownloadStateTest {
     when(metricsManager.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
 
     if (storageFormat == DataStorageFormat.BONSAI) {
-      worldStateStorage =
+      worldStateKeyValueStorage =
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(),
               new NoOpMetricsSystem(),
               DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
     } else {
-      worldStateStorage = new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+      worldStateKeyValueStorage =
+          new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
     downloadState =
         new SnapWorldDownloadState(
-            worldStateStorage,
+            worldStateStorageCoordinator,
             snapContext,
             blockchain,
             snapSyncState,
@@ -179,7 +186,9 @@ public class SnapWorldDownloadStateTest {
     final CompletableFuture<Void> postFutureChecks =
         future.thenAccept(
             result ->
-                assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+                assertThat(
+                        worldStateStorageCoordinator.getAccountStateTrieNode(
+                            Bytes.EMPTY, ROOT_NODE_HASH))
                     .contains(ROOT_NODE_DATA));
 
     downloadState.checkCompletion(header);
@@ -204,7 +213,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -221,7 +231,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
 
     downloadState.pendingLargeStorageRequests.add(
@@ -231,7 +242,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -248,7 +260,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -266,7 +279,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -344,7 +358,8 @@ public class SnapWorldDownloadStateTest {
     verify(snapSyncState, atLeastOnce()).setHealTrieStatus(true);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -453,13 +468,14 @@ public class SnapWorldDownloadStateTest {
     setUp(storageFormat);
     Assumptions.assumeTrue(storageFormat == DataStorageFormat.BONSAI);
     Assumptions.assumeTrue(isFlatDbHealingEnabled);
-    ((BonsaiWorldStateKeyValueStorage) worldStateStorage).upgradeToFullFlatDbMode();
+    ((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage).upgradeToFullFlatDbMode();
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
     verify(snapSyncState).setHealFlatDatabaseInProgress(true);
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 }

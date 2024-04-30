@@ -167,7 +167,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
                 new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
-                new MainnetBlockHeaderFunctions()),
+                new MainnetBlockHeaderFunctions(),
+                false),
             new NoOpMetricsSystem(),
             0);
 
@@ -195,6 +196,10 @@ public abstract class AbstractBlockTransactionSelectorTest {
     return false;
   }
 
+  protected Wei getMinGasPrice() {
+    return Wei.ONE;
+  }
+
   protected ProcessableBlockHeader createBlock(final long gasLimit) {
     return createBlock(gasLimit, Wei.ONE);
   }
@@ -217,6 +222,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         FixedDifficultyProtocolSchedule.create(
             GenesisConfigFile.development().getConfigOptions(),
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeader(0)).getTransactionProcessor();
@@ -732,9 +738,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
     final Transaction transaction = createTransaction(0, Wei.of(10), 21_000);
     ensureTransactionIsValid(transaction, 21_000, 0);
 
-    final TransactionInvalidReason invalidReason = TransactionInvalidReason.PLUGIN_TX_VALIDATOR;
+    final TransactionInvalidReason invalidReason =
+        TransactionInvalidReason.PLUGIN_TX_POOL_VALIDATOR;
     final Transaction invalidTransaction = createTransaction(1, Wei.of(10), 21_000);
-    ensureTransactionIsInvalid(invalidTransaction, TransactionInvalidReason.PLUGIN_TX_VALIDATOR);
+    ensureTransactionIsInvalid(
+        invalidTransaction, TransactionInvalidReason.PLUGIN_TX_POOL_VALIDATOR);
 
     final BlockTransactionSelector selector =
         createBlockSelectorAndSetupTxPool(
@@ -1337,7 +1345,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final long gasRemaining,
       final long processingTime) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {
@@ -1362,7 +1370,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final TransactionInvalidReason invalidReason,
       final long processingTime) {
     when(transactionProcessor.processTransaction(
-            any(), any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), eq(tx), any(), any(), any(), anyBoolean(), any(), any()))
         .thenAnswer(
             invocation -> {
               if (processingTime > 0) {
@@ -1403,9 +1411,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
             MutableInitValues.builder()
                 .minTransactionGasPrice(minGasPrice)
                 .minBlockOccupancyRatio(minBlockOccupancyRatio)
+                .blockPeriodSeconds(genesisBlockPeriodSeconds)
                 .build())
         .transactionSelectionService(transactionSelectionService)
-        .genesisBlockPeriodSeconds(genesisBlockPeriodSeconds)
         .poaBlockTxsSelectionMaxTime(minBlockTimePercentage)
         .build();
   }

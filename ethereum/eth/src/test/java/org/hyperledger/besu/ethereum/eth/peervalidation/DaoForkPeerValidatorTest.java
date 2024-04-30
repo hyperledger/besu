@@ -98,4 +98,28 @@ public class DaoForkPeerValidatorTest extends AbstractPeerBlockValidatorTest {
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(false);
   }
+
+  @Test
+  public void validatePeer_responsivePeerDoesNotHaveBlockWhenPastForkHeight() {
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+    final long daoBlockNumber = 500;
+
+    final PeerValidator validator =
+        new DaoForkPeerValidator(
+            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), daoBlockNumber, 0);
+
+    final RespondingEthPeer peer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, daoBlockNumber);
+
+    final CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
+
+    assertThat(result).isNotDone();
+
+    // Respond to block header request with empty
+    peer.respond(RespondingEthPeer.emptyResponder());
+
+    assertThat(result).isDone();
+    assertThat(result).isCompletedWithValue(true);
+  }
 }

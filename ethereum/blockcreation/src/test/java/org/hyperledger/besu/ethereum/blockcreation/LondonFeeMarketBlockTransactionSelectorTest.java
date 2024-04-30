@@ -71,6 +71,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager())
         .createProtocolSchedule();
   }
@@ -98,8 +99,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
     transactionPool.setEnabled();
     return transactionPool;
   }

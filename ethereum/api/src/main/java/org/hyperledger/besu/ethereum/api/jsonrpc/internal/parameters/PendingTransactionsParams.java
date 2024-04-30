@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.po
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -82,7 +83,7 @@ public class PendingTransactionsParams {
       } else if (!map.isEmpty()) {
         final Map.Entry<String, String> foundEntry = map.entrySet().stream().findFirst().get();
         final Predicate predicate =
-            Predicate.fromValue(foundEntry.getKey().toUpperCase())
+            Predicate.fromValue(foundEntry.getKey().toUpperCase(Locale.ROOT))
                 .orElseThrow(
                     () ->
                         new InvalidJsonRpcParameters(

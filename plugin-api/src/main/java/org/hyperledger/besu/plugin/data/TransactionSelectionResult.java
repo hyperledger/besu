@@ -92,33 +92,40 @@ public class TransactionSelectionResult {
   /** The transaction has been selected to be included in the new block */
   public static final TransactionSelectionResult SELECTED =
       new TransactionSelectionResult(BaseStatus.SELECTED);
+
   /** The transaction has not been selected since the block is full. */
   public static final TransactionSelectionResult BLOCK_FULL =
       new TransactionSelectionResult(BaseStatus.BLOCK_FULL);
+
   /** There was no more time to add transaction to the block */
   public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT =
       new TransactionSelectionResult(BaseStatus.BLOCK_SELECTION_TIMEOUT);
+
   /** Transaction took too much to evaluate */
   public static final TransactionSelectionResult TX_EVALUATION_TOO_LONG =
       new TransactionSelectionResult(BaseStatus.TX_EVALUATION_TOO_LONG);
+
   /**
    * The transaction has not been selected since too large and the occupancy of the block is enough
    * to stop the selection.
    */
   public static final TransactionSelectionResult BLOCK_OCCUPANCY_ABOVE_THRESHOLD =
       new TransactionSelectionResult(BaseStatus.BLOCK_OCCUPANCY_ABOVE_THRESHOLD);
+
   /**
    * The transaction has not been selected since its gas limit is greater than the block remaining
    * gas, but the selection should continue.
    */
   public static final TransactionSelectionResult TX_TOO_LARGE_FOR_REMAINING_GAS =
       TransactionSelectionResult.invalidTransient("TX_TOO_LARGE_FOR_REMAINING_GAS");
+
   /**
    * The transaction has not been selected since its current price is below the configured min
    * price, but the selection should continue.
    */
   public static final TransactionSelectionResult CURRENT_TX_PRICE_BELOW_MIN =
       TransactionSelectionResult.invalidTransient("CURRENT_TX_PRICE_BELOW_MIN");
+
   /**
    * The transaction has not been selected since its blob price is below the current network blob
    * price, but the selection should continue.

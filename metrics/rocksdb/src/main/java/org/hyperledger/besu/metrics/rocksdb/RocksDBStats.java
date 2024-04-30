@@ -22,6 +22,7 @@ import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 
 import io.prometheus.client.Collector;
 import org.rocksdb.HistogramData;
@@ -34,10 +35,13 @@ public class RocksDBStats {
 
   /** The Labels. */
   static final List<String> LABELS = Collections.singletonList("quantile");
+
   /** The Label 50. */
   static final List<String> LABEL_50 = Collections.singletonList("0.5");
+
   /** The Label 95. */
   static final List<String> LABEL_95 = Collections.singletonList("0.95");
+
   /** The Label 99. */
   static final List<String> LABEL_99 = Collections.singletonList("0.99");
 
@@ -175,7 +179,7 @@ public class RocksDBStats {
       return;
     }
     for (final TickerType ticker : TICKERS) {
-      final String promCounterName = ticker.name().toLowerCase();
+      final String promCounterName = ticker.name().toLowerCase(Locale.ROOT);
       metricsSystem.createLongGauge(
           category,
           promCounterName,
@@ -192,7 +196,7 @@ public class RocksDBStats {
       final Statistics stats, final HistogramType histogram) {
     return new Collector() {
       final String metricName =
-          KVSTORE_ROCKSDB_STATS.getName() + "_" + histogram.name().toLowerCase();
+          KVSTORE_ROCKSDB_STATS.getName() + "_" + histogram.name().toLowerCase(Locale.ROOT);
 
       @Override
       public List<MetricFamilySamples> collect() {

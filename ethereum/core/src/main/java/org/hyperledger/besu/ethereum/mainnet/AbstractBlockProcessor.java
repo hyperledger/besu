@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -138,7 +138,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
-              blockchain,
               worldStateUpdater,
               blockHeader,
               transaction,
@@ -195,6 +194,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         LOG.error("failed processing withdrawals", e);
         return new BlockProcessingResult(Optional.empty(), e);
       }
+    }
+
+    final ValidatorExitsValidator exitsValidator = protocolSpec.getExitsValidator();
+    if (exitsValidator.allowValidatorExits()) {
+      // Performing system-call logic
+      ValidatorExitContractHelper.popExitsFromQueue(worldState);
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {

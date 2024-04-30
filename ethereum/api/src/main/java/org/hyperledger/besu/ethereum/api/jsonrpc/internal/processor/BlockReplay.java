@@ -107,7 +107,6 @@ public class BlockReplay {
                       transaction, header, blockchain, transactionProcessor, blobGasPrice));
             } else {
               transactionProcessor.processTransaction(
-                  blockchain,
                   mutableWorldState.updater(),
                   header,
                   transaction,
@@ -134,7 +133,6 @@ public class BlockReplay {
         (transaction, blockHeader, blockchain, transactionProcessor, blobGasPrice) -> {
           final ProtocolSpec spec = protocolSchedule.getByBlockHeader(blockHeader);
           transactionProcessor.processTransaction(
-              blockchain,
               mutableWorldState.updater(),
               blockHeader,
               transaction,

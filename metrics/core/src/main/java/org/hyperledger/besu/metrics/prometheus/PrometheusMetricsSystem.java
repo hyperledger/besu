@@ -300,7 +300,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
 
   /**
    * Convert to prometheus counter name. Prometheus adds a _total suffix to the name if not present,
-   * so we remember if the original name already has it, to be able to covert back correctly
+   * so we remember if the original name already has it, to be able to convert back correctly
    *
    * @param category the category
    * @param name the name

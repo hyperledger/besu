@@ -23,12 +23,18 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.CliqueConfigOptions;
+import org.hyperledger.besu.config.ImmutableCliqueConfigOptions;
+import org.hyperledger.besu.config.JsonCliqueConfigOptions;
 import org.hyperledger.besu.consensus.clique.CliqueContext;
+import org.hyperledger.besu.consensus.common.ForkSpec;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
@@ -54,9 +60,19 @@ import java.util.Optional;
 import java.util.function.Function;
 
 import com.google.common.collect.Lists;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
 class CliqueBlockMinerTest {
+
+  private ForksSchedule<CliqueConfigOptions> forksSchedule;
+
+  @BeforeEach
+  public void setup() {
+    var options = ImmutableCliqueConfigOptions.builder().from(JsonCliqueConfigOptions.DEFAULT);
+    options.createEmptyBlocks(false);
+    forksSchedule = new ForksSchedule<>(List.of(new ForkSpec<>(0, options.build())));
+  }
 
   @Test
   void doesNotMineBlockIfNoTransactionsWhenEmptyBlocksNotAllowed() throws InterruptedException {
@@ -78,7 +94,8 @@ class CliqueBlockMinerTest {
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(
-            new BlockCreator.BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+            new BlockCreator.BlockCreationResult(
+                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -100,7 +117,7 @@ class CliqueBlockMinerTest {
             scheduler,
             headerBuilder.buildHeader(),
             Address.ZERO,
-            false); // parent header is arbitrary for the test.
+            forksSchedule); // parent header is arbitrary for the test.
 
     final boolean result = miner.mineBlock();
     assertThat(result).isFalse();
@@ -133,7 +150,8 @@ class CliqueBlockMinerTest {
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(
-            new BlockCreator.BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+            new BlockCreator.BlockCreationResult(
+                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -155,7 +173,7 @@ class CliqueBlockMinerTest {
             scheduler,
             headerBuilder.buildHeader(),
             Address.ZERO,
-            false); // parent header is arbitrary for the test.
+            forksSchedule); // parent header is arbitrary for the test.
 
     final boolean result = miner.mineBlock();
     assertThat(result).isTrue();

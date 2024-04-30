@@ -65,6 +65,7 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash depositsRoot,
+      final Hash exitsRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -86,7 +87,8 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot);
+        depositsRoot,
+        exitsRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -174,6 +176,9 @@ public class BlockHeader extends SealableBlockHeader
     if (depositsRoot != null) {
       out.writeBytes(depositsRoot);
     }
+    if (exitsRoot != null) {
+      out.writeBytes(exitsRoot);
+    }
     out.endList();
   }
 
@@ -206,6 +211,7 @@ public class BlockHeader extends SealableBlockHeader
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
     final Hash depositHashRoot =
         !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final Hash exitsHashRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -229,6 +235,7 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         depositHashRoot,
+        exitsHashRoot,
         blockHeaderFunctions);
   }
 
@@ -252,6 +259,7 @@ public class BlockHeader extends SealableBlockHeader
   public String toString() {
     final StringBuilder sb = new StringBuilder();
     sb.append("BlockHeader{");
+    sb.append("number=").append(number).append(", ");
     sb.append("hash=").append(getHash()).append(", ");
     sb.append("parentHash=").append(parentHash).append(", ");
     sb.append("ommersHash=").append(ommersHash).append(", ");
@@ -261,7 +269,6 @@ public class BlockHeader extends SealableBlockHeader
     sb.append("receiptsRoot=").append(receiptsRoot).append(", ");
     sb.append("logsBloom=").append(logsBloom).append(", ");
     sb.append("difficulty=").append(difficulty).append(", ");
-    sb.append("number=").append(number).append(", ");
     sb.append("gasLimit=").append(gasLimit).append(", ");
     sb.append("gasUsed=").append(gasUsed).append(", ");
     sb.append("timestamp=").append(timestamp).append(", ");
@@ -281,6 +288,9 @@ public class BlockHeader extends SealableBlockHeader
     }
     if (depositsRoot != null) {
       sb.append("depositsRoot=").append(depositsRoot);
+    }
+    if (exitsRoot != null) {
+      sb.append("exitsRoot=").append(exitsRoot);
     }
     return sb.append("}").toString();
   }
@@ -316,6 +326,7 @@ public class BlockHeader extends SealableBlockHeader
             .getDepositsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
+        pluginBlockHeader.getExitsRoot().map(h -> Hash.fromHexString(h.toHexString())).orElse(null),
         blockHeaderFunctions);
   }
 

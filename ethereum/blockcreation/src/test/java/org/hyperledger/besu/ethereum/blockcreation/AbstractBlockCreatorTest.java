@@ -364,6 +364,7 @@ abstract class AbstractBlockCreatorTest {
                         PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
+                        MiningParameters.MINING_DISABLED,
                         new BadBlockManager())
                     .createProtocolSchedule())
             .build();
@@ -386,8 +387,7 @@ abstract class AbstractBlockCreatorTest {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(new NoOpMetricsSystem()),
-            poolConf,
-            null);
+            poolConf);
     transactionPool.setEnabled();
 
     final MiningParameters miningParameters =

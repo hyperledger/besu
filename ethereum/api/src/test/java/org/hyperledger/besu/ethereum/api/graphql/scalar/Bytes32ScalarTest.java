@@ -17,6 +17,8 @@ package org.hyperledger.besu.ethereum.api.graphql.scalar;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.api.graphql.internal.Scalars;
 
 import java.util.Locale;
@@ -41,6 +43,8 @@ public class Bytes32ScalarTest {
   private final Bytes32 value = Bytes32.fromHexString(str);
   private final StringValue strValue = StringValue.newStringValue(str).build();
   private final StringValue invalidStrValue = StringValue.newStringValue("0xgh").build();
+
+  private final VersionedHash versionedHash = new VersionedHash((byte) 1, Hash.hash(value));
 
   @Test
   public void pareValueTest() {
@@ -119,6 +123,15 @@ public class Bytes32ScalarTest {
                         GraphQLContext.newContext().build(),
                         Locale.ENGLISH))
         .isInstanceOf(CoercingParseLiteralException.class);
+  }
+
+  @Test
+  public void parseVersionedHash() {
+    assertThat(
+            scalar
+                .getCoercing()
+                .serialize(versionedHash, GraphQLContext.newContext().build(), Locale.ENGLISH))
+        .isEqualTo(versionedHash.toString());
   }
 
   @BeforeEach

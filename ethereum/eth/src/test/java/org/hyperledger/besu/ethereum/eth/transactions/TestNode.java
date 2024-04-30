@@ -116,6 +116,7 @@ public class TestNode implements Closeable {
             GenesisConfigFile.development().getConfigOptions(),
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
@@ -166,7 +167,6 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
-            null,
             new BlobCache(),
             MiningParameters.newDefault());
 

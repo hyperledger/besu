@@ -192,7 +192,7 @@ public class BlockTransactionSelector {
         isTimeout.set(true);
       }
       LOG.warn(
-          "Interrupting transaction selection since it is taking more than the max configured time of "
+          "Interrupting the selection of transactions for block inclusion as it exceeds the maximum configured duration of "
               + blockTxsSelectionMaxTime
               + "ms",
           e);
@@ -326,7 +326,6 @@ public class BlockTransactionSelector {
     final BlockHashLookup blockHashLookup =
         new CachingBlockHashLookup(blockSelectionContext.processableBlockHeader(), blockchain);
     return transactionProcessor.processTransaction(
-        blockchain,
         worldStateUpdater,
         blockSelectionContext.processableBlockHeader(),
         pendingTransaction.getTransaction(),

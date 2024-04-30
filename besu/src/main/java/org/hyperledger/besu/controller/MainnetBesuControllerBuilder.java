@@ -95,6 +95,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager);
   }
 

@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -48,11 +49,13 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 import com.google.common.base.Splitter;
@@ -117,6 +120,7 @@ public class ReplayTest {
       final TransactionPoolConfiguration poolConfig =
           ImmutableTransactionPoolConfiguration.builder()
               .prioritySenders(readPrioritySenders(br.readLine()))
+              .maxPrioritizedTransactionsByType(readMaxPrioritizedByType(br.readLine()))
               .build();
 
       final AbstractPrioritizedTransactions prioritizedTransactions =
@@ -159,6 +163,17 @@ public class ReplayTest {
                 }
               });
     }
+  }
+
+  private Map<TransactionType, Integer> readMaxPrioritizedByType(final String line) {
+    return Arrays.stream(line.split(","))
+        .map(e -> e.split("="))
+        .collect(
+            Collectors.toMap(
+                a -> TransactionType.valueOf(a[0]),
+                a -> Integer.parseInt(a[1]),
+                (a, b) -> a,
+                () -> new EnumMap<>(TransactionType.class)));
   }
 
   private List<Address> readPrioritySenders(final String line) {
@@ -305,7 +320,8 @@ public class ReplayTest {
       final PendingTransaction pt1,
       final PendingTransaction pt2) {
     final TransactionPoolReplacementHandler transactionReplacementHandler =
-        new TransactionPoolReplacementHandler(poolConfig.getPriceBump());
+        new TransactionPoolReplacementHandler(
+            poolConfig.getPriceBump(), poolConfig.getBlobPriceBump());
     return transactionReplacementHandler.shouldReplace(pt1, pt2, currBlockHeader);
   }
 }

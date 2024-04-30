@@ -56,7 +56,7 @@ import picocli.CommandLine.ParentCommand;
 @Command(
     name = COMMAND_NAME,
     aliases = {COMMAND_ALIAS},
-    description = "Execute an Ethereum State Test.",
+    description = "Block Builder subcommand.",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class B11rSubCommand implements Runnable {

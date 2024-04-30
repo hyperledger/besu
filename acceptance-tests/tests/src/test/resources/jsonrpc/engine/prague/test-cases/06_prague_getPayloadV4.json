@@ -1,0 +1,51 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "engine_getPayloadV4",
+    "params": [
+      "0x282643d6e5fecedf"
+    ],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "result": {
+      "executionPayload": {
+        "parentHash": "0xd93892197c5bd2130e6167edc292a1e92021bb9f292e6460aa889c3e2f972331",
+        "feeRecipient": "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "stateRoot": "0xa194d7c0cff95750c211567fba96e394faa89644a661dd1c1b75426dc90728e2",
+        "logsBloom": "0x00000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+        "prevRandao": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "gasLimit": "0x1c9c380",
+        "gasUsed": "0x0",
+        "timestamp": "0x20",
+        "extraData": "0x",
+        "baseFeePerGas": "0x7",
+        "excessBlobGas": "0x0",
+        "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "transactions": [],
+        "withdrawals": [],
+        "depositReceipts": [],
+        "exits": [
+          {
+            "sourceAddress": "0xa4664c40aacebd82a2db79f0ea36c06bc6a19adb",
+            "validatorPubKey": "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"
+          }
+        ],
+        "blockNumber": "0x2",
+        "blockHash": "0x8494d3fc0fd54898100ffa2bda4c3ffdfb9faa3a4c2b2c1638970721e646c35b",
+        "blobGasUsed": "0x0",
+        "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"
+      },
+      "blockValue": "0x0",
+      "blobsBundle": {
+        "commitments": [],
+        "proofs": [],
+        "blobs": []
+      },
+      "shouldOverrideBuilder": false
+    }
+  },
+  "statusCode": 200
+}

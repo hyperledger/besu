@@ -56,6 +56,7 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   private final BftEventHandler eventHandler;
   private final BftProcessor bftProcessor;
   private final BftBlockCreatorFactory<?> blockCreatorFactory;
+
   /** The Blockchain. */
   protected final Blockchain blockchain;
 

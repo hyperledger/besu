@@ -332,6 +332,7 @@ public class TestContextBuilder {
             forksSchedule,
             IBFT_EXTRA_DATA_ENCODER,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     /////////////////////////////////////////////////////////////////////////////////////
@@ -368,8 +369,7 @@ public class TestContextBuilder {
             mock(TransactionBroadcaster.class),
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            poolConf,
-            null);
+            poolConf);
 
     transactionPool.setEnabled();
 

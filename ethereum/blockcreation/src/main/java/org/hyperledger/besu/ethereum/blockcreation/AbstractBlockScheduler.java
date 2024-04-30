@@ -37,23 +37,5 @@ public abstract class AbstractBlockScheduler {
 
   public abstract BlockCreationTimeResult getNextTimestamp(final BlockHeader parentHeader);
 
-  public static class BlockCreationTimeResult {
-
-    private final long timestampForHeader;
-    private final long millisecondsUntilValid;
-
-    public BlockCreationTimeResult(
-        final long timestampForHeader, final long millisecondsUntilValid) {
-      this.timestampForHeader = timestampForHeader;
-      this.millisecondsUntilValid = millisecondsUntilValid;
-    }
-
-    public long getTimestampForHeader() {
-      return timestampForHeader;
-    }
-
-    public long getMillisecondsUntilValid() {
-      return millisecondsUntilValid;
-    }
-  }
+  public record BlockCreationTimeResult(long timestampForHeader, long millisecondsUntilValid) {}
 }

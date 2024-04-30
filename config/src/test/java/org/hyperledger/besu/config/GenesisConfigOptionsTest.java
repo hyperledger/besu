@@ -52,6 +52,7 @@ class GenesisConfigOptionsTest {
     assertThat(config.getConsensusEngine()).isEqualTo("ibft2");
   }
 
+  @Test
   void shouldUseQbftWhenQbftInConfig() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("qbft", emptyMap()));
     assertThat(config.isQbft()).isTrue();
@@ -64,7 +65,7 @@ class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("clique", emptyMap()));
     assertThat(config.isClique()).isTrue();
     assertThat(config.isPoa()).isTrue();
-    assertThat(config.getCliqueConfigOptions()).isNotSameAs(CliqueConfigOptions.DEFAULT);
+    assertThat(config.getCliqueConfigOptions()).isNotSameAs(JsonCliqueConfigOptions.DEFAULT);
     assertThat(config.getConsensusEngine()).isEqualTo("clique");
   }
 
@@ -73,7 +74,7 @@ class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
     assertThat(config.isClique()).isFalse();
     assertThat(config.isPoa()).isFalse();
-    assertThat(config.getCliqueConfigOptions()).isSameAs(CliqueConfigOptions.DEFAULT);
+    assertThat(config.getCliqueConfigOptions()).isSameAs(JsonCliqueConfigOptions.DEFAULT);
   }
 
   @Test
@@ -292,6 +293,27 @@ class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(Map.of("zerobasefee", true));
 
     assertThat(config.asMap()).containsOnlyKeys("zeroBaseFee").containsValue(true);
+  }
+
+  @Test
+  void isFixedBaseFeeShouldDefaultToFalse() {
+    final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
+
+    assertThat(config.isFixedBaseFee()).isFalse();
+  }
+
+  @Test
+  void isFixedBaseFeeParsedCorrectly() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("fixedbasefee", true));
+
+    assertThat(config.isFixedBaseFee()).isTrue();
+  }
+
+  @Test
+  void asMapIncludesFixedBaseFee() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("fixedbasefee", true));
+
+    assertThat(config.asMap()).containsOnlyKeys("fixedBaseFee").containsValue(true);
   }
 
   @Test

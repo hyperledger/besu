@@ -22,10 +22,14 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.MockedStatic;
 import org.mockito.Mockito;
 
@@ -60,6 +64,33 @@ class VersionMetadataTest {
     assertThat(Files.exists(temporaryFolder)).isTrue();
   }
 
+  static Stream<Arguments> versionTestProvider() {
+    return Stream.of(
+        Arguments.of("24.4.0", "24.3.3", 1),
+        Arguments.of("24.3.3", "24.3.3", 0),
+        Arguments.of("24.2.0", "24.3.3", -1),
+        Arguments.of("24.3.3", "24.3-develop-59da092", 1),
+        Arguments.of("24.3.0", "24.3-develop-59da092", 0),
+        Arguments.of("24.3.3", "24.4-develop-59da092", -1),
+        Arguments.of("24.2-develop-59da092", "24.3-develop-9999999", -1),
+        Arguments.of("24.3-develop-59da092", "24.3-develop-9999999", 0),
+        Arguments.of("24.4-develop-59da092", "24.3-develop-9999999", 1),
+        Arguments.of("24.4-develop-59da092", "24.3.0", 1),
+        Arguments.of("24.4-develop-59da092", "24.4.0", 0),
+        Arguments.of("24.4-develop-59da092", "24.4.1", -1));
+  }
+
+  @ParameterizedTest
+  @MethodSource("versionTestProvider")
+  public void assertComparableChecks(
+      final String runtimeVersion,
+      final String metadataVersion,
+      final int expectedComparisonResult) {
+    VersionMetadata runtime = new VersionMetadata(runtimeVersion);
+    VersionMetadata develop = new VersionMetadata(metadataVersion);
+    assertThat(runtime.compareTo(develop)).isEqualTo(expectedComparisonResult);
+  }
+
   @Test
   void compatibilityCheckShouldThrowExceptionIfEnabled() throws Exception {
     // The version file says the last version to start was 23.10.3
@@ -69,7 +100,7 @@ class VersionMetadataTest {
     // The runtime says the current version is 23.10.2 (i.e. a downgrade)
     try (MockedStatic<VersionMetadata> mocked =
         Mockito.mockStatic(VersionMetadata.class, Mockito.CALLS_REAL_METHODS)) {
-      mocked.when(VersionMetadata::getRuntimeVersion).thenReturn("23.10.2");
+      mocked.when(VersionMetadata::getRuntimeVersionString).thenReturn("23.10.2");
 
       final VersionMetadata versionMetadata = VersionMetadata.lookUpFrom(tempDataDir);
       assertThat(versionMetadata).isNotNull();
@@ -96,7 +127,7 @@ class VersionMetadataTest {
     // version-compatibility-protection = false so no exception should be thrown
     try (MockedStatic<VersionMetadata> mocked =
         Mockito.mockStatic(VersionMetadata.class, Mockito.CALLS_REAL_METHODS)) {
-      mocked.when(VersionMetadata::getRuntimeVersion).thenReturn("23.10.2");
+      mocked.when(VersionMetadata::getRuntimeVersionString).thenReturn("23.10.2");
 
       final VersionMetadata versionMetadata = VersionMetadata.lookUpFrom(tempDataDir);
       assertThat(versionMetadata).isNotNull();
@@ -122,7 +153,7 @@ class VersionMetadataTest {
     // The runtime says the current version is 23.10.2 (i.e. a downgrade)
     try (MockedStatic<VersionMetadata> mocked =
         Mockito.mockStatic(VersionMetadata.class, Mockito.CALLS_REAL_METHODS)) {
-      mocked.when(VersionMetadata::getRuntimeVersion).thenReturn("23.10.4");
+      mocked.when(VersionMetadata::getRuntimeVersionString).thenReturn("23.10.4");
 
       final VersionMetadata versionMetadata = VersionMetadata.lookUpFrom(tempDataDir);
       assertThat(versionMetadata).isNotNull();
