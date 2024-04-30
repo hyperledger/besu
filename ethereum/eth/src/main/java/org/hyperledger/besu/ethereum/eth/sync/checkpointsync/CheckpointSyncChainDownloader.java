@@ -13,6 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
+
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
