@@ -18,25 +18,27 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
+import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-class ValidatorExitEncoderTest {
+class WithdrawalRequestEncoderTest {
   @Test
-  void shouldEncodeExit() {
-    final ValidatorExit exit =
-        new ValidatorExit(
+  void shouldEncodeWithdrawalRequest() {
+    final WithdrawalRequest withdrawalRequest =
+        new WithdrawalRequest(
             Address.fromHexString("0x763c396673F9c391DCe3361A9A71C8E161388000"),
             BLSPublicKey.fromHexString(
-                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"));
+                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
+            GWei.of(5));
 
-    final Bytes encoded = ValidatorExitEncoder.encodeOpaqueBytes(exit);
+    final Bytes encoded = WithdrawalRequestEncoder.encodeOpaqueBytes(withdrawalRequest);
 
     assertThat(encoded)
         .isEqualTo(
             Bytes.fromHexString(
-                "0xf84694763c396673f9c391dce3361a9a71c8e161388000b0b10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"));
+                "0xf84794763c396673f9c391dce3361a9a71c8e161388000b0b10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e05"));
   }
 }
