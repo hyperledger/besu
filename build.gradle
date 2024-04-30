@@ -207,6 +207,9 @@ allprojects {
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
+      // apply appropriate license header files.
+      licenseHeaderFile("${rootDir}/gradle/spotless.java.older.license").named("older").onlyIfContentMatches("Copyright(.*)ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless.java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\n \\* Copyright(.*)ConsenSys AG\\.\\n \\*)")
     }
     groovyGradle {
       target '*.gradle'
