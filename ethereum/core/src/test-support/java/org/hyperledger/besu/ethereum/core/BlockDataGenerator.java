@@ -304,7 +304,7 @@ public class BlockDataGenerator {
             .nonce(blockNonce)
             .withdrawalsRoot(options.getWithdrawalsRoot(null))
             .depositsRoot(options.getDepositsRoot(null))
-            .withdrawalRequestsRoot(options.getWithdrawalRequestsRoot(null))
+            .requestsRoot(options.getWithdrawalRequestsRoot(null))
             .blockHeaderFunctions(
                 options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
     options.getBaseFee(Optional.of(Wei.of(uint256(2)))).ifPresent(blockHeaderBuilder::baseFee);
@@ -334,7 +334,7 @@ public class BlockDataGenerator {
         ommers,
         options.getWithdrawals(Optional.empty()),
         options.getDeposits(Optional.empty()),
-        options.getWithdrawalRequests(Optional.empty()));
+        options.getRequests(Optional.empty()));
   }
 
   private BlockHeader ommer() {
@@ -641,7 +641,7 @@ public class BlockDataGenerator {
 
     private Optional<Optional<List<Withdrawal>>> withdrawals = Optional.empty();
     private Optional<Optional<List<Deposit>>> deposits = Optional.empty();
-    private Optional<Optional<List<WithdrawalRequest>>> withdrawalRequests = Optional.empty();
+    private Optional<Optional<List<Request>>> requests = Optional.empty();
     private Optional<Bytes> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
     private Optional<Hash> receiptsRoot = Optional.empty();
@@ -739,9 +739,8 @@ public class BlockDataGenerator {
       return withdrawalRequestsRoot.orElse(defaultValue);
     }
 
-    public Optional<List<WithdrawalRequest>> getWithdrawalRequests(
-        final Optional<List<WithdrawalRequest>> defaultValue) {
-      return withdrawalRequests.orElse(defaultValue);
+    public Optional<List<Request>> getRequests(final Optional<List<Request>> defaultValue) {
+      return requests.orElse(defaultValue);
     }
 
     public boolean hasTransactions() {
@@ -776,9 +775,8 @@ public class BlockDataGenerator {
       return this;
     }
 
-    public BlockOptions setWithdrawalRequests(
-        final Optional<List<WithdrawalRequest>> withdrawalRequests) {
-      this.withdrawalRequests = Optional.of(withdrawalRequests);
+    public BlockOptions setRequests(final Optional<List<Request>> requests) {
+      this.requests = Optional.of(requests);
       return this;
     }
 

@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
@@ -76,6 +77,7 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -184,6 +186,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal requests"));
     }
 
+    final Optional<List<Request>> maybeRequests = createRequests();
+
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");
       return respondWith(reqId, blockParam, null, SYNCING);
@@ -252,7 +256,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
-            maybeWithdrawalRequests.map(BodyValidation::withdrawalRequestsRoot).orElse(null),
+            maybeRequests.map(BodyValidation::requestsRoot).orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -320,7 +324,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 Collections.emptyList(),
                 maybeWithdrawals,
                 maybeDeposits,
-                maybeWithdrawalRequests));
+                maybeRequests));
 
     if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()
@@ -554,5 +558,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             timeInS,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
+  }
+
+  private Optional<List<Request>> createRequests() {
+    throw new NotImplementedException("Consolidate requests");
   }
 }

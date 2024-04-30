@@ -24,6 +24,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 
@@ -34,6 +36,7 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 
 public class BlockResultFactory {
@@ -173,9 +176,13 @@ public class BlockResultFactory {
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
         blockWithReceipts.getBlock().getBody().getDeposits(),
-        blockWithReceipts.getBlock().getBody().getWithdrawalRequests(),
+        getWithdrawalRequest(blockWithReceipts.getBlock().getBody().getRequests()),
         Quantity.create(blockValue),
         blobsBundleV1);
+  }
+
+  private Optional<List<WithdrawalRequest>> getWithdrawalRequest(final Optional<List<Request>> requests) {
+    throw new NotImplementedException(requests.toString());
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {

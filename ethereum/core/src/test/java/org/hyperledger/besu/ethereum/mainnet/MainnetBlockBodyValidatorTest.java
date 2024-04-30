@@ -155,7 +155,7 @@ class MainnetBlockBodyValidatorTest {
                 .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                .setWithdrawalRequests(Optional.of(List.of())));
+                .setRequests(Optional.of(List.of())));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
     when(exitsValidator.validateWithdrawalRequestsInBlock(any(), any())).thenReturn(false);

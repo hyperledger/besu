@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
@@ -151,10 +152,10 @@ public final class GenesisState {
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
     final Optional<List<Deposit>> deposits =
         isExperimentalEipsTimeAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
-    final Optional<List<WithdrawalRequest>> withdrawalRequests =
+    final Optional<List<Request>> requests =
         isPragueAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
 
-    return new BlockBody(emptyList(), emptyList(), withdrawals, deposits, withdrawalRequests);
+    return new BlockBody(emptyList(), emptyList(), withdrawals, deposits, requests);
   }
 
   public Block getBlock() {

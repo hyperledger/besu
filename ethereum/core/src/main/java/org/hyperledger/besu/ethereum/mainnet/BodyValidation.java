@@ -19,12 +19,13 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
+import org.hyperledger.besu.ethereum.core.encoding.RequestEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalRequestEncoder;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.util.List;
 import java.util.stream.IntStream;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -106,22 +108,22 @@ public final class BodyValidation {
   }
 
   /**
-   * Generates the withdrawal request root for a list of withdrawal request
+   * Generates the request root for a list of requests
    *
-   * @param withdrawalRequests list of withdrawal request
-   * @return the withdrawal request root
+   * @param requests list of request
+   * @return the request root
    */
-  public static Hash withdrawalRequestsRoot(final List<WithdrawalRequest> withdrawalRequests) {
+  public static Hash requestsRoot(final List<Request> requests) {
     final MerkleTrie<Bytes, Bytes> trie = trie();
-
-    IntStream.range(0, withdrawalRequests.size())
+       IntStream.range(0, requests.size())
         .forEach(
             i ->
                 trie.put(
                     indexKey(i),
-                    WithdrawalRequestEncoder.encodeOpaqueBytes(withdrawalRequests.get(i))));
+                    RequestEncoder.encodeOpaqueBytes(requests.get(i))));
+    throw new NotImplementedException();
 
-    return Hash.wrap(trie.getRootHash());
+   // return Hash.wrap(trie.getRootHash());
   }
 
   /**

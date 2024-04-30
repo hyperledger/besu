@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -266,6 +268,9 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                     disposableWorldState));
       }
 
+      // todo
+      Optional<List<Request>> maybeRequests = getWithdrawalRequest(maybeWithdrawalRequests);
+
       throwIfStopped();
 
       if (rewardCoinbase
@@ -303,8 +308,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-              .withdrawalRequestsRoot(
-                  maybeWithdrawalRequests.map(BodyValidation::withdrawalRequestsRoot).orElse(null));
+              .requestsRoot(maybeRequests.map(BodyValidation::requestsRoot).orElse(null));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
@@ -321,7 +325,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               ommers,
               withdrawals,
               maybeDeposits,
-              maybeWithdrawalRequests);
+              maybeRequests);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
@@ -335,6 +339,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throw new IllegalStateException(
           "Block creation failed unexpectedly. Will restart on next block added to chain.", ex);
     }
+  }
+
+  private Optional<List<Request>> getWithdrawalRequest(final Optional<List<WithdrawalRequest>> requests) {
+    throw new NotImplementedException(requests.toString());
   }
 
   @VisibleForTesting

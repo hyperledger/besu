@@ -17,11 +17,13 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,7 +63,7 @@ public interface WithdrawalRequestValidator {
     public boolean validateWithdrawalRequestsInBlock(
         final Block block, final List<WithdrawalRequest> withdrawalRequests) {
       final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests =
-          block.getBody().getWithdrawalRequests();
+          getMaybeWithdrawalRequests(block.getBody().getRequests());
       if (maybeWithdrawalRequests.isPresent()) {
         LOG.warn(
             "Block {} contains withdrawal requests but withdrawal requests are prohibited",
@@ -69,14 +71,20 @@ public interface WithdrawalRequestValidator {
         return false;
       }
 
-      if (block.getHeader().getWithdrawalRequestsRoot().isPresent()) {
+      if (block.getHeader().getRequestsRoot().isPresent()) {
         LOG.warn(
             "Block {} header contains withdrawal_requests_root but withdrawal requests are prohibited",
             block.getHash());
         return false;
       }
-
       return true;
     }
+  }
+
+
+  private static Optional<List<WithdrawalRequest>> getMaybeWithdrawalRequests(
+      final Optional<List<Request>> requests) {
+    // todo implement extract from requests
+    throw new NotImplementedException(requests.toString());
   }
 }

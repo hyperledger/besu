@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -52,6 +53,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -285,12 +287,16 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-            .withdrawalRequestsRoot(
-                maybeWithdrawalRequests.map(BodyValidation::withdrawalRequestsRoot).orElse(null))
+            .requestsRoot(getRequestsRoot(maybeWithdrawalRequests))
             .parentBeaconBlockRoot(
                 maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();
     return mockHeader;
+  }
+
+  private Hash getRequestsRoot(Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
+    throw new NotImplementedException();
+    // return  maybeWithdrawalRequests.map(BodyValidation::requestsRoot).orElse(null));
   }
 
   @Override

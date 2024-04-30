@@ -17,11 +17,13 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import java.util.List;
 import java.util.Optional;
 
+import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -45,34 +47,12 @@ public class PragueWithdrawalRequestValidator implements WithdrawalRequestValida
       final Block block, final List<WithdrawalRequest> withdrawalRequests) {
     final Hash blockHash = block.getHash();
 
-    if (block.getHeader().getWithdrawalRequestsRoot().isEmpty()) {
-      LOG.warn("Block {} must contain withdrawal_requests_root", blockHash);
-      return false;
-    }
-
-    if (block.getBody().getWithdrawalRequests().isEmpty()) {
-      LOG.warn("Block {} must contain withdrawal requests (even if empty list)", blockHash);
-      return false;
-    }
-
-    final List<WithdrawalRequest> withdrawalRequestsInBlock =
-        block.getBody().getWithdrawalRequests().get();
+    final List<WithdrawalRequest> withdrawalRequestsInBlock = getWithdrawalRequest(block.getBody());
     // TODO Do we need to allow for customization? (e.g. if the value changes in the next fork)
     if (withdrawalRequestsInBlock.size()
         > WithdrawalRequestContractHelper.MAX_WITHDRAWAL_REQUESTS_PER_BLOCK) {
       LOG.warn(
           "Block {} has more than the allowed maximum number of withdrawal requests", blockHash);
-      return false;
-    }
-
-    // Validate exits_root
-    final Hash expectedWithdrawalsRequestRoot =
-        BodyValidation.withdrawalRequestsRoot(withdrawalRequestsInBlock);
-    if (!expectedWithdrawalsRequestRoot.equals(
-        block.getHeader().getWithdrawalRequestsRoot().get())) {
-      LOG.warn(
-          "Block {} withdrawal_requests_root does not match expected hash root for withdrawal requests in block",
-          blockHash);
       return false;
     }
 
@@ -88,7 +68,11 @@ public class PragueWithdrawalRequestValidator implements WithdrawalRequestValida
           withdrawalRequests);
       return false;
     }
-
     return true;
+  }
+
+  @SuppressWarnings("UnusedVariable")
+  private List<WithdrawalRequest> getWithdrawalRequest(final BlockBody blockBody) {
+    throw new NotImplementedException();
   }
 }

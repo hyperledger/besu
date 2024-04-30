@@ -65,7 +65,7 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash depositsRoot,
-      final Hash exitsRoot,
+      final Hash requestRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -88,7 +88,7 @@ public class BlockHeader extends SealableBlockHeader
         excessBlobGas,
         parentBeaconBlockRoot,
         depositsRoot,
-        exitsRoot);
+        requestRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -176,8 +176,8 @@ public class BlockHeader extends SealableBlockHeader
     if (depositsRoot != null) {
       out.writeBytes(depositsRoot);
     }
-    if (withdrawalRequestsRoot != null) {
-      out.writeBytes(withdrawalRequestsRoot);
+    if (requestsRoot != null) {
+      out.writeBytes(requestsRoot);
     }
     out.endList();
   }
@@ -289,8 +289,8 @@ public class BlockHeader extends SealableBlockHeader
     if (depositsRoot != null) {
       sb.append("depositsRoot=").append(depositsRoot);
     }
-    if (withdrawalRequestsRoot != null) {
-      sb.append("exitsRoot=").append(withdrawalRequestsRoot);
+    if (requestsRoot != null) {
+      sb.append("requestsRoot=").append(requestsRoot);
     }
     return sb.append("}").toString();
   }
@@ -327,7 +327,7 @@ public class BlockHeader extends SealableBlockHeader
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
         pluginBlockHeader
-            .getWithdrawalRequestsRoot()
+            .getRequestsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
         blockHeaderFunctions);
