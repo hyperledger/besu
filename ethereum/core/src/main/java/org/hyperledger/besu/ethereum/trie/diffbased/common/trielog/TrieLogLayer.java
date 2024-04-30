@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 
 import static com.google.common.base.Preconditions.checkState;
