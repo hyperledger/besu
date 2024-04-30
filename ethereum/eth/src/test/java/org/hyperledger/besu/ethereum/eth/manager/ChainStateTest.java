@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 public class ChainStateTest {
@@ -46,14 +48,14 @@ public class ChainStateTest {
 
   @Test
   public void updateHeightEstimate_toZero() {
-    chainState.updateHeightEstimate(0L);
+    chainState.updateHeightEstimate(0L, Optional.empty());
     assertThat(chainState.hasEstimatedHeight()).isFalse();
     assertThat(chainState.getEstimatedHeight()).isEqualTo(0L);
   }
 
   @Test
   public void updateHeightEstimate_toNonZeroValue() {
-    chainState.updateHeightEstimate(1L);
+    chainState.updateHeightEstimate(1L, Optional.empty());
     assertThat(chainState.hasEstimatedHeight()).isTrue();
     assertThat(chainState.getEstimatedHeight()).isEqualTo(1L);
   }

@@ -158,7 +158,7 @@ public class BetterSyncTargetEvaluatorTest {
   private EthPeer peer(final long chainHeight, final long totalDifficulty) {
     final EthPeer peer = mock(EthPeer.class);
     final ChainState chainState = new ChainState();
-    chainState.updateHeightEstimate(chainHeight);
+    chainState.updateHeightEstimate(chainHeight, Optional.empty());
     chainState.statusReceived(Hash.EMPTY, Difficulty.of(totalDifficulty));
     when(peer.chainState()).thenReturn(chainState);
     return peer;

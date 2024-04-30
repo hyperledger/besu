@@ -18,6 +18,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
+import java.util.Optional;
+
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -44,6 +46,6 @@ public class EthSynchronizerUpdater implements SynchronizerUpdater {
       LOG.debug("Received message from a peer with no corresponding EthPeer.");
       return;
     }
-    ethPeer.chainState().updateHeightEstimate(knownBlockNumber);
+    ethPeer.chainState().updateHeightEstimate(knownBlockNumber, Optional.empty());
   }
 }

@@ -28,6 +28,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Supplier;
 
 import org.slf4j.Logger;
@@ -133,7 +134,7 @@ public class PivotSelectorFromSafeBlock implements PivotBlockSelector {
                                           maybeCachedHeadBlockHeader = Optional.of(blockHeader);
                                           return blockHeader.getNumber();
                                         })
-                                    .get();
+                                    .get(20, TimeUnit.SECONDS);
                               } catch (Throwable t) {
                                 LOG.debug(
                                     "Error trying to download chain head block header by hash {}",

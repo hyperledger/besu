@@ -98,7 +98,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                 if (!isEmptyResponse.test(peerResult)) {
                   retryCount = 0;
                 }
-                executeTaskTimed();
+                executeTaskTimed(); // TODO: this has already been done !!?????
               }
             });
   }

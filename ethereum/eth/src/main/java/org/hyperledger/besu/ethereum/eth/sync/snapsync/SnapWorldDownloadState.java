@@ -47,6 +47,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Consumer;
 import java.util.function.Predicate;
@@ -424,22 +425,31 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public BlockAddedObserver createBlockchainObserver() {
     return addedBlockContext -> {
-      final AtomicBoolean foundNewPivotBlock = new AtomicBoolean(false);
-      pivotBlockSelector.check(
-          (____, isNewPivotBlock) -> {
-            if (isNewPivotBlock) {
-              foundNewPivotBlock.set(true);
-            }
-          });
+      CompletableFuture.runAsync(
+              () -> {
+                final AtomicBoolean foundNewPivotBlock = new AtomicBoolean(false);
+                pivotBlockSelector.check(
+                    (____, isNewPivotBlock) -> {
+                      if (isNewPivotBlock) {
+                        foundNewPivotBlock.set(true);
+                      }
+                    });
 
-      final boolean isNewPivotBlockFound = foundNewPivotBlock.get();
-      final boolean isBlockchainCaughtUp =
-          snapSyncState.isWaitingBlockchain() && !pivotBlockSelector.isBlockchainBehind();
+                final boolean isNewPivotBlockFound = foundNewPivotBlock.get();
+                final boolean isBlockchainCaughtUp =
+                    snapSyncState.isWaitingBlockchain() && !pivotBlockSelector.isBlockchainBehind();
 
-      if (snapSyncState.isHealTrieInProgress() && (isNewPivotBlockFound || isBlockchainCaughtUp)) {
-        snapSyncState.setWaitingBlockchain(false);
-        reloadTrieHeal();
-      }
+                if (snapSyncState.isHealTrieInProgress()
+                    && (isNewPivotBlockFound || isBlockchainCaughtUp)) {
+                  snapSyncState.setWaitingBlockchain(false);
+                  reloadTrieHeal();
+                }
+              })
+          .exceptionally(
+              error -> {
+                LOG.error("Error while processing block added event", error);
+                return null;
+              });
     };
   }
 }

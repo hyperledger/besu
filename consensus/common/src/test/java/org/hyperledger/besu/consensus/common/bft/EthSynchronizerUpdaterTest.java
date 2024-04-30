@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -60,6 +62,6 @@ public class EthSynchronizerUpdaterTest {
 
     final long suppliedChainHeight = 6L;
     updater.updatePeerChainState(suppliedChainHeight, mock(PeerConnection.class));
-    verify(chainState, times(1)).updateHeightEstimate(eq(suppliedChainHeight));
+    verify(chainState, times(1)).updateHeightEstimate(eq(suppliedChainHeight), Optional.empty());
   }
 }
