@@ -161,7 +161,7 @@ public class DynamicPivotBlockSelector {
                   .addArgument(this::logLastPivotBlockFound)
                   .log();
             })
-        .orTimeout(5, TimeUnit.MINUTES);
+        .orTimeout(5, TimeUnit.SECONDS);
   }
 
   private boolean isSamePivotBlock(final FastSyncState fss) {
