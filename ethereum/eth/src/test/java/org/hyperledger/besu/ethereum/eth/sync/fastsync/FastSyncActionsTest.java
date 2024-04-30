@@ -257,11 +257,7 @@ public class FastSyncActionsTest {
     // Set subset of heights
     peers
         .subList(0, minPeers - 1)
-        .forEach(
-            p ->
-                p.getEthPeer()
-                    .chainState()
-                    .updateHeightEstimate(minPivotHeight + 10, Optional.empty()));
+        .forEach(p -> p.getEthPeer().chainState().updateHeightEstimate(minPivotHeight + 10));
 
     // No pivot should be selected while only a subset of peers have height estimates
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
@@ -269,11 +265,7 @@ public class FastSyncActionsTest {
 
     // Set final height
     final long bestPeerHeight = minPivotHeight + 1;
-    peers
-        .get(minPeers - 1)
-        .getEthPeer()
-        .chainState()
-        .updateHeightEstimate(bestPeerHeight, Optional.empty());
+    peers.get(minPeers - 1).getEthPeer().chainState().updateHeightEstimate(bestPeerHeight);
     final FastSyncState expected =
         new FastSyncState(bestPeerHeight - syncConfig.getFastSyncPivotDistance());
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
@@ -324,7 +316,7 @@ public class FastSyncActionsTest {
     // Set best height and mark best peer validated
     final long bestPeerHeight = minPivotHeight + 11;
     final EthPeer bestPeer = peers.get(minPeers - 1).getEthPeer();
-    bestPeer.chainState().updateHeightEstimate(bestPeerHeight, Optional.empty());
+    bestPeer.chainState().updateHeightEstimate(bestPeerHeight);
     bestPeer.markValidated(validator);
     final FastSyncState expected =
         new FastSyncState(bestPeerHeight - syncConfig.getFastSyncPivotDistance());

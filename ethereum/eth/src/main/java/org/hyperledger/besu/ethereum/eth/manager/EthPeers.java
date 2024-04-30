@@ -63,8 +63,8 @@ public class EthPeers {
       Comparator.comparing((final EthPeer p) -> p.getReputation().getScore())
           .thenComparing(CHAIN_HEIGHT);
 
-  public static final Comparator<EthPeer> HEAVIEST_CHAIN =
-      TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
+  public static final Comparator<EthPeer> HEAVIEST_CHAIN = CHAIN_HEIGHT;
+  // TOTAL_DIFFICULTY.thenComparing(CHAIN_HEIGHT);
 
   public static final Comparator<EthPeer> LEAST_TO_MOST_BUSY =
       Comparator.comparing(EthPeer::outstandingRequests)

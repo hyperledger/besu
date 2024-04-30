@@ -19,8 +19,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.util.Subscribers;
 
-import java.util.Optional;
-
 import com.google.common.base.MoreObjects;
 
 public class ChainState implements ChainHeadEstimate {
@@ -75,7 +73,7 @@ public class ChainState implements ChainHeadEstimate {
       if (bestBlock.hash.equals(blockHash)) {
         bestBlock.number = blockNumber;
       }
-      updateHeightEstimate(blockNumber, Optional.empty());
+      updateHeightEstimate(blockNumber);
     }
   }
 
@@ -84,7 +82,7 @@ public class ChainState implements ChainHeadEstimate {
       if (header.getHash().equals(bestBlock.hash)) {
         bestBlock.number = header.getNumber();
       }
-      updateHeightEstimate(header.getNumber(), Optional.of(header.getDifficulty()));
+      updateHeightEstimate(header.getNumber());
     }
   }
 
@@ -100,20 +98,16 @@ public class ChainState implements ChainHeadEstimate {
         bestBlock.hash = blockHeader.getParentHash();
         bestBlock.number = parentBlockNumber;
       }
-      updateHeightEstimate(parentBlockNumber, Optional.empty());
+      updateHeightEstimate(parentBlockNumber);
     }
   }
 
-  public void updateHeightEstimate(
-      final long blockNumber, final Optional<Difficulty> maybeDifficulty) {
+  public void updateHeightEstimate(final long blockNumber) {
     synchronized (this) {
       if (blockNumber > estimatedHeight) {
         estimatedHeightKnown = true;
         estimatedHeight = blockNumber;
         estimatedHeightListeners.forEach(e -> e.onEstimatedHeightChanged(estimatedHeight));
-        if (maybeDifficulty.isPresent()) {
-          bestBlock.totalDifficulty = maybeDifficulty.get();
-        }
       }
     }
   }
