@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -47,7 +46,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
    * @param memOffset the mem offset
    * @param sourceOffset the code offset
    * @param codeSize the size of the code
-   * @param accountIsWarm the account is warm
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @return the long
    */
   protected long cost(
@@ -58,13 +57,9 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       final long readSize,
       final long codeSize,
       final boolean accountIsWarm) {
-    return clampedAdd(
-        gasCalculator()
-            .extCodeCopyOperationGasCost(
-                frame, address, memOffset, sourceOffset, readSize, codeSize),
-        accountIsWarm
-            ? gasCalculator().getWarmStorageReadCost()
-            : gasCalculator().getColdAccountAccessCost());
+    return gasCalculator()
+        .extCodeCopyOperationGasCost(
+            frame, address, accountIsWarm, memOffset, sourceOffset, readSize, codeSize);
   }
 
   @Override

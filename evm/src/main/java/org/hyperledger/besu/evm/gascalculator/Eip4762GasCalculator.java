@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KEC
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_SIZE_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERSION_LEAF_KEY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
-import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
@@ -39,7 +38,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 public class Eip4762GasCalculator extends PragueGasCalculator {
   private static final long CREATE_OPERATION_GAS_COST = 1_000L;
-  private static final long INIT_CODE_COST = 2L;
 
   /** Instantiates a new Prague Gas Calculator. */
   public Eip4762GasCalculator() {
@@ -80,7 +78,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
       final Address to,
       final boolean accountIsWarm) {
 
-    long cost =
+    long gasCost =
         super.callOperationGasCost(
             frame,
             stipend,
@@ -92,39 +90,26 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
             recipient,
             to,
             true);
-    if (!super.isPrecompile(to)) {
+    if (super.isPrecompile(to)) {
+      return gasCost;
+    } else {
+      long statelessGas;
       if (frame.getWorldUpdater().get(to) == null) {
-        cost = clampedAdd(cost, frame.getAccessWitness().touchAndChargeProofOfAbsence(to));
+        statelessGas = frame.getAccessWitness().touchAndChargeProofOfAbsence(to);
       } else {
-        cost = clampedAdd(cost, frame.getAccessWitness().touchAndChargeMessageCall(to));
+        statelessGas = frame.getAccessWitness().touchAndChargeMessageCall(to);
       }
       if (!transferValue.isZero()) {
-        cost =
+        statelessGas =
             clampedAdd(
-                cost,
+                statelessGas,
                 frame.getAccessWitness().touchAndChargeValueTransfer(recipient.getAddress(), to));
       }
+      if (statelessGas == 0) {
+        return getWarmStorageReadCost();
+      }
+      return clampedAdd(gasCost, statelessGas);
     }
-    return cost;
-  }
-
-  @SuppressWarnings("removal")
-  @Override
-  @Deprecated(since = "24.4.1", forRemoval = true)
-  public long createOperationGasCost(final MessageFrame frame) {
-
-    final long initCodeOffset = clampedToLong(frame.getStackItem(1));
-    final long initCodeLength = clampedToLong(frame.getStackItem(2));
-
-    final long memoryGasCost = memoryExpansionGasCost(frame, initCodeOffset, initCodeLength);
-    long gasCost = clampedAdd(CREATE_OPERATION_GAS_COST, memoryGasCost);
-
-    return clampedAdd(gasCost, calculateInitGasCost(initCodeLength));
-  }
-
-  private static long calculateInitGasCost(final long initCodeLength) {
-    final int dataLength = (int) Math.ceil(initCodeLength / 32.0);
-    return dataLength * INIT_CODE_COST;
   }
 
   @Override
@@ -165,7 +150,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
                 frame.getRecipientAddress(), treeIndexes.get(0), treeIndexes.get(1));
 
     if (gasCost == 0) {
-      gasCost = WARM_STORAGE_READ_COST;
+      return getWarmStorageReadCost();
     }
 
     return gasCost;
@@ -183,33 +168,35 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
   public long extCodeCopyOperationGasCost(
       final MessageFrame frame,
       final Address address,
+      final boolean accountIsWarm,
       final long memOffset,
       final long codeOffset,
       final long readSize,
       final long codeSize) {
-    long gasCost =
-        super.extCodeCopyOperationGasCost(
-            frame, address, memOffset, codeOffset, readSize, codeSize);
-    gasCost =
+    long gasCost = copyWordsToMemoryGasCost(frame, 0L, COPY_WORD_GAS_COST, memOffset, readSize);
+
+    long statelessGas =
+        frame
+            .getAccessWitness()
+            .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, VERSION_LEAF_KEY);
+    statelessGas =
         clampedAdd(
-            gasCost,
-            frame
-                .getAccessWitness()
-                .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, VERSION_LEAF_KEY));
-    gasCost =
-        clampedAdd(
-            gasCost,
+            statelessGas,
             frame
                 .getAccessWitness()
                 .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_SIZE_LEAF_KEY));
+    if (statelessGas == 0) {
+      statelessGas = getWarmStorageReadCost();
+    }
+
     if (!frame.wasCreatedInTransaction(frame.getContractAddress())) {
-      gasCost =
+      statelessGas =
           clampedAdd(
-              gasCost,
+              statelessGas,
               frame.getAccessWitness().touchCodeChunks(address, codeOffset, readSize, codeSize));
     }
 
-    return gasCost;
+    return clampedAdd(gasCost, statelessGas);
   }
 
   @Override
@@ -260,48 +247,71 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
 
   @Override
   public long getBalanceOperationGasCost(
-      final MessageFrame frame, final Optional<Address> maybeAddress) {
-    return maybeAddress
-        .map(
-            address ->
-                frame
-                    .getAccessWitness()
-                    .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, BALANCE_LEAF_KEY))
-        .orElse(0L);
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
+    if (maybeAddress.isPresent()) {
+      final Address address = maybeAddress.get();
+      final long statelessGas =
+          frame
+              .getAccessWitness()
+              .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, BALANCE_LEAF_KEY);
+      if (statelessGas == 0) {
+        return getWarmStorageReadCost();
+      } else {
+        return statelessGas;
+      }
+    }
+    return 0L;
   }
 
   @Override
   public long extCodeHashOperationGasCost(
-      final MessageFrame frame, final Optional<Address> maybeAddress) {
-    return maybeAddress
-        .map(
-            address ->
-                frame
-                    .getAccessWitness()
-                    .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_KECCAK_LEAF_KEY))
-        .orElse(0L);
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
+    if (maybeAddress.isPresent()) {
+      final Address address = maybeAddress.get();
+      if (isPrecompile(address)) {
+        return 0L;
+      } else {
+        final long statelessGas =
+            frame
+                .getAccessWitness()
+                .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_KECCAK_LEAF_KEY);
+        if (statelessGas == 0) {
+          return getWarmStorageReadCost();
+        } else {
+          return statelessGas;
+        }
+      }
+    }
+    return 0L;
   }
 
   @Override
   public long getExtCodeSizeOperationGasCost(
-      final MessageFrame frame, final Optional<Address> maybeAddress) {
-    return maybeAddress
-        .map(
-            address -> {
-              long gasCost =
-                  frame
-                      .getAccessWitness()
-                      .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, VERSION_LEAF_KEY);
-              gasCost =
-                  clampedAdd(
-                      gasCost,
-                      frame
-                          .getAccessWitness()
-                          .touchAddressOnReadAndComputeGas(
-                              address, UInt256.ZERO, CODE_SIZE_LEAF_KEY));
-              return gasCost;
-            })
-        .orElse(0L);
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
+
+    if (maybeAddress.isPresent()) {
+      final Address address = maybeAddress.get();
+      if (isPrecompile(address)) {
+        return 0L;
+      } else {
+        long statelessGas =
+            frame
+                .getAccessWitness()
+                .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, VERSION_LEAF_KEY);
+        statelessGas =
+            clampedAdd(
+                statelessGas,
+                frame
+                    .getAccessWitness()
+                    .touchAddressOnReadAndComputeGas(address, UInt256.ZERO, CODE_SIZE_LEAF_KEY));
+        if (statelessGas == 0) {
+          return getWarmStorageReadCost();
+        } else {
+          return statelessGas;
+        }
+      }
+    }
+    return 0L;
   }
 
   @Override
@@ -331,13 +341,19 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
+  public long getSloadOperationGasCost(
+      final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
     AccessWitness accessWitness = frame.getAccessWitness();
     List<UInt256> treeIndexes = accessWitness.getStorageSlotTreeIndexes(key);
-    return frame
-        .getAccessWitness()
-        .touchAddressOnReadAndComputeGas(
-            frame.getContractAddress(), treeIndexes.get(0), treeIndexes.get(1));
+    long gasCost =
+        frame
+            .getAccessWitness()
+            .touchAddressOnReadAndComputeGas(
+                frame.getContractAddress(), treeIndexes.get(0), treeIndexes.get(1));
+    if (gasCost == 0) {
+      return getWarmStorageReadCost();
+    }
+    return gasCost;
   }
 
   @Override

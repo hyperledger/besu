@@ -406,7 +406,7 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long getBalanceOperationGasCost(
-      final MessageFrame frame, final Optional<Address> maybeAddress) {
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
@@ -442,6 +442,7 @@ public class FrontierGasCalculator implements GasCalculator {
   public long extCodeCopyOperationGasCost(
       final MessageFrame frame,
       final Address address,
+      final boolean accountIsWarm,
       final long memOffset,
       final long codeOffset,
       final long readSize,
@@ -452,14 +453,14 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long extCodeHashOperationGasCost(
-      final MessageFrame frame, final Optional<Address> address) {
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> address) {
     throw new UnsupportedOperationException(
         "EXTCODEHASH not supported by " + getClass().getSimpleName());
   }
 
   @Override
   public long getExtCodeSizeOperationGasCost(
-      final MessageFrame frame, final Optional<Address> maybeAddress) {
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return extCodeBaseGasCost();
   }
 
@@ -517,7 +518,8 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
+  public long getSloadOperationGasCost(
+      final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
     return SLOAD_OPERATION_GAS_COST;
   }
 

@@ -50,10 +50,7 @@ public class ExtCodeHashOperation extends AbstractOperation {
    */
   protected long cost(
       final MessageFrame frame, final Optional<Address> maybeAddress, final boolean accountIsWarm) {
-    return gasCalculator().extCodeHashOperationGasCost(frame, maybeAddress)
-        + (accountIsWarm
-            ? gasCalculator().getWarmStorageReadCost()
-            : gasCalculator().getColdAccountAccessCost());
+    return gasCalculator().extCodeHashOperationGasCost(frame, accountIsWarm, maybeAddress);
   }
 
   @Override

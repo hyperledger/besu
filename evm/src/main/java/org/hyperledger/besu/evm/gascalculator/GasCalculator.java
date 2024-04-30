@@ -337,10 +337,12 @@ public interface GasCalculator {
    * Returns the cost for executing a {@link BalanceOperation}.
    *
    * @param frame The current frame
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @param maybeAddress targeted address
    * @return the cost for executing the balance operation
    */
-  long getBalanceOperationGasCost(MessageFrame frame, final Optional<Address> maybeAddress);
+  long getBalanceOperationGasCost(
+      MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress);
 
   /**
    * Returns the cost for executing a {@link BlockHashOperation}.
@@ -362,6 +364,7 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @param address The address to use for the gas cost computation
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @param memOffset The offset in memory to external code copy the data to
    * @param codeOffset The starting offset within the code from which to begin copying
    * @param readSize The length of the code being copied into memory
@@ -371,6 +374,7 @@ public interface GasCalculator {
   long extCodeCopyOperationGasCost(
       MessageFrame frame,
       final Address address,
+      final boolean accountIsWarm,
       long memOffset,
       long codeOffset,
       long readSize,
@@ -380,19 +384,23 @@ public interface GasCalculator {
    * Returns the cost for executing a {@link ExtCodeHashOperation}.
    *
    * @param frame The current frame
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @param maybeAddress targeted address
    * @return the cost for executing the external code hash operation
    */
-  long extCodeHashOperationGasCost(final MessageFrame frame, Optional<Address> maybeAddress);
+  long extCodeHashOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, Optional<Address> maybeAddress);
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.
    *
    * @param frame The current frame
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @param maybeAddress targeted address
    * @return the cost for executing the external code size operation
    */
-  long getExtCodeSizeOperationGasCost(MessageFrame frame, Optional<Address> maybeAddress);
+  long getExtCodeSizeOperationGasCost(
+      MessageFrame frame, final boolean accountIsWarm, Optional<Address> maybeAddress);
 
   /**
    * Returns the cost for executing a {@link JumpDestOperation}.
@@ -471,7 +479,7 @@ public interface GasCalculator {
    *
    * @return the cost for executing the storage load operation
    */
-  long getSloadOperationGasCost(MessageFrame frame, UInt256 key);
+  long getSloadOperationGasCost(MessageFrame frame, UInt256 key, final boolean slotIsWarm);
 
   /**
    * Returns the cost for an SSTORE operation.
