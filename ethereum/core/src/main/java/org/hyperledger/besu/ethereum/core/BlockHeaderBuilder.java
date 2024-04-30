@@ -46,7 +46,7 @@ public class BlockHeaderBuilder {
 
   private Hash withdrawalsRoot = null;
   private Hash depositsRoot = null;
-  private Hash exitsRoot = null;
+  private Hash withdrawalRequests = null;
 
   private Hash receiptsRoot;
 
@@ -126,7 +126,7 @@ public class BlockHeaderBuilder {
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
         .depositsRoot(header.getDepositsRoot().orElse(null))
-        .exitsRoot(header.getExitsRoot().orElse(null));
+        .withdrawalRequestsRoot(header.getWithdrawalRequestsRoot().orElse(null));
   }
 
   public static BlockHeaderBuilder fromBuilder(final BlockHeaderBuilder fromBuilder) {
@@ -151,7 +151,7 @@ public class BlockHeaderBuilder {
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
             .depositsRoot(fromBuilder.depositsRoot)
-            .exitsRoot(fromBuilder.exitsRoot)
+            .withdrawalRequestsRoot(fromBuilder.withdrawalRequests)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
     return toBuilder;
@@ -182,7 +182,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         depositsRoot,
-        exitsRoot,
+        withdrawalRequests,
         blockHeaderFunctions);
   }
 
@@ -225,7 +225,7 @@ public class BlockHeaderBuilder {
         excessBlobGas,
         parentBeaconBlockRoot,
         depositsRoot,
-        exitsRoot);
+        withdrawalRequests);
   }
 
   private void validateBlockHeader() {
@@ -290,7 +290,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
     depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
-    exitsRoot(sealableBlockHeader.getExitsRoot().orElse(null));
+    withdrawalRequestsRoot(sealableBlockHeader.getWithdrawalRequestsRoot().orElse(null));
     return this;
   }
 
@@ -410,8 +410,8 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder exitsRoot(final Hash hash) {
-    this.exitsRoot = hash;
+  public BlockHeaderBuilder withdrawalRequestsRoot(final Hash hash) {
+    this.withdrawalRequests = hash;
     return this;
   }
 

@@ -36,8 +36,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -50,8 +50,8 @@ import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ValidatorExitContractHelper;
-import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
@@ -256,11 +256,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final ValidatorExitsValidator exitsValidator = newProtocolSpec.getExitsValidator();
-      Optional<List<ValidatorExit>> maybeExits = Optional.empty();
-      if (exitsValidator.allowValidatorExits()) {
-        maybeExits =
-            Optional.of(ValidatorExitContractHelper.popExitsFromQueue(disposableWorldState));
+      final WithdrawalRequestValidator withdrawalRequestsValidator =
+          newProtocolSpec.getWithdrawalRequestValidator();
+      Optional<List<WithdrawalRequest>> maybeWithdrawalRequests = Optional.empty();
+      if (withdrawalRequestsValidator.allowWithdrawalRequests()) {
+        maybeWithdrawalRequests =
+            Optional.of(
+                WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(
+                    disposableWorldState));
       }
 
       throwIfStopped();
@@ -300,7 +303,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-              .exitsRoot(maybeExits.map(BodyValidation::exitsRoot).orElse(null));
+              .withdrawalRequestsRoot(
+                  maybeWithdrawalRequests.map(BodyValidation::withdrawalRequestsRoot).orElse(null));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
@@ -317,7 +321,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               ommers,
               withdrawals,
               maybeDeposits,
-              maybeExits);
+              maybeWithdrawalRequests);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);
