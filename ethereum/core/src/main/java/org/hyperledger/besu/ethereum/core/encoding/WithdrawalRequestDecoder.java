@@ -16,17 +16,19 @@ package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
+import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-public class ValidatorExitDecoder {
+public class WithdrawalRequestDecoder {
 
-  public static ValidatorExit decode(final RLPInput rlpInput) {
+  public static WithdrawalRequest decode(final RLPInput rlpInput) {
     rlpInput.enterList();
     final Address sourceAddress = Address.readFrom(rlpInput);
     final BLSPublicKey validatorPublicKey = BLSPublicKey.readFrom(rlpInput);
+    final GWei amount = GWei.of(rlpInput.readUInt64Scalar());
     rlpInput.leaveList();
 
-    return new ValidatorExit(sourceAddress, validatorPublicKey);
+    return new WithdrawalRequest(sourceAddress, validatorPublicKey, amount);
   }
 }

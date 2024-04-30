@@ -304,7 +304,7 @@ public class BlockDataGenerator {
             .nonce(blockNonce)
             .withdrawalsRoot(options.getWithdrawalsRoot(null))
             .depositsRoot(options.getDepositsRoot(null))
-            .exitsRoot(options.getExitsRoot(null))
+            .withdrawalRequestsRoot(options.getWithdrawalRequestsRoot(null))
             .blockHeaderFunctions(
                 options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
     options.getBaseFee(Optional.of(Wei.of(uint256(2)))).ifPresent(blockHeaderBuilder::baseFee);
@@ -334,7 +334,7 @@ public class BlockDataGenerator {
         ommers,
         options.getWithdrawals(Optional.empty()),
         options.getDeposits(Optional.empty()),
-        options.getExits(Optional.empty()));
+        options.getWithdrawalRequests(Optional.empty()));
   }
 
   private BlockHeader ommer() {
@@ -641,7 +641,7 @@ public class BlockDataGenerator {
 
     private Optional<Optional<List<Withdrawal>>> withdrawals = Optional.empty();
     private Optional<Optional<List<Deposit>>> deposits = Optional.empty();
-    private Optional<Optional<List<ValidatorExit>>> exits = Optional.empty();
+    private Optional<Optional<List<WithdrawalRequest>>> withdrawalRequests = Optional.empty();
     private Optional<Bytes> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
     private Optional<Hash> receiptsRoot = Optional.empty();
@@ -658,7 +658,7 @@ public class BlockDataGenerator {
 
     private Optional<Hash> withdrawalsRoot = Optional.empty();
     private Optional<Hash> depositsRoot = Optional.empty();
-    private Optional<Hash> exitsRoot = Optional.empty();
+    private Optional<Hash> withdrawalRequestsRoot = Optional.empty();
 
     private Optional<Optional<Wei>> maybeMaxFeePerBlobGas = Optional.empty();
 
@@ -735,13 +735,13 @@ public class BlockDataGenerator {
       return deposits.orElse(defaultValue);
     }
 
-    public Hash getExitsRoot(final Hash defaultValue) {
-      return exitsRoot.orElse(defaultValue);
+    public Hash getWithdrawalRequestsRoot(final Hash defaultValue) {
+      return withdrawalRequestsRoot.orElse(defaultValue);
     }
 
-    public Optional<List<ValidatorExit>> getExits(
-        final Optional<List<ValidatorExit>> defaultValue) {
-      return exits.orElse(defaultValue);
+    public Optional<List<WithdrawalRequest>> getWithdrawalRequests(
+        final Optional<List<WithdrawalRequest>> defaultValue) {
+      return withdrawalRequests.orElse(defaultValue);
     }
 
     public boolean hasTransactions() {
@@ -776,8 +776,9 @@ public class BlockDataGenerator {
       return this;
     }
 
-    public BlockOptions setExits(final Optional<List<ValidatorExit>> exits) {
-      this.exits = Optional.of(exits);
+    public BlockOptions setWithdrawalRequests(
+        final Optional<List<WithdrawalRequest>> withdrawalRequests) {
+      this.withdrawalRequests = Optional.of(withdrawalRequests);
       return this;
     }
 
@@ -874,8 +875,8 @@ public class BlockDataGenerator {
       return this;
     }
 
-    public BlockOptions setExitsRoot(final Hash exitsRoot) {
-      this.exitsRoot = Optional.of(exitsRoot);
+    public BlockOptions setWithdrawalRequestsRoot(final Hash withdrawalRequestsRoot) {
+      this.withdrawalRequestsRoot = Optional.of(withdrawalRequestsRoot);
       return this;
     }
 
