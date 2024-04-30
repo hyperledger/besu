@@ -57,10 +57,10 @@ public interface BlockBody {
   Optional<? extends List<? extends Deposit>> getDeposits();
 
   /**
-   * Returns the list of exits of the block.
+   * Returns the list of withdrawal requests of the block.
    *
-   * @return The list of exits of the block.
+   * @return The list of withdrawal requests of the block.
    */
   @Unstable
-  Optional<? extends List<? extends ValidatorExit>> getExits();
+  Optional<? extends List<? extends WithdrawalRequest>> getWithdrawalRequests();
 }

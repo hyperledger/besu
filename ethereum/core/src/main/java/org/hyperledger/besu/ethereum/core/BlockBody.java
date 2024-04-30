@@ -38,14 +38,14 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
   private final Optional<List<Deposit>> deposits;
-  private final Optional<List<ValidatorExit>> exits;
+  private final Optional<List<WithdrawalRequest>> withdrawalRequests;
 
   public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = Optional.empty();
     this.deposits = Optional.empty();
-    this.exits = Optional.empty();
+    this.withdrawalRequests = Optional.empty();
   }
 
   public BlockBody(
@@ -53,12 +53,12 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> withdrawals,
       final Optional<List<Deposit>> deposits,
-      final Optional<List<ValidatorExit>> exits) {
+      final Optional<List<WithdrawalRequest>> withdrawalRequests) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = withdrawals;
     this.deposits = deposits;
-    this.exits = exits;
+    this.withdrawalRequests = withdrawalRequests;
   }
 
   public static BlockBody empty() {
@@ -92,13 +92,13 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
   }
 
   /**
-   * Returns the exits of the block.
+   * Returns the withdrawal requests of the block.
    *
-   * @return The optional list of exits included in the block.
+   * @return The optional list of withdrawal requests included in the block.
    */
   @Override
-  public Optional<List<ValidatorExit>> getExits() {
-    return exits;
+  public Optional<List<WithdrawalRequest>> getWithdrawalRequests() {
+    return withdrawalRequests;
   }
 
   /**
@@ -127,7 +127,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     output.writeList(getOmmers(), BlockHeader::writeTo);
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
     deposits.ifPresent(deposits -> output.writeList(deposits, Deposit::writeTo));
-    exits.ifPresent(exits -> output.writeList(exits, ValidatorExit::writeTo));
+    withdrawalRequests.ifPresent(
+        withdrawalRequests -> output.writeList(withdrawalRequests, WithdrawalRequest::writeTo));
   }
 
   public static BlockBody readWrappedBodyFrom(
@@ -182,7 +183,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
             : Optional.of(input.readList(Deposit::readFrom)),
         input.isEndOfCurrentList()
             ? Optional.empty()
-            : Optional.of(input.readList(ValidatorExit::readFrom)));
+            : Optional.of(input.readList(WithdrawalRequest::readFrom)));
   }
 
   @Override
@@ -194,12 +195,12 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         && Objects.equals(ommers, blockBody.ommers)
         && Objects.equals(withdrawals, blockBody.withdrawals)
         && Objects.equals(deposits, blockBody.deposits)
-        && Objects.equals(exits, blockBody.exits);
+        && Objects.equals(withdrawalRequests, blockBody.withdrawalRequests);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers, withdrawals, deposits, exits);
+    return Objects.hash(transactions, ommers, withdrawals, deposits, withdrawalRequests);
   }
 
   public boolean isEmpty() {
@@ -207,7 +208,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         && ommers.isEmpty()
         && withdrawals.isEmpty()
         && deposits.isEmpty()
-        && exits.isEmpty();
+        && withdrawalRequests.isEmpty();
   }
 
   @Override
@@ -221,8 +222,9 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         + withdrawals
         + ", deposits="
         + deposits
-        + ", exits="
-        + exits
+        + ", withdrawal_requests="
+        + ", withdrawal_requests="
+        + withdrawalRequests
         + '}';
   }
 }
