@@ -207,6 +207,12 @@ allprojects {
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
+      // apply appropriate license header files.
+      // TODO: Remove checkSpdxLicense task and buildSrc when all files are formatted and updated via multiple PRs
+      // TODO: Uncomment following when all files are formatted and updated via multiple PRs
+      // licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n \\* Copyright ConsenSys AG\\.")
+      // licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license").named("older.year").onlyIfContentMatches("^/\\*\\r?\\n \\* Copyright \\d{4} ConsenSys AG\\.")
+      // licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
     }
     groovyGradle {
       target '*.gradle'
