@@ -294,8 +294,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     return mockHeader;
   }
 
-  private Hash getRequestsRoot(Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
-    throw new NotImplementedException();
+  private Hash getRequestsRoot(final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
+    throw new NotImplementedException(maybeWithdrawalRequests.toString());
     // return  maybeWithdrawalRequests.map(BodyValidation::requestsRoot).orElse(null));
   }
 

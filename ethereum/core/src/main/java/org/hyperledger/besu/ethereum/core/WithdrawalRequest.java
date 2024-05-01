@@ -56,6 +56,7 @@ public class WithdrawalRequest extends Request
     return WithdrawalRequestDecoder.decode(rlpInput);
   }
 
+  @Override
   public void writeTo(final RLPOutput out) {
     WithdrawalRequestEncoder.encode(this, out);
   }

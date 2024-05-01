@@ -191,7 +191,7 @@ public class WithdrawalRequestValidatorTestFixtures {
   }
 
   private static Optional<List<Request>> createRequests(
-      Optional<List<WithdrawalRequest>> withdrawalRequests) {
-    throw new NotImplementedException();
+      final Optional<List<WithdrawalRequest>> withdrawalRequests) {
+    throw new NotImplementedException(withdrawalRequests.toString());
   }
 }
