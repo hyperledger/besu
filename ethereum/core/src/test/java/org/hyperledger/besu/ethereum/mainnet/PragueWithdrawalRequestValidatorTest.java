@@ -46,8 +46,14 @@ class PragueWithdrawalRequestValidatorTest {
 
   private static Stream<Arguments> paramsForValidateWithdrawalRequestParameter() {
     return Stream.of(
-        Arguments.of("Allowed exits - validating empty exits", Optional.empty(), false),
-        Arguments.of("Allowed exits - validating present exits", Optional.of(List.of()), true));
+        Arguments.of(
+            "Allowed WithdrawalRequests - validating empty WithdrawalRequests",
+            Optional.empty(),
+            false),
+        Arguments.of(
+            "Allowed WithdrawalRequests - validating present WithdrawalRequests",
+            Optional.of(List.of()),
+            true));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
@@ -68,7 +74,7 @@ class PragueWithdrawalRequestValidatorTest {
   }
 
   @Test
-  public void allowExitsShouldReturnTrue() {
+  public void allowWithdrawalRequestsShouldReturnTrue() {
     assertThat(new PragueWithdrawalRequestValidator().allowWithdrawalRequests()).isTrue();
   }
 }

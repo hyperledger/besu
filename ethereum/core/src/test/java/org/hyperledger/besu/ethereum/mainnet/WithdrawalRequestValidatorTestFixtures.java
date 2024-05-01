@@ -44,7 +44,7 @@ public class WithdrawalRequestValidatorTestFixtures {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(BodyValidation.requestsRoot(maybeWithdrawalRequests.get()))
+            .setRequestsRoot(BodyValidation.requestsRoot(maybeWithdrawalRequests.get()))
             .setRequests(maybeWithdrawalRequests);
     final Block block = blockDataGenerator.block(blockOptions);
 
@@ -57,7 +57,7 @@ public class WithdrawalRequestValidatorTestFixtures {
   static WithdrawalRequestTestParameter blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(Hash.EMPTY)
+            .setRequestsRoot(Hash.EMPTY)
             .setRequests(Optional.empty());
     final Block block = blockDataGenerator.block(blockOptions);
 
@@ -97,9 +97,7 @@ public class WithdrawalRequestValidatorTestFixtures {
     final Optional<List<Request>> requests = Optional.of(java.util.List.of(withdrawalRequest));
 
     final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(Hash.EMPTY)
-            .setRequests(requests);
+        BlockDataGenerator.BlockOptions.create().setRequestsRoot(Hash.EMPTY).setRequests(requests);
     final Block block = blockDataGenerator.block(blockOptions);
 
     return new WithdrawalRequestTestParameter(
@@ -116,7 +114,7 @@ public class WithdrawalRequestValidatorTestFixtures {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(BodyValidation.requestsRoot(requests.get()))
+            .setRequestsRoot(BodyValidation.requestsRoot(requests.get()))
             .setRequests(requests);
     final Block block = blockDataGenerator.block(blockOptions);
 
@@ -139,7 +137,7 @@ public class WithdrawalRequestValidatorTestFixtures {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(BodyValidation.requestsRoot(maybeRequests.get()))
+            .setRequestsRoot(BodyValidation.requestsRoot(maybeRequests.get()))
             .setRequests(maybeRequests);
     final Block block = blockDataGenerator.block(blockOptions);
 

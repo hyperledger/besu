@@ -58,7 +58,7 @@ public class PragueWithdrawalRequestValidator implements WithdrawalRequestValida
       return false;
     }
 
-    // Validate exits
+    // Validate WithdrawalRequests
     final boolean expectedWithdrawalRequestMatch =
         withdrawalRequests.equals(withdrawalRequestsInBlock);
     if (!expectedWithdrawalRequestMatch) {

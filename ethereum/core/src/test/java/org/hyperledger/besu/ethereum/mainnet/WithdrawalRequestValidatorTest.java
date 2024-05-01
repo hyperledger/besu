@@ -47,8 +47,14 @@ class WithdrawalRequestValidatorTest {
 
   private static Stream<Arguments> paramsForValidateWithdrawalRequestParameter() {
     return Stream.of(
-        Arguments.of("Prohibited exits - validating empty exits", Optional.empty(), true),
-        Arguments.of("Prohibited exits - validating present exits", Optional.of(List.of()), false));
+        Arguments.of(
+            "Prohibited WithdrawalRequests - validating empty WithdrawalRequests",
+            Optional.empty(),
+            true),
+        Arguments.of(
+            "Prohibited WithdrawalRequests - validating present WithdrawalRequests",
+            Optional.of(List.of()),
+            false));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
@@ -70,7 +76,7 @@ class WithdrawalRequestValidatorTest {
   }
 
   @Test
-  public void allowExitsShouldReturnFalse() {
+  public void allowWithdrawalRequestsShouldReturnFalse() {
     assertThat(new ProhibitedWithdrawalRequests().allowWithdrawalRequests()).isFalse();
   }
 }

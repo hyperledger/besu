@@ -50,7 +50,7 @@ public class PragueRequestValidator {
       return false;
     }
 
-    // Validate exits_root
+    // Validate requests root
     final Hash expectedRequestRoot = BodyValidation.requestsRoot(requests);
     if (!expectedRequestRoot.equals(block.getHeader().getRequestsRoot().get())) {
       LOG.warn(

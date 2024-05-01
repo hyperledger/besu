@@ -123,8 +123,8 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
   }
 
   @Test
-  public void assertBodyIdentifierUsesExitsToGenerateBodyIdentifiers() {
-    final WithdrawalRequest validatorExit =
+  public void assertBodyIdentifierUsesWithdrawalRequestsToGenerateBodyIdentifiers() {
+    final WithdrawalRequest withdrawalRequest =
         new WithdrawalRequest(
             Address.fromHexString("0x763c396673F9c391DCe3361A9A71C8E161388000"),
             BLSPublicKey.fromHexString(
@@ -140,7 +140,7 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
             emptyList(),
             Optional.empty(),
             Optional.empty(),
-            Optional.of(List.of(validatorExit)));
+            Optional.of(List.of(withdrawalRequest)));
 
     assertThat(
             new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)

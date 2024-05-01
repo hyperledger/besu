@@ -196,8 +196,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
-    final WithdrawalRequestValidator exitsValidator = protocolSpec.getWithdrawalRequestValidator();
-    if (exitsValidator.allowWithdrawalRequests()) {
+    final WithdrawalRequestValidator withdrawalRequestValidator =
+        protocolSpec.getWithdrawalRequestValidator();
+    if (withdrawalRequestValidator.allowWithdrawalRequests()) {
       // Performing system-call logic
       WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
     }

@@ -52,7 +52,7 @@ class MainnetBlockBodyValidatorTest {
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsValidator withdrawalsValidator;
   @Mock private DepositsValidator depositsValidator;
-  @Mock private WithdrawalRequestValidator exitsValidator;
+  @Mock private WithdrawalRequestValidator withdrawalRequestValidator;
 
   @BeforeEach
   public void setUp() {
@@ -66,8 +66,12 @@ class MainnetBlockBodyValidatorTest {
     lenient().when(depositsValidator.validateDeposits(any(), any())).thenReturn(true);
     lenient().when(depositsValidator.validateDepositsRoot(any())).thenReturn(true);
 
-    lenient().when(protocolSpec.getWithdrawalRequestValidator()).thenReturn(exitsValidator);
-    lenient().when(exitsValidator.validateWithdrawalRequestsInBlock(any(), any())).thenReturn(true);
+    lenient()
+        .when(protocolSpec.getWithdrawalRequestValidator())
+        .thenReturn(withdrawalRequestValidator);
+    lenient()
+        .when(withdrawalRequestValidator.validateWithdrawalRequestsInBlock(any(), any()))
+        .thenReturn(true);
   }
 
   @Test
@@ -144,7 +148,7 @@ class MainnetBlockBodyValidatorTest {
   }
 
   @Test
-  public void validationFailsIfExitsValidationFails() {
+  public void validationFailsIfWithdrawalRequestsValidationFails() {
     final Block block =
         blockDataGenerator.block(
             new BlockOptions()
@@ -158,7 +162,8 @@ class MainnetBlockBodyValidatorTest {
                 .setRequests(Optional.of(List.of())));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
-    when(exitsValidator.validateWithdrawalRequestsInBlock(any(), any())).thenReturn(false);
+    when(withdrawalRequestValidator.validateWithdrawalRequestsInBlock(any(), any()))
+        .thenReturn(false);
 
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
