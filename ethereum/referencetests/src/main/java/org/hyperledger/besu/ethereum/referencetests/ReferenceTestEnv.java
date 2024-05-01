@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.referencetests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -145,7 +143,7 @@ public class ReferenceTestEnv extends BlockHeader {
         currentExcessBlobGas == null ? null : BlobGas.of(Long.decode(currentExcessBlobGas)),
         beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
         null, // depositsRoot
-        null, // exitsRoot
+        null, // withdrawalRequestsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;
