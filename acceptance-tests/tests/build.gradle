@@ -162,6 +162,7 @@ task acceptanceTestMainnet(type: Test) {
 task acceptanceTestNotPrivacy(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   exclude '**/privacy/**'
+  exclude '**/bftsoak/**'
 
   useJUnitPlatform {}
 
