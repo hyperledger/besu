@@ -119,16 +119,7 @@ public class RangeHeadersFetcher {
 
   private List<BlockHeader> stripExistingRangeHeaders(
       final BlockHeader lastHeader, final List<BlockHeader> headers) {
-    LOG.atDebug()
-        .setMessage("Retrieved range headers for block number {} to {}")
-        .addArgument(headers.get(0).getNumber())
-        .addArgument(headers.get(headers.size() - 1).getNumber())
-        .log();
     if (!headers.isEmpty() && headers.get(0).equals(lastHeader)) {
-      LOG.atDebug()
-          .setMessage("Stripping block {} from range headers")
-          .addArgument(lastHeader.getNumber())
-          .log();
       return headers.subList(1, headers.size());
     }
     return headers;
