@@ -17,7 +17,7 @@ pragma solidity >=0.7.0 <0.9.0;
 // compile with:
 // solc EventEmitter.sol --bin --abi --optimize --overwrite -o .
 // then create web3j wrappers with:
-// web3j solidity generate -b ./generated/EventEmitter.bin -a ./generated/EventEmitter.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
+// web3j generate solidity -b ./generated/EventEmitter.bin -a ./generated/EventEmitter.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
 contract EventEmitter {
     address owner;
     event stored(address _to, uint _amount);

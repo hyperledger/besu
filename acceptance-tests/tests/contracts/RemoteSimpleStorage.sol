@@ -19,7 +19,7 @@ import "./SimpleStorage.sol";
 // compile with:
 // solc RemoteSimpleStorage.sol --bin --abi --optimize --overwrite -o .
 // then create web3j wrappers with:
-// web3j solidity generate -b ./generated/RemoteSimpleStorage.bin -a ./generated/RemoteSimpleStorage.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
+// web3j generate solidity -b ./generated/RemoteSimpleStorage.bin -a ./generated/RemoteSimpleStorage.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
 contract RemoteSimpleStorage {
     SimpleStorage public simpleStorage;
 

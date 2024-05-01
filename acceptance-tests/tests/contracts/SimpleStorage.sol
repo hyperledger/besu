@@ -17,7 +17,7 @@ pragma solidity >=0.7.0 <0.8.20;
 // compile with:
 // solc SimpleStorage.sol --bin --abi --optimize --overwrite -o .
 // then create web3j wrappers with:
-// web3j solidity generate -b ./generated/SimpleStorage.bin -a ./generated/SimpleStorage.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
+// web3j generate solidity -b ./generated/SimpleStorage.bin -a ./generated/SimpleStorage.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
 contract SimpleStorage {
     uint data;
 
