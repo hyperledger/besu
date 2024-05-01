@@ -14,18 +14,58 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import static com.google.common.base.Preconditions.checkNotNull;
+
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
+/** Encodes Request objects into RLP format. */
 public class RequestEncoder {
-  public static void encode(final Request request, final RLPOutput rlpOutput) {
-    request.writeTo(rlpOutput);
+
+  @FunctionalInterface
+  interface Encoder {
+    void encode(Request request, RLPOutput output);
   }
 
+  private static final ImmutableMap<RequestType, RequestEncoder.Encoder> ENCODERS =
+      ImmutableMap.of(RequestType.WITHDRAWAL, WithdrawalRequestEncoder::encode);
+
+  /**
+   * Encodes a Request into the provided RLPOutput.
+   *
+   * @param request The Request to encode.
+   * @param rlpOutput The RLPOutput to write the encoded data to.
+   */
+  public static void encode(final Request request, final RLPOutput rlpOutput) {
+    final RequestEncoder.Encoder encoder = getEncoder(request.getType());
+    rlpOutput.writeByte(request.getType().getSerializedType());
+    encoder.encode(request, rlpOutput);
+  }
+
+  /**
+   * Encodes a Request into a Bytes object representing the RLP-encoded data.
+   *
+   * @param request The Request to encode.
+   * @return The RLP-encoded data as a Bytes object.
+   */
   public static Bytes encodeOpaqueBytes(final Request request) {
     return RLP.encode(rlpOutput -> encode(request, rlpOutput));
+  }
+
+  /**
+   * Retrieves the encoder for the specified RequestType.
+   *
+   * @param requestType The type of the request.
+   * @return The encoder for the specified type.
+   * @throws NullPointerException if no encoder is found for the specified type.
+   */
+  private static RequestEncoder.Encoder getEncoder(final RequestType requestType) {
+    return checkNotNull(
+        ENCODERS.get(requestType), "Encoder not found for request type: %s", requestType);
   }
 }

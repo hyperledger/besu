@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -22,7 +23,28 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class WithdrawalRequestEncoder {
 
-  public static void encode(final WithdrawalRequest withdrawalRequest, final RLPOutput rlpOutput) {
+  /**
+   * Encodes a Request into RLP format if it is a WithdrawalRequest.
+   *
+   * @param request The Request to encode, which must be a WithdrawalRequest.
+   * @param rlpOutput The RLPOutput to write the encoded data to.
+   * @throws IllegalArgumentException if the provided request is not a WithdrawalRequest.
+   */
+  public static void encode(final Request request, final RLPOutput rlpOutput) {
+    if (!(request instanceof WithdrawalRequest withdrawalRequest)) {
+      throw new IllegalArgumentException("The provided request is not of type WithdrawalRequest.");
+    }
+    encodeWithdrawalRequest(withdrawalRequest, rlpOutput);
+  }
+
+  /**
+   * Encodes the details of a WithdrawalRequest into RLP format.
+   *
+   * @param withdrawalRequest The WithdrawalRequest to encode.
+   * @param rlpOutput The RLPOutput to write the encoded data to.
+   */
+  private static void encodeWithdrawalRequest(
+      final WithdrawalRequest withdrawalRequest, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     rlpOutput.writeBytes(withdrawalRequest.getSourceAddress());
     rlpOutput.writeBytes(withdrawalRequest.getValidatorPubKey());
