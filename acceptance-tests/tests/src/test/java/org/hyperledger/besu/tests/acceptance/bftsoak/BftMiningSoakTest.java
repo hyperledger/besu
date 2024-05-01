@@ -28,7 +28,6 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -104,91 +103,59 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     Instant nextStepEndTime = startTime.plus(getTestDurationMins() / NUM_STEPS, ChronoUnit.MINUTES);
 
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
-      try {
-        Thread.sleep(ONE_MINUTE);
-        chainHeight = minerNode1.execute(ethTransactions.blockNumber());
+      Thread.sleep(ONE_MINUTE);
+      chainHeight = minerNode1.execute(ethTransactions.blockNumber());
 
-        // With 1-second block period chain height should have moved on by at least 50 blocks
-        assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(50))))
-            .isGreaterThanOrEqualTo(1);
-        lastChainHeight = chainHeight;
-      } catch (InterruptedException e) {
-        Assertions.fail(e);
-        break;
-      }
+      // With 1-second block period chain height should have moved on by at least 50 blocks
+      assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(50))))
+          .isGreaterThanOrEqualTo(1);
+      lastChainHeight = chainHeight;
     }
     Instant previousStepEndTime = Instant.now();
 
     // Step 2
     // Stop one of the nodes, check that the chain continues mining
     // blocks
-    cluster.stopNode(minerNode4);
+    stopNode(minerNode4);
 
     nextStepEndTime =
         previousStepEndTime.plus(getTestDurationMins() / NUM_STEPS, ChronoUnit.MINUTES);
-    while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
-      try {
-        Thread.sleep(ONE_MINUTE);
-        chainHeight = minerNode1.execute(ethTransactions.blockNumber());
 
-        // Chain height should have moved on by at least 5 blocks
-        assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(20))))
-            .isGreaterThanOrEqualTo(1);
-        lastChainHeight = chainHeight;
-      } catch (InterruptedException e) {
-        Assertions.fail(e);
-        break;
-      }
+    while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
+      Thread.sleep(ONE_MINUTE);
+      chainHeight = minerNode1.execute(ethTransactions.blockNumber());
+
+      // Chain height should have moved on by at least 5 blocks
+      assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(20))))
+          .isGreaterThanOrEqualTo(1);
+      lastChainHeight = chainHeight;
     }
     previousStepEndTime = Instant.now();
 
     // Step 3
     // Stop another one of the nodes, check that the chain now stops
     // mining blocks
-    cluster.stopNode(minerNode3);
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
+    stopNode(minerNode3);
+
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
     lastChainHeight = chainHeight;
 
     nextStepEndTime =
         previousStepEndTime.plus(getTestDurationMins() / NUM_STEPS, ChronoUnit.MINUTES);
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
-      try {
-        Thread.sleep(ONE_MINUTE);
-        chainHeight = minerNode1.execute(ethTransactions.blockNumber());
+      Thread.sleep(ONE_MINUTE);
+      chainHeight = minerNode1.execute(ethTransactions.blockNumber());
 
-        // Chain height should not have moved on
-        assertThat(chainHeight.equals(lastChainHeight)).isTrue();
-      } catch (InterruptedException e) {
-        Assertions.fail(e);
-        break;
-      }
+      // Chain height should not have moved on
+      assertThat(chainHeight.equals(lastChainHeight)).isTrue();
     }
 
     // Step 4
     // Restart both of the stopped nodes. Check that the chain resumes
     // mining blocks
-    cluster.startNode(minerNode4);
+    startNode(minerNode3);
 
-    // Give it time to start
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
-
-    cluster.startNode(minerNode3);
-
-    // Give it time to start
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
+    startNode(minerNode4);
 
     previousStepEndTime = Instant.now();
 
@@ -201,33 +168,24 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     lastChainHeight = chainHeight;
 
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
-      try {
-        Thread.sleep(ONE_MINUTE);
-        chainHeight = minerNode1.execute(ethTransactions.blockNumber());
-        lastChainHeight = chainHeight;
-      } catch (InterruptedException e) {
-        Assertions.fail(e);
-        break;
-      }
+      Thread.sleep(ONE_MINUTE);
+      chainHeight = minerNode1.execute(ethTransactions.blockNumber());
+      lastChainHeight = chainHeight;
     }
     previousStepEndTime = Instant.now();
 
     // By this loop it should be producing blocks again
     nextStepEndTime =
         previousStepEndTime.plus(getTestDurationMins() / NUM_STEPS, ChronoUnit.MINUTES);
-    while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
-      try {
-        Thread.sleep(ONE_MINUTE);
-        chainHeight = minerNode1.execute(ethTransactions.blockNumber());
 
-        // Chain height should have moved on by at least 50 blocks
-        assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(50))))
-            .isGreaterThanOrEqualTo(1);
-        lastChainHeight = chainHeight;
-      } catch (InterruptedException e) {
-        Assertions.fail(e);
-        break;
-      }
+    while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
+      Thread.sleep(ONE_MINUTE);
+      chainHeight = minerNode1.execute(ethTransactions.blockNumber());
+
+      // Chain height should have moved on by at least 50 blocks
+      assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(50))))
+          .isGreaterThanOrEqualTo(1);
+      lastChainHeight = chainHeight;
     }
 
     // Update our smart contract before upgrading from berlin to london
@@ -236,14 +194,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
     // Upgrade the chain from berlin to london
-    cluster.stopNode(minerNode1);
 
-    // Give it time to stop
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
+    // Stop node 1
+    stopNode(minerNode1);
 
     final int londonBlockNumber = lastChainHeight.intValue() + 120;
 
@@ -251,80 +204,35 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     updateGenesisConfigToLondon(minerNode1, true, londonBlockNumber);
 
     // Restart it
-    cluster.startNode(minerNode1);
+    startNode(minerNode1);
 
-    // Give it time to start
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
-
-    cluster.stopNode(minerNode2);
-
-    // Give it time to stop
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
+    // Stop node 2
+    stopNode(minerNode2);
 
     // Upgrade to London in 120 blocks time
     updateGenesisConfigToLondon(minerNode2, true, londonBlockNumber);
 
     // Restart it
-    cluster.startNode(minerNode2);
+    startNode(minerNode2);
 
-    // Give it time to start
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
-
-    cluster.stopNode(minerNode3);
-
-    // Give it time to stop
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
+    // Stop node 3
+    stopNode(minerNode3);
 
     // Upgrade to London in 120 blocks time
     updateGenesisConfigToLondon(minerNode3, true, londonBlockNumber);
 
     // Restart it
-    cluster.startNode(minerNode3);
+    startNode(minerNode3);
 
-    // Give it time to start
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
-
-    cluster.stopNode(minerNode4);
-
-    // Give it time to stop
-    try {
-      Thread.sleep(TEN_SECONDS);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
+    // Stop node 4
+    stopNode(minerNode4);
 
     // Upgrade to London in 120 block time
     updateGenesisConfigToLondon(minerNode4, true, londonBlockNumber);
 
     // Restart it
-    cluster.startNode(minerNode4);
+    startNode(minerNode4);
 
-    // Give it time to start
-    try {
-      Thread.sleep(ONE_MINUTE);
-    } catch (InterruptedException e) {
-      Assertions.fail(e);
-    }
     previousStepEndTime = Instant.now();
 
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -333,18 +241,13 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     lastChainHeight = chainHeight;
 
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
-      try {
-        Thread.sleep(ONE_MINUTE);
-        chainHeight = minerNode1.execute(ethTransactions.blockNumber());
+      Thread.sleep(ONE_MINUTE);
+      chainHeight = minerNode1.execute(ethTransactions.blockNumber());
 
-        // Chain height should have moved on by at least 50 blocks
-        assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(50))))
-            .isGreaterThanOrEqualTo(1);
-        lastChainHeight = chainHeight;
-      } catch (InterruptedException e) {
-        Assertions.fail(e);
-        break;
-      }
+      // Chain height should have moved on by at least 50 blocks
+      assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(50))))
+          .isGreaterThanOrEqualTo(1);
+      lastChainHeight = chainHeight;
     }
 
     // Check that the state of our smart contract is still correct
@@ -366,5 +269,17 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       config1.put("zeroBaseFee", zeroBaseFeeEnabled);
       minerNode.setGenesisConfig(genesisConfigNode3.toString());
     }
+  }
+
+  // Start a node with a delay before returning to give it time to start
+  private void startNode(final BesuNode node) throws InterruptedException {
+    cluster.startNode(node);
+    Thread.sleep(TEN_SECONDS);
+  }
+
+  // Stop a node with a delay before returning to give it time to stop
+  private void stopNode(final BesuNode node) throws InterruptedException {
+    cluster.stopNode(node);
+    Thread.sleep(TEN_SECONDS);
   }
 }
