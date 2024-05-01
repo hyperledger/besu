@@ -81,7 +81,6 @@ public interface WithdrawalRequestValidator {
     }
   }
 
-
   private static Optional<List<WithdrawalRequest>> getMaybeWithdrawalRequests(
       final Optional<List<Request>> requests) {
     // todo implement extract from requests

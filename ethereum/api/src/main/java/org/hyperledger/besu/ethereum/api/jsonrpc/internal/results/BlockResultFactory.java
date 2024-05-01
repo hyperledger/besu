@@ -181,7 +181,8 @@ public class BlockResultFactory {
         blobsBundleV1);
   }
 
-  private Optional<List<WithdrawalRequest>> getWithdrawalRequest(final Optional<List<Request>> requests) {
+  private Optional<List<WithdrawalRequest>> getWithdrawalRequest(
+      final Optional<List<Request>> requests) {
     throw new NotImplementedException(requests.toString());
   }
 

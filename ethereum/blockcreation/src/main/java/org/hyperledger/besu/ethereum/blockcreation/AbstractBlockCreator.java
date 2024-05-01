@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -73,6 +72,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
+import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -341,7 +341,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     }
   }
 
-  private Optional<List<Request>> getWithdrawalRequest(final Optional<List<WithdrawalRequest>> requests) {
+  private Optional<List<Request>> getWithdrawalRequest(
+      final Optional<List<WithdrawalRequest>> requests) {
     throw new NotImplementedException(requests.toString());
   }
 

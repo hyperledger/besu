@@ -14,27 +14,80 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import org.apache.commons.lang3.NotImplementedException;
+import java.util.Optional;
 
+import com.google.common.collect.ImmutableMap;
+import org.apache.tuweni.bytes.Bytes;
+
+/**
+ * Decodes a request from its RLP encoded form.
+ *
+ * <p>This class provides functionality to decode requests based on their type.
+ */
 public class RequestDecoder {
+  @FunctionalInterface
+  interface Decoder {
+    Request decode(RLPInput input);
+  }
 
+  private static final ImmutableMap<RequestType, Decoder> DECODERS =
+      ImmutableMap.of(RequestType.WITHDRAWAL, WithdrawalRequestDecoder::decode);
+
+  /**
+   * Decodes a request from its RLP encoded bytes.
+   *
+   * <p>This method first determines the type of the request and then decodes the request data
+   * according to the request type.
+   *
+   * @param rlpInput The RLP encoded request.
+   * @return The decoded Request object.
+   * @throws IllegalArgumentException if the request type is unsupported or invalid.
+   */
   public static Request decode(final RLPInput rlpInput) {
-    rlpInput.enterList();
+    final Bytes requestBytes = rlpInput.readBytes();
+    return getRequestType(requestBytes)
+        .map(type -> decodeRequest(requestBytes, type))
+        .orElseThrow(() -> new IllegalArgumentException("Unsupported or invalid request type"));
+  }
 
-   /* final Address sourceAddress = Address.readFrom(rlpInput);
-    final BLSPublicKey validatorPublicKey = BLSPublicKey.readFrom(rlpInput);
-    final GWei amount = GWei.of(rlpInput.readUInt64Scalar());*/
-    rlpInput.leaveList();
-    if(true) {
-      throw new NotImplementedException(rlpInput.toString());
+  /**
+   * Decodes the request data according to the request type.
+   *
+   * @param requestBytes The bytes representing the request, including the request type byte.
+   * @param requestType The type of the request to decode.
+   * @return The decoded Request.
+   * @throws IllegalStateException if no decoder is found for the specified request type.
+   */
+  private static Request decodeRequest(Bytes requestBytes, RequestType requestType) {
+    // Skip the first byte which is the request type
+    RLPInput requestInput = RLP.input(requestBytes.slice(1));
+    Decoder decoder =
+        Optional.ofNullable(DECODERS.get(requestType))
+            .orElseThrow(
+                () ->
+                    new IllegalStateException(
+                        "Decoder not found for request type: " + requestType));
+    return decoder.decode(requestInput);
+  }
+
+  /**
+   * Extracts the request type from the given bytes.
+   *
+   * @param bytes The bytes from which to extract the request type.
+   * @return An Optional containing the RequestType if it could be determined, or an empty Optional
+   *     otherwise.
+   */
+  private static Optional<RequestType> getRequestType(final Bytes bytes) {
+    try {
+      byte typeByte = bytes.get(0);
+      return Optional.of(RequestType.of(typeByte));
+    } catch (IllegalArgumentException ex) {
+      return Optional.empty();
     }
-    return null;
   }
 }

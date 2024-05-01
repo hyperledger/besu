@@ -123,6 +123,7 @@ public class NonBesuBlockHeader implements BlockHeader {
   public Optional<? extends Hash> getRequestsRoot() {
     return Optional.empty();
   }
+
   @Override
   public Hash getBlockHash() {
     return blockHash;

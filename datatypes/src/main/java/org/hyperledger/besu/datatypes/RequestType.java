@@ -12,12 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+
 package org.hyperledger.besu.datatypes;
 
-/** The enum Transaction type. */
+import java.util.Arrays;
+
+/** Enum representing different types of requests with associated serialized type values. */
 public enum RequestType {
-  /** The Frontier. */
   WITHDRAWAL(0x01);
+
   private final int typeValue;
 
   RequestType(final int typeValue) {
@@ -25,11 +28,29 @@ public enum RequestType {
   }
 
   /**
-   * Gets serialized type.
+   * Gets the serialized type value of the request type.
    *
-   * @return the serialized type
+   * @return the serialized type value as a byte.
    */
   public byte getSerializedType() {
     return (byte) this.typeValue;
+  }
+
+  /**
+   * Returns the {@link RequestType} corresponding to the given serialized type value.
+   *
+   * @param serializedTypeValue the serialized type value.
+   * @return the corresponding {@link RequestType}.
+   * @throws IllegalArgumentException if the serialized type value does not correspond to any {@link
+   *     RequestType}.
+   */
+  public static RequestType of(final int serializedTypeValue) {
+    return Arrays.stream(RequestType.values())
+        .filter(requestType -> requestType.typeValue == serializedTypeValue)
+        .findFirst()
+        .orElseThrow(
+            () ->
+                new IllegalArgumentException(
+                    String.format("Unsupported request type: 0x%02X", serializedTypeValue)));
   }
 }
