@@ -76,9 +76,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     //    Deploy a contract that we'll invoke periodically to ensure state
     //    is correct during the test, especially after stopping nodes and
     //    applying new forks.
-    SimpleStorage simpleStorageContract = null;
-
-    simpleStorageContract =
+    SimpleStorage simpleStorageContract =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorage.class));
 
     // Check the contract address is as expected for this sender & nonce
