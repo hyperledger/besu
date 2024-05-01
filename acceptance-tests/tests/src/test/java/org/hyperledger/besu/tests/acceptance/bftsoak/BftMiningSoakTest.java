@@ -21,6 +21,7 @@ import org.hyperledger.besu.tests.acceptance.bft.BftAcceptanceTestParameterizati
 import org.hyperledger.besu.tests.acceptance.bft.ParameterizedBftTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.web3j.generated.SimpleStorage;
+import org.hyperledger.besu.tests.web3j.generated.SimpleStorageShanghai;
 
 import java.math.BigInteger;
 import java.time.Duration;
@@ -28,6 +29,7 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -74,13 +76,26 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     //    Deploy a contract that we'll invoke periodically to ensure state
     //    is correct during the test, especially after stopping nodes and
     //    applying new forks.
-    final SimpleStorage simpleStorageContract =
+    SimpleStorage simpleStorageContract = null;
+
+    simpleStorageContract =
         minerNode1.execute(contractTransactions.createSmartContract(SimpleStorage.class));
 
     // Check the contract address is as expected for this sender & nonce
     contractVerifier
         .validTransactionReceipt("0x42699a7612a82f1d9c36148af9c77354759b210b")
         .verify(simpleStorageContract);
+
+    // Before upgrading to newer forks, try creating a shanghai-evm contract and check that
+    // the transaction fails
+    try {
+      minerNode1.execute(contractTransactions.createSmartContract(SimpleStorageShanghai.class));
+      Assertions.fail("Shanghai transaction should not be executed on a pre-shanghai chain");
+    } catch (RuntimeException e) {
+      assertThat(e.getMessage())
+          .contains(
+              "Revert reason: 'Transaction processing could not be completed due to an exception'");
+    }
 
     // Should initially be set to 0
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(0));
