@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
@@ -75,7 +76,8 @@ public class ProtocolSpecBuilder {
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
   private DepositsValidator depositsValidator = new DepositsValidator.ProhibitedDeposits();
-  private ValidatorExitsValidator exitsValidator = new ValidatorExitsValidator.ProhibitedExits();
+  private WithdrawalRequestValidator withdrawalRequestValidator =
+      new ProhibitedWithdrawalRequests();
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -265,8 +267,9 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder exitsValidator(final ValidatorExitsValidator exitsValidator) {
-    this.exitsValidator = exitsValidator;
+  public ProtocolSpecBuilder withdrawalRequestsValidator(
+      final WithdrawalRequestValidator withdrawalRequestValidator) {
+    this.withdrawalRequestValidator = withdrawalRequestValidator;
     return this;
   }
 
@@ -389,7 +392,7 @@ public class ProtocolSpecBuilder {
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),
         depositsValidator,
-        exitsValidator,
+        withdrawalRequestValidator,
         isPoS,
         isReplayProtectionSupported);
   }
