@@ -21,6 +21,9 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Collections;
+import java.util.List;
+
 import org.apache.tuweni.bytes.Bytes;
 
 public abstract class Request implements org.hyperledger.besu.plugin.data.Request {
@@ -37,5 +40,22 @@ public abstract class Request implements org.hyperledger.besu.plugin.data.Reques
 
   public void writeTo(final RLPOutput out) {
     RequestEncoder.encode(this, out);
+  }
+
+  /**
+   * Filters and returns a list of requests of a specific type from a given list of requests.
+   *
+   * @param <T> The type of the request to filter by, extending Request.
+   * @param requests The list of requests to filter.
+   * @param requestType The class of the request type to filter for.
+   * @return A List containing only requests of the specified type, or an empty list if the input
+   *     list is null or contains no requests of the specified type.
+   */
+  public static <T extends Request> List<T> filterRequestsOfType(
+      final List<Request> requests, final Class<T> requestType) {
+    if (requests == null) {
+      return Collections.emptyList();
+    }
+    return requests.stream().filter(requestType::isInstance).map(requestType::cast).toList();
   }
 }

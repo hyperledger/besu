@@ -27,7 +27,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -49,11 +48,11 @@ import org.hyperledger.besu.ethereum.mainnet.PragueWithdrawalRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -287,16 +286,16 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-            .requestsRoot(getRequestsRoot(maybeWithdrawalRequests))
+            .requestsRoot(
+                maybeWithdrawalRequests
+                    .map(
+                        withdrawalRequests ->
+                            BodyValidation.requestsRoot(new ArrayList<>(withdrawalRequests)))
+                    .orElse(null))
             .parentBeaconBlockRoot(
                 maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();
     return mockHeader;
-  }
-
-  private Hash getRequestsRoot(final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
-    throw new NotImplementedException(maybeWithdrawalRequests.toString());
-    // return  maybeWithdrawalRequests.map(BodyValidation::requestsRoot).orElse(null));
   }
 
   @Override

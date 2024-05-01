@@ -65,6 +65,7 @@ import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 
 import java.math.BigInteger;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -72,7 +73,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -268,9 +268,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                     disposableWorldState));
       }
 
-      // todo
-      Optional<List<Request>> maybeRequests = getWithdrawalRequest(maybeWithdrawalRequests);
-
+      Optional<List<Request>> maybeRequests = Optional.empty();
+      if (maybeWithdrawalRequests.isPresent()) {
+        maybeRequests = Optional.of(new ArrayList<>(maybeWithdrawalRequests.get()));
+      }
       throwIfStopped();
 
       if (rewardCoinbase
@@ -339,11 +340,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throw new IllegalStateException(
           "Block creation failed unexpectedly. Will restart on next block added to chain.", ex);
     }
-  }
-
-  private Optional<List<Request>> getWithdrawalRequest(
-      final Optional<List<WithdrawalRequest>> requests) {
-    throw new NotImplementedException(requests.toString());
   }
 
   @VisibleForTesting

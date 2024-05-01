@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -27,7 +28,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -329,20 +329,22 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  @SuppressWarnings("UnusedMethod")
+  private boolean validateRequests(final Block block) {
+    if (block.getBody().getRequests().isEmpty()) {
+      return true;
+    }
+    var withdrawalRequests = getWithdrawalRequests(block.getBody().getRequests().get());
+    return validateWithdrawalRequests(block, withdrawalRequests);
+  }
+
+  private List<WithdrawalRequest> getWithdrawalRequests(final List<Request> requests) {
+    return Request.filterRequestsOfType(requests, WithdrawalRequest.class);
+  }
+
   private boolean validateWithdrawalRequests(
       final Block block, final List<WithdrawalRequest> withdrawalRequests) {
     final WithdrawalRequestValidator withdrawalRequestValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getWithdrawalRequestValidator();
     return withdrawalRequestValidator.validateWithdrawalRequestsInBlock(block, withdrawalRequests);
-  }
-
-  private boolean validateRequests(final Block block) {
-    if (block.getBody().getRequests().isEmpty()) {
-      return true;
-    }
-
-    // todo call each request validator here
-    throw new NotImplementedException("Validate eacch request ");
   }
 }

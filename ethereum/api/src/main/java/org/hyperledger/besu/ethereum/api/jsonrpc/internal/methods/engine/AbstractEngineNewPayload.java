@@ -77,7 +77,6 @@ import java.util.stream.Collectors;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.json.Json;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -186,7 +185,10 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal requests"));
     }
 
-    final Optional<List<Request>> maybeRequests = createRequests();
+    Optional<List<Request>> maybeRequests = Optional.empty();
+    if (maybeWithdrawalRequests.isPresent()) {
+      maybeRequests = Optional.of(new ArrayList<>(maybeWithdrawalRequests.get()));
+    }
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");
@@ -558,9 +560,5 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             timeInS,
             ethPeers.peerCount()));
     LOG.info(String.format(message.toString(), messageArgs.toArray()));
-  }
-
-  private Optional<List<Request>> createRequests() {
-    throw new NotImplementedException("Consolidate requests");
   }
 }

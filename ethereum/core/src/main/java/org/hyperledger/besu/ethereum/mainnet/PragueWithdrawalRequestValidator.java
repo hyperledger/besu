@@ -16,9 +16,9 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import java.util.Collections;
@@ -74,11 +74,9 @@ public class PragueWithdrawalRequestValidator implements WithdrawalRequestValida
   }
 
   private List<WithdrawalRequest> getWithdrawalRequests(final BlockBody blockBody) {
-    return blockBody.getRequests().orElse(Collections.emptyList()).stream()
-        .filter(
-            request ->
-                request instanceof WithdrawalRequest && request.getType() == RequestType.WITHDRAWAL)
-        .map(WithdrawalRequest.class::cast)
-        .toList();
+    return blockBody
+        .getRequests()
+        .map(requests -> Request.filterRequestsOfType(requests, WithdrawalRequest.class))
+        .orElse(Collections.emptyList());
   }
 }

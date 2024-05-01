@@ -36,7 +36,6 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 
 public class BlockResultFactory {
@@ -183,7 +182,8 @@ public class BlockResultFactory {
 
   private Optional<List<WithdrawalRequest>> getWithdrawalRequest(
       final Optional<List<Request>> requests) {
-    throw new NotImplementedException(requests.toString());
+    return requests.map(
+        requestList -> Request.filterRequestsOfType(requestList, WithdrawalRequest.class));
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
