@@ -16,14 +16,15 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,7 +48,8 @@ public class PragueWithdrawalRequestValidator implements WithdrawalRequestValida
       final Block block, final List<WithdrawalRequest> withdrawalRequests) {
     final Hash blockHash = block.getHash();
 
-    final List<WithdrawalRequest> withdrawalRequestsInBlock = getWithdrawalRequest(block.getBody());
+    final List<WithdrawalRequest> withdrawalRequestsInBlock =
+        getWithdrawalRequests(block.getBody());
     // TODO Do we need to allow for customization? (e.g. if the value changes in the next fork)
     if (withdrawalRequestsInBlock.size()
         > WithdrawalRequestContractHelper.MAX_WITHDRAWAL_REQUESTS_PER_BLOCK) {
@@ -71,8 +73,12 @@ public class PragueWithdrawalRequestValidator implements WithdrawalRequestValida
     return true;
   }
 
-  @SuppressWarnings("UnusedVariable")
-  private List<WithdrawalRequest> getWithdrawalRequest(final BlockBody blockBody) {
-    throw new NotImplementedException();
+  private List<WithdrawalRequest> getWithdrawalRequests(final BlockBody blockBody) {
+    return blockBody.getRequests().orElse(Collections.emptyList()).stream()
+        .filter(
+            request ->
+                request instanceof WithdrawalRequest && request.getType() == RequestType.WITHDRAWAL)
+        .map(WithdrawalRequest.class::cast)
+        .toList();
   }
 }

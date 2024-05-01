@@ -36,7 +36,6 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import java.util.List;
 import java.util.stream.IntStream;
 
-import org.apache.commons.lang3.NotImplementedException;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
@@ -116,9 +115,7 @@ public final class BodyValidation {
     final MerkleTrie<Bytes, Bytes> trie = trie();
     IntStream.range(0, requests.size())
         .forEach(i -> trie.put(indexKey(i), RequestEncoder.encodeOpaqueBytes(requests.get(i))));
-    throw new NotImplementedException();
-
-    // return Hash.wrap(trie.getRootHash());
+    return Hash.wrap(trie.getRootHash());
   }
 
   /**
