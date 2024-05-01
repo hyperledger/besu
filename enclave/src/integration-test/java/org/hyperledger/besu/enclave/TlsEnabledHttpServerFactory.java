@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.enclave;
 
 import static org.hyperledger.besu.enclave.TlsHelpers.populateFingerprintFile;
