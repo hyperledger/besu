@@ -63,7 +63,7 @@ public class RequestDecoder {
    * @return The decoded Request.
    * @throws IllegalStateException if no decoder is found for the specified request type.
    */
-  private static Request decodeRequest(final Bytes requestBytes, final  RequestType requestType) {
+  private static Request decodeRequest(final Bytes requestBytes, final RequestType requestType) {
     // Skip the first byte which is the request type
     RLPInput requestInput = RLP.input(requestBytes.slice(1));
     Decoder decoder =
