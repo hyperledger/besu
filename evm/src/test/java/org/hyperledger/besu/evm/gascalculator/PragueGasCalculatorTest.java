@@ -15,33 +15,61 @@
 
 package org.hyperledger.besu.evm.gascalculator;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.junit.jupiter.api.Test;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-public class PragueGasCalculatorTest {
-    @Test
-    public void testAuthOperationGasCost() {
-        PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
-        MessageFrame runningIn = mock(MessageFrame.class);
-        Address authority = Address.fromHexString("0xdeadbeef");
-        when(runningIn.isAddressWarm(authority)).thenReturn(true);
-        long gasSpent = pragueGasCalculator.authOperationGasCost(runningIn, 0, 97, authority);
-        assertEquals(3100 + 100 + pragueGasCalculator.memoryExpansionGasCost(runningIn, 0, 97), gasSpent);
-    }
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 
-    @Test
-    public void testAuthCallOperationGasCost() {
-        PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
-        MessageFrame runningIn = mock(MessageFrame.class);
-        Address authority = Address.fromHexString("0xdeadbeef");
-        when(runningIn.isAddressWarm(authority)).thenReturn(true);
-        long gasSpent = pragueGasCalculator.callOperationGasCost(runningIn, 63, 0, 97, 100, 97, Wei.ONE, );
-        assertEquals(3100 + 100 + pragueGasCalculator.memoryExpansionGasCost(runningIn, 0, 97), gasSpent);
-    }
+import org.junit.jupiter.api.Test;
+
+public class PragueGasCalculatorTest {
+  @Test
+  public void testAuthOperationGasCost() {
+    PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
+    MessageFrame runningIn = mock(MessageFrame.class);
+    Address authority = Address.fromHexString("0xdeadbeef");
+    when(runningIn.isAddressWarm(authority)).thenReturn(true);
+    long gasSpent = pragueGasCalculator.authOperationGasCost(runningIn, 0, 97, authority);
+    assertEquals(
+        3100 + 100 + pragueGasCalculator.memoryExpansionGasCost(runningIn, 0, 97), gasSpent);
+  }
+
+  @Test
+  public void testAuthCallOperationGasCostWithTransfer() {
+    PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
+    MessageFrame runningIn = mock(MessageFrame.class);
+    Account invoker = mock(MutableAccount.class);
+    when(invoker.getAddress()).thenReturn(Address.fromHexString("0xCafeBabe"));
+    Address invokee = Address.fromHexString("0xdeadbeef");
+    when(runningIn.isAddressWarm(invokee)).thenReturn(true);
+    long gasSpentInAuthCall =
+        pragueGasCalculator.authCallOperationGasCost(
+            runningIn, 63, 0, 97, 100, 97, Wei.ONE, invoker, invokee, true);
+    long gasSpentInCall =
+        pragueGasCalculator.callOperationGasCost(
+            runningIn, 63, 0, 97, 100, 97, Wei.ONE, invoker, invokee, true);
+    assertEquals(gasSpentInCall - 2300, gasSpentInAuthCall);
+  }
+
+  @Test
+  public void testAuthCallOperationGasCostNoTransfer() {
+    PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
+    MessageFrame runningIn = mock(MessageFrame.class);
+    Account invoker = mock(MutableAccount.class);
+    when(invoker.getAddress()).thenReturn(Address.fromHexString("0xCafeBabe"));
+    Address invokee = Address.fromHexString("0xdeadbeef");
+    when(runningIn.isAddressWarm(invokee)).thenReturn(true);
+    long gasSpentInAuthCall =
+        pragueGasCalculator.authCallOperationGasCost(
+            runningIn, 63, 0, 97, 100, 97, Wei.ZERO, invoker, invokee, true);
+    long gasSpentInCall =
+        pragueGasCalculator.callOperationGasCost(
+            runningIn, 63, 0, 97, 100, 97, Wei.ZERO, invoker, invokee, true);
+    assertEquals(gasSpentInCall, gasSpentInAuthCall);
+  }
 }

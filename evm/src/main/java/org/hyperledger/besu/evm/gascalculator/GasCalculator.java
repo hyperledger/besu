@@ -211,6 +211,35 @@ public interface GasCalculator {
       boolean accountIsWarm);
 
   /**
+   * Returns the gas cost for AUTHCALL.
+   *
+   * @param frame The current frame
+   * @param stipend The gas stipend being provided by the CALL caller
+   * @param inputDataOffset The offset in memory to retrieve the CALL input data
+   * @param inputDataLength The CALL input data length
+   * @param outputDataOffset The offset in memory to place the CALL output data
+   * @param outputDataLength The CALL output data length
+   * @param transferValue The wei being transferred
+   * @param invoker The contract calling out on behalf of the authority
+   * @param invokee The address of the recipient (never null)
+   * @param accountIsWarm The address of the contract is "warm" as per EIP-2929
+   * @return The gas cost for the CALL operation
+   */
+  default long authCallOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account invoker,
+      final Address invokee,
+      final boolean accountIsWarm) {
+    return 0L;
+  }
+
+  /**
    * Gets additional call stipend.
    *
    * @return the additional call stipend
