@@ -42,10 +42,9 @@ public class EOFCreateOperation extends AbstractCreateOperation {
    * Instantiates a new EOFCreate operation.
    *
    * @param gasCalculator the gas calculator
-   * @param maxInitcodeSize Maximum init code size
    */
-  public EOFCreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-    super(OPCODE, "EOFCREATE", 4, 1, gasCalculator, maxInitcodeSize, 1);
+  public EOFCreateOperation(final GasCalculator gasCalculator) {
+    super(OPCODE, "EOFCREATE", 4, 1, gasCalculator, Integer.MAX_VALUE, 1);
   }
 
   @Override

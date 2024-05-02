@@ -993,7 +993,7 @@ public class MainnetEVMs {
     registry.put(new DataCopyOperation(gasCalculator));
 
     // EIP-7620 EOF Create and Return Contract operation
-    registry.put(new EOFCreateOperation(gasCalculator, SHANGHAI_INIT_CODE_SIZE_LIMIT));
+    registry.put(new EOFCreateOperation(gasCalculator));
     registry.put(new ReturnContractOperation(gasCalculator));
   }
 
