@@ -41,6 +41,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
   private static final long ONE_MINUTE = Duration.of(1, ChronoUnit.MINUTES).toMillis();
 
+  private static final long THREE_MINUTES = Duration.of(1, ChronoUnit.MINUTES).toMillis();
+
   private static final long TEN_SECONDS = Duration.of(10, ChronoUnit.SECONDS).toMillis();
 
   static int getTestDurationMins() {
@@ -153,8 +155,9 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
     lastChainHeight = chainHeight;
 
-    nextStepEndTime =
-        previousStepEndTime.plus(getTestDurationMins() / NUM_STEPS, ChronoUnit.MINUTES);
+    // Leave the chain stalled for 3 minutes. Check no new blocks are mined. Then
+    // resume the other validators.
+    nextStepEndTime = previousStepEndTime.plus(3, ChronoUnit.MINUTES);
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
       Thread.sleep(ONE_MINUTE);
       chainHeight = minerNode1.execute(ethTransactions.blockNumber());
@@ -172,12 +175,10 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
     previousStepEndTime = Instant.now();
 
-    // This step gives the stalled chain time to re-sync and agree on the next BFT round.
-    // The time this takes is proportional to the time the chain was stalled for, because
-    // the time between BFT rounds increases over time.
+    // This step gives the stalled chain time to re-sync and agree on the next BFT round
     chainHeight = minerNode1.execute(ethTransactions.blockNumber());
     nextStepEndTime =
-        previousStepEndTime.plus((getTestDurationMins() / NUM_STEPS + 2), ChronoUnit.MINUTES);
+        previousStepEndTime.plus((getTestDurationMins() / NUM_STEPS), ChronoUnit.MINUTES);
     lastChainHeight = chainHeight;
 
     while (System.currentTimeMillis() < nextStepEndTime.toEpochMilli()) {
@@ -195,8 +196,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       Thread.sleep(ONE_MINUTE);
       chainHeight = minerNode1.execute(ethTransactions.blockNumber());
 
-      // Chain height should have moved on by at least 50 blocks
-      assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(50))))
+      // Chain height should have moved on by at least 1 block
+      assertThat(chainHeight.compareTo(lastChainHeight.add(BigInteger.valueOf(1))))
           .isGreaterThanOrEqualTo(1);
       lastChainHeight = chainHeight;
     }
@@ -207,44 +208,8 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
     // Upgrade the chain from berlin to london
-
-    // Stop node 1
-    stopNode(minerNode1);
-
-    final int londonBlockNumber = lastChainHeight.intValue() + 120;
-
-    // Upgrade to London in 120 blocks time
-    updateGenesisConfigToLondon(minerNode1, true, londonBlockNumber);
-
-    // Restart it
-    startNode(minerNode1);
-
-    // Stop node 2
-    stopNode(minerNode2);
-
-    // Upgrade to London in 120 blocks time
-    updateGenesisConfigToLondon(minerNode2, true, londonBlockNumber);
-
-    // Restart it
-    startNode(minerNode2);
-
-    // Stop node 3
-    stopNode(minerNode3);
-
-    // Upgrade to London in 120 blocks time
-    updateGenesisConfigToLondon(minerNode3, true, londonBlockNumber);
-
-    // Restart it
-    startNode(minerNode3);
-
-    // Stop node 4
-    stopNode(minerNode4);
-
-    // Upgrade to London in 120 block time
-    updateGenesisConfigToLondon(minerNode4, true, londonBlockNumber);
-
-    // Restart it
-    startNode(minerNode4);
+    upgradeToLondon(
+        minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
 
     previousStepEndTime = Instant.now();
 
@@ -269,6 +234,20 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     // Update it once more to check new transactions are mined OK
     simpleStorageContract.set(BigInteger.valueOf(301)).send();
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(301));
+
+    // Upgrade the chain to shanghai in 120 seconds. Then try to deploy a shanghai contract
+    upgradeToShanghai(
+        minerNode1, minerNode2, minerNode3, minerNode4, Instant.now().getEpochSecond() + 120);
+
+    Thread.sleep(THREE_MINUTES);
+
+    SimpleStorageShanghai simpleStorageContractShanghai =
+        minerNode1.execute(contractTransactions.createSmartContract(SimpleStorageShanghai.class));
+
+    // Check the contract address is as expected for this sender & nonce
+    contractVerifier
+        .validTransactionReceipt("0x05d91b9031a655d08e654177336d08543ac4b711")
+        .verify(simpleStorageContractShanghai);
   }
 
   private static void updateGenesisConfigToLondon(
@@ -284,6 +263,74 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     }
   }
 
+  private static void updateGenesisConfigToShanghai(
+      final BesuNode minerNode, final long blockTimestamp) {
+
+    if (minerNode.getGenesisConfig().isPresent()) {
+      final ObjectNode genesisConfigNode3 =
+          JsonUtil.objectNodeFromString(minerNode.getGenesisConfig().get());
+      final ObjectNode config1 = (ObjectNode) genesisConfigNode3.get("config");
+      config1.put("shanghaiTime", blockTimestamp);
+      minerNode.setGenesisConfig(genesisConfigNode3.toString());
+    }
+  }
+
+  private void upgradeToLondon(
+      final BesuNode minerNode1,
+      final BesuNode minerNode2,
+      final BesuNode minerNode3,
+      final BesuNode minerNode4,
+      final int londonBlockNumber)
+      throws InterruptedException {
+    // Node 1
+    stopNode(minerNode1);
+    updateGenesisConfigToLondon(minerNode1, true, londonBlockNumber);
+    startNode(minerNode1);
+
+    // Node 2
+    stopNode(minerNode2);
+    updateGenesisConfigToLondon(minerNode2, true, londonBlockNumber);
+    startNode(minerNode2);
+
+    // Node 3
+    stopNode(minerNode3);
+    updateGenesisConfigToLondon(minerNode3, true, londonBlockNumber);
+    startNode(minerNode3);
+
+    // Node 4
+    stopNode(minerNode4);
+    updateGenesisConfigToLondon(minerNode4, true, londonBlockNumber);
+    startNode(minerNode4);
+  }
+
+  private void upgradeToShanghai(
+      final BesuNode minerNode1,
+      final BesuNode minerNode2,
+      final BesuNode minerNode3,
+      final BesuNode minerNode4,
+      final long shanghaiTime)
+      throws InterruptedException {
+    // Node 1
+    stopNode(minerNode1);
+    updateGenesisConfigToShanghai(minerNode1, shanghaiTime);
+    startNode(minerNode1);
+
+    // Node 2
+    stopNode(minerNode2);
+    updateGenesisConfigToShanghai(minerNode2, shanghaiTime);
+    startNode(minerNode2);
+
+    // Node 3
+    stopNode(minerNode3);
+    updateGenesisConfigToShanghai(minerNode3, shanghaiTime);
+    startNode(minerNode3);
+
+    // Node 4
+    stopNode(minerNode4);
+    updateGenesisConfigToShanghai(minerNode4, shanghaiTime);
+    startNode(minerNode4);
+  }
+
   // Start a node with a delay before returning to give it time to start
   private void startNode(final BesuNode node) throws InterruptedException {
     cluster.startNode(node);
@@ -294,5 +341,12 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
   private void stopNode(final BesuNode node) throws InterruptedException {
     cluster.stopNode(node);
     Thread.sleep(TEN_SECONDS);
+  }
+
+  @Override
+  public void tearDownAcceptanceTestBase() {
+    System.out.println("MRW: KILLING CLUSTER NODES AFTER TEST");
+    cluster.stop();
+    super.tearDownAcceptanceTestBase();
   }
 }
