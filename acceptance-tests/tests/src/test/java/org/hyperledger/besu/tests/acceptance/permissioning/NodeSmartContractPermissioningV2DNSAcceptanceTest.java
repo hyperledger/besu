@@ -24,8 +24,8 @@ import java.net.InetAddress;
 import java.net.UnknownHostException;
 
 import org.assertj.core.api.Assertions;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractPermissioningV2DNSAcceptanceTest
     extends NodeSmartContractPermissioningV2AcceptanceTestBase {
@@ -38,7 +38,7 @@ public class NodeSmartContractPermissioningV2DNSAcceptanceTest
   final ImmutableEnodeDnsConfiguration enodeDnsConfiguration =
       ImmutableEnodeDnsConfiguration.builder().dnsEnabled(true).updateEnabled(true).build();
 
-  @Before
+  @BeforeEach
   public void setUp() {
     bootnode = bootnode("bootnode");
     forbiddenNode = node("forbidden-node");

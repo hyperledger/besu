@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -44,6 +44,7 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.google.common.collect.Lists;
@@ -95,10 +96,11 @@ public class RequestDataStep {
     downloadState.addOutstandingTask(getAccountTask);
     return getAccountTask
         .run()
+        .orTimeout(10, TimeUnit.SECONDS)
         .handle(
             (response, error) -> {
+              downloadState.removeOutstandingTask(getAccountTask);
               if (response != null) {
-                downloadState.removeOutstandingTask(getAccountTask);
                 accountDataRequest.setRootHash(blockHeader.getStateRoot());
                 accountDataRequest.addResponse(
                     worldStateProofProvider, response.accounts(), response.proofs());
@@ -130,13 +132,12 @@ public class RequestDataStep {
     downloadState.addOutstandingTask(getStorageRangeTask);
     return getStorageRangeTask
         .run()
+        .orTimeout(10, TimeUnit.SECONDS)
         .handle(
             (response, error) -> {
+              downloadState.removeOutstandingTask(getStorageRangeTask);
               if (response != null) {
-                downloadState.removeOutstandingTask(getStorageRangeTask);
                 final ArrayDeque<NavigableMap<Bytes32, Bytes>> slots = new ArrayDeque<>();
-                // Check if we have an empty range
-
                 /*
                  * Checks if the response represents an "empty range".
                  *
@@ -186,10 +187,11 @@ public class RequestDataStep {
     downloadState.addOutstandingTask(getByteCodeTask);
     return getByteCodeTask
         .run()
+        .orTimeout(10, TimeUnit.SECONDS)
         .handle(
             (response, error) -> {
+              downloadState.removeOutstandingTask(getByteCodeTask);
               if (response != null) {
-                downloadState.removeOutstandingTask(getByteCodeTask);
                 for (Task<SnapDataRequest> requestTask : requestTasks) {
                   final BytecodeRequest request = (BytecodeRequest) requestTask.getData();
                   request.setRootHash(blockHeader.getStateRoot());
@@ -225,10 +227,11 @@ public class RequestDataStep {
     downloadState.addOutstandingTask(getTrieNodeFromPeerTask);
     return getTrieNodeFromPeerTask
         .run()
+        .orTimeout(10, TimeUnit.SECONDS)
         .handle(
             (response, error) -> {
+              downloadState.removeOutstandingTask(getTrieNodeFromPeerTask);
               if (response != null) {
-                downloadState.removeOutstandingTask(getTrieNodeFromPeerTask);
                 for (final Task<SnapDataRequest> task : requestTasks) {
                   final TrieNodeHealingRequest request = (TrieNodeHealingRequest) task.getData();
                   final Bytes matchingData = response.get(request.getPathId());

@@ -22,9 +22,6 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.nio.charset.StandardCharsets;
-
-import com.google.common.io.Resources;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -127,13 +124,10 @@ public class MainnetProtocolScheduleTest {
   }
 
   @Test
-  public void shouldCreateGoerliConfig() throws Exception {
+  public void shouldCreateGoerliConfig() {
     final ProtocolSchedule sched =
         MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(
-                    Resources.toString(
-                        this.getClass().getResource("/goerli.json"), StandardCharsets.UTF_8))
-                .getConfigOptions(),
+            GenesisConfigFile.fromResource("/goerli.json").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
             new BadBlockManager());

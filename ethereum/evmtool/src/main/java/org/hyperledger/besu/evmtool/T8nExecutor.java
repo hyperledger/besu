@@ -252,7 +252,6 @@ public class T8nExecutor {
     final BlockHeader blockHeader = referenceTestEnv.updateFromParentValues(protocolSpec);
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
     final WorldUpdater worldStateUpdater = worldState.updater();
-
     final Wei blobGasPrice =
         protocolSpec
             .getFeeMarket()

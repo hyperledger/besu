@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -287,7 +288,7 @@ public class JsonUtil {
    * @return the object node
    */
   public static ObjectNode objectNodeFromMap(final Map<String, Object> map) {
-    return (ObjectNode) getObjectMapper().valueToTree(map);
+    return getObjectMapper().valueToTree(map);
   }
 
   /**
@@ -313,6 +314,27 @@ public class JsonUtil {
     objectMapper.configure(Feature.ALLOW_COMMENTS, allowComments);
     try {
       final JsonNode jsonNode = objectMapper.readTree(jsonData);
+      validateType(jsonNode, JsonNodeType.OBJECT);
+      return (ObjectNode) jsonNode;
+    } catch (final IOException e) {
+      // Reading directly from a string should not raise an IOException, just catch and rethrow
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
+   * Object node from URL.
+   *
+   * @param jsonSource the URL of the json source
+   * @param allowComments true to allow comments
+   * @return the object node
+   */
+  public static ObjectNode objectNodeFromURL(final URL jsonSource, final boolean allowComments) {
+
+    final ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(Feature.ALLOW_COMMENTS, allowComments);
+    try {
+      final JsonNode jsonNode = objectMapper.readTree(jsonSource);
       validateType(jsonNode, JsonNodeType.OBJECT);
       return (ObjectNode) jsonNode;
     } catch (final IOException e) {
@@ -455,14 +477,14 @@ public class JsonUtil {
 
   private static boolean validateLong(final JsonNode node) {
     if (!node.canConvertToLong()) {
-      throw new IllegalArgumentException("Cannot convert value to long: " + node.toString());
+      throw new IllegalArgumentException("Cannot convert value to long: " + node);
     }
     return true;
   }
 
   private static boolean validateInt(final JsonNode node) {
     if (!node.canConvertToInt()) {
-      throw new IllegalArgumentException("Cannot convert value to integer: " + node.toString());
+      throw new IllegalArgumentException("Cannot convert value to integer: " + node);
     }
     return true;
   }

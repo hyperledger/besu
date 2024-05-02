@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,7 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameterTestFixture.DEPOSIT_PARAM_1;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ValidatorExitTestFixture.VALIDATOR_EXIT_PARAMETER_1;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestTestFixture.WITHDRAWAL_REQUEST_PARAMETER_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
@@ -34,17 +34,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ValidatorExitParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
-import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
+import org.hyperledger.besu.ethereum.mainnet.PragueWithdrawalRequestValidator;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
 import java.util.Collections;
@@ -174,9 +175,9 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   }
 
   @Test
-  public void shouldReturnValidIfExitsIsNull_WhenExitsProhibited() {
-    when(protocolSpec.getExitsValidator())
-        .thenReturn(new ValidatorExitsValidator.ProhibitedExits());
+  public void shouldReturnValidIfWithdrawalRequestsIsNull_WhenWithdrawalRequestsAreProhibited() {
+    when(protocolSpec.getWithdrawalRequestValidator())
+        .thenReturn(new ProhibitedWithdrawalRequests());
 
     BlockHeader mockHeader =
         setupValidPayload(
@@ -195,8 +196,9 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   }
 
   @Test
-  public void shouldReturnInvalidIfExitsIsNull_WhenExitsAllowed() {
-    when(protocolSpec.getExitsValidator()).thenReturn(new ValidatorExitsValidator.AllowedExits());
+  public void shouldReturnInvalidIfWithdrawalRequestsIsNull_WhenWithdrawalRequestsAreAllowed() {
+    when(protocolSpec.getWithdrawalRequestValidator())
+        .thenReturn(new PragueWithdrawalRequestValidator());
 
     var resp =
         resp(
@@ -212,18 +214,20 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   }
 
   @Test
-  public void shouldReturnValidIfExitsIsNotNull_WhenExitsAllowed() {
-    final List<ValidatorExitParameter> validatorExitsParams = List.of(VALIDATOR_EXIT_PARAMETER_1);
-    final List<ValidatorExit> validatorExits =
-        List.of(VALIDATOR_EXIT_PARAMETER_1.toValidatorExit());
-    when(protocolSpec.getExitsValidator()).thenReturn(new ValidatorExitsValidator.AllowedExits());
+  public void shouldReturnValidIfWithdrawalRequestsIsNotNull_WhenWithdrawalRequestsAreAllowed() {
+    final List<WithdrawalRequestParameter> withdrawalRequestsParams =
+        List.of(WITHDRAWAL_REQUEST_PARAMETER_1);
+    final List<WithdrawalRequest> withdrawalRequests =
+        List.of(WITHDRAWAL_REQUEST_PARAMETER_1.toWithdrawalRequest());
+    when(protocolSpec.getWithdrawalRequestValidator())
+        .thenReturn(new PragueWithdrawalRequestValidator());
 
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
             Optional.empty(),
             Optional.empty(),
-            Optional.of(validatorExits));
+            Optional.of(withdrawalRequests));
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))
@@ -231,16 +235,17 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     var resp =
         resp(
             mockEnginePayload(
-                mockHeader, Collections.emptyList(), null, null, validatorExitsParams));
+                mockHeader, Collections.emptyList(), null, null, withdrawalRequestsParams));
 
     assertValidResponse(mockHeader, resp);
   }
 
   @Test
-  public void shouldReturnInvalidIfExitsIsNotNull_WhenExitsProhibited() {
-    final List<ValidatorExitParameter> validatorExits = List.of();
-    when(protocolSpec.getExitsValidator())
-        .thenReturn(new ValidatorExitsValidator.ProhibitedExits());
+  public void
+      shouldReturnInvalidIfWithdrawalRequestsIsNotNull_WhenWithdrawalRequestsAreProhibited() {
+    final List<WithdrawalRequestParameter> withdrawalRequests = List.of();
+    when(protocolSpec.getWithdrawalRequestValidator())
+        .thenReturn(new ProhibitedWithdrawalRequests());
 
     var resp =
         resp(
@@ -250,7 +255,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
                 Collections.emptyList(),
                 null,
                 null,
-                validatorExits));
+                withdrawalRequests));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -261,7 +266,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   protected BlockHeader createBlockHeader(
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<List<Deposit>> maybeDeposits,
-      final Optional<List<ValidatorExit>> maybeExits) {
+      final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
@@ -280,7 +285,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-            .exitsRoot(maybeExits.map(BodyValidation::exitsRoot).orElse(null))
+            .withdrawalRequestsRoot(
+                maybeWithdrawalRequests.map(BodyValidation::withdrawalRequestsRoot).orElse(null))
             .parentBeaconBlockRoot(
                 maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();

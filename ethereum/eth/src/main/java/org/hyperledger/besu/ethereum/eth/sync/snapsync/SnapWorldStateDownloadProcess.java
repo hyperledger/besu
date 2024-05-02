@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.DynamicPivotBlockSelector.doNothingOnPivotChange;
 import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipelineFrom;
 
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -159,16 +158,9 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
     private SnapSyncProcessState snapSyncState;
     private PersistDataStep persistDataStep;
     private CompleteTaskStep completeTaskStep;
-    private DynamicPivotBlockSelector pivotBlockManager;
 
     public Builder configuration(final SnapSyncConfiguration snapSyncConfiguration) {
       this.snapSyncConfiguration = snapSyncConfiguration;
-      return this;
-    }
-
-    public Builder dynamicPivotBlockSelector(
-        final DynamicPivotBlockSelector dynamicPivotBlockSelector) {
-      this.pivotBlockManager = dynamicPivotBlockSelector;
       return this;
     }
 
@@ -265,12 +257,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .thenProcess(
-                  "checkNewPivotBlock-Account",
-                  tasks -> {
-                    pivotBlockManager.check(doNothingOnPivotChange);
-                    return tasks;
-                  })
               .thenProcessAsync(
                   "batchDownloadAccountData",
                   requestTask -> requestDataStep.requestAccount(requestTask),
@@ -288,12 +274,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   true,
                   "world_state_download")
               .inBatches(snapSyncConfiguration.getStorageCountPerRequest())
-              .thenProcess(
-                  "checkNewPivotBlock-Storage",
-                  tasks -> {
-                    pivotBlockManager.check(doNothingOnPivotChange);
-                    return tasks;
-                  })
               .thenProcessAsyncOrdered(
                   "batchDownloadStorageData",
                   requestTask -> requestDataStep.requestStorage(requestTask),
@@ -314,12 +294,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   outputCounter,
                   true,
                   "world_state_download")
-              .thenProcess(
-                  "checkNewPivotBlock-LargeStorage",
-                  tasks -> {
-                    pivotBlockManager.check(doNothingOnPivotChange);
-                    return tasks;
-                  })
               .thenProcessAsyncOrdered(
                   "batchDownloadLargeStorageData",
                   requestTask -> requestDataStep.requestStorage(List.of(requestTask)),
@@ -354,14 +328,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                                   .map(BytecodeRequest::getCodeHash)
                                   .distinct()
                                   .count())
-              .thenProcess(
-                  "checkNewPivotBlock-Code",
-                  tasks -> {
-                    pivotBlockManager.check(
-                        (blockHeader, newBlockFound) ->
-                            reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
-                    return tasks;
-                  })
               .thenProcessAsyncOrdered(
                   "batchDownloadCodeData",
                   tasks -> requestDataStep.requestCode(tasks),
@@ -390,14 +356,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
                   3,
                   bufferCapacity)
               .inBatches(snapSyncConfiguration.getTrienodeCountPerRequest())
-              .thenProcess(
-                  "checkNewPivotBlock-TrieNode",
-                  tasks -> {
-                    pivotBlockManager.check(
-                        (blockHeader, newBlockFound) ->
-                            reloadHealWhenNeeded(snapSyncState, downloadState, newBlockFound));
-                    return tasks;
-                  })
               .thenProcessAsync(
                   "batchDownloadTrieNodeData",
                   tasks -> requestDataStep.requestTrieNodeByPath(tasks),
@@ -459,15 +417,6 @@ public class SnapWorldStateDownloadProcess implements WorldStateDownloadProcess 
           storageFlatDatabaseHealingPipeline,
           completionPipeline,
           requestsToComplete);
-    }
-  }
-
-  private static void reloadHealWhenNeeded(
-      final SnapSyncProcessState snapSyncState,
-      final SnapWorldDownloadState downloadState,
-      final boolean newBlockFound) {
-    if (snapSyncState.isHealTrieInProgress() && newBlockFound) {
-      downloadState.reloadTrieHeal();
     }
   }
 }

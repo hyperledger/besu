@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,11 +21,14 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConf
 
 import org.hyperledger.besu.cli.converter.DurationMillisConverter;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.util.number.Percentage;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.time.Duration;
 
 import org.junit.jupiter.api.Test;
@@ -367,6 +370,52 @@ public class TransactionPoolOptionsTest
         "Invalid value for option '--Xeth65-tx-announced-buffering-period-milliseconds': cannot convert '-1' to Duration (org.hyperledger.besu.cli.converter.exception.DurationConversionException: negative value '-1' is not allowed)",
         "--Xeth65-tx-announced-buffering-period-milliseconds",
         "-1");
+  }
+
+  @Test
+  public void maxPrioritizedTxsPerType() {
+    final int maxBlobs = 2;
+    final int maxFrontier = 200;
+    internalTestSuccess(
+        config -> {
+          assertThat(config.getMaxPrioritizedTransactionsByType().get(TransactionType.BLOB))
+              .isEqualTo(maxBlobs);
+          assertThat(config.getMaxPrioritizedTransactionsByType().get(TransactionType.FRONTIER))
+              .isEqualTo(maxFrontier);
+        },
+        "--tx-pool-max-prioritized-by-type",
+        "BLOB=" + maxBlobs + ",FRONTIER=" + maxFrontier);
+  }
+
+  @Test
+  public void maxPrioritizedTxsPerTypeConfigFile() throws IOException {
+    final int maxBlobs = 2;
+    final int maxFrontier = 200;
+    final Path tempConfigFilePath =
+        createTempFile(
+            "config",
+            String.format(
+                """
+    tx-pool-max-prioritized-by-type=["BLOB=%s","FRONTIER=%s"]
+    """,
+                maxBlobs, maxFrontier));
+    internalTestSuccess(
+        config -> {
+          assertThat(config.getMaxPrioritizedTransactionsByType().get(TransactionType.BLOB))
+              .isEqualTo(maxBlobs);
+          assertThat(config.getMaxPrioritizedTransactionsByType().get(TransactionType.FRONTIER))
+              .isEqualTo(maxFrontier);
+        },
+        "--config-file",
+        tempConfigFilePath.toString());
+  }
+
+  @Test
+  public void maxPrioritizedTxsPerTypeWrongTxType() {
+    internalTestFailure(
+        "Invalid value for option '--tx-pool-max-prioritized-by-type' (MAP<TYPE,INTEGER>): expected one of [FRONTIER, ACCESS_LIST, EIP1559, BLOB] (case-insensitive) but was 'WRONG_TYPE'",
+        "--tx-pool-max-prioritized-by-type",
+        "WRONG_TYPE=1");
   }
 
   @Override

@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.plugin.services;
 
 import org.hyperledger.besu.plugin.BesuContext;

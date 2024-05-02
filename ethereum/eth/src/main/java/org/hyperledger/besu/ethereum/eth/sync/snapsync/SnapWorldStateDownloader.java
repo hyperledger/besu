@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -214,7 +214,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           SnapWorldStateDownloadProcess.builder()
               .configuration(snapSyncConfiguration)
               .maxOutstandingRequests(maxOutstandingRequests)
-              .dynamicPivotBlockSelector(dynamicPivotBlockManager)
               .loadLocalDataStep(
                   new LoadLocalDataStep(
                       worldStateStorageCoordinator,
