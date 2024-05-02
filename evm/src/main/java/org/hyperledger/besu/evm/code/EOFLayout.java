@@ -633,7 +633,9 @@ public record EOFLayout(
     for (int i = 0; i < codeSections.length; i++) {
       CodeSection cs = getCodeSection(i);
       out.print(prefix);
-      out.printf("       # Code section %d%n", i);
+      out.printf(
+          "       # Code section %d - in=%d out=%d height=%d%n",
+          i, cs.inputs, cs.outputs, cs.maxStackHeight);
       byte[] byteCode = container.slice(cs.getEntryPoint(), cs.getLength()).toArray();
       int pc = 0;
       while (pc < byteCode.length) {
@@ -662,12 +664,14 @@ public record EOFLayout(
           int b0 = byteCode[pc + 1] & 0xff;
           int b1 = byteCode[pc + 2] & 0xff;
           short delta = (short) (b0 << 8 | b1);
-          out.printf("%02x%02x \t# [%d] %s(%d)", b0, b1, pc, ci.name(), delta);
+          out.printf("%02x%02x%02x \t# [%d] %s(%d)", byteCode[pc], b0, b1, pc, ci.name(), delta);
           pc += 3;
           out.printf("%n");
         } else if (ci.opcode() == ExchangeOperation.OPCODE) {
           int imm = byteCode[pc + 1] & 0xff;
-          out.printf("%02x \t# [%d] %s(%d, %d)", imm, pc, ci.name(), imm >> 4, imm & 0x0F);
+          out.printf(
+              "%02x%02x \t# [%d] %s(%d, %d)",
+              byteCode[pc], imm, pc, ci.name(), imm >> 4, imm & 0x0F);
           pc += 3;
           out.printf("%n");
         } else {

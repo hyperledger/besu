@@ -15,12 +15,10 @@ package org.hyperledger.besu.evmtool;
  * SPDX-License-Identifier: Apache-2.0
  *
  */
-import static org.hyperledger.besu.evmtool.PrettyCodeSubCommand.COMMAND_NAME;
+import static org.hyperledger.besu.evmtool.PrettyPrintSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeFactory;
-import org.hyperledger.besu.evm.code.CodeInvalid;
-import org.hyperledger.besu.evm.code.CodeV1;
+import org.hyperledger.besu.evm.code.CodeV1Validation;
+import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.util.ArrayList;
@@ -34,18 +32,24 @@ import picocli.CommandLine;
     description = "Pretty Prints EOF Code",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
-public class PrettyCodeSubCommand implements Runnable {
+public class PrettyPrintSubCommand implements Runnable {
   public static final String COMMAND_NAME = "pretty-print";
   @CommandLine.ParentCommand private final EvmToolCommand parentCommand;
+
+  @CommandLine.Option(
+      names = {"-f", "--force"},
+      description = "Always print well formated code, even if there is an error",
+      paramLabel = "<boolean>")
+  private final Boolean force = false;
 
   // picocli does it magically
   @CommandLine.Parameters private final List<String> codeList = new ArrayList<>();
 
-  public PrettyCodeSubCommand() {
+  public PrettyPrintSubCommand() {
     this(null);
   }
 
-  public PrettyCodeSubCommand(final EvmToolCommand parentCommand) {
+  public PrettyPrintSubCommand(final EvmToolCommand parentCommand) {
     this.parentCommand = parentCommand;
   }
 
@@ -54,14 +58,24 @@ public class PrettyCodeSubCommand implements Runnable {
     LogConfigurator.setLevel("", "OFF");
 
     for (var hexCode : codeList) {
-      Code code = CodeFactory.createCode(Bytes.fromHexString(hexCode), 1);
-      if (code instanceof CodeInvalid codeInvalid) {
-        parentCommand.out.println("EOF code is invalid - " + codeInvalid.getInvalidReason());
-      } else if (code instanceof CodeV1 codev1) {
-        codev1.prettyPrint(parentCommand.out);
-      } else {
+      Bytes container = Bytes.fromHexString(hexCode);
+      if (container.get(0) != ((byte) 0xef) && container.get(1) != 0) {
         parentCommand.out.println(
             "Pretty printing of legacy EVM is not supported. Patches welcome!");
+
+      } else {
+        EOFLayout layout = EOFLayout.parseEOF(container);
+        if (layout.isValid()) {
+          String validation = CodeV1Validation.validate(layout, true);
+          if (validation == null || force) {
+            layout.prettyPrint(parentCommand.out);
+          }
+          if (validation != null) {
+            parentCommand.out.println("EOF code is invalid - " + validation);
+          }
+        } else {
+          parentCommand.out.println("EOF layout is invalid - " + layout.invalidReason());
+        }
       }
     }
   }
