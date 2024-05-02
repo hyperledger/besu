@@ -51,7 +51,7 @@ public class SwapNOperation extends AbstractFixedCostOperation {
 
     final Bytes tmp = frame.getStackItem(0);
     frame.setStackItem(0, frame.getStackItem(index + 1));
-    frame.setStackItem(index, tmp);
+    frame.setStackItem(index+1, tmp);
     frame.setPC(pc + 1);
 
     return swapSuccess;
