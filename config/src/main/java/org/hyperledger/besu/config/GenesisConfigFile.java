@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.config;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import org.hyperledger.besu.datatypes.Wei;
 
-import java.io.IOException;
 import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
@@ -31,7 +28,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.io.Resources;
 
 /** The Genesis config file. */
 public class GenesisConfigFile {
@@ -57,40 +53,26 @@ public class GenesisConfigFile {
    * @return the genesis config file
    */
   public static GenesisConfigFile mainnet() {
-    return genesisFileFromResources("/mainnet.json");
+    return fromSource(GenesisConfigFile.class.getResource("/mainnet.json"));
   }
 
   /**
-   * Mainnet json node object node.
+   * Genesis file from URL.
    *
-   * @return the object node
-   */
-  public static ObjectNode mainnetJsonNode() {
-    try {
-      final String jsonString =
-          Resources.toString(GenesisConfigFile.class.getResource("/mainnet.json"), UTF_8);
-      return JsonUtil.objectNodeFromString(jsonString, false);
-    } catch (final IOException e) {
-      throw new IllegalStateException(e);
-    }
-  }
-
-  /**
-   * Development genesis config file.
-   *
+   * @param jsonSource the URL
    * @return the genesis config file
    */
-  public static GenesisConfigFile development() {
-    return genesisFileFromResources("/dev.json");
+  public static GenesisConfigFile fromSource(final URL jsonSource) {
+    return fromConfig(JsonUtil.objectNodeFromURL(jsonSource, false));
   }
 
   /**
-   * Genesis file from resources genesis config file.
+   * Genesis file from resource.
    *
    * @param resourceName the resource name
    * @return the genesis config file
    */
-  public static GenesisConfigFile genesisFileFromResources(final String resourceName) {
+  public static GenesisConfigFile fromResource(final String resourceName) {
     return fromConfig(GenesisConfigFile.class.getResource(resourceName));
   }
 

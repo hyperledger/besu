@@ -432,6 +432,27 @@ public class JsonUtil {
   }
 
   /**
+   * Object node from URL.
+   *
+   * @param jsonSource the URL of the json source
+   * @param allowComments true to allow comments
+   * @return the object node
+   */
+  public static ObjectNode objectNodeFromURL(final URL jsonSource, final boolean allowComments) {
+
+    final ObjectMapper objectMapper = new ObjectMapper();
+    objectMapper.configure(Feature.ALLOW_COMMENTS, allowComments);
+    try {
+      final JsonNode jsonNode = objectMapper.readTree(jsonSource);
+      validateType(jsonNode, JsonNodeType.OBJECT);
+      return (ObjectNode) jsonNode;
+    } catch (final IOException e) {
+      // Reading directly from a string should not raise an IOException, just catch and rethrow
+      throw new RuntimeException(e);
+    }
+  }
+
+  /**
    * Gets json.
    *
    * @param objectNode the object node

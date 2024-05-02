@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.controller;
 
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
@@ -289,6 +290,12 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   public BesuControllerBuilder evmConfiguration(final EvmConfiguration evmConfiguration) {
     super.evmConfiguration(evmConfiguration);
     return propagateConfig(z -> z.evmConfiguration(evmConfiguration));
+  }
+
+  @Override
+  public BesuControllerBuilder genesisConfigFile(final GenesisConfigFile genesisConfig) {
+    super.genesisConfigFile(genesisConfig);
+    return propagateConfig(z -> z.genesisConfigFile(genesisConfig));
   }
 
   @Override

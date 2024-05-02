@@ -321,8 +321,8 @@ public class BesuController implements java.io.Closeable {
      */
     public BesuControllerBuilder fromEthNetworkConfig(
         final EthNetworkConfig ethNetworkConfig, final SyncMode syncMode) {
-      return fromGenesisFile(ethNetworkConfig.getGenesisConfig(), syncMode)
-          .networkId(ethNetworkConfig.getNetworkId());
+      return fromGenesisFile(ethNetworkConfig.genesisConfigFile(), syncMode)
+          .networkId(ethNetworkConfig.networkId());
     }
 
     /**
@@ -342,16 +342,16 @@ public class BesuController implements java.io.Closeable {
       }
 
       if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
-        builder = new MainnetBesuControllerBuilder().genesisConfigFile(genesisConfigFile);
+        builder = new MainnetBesuControllerBuilder();
       } else if (configOptions.isIbft2()) {
-        builder = new IbftBesuControllerBuilder().genesisConfigFile(genesisConfigFile);
+        builder = new IbftBesuControllerBuilder();
       } else if (configOptions.isIbftLegacy()) {
         throw new IllegalStateException(
             "IBFT1 (legacy) is no longer supported. Consider using IBFT2 or QBFT.");
       } else if (configOptions.isQbft()) {
-        builder = new QbftBesuControllerBuilder().genesisConfigFile(genesisConfigFile);
+        builder = new QbftBesuControllerBuilder();
       } else if (configOptions.isClique()) {
-        builder = new CliqueBesuControllerBuilder().genesisConfigFile(genesisConfigFile);
+        builder = new CliqueBesuControllerBuilder();
       } else {
         throw new IllegalArgumentException("Unknown consensus mechanism defined");
       }
@@ -365,9 +365,7 @@ public class BesuController implements java.io.Closeable {
           // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
           // series of classes removed after we successfully transition to PoS
           // https://github.com/hyperledger/besu/issues/2897
-          final var mergeControllerBuilder = new MergeBesuControllerBuilder();
-          mergeControllerBuilder.genesisConfigFile(genesisConfigFile);
-          return new TransitionBesuControllerBuilder(builder, mergeControllerBuilder)
+          return new TransitionBesuControllerBuilder(builder, new MergeBesuControllerBuilder())
               .genesisConfigFile(genesisConfigFile);
         }
 

@@ -366,7 +366,7 @@ public class TestContextBuilder {
 
   private GenesisState createGenesisBlock(final String genesisFile) throws IOException {
     return GenesisState.fromConfig(
-        GenesisConfigFile.fromConfig(Path.of(genesisFile).toUri().toURL()),
+        GenesisConfigFile.fromSource(Path.of(genesisFile).toUri().toURL()),
         ProtocolScheduleFixture.MAINNET);
   }
 

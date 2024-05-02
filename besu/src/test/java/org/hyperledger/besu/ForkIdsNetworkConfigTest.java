@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -150,7 +148,7 @@ public class ForkIdsNetworkConfigTest {
   @MethodSource("parameters")
   public void testForkId(final NetworkName chainName, final List<ForkId> expectedForkIds) {
     final GenesisConfigFile genesisConfigFile =
-        GenesisConfigFile.fromConfig(chainName.getGenesisFileResource());
+        GenesisConfigFile.fromResource(chainName.getGenesisFile());
     final MilestoneStreamingTransitionProtocolSchedule schedule = createSchedule(genesisConfigFile);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);

@@ -110,10 +110,10 @@ public class TestNode implements Closeable {
                     .setBindPort(listenPort)
                     .setSupportedProtocols(EthProtocol.get()));
 
-    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
+    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromResource("/dev.json");
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(),
+            GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,

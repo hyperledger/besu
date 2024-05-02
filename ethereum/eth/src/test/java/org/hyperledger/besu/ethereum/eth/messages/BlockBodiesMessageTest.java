@@ -56,7 +56,7 @@ public final class BlockBodiesMessageTest {
   public void setup() {
     protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(),
+            GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,

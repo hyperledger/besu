@@ -215,7 +215,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     node.getConfiguration()
         .getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
-        .ifPresent(networkConfigBuilder::setGenesisConfig);
+        .ifPresent(networkConfigBuilder::setGenesisConfigFile);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
     final SynchronizerConfiguration synchronizerConfiguration =
         new SynchronizerConfiguration.Builder().build();

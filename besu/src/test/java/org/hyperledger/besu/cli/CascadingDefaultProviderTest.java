@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -123,12 +123,13 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"));
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes()).isEqualTo(nodes);
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes()).isEqualTo(nodes);
 
     final EthNetworkConfig networkConfig =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfig(GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)))
+            .setGenesisConfigFile(
+                GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)))
             .setBootNodes(nodes)
             .setDnsDiscoveryUrl(null)
             .build();
@@ -165,7 +166,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
-                GenesisConfigFile.fromConfig(MAINNET.getGenesisFileResource()),
+                GenesisConfigFile.fromResource(MAINNET.getGenesisFile()),
                 MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
@@ -239,7 +240,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getNetworkId()).isEqualTo(DEV.getNetworkId());
+    assertThat(config.networkId()).isEqualTo(DEV.getNetworkId());
   }
 
   /**
@@ -257,7 +258,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getNetworkId()).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId()).isEqualTo(MAINNET.getNetworkId());
   }
 
   /**
@@ -276,7 +277,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getNetworkId()).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId()).isEqualTo(MAINNET.getNetworkId());
   }
 
   /**
@@ -294,6 +295,6 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getNetworkId()).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId()).isEqualTo(MAINNET.getNetworkId());
   }
 }

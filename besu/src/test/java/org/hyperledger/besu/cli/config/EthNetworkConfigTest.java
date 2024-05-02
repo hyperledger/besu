@@ -35,41 +35,41 @@ public class EthNetworkConfigTest {
   @Test
   public void testDefaultMainnetConfig() {
     EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET);
-    assertThat(config.getDnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
-    assertThat(config.getBootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.ONE);
+    assertThat(config.dnsDiscoveryUrl()).isEqualTo(MAINNET_DISCOVERY_URL);
+    assertThat(config.bootNodes()).isEqualTo(MAINNET_BOOTSTRAP_NODES);
+    assertThat(config.networkId()).isEqualTo(BigInteger.ONE);
   }
 
   @Test
   public void testDefaultGoerliConfig() {
     EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.GOERLI);
-    assertThat(config.getDnsDiscoveryUrl()).isEqualTo(GOERLI_DISCOVERY_URL);
-    assertThat(config.getBootNodes()).isEqualTo(GOERLI_BOOTSTRAP_NODES);
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(5));
+    assertThat(config.dnsDiscoveryUrl()).isEqualTo(GOERLI_DISCOVERY_URL);
+    assertThat(config.bootNodes()).isEqualTo(GOERLI_BOOTSTRAP_NODES);
+    assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(5));
   }
 
   @Test
   public void testDefaultDevConfig() {
     EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.DEV);
-    assertThat(config.getDnsDiscoveryUrl()).isNull();
-    assertThat(config.getBootNodes()).isEmpty();
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2018));
+    assertThat(config.dnsDiscoveryUrl()).isNull();
+    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(2018));
   }
 
   @Test
   public void testDefaultFutureConfig() {
     EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.FUTURE_EIPS);
-    assertThat(config.getDnsDiscoveryUrl()).isNull();
-    assertThat(config.getBootNodes()).isEmpty();
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2022));
+    assertThat(config.dnsDiscoveryUrl()).isNull();
+    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(2022));
   }
 
   @Test
   public void testDefaultExperimentalConfig() {
     EthNetworkConfig config = EthNetworkConfig.getNetworkConfig(NetworkName.EXPERIMENTAL_EIPS);
-    assertThat(config.getDnsDiscoveryUrl()).isNull();
-    assertThat(config.getBootNodes()).isEmpty();
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(2023));
+    assertThat(config.dnsDiscoveryUrl()).isNull();
+    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(2023));
   }
 
   @Test
@@ -77,7 +77,7 @@ public class EthNetworkConfigTest {
     EthNetworkConfig config =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfig(
+            .setGenesisConfigFile(
                 GenesisConfigFile.fromConfig(
                     """
             {
@@ -87,10 +87,10 @@ public class EthNetworkConfigTest {
             }
             """))
             .build();
-    assertThat(config.getGenesisConfig().getConfigOptions().getChainId())
+    assertThat(config.genesisConfigFile().getConfigOptions().getChainId())
         .contains(BigInteger.valueOf(1234567));
-    assertThat(config.getDnsDiscoveryUrl()).isNotNull();
-    assertThat(config.getBootNodes()).isNotEmpty();
-    assertThat(config.getNetworkId()).isEqualTo(BigInteger.valueOf(42));
+    assertThat(config.dnsDiscoveryUrl()).isNotNull();
+    assertThat(config.bootNodes()).isNotEmpty();
+    assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(42));
   }
 }

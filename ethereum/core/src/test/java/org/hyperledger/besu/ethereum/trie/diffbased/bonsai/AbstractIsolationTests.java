@@ -104,11 +104,11 @@ public abstract class AbstractIsolationTests {
               .createKeyPair(SECPPrivateKey.create(key, "ECDSA"));
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
-          GenesisConfigFile.development().getConfigOptions(),
+          GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
           MiningParameters.MINING_DISABLED,
           new BadBlockManager());
   protected final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
+      GenesisState.fromConfig(GenesisConfigFile.fromResource("/dev.json"), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
   protected final TransactionPoolConfiguration poolConfiguration =
@@ -139,7 +139,7 @@ public abstract class AbstractIsolationTests {
               MiningParameters.newDefault()));
 
   protected final List<GenesisAccount> accounts =
-      GenesisConfigFile.development()
+      GenesisConfigFile.fromResource("/dev.json")
           .streamAllocations()
           .filter(ga -> ga.privateKey() != null)
           .toList();

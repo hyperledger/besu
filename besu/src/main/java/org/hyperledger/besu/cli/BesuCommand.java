@@ -1659,10 +1659,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GenesisConfigFile readGenesisConfigFile() {
-    return GenesisConfigFile.fromConfig(
-        genesisFile != null
-            ? genesisConfigSource(genesisFile)
-            : Optional.ofNullable(network).orElse(MAINNET).getGenesisFileResource());
+    return genesisFile != null
+        ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
+        : GenesisConfigFile.fromResource(
+            Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {
@@ -1770,7 +1770,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     permissioningConfiguration = permissioningConfiguration();
     staticNodes = loadStaticNodes();
 
-    final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
+    final List<EnodeURL> enodeURIs = ethNetworkConfig.bootNodes();
     permissioningConfiguration
         .flatMap(PermissioningConfiguration::getLocalConfig)
         .ifPresent(p -> ensureAllNodesAreInAllowlist(enodeURIs, p));
@@ -2347,7 +2347,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
               genesisConfigOptionsSupplier
                   .get()
                   .getChainId()
-                  .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).getNetworkId()));
+                  .orElse(EthNetworkConfig.getNetworkConfig(MAINNET).networkId()));
         } catch (final DecodeException e) {
           throw new ParameterException(
               this.commandLine, String.format("Unable to parse genesis file %s.", genesisFile), e);
@@ -2365,7 +2365,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setDnsDiscoveryUrl(null);
     }
 
-    builder.setGenesisConfig(genesisConfigFileSupplier.get());
+    builder.setGenesisConfigFile(genesisConfigFileSupplier.get());
 
     if (networkId != null) {
       builder.setNetworkId(networkId);
@@ -2726,7 +2726,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (genesisFile != null) {
       builder.setCustomGenesis(genesisFile.getAbsolutePath());
     }
-    builder.setNetworkId(ethNetworkConfig.getNetworkId());
+    builder.setNetworkId(ethNetworkConfig.networkId());
 
     builder
         .setDataStorage(dataStorageOptions.normalizeDataStorageFormat())
