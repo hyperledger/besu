@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,27 +15,35 @@
 package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.PublicKey;
 import org.hyperledger.besu.plugin.Unstable;
 
 /**
- * A deposit is a system-level operation to support validator exitys that are pushed from the EVM to
- * beacon chain.
+ * A withdrawal request is an operation sent to the Beacon Node for processing validator withdrawal
+ * requests (partial or complete)
  */
 @Unstable
-public interface ValidatorExit {
+public interface WithdrawalRequest {
 
   /**
-   * Withdrawal credential (0x01) associated with the validator to be exited
+   * Withdrawal credential (0x01) associated with the validator
    *
    * @return withdrawal credential address
    */
   Address getSourceAddress();
 
   /**
-   * Public key of the validator that is going to exit
+   * Public key of the validator that is going to request a withdrawal
    *
    * @return public key of validator
    */
   PublicKey getValidatorPubKey();
+
+  /**
+   * The amount for withdrawal
+   *
+   * @return withdrawal amount
+   */
+  GWei getAmount();
 }
