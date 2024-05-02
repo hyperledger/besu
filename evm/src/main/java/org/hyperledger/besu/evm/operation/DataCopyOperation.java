@@ -32,7 +32,7 @@ public class DataCopyOperation extends AbstractOperation {
    * @param gasCalculator the gas calculator
    */
   public DataCopyOperation(final GasCalculator gasCalculator) {
-    super(0xd3, "DATALOAD", 3, 1, gasCalculator);
+    super(0xd3, "DATACOPY", 3, 1, gasCalculator);
   }
 
   /**
@@ -44,7 +44,8 @@ public class DataCopyOperation extends AbstractOperation {
    * @return the long
    */
   protected long cost(final MessageFrame frame, final long memOffset, final long length) {
-    return gasCalculator().extCodeCopyOperationGasCost(frame, memOffset, length);
+    return gasCalculator().getVeryLowTierGasCost()
+        + gasCalculator().extCodeCopyOperationGasCost(frame, memOffset, length);
   }
 
   @Override
