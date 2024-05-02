@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;

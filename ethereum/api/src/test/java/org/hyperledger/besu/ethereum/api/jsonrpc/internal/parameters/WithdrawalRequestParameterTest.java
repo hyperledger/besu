@@ -17,35 +17,38 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ValidatorExitTestFixture.VALIDATOR_EXIT_PARAMETER_1;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestTestFixture.WITHDRAWAL_REQUEST_PARAMETER_1;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
+import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import org.junit.jupiter.api.Test;
 
-public class ValidatorExitParameterTest {
+public class WithdrawalRequestParameterTest {
 
   @Test
-  public void toValidatorExit() {
-    ValidatorExit expected =
-        new ValidatorExit(
+  public void toWithdrawalRequest() {
+    WithdrawalRequest expected =
+        new WithdrawalRequest(
             Address.fromHexString("0x814FaE9f487206471B6B0D713cD51a2D35980000"),
             BLSPublicKey.fromHexString(
-                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"));
-    assertThat(VALIDATOR_EXIT_PARAMETER_1.toValidatorExit()).isEqualTo(expected);
+                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
+            GWei.ONE);
+    assertThat(WITHDRAWAL_REQUEST_PARAMETER_1.toWithdrawalRequest()).isEqualTo(expected);
   }
 
   @Test
-  public void fromValidatorExit() {
-    ValidatorExit validatorExit =
-        new ValidatorExit(
+  public void fromWithdrawalRequest() {
+    WithdrawalRequest withdrawalRequest =
+        new WithdrawalRequest(
             Address.fromHexString("0x814FaE9f487206471B6B0D713cD51a2D35980000"),
             BLSPublicKey.fromHexString(
-                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"));
+                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
+            GWei.ONE);
 
-    assertThat(ValidatorExitParameter.fromValidatorExit(validatorExit))
-        .isEqualTo(VALIDATOR_EXIT_PARAMETER_1);
+    assertThat(WithdrawalRequestParameter.fromWithdrawalRequest(withdrawalRequest))
+        .isEqualTo(WITHDRAWAL_REQUEST_PARAMETER_1);
   }
 }

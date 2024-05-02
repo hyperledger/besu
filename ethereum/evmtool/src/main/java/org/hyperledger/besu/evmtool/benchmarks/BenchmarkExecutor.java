@@ -146,7 +146,7 @@ public abstract class BenchmarkExecutor {
   /**
    * Run the benchmarks
    *
-   * @param output stream to print results to (typicall System.out)
+   * @param output stream to print results to (typically System.out)
    * @param attemptNative Should the benchmark attempt to us native libraries? (null use the
    *     default, false disabled, true enabled)
    * @param fork the fork name to run the benchmark against.
