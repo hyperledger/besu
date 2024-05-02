@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,6 +28,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
@@ -122,17 +123,18 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"),
             EnodeURLImpl.fromString("enode://" + VALID_NODE_ID + "@192.168.0.1:4567"));
-    assertThat(ethNetworkConfigArgumentCaptor.getValue().getBootNodes()).isEqualTo(nodes);
+    assertThat(ethNetworkConfigArgumentCaptor.getValue().bootNodes()).isEqualTo(nodes);
 
     final EthNetworkConfig networkConfig =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(MAINNET))
             .setNetworkId(BigInteger.valueOf(42))
-            .setGenesisConfig(encodeJsonGenesis(GENESIS_VALID_JSON))
+            .setGenesisConfigFile(
+                GenesisConfigFile.fromConfig(encodeJsonGenesis(GENESIS_VALID_JSON)))
             .setBootNodes(nodes)
             .setDnsDiscoveryUrl(null)
             .build();
     verify(mockControllerBuilder).dataDirectory(eq(dataFolder.toPath()));
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig), any(), any());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(eq(networkConfig), any());
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     assertThat(syncConfigurationCaptor.getValue().getSyncMode()).isEqualTo(SyncMode.FAST);
@@ -164,7 +166,7 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
-                EthNetworkConfig.jsonConfig(MAINNET),
+                GenesisConfigFile.fromResource(MAINNET.getGenesisFile()),
                 MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
@@ -234,11 +236,11 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     parseCommand("--profile", "dev");
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getNetworkId()).isEqualTo(DEV.getNetworkId());
+    assertThat(config.networkId()).isEqualTo(DEV.getNetworkId());
   }
 
   /**
@@ -252,11 +254,11 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     parseCommand("--profile", "dev", "--network", "MAINNET");
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getNetworkId()).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId()).isEqualTo(MAINNET.getNetworkId());
   }
 
   /**
@@ -271,11 +273,11 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     final String configFile = this.getClass().getResource("/partial_config.toml").getFile();
     parseCommand("--profile", "dev", "--config-file", configFile);
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getNetworkId()).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId()).isEqualTo(MAINNET.getNetworkId());
   }
 
   /**
@@ -289,10 +291,10 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     setEnvironmentVariable("BESU_NETWORK", "MAINNET");
     parseCommand("--profile", "dev");
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any(), any());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
 
     final EthNetworkConfig config = networkArg.getValue();
-    assertThat(config.getNetworkId()).isEqualTo(MAINNET.getNetworkId());
+    assertThat(config.networkId()).isEqualTo(MAINNET.getNetworkId());
   }
 }

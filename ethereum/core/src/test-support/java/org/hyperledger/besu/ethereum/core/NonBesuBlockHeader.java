@@ -120,7 +120,7 @@ public class NonBesuBlockHeader implements BlockHeader {
   }
 
   @Override
-  public Optional<? extends Hash> getExitsRoot() {
+  public Optional<? extends Hash> getWithdrawalRequestsRoot() {
     return Optional.empty();
   }
 

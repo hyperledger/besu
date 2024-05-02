@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
@@ -34,8 +33,8 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -167,7 +166,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
         @JsonProperty("depositsRoot") final String depositsRoot,
-        @JsonProperty("exitsRoot") final String exitsRoot,
+        @JsonProperty("withdrawalRequestsRoot") final String withdrawalRequestsRoot,
         @JsonProperty("dataGasUsed")
             final String dataGasUsed, // TODO: remove once reference tests have been updated
         @JsonProperty("excessDataGas")
@@ -206,7 +205,7 @@ public class BlockchainReferenceTestCaseSpec {
               : excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
-          exitsRoot != null ? Hash.fromHexString(exitsRoot) : null,
+          withdrawalRequestsRoot != null ? Hash.fromHexString(withdrawalRequestsRoot) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -297,7 +296,7 @@ public class BlockchainReferenceTestCaseSpec {
                   : Optional.of(input.readList(Deposit::readFrom)),
               input.isEndOfCurrentList()
                   ? Optional.empty()
-                  : Optional.of(input.readList(ValidatorExit::readFrom)));
+                  : Optional.of(input.readList(WithdrawalRequest::readFrom)));
       return new Block(header, body);
     }
   }

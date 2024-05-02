@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,9 +16,10 @@ package org.hyperledger.besu.ethereum.core;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.PublicKey;
-import org.hyperledger.besu.ethereum.core.encoding.ValidatorExitDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.ValidatorExitEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalRequestDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalRequestEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
@@ -27,26 +28,29 @@ import java.util.Objects;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class ValidatorExit implements org.hyperledger.besu.plugin.data.ValidatorExit {
+public class WithdrawalRequest implements org.hyperledger.besu.plugin.data.WithdrawalRequest {
 
   private final Address sourceAddress;
   private final BLSPublicKey validatorPubKey;
+  private final GWei amount;
 
-  public ValidatorExit(final Address sourceAddress, final BLSPublicKey validatorPubKey) {
+  public WithdrawalRequest(
+      final Address sourceAddress, final BLSPublicKey validatorPubKey, final GWei amount) {
     this.sourceAddress = sourceAddress;
     this.validatorPubKey = validatorPubKey;
+    this.amount = amount;
   }
 
-  public static ValidatorExit readFrom(final Bytes rlpBytes) {
+  public static WithdrawalRequest readFrom(final Bytes rlpBytes) {
     return readFrom(RLP.input(rlpBytes));
   }
 
-  public static ValidatorExit readFrom(final RLPInput rlpInput) {
-    return ValidatorExitDecoder.decode(rlpInput);
+  public static WithdrawalRequest readFrom(final RLPInput rlpInput) {
+    return WithdrawalRequestDecoder.decode(rlpInput);
   }
 
   public void writeTo(final RLPOutput out) {
-    ValidatorExitEncoder.encode(this, out);
+    WithdrawalRequestEncoder.encode(this, out);
   }
 
   @Override
@@ -60,12 +64,19 @@ public class ValidatorExit implements org.hyperledger.besu.plugin.data.Validator
   }
 
   @Override
+  public GWei getAmount() {
+    return amount;
+  }
+
+  @Override
   public String toString() {
-    return "ValidatorExit{"
+    return "WithdrawalRequest{"
         + "sourceAddress="
         + sourceAddress
         + " validatorPubKey="
         + validatorPubKey
+        + " amount="
+        + amount
         + '}';
   }
 
@@ -77,13 +88,14 @@ public class ValidatorExit implements org.hyperledger.besu.plugin.data.Validator
     if (o == null || getClass() != o.getClass()) {
       return false;
     }
-    final ValidatorExit that = (ValidatorExit) o;
+    final WithdrawalRequest that = (WithdrawalRequest) o;
     return Objects.equals(sourceAddress, that.sourceAddress)
-        && Objects.equals(validatorPubKey, that.validatorPubKey);
+        && Objects.equals(validatorPubKey, that.validatorPubKey)
+        && Objects.equals(amount, that.amount);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceAddress, validatorPubKey);
+    return Objects.hash(sourceAddress, validatorPubKey, amount);
   }
 }
