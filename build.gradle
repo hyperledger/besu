@@ -717,7 +717,7 @@ task distDocker {
       def gitDetails = getGitCommitDetails(7)
       executable shell
       workingDir dockerBuildDir
-      args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
+      args "-c", "docker buildx build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} --push ."
     }
   }
 }
