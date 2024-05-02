@@ -281,13 +281,7 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
-    this.returnStack =
-        Suppliers.memoize(
-            () -> {
-              var rStack = new ReturnStack();
-              rStack.push(new ReturnStack.ReturnStackItem(0, 0, 0));
-              return rStack;
-            });
+    this.returnStack = Suppliers.memoize(ReturnStack::new);
     this.pc = code.isValid() ? code.getCodeSection(0).getEntryPoint() : 0;
     this.recipient = recipient;
     this.contract = contract;
@@ -376,10 +370,8 @@ public class MessageFrame {
     CodeSection info = code.getCodeSection(section);
     if (info == null) {
       return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else if (stackSize() != peekReturnStack().getStackHeight() + info.getInputs()) {
-      return ExceptionalHaltReason.JUMPF_STACK_MISMATCH;
     } else {
-      pc = -1; // will be +1ed at end of operations loop
+      pc = info.getEntryPoint() - 1; // will be +1ed at end of operations loop
       this.section = section;
       return null;
     }
@@ -391,20 +383,11 @@ public class MessageFrame {
    * @return the exceptional halt reason
    */
   public ExceptionalHaltReason returnFunction() {
-    CodeSection thisInfo = code.getCodeSection(this.section);
     var rStack = returnStack.get();
     var returnInfo = rStack.pop();
-    if ((returnInfo.getStackHeight() + thisInfo.getOutputs()) != stack.size()) {
-      return ExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS;
-    } else if (rStack.isEmpty()) {
-      setState(MessageFrame.State.CODE_SUCCESS);
-      setOutputData(Bytes.EMPTY);
-      return null;
-    } else {
-      this.pc = returnInfo.getPC();
-      this.section = returnInfo.getCodeSectionIndex();
-      return null;
-    }
+    this.pc = returnInfo.getPC();
+    this.section = returnInfo.getCodeSectionIndex();
+    return null;
   }
 
   /** Deducts the remaining gas. */
