@@ -97,7 +97,7 @@ public class RangeHeadersFetcher {
       final BlockHeader referenceHeader,
       final int headerCount,
       final int skip) {
-    LOG.trace(
+    LOG.info(
         "Requesting {} range headers, starting from {}, {} blocks apart",
         headerCount,
         referenceHeader.getNumber(),

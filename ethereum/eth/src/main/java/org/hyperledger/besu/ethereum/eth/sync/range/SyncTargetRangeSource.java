@@ -31,8 +31,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -146,7 +144,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
     final CompletableFuture<List<BlockHeader>> pendingRequest = this.pendingRequests.get();
     try {
       final List<BlockHeader> newHeaders =
-          pendingRequest.get(newHeaderWaitDuration.toMillis(), MILLISECONDS);
+          pendingRequest.get(newHeaderWaitDuration.toMillis(), MILLISECONDS); // 5 seconds
       this.pendingRequests = Optional.empty();
       if (newHeaders.isEmpty()) {
         retryCount++;
@@ -157,7 +155,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
               .addArgument(peer)
               .log();
           peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
-          // TODO: Exception
+          throw new RuntimeException("Too many retries in range header fetching.");
         }
       } else {
         retryCount = 0;
@@ -167,15 +165,18 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
         }
       }
       return retrievedRanges.poll();
-    } catch (final InterruptedException e) {
-      LOG.trace("Interrupted while waiting for new range headers", e);
-      return null;
-    } catch (final ExecutionException e) {
-      LOG.debug("Failed to retrieve new range headers", e);
-      this.pendingRequests = Optional.empty();
+    } catch (final Exception e) {
+      LOG.debug("Interrupted while waiting for new range headers, target peer {}", peer, e);
       retryCount++;
-      return null;
-    } catch (final TimeoutException e) {
+      if (retryCount >= retriesPermitted) {
+        LOG.atDebug()
+            .setMessage(
+                "Disconnecting target peer for providing useless or empty range header: {}.")
+            .addArgument(peer)
+            .log();
+        peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
+        throw new RuntimeException("Too many retries in range header fetching.");
+      }
       return null;
     }
   }

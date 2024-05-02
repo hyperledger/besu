@@ -107,7 +107,10 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   protected void handleTaskError(final Throwable error) {
     final Throwable cause = ExceptionUtils.rootCause(error);
-    LOG.info("Cause of error: {}", cause.getMessage());
+    LOG.info(
+        "Error in handleTaskError: {} ,\n  Cause of error: {}",
+        error.getStackTrace(),
+        cause.getMessage());
     if (!isRetryableError(cause)) {
       // Complete exceptionally
       LOG.info("completing exceptionally due to error: {}", cause.getMessage());
