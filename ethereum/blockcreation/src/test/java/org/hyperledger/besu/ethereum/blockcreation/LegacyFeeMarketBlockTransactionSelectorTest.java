@@ -51,8 +51,7 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
 
   @Override
   protected GenesisConfigFile getGenesisConfigFile() {
-    return GenesisConfigFile.genesisFileFromResources(
-        "/block-transaction-selector/gas-price-genesis.json");
+    return GenesisConfigFile.fromResource("/block-transaction-selector/gas-price-genesis.json");
   }
 
   @Override

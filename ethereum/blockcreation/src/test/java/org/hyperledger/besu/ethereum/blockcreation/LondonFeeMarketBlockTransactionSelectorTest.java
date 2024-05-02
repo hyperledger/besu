@@ -58,8 +58,7 @@ public class LondonFeeMarketBlockTransactionSelectorTest
 
   @Override
   protected GenesisConfigFile getGenesisConfigFile() {
-    return GenesisConfigFile.genesisFileFromResources(
-        "/block-transaction-selector/london-genesis.json");
+    return GenesisConfigFile.fromResource("/block-transaction-selector/london-genesis.json");
   }
 
   @Override
