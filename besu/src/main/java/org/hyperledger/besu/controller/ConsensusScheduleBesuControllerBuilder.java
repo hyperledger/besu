@@ -160,7 +160,7 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         besuControllerBuilderSchedule.entrySet().stream()
             .map(e -> new ForkSpec<>(e.getKey(), e.getValue().createProtocolSchedule()))
             .collect(Collectors.toCollection(() -> new TreeSet<>(ForkSpec.COMPARATOR)));
-    final Optional<BigInteger> chainId = configOptionsSupplier.get().getChainId();
+    final Optional<BigInteger> chainId = genesisConfigOptions.getChainId();
     return combinedProtocolScheduleFactory.apply(protocolScheduleSpecs, chainId);
   }
 
@@ -361,15 +361,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         .values()
         .forEach(b -> b.isRevertReasonEnabled(isRevertReasonEnabled));
     return super.isRevertReasonEnabled(isRevertReasonEnabled);
-  }
-
-  @Override
-  public BesuControllerBuilder genesisConfigOverrides(
-      final Map<String, String> genesisConfigOverrides) {
-    besuControllerBuilderSchedule
-        .values()
-        .forEach(b -> b.genesisConfigOverrides(genesisConfigOverrides));
-    return super.genesisConfigOverrides(genesisConfigOverrides);
   }
 
   @Override
