@@ -207,7 +207,7 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
     simpleStorageContract.set(BigInteger.valueOf(201)).send();
     assertThat(simpleStorageContract.get().send()).isEqualTo(BigInteger.valueOf(201));
 
-    // Upgrade the chain from berlin to london
+    // Upgrade the chain from berlin to london in 120 blocks time
     upgradeToLondon(
         minerNode1, minerNode2, minerNode3, minerNode4, lastChainHeight.intValue() + 120);
 
@@ -345,7 +345,6 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
 
   @Override
   public void tearDownAcceptanceTestBase() {
-    System.out.println("MRW: KILLING CLUSTER NODES AFTER TEST");
     cluster.stop();
     super.tearDownAcceptanceTestBase();
   }
