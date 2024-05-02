@@ -22,7 +22,8 @@ import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_MAX_OPEN_FILES;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -111,7 +112,7 @@ public class PrivacyTest {
             .setFlexiblePrivacyGroupsEnabled(flexibleEnabled)
             .build();
     return new BesuController.Builder()
-        .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FULL)
+        .fromEthNetworkConfig(EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET), SyncMode.FULL)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())
