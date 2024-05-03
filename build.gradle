@@ -220,7 +220,7 @@ allprojects {
     }
     // Below this line are currently only license header tasks
     format 'bash', { target '**/*.sh' }
-    format 'sol', {
+    format 'Solidity', {
       target '**/*.sol'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       trimTrailingWhitespace()
