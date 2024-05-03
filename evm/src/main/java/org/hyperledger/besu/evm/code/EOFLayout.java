@@ -632,8 +632,8 @@ public record EOFLayout(
       CodeSection cs = getCodeSection(i);
       out.print(prefix);
       out.printf(
-          "       # Code section %d - in=%d out=%d height=%d%n",
-          i, cs.inputs, cs.outputs, cs.maxStackHeight);
+          "       # Code section %d - in=%d out=%s height=%d%n",
+          i, cs.inputs, cs.isReturning() ? cs.outputs : "non-returning", cs.maxStackHeight);
       byte[] byteCode = container.slice(cs.getEntryPoint(), cs.getLength()).toArray();
       int pc = 0;
       while (pc < byteCode.length) {
