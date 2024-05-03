@@ -39,6 +39,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-downloader-header-request-size";
   private static final String DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG =
       "--Xsynchronizer-downloader-checkpoint-timeouts-permitted";
+  private static final String DOWNLOADER_CHECKPOINT_RETRIES_FLAG =
+      "--Xsynchronizer-downloader-checkpoint-RETRIES";
   private static final String DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG =
       "--Xsynchronizer-downloader-chain-segment-size";
   private static final String DOWNLOADER_PARALLELISM_FLAG =
@@ -132,12 +134,12 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SynchronizerConfiguration.DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE;
 
   @CommandLine.Option(
-      names = DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
+      names = {DOWNLOADER_CHECKPOINT_RETRIES_FLAG, DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG},
       hidden = true,
       paramLabel = "<INTEGER>",
       description =
           "Number of tries to attempt to download checkpoints before stopping (default: ${DEFAULT-VALUE})")
-  private int downloaderCheckpointTimeoutsPermitted =
+  private int downloaderCheckpointRetries =
       SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED;
 
   @CommandLine.Option(
@@ -354,8 +356,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getDownloaderChangeTargetThresholdByHeight();
     options.downloaderChangeTargetThresholdByTd = config.getDownloaderChangeTargetThresholdByTd();
     options.downloaderHeaderRequestSize = config.getDownloaderHeaderRequestSize();
-    options.downloaderCheckpointTimeoutsPermitted =
-        config.getDownloaderCheckpointTimeoutsPermitted();
+    options.downloaderCheckpointRetries = config.getDownloaderCheckpointRetries();
     options.downloaderChainSegmentSize = config.getDownloaderChainSegmentSize();
     options.downloaderParallelism = config.getDownloaderParallelism();
     options.transactionsParallelism = config.getTransactionsParallelism();
@@ -394,7 +395,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.downloaderChangeTargetThresholdByHeight(downloaderChangeTargetThresholdByHeight);
     builder.downloaderChangeTargetThresholdByTd(downloaderChangeTargetThresholdByTd);
     builder.downloaderHeadersRequestSize(downloaderHeaderRequestSize);
-    builder.downloaderCheckpointTimeoutsPermitted(downloaderCheckpointTimeoutsPermitted);
+    builder.downloaderCheckpointRetries(downloaderCheckpointRetries);
     builder.downloaderChainSegmentSize(downloaderChainSegmentSize);
     builder.downloaderParallelism(downloaderParallelism);
     builder.transactionsParallelism(transactionsParallelism);
@@ -436,7 +437,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
             OptionParser.format(downloaderHeaderRequestSize),
             DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
-            OptionParser.format(downloaderCheckpointTimeoutsPermitted),
+            OptionParser.format(downloaderCheckpointRetries),
             DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
             OptionParser.format(downloaderChainSegmentSize),
             DOWNLOADER_PARALLELISM_FLAG,
