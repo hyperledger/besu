@@ -215,7 +215,8 @@ allprojects {
     // spotless check applied to build.gradle (groovy) files
     groovyGradle {
       target '*.gradle'
-      greclipse('4.21').configFile(rootProject.file('gradle/formatter.properties'))
+      // Use the default version and Groovy-Eclipse custom configuration
+      greclipse().configFile(rootProject.file('gradle/spotless/greclipse.properties'))
       endWithNewline()
     }
     // Below this line are currently only license header tasks
@@ -769,7 +770,6 @@ task testDocker {
       executable shell
       args "-c", "./test.sh ${image}"
     }
-
   }
 }
 
