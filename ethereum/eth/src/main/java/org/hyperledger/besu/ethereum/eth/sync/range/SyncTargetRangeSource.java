@@ -173,16 +173,21 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       LOG.trace("Interrupted while waiting for new range headers", e);
       return null;
     } catch (final ExecutionException e) {
-      LOG.atTrace().setMessage("Future completed exceptionally while waiting for new range headers, target peer {}").addArgument(peer::toString).setCause(e).log();
+      LOG.atTrace()
+          .setMessage(
+              "Future completed exceptionally while waiting for new range headers, target peer {}")
+          .addArgument(peer::toString)
+          .setCause(e)
+          .log();
       this.pendingRequests = Optional.empty();
       retryCount++;
       if (retryCount >= retriesPermitted) {
         LOG.atDebug()
-                .setMessage(
-                        "Disconnecting target peer for not providing useful range headers after {} retries: {}.")
-                .addArgument(retriesPermitted)
-                .addArgument(peer)
-                .log();
+            .setMessage(
+                "Disconnecting target peer for not providing useful range headers after {} retries: {}.")
+            .addArgument(retriesPermitted)
+            .addArgument(peer)
+            .log();
         peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
         retryCount = 0;
         throw new RuntimeException("Too many retries fetching range headers for chain download.");
