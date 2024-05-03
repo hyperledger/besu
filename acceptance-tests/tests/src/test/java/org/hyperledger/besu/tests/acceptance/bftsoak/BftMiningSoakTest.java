@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -254,12 +254,12 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       final BesuNode minerNode, final boolean zeroBaseFeeEnabled, final int blockNumber) {
 
     if (minerNode.getGenesisConfig().isPresent()) {
-      final ObjectNode genesisConfigNode3 =
+      final ObjectNode genesisConfigNode =
           JsonUtil.objectNodeFromString(minerNode.getGenesisConfig().get());
-      final ObjectNode config1 = (ObjectNode) genesisConfigNode3.get("config");
-      config1.put("londonBlock", blockNumber);
-      config1.put("zeroBaseFee", zeroBaseFeeEnabled);
-      minerNode.setGenesisConfig(genesisConfigNode3.toString());
+      final ObjectNode config = (ObjectNode) genesisConfigNode.get("config");
+      config.put("londonBlock", blockNumber);
+      config.put("zeroBaseFee", zeroBaseFeeEnabled);
+      minerNode.setGenesisConfig(genesisConfigNode.toString());
     }
   }
 
@@ -267,11 +267,11 @@ public class BftMiningSoakTest extends ParameterizedBftTestBase {
       final BesuNode minerNode, final long blockTimestamp) {
 
     if (minerNode.getGenesisConfig().isPresent()) {
-      final ObjectNode genesisConfigNode3 =
+      final ObjectNode genesisConfigNode =
           JsonUtil.objectNodeFromString(minerNode.getGenesisConfig().get());
-      final ObjectNode config1 = (ObjectNode) genesisConfigNode3.get("config");
-      config1.put("shanghaiTime", blockTimestamp);
-      minerNode.setGenesisConfig(genesisConfigNode3.toString());
+      final ObjectNode config = (ObjectNode) genesisConfigNode.get("config");
+      config.put("shanghaiTime", blockTimestamp);
+      minerNode.setGenesisConfig(genesisConfigNode.toString());
     }
   }
 
