@@ -225,7 +225,7 @@ allprojects {
       trimTrailingWhitespace()
       endWithNewline()
 
-      licenseHeaderFile("${rootDir}/gradle/spotless/sh.license","^(?!#).+").skipLinesMatching("^#!.+?\$")
+      licenseHeaderFile("${rootDir}/gradle/spotless/sh.license","^(?!##).+").skipLinesMatching("^#!.+?\$")
     }
     format 'Solidity', {
       target '**/*.sol'
