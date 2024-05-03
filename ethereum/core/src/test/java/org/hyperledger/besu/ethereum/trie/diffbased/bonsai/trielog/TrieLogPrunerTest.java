@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog;
 
 import static org.assertj.core.api.Assertions.assertThat;

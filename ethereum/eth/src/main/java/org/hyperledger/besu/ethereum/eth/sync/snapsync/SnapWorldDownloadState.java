@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordina
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
@@ -86,6 +87,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   // blockchain
   private final Blockchain blockchain;
   private final Long blockObserverId;
+  private final EthContext ethContext;
 
   // metrics around the snapsync
   private final SnapSyncMetricsManager metricsManager;
@@ -99,7 +101,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final SnapSyncMetricsManager metricsManager,
-      final Clock clock) {
+      final Clock clock,
+      final EthContext ethContext) {
     super(
         worldStateStorageCoordinator,
         pendingRequests,
@@ -111,6 +114,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.snapSyncState = snapSyncState;
     this.metricsManager = metricsManager;
     this.blockObserverId = blockchain.observeBlockAdded(createBlockchainObserver());
+    this.ethContext = ethContext;
 
     metricsManager
         .getMetricsSystem()
@@ -423,23 +427,29 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public BlockAddedObserver createBlockchainObserver() {
-    return addedBlockContext -> {
-      final AtomicBoolean foundNewPivotBlock = new AtomicBoolean(false);
-      pivotBlockSelector.check(
-          (____, isNewPivotBlock) -> {
-            if (isNewPivotBlock) {
-              foundNewPivotBlock.set(true);
-            }
-          });
+    return addedBlockContext ->
+        ethContext
+            .getScheduler()
+            .executeServiceTask(
+                () -> {
+                  final AtomicBoolean foundNewPivotBlock = new AtomicBoolean(false);
+                  pivotBlockSelector.check(
+                      (____, isNewPivotBlock) -> {
+                        if (isNewPivotBlock) {
+                          foundNewPivotBlock.set(true);
+                        }
+                      });
 
-      final boolean isNewPivotBlockFound = foundNewPivotBlock.get();
-      final boolean isBlockchainCaughtUp =
-          snapSyncState.isWaitingBlockchain() && !pivotBlockSelector.isBlockchainBehind();
+                  final boolean isNewPivotBlockFound = foundNewPivotBlock.get();
+                  final boolean isBlockchainCaughtUp =
+                      snapSyncState.isWaitingBlockchain()
+                          && !pivotBlockSelector.isBlockchainBehind();
 
-      if (snapSyncState.isHealTrieInProgress() && (isNewPivotBlockFound || isBlockchainCaughtUp)) {
-        snapSyncState.setWaitingBlockchain(false);
-        reloadTrieHeal();
-      }
-    };
+                  if (snapSyncState.isHealTrieInProgress()
+                      && (isNewPivotBlockFound || isBlockchainCaughtUp)) {
+                    snapSyncState.setWaitingBlockchain(false);
+                    reloadTrieHeal();
+                  }
+                });
   }
 }
