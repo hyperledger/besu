@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -33,6 +33,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
@@ -90,6 +92,7 @@ public class SnapWorldDownloadStateTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final DynamicPivotBlockSelector dynamicPivotBlockManager =
       mock(DynamicPivotBlockSelector.class);
+  private final EthContext ethContext = mock(EthContext.class);
 
   private final TestClock clock = new TestClock();
   private SnapWorldDownloadState downloadState;
@@ -132,7 +135,8 @@ public class SnapWorldDownloadStateTest {
             MAX_REQUESTS_WITHOUT_PROGRESS,
             MIN_MILLIS_BEFORE_STALLING,
             metricsManager,
-            clock);
+            clock,
+            ethContext);
     final DynamicPivotBlockSelector dynamicPivotBlockManager =
         mock(DynamicPivotBlockSelector.class);
     doAnswer(
@@ -147,6 +151,17 @@ public class SnapWorldDownloadStateTest {
     downloadState.setRootNodeData(ROOT_NODE_DATA);
     future = downloadState.getDownloadFuture();
     assertThat(downloadState.isDownloading()).isTrue();
+
+    final EthScheduler ethScheduler = mock(EthScheduler.class);
+    when(ethContext.getScheduler()).thenReturn(ethScheduler);
+    doAnswer(
+            invocation -> {
+              Runnable runnable = invocation.getArgument(0);
+              runnable.run();
+              return null;
+            })
+        .when(ethScheduler)
+        .executeServiceTask(any(Runnable.class));
   }
 
   @ParameterizedTest

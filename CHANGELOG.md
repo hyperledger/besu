@@ -44,6 +44,7 @@
 - Add `rlp decode` subcommand to decode IBFT/QBFT extraData to validator list [#6895](https://github.com/hyperledger/besu/pull/6895)
 - Allow users to specify which plugins are registered [#6700](https://github.com/hyperledger/besu/pull/6700)
 - Layered txpool tuning for blob transactions [#6940](https://github.com/hyperledger/besu/pull/6940)
+- Update Gradle to 7.6.4 [#7030](https://github.com/hyperledger/besu/pull/7030)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
@@ -55,6 +56,7 @@
 - Snap client fixes discovered during snap server testing [#6847](https://github.com/hyperledger/besu/pull/6847)
 - Correctly initialize the txpool as disabled on creation [#6890](https://github.com/hyperledger/besu/pull/6890)
 - Fix worldstate download halt when using snap sync during initial sync [#6981](https://github.com/hyperledger/besu/pull/6981)
+- Fix chain halt due to peers only partially responding with headers. And worldstate halts caused by a halt in the chain sync [#7027](https://github.com/hyperledger/besu/pull/7027)
 
 ### Download Links
 
