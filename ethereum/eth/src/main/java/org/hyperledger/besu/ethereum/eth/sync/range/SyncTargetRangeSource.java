@@ -172,11 +172,11 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       retryCount++;
       if (retryCount >= retriesPermitted) {
         LOG.atDebug()
-                .setMessage(
-                        "Disconnecting target peer for not providing useful range headers after {} retries: {}.")
-                .addArgument(retriesPermitted)
-                .addArgument(peer)
-                .log();
+            .setMessage(
+                "Disconnecting target peer for not providing useful range headers after {} retries: {}.")
+            .addArgument(retriesPermitted)
+            .addArgument(peer)
+            .log();
         peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
         retryCount = 0;
         throw new RuntimeException("Too many retries fetching range headers for chain download.");
