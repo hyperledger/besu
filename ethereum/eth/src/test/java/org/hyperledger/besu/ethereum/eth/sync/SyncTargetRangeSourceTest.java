@@ -19,6 +19,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 import static java.util.concurrent.CompletableFuture.completedFuture;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.mock;
@@ -101,14 +102,13 @@ public class SyncTargetRangeSourceTest {
     when(rangeHeaders.getNextRangeHeaders(peer, commonAncestor))
         .thenReturn(CompletableFuture.failedFuture(new TimeoutException()));
 
-    for (int i = 1; i <= CHECKPOINT_TIMEOUTS_PERMITTED; i++) {
+    for (int i = 1; i < CHECKPOINT_TIMEOUTS_PERMITTED; i++) {
       assertThat(source).hasNext();
       assertThat(source.next()).isNull();
       verify(rangeHeaders, times(i)).getNextRangeHeaders(peer, commonAncestor);
     }
 
-    // Too many timeouts, give up on this sync target.
-    assertThat(source).isExhausted();
+    assertThatThrownBy(source::next).isInstanceOf(RuntimeException.class);
   }
 
   @Test
@@ -117,14 +117,13 @@ public class SyncTargetRangeSourceTest {
     when(rangeHeaders.getNextRangeHeaders(peer, commonAncestor))
         .thenReturn(completedFuture(emptyList()));
 
-    for (int i = 1; i <= CHECKPOINT_TIMEOUTS_PERMITTED; i++) {
+    for (int i = 1; i < CHECKPOINT_TIMEOUTS_PERMITTED; i++) {
       assertThat(source).hasNext();
       assertThat(source.next()).isNull();
       verify(rangeHeaders, times(i)).getNextRangeHeaders(peer, commonAncestor);
     }
 
-    // Too many timeouts, give up on this sync target.
-    assertThat(source).isExhausted();
+    assertThatThrownBy(source::next).isInstanceOf(RuntimeException.class);
   }
 
   @Test

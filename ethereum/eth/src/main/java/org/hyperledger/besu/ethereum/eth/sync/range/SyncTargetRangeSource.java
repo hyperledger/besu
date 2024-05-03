@@ -31,6 +31,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -148,7 +150,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       this.pendingRequests = Optional.empty();
       if (newHeaders.isEmpty()) {
         retryCount++;
-        if (retryCount >= retriesPermitted) {
+        if (retryCount > retriesPermitted) {
           LOG.atDebug()
               .setMessage(
                   "Disconnecting target peer for not providing useful range headers after {} retries: {}.")
@@ -167,20 +169,27 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
         }
       }
       return retrievedRanges.poll();
-    } catch (final Exception e) {
-      LOG.debug("Interrupted while waiting for new range headers, target peer {}", peer, e);
+    } catch (final InterruptedException e) {
+      LOG.trace("Interrupted while waiting for new range headers", e);
+      return null;
+    } catch (final ExecutionException e) {
+      LOG.atTrace().setMessage("Future completed exceptionally while waiting for new range headers, target peer {}").addArgument(peer::toString).setCause(e).log();
+      this.pendingRequests = Optional.empty();
       retryCount++;
       if (retryCount >= retriesPermitted) {
         LOG.atDebug()
-            .setMessage(
-                "Disconnecting target peer for not providing useful range headers after {} retries: {}.")
-            .addArgument(retriesPermitted)
-            .addArgument(peer)
-            .log();
+                .setMessage(
+                        "Disconnecting target peer for not providing useful range headers after {} retries: {}.")
+                .addArgument(retriesPermitted)
+                .addArgument(peer)
+                .log();
         peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
         retryCount = 0;
         throw new RuntimeException("Too many retries fetching range headers for chain download.");
       }
+      return null;
+    } catch (final TimeoutException e) {
+      LOG.trace("TimeoutException while waiting for new range headers", e);
       return null;
     }
   }
