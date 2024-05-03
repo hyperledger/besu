@@ -55,6 +55,7 @@
 - Snap client fixes discovered during snap server testing [#6847](https://github.com/hyperledger/besu/pull/6847)
 - Correctly initialize the txpool as disabled on creation [#6890](https://github.com/hyperledger/besu/pull/6890)
 - Fix worldstate download halt when using snap sync during initial sync [#6981](https://github.com/hyperledger/besu/pull/6981)
+- Fix chain halt due to peers only partially responding with headers. And worldstate halts caused by a halt in the chain sync [#7027](https://github.com/hyperledger/besu/pull/7027)
 
 ### Download Links
 

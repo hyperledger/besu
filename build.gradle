@@ -208,19 +208,17 @@ allprojects {
       trimTrailingWhitespace()
       endWithNewline()
       // apply appropriate license header files.
-      // TODO: Remove checkSpdxLicense task and buildSrc when all files are formatted and updated via multiple PRs
-      // TODO: Uncomment following when all files are formatted and updated via multiple PRs
-      // licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license").named("older.year").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
-      // licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
     }
+    // spotless check applied to build.gradle (groovy) files
     groovyGradle {
       target '*.gradle'
       greclipse('4.21').configFile(rootProject.file('gradle/formatter.properties'))
       endWithNewline()
     }
     // Below this line are currently only license header tasks
-    format 'groovy', { target '**/src/*/grovy/**/*.groovy' }
     format 'bash', { target '**/*.sh' }
     format 'sol', { target '**/*.sol' }
   }
@@ -886,27 +884,6 @@ task manifestDockerRelease {
 
 def sep = Pattern.quote(File.separator)
 
-task checkSpdxHeader(type: CheckSpdxHeader) {
-  apply plugin: 'groovy'
-
-  rootPath = "${projectDir}"
-  spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
-  filesRegex = "(.*.java)|(.*.groovy)"
-  excludeRegex = [
-    "(.*${sep}generalstate${sep}GeneralStateRegressionReferenceTest.*)",
-    "(.*${sep}generalstate${sep}GeneralStateReferenceTest.*)",
-    "(.*${sep}generalstate${sep}LegacyGeneralStateReferenceTest.*)",
-    "(.*${sep}blockchain${sep}BlockchainReferenceTest.*)",
-    "(.*${sep}blockchain${sep}LegacyBlockchainReferenceTest.*)",
-    "(.*${sep}.gradle${sep}.*)",
-    "(.*${sep}.idea${sep}.*)",
-    "(.*${sep}out${sep}.*)",
-    "(.*${sep}bin${sep}.*)",
-    "(.*${sep}build${sep}.*)",
-    "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
-  ].join("|")
-}
-
 jacocoTestReport {
   reports {
     xml.required = true
@@ -1049,7 +1026,6 @@ distributions {
   }
 }
 
-check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions
 artifactoryPublish.mustRunAfter(distTar)
