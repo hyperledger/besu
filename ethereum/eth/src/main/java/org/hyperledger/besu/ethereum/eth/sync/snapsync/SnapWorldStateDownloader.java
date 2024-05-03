@@ -147,7 +147,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
               snapsyncMetricsManager,
-              clock);
+              clock,
+              ethContext);
 
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
       snapsyncMetricsManager.initRange(ranges);
@@ -214,6 +215,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
           SnapWorldStateDownloadProcess.builder()
               .configuration(snapSyncConfiguration)
               .maxOutstandingRequests(maxOutstandingRequests)
+              .dynamicPivotBlockSelector(dynamicPivotBlockManager)
               .loadLocalDataStep(
                   new LoadLocalDataStep(
                       worldStateStorageCoordinator,
