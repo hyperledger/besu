@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -101,7 +101,9 @@ public class SparseTransactions extends AbstractTransactionsLayer {
             orderByGap.get(gap).add(pendingTransaction);
             return gap;
           }
-          if (pendingTransaction.getNonce() < txsBySender.get(sender).firstKey()) {
+          if (Long.compareUnsigned(
+                  pendingTransaction.getNonce(), txsBySender.get(sender).firstKey())
+              < 0) {
             orderByGap.get(currGap).remove(sender);
             orderByGap.get(gap).add(pendingTransaction);
             return gap;
@@ -145,7 +147,8 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] remainingPromotionsPerType) {
     long accumulatedSpace = 0;
     final List<PendingTransaction> promotedTxs = new ArrayList<>();
 
@@ -156,11 +159,12 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       final var senderSeqTxs = getSequentialSubset(txsBySender.get(sender));
 
       for (final var candidateTx : senderSeqTxs.values()) {
-
-        if (promotionFilter.test(candidateTx)) {
+        final var txType = candidateTx.getTransaction().getType();
+        if (promotionFilter.test(candidateTx) && remainingPromotionsPerType[txType.ordinal()] > 0) {
           accumulatedSpace += candidateTx.memorySize();
           if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
             promotedTxs.add(candidateTx);
+            --remainingPromotionsPerType[txType.ordinal()];
           } else {
             // no room for more txs the search is over exit the loops
             break search;
@@ -431,7 +435,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
               while (itNonce.hasNext()) {
                 final long currNonce = itNonce.next().getKey();
-                assert prevNonce < currNonce : "non incremental nonce";
+                assert Long.compareUnsigned(prevNonce, currNonce) < 0 : "non incremental nonce";
                 prevNonce = currNonce;
               }
             });

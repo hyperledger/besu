@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -72,7 +72,20 @@ public interface Words {
   }
 
   /**
-   * The value of the bytes as though it was representing an unsigned integer, however if the value
+   * The number of words corresponding to the provided length.
+   *
+   * <p>In other words, this computes {@code input.size() / 32} but rounded up.
+   *
+   * @param length the byte length to check
+   * @return the number of (32 bytes) words that {@code input} spans.
+   */
+  static int numWords(final int length) {
+    // m/n round up == (m + n - 1)/n: http://www.cs.nott.ac.uk/~psarb2/G51MPC/slides/NumberLogic.pdf
+    return (length + Bytes32.SIZE - 1) / Bytes32.SIZE;
+  }
+
+  /**
+   * The value of the bytes as though it was representing an unsigned long, however if the value
    * exceeds Long.MAX_VALUE then Long.MAX_VALUE will be returned.
    *
    * @param uint the unsigned integer
@@ -91,6 +104,29 @@ public interface Words {
     } else {
       // clamp to the largest int.
       return Long.MAX_VALUE;
+    }
+  }
+
+  /**
+   * The value of the bytes as though it was representing an unsigned integer, however if the value
+   * exceeds Integer.MAX_VALUE then Integer.MAX_VALUE will be returned.
+   *
+   * @param uint the unsigned integer
+   * @return the least of the integer value or Integer.MAX_VALUE
+   */
+  static int clampedToInt(final Bytes uint) {
+    if (uint.size() <= 4) {
+      final int result = uint.toInt();
+      return result < 0 ? Integer.MAX_VALUE : result;
+    }
+
+    final Bytes trimmed = uint.trimLeadingZeros();
+    if (trimmed.size() <= 4) {
+      final int result = trimmed.toInt();
+      return result < 0 ? Integer.MAX_VALUE : result;
+    } else {
+      // clamp to the largest int.
+      return Integer.MAX_VALUE;
     }
   }
 
@@ -170,7 +206,7 @@ public interface Words {
     if (index + 1 >= array.length) {
       throw new IndexOutOfBoundsException();
     }
-    return ((array[index] & 0xff) << 8) | (array[index + 1] & 0xff);
+    return ((array[index] << 8) & 0xff00) | (array[index + 1] & 0xff);
   }
 
   /**

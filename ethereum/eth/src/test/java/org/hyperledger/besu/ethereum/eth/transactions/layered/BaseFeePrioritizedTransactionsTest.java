@@ -1,5 +1,5 @@
 /*
- * Copyright Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -35,9 +35,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
 import java.util.function.BiFunction;
@@ -45,9 +45,12 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.EnumSource;
 
 public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTransactionsTestBase {
   private static final FeeMarket EIP1559_FEE_MARKET = FeeMarket.london(0L);
+  private static final Wei DEFAULT_BASE_FEE = DEFAULT_MIN_GAS_PRICE.subtract(2);
   private static final Random randomizeTxType = new Random();
 
   @Override
@@ -72,7 +75,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
 
   @Override
   protected BlockHeader mockBlockHeader() {
-    return mockBlockHeader(Wei.ONE);
+    return mockBlockHeader(DEFAULT_BASE_FEE);
   }
 
   private BlockHeader mockBlockHeader(final Wei baseFee) {
@@ -109,22 +112,15 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         originalTransaction.getType(),
         originalTransaction.getNonce(),
         originalTransaction.getMaxGasPrice().multiply(2),
+        originalTransaction.getMaxGasPrice().multiply(2).divide(10),
+        originalTransaction.getPayload().size(),
+        originalTransaction.getBlobCount(),
         keys);
   }
 
   @Test
-  public void shouldPrioritizePriorityFeeThenTimeAddedToPoolOnlyEIP1559Txs() {
-    shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(EIP1559);
-  }
-
-  @Test
-  public void shouldPrioritizeGasPriceThenTimeAddedToPoolOnlyFrontierTxs() {
-    shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(FRONTIER);
-  }
-
-  @Test
   public void shouldPrioritizeEffectivePriorityFeeThenTimeAddedToPoolOnMixedTypes() {
-    final var nextBlockBaseFee = Optional.of(Wei.ONE);
+    final var nextBlockBaseFee = Optional.of(DEFAULT_MIN_GAS_PRICE.subtract(1));
 
     final PendingTransaction highGasPriceTransaction =
         createRemotePendingTransaction(
@@ -167,7 +163,6 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
 
   @Test
   public void txBelowCurrentMineableMinPriorityFeeIsNotPrioritized() {
-    setBaseFee(DEFAULT_MIN_GAS_PRICE.subtract(2));
     miningParameters.setMinPriorityFeePerGas(Wei.of(5));
     final PendingTransaction lowPriorityFeeTx =
         createRemotePendingTransaction(
@@ -179,7 +174,6 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
 
   @Test
   public void txWithPriorityBelowCurrentMineableMinPriorityFeeIsPrioritized() {
-    setBaseFee(DEFAULT_MIN_GAS_PRICE.subtract(2));
     miningParameters.setMinPriorityFeePerGas(Wei.of(5));
     final PendingTransaction lowGasPriceTx =
         createRemotePendingTransaction(
@@ -188,11 +182,29 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
     assertTransactionPrioritized(lowGasPriceTx);
   }
 
-  private void shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(
+  @ParameterizedTest
+  @EnumSource(
+      value = TransactionType.class,
+      names = {"EIP1559", "BLOB"})
+  public void txWithEffectiveGasPriceBelowCurrentMineableMinGasPriceIsNotPrioritized(
+      final TransactionType type) {
+    final PendingTransaction lowGasPriceTx =
+        createRemotePendingTransaction(
+            createTransaction(type, 0, DEFAULT_MIN_GAS_PRICE, Wei.ONE, 0, 1, KEYS1));
+    assertThat(prioritizeTransaction(lowGasPriceTx)).isEqualTo(DROPPED);
+    assertEvicted(lowGasPriceTx);
+    assertTransactionNotPrioritized(lowGasPriceTx);
+  }
+
+  @ParameterizedTest
+  @EnumSource(
+      value = TransactionType.class,
+      names = {"EIP1559", "FRONTIER"})
+  public void shouldPrioritizePriorityFeeThenTimeAddedToPoolSameTypeTxs(
       final TransactionType transactionType) {
     final PendingTransaction highGasPriceTransaction =
         createRemotePendingTransaction(
-            createTransaction(0, DEFAULT_MIN_GAS_PRICE.multiply(20), KEYS1));
+            createTransaction(0, DEFAULT_MIN_GAS_PRICE.multiply(200), KEYS1));
 
     final var lowValueTxs =
         IntStream.range(0, MAX_TRANSACTIONS)
@@ -202,7 +214,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
                         createTransaction(
                             transactionType,
                             0,
-                            DEFAULT_MIN_GAS_PRICE.add(1),
+                            DEFAULT_MIN_GAS_PRICE.add(1).multiply(20),
                             0,
                             SIGNATURE_ALGORITHM.get().generateKeyPair())))
             .collect(Collectors.toUnmodifiableList());
@@ -211,7 +223,71 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
   }
 
-  private void setBaseFee(final Wei baseFee) {
-    transactions.blockAdded(EIP1559_FEE_MARKET, mockBlockHeader(baseFee), Map.of());
+  @Test
+  public void maxNumberOfTxsForTypeIsEnforced() {
+    final var limitedType = MAX_TRANSACTIONS_BY_TYPE.entrySet().iterator().next();
+    final var maxNumber = limitedType.getValue();
+    final var addedTxs = new ArrayList<Transaction>(maxNumber);
+    for (int i = 0; i < maxNumber; i++) {
+      final var tx =
+          createTransaction(
+              limitedType.getKey(),
+              0,
+              DEFAULT_MIN_GAS_PRICE,
+              DEFAULT_MIN_GAS_PRICE.divide(10),
+              0,
+              1,
+              SIGNATURE_ALGORITHM.get().generateKeyPair());
+      addedTxs.add(tx);
+      assertThat(prioritizeTransaction(tx)).isEqualTo(ADDED);
+    }
+
+    final var overflowTx =
+        createTransaction(
+            limitedType.getKey(),
+            0,
+            DEFAULT_MIN_GAS_PRICE,
+            DEFAULT_MIN_GAS_PRICE.divide(10),
+            0,
+            1,
+            SIGNATURE_ALGORITHM.get().generateKeyPair());
+    assertThat(prioritizeTransaction(overflowTx)).isEqualTo(DROPPED);
+
+    addedTxs.forEach(this::assertTransactionPrioritized);
+    assertTransactionNotPrioritized(overflowTx);
+  }
+
+  @Test
+  public void maxNumberOfTxsForTypeWithReplacement() {
+    final var limitedType = MAX_TRANSACTIONS_BY_TYPE.entrySet().iterator().next();
+    final var maxNumber = limitedType.getValue();
+    final var addedTxs = new ArrayList<Transaction>(maxNumber);
+    for (int i = 0; i < maxNumber; i++) {
+      final var tx =
+          createTransaction(
+              limitedType.getKey(),
+              i,
+              DEFAULT_MIN_GAS_PRICE,
+              DEFAULT_MIN_GAS_PRICE.divide(10),
+              0,
+              1,
+              KEYS1);
+      addedTxs.add(tx);
+      assertThat(prioritizeTransaction(tx)).isEqualTo(ADDED);
+    }
+
+    final var replacedTx = addedTxs.get(0);
+    final var replacementTx = createTransactionReplacement(replacedTx, KEYS1);
+    final var txAddResult = prioritizeTransaction(replacementTx);
+
+    assertThat(txAddResult.isReplacement()).isTrue();
+    assertThat(txAddResult.maybeReplacedTransaction())
+        .map(PendingTransaction::getTransaction)
+        .contains(replacedTx);
+
+    addedTxs.remove(replacedTx);
+    addedTxs.forEach(this::assertTransactionPrioritized);
+    assertTransactionNotPrioritized(replacedTx);
+    assertTransactionPrioritized(replacementTx);
   }
 }

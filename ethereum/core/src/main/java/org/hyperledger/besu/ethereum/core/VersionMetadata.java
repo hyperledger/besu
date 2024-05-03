@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.nio.file.Path;
+import javax.annotation.Nonnull;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
@@ -27,7 +28,7 @@ import org.apache.maven.artifact.versioning.ComparableVersion;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class VersionMetadata {
+public class VersionMetadata implements Comparable<VersionMetadata> {
   private static final Logger LOG = LoggerFactory.getLogger(VersionMetadata.class);
 
   /** Represents an unknown Besu version in the version metadata file */
@@ -42,10 +43,14 @@ public class VersionMetadata {
    *
    * @return the version of Besu
    */
-  public static String getRuntimeVersion() {
+  public static String getRuntimeVersionString() {
     return VersionMetadata.class.getPackage().getImplementationVersion() == null
         ? BESU_VERSION_UNKNOWN
         : VersionMetadata.class.getPackage().getImplementationVersion();
+  }
+
+  public static VersionMetadata getRuntimeVersion() {
+    return new VersionMetadata(getRuntimeVersionString());
   }
 
   @JsonCreator
@@ -103,52 +108,57 @@ public class VersionMetadata {
    */
   public static void versionCompatibilityChecks(
       final boolean enforceCompatibilityProtection, final Path dataDir) throws IOException {
-    final VersionMetadata versionMetaData = VersionMetadata.lookUpFrom(dataDir);
-    if (versionMetaData.getBesuVersion().equals(VersionMetadata.BESU_VERSION_UNKNOWN)) {
+    final VersionMetadata metadataVersion = VersionMetadata.lookUpFrom(dataDir);
+    final VersionMetadata runtimeVersion = getRuntimeVersion();
+    if (metadataVersion.getBesuVersion().equals(VersionMetadata.BESU_VERSION_UNKNOWN)) {
       // The version isn't known, potentially because the file doesn't exist. Write the latest
       // version to the metadata file.
       LOG.info(
           "No version data detected. Writing Besu version {} to metadata file",
-          VersionMetadata.getRuntimeVersion());
-      new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir);
+          runtimeVersion.getBesuVersion());
+      runtimeVersion.writeToDirectory(dataDir);
     } else {
       // Check the runtime version against the most recent version as recorded in the version
       // metadata file
-      final String installedVersion = VersionMetadata.getRuntimeVersion().split("-", 2)[0];
-      final String metadataVersion = versionMetaData.getBesuVersion().split("-", 2)[0];
-      final int versionComparison =
-          new ComparableVersion(installedVersion).compareTo(new ComparableVersion(metadataVersion));
+      final int versionComparison = runtimeVersion.compareTo(metadataVersion);
       if (versionComparison == 0) {
         // Versions match - no-op
       } else if (versionComparison < 0) {
         if (!enforceCompatibilityProtection) {
           LOG.warn(
               "Besu version {} is lower than version {} that last started. Allowing startup because --version-compatibility-protection has been disabled.",
-              installedVersion,
-              metadataVersion);
+              runtimeVersion.getBesuVersion(),
+              metadataVersion.getBesuVersion());
           // We've allowed startup at an older version of Besu. Since the version in the metadata
           // file records the latest version of
           // Besu to write to the database we'll update the metadata version to this
           // downgraded-version.
-          new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir);
+          runtimeVersion.writeToDirectory(dataDir);
         } else {
           final String message =
               "Besu version "
-                  + installedVersion
+                  + runtimeVersion.getBesuVersion()
                   + " is lower than version "
-                  + metadataVersion
+                  + metadataVersion.getBesuVersion()
                   + " that last started. Remove --version-compatibility-protection option to allow Besu to start at "
                   + " the lower version (warning - this may have unrecoverable effects on the database).";
-          LOG.error(message, installedVersion, metadataVersion);
+          LOG.error(message);
           throw new IllegalStateException(message);
         }
       } else {
         LOG.info(
             "Besu version {} is higher than version {} that last started. Updating version metadata.",
-            installedVersion,
-            metadataVersion);
-        new VersionMetadata(VersionMetadata.getRuntimeVersion()).writeToDirectory(dataDir);
+            runtimeVersion.getBesuVersion(),
+            metadataVersion.getBesuVersion());
+        runtimeVersion.writeToDirectory(dataDir);
       }
     }
+  }
+
+  @Override
+  public int compareTo(@Nonnull final VersionMetadata versionMetadata) {
+    final String thisVersion = this.getBesuVersion().split("-", 2)[0];
+    final String metadataVersion = versionMetadata.getBesuVersion().split("-", 2)[0];
+    return new ComparableVersion(thisVersion).compareTo(new ComparableVersion(metadataVersion));
   }
 }

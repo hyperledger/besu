@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -408,11 +408,15 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       if (ethPeers.shouldConnect(peer, incoming)) {
         return true;
       }
+    } else {
+      LOG.atDebug()
+          .setMessage("ForkId check failed for peer {} our fork id {} theirs {}")
+          .addArgument(peer::getLoggableId)
+          .addArgument(forkIdManager.getForkIdForChainHead())
+          .addArgument(peer.getForkId())
+          .log();
+      return false;
     }
-    LOG.atDebug()
-        .setMessage("ForkId check failed for peer {}")
-        .addArgument(peer::getLoggableId)
-        .log();
     return false;
   }
 
@@ -421,16 +425,18 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
       final PeerConnection connection,
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
-    if (ethPeers.registerDisconnect(connection)) {
-      LOG.atDebug()
-          .setMessage("Disconnect - {} - {} - {} - {} peers left")
-          .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
-          .addArgument(reason::toString)
-          .addArgument(() -> connection.getPeer().getLoggableId())
-          .addArgument(ethPeers::peerCount)
-          .log();
-      LOG.atTrace().setMessage("{}").addArgument(ethPeers::toString).log();
-    }
+    final boolean wasActiveConnection = ethPeers.registerDisconnect(connection);
+    LOG.atDebug()
+        .setMessage("Disconnect - active Connection? {} - {} - {} {} - {} {} - {} peers left")
+        .addArgument(wasActiveConnection)
+        .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
+        .addArgument(reason::getValue)
+        .addArgument(reason::name)
+        .addArgument(() -> connection.getPeer().getLoggableId())
+        .addArgument(() -> connection.getPeerInfo().getClientId())
+        .addArgument(ethPeers::peerCount)
+        .log();
+    LOG.atTrace().setMessage("{}").addArgument(ethPeers::toString).log();
   }
 
   private void handleStatusMessage(final EthPeer peer, final Message message) {

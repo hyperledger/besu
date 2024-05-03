@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
@@ -105,11 +104,11 @@ public abstract class AbstractIsolationTests {
               .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
-          GenesisConfigFile.development().getConfigOptions(),
+          GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
           MiningParameters.MINING_DISABLED,
           new BadBlockManager());
   protected final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
+      GenesisState.fromConfig(GenesisConfigFile.fromResource("/dev.json"), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
   protected final TransactionPoolConfiguration poolConfiguration =
@@ -140,7 +139,7 @@ public abstract class AbstractIsolationTests {
               MiningParameters.newDefault()));
 
   protected final List<GenesisAllocation> accounts =
-      GenesisConfigFile.development()
+      GenesisConfigFile.fromResource("/dev.json")
           .streamAllocations()
           .filter(ga -> ga.getPrivateKey().isPresent())
           .collect(Collectors.toList());

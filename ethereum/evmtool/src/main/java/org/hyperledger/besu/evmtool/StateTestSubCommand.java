@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evmtool;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -34,7 +32,6 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
-import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.account.Account;
@@ -84,6 +81,11 @@ public class StateTestSubCommand implements Runnable {
       names = {"--fork"},
       description = "Force the state tests to run on a specific fork.")
   private String fork = null;
+
+  @Option(
+      names = {"--test-name"},
+      description = "Limit execution to one named test.")
+  private String testName = null;
 
   @Option(
       names = {"--data-index"},
@@ -173,10 +175,12 @@ public class StateTestSubCommand implements Runnable {
   private void executeStateTest(final Map<String, GeneralStateTestCaseSpec> generalStateTests) {
     for (final Map.Entry<String, GeneralStateTestCaseSpec> generalStateTestEntry :
         generalStateTests.entrySet()) {
-      generalStateTestEntry
-          .getValue()
-          .finalStateSpecs()
-          .forEach((__, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
+      if (testName == null || testName.equals(generalStateTestEntry.getKey())) {
+        generalStateTestEntry
+            .getValue()
+            .finalStateSpecs()
+            .forEach((__, specs) -> traceTestSpecs(generalStateTestEntry.getKey(), specs));
+      }
     }
   }
 
@@ -241,14 +245,11 @@ public class StateTestSubCommand implements Runnable {
         final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
         final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
         final WorldUpdater worldStateUpdater = worldState.updater();
-        final ReferenceTestBlockchain blockchain =
-            new ReferenceTestBlockchain(blockHeader.getNumber());
         final Stopwatch timer = Stopwatch.createStarted();
         // Todo: EIP-4844 use the excessBlobGas of the parent instead of BlobGas.ZERO
         final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(BlobGas.ZERO);
         final TransactionProcessingResult result =
             processor.processTransaction(
-                blockchain,
                 worldStateUpdater,
                 blockHeader,
                 transaction,

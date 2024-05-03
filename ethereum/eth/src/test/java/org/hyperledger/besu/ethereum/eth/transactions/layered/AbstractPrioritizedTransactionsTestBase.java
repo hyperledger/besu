@@ -1,5 +1,5 @@
 /*
- * Copyright Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.DROPPED;
 
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -30,8 +31,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 
 import java.util.ArrayList;
+import java.util.EnumMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.function.BiFunction;
 import java.util.stream.IntStream;
 
@@ -39,6 +42,8 @@ import org.junit.jupiter.api.Test;
 
 public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransactionPoolTest {
   protected static final int MAX_TRANSACTIONS = 5;
+  protected static final EnumMap<TransactionType, Integer> MAX_TRANSACTIONS_BY_TYPE =
+      new EnumMap<>(Map.of(TransactionType.BLOB, 2));
   protected final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
   protected final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
   protected final MiningParameters miningParameters =
@@ -49,6 +54,7 @@ public abstract class AbstractPrioritizedTransactionsTestBase extends BaseTransa
       getSorter(
           ImmutableTransactionPoolConfiguration.builder()
               .maxPrioritizedTransactions(MAX_TRANSACTIONS)
+              .maxPrioritizedTransactionsByType(MAX_TRANSACTIONS_BY_TYPE)
               .maxFutureBySender(MAX_TRANSACTIONS)
               .build(),
           miningParameters);

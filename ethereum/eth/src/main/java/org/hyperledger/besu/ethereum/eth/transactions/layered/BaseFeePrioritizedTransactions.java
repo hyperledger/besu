@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -149,6 +149,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
   @Override
   protected boolean promotionFilter(final PendingTransaction pendingTransaction) {
+
     // check if the tx is willing to pay at least the base fee
     if (nextBlockBaseFee
         .map(pendingTransaction.getTransaction().getMaxGasPrice()::lessThan)
@@ -158,10 +159,10 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
     // priority txs are promoted even if they pay less
     if (!pendingTransaction.hasPriority()) {
-      // check if max fee per gas is higher than the min gas price
+      // check if effective gas price is higher than the min gas price
       if (pendingTransaction
           .getTransaction()
-          .getMaxGasPrice()
+          .getEffectiveGasPrice(nextBlockBaseFee)
           .lessThan(miningParameters.getMinTransactionGasPrice())) {
         return false;
       }

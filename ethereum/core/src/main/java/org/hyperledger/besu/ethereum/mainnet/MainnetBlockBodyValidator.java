@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
@@ -106,6 +107,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
 
     if (!validateDeposits(block, receipts)) {
       return false;
+    }
+
+    if (body.getWithdrawalRequests().isPresent()) {
+      if (!validateWithdrawalRequests(block, body.getWithdrawalRequests().get())) {
+        return false;
+      }
     }
 
     return true;
@@ -322,5 +329,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     }
 
     return true;
+  }
+
+  private boolean validateWithdrawalRequests(
+      final Block block, final List<WithdrawalRequest> withdrawalRequests) {
+    final WithdrawalRequestValidator withdrawalRequestValidator =
+        protocolSchedule.getByBlockHeader(block.getHeader()).getWithdrawalRequestValidator();
+    return withdrawalRequestValidator.validateWithdrawalRequestsInBlock(block, withdrawalRequests);
   }
 }

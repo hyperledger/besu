@@ -764,7 +764,7 @@ public abstract class MainnetProtocolSpecs {
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
-        .exitsValidator(new ValidatorExitsValidator.AllowedExits())
+        .withdrawalRequestsValidator(new PragueWithdrawalRequestValidator())
         .name("Prague");
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -232,7 +232,10 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @return the amount of gas the CREATE operation will consume
+   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
+   *     #memoryExpansionGasCost(MessageFrame, long, long)}, and {@link #initcodeCost(int)}
    */
+  @Deprecated(since = "24.4.1", forRemoval = true)
   long createOperationGasCost(MessageFrame frame);
 
   /**
@@ -240,8 +243,36 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @return the amount of gas the CREATE2 operation will consume
+   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
+   *     #memoryExpansionGasCost(MessageFrame, long, long)}, {@link #createKeccakCost(int)}, and
+   *     {@link #initcodeCost(int)}
    */
+  @Deprecated(since = "24.4.1", forRemoval = true)
   long create2OperationGasCost(MessageFrame frame);
+
+  /**
+   * Returns the base create cost, or TX_CREATE_COST as defined in the execution specs
+   *
+   * @return the TX_CREATE value for this gas schedule
+   */
+  long txCreateCost();
+
+  /**
+   * For Creates that need to hash the initcode, this is the gas cost for such hashing
+   *
+   * @param initCodeLength length of the init code, in bytes
+   * @return gas cost to charge for hashing
+   */
+  long createKeccakCost(int initCodeLength);
+
+  /**
+   * The cost of a create operation's initcode charge. This is just the initcode cost, separate from
+   * the operation base cost and initcode hashing cost.
+   *
+   * @param initCodeLength Number of bytes in the initcode
+   * @return the gas cost for the create initcode
+   */
+  long initcodeCost(final int initCodeLength);
 
   /**
    * Returns the amount of gas parent will provide its child CREATE.

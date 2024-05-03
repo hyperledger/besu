@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -44,7 +45,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
   private final SyncTargetChecker syncTargetChecker;
   private final EthPeer peer;
   private final EthScheduler ethScheduler;
-  private final int rangeTimeoutsPermitted;
+  private final int retriesPermitted;
   private final Duration newHeaderWaitDuration;
   private final SyncTerminationCondition terminationCondition;
 
@@ -52,7 +53,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
   private BlockHeader lastRangeEnd;
   private boolean reachedEndOfRanges = false;
   private Optional<CompletableFuture<List<BlockHeader>>> pendingRequests = Optional.empty();
-  private int requestFailureCount = 0;
+  private int retryCount = 0;
 
   public SyncTargetRangeSource(
       final RangeHeadersFetcher fetcher,
@@ -60,7 +61,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       final EthScheduler ethScheduler,
       final EthPeer peer,
       final BlockHeader commonAncestor,
-      final int rangeTimeoutsPermitted,
+      final int retriesPermitted,
       final SyncTerminationCondition terminationCondition) {
     this(
         fetcher,
@@ -68,7 +69,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
         ethScheduler,
         peer,
         commonAncestor,
-        rangeTimeoutsPermitted,
+        retriesPermitted,
         Duration.ofSeconds(5),
         terminationCondition);
   }
@@ -79,7 +80,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       final EthScheduler ethScheduler,
       final EthPeer peer,
       final BlockHeader commonAncestor,
-      final int rangeTimeoutsPermitted,
+      final int retriesPermitted,
       final Duration newHeaderWaitDuration,
       final SyncTerminationCondition terminationCondition) {
     this.fetcher = fetcher;
@@ -87,7 +88,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
     this.ethScheduler = ethScheduler;
     this.peer = peer;
     this.lastRangeEnd = commonAncestor;
-    this.rangeTimeoutsPermitted = rangeTimeoutsPermitted;
+    this.retriesPermitted = retriesPermitted;
     this.newHeaderWaitDuration = newHeaderWaitDuration;
     this.terminationCondition = terminationCondition;
   }
@@ -96,7 +97,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
   public boolean hasNext() {
     return terminationCondition.shouldContinueDownload()
         && (!retrievedRanges.isEmpty()
-            || (requestFailureCount < rangeTimeoutsPermitted
+            || (retryCount < retriesPermitted
                 && syncTargetChecker.shouldContinueDownloadingFromSyncTarget(peer, lastRangeEnd)
                 && !reachedEndOfRanges));
   }
@@ -148,13 +149,21 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
           pendingRequest.get(newHeaderWaitDuration.toMillis(), MILLISECONDS);
       this.pendingRequests = Optional.empty();
       if (newHeaders.isEmpty()) {
-        requestFailureCount++;
+        retryCount++;
+        if (retryCount >= retriesPermitted) {
+          LOG.atDebug()
+              .setMessage(
+                  "Disconnecting target peer for providing useless or empty range header: {}.")
+              .addArgument(peer)
+              .log();
+          peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
+        }
       } else {
-        requestFailureCount = 0;
-      }
-      for (final BlockHeader header : newHeaders) {
-        retrievedRanges.add(new SyncTargetRange(peer, lastRangeEnd, header));
-        lastRangeEnd = header;
+        retryCount = 0;
+        for (final BlockHeader header : newHeaders) {
+          retrievedRanges.add(new SyncTargetRange(peer, lastRangeEnd, header));
+          lastRangeEnd = header;
+        }
       }
       return retrievedRanges.poll();
     } catch (final InterruptedException e) {
@@ -163,7 +172,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
     } catch (final ExecutionException e) {
       LOG.debug("Failed to retrieve new range headers", e);
       this.pendingRequests = Optional.empty();
-      requestFailureCount++;
+      retryCount++;
       return null;
     } catch (final TimeoutException e) {
       return null;

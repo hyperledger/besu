@@ -1,5 +1,5 @@
 /*
- * Copyright Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.datatypes.TransactionType.BLOB;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.NONCE_TOO_FAR_IN_FUTURE_FOR_SENDER;
@@ -55,6 +56,7 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.BiFunction;
@@ -68,7 +70,8 @@ import org.junit.jupiter.params.provider.MethodSource;
 public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
   protected static final int MAX_TRANSACTIONS = 5;
-  protected static final int MAX_CAPACITY_BYTES = 10_000;
+  protected static final int MAX_PRIORITIZED_BLOB_TRANSACTIONS = MAX_TRANSACTIONS + 1;
+  protected static final int MAX_CAPACITY_BYTES = 150_000;
   protected static final Wei DEFAULT_BASE_FEE = Wei.of(100);
   protected static final int LIMITED_TRANSACTIONS_BY_SENDER = 4;
   protected static final String REMOTE = "remote";
@@ -82,20 +85,31 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   private final TransactionPoolConfiguration poolConf =
       ImmutableTransactionPoolConfiguration.builder()
           .maxPrioritizedTransactions(MAX_TRANSACTIONS)
+          .maxPrioritizedTransactionsByType(Map.of(BLOB, MAX_PRIORITIZED_BLOB_TRANSACTIONS))
           .maxFutureBySender(MAX_TRANSACTIONS)
-          .pendingTransactionsLayerMaxCapacityBytes(MAX_CAPACITY_BYTES)
           .build();
 
   private final TransactionPoolConfiguration senderLimitedConfig =
       ImmutableTransactionPoolConfiguration.builder()
           .maxPrioritizedTransactions(MAX_TRANSACTIONS)
+          .maxPrioritizedTransactionsByType(Map.of(BLOB, MAX_PRIORITIZED_BLOB_TRANSACTIONS))
+          .maxFutureBySender(LIMITED_TRANSACTIONS_BY_SENDER)
+          .build();
+
+  private final TransactionPoolConfiguration smallPoolConfig =
+      ImmutableTransactionPoolConfiguration.builder()
+          .maxPrioritizedTransactions(MAX_TRANSACTIONS)
+          .maxPrioritizedTransactionsByType(Map.of(BLOB, MAX_PRIORITIZED_BLOB_TRANSACTIONS))
           .maxFutureBySender(LIMITED_TRANSACTIONS_BY_SENDER)
           .pendingTransactionsLayerMaxCapacityBytes(MAX_CAPACITY_BYTES)
           .build();
+
   private LayeredPendingTransactions senderLimitedTransactions;
   private LayeredPendingTransactions pendingTransactions;
+  private LayeredPendingTransactions smallPendingTransactions;
   private CreatedLayers senderLimitedLayers;
   private CreatedLayers layers;
+  private CreatedLayers smallLayers;
   private TransactionPoolMetrics txPoolMetrics;
 
   private static BlockHeader mockBlockHeader() {
@@ -151,12 +165,16 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
 
     layers = createLayers(poolConf);
     senderLimitedLayers = createLayers(senderLimitedConfig);
+    smallLayers = createLayers(smallPoolConfig);
 
     pendingTransactions = new LayeredPendingTransactions(poolConf, layers.prioritizedTransactions);
 
     senderLimitedTransactions =
         new LayeredPendingTransactions(
             senderLimitedConfig, senderLimitedLayers.prioritizedTransactions);
+
+    smallPendingTransactions =
+        new LayeredPendingTransactions(smallPoolConfig, smallLayers.prioritizedTransactions);
   }
 
   @Test
@@ -211,41 +229,43 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
   public void evictTransactionsWhenSizeLimitExceeded() {
     final List<Transaction> firstTxs = new ArrayList<>(MAX_TRANSACTIONS);
 
-    pendingTransactions.subscribeDroppedTransactions(droppedListener);
+    smallPendingTransactions.subscribeDroppedTransactions(droppedListener);
 
     for (int i = 0; i < MAX_TRANSACTIONS; i++) {
       final Account sender = mock(Account.class);
       when(sender.getNonce()).thenReturn((long) i);
       final var tx =
-          createTransaction(
+          createTransactionOfSize(
               i,
-              DEFAULT_MIN_GAS_PRICE.multiply(2 * (i + 1)),
-              (int) poolConf.getPendingTransactionsLayerMaxCapacityBytes() + 1,
+              DEFAULT_BASE_FEE.add(i),
+              (int) smallPoolConfig.getPendingTransactionsLayerMaxCapacityBytes() + 1,
               SIGNATURE_ALGORITHM.get().generateKeyPair());
-      pendingTransactions.addTransaction(createRemotePendingTransaction(tx), Optional.of(sender));
+      smallPendingTransactions.addTransaction(
+          createRemotePendingTransaction(tx), Optional.of(sender));
       firstTxs.add(tx);
-      assertTransactionPending(pendingTransactions, tx);
+      assertTransactionPending(smallPendingTransactions, tx);
     }
 
-    assertThat(pendingTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
+    assertThat(smallPendingTransactions.size()).isEqualTo(MAX_TRANSACTIONS);
 
     final Transaction lastBigTx =
-        createTransaction(
+        createTransactionOfSize(
             0,
             DEFAULT_MIN_GAS_PRICE.multiply(1000),
-            (int) poolConf.getPendingTransactionsLayerMaxCapacityBytes(),
+            (int) smallPoolConfig.getPendingTransactionsLayerMaxCapacityBytes(),
             SIGNATURE_ALGORITHM.get().generateKeyPair());
     final Account lastSender = mock(Account.class);
     when(lastSender.getNonce()).thenReturn(0L);
-    pendingTransactions.addTransaction(
+    smallPendingTransactions.addTransaction(
         createRemotePendingTransaction(lastBigTx), Optional.of(lastSender));
-    assertTransactionPending(pendingTransactions, lastBigTx);
+    assertTransactionPending(smallPendingTransactions, lastBigTx);
 
-    assertTransactionNotPending(pendingTransactions, firstTxs.get(0));
+    assertTransactionNotPending(smallPendingTransactions, firstTxs.get(0));
     assertThat(
-            getRemovedCount(REMOTE, NO_PRIORITY, DROPPED.label(), layers.evictedCollector.name()))
+            getRemovedCount(
+                REMOTE, NO_PRIORITY, DROPPED.label(), smallLayers.evictedCollector.name()))
         .isEqualTo(1);
-    assertThat(layers.evictedCollector.getEvictedTransactions())
+    assertThat(smallLayers.evictedCollector.getEvictedTransactions())
         .map(PendingTransaction::getTransaction)
         .contains(firstTxs.get(0));
     verify(droppedListener).onTransactionDropped(firstTxs.get(0));

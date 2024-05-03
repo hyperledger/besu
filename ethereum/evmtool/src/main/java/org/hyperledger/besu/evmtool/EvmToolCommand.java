@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
@@ -26,6 +25,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -33,13 +33,11 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
-import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -58,7 +56,7 @@ import java.util.Comparator;
 import java.util.Deque;
 import java.util.LinkedHashMap;
 import java.util.List;
-import java.util.NavigableMap;
+import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
@@ -474,8 +472,9 @@ public class EvmToolCommand implements Runnable {
         lastTime = stopwatch.elapsed().toNanos();
         stopwatch.reset();
         if (showJsonAlloc && lastLoop) {
+          initialMessageFrame.getSelfDestructs().forEach(updater::deleteAccount);
           updater.commit();
-          WorldState worldState = component.getWorldState();
+          MutableWorldState worldState = component.getWorldState();
           dumpWorldState(worldState, out);
         }
       } while (remainingIters-- > 0);
@@ -486,40 +485,45 @@ public class EvmToolCommand implements Runnable {
     }
   }
 
-  public static void dumpWorldState(final WorldState worldState, final PrintWriter out) {
+  public static void dumpWorldState(final MutableWorldState worldState, final PrintWriter out) {
     out.println("{");
     worldState
         .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
         .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
         .forEach(
-            account -> {
-              out.println(
-                  " \"" + account.getAddress().map(Address::toHexString).orElse("-") + "\": {");
+            a -> {
+              var account = worldState.get(a.getAddress().get());
+              out.println(" \"" + account.getAddress().toHexString() + "\": {");
               if (account.getCode() != null && !account.getCode().isEmpty()) {
                 out.println("  \"code\": \"" + account.getCode().toHexString() + "\",");
               }
-              NavigableMap<Bytes32, AccountStorageEntry> storageEntries =
-                  account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE);
+              var storageEntries =
+                  account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE).values().stream()
+                      .map(
+                          e ->
+                              Map.entry(
+                                  e.getKey().get(),
+                                  account.getStorageValue(UInt256.fromBytes(e.getKey().get()))))
+                      .filter(e -> !e.getValue().isZero())
+                      .sorted(Map.Entry.comparingByKey())
+                      .toList();
               if (!storageEntries.isEmpty()) {
                 out.println("  \"storage\": {");
                 out.println(
                     STORAGE_JOINER.join(
-                        storageEntries.values().stream()
+                        storageEntries.stream()
                             .map(
-                                accountStorageEntry ->
+                                e ->
                                     "   \""
-                                        + accountStorageEntry
-                                            .getKey()
-                                            .map(UInt256::toQuantityHexString)
-                                            .orElse("-")
+                                        + e.getKey().toQuantityHexString()
                                         + "\": \""
-                                        + accountStorageEntry.getValue().toQuantityHexString()
+                                        + e.getValue().toQuantityHexString()
                                         + "\"")
                             .toList()));
                 out.println("  },");
               }
               out.print("  \"balance\": \"" + account.getBalance().toShortHexString() + "\"");
-              if (account.getNonce() > 0) {
+              if (account.getNonce() != 0) {
                 out.println(",");
                 out.println(
                     "  \"nonce\": \""

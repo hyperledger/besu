@@ -66,7 +66,7 @@ public class LineaTest {
 
   private BesuController setUpController(final String genesisFile) {
     return new BesuController.Builder()
-        .fromGenesisConfig(GenesisConfigFile.genesisFileFromResources(genesisFile), SyncMode.FULL)
+        .fromGenesisFile(GenesisConfigFile.fromResource(genesisFile), SyncMode.FULL)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())

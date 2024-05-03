@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -45,7 +45,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final Hash depositsRoot;
 
-  protected final Hash exitsRoot;
+  protected final Hash withdrawalRequestsRoot;
 
   protected final Long blobGasUsed;
 
@@ -72,7 +72,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash depositsRoot,
-      final Hash exitsRoot) {
+      final Hash withdrawalRequestsRoot) {
     super(
         parentHash,
         coinbase,
@@ -89,7 +89,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.withdrawalsRoot = withdrawalsRoot;
     this.depositsRoot = depositsRoot;
     this.receiptsRoot = receiptsRoot;
-    this.exitsRoot = exitsRoot;
+    this.withdrawalRequestsRoot = withdrawalRequestsRoot;
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
     this.extraData = extraData;
@@ -178,8 +178,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     return Optional.ofNullable(depositsRoot);
   }
 
-  public Optional<Hash> getExitsRoot() {
-    return Optional.ofNullable(exitsRoot);
+  public Optional<Hash> getWithdrawalRequestsRoot() {
+    return Optional.ofNullable(withdrawalRequestsRoot);
   }
 
   /**

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm;
 
+import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.evm.operation.PushOperation.PUSH_BASE;
 import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
@@ -137,7 +138,7 @@ public class EVM {
   /**
    * Returns the non-fork related configuration parameters of the EVM.
    *
-   * @return the EVM coniguration.
+   * @return the EVM configuration.
    */
   public EvmConfiguration getEvmConfiguration() {
     return evmConfiguration;
@@ -348,13 +349,22 @@ public class EVM {
    * @return the code
    */
   public Code getCode(final Hash codeHash, final Bytes codeBytes) {
-    Code result = codeHash == null ? null : codeCache.getIfPresent(codeHash);
+    checkNotNull(codeHash);
+    Code result = codeCache.getIfPresent(codeHash);
     if (result == null) {
-      result = CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion(), false);
-      if (codeHash != null) {
-        codeCache.put(codeHash, result);
-      }
+      result = getCodeUncached(codeBytes);
+      codeCache.put(codeHash, result);
     }
     return result;
+  }
+
+  /**
+   * Gets code skipping the code cache.
+   *
+   * @param codeBytes the code bytes
+   * @return the code
+   */
+  public Code getCodeUncached(final Bytes codeBytes) {
+    return CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion(), false);
   }
 }

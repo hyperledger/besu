@@ -171,7 +171,6 @@ public class PrivateGroupRehydrationBlockProcessor {
       // depend on  public state
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
-              blockchain,
               worldStateUpdater,
               blockHeader,
               transaction,

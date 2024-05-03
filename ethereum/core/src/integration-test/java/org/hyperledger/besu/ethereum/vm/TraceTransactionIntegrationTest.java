@@ -100,7 +100,6 @@ public class TraceTransactionIntegrationTest {
     final WorldUpdater createTransactionUpdater = worldState.updater();
     TransactionProcessingResult result =
         transactionProcessor.processTransaction(
-            blockchain,
             createTransactionUpdater,
             genesisBlockHeader,
             createTransaction,
@@ -133,7 +132,6 @@ public class TraceTransactionIntegrationTest {
     final WorldUpdater storeUpdater = worldState.updater();
     result =
         transactionProcessor.processTransaction(
-            blockchain,
             storeUpdater,
             genesisBlockHeader,
             executeTransaction,
@@ -172,7 +170,6 @@ public class TraceTransactionIntegrationTest {
             new BytesValueRLPInput(Bytes.fromHexString(CONTRACT_CREATION_TX), false));
     final BlockHeader genesisBlockHeader = genesisBlock.getHeader();
     transactionProcessor.processTransaction(
-        blockchain,
         worldStateArchive
             .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
             .get()

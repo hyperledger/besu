@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.nat.docker;
 
 import org.hyperledger.besu.nat.core.IpDetector;

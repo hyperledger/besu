@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -36,8 +36,8 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -50,7 +50,8 @@ import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
@@ -126,7 +127,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
    * body, and will supply an empty Ommers list.
    *
    * <p>Once transactions have been selected and applied to a disposable/temporary world state, the
-   * block reward is paid to the relevant coinbase, and a sealable header is constucted.
+   * block reward is paid to the relevant coinbase, and a sealable header is constructed.
    *
    * <p>The sealableHeader is then provided to child instances for sealing (i.e. proof of work or
    * otherwise).
@@ -255,12 +256,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      // TODO implement logic to retrieve validator exits from precompile
-      // https://github.com/hyperledger/besu/issues/6800
-      final ValidatorExitsValidator exitsValidator = newProtocolSpec.getExitsValidator();
-      Optional<List<ValidatorExit>> maybeExits = Optional.empty();
-      if (exitsValidator instanceof ValidatorExitsValidator.AllowedExits) {
-        maybeExits = Optional.of(List.of());
+      final WithdrawalRequestValidator withdrawalRequestsValidator =
+          newProtocolSpec.getWithdrawalRequestValidator();
+      Optional<List<WithdrawalRequest>> maybeWithdrawalRequests = Optional.empty();
+      if (withdrawalRequestsValidator.allowWithdrawalRequests()) {
+        maybeWithdrawalRequests =
+            Optional.of(
+                WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(
+                    disposableWorldState));
       }
 
       throwIfStopped();
@@ -300,7 +303,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
               .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-              .exitsRoot(maybeExits.map(BodyValidation::exitsRoot).orElse(null));
+              .withdrawalRequestsRoot(
+                  maybeWithdrawalRequests.map(BodyValidation::withdrawalRequestsRoot).orElse(null));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
       }
@@ -317,7 +321,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               ommers,
               withdrawals,
               maybeDeposits,
-              maybeExits);
+              maybeWithdrawalRequests);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);

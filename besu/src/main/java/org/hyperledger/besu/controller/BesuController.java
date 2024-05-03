@@ -42,7 +42,6 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -317,50 +316,29 @@ public class BesuController implements java.io.Closeable {
      * From eth network config besu controller builder.
      *
      * @param ethNetworkConfig the eth network config
-     * @param genesisConfigOverrides the genesis config overrides
      * @param syncMode The sync mode
      * @return the besu controller builder
      */
     public BesuControllerBuilder fromEthNetworkConfig(
-        final EthNetworkConfig ethNetworkConfig,
-        final Map<String, String> genesisConfigOverrides,
-        final SyncMode syncMode) {
-      return fromGenesisConfig(
-              GenesisConfigFile.fromConfig(ethNetworkConfig.getGenesisConfig()),
-              genesisConfigOverrides,
-              syncMode)
-          .networkId(ethNetworkConfig.getNetworkId());
+        final EthNetworkConfig ethNetworkConfig, final SyncMode syncMode) {
+      return fromGenesisFile(ethNetworkConfig.genesisConfigFile(), syncMode)
+          .networkId(ethNetworkConfig.networkId());
     }
 
     /**
      * From genesis config besu controller builder.
      *
-     * @param genesisConfig the genesis config
-     * @param syncMode The Sync Mode
+     * @param genesisConfigFile the genesis config file
+     * @param syncMode the sync mode
      * @return the besu controller builder
      */
-    public BesuControllerBuilder fromGenesisConfig(
-        final GenesisConfigFile genesisConfig, final SyncMode syncMode) {
-      return fromGenesisConfig(genesisConfig, Collections.emptyMap(), syncMode);
-    }
-
-    /**
-     * From genesis config besu controller builder.
-     *
-     * @param genesisConfig the genesis config
-     * @param genesisConfigOverrides the genesis config overrides
-     * @return the besu controller builder
-     */
-    BesuControllerBuilder fromGenesisConfig(
-        final GenesisConfigFile genesisConfig,
-        final Map<String, String> genesisConfigOverrides,
-        final SyncMode syncMode) {
-      final GenesisConfigOptions configOptions =
-          genesisConfig.getConfigOptions(genesisConfigOverrides);
+    public BesuControllerBuilder fromGenesisFile(
+        final GenesisConfigFile genesisConfigFile, final SyncMode syncMode) {
       final BesuControllerBuilder builder;
+      final var configOptions = genesisConfigFile.getConfigOptions();
 
       if (configOptions.isConsensusMigration()) {
-        return createConsensusScheduleBesuControllerBuilder(genesisConfig, configOptions);
+        return createConsensusScheduleBesuControllerBuilder(genesisConfigFile);
       }
 
       if (configOptions.getPowAlgorithm() != PowAlgorithm.UNSUPPORTED) {
@@ -383,21 +361,22 @@ public class BesuController implements java.io.Closeable {
         // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block
         if ((isCheckpointSync(syncMode) && isCheckpointPoSBlock(configOptions))
             || configOptions.getLineaBlockNumber().isPresent()) {
-          return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfig);
+          return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfigFile);
         } else {
           // TODO this should be changed to vanilla MergeBesuControllerBuilder and the Transition*
           // series of classes removed after we successfully transition to PoS
           // https://github.com/hyperledger/besu/issues/2897
           return new TransitionBesuControllerBuilder(builder, new MergeBesuControllerBuilder())
-              .genesisConfigFile(genesisConfig);
+              .genesisConfigFile(genesisConfigFile);
         }
 
-      } else return builder.genesisConfigFile(genesisConfig);
+      } else return builder.genesisConfigFile(genesisConfigFile);
     }
 
     private BesuControllerBuilder createConsensusScheduleBesuControllerBuilder(
-        final GenesisConfigFile genesisConfig, final GenesisConfigOptions configOptions) {
+        final GenesisConfigFile genesisConfigFile) {
       final Map<Long, BesuControllerBuilder> besuControllerBuilderSchedule = new HashMap<>();
+      final var configOptions = genesisConfigFile.getConfigOptions();
 
       final BesuControllerBuilder originalControllerBuilder;
       if (configOptions.isIbft2()) {
@@ -416,7 +395,7 @@ public class BesuController implements java.io.Closeable {
       besuControllerBuilderSchedule.put(qbftBlock, new QbftBesuControllerBuilder());
 
       return new ConsensusScheduleBesuControllerBuilder(besuControllerBuilderSchedule)
-          .genesisConfigFile(genesisConfig);
+          .genesisConfigFile(genesisConfigFile);
     }
 
     private Long readQbftStartBlockConfig(final QbftConfigOptions qbftConfigOptions) {

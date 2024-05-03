@@ -170,16 +170,15 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
   private void logProducedBlock(final Block block, final BlockCreationTiming blockCreationTiming) {
     LOG.info(
         String.format(
-            "Produced #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs",
+            "Produced #%,d / %d tx / %d om / %,d (%01.1f%%) gas / (%s) in %01.3fs / Timing(%s)",
             block.getHeader().getNumber(),
             block.getBody().getTransactions().size(),
             block.getBody().getOmmers().size(),
             block.getHeader().getGasUsed(),
             (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
             block.getHash(),
-            blockCreationTiming.end("log").toMillis() / 1000.0));
-
-    LOG.debug("Timing #{} / {}", block.getHeader().getNumber(), blockCreationTiming);
+            blockCreationTiming.end("log").toMillis() / 1000.0,
+            blockCreationTiming));
   }
 
   public void cancel() {

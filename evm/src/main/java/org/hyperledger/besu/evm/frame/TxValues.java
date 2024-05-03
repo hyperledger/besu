@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.frame;
 
+import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
@@ -47,7 +48,8 @@ public record TxValues(
     Optional<List<VersionedHash>> versionedHashes,
     UndoTable<Address, Bytes32, Bytes32> transientStorage,
     UndoSet<Address> creates,
-    UndoSet<Address> selfDestructs) {
+    UndoSet<Address> selfDestructs,
+    UndoScalar<Long> gasRefunds) {
 
   /**
    * For all data stored in this record, undo the changes since the mark.
@@ -60,5 +62,6 @@ public record TxValues(
     transientStorage.undo(mark);
     creates.undo(mark);
     selfDestructs.undo(mark);
+    gasRefunds.undo(mark);
   }
 }

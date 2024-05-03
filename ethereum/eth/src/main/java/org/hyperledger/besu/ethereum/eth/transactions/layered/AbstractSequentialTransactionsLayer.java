@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -47,7 +47,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
 
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     final long invalidNonce = invalidatedTx.getNonce();
-    if (senderTxs != null && invalidNonce <= senderTxs.lastKey()) {
+    if (senderTxs != null && Long.compareUnsigned(invalidNonce, senderTxs.lastKey()) <= 0) {
       // on sequential layers we need to push to next layer all the txs following the invalid one,
       // even if it belongs to a previous layer
 
