@@ -78,6 +78,7 @@ public class SynchronizerOptionsTest
                 .storageCountPerRequest(SnapSyncConfiguration.DEFAULT_STORAGE_COUNT_PER_REQUEST + 2)
                 .bytecodeCountPerRequest(
                     SnapSyncConfiguration.DEFAULT_BYTECODE_COUNT_PER_REQUEST + 2)
+                .isSnapServerEnabled(Boolean.TRUE)
                 .build());
   }
 

@@ -152,8 +152,11 @@ public abstract class AbstractIsolationTests {
   @BeforeEach
   public void createStorage() {
     worldStateKeyValueStorage =
+        // FYI: BonsaiSnapshoIsolationTests  work with frozen/cached worldstates, using PARTIAL
+        // flat db strategy allows the tests to make account assertions based on trie
+        // (whereas a full db strategy will not, since the worldstates are frozen/cached)
         createKeyValueStorageProvider()
-            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_PARTIAL_DB_CONFIG);
     archive =
         new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
