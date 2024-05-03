@@ -1,3 +1,4 @@
+#!/usr/bin/env sh
 # call
 ../../../build/install/evmtool/bin/evm  \
   --code=5B600080808060045AFA50600056 \
