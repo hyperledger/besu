@@ -227,7 +227,16 @@ allprojects {
 
       licenseHeaderFile("${rootDir}/gradle/spotless/sh.license",'').skipLinesMatching("^#!.+?\$")
     }
-    format 'sol', { target '**/*.sol' }
+    format 'Solidity', {
+      target '**/*.sol'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+      trimTrailingWhitespace()
+      endWithNewline()
+
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license","^pragma solidity.+?").named("former").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license","^pragma solidity.+?").named("former.date").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
+    }
   }
 
   tasks.withType(JavaCompile).configureEach {
