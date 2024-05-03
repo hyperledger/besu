@@ -25,6 +25,8 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
+import org.apache.tuweni.bytes.Bytes32;
+
 /** Introduced via EIP-3074 to call another contract with a different authorization context. */
 public class AuthCallOperation extends AbstractCallOperation {
 
@@ -94,6 +96,7 @@ public class AuthCallOperation extends AbstractCallOperation {
     } else if (frame.getAuthorizedBy() != null) {
       return super.execute(frame, evm);
     } else {
+      frame.pushStackItem(Bytes32.ZERO);
       return new OperationResult(cost(frame, true), null);
     }
   }

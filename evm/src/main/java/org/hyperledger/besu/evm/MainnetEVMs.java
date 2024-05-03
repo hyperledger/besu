@@ -950,6 +950,8 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerCancunOperations(registry, gasCalculator, chainID);
+
+    // EIP-3074 AUTH and AUTHCALL
     registry.put(new AuthOperation(gasCalculator));
     registry.put(new AuthCallOperation(gasCalculator));
   }

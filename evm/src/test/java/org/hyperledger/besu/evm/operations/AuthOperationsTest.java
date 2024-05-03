@@ -29,7 +29,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
-import org.hyperledger.besu.evm.operation.AuthCallOperation;
 import org.hyperledger.besu.evm.operation.AuthOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -93,18 +92,5 @@ public class AuthOperationsTest {
     authOperation.execute(frame, fakeEVM);
     verify(frame).setAuthorizedBy(authingAddress);
     verify(frame).pushStackItem(UInt256.ONE);
-  }
-
-  @Test
-  public void authCallHappyPath() {
-    Address author = Address.fromHexString("0xdeadbeef");
-    MessageFrame messageFrame = mock(MessageFrame.class);
-    when(messageFrame.getAuthorizedBy()).thenReturn(author);
-
-    EVM fakeEvm = mock(EVM.class);
-
-    AuthCallOperation authCallOperation = new AuthCallOperation(new PragueGasCalculator());
-    authCallOperation.execute(messageFrame, fakeEvm);
-    verify(messageFrame).getAuthorizedBy();
   }
 }

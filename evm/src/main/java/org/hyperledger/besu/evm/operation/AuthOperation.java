@@ -70,7 +70,7 @@ public class AuthOperation extends AbstractOperation {
     Bytes32 invoker = Bytes32.leftPad(frame.getContractAddress());
     Bytes32 senderNonce =
         Bytes32.leftPad(
-            Bytes.ofUnsignedLong(frame.getWorldUpdater().getSenderAccount(frame).getNonce()));
+            Bytes.ofUnsignedLong(frame.getWorldUpdater().getAccount(authority).getNonce()));
     if (evm.getChainId().isEmpty()) {
       frame.pushStackItem(UInt256.ZERO);
       LOG.error("ChainId is not set");
