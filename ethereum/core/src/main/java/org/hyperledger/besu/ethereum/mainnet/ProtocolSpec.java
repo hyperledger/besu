@@ -20,6 +20,8 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -76,7 +78,8 @@ public class ProtocolSpec {
   private final WithdrawalsValidator withdrawalsValidator;
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
   private final DepositsValidator depositsValidator;
-  private final WithdrawalRequestValidator withdrawalRequestValidator;
+  private final RequestValidator requestValidator;
+  private final Optional<RequestProcessor> requestProcessor;
 
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
@@ -106,9 +109,10 @@ public class ProtocolSpec {
    * @param gasLimitCalculator the gas limit calculator to use.
    * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
    * @param powHasher the proof-of-work hasher
-   * @param withdrawalsValidator the withdrawals validator to use
    * @param withdrawalsProcessor the Withdrawals processor to use
    * @param depositsValidator the withdrawals validator to use
+   * @param requestValidator the request validator to use
+   * @param requestProcessor the request processor to use
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
@@ -139,7 +143,8 @@ public class ProtocolSpec {
       final WithdrawalsValidator withdrawalsValidator,
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final DepositsValidator depositsValidator,
-      final WithdrawalRequestValidator withdrawalRequestValidator,
+      final RequestValidator requestValidator,
+      final Optional<RequestProcessor> requestProcessor,
       final boolean isPoS,
       final boolean isReplayProtectionSupported) {
     this.name = name;
@@ -167,7 +172,8 @@ public class ProtocolSpec {
     this.withdrawalsValidator = withdrawalsValidator;
     this.withdrawalsProcessor = withdrawalsProcessor;
     this.depositsValidator = depositsValidator;
-    this.withdrawalRequestValidator = withdrawalRequestValidator;
+    this.requestValidator = requestValidator;
+    this.requestProcessor = requestProcessor;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
   }
@@ -373,8 +379,12 @@ public class ProtocolSpec {
     return depositsValidator;
   }
 
-  public WithdrawalRequestValidator getWithdrawalRequestValidator() {
-    return withdrawalRequestValidator;
+  public RequestValidator getRequestValidator() {
+    return requestValidator;
+  }
+
+  public Optional<RequestProcessor> getRequestProcessor() {
+    return requestProcessor;
   }
 
   /**

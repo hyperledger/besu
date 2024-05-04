@@ -147,6 +147,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           null,
           null,
+          Optional.empty(),
           true,
           true);
   private final ProtocolSpec statusTransactionTypeSpec =
@@ -177,6 +178,7 @@ public class EthGetTransactionReceiptTest {
           Optional.empty(),
           null,
           null,
+          Optional.empty(),
           true,
           true);
 

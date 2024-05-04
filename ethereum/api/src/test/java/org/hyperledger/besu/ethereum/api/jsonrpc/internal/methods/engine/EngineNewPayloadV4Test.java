@@ -44,8 +44,8 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
-import org.hyperledger.besu.ethereum.mainnet.PragueWithdrawalRequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
 import java.util.ArrayList;
@@ -177,8 +177,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnValidIfWithdrawalRequestsIsNull_WhenWithdrawalRequestsAreProhibited() {
-    when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new ProhibitedWithdrawalRequests());
+    when(protocolSpec.getRequestValidator()).thenReturn(new ProhibitedRequestsValidator());
 
     BlockHeader mockHeader =
         setupValidPayload(
@@ -198,8 +197,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnInvalidIfWithdrawalRequestsIsNull_WhenWithdrawalRequestsAreAllowed() {
-    when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new PragueWithdrawalRequestValidator());
+    when(protocolSpec.getRequestValidator()).thenReturn(new WithdrawalRequestValidator());
 
     var resp =
         resp(
@@ -220,8 +218,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
         List.of(WITHDRAWAL_REQUEST_PARAMETER_1);
     final List<WithdrawalRequest> withdrawalRequests =
         List.of(WITHDRAWAL_REQUEST_PARAMETER_1.toWithdrawalRequest());
-    when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new PragueWithdrawalRequestValidator());
+    when(protocolSpec.getRequestValidator()).thenReturn(new WithdrawalRequestValidator());
 
     BlockHeader mockHeader =
         setupValidPayload(
@@ -245,8 +242,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void
       shouldReturnInvalidIfWithdrawalRequestsIsNotNull_WhenWithdrawalRequestsAreProhibited() {
     final List<WithdrawalRequestParameter> withdrawalRequests = List.of();
-    when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new ProhibitedWithdrawalRequests());
+    when(protocolSpec.getRequestValidator()).thenReturn(new ProhibitedRequestsValidator());
 
     var resp =
         resp(

@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.DepositsValidatorProvider.getDepositsValidator;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalRequestValidatorProvider.getWithdrawalRequestValidator;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 
@@ -178,16 +178,15 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                     withdrawalRequest.stream()
                         .map(WithdrawalRequestParameter::toWithdrawalRequest)
                         .collect(toList()));
-    if (!getWithdrawalRequestValidator(
-            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-        .validateWithdrawalRequestParameter(maybeWithdrawalRequests)) {
-      return new JsonRpcErrorResponse(
-          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal requests"));
-    }
 
     Optional<List<Request>> maybeRequests = Optional.empty();
     if (maybeWithdrawalRequests.isPresent()) {
       maybeRequests = Optional.of(new ArrayList<>(maybeWithdrawalRequests.get()));
+    }
+    if (!getRequestValidator(
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
+        .validateParameter(maybeRequests)) {
+      return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid requests"));
     }
 
     if (mergeContext.get().isSyncing()) {

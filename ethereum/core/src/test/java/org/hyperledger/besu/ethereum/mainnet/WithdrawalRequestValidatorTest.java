@@ -20,15 +20,16 @@ import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTe
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot;
 
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.WithdrawalRequestTestParameter;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -41,7 +42,9 @@ class WithdrawalRequestValidatorTest {
       final String description,
       final Optional<List<WithdrawalRequest>> maybeExits,
       final boolean expectedValidity) {
-    assertThat(new ProhibitedWithdrawalRequests().validateWithdrawalRequestParameter(maybeExits))
+    var list = maybeExits.get();
+    var requests = Optional.of(new ArrayList<Request>(list).stream().toList());
+    assertThat(new ProhibitedRequestsValidator().validateParameter(requests))
         .isEqualTo(expectedValidity);
   }
 
@@ -61,9 +64,11 @@ class WithdrawalRequestValidatorTest {
   @MethodSource("validateWithdrawalRequestsInBlockParamsForProhibited")
   public void validateWithdrawalRequestsInBlock_WhenProhibited(
       final WithdrawalRequestTestParameter param, final boolean expectedValidity) {
-    assertThat(
-            new ProhibitedWithdrawalRequests()
-                .validateWithdrawalRequestsInBlock(param.block, param.expectedWithdrawalRequest))
+
+    var list = param.expectedWithdrawalRequest;
+    var requests = new ArrayList<Request>(list).stream().toList();
+
+    assertThat(new ProhibitedRequestsValidator().validate(param.block, requests))
         .isEqualTo(expectedValidity);
   }
 
@@ -73,10 +78,5 @@ class WithdrawalRequestValidatorTest {
         Arguments.of(blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot(), false),
         Arguments.of(blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot(), false),
         Arguments.of(blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot(), true));
-  }
-
-  @Test
-  public void allowWithdrawalRequestsShouldReturnFalse() {
-    assertThat(new ProhibitedWithdrawalRequests().allowWithdrawalRequests()).isFalse();
   }
 }

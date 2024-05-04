@@ -65,7 +65,7 @@ public class WithdrawalRequestContractHelper {
   // How many slots each withdrawal request occupies in the account state
   private static final int WITHDRAWAL_REQUEST_STORAGE_SLOT_SIZE = 3;
 
-  @VisibleForTesting static final int MAX_WITHDRAWAL_REQUESTS_PER_BLOCK = 16;
+  public static final int MAX_WITHDRAWAL_REQUESTS_PER_BLOCK = 16;
 
   private static final int TARGET_WITHDRAWAL_REQUESTS_PER_BLOCK = 2;
 

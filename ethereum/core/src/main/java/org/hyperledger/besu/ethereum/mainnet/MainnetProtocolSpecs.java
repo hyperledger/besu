@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsProcessors;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
@@ -764,7 +767,8 @@ public abstract class MainnetProtocolSpecs {
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
-        .withdrawalRequestsValidator(new PragueWithdrawalRequestValidator())
+        .requestsValidator(pragueRequestsValidator())
+        .requestsProcessor(pragueRequestsProcessors())
         .name("Prague");
   }
 

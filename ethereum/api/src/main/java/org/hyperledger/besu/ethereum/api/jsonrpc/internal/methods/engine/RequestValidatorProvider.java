@@ -19,14 +19,14 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
 
 import java.util.Optional;
 
-public class WithdrawalRequestValidatorProvider {
+public class RequestValidatorProvider {
 
-  static WithdrawalRequestValidator getWithdrawalRequestValidator(
+  static RequestValidator getRequestValidator(
       final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
 
     final BlockHeader blockHeader =
@@ -34,13 +34,12 @@ public class WithdrawalRequestValidatorProvider {
             .timestamp(blockTimestamp)
             .number(blockNumber)
             .buildBlockHeader();
-    return getWithdrawalRequestValidator(protocolSchedule.getByBlockHeader(blockHeader));
+    return getRequestValidator(protocolSchedule.getByBlockHeader(blockHeader));
   }
 
-  private static WithdrawalRequestValidator getWithdrawalRequestValidator(
-      final ProtocolSpec protocolSchedule) {
+  private static RequestValidator getRequestValidator(final ProtocolSpec protocolSchedule) {
     return Optional.ofNullable(protocolSchedule)
-        .map(ProtocolSpec::getWithdrawalRequestValidator)
-        .orElseGet(ProhibitedWithdrawalRequests::new);
+        .map(ProtocolSpec::getRequestValidator)
+        .orElseGet(ProhibitedRequestsValidator::new);
   }
 }

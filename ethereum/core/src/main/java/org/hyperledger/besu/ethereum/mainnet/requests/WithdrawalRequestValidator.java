@@ -13,13 +13,13 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
-import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,28 +28,26 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PragueWithdrawalRequestValidator implements WithdrawalRequestValidator {
+public class WithdrawalRequestValidator implements RequestValidator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PragueWithdrawalRequestValidator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WithdrawalRequestValidator.class);
 
-  @Override
-  public boolean allowWithdrawalRequests() {
-    return true;
-  }
-
-  @Override
-  public boolean validateWithdrawalRequestParameter(
+  private boolean validateWithdrawalRequestParameter(
       final Optional<List<WithdrawalRequest>> withdrawalRequests) {
     return withdrawalRequests.isPresent();
   }
 
-  @Override
-  public boolean validateWithdrawalRequestsInBlock(
+  private boolean validateWithdrawalRequestsInBlock(
       final Block block, final List<WithdrawalRequest> withdrawalRequests) {
     final Hash blockHash = block.getHash();
 
     final List<WithdrawalRequest> withdrawalRequestsInBlock =
-        getWithdrawalRequests(block.getBody());
+        block
+            .getBody()
+            .getRequests()
+            .map(requests -> Request.filterRequestsOfType(requests, WithdrawalRequest.class))
+            .orElse(Collections.emptyList());
+
     // TODO Do we need to allow for customization? (e.g. if the value changes in the next fork)
     if (withdrawalRequestsInBlock.size()
         > WithdrawalRequestContractHelper.MAX_WITHDRAWAL_REQUESTS_PER_BLOCK) {
@@ -73,10 +71,18 @@ public class PragueWithdrawalRequestValidator implements WithdrawalRequestValida
     return true;
   }
 
-  private List<WithdrawalRequest> getWithdrawalRequests(final BlockBody blockBody) {
-    return blockBody
-        .getRequests()
-        .map(requests -> Request.filterRequestsOfType(requests, WithdrawalRequest.class))
-        .orElse(Collections.emptyList());
+  @Override
+  public boolean validate(final Block block, final List<Request> requests) {
+    var withdrawalRequests = Request.filterRequestsOfType(requests, WithdrawalRequest.class);
+    return validateWithdrawalRequestsInBlock(block, withdrawalRequests);
+  }
+
+  @Override
+  public boolean validateParameter(final Optional<List<Request>> request) {
+    if (request.isEmpty()) {
+      return false;
+    }
+    var withdrawalRequests = Request.filterRequestsOfType(request.get(), WithdrawalRequest.class);
+    return validateWithdrawalRequestParameter(Optional.of(withdrawalRequests));
   }
 }

@@ -38,7 +38,6 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -51,12 +50,11 @@ import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessor;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -65,7 +63,6 @@ import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
@@ -258,20 +255,11 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final WithdrawalRequestValidator withdrawalRequestsValidator =
-          newProtocolSpec.getWithdrawalRequestValidator();
-      Optional<List<WithdrawalRequest>> maybeWithdrawalRequests = Optional.empty();
-      if (withdrawalRequestsValidator.allowWithdrawalRequests()) {
-        maybeWithdrawalRequests =
-            Optional.of(
-                WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(
-                    disposableWorldState));
-      }
+      // EIP-7685: process EL requests
+      final Optional<RequestProcessor> requestProcessor = newProtocolSpec.getRequestProcessor();
+      Optional<List<Request>> maybeRequests =
+          requestProcessor.flatMap(processor -> processor.process(disposableWorldState));
 
-      Optional<List<Request>> maybeRequests = Optional.empty();
-      if (maybeWithdrawalRequests.isPresent()) {
-        maybeRequests = Optional.of(new ArrayList<>(maybeWithdrawalRequests.get()));
-      }
       throwIfStopped();
 
       if (rewardCoinbase

@@ -32,7 +32,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 
@@ -68,8 +68,8 @@ abstract class AbstractBlockProcessorTest {
   void baseSetup() {
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     lenient()
-        .when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new ProhibitedWithdrawalRequests());
+        .when(protocolSpec.getRequestValidator())
+        .thenReturn(new ProhibitedRequestsValidator());
     blockProcessor =
         new TestBlockProcessor(
             transactionProcessor,

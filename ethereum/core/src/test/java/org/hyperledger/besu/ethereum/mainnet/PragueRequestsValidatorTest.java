@@ -23,14 +23,15 @@ import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTe
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot;
 
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.WithdrawalRequestTestParameter;
+import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -41,10 +42,9 @@ class PragueRequestsValidatorTest {
   @MethodSource("paramsForValidateWithdrawalRequestParameter")
   public void validateWithdrawalRequestParameter(
       final String description,
-      final Optional<List<WithdrawalRequest>> maybeExits,
+      final Optional<List<Request>> maybeExits,
       final boolean expectedValidity) {
-    assertThat(
-            new PragueWithdrawalRequestValidator().validateWithdrawalRequestParameter(maybeExits))
+    assertThat(new WithdrawalRequestValidator().validateParameter(maybeExits))
         .isEqualTo(expectedValidity);
   }
 
@@ -65,8 +65,8 @@ class PragueRequestsValidatorTest {
   public void validateWithdrawalRequestsInBlock_WhenPrague(
       final WithdrawalRequestTestParameter param, final boolean expectedValidity) {
     assertThat(
-            new PragueWithdrawalRequestValidator()
-                .validateWithdrawalRequestsInBlock(param.block, param.expectedWithdrawalRequest))
+            new WithdrawalRequestValidator()
+                .validate(param.block, new ArrayList<>(param.expectedWithdrawalRequest)))
         .isEqualTo(expectedValidity);
   }
 
@@ -79,10 +79,5 @@ class PragueRequestsValidatorTest {
         Arguments.of(blockWithWithdrawalRequestsRootMismatch(), false),
         Arguments.of(blockWithWithdrawalRequestsMismatch(), false),
         Arguments.of(blockWithMoreThanMaximumWithdrawalRequests(), false));
-  }
-
-  @Test
-  public void allowWithdrawalRequestsShouldReturnTrue() {
-    assertThat(new PragueWithdrawalRequestValidator().allowWithdrawalRequests()).isTrue();
   }
 }

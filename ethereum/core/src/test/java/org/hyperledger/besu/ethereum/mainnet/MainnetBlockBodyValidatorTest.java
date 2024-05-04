@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Collections;
@@ -52,7 +53,7 @@ class MainnetBlockBodyValidatorTest {
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsValidator withdrawalsValidator;
   @Mock private DepositsValidator depositsValidator;
-  @Mock private WithdrawalRequestValidator withdrawalRequestValidator;
+  @Mock private RequestValidator requestValidator;
 
   @BeforeEach
   public void setUp() {
@@ -66,12 +67,8 @@ class MainnetBlockBodyValidatorTest {
     lenient().when(depositsValidator.validateDeposits(any(), any())).thenReturn(true);
     lenient().when(depositsValidator.validateDepositsRoot(any())).thenReturn(true);
 
-    lenient()
-        .when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(withdrawalRequestValidator);
-    lenient()
-        .when(withdrawalRequestValidator.validateWithdrawalRequestsInBlock(any(), any()))
-        .thenReturn(true);
+    lenient().when(protocolSpec.getRequestValidator()).thenReturn(requestValidator);
+    lenient().when(requestValidator.validate(any(), any())).thenReturn(true);
   }
 
   @Test
@@ -162,8 +159,7 @@ class MainnetBlockBodyValidatorTest {
                 .setRequests(Optional.of(List.of())));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
-    when(withdrawalRequestValidator.validateWithdrawalRequestsInBlock(any(), any()))
-        .thenReturn(false);
+    when(requestValidator.validate(any(), any())).thenReturn(false);
 
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)

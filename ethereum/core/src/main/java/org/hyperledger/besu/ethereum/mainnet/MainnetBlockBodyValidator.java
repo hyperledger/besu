@@ -19,9 +19,8 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
@@ -330,21 +329,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   }
 
   private boolean validateRequests(final Block block) {
-    if (block.getBody().getRequests().isEmpty()) {
-      return true;
-    }
-    var withdrawalRequests = getWithdrawalRequests(block.getBody().getRequests().get());
-    return validateWithdrawalRequests(block, withdrawalRequests);
-  }
-
-  private List<WithdrawalRequest> getWithdrawalRequests(final List<Request> requests) {
-    return Request.filterRequestsOfType(requests, WithdrawalRequest.class);
-  }
-
-  private boolean validateWithdrawalRequests(
-      final Block block, final List<WithdrawalRequest> withdrawalRequests) {
-    final WithdrawalRequestValidator withdrawalRequestValidator =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getWithdrawalRequestValidator();
-    return withdrawalRequestValidator.validateWithdrawalRequestsInBlock(block, withdrawalRequests);
+    final RequestValidator requestValidator =
+        protocolSchedule.getByBlockHeader(block.getHeader()).getRequestValidator();
+    return block
+        .getBody()
+        .getRequests()
+        .map(requests -> requestValidator.validate(block, requests))
+        .orElse(true);
   }
 }

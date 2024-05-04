@@ -26,11 +26,13 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.EVM;
@@ -76,8 +78,9 @@ public class ProtocolSpecBuilder {
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
   private DepositsValidator depositsValidator = new DepositsValidator.ProhibitedDeposits();
-  private WithdrawalRequestValidator withdrawalRequestValidator =
-      new ProhibitedWithdrawalRequests();
+  private RequestValidator requestValidator = new ProhibitedRequestsValidator();
+  private RequestProcessor requestProcessor;
+
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -267,9 +270,13 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder withdrawalRequestsValidator(
-      final WithdrawalRequestValidator withdrawalRequestValidator) {
-    this.withdrawalRequestValidator = withdrawalRequestValidator;
+  public ProtocolSpecBuilder requestsValidator(final RequestValidator requestValidator) {
+    this.requestValidator = requestValidator;
+    return this;
+  }
+
+  public ProtocolSpecBuilder requestsProcessor(final RequestProcessor requestProcessor) {
+    this.requestProcessor = requestProcessor;
     return this;
   }
 
@@ -392,7 +399,8 @@ public class ProtocolSpecBuilder {
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),
         depositsValidator,
-        withdrawalRequestValidator,
+        requestValidator,
+        Optional.ofNullable(requestProcessor),
         isPoS,
         isReplayProtectionSupported);
   }

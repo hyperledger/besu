@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessor;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -196,12 +197,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
-    final WithdrawalRequestValidator withdrawalRequestValidator =
-        protocolSpec.getWithdrawalRequestValidator();
-    if (withdrawalRequestValidator.allowWithdrawalRequests()) {
-      // Performing system-call logic
-      WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
-    }
+    // EIP-7685: process EL requests
+    final Optional<RequestProcessor> requestProcessor = protocolSpec.getRequestProcessor();
+    requestProcessor.ifPresent(processor -> processor.process(worldState));
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
