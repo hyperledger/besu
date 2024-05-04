@@ -45,7 +45,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -79,18 +78,19 @@ public class BonsaiWorldStateKeyValueStorageTest {
 
   BonsaiWorldStateKeyValueStorage storage;
 
-  public void setUp(final FlatDbMode flatDbMode) {
-    storage = emptyStorage();
-    if (flatDbMode.equals(FlatDbMode.FULL)) {
-      storage.upgradeToFullFlatDbMode();
-    }
+  public BonsaiWorldStateKeyValueStorage setUp(final FlatDbMode flatDbMode) {
+    return setUp(flatDbMode, false);
   }
 
-  public void setUp(final FlatDbMode flatDbMode, final boolean useCodeHashStorage) {
+  public BonsaiWorldStateKeyValueStorage setUp(
+      final FlatDbMode flatDbMode, final boolean useCodeHashStorage) {
     storage = emptyStorage(useCodeHashStorage);
     if (flatDbMode.equals(FlatDbMode.FULL)) {
       storage.upgradeToFullFlatDbMode();
+    } else if (flatDbMode.equals(FlatDbMode.PARTIAL)) {
+      storage.downgradeToPartialFlatDbMode();
     }
+    return storage;
   }
 
   @ParameterizedTest
@@ -215,9 +215,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbMode")
   void getAccount_notLoadFromTrieWhenEmptyAndFlatDbFullMode(final FlatDbMode flatDbMode) {
-    setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.FULL);
-    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
     final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
 
@@ -233,8 +232,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
     updater.commit();
 
     // remove flat database
+    storage.downgradeToPartialFlatDbMode();
     storage.clearFlatDatabase();
-
     storage.upgradeToFullFlatDbMode();
 
     Mockito.reset(storage);
@@ -247,9 +246,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbMode")
   void getAccount_loadFromTrieWhenEmptyAndFlatDbPartialMode(final FlatDbMode flatDbMode) {
-    setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
-    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
     final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -277,9 +275,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbMode")
   void shouldUsePartialDBStrategyAfterDowngradingMode(final FlatDbMode flatDbMode) {
-    setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
-    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
     final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -309,9 +306,9 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbMode")
   void getStorage_loadFromTrieWhenEmptyWithPartialMode(final FlatDbMode flatDbMode) {
-    setUp(flatDbMode);
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.PARTIAL);
-    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+
     final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
     final TreeMap<Bytes32, Bytes> accounts =
@@ -359,9 +356,8 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbMode")
   void getStorage_loadFromTrieWhenEmptyWithFullMode(final FlatDbMode flatDbMode) {
-    setUp(flatDbMode);
     Assumptions.assumeTrue(flatDbMode == FlatDbMode.FULL);
-    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
     storage.upgradeToFullFlatDbMode();
     final WorldStateStorageCoordinator coordinator = new WorldStateStorageCoordinator(storage);
     final MerkleTrie<Bytes, Bytes> trie = TrieGenerator.generateTrie(coordinator, 1);
@@ -380,8 +376,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   @ParameterizedTest
   @MethodSource("flatDbMode")
   void clear_reloadFlatDbStrategy(final FlatDbMode flatDbMode) {
-    setUp(flatDbMode);
-    final BonsaiWorldStateKeyValueStorage storage = spy(emptyStorage());
+    final BonsaiWorldStateKeyValueStorage storage = spy(setUp(flatDbMode));
 
     // save world state root hash
     final BonsaiWorldStateKeyValueStorage.Updater updater = storage.updater();
@@ -489,7 +484,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   void successfulPruneReturnsTrue() {
     final KeyValueStorage mockTrieLogStorage = mock(KeyValueStorage.class);
     when(mockTrieLogStorage.tryDelete(any())).thenReturn(true);
-    final BonsaiWorldStateKeyValueStorage storage = setupMockStorage(mockTrieLogStorage);
+    final BonsaiWorldStateKeyValueStorage storage = setupSpyStorage(mockTrieLogStorage);
     assertThat(storage.pruneTrieLog(Hash.ZERO)).isTrue();
   }
 
@@ -497,7 +492,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
   void failedPruneReturnsFalse() {
     final KeyValueStorage mockTrieLogStorage = mock(KeyValueStorage.class);
     when(mockTrieLogStorage.tryDelete(any())).thenReturn(false);
-    final BonsaiWorldStateKeyValueStorage storage = setupMockStorage(mockTrieLogStorage);
+    final BonsaiWorldStateKeyValueStorage storage = setupSpyStorage(mockTrieLogStorage);
     assertThat(storage.pruneTrieLog(Hash.ZERO)).isFalse();
   }
 
@@ -505,18 +500,17 @@ public class BonsaiWorldStateKeyValueStorageTest {
   void exceptionalPruneReturnsFalse() {
     final KeyValueStorage mockTrieLogStorage = mock(KeyValueStorage.class);
     when(mockTrieLogStorage.tryDelete(any())).thenThrow(new RuntimeException("test exception"));
-    final BonsaiWorldStateKeyValueStorage storage = setupMockStorage(mockTrieLogStorage);
+    final BonsaiWorldStateKeyValueStorage storage = setupSpyStorage(mockTrieLogStorage);
     assertThat(storage.pruneTrieLog(Hash.ZERO)).isFalse();
   }
 
-  private BonsaiWorldStateKeyValueStorage setupMockStorage(
+  private BonsaiWorldStateKeyValueStorage setupSpyStorage(
       final KeyValueStorage mockTrieLogStorage) {
-    final StorageProvider mockStorageProvider = mock(StorageProvider.class);
+    final StorageProvider mockStorageProvider = spy(new InMemoryKeyValueStorageProvider());
     when(mockStorageProvider.getStorageBySegmentIdentifier(
             KeyValueSegmentIdentifier.TRIE_LOG_STORAGE))
         .thenReturn(mockTrieLogStorage);
-    when(mockStorageProvider.getStorageBySegmentIdentifiers(any()))
-        .thenReturn(mock(SegmentedKeyValueStorage.class));
+
     return new BonsaiWorldStateKeyValueStorage(
         mockStorageProvider,
         new NoOpMetricsSystem(),
