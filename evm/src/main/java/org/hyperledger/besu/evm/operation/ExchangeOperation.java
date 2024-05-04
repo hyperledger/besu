@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -53,7 +53,7 @@ public class ExchangeOperation extends AbstractFixedCostOperation {
     final Bytes tmp = frame.getStackItem(n);
     frame.setStackItem(n, frame.getStackItem(m));
     frame.setStackItem(m, tmp);
-    frame.setPC(pc+1);
+    frame.setPC(pc + 1);
 
     return exchangeSuccess;
   }

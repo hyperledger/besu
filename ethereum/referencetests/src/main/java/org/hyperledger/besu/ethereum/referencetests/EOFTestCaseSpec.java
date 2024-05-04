@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.referencetests;
 
 import java.util.NavigableMap;
@@ -31,14 +29,14 @@ public class EOFTestCaseSpec {
 
   public record TestResult(
       @JsonProperty("exception") String exception, @JsonProperty("result") boolean result) {
-    public static TestResult PASSED = new TestResult(null, true);
+    public static TestResult TEST_RESULT_PASSED = new TestResult(null, true);
 
     public static TestResult failed(final String exception) {
       return new TestResult(exception, false);
     }
 
     public static TestResult passed() {
-      return PASSED;
+      return TEST_RESULT_PASSED;
     }
   }
 
