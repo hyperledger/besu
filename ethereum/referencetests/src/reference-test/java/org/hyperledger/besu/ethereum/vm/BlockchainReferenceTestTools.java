@@ -75,14 +75,14 @@ public class BlockchainReferenceTestTools {
 
     // Consumes a huge amount of memory
     params.ignore("static_Call1MB1024Calldepth_d1g0v0_\\w+");
-    params.ignore("ShanghaiLove_.*");
+    params.ignore("ShanghaiLove_");
 
     // Absurd amount of gas, doesn't run in parallel
     params.ignore("randomStatetest94_\\w+");
 
     // Don't do time-consuming tests
-    params.ignore("CALLBlake2f_MaxRounds.*");
-    params.ignore("loopMul_*");
+    params.ignore("CALLBlake2f_MaxRounds");
+    params.ignore("loopMul_");
 
     // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
     // chain head.

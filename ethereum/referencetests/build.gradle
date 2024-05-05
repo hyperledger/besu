@@ -81,12 +81,11 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
   outputs.files generatedTestsPath
   generateTestFiles(
-    fileTree(referenceTestsPath + "/fixtures"),
+    fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
     file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
     "fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
-    "ExecutionSpecTest",
-    ("fixtures/example/example") // exclude test for test filling tool
+    "ExecutionSpecTest"
     )
 }
 
@@ -254,24 +253,21 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
   mkdir(destination)
   def referenceTestTemplate = templateFile.text
 
-  // This is how many json files to include in each test file
-  def fileSets = jsonPath.getFiles().collate(5)
-
-  fileSets.eachWithIndex { fileSet, idx ->
-    def paths = []
-    fileSet.each { testJsonFile ->
-      def parentFile = testJsonFile.getParentFile()
-      def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
-      if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
-        def pathFile = testJsonFile.getPath()
-        paths << pathFile.substring(pathFile.indexOf(pathstrip))
-      }
+  def paths = []
+  jsonPath.getFiles().forEach { testJsonFile ->
+    def parentFile = testJsonFile.getParentFile()
+    def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
+    if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
+      def pathFile = testJsonFile.getPath()
+      paths << pathFile.substring(pathFile.indexOf(pathstrip))
     }
+  }
+  println paths.collate(5)
 
+  paths.collate(5).eachWithIndex { tests, idx ->
     def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
 
-
-    def allPaths = '"' + paths.join('",\n        "') + '"'
+    def allPaths = '"' + tests.join('",\n        "') + '"'
 
     def testFileContents = referenceTestTemplate
       .replaceAll("%%TESTS_FILE%%", allPaths)
