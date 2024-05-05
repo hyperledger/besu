@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeSection;
-import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.ReturnStack;
@@ -52,7 +51,7 @@ class RetFOperationTest {
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
             .build();
-    messageFrame.pushReturnStackItem(new ReturnStack.ReturnStackItem(2, 3, 1));
+    messageFrame.pushReturnStackItem(new ReturnStack.ReturnStackItem(2, 3));
 
     RetFOperation retF = new RetFOperation(gasCalculator);
     Operation.OperationResult retFResult = retF.execute(messageFrame, null);
@@ -61,64 +60,6 @@ class RetFOperationTest {
     assertThat(retFResult.getPcIncrement()).isEqualTo(1);
     assertThat(messageFrame.getSection()).isEqualTo(2);
     assertThat(messageFrame.getPC()).isEqualTo(3);
-    assertThat(messageFrame.returnStackSize()).isEqualTo(1);
-  }
-
-  @Test
-  void retFFinalReturn() {
-    final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mockCode("00" + "b1" + "00");
-
-    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
-    when(mockCode.getCodeSection(1)).thenReturn(codeSection);
-
-    MessageFrame messageFrame =
-        new TestMessageFrameBuilder()
-            .code(mockCode)
-            .pc(1)
-            .section(1)
-            .initialGas(10L)
-            .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(Bytes.EMPTY)
-            .build();
-
-    RetFOperation retF = new RetFOperation(gasCalculator);
-    Operation.OperationResult retFResult = retF.execute(messageFrame, null);
-
-    assertThat(retFResult.getHaltReason()).isNull();
-    assertThat(retFResult.getPcIncrement()).isEqualTo(1);
-    assertThat(messageFrame.getState()).isEqualTo(MessageFrame.State.CODE_SUCCESS);
-    assertThat(messageFrame.getOutputData()).isEqualTo(Bytes.EMPTY);
-  }
-
-  @Test
-  void retFIncorrectOutput() {
-    final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mockCode("00" + "b1" + "00");
-
-    final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
-    when(mockCode.getCodeSection(1)).thenReturn(codeSection);
-
-    MessageFrame messageFrame =
-        new TestMessageFrameBuilder()
-            .code(mockCode)
-            .pc(1)
-            .section(1)
-            .initialGas(10L)
-            .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(Bytes.EMPTY)
-            .build();
-
-    RetFOperation retF = new RetFOperation(gasCalculator);
-    Operation.OperationResult retFResult = retF.execute(messageFrame, null);
-
-    assertThat(retFResult.getHaltReason())
-        .isEqualTo(ExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS);
-    assertThat(retFResult.getPcIncrement()).isEqualTo(1);
-    assertThat(messageFrame.getSection()).isEqualTo(1);
-    assertThat(messageFrame.getPC()).isEqualTo(1);
     assertThat(messageFrame.returnStackSize()).isZero();
-    assertThat(messageFrame.peekReturnStack()).isNull();
   }
 }

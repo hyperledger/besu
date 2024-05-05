@@ -162,7 +162,8 @@ class ContractCreationProcessorTest
             1,
             Collections.emptyList());
     final Bytes contractCode = INNER_CONTRACT;
-    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
+    final MessageFrame messageFrame =
+        new TestMessageFrameBuilder().code(CodeFactory.createCode(EOF_CREATE_CONTRACT, 1)).build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(100L);
 

@@ -26,7 +26,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.evm.internal.ReturnStack;
@@ -333,61 +332,6 @@ public class MessageFrame {
    */
   public int getSection() {
     return section;
-  }
-
-  /**
-   * Call function and return exceptional halt reason.
-   *
-   * @param calledSection the called section
-   * @return the exceptional halt reason
-   */
-  public ExceptionalHaltReason callFunction(final int calledSection) {
-    CodeSection info = code.getCodeSection(calledSection);
-    if (info == null) {
-      return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else if (stack.size() + info.getMaxStackHeight() - info.getInputs()
-        > txValues.maxStackSize()) {
-      return ExceptionalHaltReason.TOO_MANY_STACK_ITEMS;
-    } else if (stack.size() < info.getInputs()) {
-      return ExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
-    } else {
-      returnStack
-          .get()
-          .push(new ReturnStack.ReturnStackItem(section, pc + 2, stack.size() - info.getInputs()));
-      pc = info.getEntryPoint() - 1; // will be +1ed at end of operations loop
-      this.section = calledSection;
-      return null;
-    }
-  }
-
-  /**
-   * Execute the mechanics of the JUMPF operation.
-   *
-   * @param section the section
-   * @return the exceptional halt reason, if the jump failed
-   */
-  public ExceptionalHaltReason jumpFunction(final int section) {
-    CodeSection info = code.getCodeSection(section);
-    if (info == null) {
-      return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else {
-      pc = info.getEntryPoint() - 1; // will be +1ed at end of operations loop
-      this.section = section;
-      return null;
-    }
-  }
-
-  /**
-   * Return function exceptional halt reason.
-   *
-   * @return the exceptional halt reason
-   */
-  public ExceptionalHaltReason returnFunction() {
-    var rStack = returnStack.get();
-    var returnInfo = rStack.pop();
-    this.pc = returnInfo.getPC();
-    this.section = returnInfo.getCodeSectionIndex();
-    return null;
   }
 
   /** Deducts the remaining gas. */
@@ -1220,6 +1164,15 @@ public class MessageFrame {
    */
   public Deque<MessageFrame> getMessageFrameStack() {
     return txValues.messageFrameStack();
+  }
+
+  /**
+   * The return stack used for EOF code sections.
+   *
+   * @return the return stack
+   */
+  public ReturnStack getReturnStack() {
+    return returnStack.get();
   }
 
   /**

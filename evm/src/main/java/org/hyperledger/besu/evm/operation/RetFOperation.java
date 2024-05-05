@@ -43,11 +43,11 @@ public class RetFOperation extends AbstractOperation {
     if (code.getEofVersion() == 0) {
       return InvalidOperation.INVALID_RESULT;
     }
-    var exception = frame.returnFunction();
-    if (exception == null) {
-      return retfSuccess;
-    } else {
-      return new OperationResult(retfSuccess.gasCost, exception);
-    }
+    var rStack = frame.getReturnStack();
+    var returnInfo = rStack.pop();
+    frame.setPC(returnInfo.pc());
+    frame.setSection(returnInfo.codeSectionIndex());
+
+    return retfSuccess;
   }
 }

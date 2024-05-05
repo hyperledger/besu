@@ -45,11 +45,9 @@ public class JumpFOperation extends AbstractOperation {
     }
     int pc = frame.getPC();
     int section = code.readBigEndianU16(pc + 1);
-    var exception = frame.jumpFunction(section);
-    if (exception == null) {
-      return jumpfSuccess;
-    } else {
-      return new OperationResult(jumpfSuccess.gasCost, exception);
-    }
+    var info = code.getCodeSection(section);
+    frame.setPC(info.getEntryPoint() - 1); // will be +1ed at end of operations loop
+    frame.setSection(section);
+    return jumpfSuccess;
   }
 }

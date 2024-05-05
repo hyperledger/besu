@@ -18,7 +18,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -50,8 +49,6 @@ public class TLoadOperation extends AbstractOperation {
       }
     } catch (final UnderflowException ufe) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
-    } catch (final OverflowException ofe) {
-      return new OperationResult(cost, ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

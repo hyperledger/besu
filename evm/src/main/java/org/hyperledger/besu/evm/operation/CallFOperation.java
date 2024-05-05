@@ -16,8 +16,10 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.ReturnStack;
 
 /** The Call F operation. */
 public class CallFOperation extends AbstractOperation {
@@ -46,12 +48,11 @@ public class CallFOperation extends AbstractOperation {
 
     int pc = frame.getPC();
     int section = code.readBigEndianU16(pc + 1);
+    CodeSection info = code.getCodeSection(section);
+    frame.getReturnStack().push(new ReturnStack.ReturnStackItem(frame.getSection(), pc + 2));
+    frame.setPC(info.getEntryPoint() - 1); // will be +1ed at end of operations loop
+    frame.setSection(section);
 
-    var exception = frame.callFunction(section);
-    if (exception == null) {
-      return callfSuccess;
-    } else {
-      return new OperationResult(callfSuccess.gasCost, exception);
-    }
+    return callfSuccess;
   }
 }
