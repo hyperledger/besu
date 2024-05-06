@@ -136,7 +136,6 @@ public interface MainnetPrecompiledContracts {
     populateForIstanbul(registry, gasCalculator);
 
     // EIP-4844 - shard blob transactions
-    // TODO: allow override to be configured?
     registry.put(Address.KZG_POINT_EVAL, new KZGPointEvalPrecompiledContract());
   }
 
@@ -162,7 +161,7 @@ public interface MainnetPrecompiledContracts {
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForCancun(registry, gasCalculator);
 
-    // TODO: add Prague precompiles here
+    // EIP-2537 - BLS12-381 curve operations
     registry.put(Address.BLS12_G1ADD, new BLS12G1AddPrecompiledContract());
     registry.put(Address.BLS12_G1MUL, new BLS12G1MulPrecompiledContract());
     registry.put(Address.BLS12_G1MULTIEXP, new BLS12G1MultiExpPrecompiledContract());
@@ -195,7 +194,5 @@ public interface MainnetPrecompiledContracts {
   static void populateForFutureEIPs(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForCancun(registry, gasCalculator);
-
-    // EIP-2537 - BLS12-381 curve operations
   }
 }
