@@ -49,7 +49,6 @@ import org.mockito.ArgumentCaptor;
 
 public class AuthCallProcessorTest extends MessageCallProcessorTest {
 
-  // TestMessageFrameBuilder builder = new TestMessageFrameBuilder();
   MessageCallProcessor spyingMessageCallProcessor;
   ArgumentCaptor<MessageFrame> frameCaptor = ArgumentCaptor.forClass(MessageFrame.class);
 
@@ -92,32 +91,28 @@ public class AuthCallProcessorTest extends MessageCallProcessorTest {
             encodedSignature.slice(32, 32), // s
             contractCommitment);
 
-    toyWorld.createAccount(Address.extract(keys.getPublicKey()), 0, Wei.MAX_WEI);
-    toyWorld.createAccount(invokerAddress, 0, Wei.MAX_WEI);
+    toyWorld.createAccount(Address.extract(keys.getPublicKey()), 0, Wei.MAX_WEI); //initialize authority account
+    toyWorld.createAccount(invokerAddress, 0, Wei.MAX_WEI); //initialize invoker account
     final Bytes codeBytes =
         Bytes.fromHexString(
             "0x"
-                + "6061"
-                + "6000"
-                + "6000"
-                + "37"
-                + // calldatacopy 97 bytes to mem 0
-                "6061"
-                + // param is 97 bytes (0x61)
-                "6000"
-                + // push 0
-                "73"
-                + Address.extract(keys.getPublicKey()).toUnprefixedHexString()
-                + // push authority address
-                "F6"
-                + "6000"
-                + "6000"
-                + "6000"
-                + "6000"
-                + "60FF"
-                + "73deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
-                + "60FF"
-                + "F7");
+                + "6061" //push 97 the calldata length
+                + "6000" //push 0 the offset
+                + "6000" //push 0 the destination offset
+                + "37"  // calldatacopy 97 bytes of the auth param to mem 0
+                + "6061" // param is 97 bytes (0x61)
+                + "6000" // push 0 where in mem to find auth param
+                + "73" // push next 20 bytes for the authority address
+                + Address.extract(keys.getPublicKey()).toUnprefixedHexString() // push authority address
+                + "F6" // AUTH call, should work and set authorizedBy on the frame
+                + "6000" // push 0 for return length, we don't care about the return
+                + "6000" // push 0 for return offset, we don't care about the return
+                + "6000" // push 0 for input length
+                + "6000" // push 0 for input offset
+                + "60FF" // push 255 for the value being sent
+                + "73deadbeefdeadbeefdeadbeefdeadbeefdeadbeef" // push20 the invokee address
+                + "60FF" // push 255 gas
+                + "F7"); // AUTHCALL, should work
     executor.contract(invokerAddress);
     executor.execute(codeBytes, authParam, Wei.ZERO, invokerAddress);
     verify(this.spyingMessageCallProcessor, times(2))
@@ -140,14 +135,14 @@ public class AuthCallProcessorTest extends MessageCallProcessorTest {
     final Bytes codeBytes =
         Bytes.fromHexString(
             "0x"
-                + "6000"
-                + "6000"
-                + "6000"
-                + "6000"
-                + "60FF"
-                + "73deadbeefdeadbeefdeadbeefdeadbeefdeadbeef"
-                + "60FF"
-                + "F7");
+                + "6000" //push 0 for return length
+                + "6000" //push 0 for return offset
+                + "6000" //push 0 for input length
+                + "6000" //push 0 for input offset
+                + "60FF" //push 255 for the value being sent
+                + "73deadbeefdeadbeefdeadbeefdeadbeefdeadbeef" //push20 the invokee address
+                + "60FF" //push 255 gas
+                + "F7"); //AUTHCALL without prior AUTH, should fail
 
     executor.execute(codeBytes, Bytes.EMPTY, Wei.ZERO, Address.ZERO);
     verify(this.spyingMessageCallProcessor).start(frameCaptor.capture(), any());

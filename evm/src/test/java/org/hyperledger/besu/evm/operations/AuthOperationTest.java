@@ -16,6 +16,7 @@
 package org.hyperledger.besu.evm.operations;
 
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
@@ -39,7 +40,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
-public class AuthOperationsTest {
+public class AuthOperationTest {
 
   @Test
   public void testAuthOperation() {
@@ -92,5 +93,61 @@ public class AuthOperationsTest {
     authOperation.execute(frame, fakeEVM);
     verify(frame).setAuthorizedBy(authingAddress);
     verify(frame).pushStackItem(UInt256.ONE);
+  }
+
+  @Test
+  public void testAuthOperationNegative() {
+    SignatureAlgorithm algo = SignatureAlgorithmFactory.getInstance();
+    KeyPair keys = algo.generateKeyPair();
+    Address authingAddress = Address.extract(keys.getPublicKey());
+    EVM fakeEVM = mock(EVM.class);
+
+    Optional<Bytes> chainId = Optional.of(Bytes.of(1));
+    when(fakeEVM.getChainId()).thenReturn(chainId);
+    long senderNonce = 0;
+    Address invokerAddress = Address.fromHexString("0xdeadbeef");
+    Bytes32 invoker = Bytes32.leftPad(invokerAddress);
+    Bytes32 contractCommitment = Bytes32.leftPad(Bytes.fromHexString("0x1234"));
+    Bytes authPreImage =
+            Bytes.concatenate(
+                    Bytes.ofUnsignedShort(AuthOperation.MAGIC),
+                    chainId.get(),
+                    Bytes32.leftPad(Bytes.ofUnsignedLong(senderNonce)),
+                    invoker,
+                    contractCommitment);
+    Bytes32 messageHash = Hash.keccak256(authPreImage);
+
+    // Generate a new key pair to create an incorrect signature
+    KeyPair wrongKeys = algo.generateKeyPair();
+    SECPSignature wrongSignature = algo.sign(messageHash, wrongKeys);
+
+    MessageFrame frame = mock(MessageFrame.class);
+    when(frame.getContractAddress()).thenReturn(invokerAddress);
+    MutableAccount authingAccount = mock(MutableAccount.class);
+    when(authingAccount.getAddress()).thenReturn(authingAddress);
+    when(authingAccount.getNonce()).thenReturn(senderNonce);
+
+    WorldUpdater state = mock(WorldUpdater.class);
+
+    when(state.getAccount(authingAddress)).thenReturn(authingAccount);
+
+    when(frame.getWorldUpdater()).thenReturn(state);
+
+    when(frame.getSenderAddress()).thenReturn(authingAddress);
+    when(state.getSenderAccount(frame)).thenReturn(authingAccount);
+    when(frame.getStackItem(0)).thenReturn(authingAddress);
+    when(frame.getStackItem(1)).thenReturn(Bytes.of(0));
+    when(frame.getStackItem(2)).thenReturn(Bytes.of(97));
+    Bytes encodedSignature = wrongSignature.encodedBytes(); // Use the wrong signature
+    when(frame.readMemory(0, 1)).thenReturn(encodedSignature.slice(64, 1));
+    when(frame.readMemory(1, 32)).thenReturn(Bytes32.wrap(encodedSignature.slice(0, 32).toArray()));
+    when(frame.readMemory(33, 32))
+            .thenReturn(Bytes32.wrap(encodedSignature.slice(32, 32).toArray()));
+    when(frame.readMemory(65, 32)).thenReturn(contractCommitment);
+
+    AuthOperation authOperation = new AuthOperation(new PragueGasCalculator());
+    authOperation.execute(frame, fakeEVM);
+    verify(frame, never()).setAuthorizedBy(authingAddress); // The address should not be authorized
+    verify(frame).pushStackItem(UInt256.ZERO); // The stack should contain UInt256.ZERO
   }
 }
