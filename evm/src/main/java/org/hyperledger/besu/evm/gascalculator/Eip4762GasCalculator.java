@@ -18,6 +18,7 @@ import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.BALANCE_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_KECCAK_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_SIZE_LEAF_KEY;
+import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.NONCE_LEAF_KEY;
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERSION_LEAF_KEY;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
@@ -321,23 +322,61 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
       final Address recipientAddress,
       final Wei inheritance,
       final Address originatorAddress) {
-    long cost =
+    final long gasCost =
         super.selfDestructOperationGasCost(
             frame, recipient, recipientAddress, inheritance, originatorAddress);
-    cost =
-        clampedAdd(
-            cost,
-            frame
-                .getAccessWitness()
-                .touchAddressOnReadAndComputeGas(
-                    originatorAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
-    cost =
-        clampedAdd(
-            cost,
-            frame
-                .getAccessWitness()
-                .touchAddressOnReadAndComputeGas(recipientAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
-    return cost;
+    if (isPrecompile(recipientAddress)) {
+      return gasCost;
+    } else {
+      long statelessGas =
+          frame
+              .getAccessWitness()
+              .touchAddressOnReadAndComputeGas(originatorAddress, UInt256.ZERO, BALANCE_LEAF_KEY);
+      if (!originatorAddress.equals(recipientAddress)) {
+        statelessGas =
+            clampedAdd(
+                statelessGas,
+                frame
+                    .getAccessWitness()
+                    .touchAddressOnReadAndComputeGas(
+                        recipientAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
+      }
+      if (!inheritance.isZero()) {
+        statelessGas =
+            clampedAdd(
+                statelessGas,
+                frame
+                    .getAccessWitness()
+                    .touchAddressOnWriteAndComputeGas(
+                        originatorAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
+        if (!originatorAddress.equals(recipientAddress)) {
+          statelessGas =
+              clampedAdd(
+                  statelessGas,
+                  frame
+                      .getAccessWitness()
+                      .touchAddressOnWriteAndComputeGas(
+                          recipientAddress, UInt256.ZERO, BALANCE_LEAF_KEY));
+        }
+        if (recipient == null) {
+          statelessGas =
+              clampedAdd(
+                  statelessGas,
+                  frame
+                      .getAccessWitness()
+                      .touchAddressOnWriteAndComputeGas(
+                          recipientAddress, UInt256.ZERO, VERSION_LEAF_KEY));
+          statelessGas =
+              clampedAdd(
+                  statelessGas,
+                  frame
+                      .getAccessWitness()
+                      .touchAddressOnWriteAndComputeGas(
+                          recipientAddress, UInt256.ZERO, NONCE_LEAF_KEY));
+        }
+      }
+      return clampedAdd(gasCost, statelessGas);
+    }
   }
 
   @Override
