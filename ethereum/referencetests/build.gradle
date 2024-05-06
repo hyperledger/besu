@@ -80,14 +80,23 @@ def executionSpecTests = tasks.register("executionSpecTests") {
 
   inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
   outputs.files generatedTestsPath
+  // generate blockchain_tests:
   generateTestFiles(
-    fileTree(referenceTestsPath + "/fixtures"),
-    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
+    file("src/reference-test/templates/ExecutionSpecTest.java.template"),
     "fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
-    "ExecutionSpecTest",
-    ("fixtures/example/example") // exclude test for test filling tool
-    )
+    "ExecutionSpecBlockchainTest"
+  )
+
+  // generate state_tests:
+  generateTestFiles(
+          fileTree(referenceTestsPath + "/fixtures/state_tests"),
+          file("src/reference-test/templates/ExecutionSpecStateTest.java.template"),
+          "fixtures",
+          "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+          "ExecutionSpecStateTest"
+  )
 }
 
 def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
@@ -170,7 +179,7 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:0.2.5:fixtures@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:2.1.1:fixtures@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.tmio:tuweni-bytes'
