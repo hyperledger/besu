@@ -312,11 +312,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                           new StorageConsumingMap<>(
                               updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
 
-              if (tracked.getStorageWasCleared()) {
-                storageToClear.add(updatedAddress);
-                pendingStorageUpdates.clear();
-              }
-
               if (tracked.getWrappedAccount() == null) {
                 updatedAccount = createAccount(this, tracked);
                 tracked.setWrappedAccount(updatedAccount);
@@ -356,6 +351,11 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                                     .orElse(null),
                                 null));
                 pendingCode.setUpdated(updatedAccount.getCode());
+              }
+
+              if (tracked.getStorageWasCleared()) {
+                storageToClear.add(updatedAddress);
+                pendingStorageUpdates.clear();
               }
 
               // This is especially to avoid unnecessary computation for withdrawals and
