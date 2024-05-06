@@ -47,6 +47,7 @@
 - Layered txpool tuning for blob transactions [#6940](https://github.com/hyperledger/besu/pull/6940)
 - Update Gradle to 7.6.4 [#7030](https://github.com/hyperledger/besu/pull/7030)
 - Remove deprecated Goerli testnet [#7049](https://github.com/hyperledger/besu/pull/7049)
+- Default bonsai to use full-flat db and code-storage-by-code-hash [#6984](https://github.com/hyperledger/besu/pull/6894)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)

@@ -218,6 +218,8 @@ receipt-compaction-enabled=true
 # feature flags
 Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false
+Xsnapsync-server-enabled=true
+Xbonsai-full-flat-db-enabled=true
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false

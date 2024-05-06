@@ -118,7 +118,7 @@ public class SnapWorldDownloadStateTest {
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(),
               new NoOpMetricsSystem(),
-              DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+              DataStorageConfiguration.DEFAULT_BONSAI_PARTIAL_DB_CONFIG);
     } else {
       worldStateKeyValueStorage =
           new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());

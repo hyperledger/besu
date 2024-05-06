@@ -2319,29 +2319,48 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void snapsyncHealingOptionShouldBeDisabledByDefault() {
+  public void bonsaiFlatDbShouldBeEnabledByDefault() {
     final TestBesuCommand besuCommand = parseCommand();
-    assertThat(besuCommand.unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled()).isFalse();
+    assertThat(
+            besuCommand
+                .getDataStorageOptions()
+                .toDomainObject()
+                .getUnstable()
+                .getBonsaiFullFlatDbEnabled())
+        .isTrue();
   }
 
   @Test
   public void snapsyncHealingOptionShouldWork() {
-    final TestBesuCommand besuCommand =
-        parseCommand("--Xsnapsync-synchronizer-flat-db-healing-enabled", "true");
-    assertThat(besuCommand.unstableSynchronizerOptions.isSnapsyncFlatDbHealingEnabled()).isTrue();
+    final TestBesuCommand besuCommand = parseCommand("--Xbonsai-full-flat-db-enabled", "false");
+    assertThat(
+            besuCommand
+                .dataStorageOptions
+                .toDomainObject()
+                .getUnstable()
+                .getBonsaiFullFlatDbEnabled())
+        .isFalse();
   }
 
   @Test
   public void snapsyncForHealingFeaturesShouldFailWhenHealingIsNotEnabled() {
-    parseCommand("--Xsnapsync-synchronizer-flat-account-healed-count-per-request", "100");
+    parseCommand(
+        "--Xbonsai-full-flat-db-enabled",
+        "false",
+        "--Xsnapsync-synchronizer-flat-account-healed-count-per-request",
+        "100");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
+            "--Xsnapsync-synchronizer-flat option can only be used when --Xbonsai-full-flat-db-enabled is true");
 
-    parseCommand("--Xsnapsync-synchronizer-flat-slot-healed-count-per-request", "100");
+    parseCommand(
+        "--Xbonsai-full-flat-db-enabled",
+        "false",
+        "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request",
+        "100");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xsnapsync-synchronizer-flat option can only be used when -Xsnapsync-synchronizer-flat-db-healing-enabled is true");
+            "--Xsnapsync-synchronizer-flat option can only be used when --Xbonsai-full-flat-db-enabled is true");
   }
 
   @Test
