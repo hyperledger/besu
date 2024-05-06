@@ -23,6 +23,9 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
@@ -38,10 +41,14 @@ public class RequestsDelegateValidator implements RequestValidator {
 
   @Override
   public boolean validate(final Block block, final List<Request> requests) {
+    if (!validateRequestSorting(requests)) {
+      final Hash blockHash = block.getHash();
+      LOG.warn("Block {} the ordering across requests must be ascending by type", blockHash);
+    }
     if (!validateRequestRoot(block, requests)) {
       return false;
     }
-    for (final RequestType type : RequestType.values()) {
+    for (final RequestType type : requestTypes(requests)) {
       if (!validateRequest(type, block, requests)) {
         return false;
       }
@@ -104,5 +111,14 @@ public class RequestsDelegateValidator implements RequestValidator {
    */
   private Optional<RequestValidator> getRequestValidator(final RequestType requestType) {
     return Optional.ofNullable(validators.get(requestType));
+  }
+
+  public static Set<RequestType> requestTypes(final List<Request> requests) {
+    return requests.stream().map(Request::getType).collect(Collectors.toSet());
+  }
+
+  private static boolean validateRequestSorting(final List<Request> requests) {
+    return IntStream.range(0, requests.size() - 1)
+        .allMatch(i -> requests.get(i).getType().compareTo(requests.get(i + 1).getType()) <= 0);
   }
 }

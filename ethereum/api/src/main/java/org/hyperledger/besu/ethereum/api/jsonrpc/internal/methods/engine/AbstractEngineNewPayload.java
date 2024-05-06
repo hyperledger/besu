@@ -54,7 +54,6 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -171,22 +170,24 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposits"));
     }
 
-    final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests =
+    final Optional<List<Request>> maybeWithdrawalRequests =
         Optional.ofNullable(blockParam.getWithdrawalRequests())
             .map(
                 withdrawalRequest ->
                     withdrawalRequest.stream()
                         .map(WithdrawalRequestParameter::toWithdrawalRequest)
                         .collect(toList()));
+    if (!getRequestValidator(
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
+        .validateParameter(maybeWithdrawalRequests)) {
+      return new JsonRpcErrorResponse(
+          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal request"));
+    }
 
     Optional<List<Request>> maybeRequests = Optional.empty();
     if (maybeWithdrawalRequests.isPresent()) {
-      maybeRequests = Optional.of(new ArrayList<>(maybeWithdrawalRequests.get()));
-    }
-    if (!getRequestValidator(
-            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-        .validateParameter(maybeRequests)) {
-      return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid requests"));
+      // todo add deposits and other request types
+      maybeRequests = maybeWithdrawalRequests;
     }
 
     if (mergeContext.get().isSyncing()) {

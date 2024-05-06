@@ -19,6 +19,7 @@ import java.util.Arrays;
 
 /** Enum representing different types of requests with associated serialized type values. */
 public enum RequestType {
+  /** WITHDRAWAL */
   WITHDRAWAL(0x01);
 
   private final int typeValue;

@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTe
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot;
 
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.WithdrawalRequestTestParameter;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
 
@@ -40,11 +39,9 @@ class WithdrawalRequestValidatorTest {
   @MethodSource("paramsForValidateWithdrawalRequestParameter")
   public void validateWithdrawalRequestParameter(
       final String description,
-      final Optional<List<WithdrawalRequest>> maybeExits,
+      final Optional<List<Request>> maybeExits,
       final boolean expectedValidity) {
-    var list = maybeExits.get();
-    var requests = Optional.of(new ArrayList<Request>(list).stream().toList());
-    assertThat(new ProhibitedRequestsValidator().validateParameter(requests))
+    assertThat(new ProhibitedRequestsValidator().validateParameter(maybeExits))
         .isEqualTo(expectedValidity);
   }
 

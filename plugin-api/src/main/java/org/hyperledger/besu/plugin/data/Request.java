@@ -21,5 +21,10 @@ import org.hyperledger.besu.plugin.Unstable;
 @Unstable
 public interface Request {
 
+  /**
+   * Retrieves the type of this request.
+   *
+   * @return The {@link RequestType} representing the type of this request.
+   */
   RequestType getType();
 }

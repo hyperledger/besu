@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTe
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
 
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.WithdrawalRequestTestParameter;
@@ -65,7 +66,7 @@ class PragueRequestsValidatorTest {
   public void validateWithdrawalRequestsInBlock_WhenPrague(
       final WithdrawalRequestTestParameter param, final boolean expectedValidity) {
     assertThat(
-            new WithdrawalRequestValidator()
+            pragueRequestsValidator()
                 .validate(param.block, new ArrayList<>(param.expectedWithdrawalRequest)))
         .isEqualTo(expectedValidity);
   }
