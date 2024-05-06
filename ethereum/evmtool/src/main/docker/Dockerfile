@@ -3,14 +3,14 @@ FROM ubuntu:22.04
 ARG VERSION="dev"
 ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0"
 
-# Clean apt cache
-RUN apt-get clean  && \
-  rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/*  && \
-  rm -rf /var/lib/apt/lists/*  && \
-  # Update and install dependencies without using any cache
-  apt-get update $NO_PROXY_CACHE  && \
+# Update and install dependencies without using any cache
+RUN apt-get update $NO_PROXY_CACHE  && \
   apt-get install $NO_PROXY_CACHE --no-install-recommends -q --assume-yes ca-certificates-java=20190909*  && \
   apt-get install $NO_PROXY_CACHE --no-install-recommends -q --assume-yes openjdk-17-jre-headless=17*  && \
+  # Clean apt cache  \
+  apt-get clean  && \
+  rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/*  && \
+  rm -rf /var/lib/apt/lists/*  && \
   # Creating a user for besu
   adduser --disabled-password --gecos "" --home /opt/besu besu  && \
   chown besu:besu /opt/besu
