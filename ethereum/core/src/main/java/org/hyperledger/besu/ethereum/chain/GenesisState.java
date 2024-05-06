@@ -226,6 +226,7 @@ public final class GenesisState {
         .excessBlobGas(isCancunAtGenesis(genesis) ? parseExcessBlobGas(genesis) : null)
         .parentBeaconBlockRoot(
             (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
+        .requestsRoot(isPragueAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .depositsRoot(isExperimentalEipsTimeAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
