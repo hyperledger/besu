@@ -80,13 +80,22 @@ def executionSpecTests = tasks.register("executionSpecTests") {
 
   inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
   outputs.files generatedTestsPath
+  // generate blockchain_tests:
   generateTestFiles(
-    fileTree(referenceTestsPath + "/fixtures"),
-    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
+    file("src/reference-test/templates/ExecutionSpecTest.java.template"),
     "fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
-    "ExecutionSpecTest",
-    ("fixtures/example/example") // exclude test for test filling tool
+    "ExecutionSpecBlockchainTest"
+    )
+
+  // generate state_tests:
+  generateTestFiles(
+    fileTree(referenceTestsPath + "/fixtures/state_tests"),
+    file("src/reference-test/templates/ExecutionSpecStateTest.java.template"),
+    "fixtures",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+    "ExecutionSpecStateTest"
     )
 }
 
