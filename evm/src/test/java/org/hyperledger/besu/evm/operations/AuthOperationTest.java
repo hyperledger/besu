@@ -109,12 +109,12 @@ public class AuthOperationTest {
     Bytes32 invoker = Bytes32.leftPad(invokerAddress);
     Bytes32 contractCommitment = Bytes32.leftPad(Bytes.fromHexString("0x1234"));
     Bytes authPreImage =
-            Bytes.concatenate(
-                    Bytes.ofUnsignedShort(AuthOperation.MAGIC),
-                    chainId.get(),
-                    Bytes32.leftPad(Bytes.ofUnsignedLong(senderNonce)),
-                    invoker,
-                    contractCommitment);
+        Bytes.concatenate(
+            Bytes.ofUnsignedShort(AuthOperation.MAGIC),
+            chainId.get(),
+            Bytes32.leftPad(Bytes.ofUnsignedLong(senderNonce)),
+            invoker,
+            contractCommitment);
     Bytes32 messageHash = Hash.keccak256(authPreImage);
 
     // Generate a new key pair to create an incorrect signature
@@ -142,7 +142,7 @@ public class AuthOperationTest {
     when(frame.readMemory(0, 1)).thenReturn(encodedSignature.slice(64, 1));
     when(frame.readMemory(1, 32)).thenReturn(Bytes32.wrap(encodedSignature.slice(0, 32).toArray()));
     when(frame.readMemory(33, 32))
-            .thenReturn(Bytes32.wrap(encodedSignature.slice(32, 32).toArray()));
+        .thenReturn(Bytes32.wrap(encodedSignature.slice(32, 32).toArray()));
     when(frame.readMemory(65, 32)).thenReturn(contractCommitment);
 
     AuthOperation authOperation = new AuthOperation(new PragueGasCalculator());
