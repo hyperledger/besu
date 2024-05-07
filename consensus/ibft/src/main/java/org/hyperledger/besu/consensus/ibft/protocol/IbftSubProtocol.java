@@ -30,7 +30,7 @@ public class IbftSubProtocol implements SubProtocol {
   private static final IbftSubProtocol INSTANCE = new IbftSubProtocol();
 
   /** Default constructor. */
-  private IbftSubProtocol() {}
+  IbftSubProtocol() {}
 
   /**
    * Get ibft sub protocol.
