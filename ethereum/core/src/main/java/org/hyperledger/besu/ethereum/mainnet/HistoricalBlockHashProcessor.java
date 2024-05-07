@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
@@ -32,10 +33,9 @@ import org.apache.tuweni.units.bigints.UInt256;
  */
 public class HistoricalBlockHashProcessor {
 
-  public static final Address HISTORICAL_BLOCKHASH_ADDRESS =
-      Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
+  public static final Address HISTORY_STORAGE_ADDRESS = BlockHashOperation.HISTORY_STORAGE_ADDRESS;
 
-  private static final long HISTORY_SAVE_WINDOW = 8192;
+  private static final long HISTORY_SERVE_WINDOW = 8192;
 
   private final long forkTimestamp;
   private final long historySaveWindow;
@@ -46,7 +46,7 @@ public class HistoricalBlockHashProcessor {
    * @param forkTimestamp The timestamp at which the fork becomes active.
    */
   public HistoricalBlockHashProcessor(final long forkTimestamp) {
-    this(forkTimestamp, HISTORY_SAVE_WINDOW);
+    this(forkTimestamp, HISTORY_SERVE_WINDOW);
   }
 
   /**
@@ -76,7 +76,7 @@ public class HistoricalBlockHashProcessor {
       final WorldUpdater worldUpdater,
       final ProcessableBlockHeader currentBlockHeader) {
 
-    final MutableAccount account = worldUpdater.getOrCreate(HISTORICAL_BLOCKHASH_ADDRESS);
+    final MutableAccount account = worldUpdater.getOrCreate(HISTORY_STORAGE_ADDRESS);
 
     if (currentBlockHeader.getNumber() > 0) {
       storeParentHash(account, currentBlockHeader);

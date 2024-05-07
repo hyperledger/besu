@@ -17,7 +17,7 @@ package org.hyperledger.besu.evm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy;
 import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy.STATE_READ;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.HISTORICAL_BLOCKHASH_ADDRESS;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.HISTORY_STORAGE_ADDRESS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -190,6 +190,6 @@ class BlockHashOperationTest {
     Account account = mock(Account.class);
     when(account.getStorageValue(UInt256.valueOf(blockNumber % MAX_RELATIVE_BLOCK)))
         .thenReturn(UInt256.fromBytes(blockHash));
-    when(worldUpdater.get(HISTORICAL_BLOCKHASH_ADDRESS)).thenReturn(account);
+    when(worldUpdater.get(HISTORY_STORAGE_ADDRESS)).thenReturn(account);
   }
 }

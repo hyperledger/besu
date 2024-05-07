@@ -32,9 +32,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The Block hash operation. */
 public class BlockHashOperation extends AbstractFixedCostOperation {
 
-  /** The HISTORICAL_BLOCKHASH_ADDRESS */
-  public static final Address HISTORICAL_BLOCKHASH_ADDRESS =
-      Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
+  /** The HISTORY_STORAGE_ADDRESS */
+  public static final Address HISTORY_STORAGE_ADDRESS =
+      Address.fromHexString("0x25a219378dad9b3503c8268c9ca836a52427a4fb");
 
   private static final int MAX_RELATIVE_BLOCK = 256;
   private static final int MAX_BLOCK_ARG_SIZE = 8;
@@ -103,7 +103,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
         Hash.wrap(
             frame
                 .getWorldUpdater()
-                .get(HISTORICAL_BLOCKHASH_ADDRESS)
+                .get(HISTORY_STORAGE_ADDRESS)
                 .getStorageValue(UInt256.valueOf(soughtBlock % MAX_RELATIVE_BLOCK)));
     return Bytes32.wrap(blockHash);
   }

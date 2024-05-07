@@ -47,7 +47,7 @@ class HistoricalBlockHashProcessorTest {
     blockchain = mock(Blockchain.class);
     worldUpdater = mock(WorldUpdater.class);
     account = mock(MutableAccount.class);
-    when(worldUpdater.getOrCreate(HistoricalBlockHashProcessor.HISTORICAL_BLOCKHASH_ADDRESS))
+    when(worldUpdater.getOrCreate(HistoricalBlockHashProcessor.HISTORY_STORAGE_ADDRESS))
         .thenReturn(account);
   }
 

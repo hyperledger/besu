@@ -740,7 +740,7 @@ public abstract class MainnetProtocolSpecs {
 
     final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
         new ClearEmptyAccountWithException(
-            List.of(HistoricalBlockHashProcessor.HISTORICAL_BLOCKHASH_ADDRESS));
+            List.of(HistoricalBlockHashProcessor.HISTORY_STORAGE_ADDRESS));
 
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
