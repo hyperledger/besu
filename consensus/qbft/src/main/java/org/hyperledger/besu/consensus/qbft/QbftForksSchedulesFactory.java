@@ -27,6 +27,8 @@ import java.util.Optional;
 
 /** The Qbft forks schedules factory. */
 public class QbftForksSchedulesFactory {
+  /** Default constructor */
+  private QbftForksSchedulesFactory() {}
 
   /**
    * Create forks schedule.
