@@ -30,14 +30,13 @@ jar {
 
 dependencies {
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
+  compileOnly 'io.vertx:vertx-core'
 
   implementation project(':crypto:algorithms')
   implementation project(':ethereum:rlp')
   implementation 'com.google.guava:guava'
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
-
-  compileOnly 'io.vertx:vertx-core'
 
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.junit.jupiter:junit-jupiter'
