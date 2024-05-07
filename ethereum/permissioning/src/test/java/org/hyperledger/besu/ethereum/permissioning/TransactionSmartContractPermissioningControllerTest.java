@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.permissioning;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
@@ -42,7 +41,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import java.io.IOException;
 import java.math.BigInteger;
 
-import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -57,13 +55,13 @@ public class TransactionSmartContractPermissioningControllerTest {
   @Mock private Counter checkUnpermittedCounter;
 
   private TransactionSmartContractPermissioningController setupController(
-      final String resourceName, final String contractAddressString) throws IOException {
+      final String resourceName, final String contractAddressString) {
     final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
 
-    final String emptyContractFile =
-        Resources.toString(this.getClass().getResource(resourceName), UTF_8);
     final GenesisState genesisState =
-        GenesisState.fromConfig(GenesisConfigFile.fromConfig(emptyContractFile), protocolSchedule);
+        GenesisState.fromConfig(
+            GenesisConfigFile.fromSource(this.getClass().getResource(resourceName)),
+            protocolSchedule);
 
     final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
     final WorldStateArchive worldArchive = createInMemoryWorldStateArchive();

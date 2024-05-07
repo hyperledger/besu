@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -79,17 +77,6 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xfd4f016bL), 1707305664L),
               new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L),
               new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L))
-        },
-        new Object[] {
-          NetworkName.GOERLI,
-          List.of(
-              new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
-              new ForkId(Bytes.ofUnsignedInt(0xc25efa5cL), 4460644L),
-              new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 5062605L),
-              new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 1678832736L),
-              new ForkId(Bytes.ofUnsignedInt(0xf9843abfL), 1705473120),
-              new ForkId(Bytes.ofUnsignedInt(0x70cc14e2L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x70cc14e2L), 0L))
         },
         new Object[] {
           NetworkName.MAINNET,

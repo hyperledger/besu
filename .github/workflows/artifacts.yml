@@ -13,6 +13,9 @@ jobs:
     runs-on: ubuntu-22.04
     permissions:
       contents: write
+    outputs:
+      tarSha: ${{steps.hashes.outputs.tarSha}}
+      zipSha: ${{steps.hashes.outputs.zipSha}}
     steps:
       - name: checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -32,6 +35,8 @@ jobs:
         id: hashes
         run: |
           cd build/distributions
+          echo "zipSha=$(shasum -a 256 besu*.zip)"
+          echo "tarSha=$(shasum -a 256 besu*.tar.gz)"
           echo "zipSha=$(shasum -a 256 besu*.zip)" >> $GITHUB_OUTPUT
           echo "tarSha=$(shasum -a 256 besu*.tar.gz)" >> $GITHUB_OUTPUT
       - name: upload tarball
@@ -73,7 +78,7 @@ jobs:
           besu\bin\besu.bat --version
   publish:
     runs-on: ubuntu-22.04
-    needs: testWindows
+    needs: [artifacts, testWindows]
     permissions:
       contents: write
     steps:
@@ -91,8 +96,8 @@ jobs:
             build/distributions/besu*.tar.gz
             build/distributions/besu*.zip
           body: |
-            ${{steps.hashes.outputs.tarSha}}
-            ${{steps.hashes.outputs.zipSha}}
+            ${{needs.artifacts.outputs.tarSha}}
+            ${{needs.artifacts.outputs.zipSha}}
   artifactoryPublish:
     runs-on: ubuntu-22.04
     needs: artifacts

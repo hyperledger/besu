@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -176,8 +176,8 @@ public class BlockHeader extends SealableBlockHeader
     if (depositsRoot != null) {
       out.writeBytes(depositsRoot);
     }
-    if (exitsRoot != null) {
-      out.writeBytes(exitsRoot);
+    if (withdrawalRequestsRoot != null) {
+      out.writeBytes(withdrawalRequestsRoot);
     }
     out.endList();
   }
@@ -289,8 +289,8 @@ public class BlockHeader extends SealableBlockHeader
     if (depositsRoot != null) {
       sb.append("depositsRoot=").append(depositsRoot);
     }
-    if (exitsRoot != null) {
-      sb.append("exitsRoot=").append(exitsRoot);
+    if (withdrawalRequestsRoot != null) {
+      sb.append("exitsRoot=").append(withdrawalRequestsRoot);
     }
     return sb.append("}").toString();
   }
@@ -326,7 +326,10 @@ public class BlockHeader extends SealableBlockHeader
             .getDepositsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
-        pluginBlockHeader.getExitsRoot().map(h -> Hash.fromHexString(h.toHexString())).orElse(null),
+        pluginBlockHeader
+            .getWithdrawalRequestsRoot()
+            .map(h -> Hash.fromHexString(h.toHexString()))
+            .orElse(null),
         blockHeaderFunctions);
   }
 

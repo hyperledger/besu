@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -426,7 +426,7 @@ public class MiningOptionsTest extends AbstractCLIOptionsTest<MiningParameters, 
 
   private MiningParameters runtimeConfiguration(
       final TestBesuCommand besuCommand, final MiningParameters miningParameters) {
-    if (besuCommand.getActualGenesisConfigOptions().isPoa()) {
+    if (besuCommand.getGenesisConfigOptions().isPoa()) {
       miningParameters.setBlockPeriodSeconds(POA_BLOCK_PERIOD_SECONDS);
     }
     return miningParameters;

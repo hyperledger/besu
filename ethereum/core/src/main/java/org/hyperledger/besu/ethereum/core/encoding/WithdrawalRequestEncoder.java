@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,22 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class ValidatorExitEncoder {
+public class WithdrawalRequestEncoder {
 
-  public static void encode(final ValidatorExit exit, final RLPOutput rlpOutput) {
+  public static void encode(final WithdrawalRequest withdrawalRequest, final RLPOutput rlpOutput) {
     rlpOutput.startList();
-    rlpOutput.writeBytes(exit.getSourceAddress());
-    rlpOutput.writeBytes(exit.getValidatorPubKey());
+    rlpOutput.writeBytes(withdrawalRequest.getSourceAddress());
+    rlpOutput.writeBytes(withdrawalRequest.getValidatorPubKey());
+    rlpOutput.writeUInt64Scalar(withdrawalRequest.getAmount());
     rlpOutput.endList();
   }
 
-  public static Bytes encodeOpaqueBytes(final ValidatorExit exit) {
+  public static Bytes encodeOpaqueBytes(final WithdrawalRequest exit) {
     return RLP.encode(rlpOutput -> encode(exit, rlpOutput));
   }
 }

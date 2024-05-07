@@ -22,9 +22,6 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.nio.charset.StandardCharsets;
-
-import com.google.common.io.Resources;
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -124,29 +121,6 @@ public class MainnetProtocolScheduleTest {
                     EvmConfiguration.DEFAULT,
                     MiningParameters.MINING_DISABLED,
                     new BadBlockManager()));
-  }
-
-  @Test
-  public void shouldCreateGoerliConfig() throws Exception {
-    final ProtocolSchedule sched =
-        MainnetProtocolSchedule.fromConfig(
-            GenesisConfigFile.fromConfig(
-                    Resources.toString(
-                        this.getClass().getResource("/goerli.json"), StandardCharsets.UTF_8))
-                .getConfigOptions(),
-            EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(0L)).getName())
-        .isEqualTo("Petersburg");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(1_561_651L)).getName())
-        .isEqualTo("Istanbul");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(4_460_644L)).getName())
-        .isEqualTo("Berlin");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(5_062_605L)).getName())
-        .isEqualTo("London");
-    Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
-        .isEqualTo("London");
   }
 
   private BlockHeader blockHeader(final long number) {
