@@ -25,10 +25,17 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
 
+/** The P256Verify precompiled contract. */
 public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
   private final SECP256R1 p256 = new SECP256R1();
-  private final Bytes32 SUCCESS = Bytes32.fromHexString("0x01");
+  private final Bytes32 VERIFICATION_SUCCESS = Bytes32.fromHexString("0x01");
+  private final Bytes32 VERIFICATION_FAILURE = Bytes32.ZERO;
 
+  /**
+   * Instantiates a new P256Verify precompiled contract.
+   *
+   * @param gasCalculator the gas calculator
+   */
   public P256VerifyPrecompiledContract(final GasCalculator gasCalculator) {
     super("P256VERIFY", gasCalculator);
   }
@@ -51,7 +58,7 @@ public class P256VerifyPrecompiledContract extends AbstractPrecompiledContract {
     final BigInteger publicKey = d.slice(96, 64).toUnsignedBigInteger();
 
     return p256.verify(hash, r, s, p256.createPublicKey(publicKey))
-        ? PrecompileContractResult.success(SUCCESS)
-        : PrecompileContractResult.success(Bytes32.ZERO);
+        ? PrecompileContractResult.success(VERIFICATION_SUCCESS)
+        : PrecompileContractResult.success(VERIFICATION_FAILURE);
   }
 }

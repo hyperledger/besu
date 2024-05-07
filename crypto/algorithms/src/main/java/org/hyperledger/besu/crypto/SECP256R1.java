@@ -94,6 +94,15 @@ public class SECP256R1 extends AbstractSECP256 {
     }
   }
 
+  /**
+   * Verify if a public key has signed .
+   *
+   * @param data the hash which was signed
+   * @param r the 1. part of the signature
+   * @param s the 2. part of the signature
+   * @param pub the public key
+   * @return true if the signature matches, false otherwise
+   */
   public boolean verify(
       final Bytes32 data, final BigInteger r, final BigInteger s, final SECPPublicKey pub) {
     if (useNative) {
