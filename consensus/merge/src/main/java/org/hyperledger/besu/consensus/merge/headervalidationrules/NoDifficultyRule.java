@@ -30,6 +30,9 @@ public class NoDifficultyRule extends MergeConsensusRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoDifficultyRule.class);
 
+  /** Default Constructor. */
+  public NoDifficultyRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {

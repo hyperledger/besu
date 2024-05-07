@@ -27,6 +27,9 @@ public class UnverifiedForkchoiceSupplier
 
   private volatile Optional<ForkchoiceEvent> maybeLastForkchoiceUpdate = Optional.empty();
 
+  /** Default Constructor. */
+  public UnverifiedForkchoiceSupplier() {}
+
   @Override
   public void onNewUnverifiedForkchoice(final ForkchoiceEvent event) {
     maybeLastForkchoiceUpdate = Optional.of(event);

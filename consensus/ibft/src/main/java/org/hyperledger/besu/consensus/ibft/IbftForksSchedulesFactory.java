@@ -24,6 +24,8 @@ import org.hyperledger.besu.consensus.common.bft.MutableBftConfigOptions;
 
 /** The Ibft forks schedules factory. */
 public class IbftForksSchedulesFactory {
+  /** Default constructor. */
+  private IbftForksSchedulesFactory() {}
 
   /**
    * Create forks schedule.
