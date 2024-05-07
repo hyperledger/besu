@@ -21,6 +21,8 @@ import picocli.CommandLine;
 
 /** The PositiveNumber Cli type converter. */
 public class PositiveNumberConverter implements CommandLine.ITypeConverter<PositiveNumber> {
+  /** Default Constructor. */
+  public PositiveNumberConverter() {}
 
   @Override
   public PositiveNumber convert(final String value) throws PercentageConversionException {

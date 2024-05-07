@@ -206,7 +206,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private int numberOfBlocksToCache = 0;
 
   /** Instantiates a new Besu controller builder. */
-  public BesuControllerBuilder() {}
+  protected BesuControllerBuilder() {}
 
   /**
    * Provide a BesuComponent which can be used to get other dependencies

@@ -36,6 +36,9 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   private EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
 
+  /** Default constructor. */
+  public MainnetBesuControllerBuilder() {}
+
   @Override
   protected MiningCoordinator createMiningCoordinator(
       final ProtocolSchedule protocolSchedule,
