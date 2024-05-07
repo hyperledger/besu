@@ -43,6 +43,9 @@ public class MergeValidationRulesetFactory {
   private static final EpochCalculator preMergeCalculator =
       new EpochCalculator.DefaultEpochCalculator();
 
+  /** Default constructor. */
+  private MergeValidationRulesetFactory() {}
+
   /**
    * Creates a set of rules which when executed will determine if a given block header is valid with
    * respect to its parent (or chain).
