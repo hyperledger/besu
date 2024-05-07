@@ -37,6 +37,11 @@ import org.slf4j.Logger;
  */
 @Module
 public class BesuCommandModule {
+  /**
+   * Default constructor.
+   */
+  public BesuCommandModule() {
+  }
 
   @Provides
   @Singleton

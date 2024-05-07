@@ -30,6 +30,12 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   private MiningParameters miningParameters;
 
   /**
+   * Default Constructor.
+   */
+  public BesuConfigurationImpl() {
+  }
+
+  /**
    * Post creation initialization
    *
    * @param dataPath The Path representing data folder

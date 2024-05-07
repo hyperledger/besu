@@ -30,7 +30,13 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/** The Eth network config. */
+/**
+ * The Eth network config.
+ * @param genesisConfigFile Genesis Config File
+ * @param networkId Network Id
+ * @param bootNodes Boot Nodes
+ * @param dnsDiscoveryUrl DNS Discovery URL
+ */
 public record EthNetworkConfig(
     GenesisConfigFile genesisConfigFile,
     BigInteger networkId,
