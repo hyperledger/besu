@@ -28,6 +28,8 @@ import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
  */
 public class PragueGasCalculator extends CancunGasCalculator {
 
+  private static final long P256_PRECOMPILED_GAS_COST = 3_450L;
+
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
     this(KZG_POINT_EVAL.toArrayUnsafe()[19]);
@@ -40,5 +42,10 @@ public class PragueGasCalculator extends CancunGasCalculator {
    */
   protected PragueGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
+  }
+
+  @Override
+  public long getP256PrecompiledContractGasCost() {
+    return P256_PRECOMPILED_GAS_COST;
   }
 }

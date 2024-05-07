@@ -94,6 +94,16 @@ public class SECP256R1 extends AbstractSECP256 {
     }
   }
 
+  public boolean verify(
+      final Bytes32 data, final BigInteger r, final BigInteger s, final SECPPublicKey pub) {
+    if (useNative) {
+      return libSECP256R1.verify(
+          data.toArrayUnsafe(), r.toByteArray(), s.toByteArray(), pub.getEncoded());
+    }
+
+    return verify(data, r, s, pub);
+  }
+
   @Override
   public Optional<SECPPublicKey> recoverPublicKeyFromSignature(
       final Bytes32 dataHash, final SECPSignature signature) {

@@ -356,19 +356,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
    */
   @Override
   public boolean verify(final Bytes data, final SECPSignature signature, final SECPPublicKey pub) {
-    final ECDSASigner signer = new ECDSASigner();
-    final Bytes toDecode = Bytes.wrap(Bytes.of((byte) 4), pub.getEncodedBytes());
-    final ECPublicKeyParameters params =
-        new ECPublicKeyParameters(curve.getCurve().decodePoint(toDecode.toArrayUnsafe()), curve);
-    signer.init(false, params);
-    try {
-      return signer.verifySignature(data.toArrayUnsafe(), signature.getR(), signature.getS());
-    } catch (final NullPointerException e) {
-      // Bouncy Castle contains a bug that can cause NPEs given specially crafted signatures. Those
-      // signatures
-      // are inherently invalid/attack sigs so we just fail them here rather than crash the thread.
-      return false;
-    }
+    return verify(data, signature.getR(), signature.getS(), pub);
   }
 
   /**
@@ -389,7 +377,7 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
       final SECPPublicKey pub,
       final UnaryOperator<Bytes> preprocessor) {
     checkArgument(preprocessor != null, "preprocessor must not be null");
-    return verify(preprocessor.apply(data), signature, pub);
+    return verify(preprocessor.apply(data), signature.getR(), signature.getS(), pub);
   }
 
   @Override
@@ -403,5 +391,22 @@ public abstract class AbstractSECP256 implements SignatureAlgorithm {
   @Override
   public Bytes compressPublicKey(final SECPPublicKey uncompressedPublicKey) {
     return Bytes.wrap(publicKeyAsEcPoint(uncompressedPublicKey).getEncoded(true));
+  }
+
+  protected boolean verify(
+      final Bytes data, final BigInteger r, final BigInteger s, final SECPPublicKey pub) {
+    final ECDSASigner signer = new ECDSASigner();
+    final Bytes toDecode = Bytes.wrap(Bytes.of((byte) 4), pub.getEncodedBytes());
+    final ECPublicKeyParameters params =
+        new ECPublicKeyParameters(curve.getCurve().decodePoint(toDecode.toArrayUnsafe()), curve);
+    signer.init(false, params);
+    try {
+      return signer.verifySignature(data.toArrayUnsafe(), r, s);
+    } catch (final NullPointerException e) {
+      // Bouncy Castle contains a bug that can cause NPEs given specially crafted signatures. Those
+      // signatures
+      // are inherently invalid/attack sigs so we just fail them here rather than crash the thread.
+      return false;
+    }
   }
 }

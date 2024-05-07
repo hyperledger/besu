@@ -163,6 +163,7 @@ public interface MainnetPrecompiledContracts {
     populateForCancun(registry, gasCalculator);
 
     // TODO: add Prague precompiles here
+    registry.put(Address.P256VERIFY, new P256VerifyPrecompiledContract(gasCalculator));
   }
 
   /**
