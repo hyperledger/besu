@@ -95,6 +95,9 @@ public class Address extends DelegatingBytes {
   /** The constant BLS12_MAP_FP2_TO_G2. */
   public static final Address BLS12_MAP_FP2_TO_G2 = Address.precompiled(0x13);
 
+  /** Address for RIP-7212 precompile contract */
+  public static final Address P256VERIFY = Address.ripPrecompiled(0x100);
+
   /** The constant ZERO. */
   public static final Address ZERO = Address.fromHexString("0x0");
 
@@ -224,6 +227,19 @@ public class Address extends DelegatingBytes {
     final byte[] address = new byte[SIZE];
     address[SIZE - 1] = (byte) value;
     return new Address(Bytes.wrap(address));
+  }
+
+  /**
+   * Precompiled RIP address.
+   *
+   * @param value the value
+   * @return the address
+   */
+  public static Address ripPrecompiled(final int value) {
+    // RIP precompile addresses are reserved between 0x100 to 0x1ff:
+    // https://eips.ethereum.org/EIPS/eip-7587
+    checkArgument(value >= 0x100 && value < 0x1ff);
+    return new Address(Bytes.ofUnsignedInt(value));
   }
 
   /**
