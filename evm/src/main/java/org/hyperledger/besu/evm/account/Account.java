@@ -41,4 +41,12 @@ public interface Account extends AccountState {
    * @return the account address
    */
   Address getAddress();
+
+  /**
+   * Does this account have any storage slots that are set to non-zero values?
+   *
+   * @return true if the account has no storage values set to non-zero values. False if any storage
+   *     is set.
+   */
+  boolean isStorageEmpty();
 }
