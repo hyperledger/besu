@@ -50,6 +50,7 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
   private final CommandLine commandLine;
   private final InputStream configurationInputStream;
   private TomlParseResult result;
+  private boolean isOptionsValid;
 
   /**
    * Instantiates a new Toml config file default value provider.
@@ -230,6 +231,11 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
       throw new ParameterException(
           commandLine,
           String.format("Unable to read TOML configuration file %s", configurationInputStream));
+
+    if (!isOptionsValid && !commandLine.isUnmatchedArgumentsAllowed()) {
+      checkUnknownOptions(result);
+      isOptionsValid = true;
+    }
   }
 
   /** Load configuration from file. */
@@ -248,8 +254,6 @@ public class TomlConfigurationDefaultProvider implements IDefaultValueProvider {
           throw new ParameterException(
               commandLine, String.format("Invalid TOML configuration: %s", errors));
         }
-
-        checkUnknownOptions(result);
 
         this.result = result;
 
