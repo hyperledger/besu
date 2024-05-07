@@ -63,6 +63,7 @@ public class ConfigurationOverviewBuilder {
 
   /**
    * Create a new ConfigurationOverviewBuilder.
+   *
    * @param logger the logger
    */
   public ConfigurationOverviewBuilder(final Logger logger) {

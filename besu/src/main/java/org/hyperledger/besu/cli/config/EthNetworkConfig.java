@@ -32,6 +32,7 @@ import java.util.stream.Collectors;
 
 /**
  * The Eth network config.
+ *
  * @param genesisConfigFile Genesis Config File
  * @param networkId Network Id
  * @param bootNodes Boot Nodes
