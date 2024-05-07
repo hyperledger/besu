@@ -33,6 +33,9 @@ public class PkiQbftExtraDataCodec extends QbftExtraDataCodec {
   /** The constant QBFT_EXTRA_DATA_LIST_SIZE. */
   public static final int QBFT_EXTRA_DATA_LIST_SIZE = 5;
 
+  /** Default constructor */
+  public PkiQbftExtraDataCodec() {}
+
   @Override
   public BftExtraData decodeRaw(final Bytes input) {
     if (input.isEmpty()) {

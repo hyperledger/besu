@@ -33,6 +33,9 @@ public class ConstantOmmersHashRule implements AttachedBlockHeaderValidationRule
 
   private static final Logger LOG = LoggerFactory.getLogger(ConstantOmmersHashRule.class);
 
+  /** Default constructor. */
+  public ConstantOmmersHashRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
