@@ -15,8 +15,11 @@
 package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BLOCKHASH_OLD_WINDOW;
 import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy.BLOCK_HASH_LOOKUP;
 import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashRetrievalStrategy.STATE_READ;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.HISTORY_SERVE_WINDOW;
 import static org.hyperledger.besu.evm.operation.BlockHashOperation.HISTORY_STORAGE_ADDRESS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -40,9 +43,7 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
 
 class BlockHashOperationTest {
-  private static final int MAX_RELATIVE_BLOCK = 256;
 
-  private static final int MAXIMUM_COMPLETE_BLOCKS_BEHIND = 256;
   protected WorldUpdater worldUpdater = mock(WorldUpdater.class);
 
   private BlockHashOperation createBlockHashOperation(
@@ -86,19 +87,30 @@ class BlockHashOperationTest {
         createBlockHashOperation(blockHashRetrievalStrategy));
   }
 
-  @ParameterizedTest
-  @EnumSource(BlockHashRetrievalStrategy.class)
-  void shouldReturnZeroWhenRequestedBlockTooFarBehindCurrent(
-      final BlockHashRetrievalStrategy blockHashRetrievalStrategy) {
+  @Test
+  void shouldReturnZeroWhenRequestedBlockTooFarBehindCurrent_BlockHashLookup() {
     final int requestedBlock = 10;
     // Our block is the one after the chain head (it's a new block), hence the + 1.
-    final int importingBlockNumber = MAXIMUM_COMPLETE_BLOCKS_BEHIND + requestedBlock + 1;
+    final int importingBlockNumber = BLOCKHASH_OLD_WINDOW + requestedBlock + 1;
     assertBlockHash(
         requestedBlock,
         Bytes32.ZERO,
         importingBlockNumber,
         block -> Hash.EMPTY_LIST_HASH,
-        createBlockHashOperation(blockHashRetrievalStrategy));
+        createBlockHashOperation(BLOCK_HASH_LOOKUP));
+  }
+
+  @Test
+  void shouldReturnZeroWhenRequestedBlockTooFarBehindCurrent_State() {
+    final int requestedBlock = 10;
+    // Our block is the one after the chain head (it's a new block), hence the + 1.
+    final long importingBlockNumber = HISTORY_SERVE_WINDOW + requestedBlock + 1;
+    assertBlockHash(
+        requestedBlock,
+        Bytes32.ZERO,
+        importingBlockNumber,
+        block -> Hash.EMPTY_LIST_HASH,
+        createBlockHashOperation(STATE_READ));
   }
 
   @ParameterizedTest
@@ -188,7 +200,7 @@ class BlockHashOperationTest {
 
   private void mockStorageValue(final long blockNumber, final Hash blockHash) {
     Account account = mock(Account.class);
-    when(account.getStorageValue(UInt256.valueOf(blockNumber % MAX_RELATIVE_BLOCK)))
+    when(account.getStorageValue(UInt256.valueOf(blockNumber % HISTORY_SERVE_WINDOW)))
         .thenReturn(UInt256.fromBytes(blockHash));
     when(worldUpdater.get(HISTORY_STORAGE_ADDRESS)).thenReturn(account);
   }

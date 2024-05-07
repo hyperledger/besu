@@ -36,7 +36,12 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
   public static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0x25a219378dad9b3503c8268c9ca836a52427a4fb");
 
-  private static final int BLOCKHASH_OLD_WINDOW = 256;
+  /** The HISTORY_SERVE_WINDOW */
+  public static final long HISTORY_SERVE_WINDOW = 8192;
+
+  /** The BLOCKHASH_OLD_WINDOW */
+  public static final int BLOCKHASH_OLD_WINDOW = 256;
+
   private static final int MAX_BLOCK_ARG_SIZE = 8;
 
   private final BlockHashRetrievalStrategy blockHashRetrievalStrategy;
@@ -75,7 +80,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     final long soughtBlock = blockArg.toLong();
     final long currentBlockNumber = frame.getBlockValues().getNumber();
 
-    if (!isBlockWithinLast256Blocks(soughtBlock, currentBlockNumber)) {
+    if (!isBlockWithinServeWindow(soughtBlock, currentBlockNumber)) {
       frame.pushStackItem(UInt256.ZERO);
     } else {
       frame.pushStackItem(getBlockHash(frame, soughtBlock));
@@ -84,14 +89,17 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     return successResponse;
   }
 
-  private boolean isBlockWithinLast256Blocks(
-      final long soughtBlock, final long currentBlockNumber) {
-    return soughtBlock >= Math.max(currentBlockNumber - BLOCKHASH_OLD_WINDOW, 0)
+  private boolean isBlockWithinServeWindow(final long soughtBlock, final long currentBlockNumber) {
+
+    final long historyServeWindow =
+        isServingFromState() ? HISTORY_SERVE_WINDOW : BLOCKHASH_OLD_WINDOW;
+
+    return soughtBlock >= Math.max(currentBlockNumber - historyServeWindow, 0)
         && soughtBlock < currentBlockNumber;
   }
 
   private Bytes32 getBlockHash(final MessageFrame frame, final long soughtBlock) {
-    if (blockHashRetrievalStrategy == STATE_READ) {
+    if (isServingFromState()) {
       return readBlockHashFromState(frame, soughtBlock);
     } else {
       return lookupBlockHash(frame, soughtBlock);
@@ -112,6 +120,10 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     final Function<Long, Hash> blockHashLookup = frame.getBlockHashLookup();
     Hash blockHash = blockHashLookup.apply(soughtBlock);
     return Bytes32.wrap(blockHash);
+  }
+
+  private boolean isServingFromState() {
+    return blockHashRetrievalStrategy == STATE_READ;
   }
 
   /** Defines the strategies for retrieving a block hash. */

@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.HISTORY_SERVE_WINDOW;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -34,8 +36,6 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class HistoricalBlockHashProcessor {
 
   public static final Address HISTORY_STORAGE_ADDRESS = BlockHashOperation.HISTORY_STORAGE_ADDRESS;
-
-  private static final long HISTORY_SERVE_WINDOW = 8192;
 
   private final long forkTimestamp;
   private final long historySaveWindow;
@@ -76,10 +76,10 @@ public class HistoricalBlockHashProcessor {
       final WorldUpdater worldUpdater,
       final ProcessableBlockHeader currentBlockHeader) {
 
-    final MutableAccount account = worldUpdater.getOrCreate(HISTORY_STORAGE_ADDRESS);
+    final MutableAccount historyStorageAccount = worldUpdater.getOrCreate(HISTORY_STORAGE_ADDRESS);
 
     if (currentBlockHeader.getNumber() > 0) {
-      storeParentHash(account, currentBlockHeader);
+      storeParentHash(historyStorageAccount, currentBlockHeader);
 
       BlockHeader ancestor =
           blockchain.getBlockHeader(currentBlockHeader.getParentHash()).orElseThrow();
@@ -88,7 +88,7 @@ public class HistoricalBlockHashProcessor {
       if (ancestor.getTimestamp() < forkTimestamp) {
         for (int i = 0; i < (historySaveWindow - 1) && ancestor.getNumber() > 0; i++) {
           ancestor = blockchain.getBlockHeader(ancestor.getParentHash()).orElseThrow();
-          storeBlockHeaderHash(account, ancestor);
+          storeBlockHeaderHash(historyStorageAccount, ancestor);
         }
       }
     }
