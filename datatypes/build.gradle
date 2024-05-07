@@ -30,6 +30,7 @@ jar {
 
 dependencies {
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
+  compileOnly 'io.vertx:vertx-core'
 
   implementation project(':crypto:algorithms')
   implementation project(':ethereum:rlp')
