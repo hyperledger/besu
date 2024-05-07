@@ -112,7 +112,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
             frame
                 .getWorldUpdater()
                 .get(HISTORY_STORAGE_ADDRESS)
-                .getStorageValue(UInt256.valueOf(soughtBlock % BLOCKHASH_OLD_WINDOW)));
+                .getStorageValue(UInt256.valueOf(soughtBlock % HISTORY_SERVE_WINDOW)));
     return Bytes32.wrap(blockHash);
   }
 
