@@ -30,6 +30,9 @@ public class ProposalBlockConsistencyValidator {
   private static final Logger LOG =
       LoggerFactory.getLogger(ProposalBlockConsistencyValidator.class);
 
+  /** Default constructor. */
+  public ProposalBlockConsistencyValidator() {}
+
   /**
    * Validate proposal matches block.
    *
