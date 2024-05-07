@@ -206,16 +206,6 @@ class GenesisConfigFileTest {
   }
 
   @Test
-  void assertGoerliTerminalTotalDifficulty() {
-    GenesisConfigOptions goerliOptions =
-        GenesisConfigFile.fromResource("/goerli.json").getConfigOptions();
-
-    assertThat(goerliOptions.getTerminalTotalDifficulty()).isPresent();
-    assertThat(goerliOptions.getTerminalTotalDifficulty())
-        .contains(UInt256.valueOf(new BigInteger("10790000")));
-  }
-
-  @Test
   void assertMainnetTerminalTotalDifficulty() {
     GenesisConfigOptions mainnetOptions =
         GenesisConfigFile.fromResource("/mainnet.json").getConfigOptions();

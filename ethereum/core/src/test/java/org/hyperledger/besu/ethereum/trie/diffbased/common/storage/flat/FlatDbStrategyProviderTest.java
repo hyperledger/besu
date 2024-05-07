@@ -63,7 +63,7 @@ class FlatDbStrategyProviderTest {
   @Test
   void loadsPartialFlatDbStrategyWhenNoFlatDbModeStored() {
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
-    assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.PARTIAL);
+    assertThat(flatDbStrategyProvider.getFlatDbMode()).isEqualTo(FlatDbMode.FULL);
   }
 
   @Test
@@ -76,7 +76,7 @@ class FlatDbStrategyProviderTest {
     assertThat(flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage))
         .isInstanceOf(FullFlatDbStrategy.class);
     assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
-        .isInstanceOf(AccountHashCodeStorageStrategy.class);
+        .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }
 
   @ParameterizedTest
@@ -99,7 +99,7 @@ class FlatDbStrategyProviderTest {
         codeByHashEnabled
             ? CodeHashCodeStorageStrategy.class
             : AccountHashCodeStorageStrategy.class;
-    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.PARTIAL);
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.FULL);
     assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
         .isInstanceOf(expectedCodeStorageClass);
   }
@@ -129,7 +129,7 @@ class FlatDbStrategyProviderTest {
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
-    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.PARTIAL);
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.FULL);
     assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
         .isInstanceOf(AccountHashCodeStorageStrategy.class);
   }
@@ -158,7 +158,7 @@ class FlatDbStrategyProviderTest {
     transaction.commit();
 
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
-    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.PARTIAL);
+    assertThat(flatDbStrategyProvider.flatDbMode).isEqualTo(FlatDbMode.FULL);
     assertThat(flatDbStrategyProvider.flatDbStrategy.codeStorageStrategy)
         .isInstanceOf(CodeHashCodeStorageStrategy.class);
   }

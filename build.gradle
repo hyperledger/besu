@@ -204,7 +204,14 @@ allprojects {
       endWithNewline()
     }
     // Below this line are currently only license header tasks
-    format 'bash', { target '**/*.sh' }
+    format 'ShellScripts', {
+      target '**/*.sh'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+      trimTrailingWhitespace()
+      endWithNewline()
+
+      licenseHeaderFile("${rootDir}/gradle/spotless/sh.license","^(?!##).+").skipLinesMatching("^#!.+?\$")
+    }
     format 'Solidity', {
       target '**/*.sol'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
@@ -1001,7 +1008,7 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
-      from("build/besu.autocomplete.sh") { into "." }
+      from(autocomplete) { into "." }
     }
   }
 }
