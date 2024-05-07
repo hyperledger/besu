@@ -62,6 +62,7 @@ public class ConfigurationOverviewBuilder {
   private BesuPluginContextImpl besuPluginContext;
 
   /**
+   * Create a new ConfigurationOverviewBuilder.
    * @param logger the logger
    */
   public ConfigurationOverviewBuilder(final Logger logger) {
