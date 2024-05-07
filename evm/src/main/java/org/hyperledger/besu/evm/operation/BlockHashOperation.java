@@ -36,7 +36,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
   public static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0x25a219378dad9b3503c8268c9ca836a52427a4fb");
 
-  private static final int MAX_RELATIVE_BLOCK = 256;
+  private static final int BLOCKHASH_OLD_WINDOW = 256;
   private static final int MAX_BLOCK_ARG_SIZE = 8;
 
   private final BlockHashRetrievalStrategy blockHashRetrievalStrategy;
@@ -86,7 +86,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
 
   private boolean isBlockWithinLast256Blocks(
       final long soughtBlock, final long currentBlockNumber) {
-    return soughtBlock >= Math.max(currentBlockNumber - MAX_RELATIVE_BLOCK, 0)
+    return soughtBlock >= Math.max(currentBlockNumber - BLOCKHASH_OLD_WINDOW, 0)
         && soughtBlock < currentBlockNumber;
   }
 
@@ -104,7 +104,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
             frame
                 .getWorldUpdater()
                 .get(HISTORY_STORAGE_ADDRESS)
-                .getStorageValue(UInt256.valueOf(soughtBlock % MAX_RELATIVE_BLOCK)));
+                .getStorageValue(UInt256.valueOf(soughtBlock % BLOCKHASH_OLD_WINDOW)));
     return Bytes32.wrap(blockHash);
   }
 
