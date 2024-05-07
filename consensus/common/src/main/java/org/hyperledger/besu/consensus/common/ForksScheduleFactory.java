@@ -43,6 +43,9 @@ public class ForksScheduleFactory {
     T create(ForkSpec<T> lastSpec, U fork);
   }
 
+  /** Default constructor. */
+  private ForksScheduleFactory() {}
+
   /**
    * Create forks schedule.
    *
