@@ -38,6 +38,9 @@ public class BftValidatorsValidationRule implements AttachedBlockHeaderValidatio
 
   private static final Logger LOGGER = LoggerFactory.getLogger(BftValidatorsValidationRule.class);
 
+  /** Default constructor. */
+  public BftValidatorsValidationRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {

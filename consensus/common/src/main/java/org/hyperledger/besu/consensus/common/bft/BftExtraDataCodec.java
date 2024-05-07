@@ -38,6 +38,9 @@ public abstract class BftExtraDataCodec {
   /** The constant EXTRA_VANITY_LENGTH. */
   public static int EXTRA_VANITY_LENGTH = 32;
 
+  /** Default constructor. */
+  public BftExtraDataCodec() {}
+
   /**
    * Encode.
    *
