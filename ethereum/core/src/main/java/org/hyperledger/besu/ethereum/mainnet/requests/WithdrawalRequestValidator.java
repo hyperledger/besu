@@ -18,6 +18,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper;
 
@@ -72,7 +73,8 @@ public class WithdrawalRequestValidator implements RequestValidator {
   }
 
   @Override
-  public boolean validate(final Block block, final List<Request> requests) {
+  public boolean validate(
+      final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
     var withdrawalRequests = Request.filterRequestsOfType(requests, WithdrawalRequest.class);
     return validateWithdrawalRequestsInBlock(block, withdrawalRequests);
   }

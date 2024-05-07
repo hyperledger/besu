@@ -45,7 +45,6 @@ public class BlockHeaderBuilder {
   private Hash transactionsRoot;
 
   private Hash withdrawalsRoot = null;
-  private Hash depositsRoot = null;
   private Hash requestsRoot = null;
 
   private Hash receiptsRoot;
@@ -125,7 +124,6 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-        .depositsRoot(header.getDepositsRoot().orElse(null))
         .requestsRoot(header.getRequestsRoot().orElse(null));
   }
 
@@ -150,7 +148,6 @@ public class BlockHeaderBuilder {
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
-            .depositsRoot(fromBuilder.depositsRoot)
             .requestsRoot(fromBuilder.requestsRoot)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
@@ -181,7 +178,6 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot,
         requestsRoot,
         blockHeaderFunctions);
   }
@@ -224,7 +220,6 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot,
         requestsRoot);
   }
 
@@ -289,7 +284,6 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getBlobGasUsed().ifPresent(this::blobGasUsed);
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
-    depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
     requestsRoot(sealableBlockHeader.getRequestsRoot().orElse(null));
     return this;
   }
@@ -402,11 +396,6 @@ public class BlockHeaderBuilder {
 
   public BlockHeaderBuilder withdrawalsRoot(final Hash hash) {
     this.withdrawalsRoot = hash;
-    return this;
-  }
-
-  public BlockHeaderBuilder depositsRoot(final Hash hash) {
-    this.depositsRoot = hash;
     return this;
   }
 

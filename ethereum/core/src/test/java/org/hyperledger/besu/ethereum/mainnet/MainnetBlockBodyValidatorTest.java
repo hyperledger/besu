@@ -63,12 +63,10 @@ class MainnetBlockBodyValidatorTest {
     lenient().when(withdrawalsValidator.validateWithdrawals(any())).thenReturn(true);
     lenient().when(withdrawalsValidator.validateWithdrawalsRoot(any())).thenReturn(true);
 
-    lenient().when(protocolSpec.getDepositsValidator()).thenReturn(depositsValidator);
-    lenient().when(depositsValidator.validateDeposits(any(), any())).thenReturn(true);
-    lenient().when(depositsValidator.validateDepositsRoot(any())).thenReturn(true);
+    lenient().when(depositsValidator.validateDeposits(any(), any(), any())).thenReturn(true);
 
     lenient().when(protocolSpec.getRequestValidator()).thenReturn(requestValidator);
-    lenient().when(requestValidator.validate(any(), any())).thenReturn(true);
+    lenient().when(requestValidator.validate(any(), any(), any())).thenReturn(true);
   }
 
   @Test
@@ -159,7 +157,7 @@ class MainnetBlockBodyValidatorTest {
                 .setRequests(Optional.of(List.of())));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
-    when(requestValidator.validate(any(), any())).thenReturn(false);
+    when(requestValidator.validate(any(), any(), any())).thenReturn(false);
 
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)

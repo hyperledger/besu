@@ -18,7 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import com.google.common.collect.ImmutableMap;
@@ -33,7 +33,11 @@ public class RequestEncoder {
   }
 
   private static final ImmutableMap<RequestType, RequestEncoder.Encoder> ENCODERS =
-      ImmutableMap.of(RequestType.WITHDRAWAL, WithdrawalRequestEncoder::encode);
+      ImmutableMap.of(
+          RequestType.WITHDRAWAL,
+          WithdrawalRequestEncoder::encode,
+          RequestType.DEPOSIT,
+          DepositEncoder::encode);
 
   /**
    * Encodes a Request into the provided RLPOutput.
@@ -54,7 +58,11 @@ public class RequestEncoder {
    * @return The RLP-encoded data as a Bytes object.
    */
   public static Bytes encodeOpaqueBytes(final Request request) {
-    return RLP.encode(rlpOutput -> encode(request, rlpOutput));
+    final RequestEncoder.Encoder encoder = getEncoder(request.getType());
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.writeByte(request.getType().getSerializedType());
+    encoder.encode(request, out);
+    return out.encoded();
   }
 
   /**

@@ -64,7 +64,6 @@ public class BlockHeader extends SealableBlockHeader
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
-      final Hash depositsRoot,
       final Hash requestRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
@@ -87,7 +86,6 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot,
         requestRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
@@ -173,9 +171,6 @@ public class BlockHeader extends SealableBlockHeader
     if (parentBeaconBlockRoot != null) {
       out.writeBytes(parentBeaconBlockRoot);
     }
-    if (depositsRoot != null) {
-      out.writeBytes(depositsRoot);
-    }
     if (requestsRoot != null) {
       out.writeBytes(requestsRoot);
     }
@@ -209,8 +204,6 @@ public class BlockHeader extends SealableBlockHeader
     final BlobGas excessBlobGas =
         !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
-    final Hash depositHashRoot =
-        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     final Hash exitsHashRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
     return new BlockHeader(
@@ -234,7 +227,6 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositHashRoot,
         exitsHashRoot,
         blockHeaderFunctions);
   }
@@ -286,9 +278,6 @@ public class BlockHeader extends SealableBlockHeader
     if (parentBeaconBlockRoot != null) {
       sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
     }
-    if (depositsRoot != null) {
-      sb.append("depositsRoot=").append(depositsRoot);
-    }
     if (requestsRoot != null) {
       sb.append("requestsRoot=").append(requestsRoot);
     }
@@ -322,10 +311,6 @@ public class BlockHeader extends SealableBlockHeader
         pluginBlockHeader.getBlobGasUsed().map(Long::longValue).orElse(null),
         pluginBlockHeader.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null),
         pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
-        pluginBlockHeader
-            .getDepositsRoot()
-            .map(h -> Hash.fromHexString(h.toHexString()))
-            .orElse(null),
         pluginBlockHeader
             .getRequestsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))

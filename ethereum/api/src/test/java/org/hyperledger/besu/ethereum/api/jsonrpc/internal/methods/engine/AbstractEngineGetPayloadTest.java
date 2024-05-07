@@ -104,7 +104,6 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
               Collections.emptyList(),
               Collections.emptyList(),
               Optional.of(Collections.emptyList()),
-              Optional.empty(),
               Optional.empty()));
   private static final Block mockBlockWithDeposits =
       new Block(
@@ -113,7 +112,6 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
               Collections.emptyList(),
               Collections.emptyList(),
               Optional.empty(),
-              Optional.of(Collections.emptyList()),
               Optional.of(Collections.emptyList())));
   protected static final BlockWithReceipts mockBlockWithReceiptsAndWithdrawals =
       new BlockWithReceipts(mockBlockWithWithdrawals, Collections.emptyList());

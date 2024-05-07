@@ -168,7 +168,6 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .number(parentBlockHeader.getNumber() + 1)
             .timestamp(parentBlockHeader.getTimestamp() + 12)
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
-            .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
             .parentBeaconBlockRoot(

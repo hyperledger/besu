@@ -62,7 +62,7 @@ class PragueWithdrawalRequestValidatorTest {
       final WithdrawalRequestTestParameter param, final boolean expectedValidity) {
     assertThat(
             new WithdrawalRequestValidator()
-                .validate(param.block, new ArrayList<>(param.expectedWithdrawalRequest)))
+                .validate(param.block, new ArrayList<>(param.expectedWithdrawalRequest), List.of()))
         .isEqualTo(expectedValidity);
   }
 

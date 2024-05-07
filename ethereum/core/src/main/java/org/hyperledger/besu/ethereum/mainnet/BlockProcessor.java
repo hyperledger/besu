@@ -19,8 +19,8 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -83,7 +83,7 @@ public interface BlockProcessor {
         block.getBody().getTransactions(),
         block.getBody().getOmmers(),
         block.getBody().getWithdrawals(),
-        block.getBody().getDeposits(),
+        block.getBody().getRequests(),
         null);
   }
 
@@ -123,7 +123,7 @@ public interface BlockProcessor {
    * @param transactions the transactions in the block
    * @param ommers the block ommers
    * @param withdrawals the withdrawals for the block
-   * @param deposits the deposits for the block
+   * @param requests the requests for the block
    * @param privateMetadataUpdater the updater used to update the private metadata for the block
    * @return the block processing result
    */
@@ -134,7 +134,7 @@ public interface BlockProcessor {
       List<Transaction> transactions,
       List<BlockHeader> ommers,
       Optional<List<Withdrawal>> withdrawals,
-      Optional<List<Deposit>> deposits,
+      Optional<List<Request>> requests,
       PrivateMetadataUpdater privateMetadataUpdater);
 
   /**

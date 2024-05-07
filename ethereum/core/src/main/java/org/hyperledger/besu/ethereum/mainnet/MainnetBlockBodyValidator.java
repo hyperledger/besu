@@ -105,11 +105,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validateDeposits(block, receipts)) {
-      return false;
-    }
-
-    if (!validateRequests(block)) {
+    if (!validateRequests(block, receipts)) {
       return false;
     }
     return true;
@@ -313,28 +309,13 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
-    final DepositsValidator depositsValidator =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getDepositsValidator();
-
-    if (!depositsValidator.validateDeposits(block, receipts)) {
-      return false;
-    }
-
-    if (!depositsValidator.validateDepositsRoot(block)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private boolean validateRequests(final Block block) {
+  private boolean validateRequests(final Block block, final List<TransactionReceipt> receipts) {
     final RequestValidator requestValidator =
         protocolSchedule.getByBlockHeader(block.getHeader()).getRequestValidator();
     return block
         .getBody()
         .getRequests()
-        .map(requests -> requestValidator.validate(block, requests))
+        .map(requests -> requestValidator.validate(block, requests, receipts))
         .orElse(true);
   }
 }

@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
@@ -246,19 +245,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       throwIfStopped();
 
-      final DepositsValidator depositsValidator = newProtocolSpec.getDepositsValidator();
-      Optional<List<Deposit>> maybeDeposits = Optional.empty();
-      if (depositsValidator instanceof DepositsValidator.AllowedDeposits
-          && depositContractAddress.isPresent()) {
-        maybeDeposits = Optional.of(findDepositsFromReceipts(transactionResults));
-      }
-
-      throwIfStopped();
-
       // EIP-7685: process EL requests
       final Optional<RequestProcessor> requestProcessor = newProtocolSpec.getRequestProcessor();
       Optional<List<Request>> maybeRequests =
-          requestProcessor.flatMap(processor -> processor.process(disposableWorldState));
+          requestProcessor.flatMap(
+              processor ->
+                  processor.process(disposableWorldState, transactionResults.getReceipts()));
 
       throwIfStopped();
 
@@ -296,7 +288,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
                   withdrawalsCanBeProcessed
                       ? BodyValidation.withdrawalsRoot(maybeWithdrawals.get())
                       : null)
-              .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
               .requestsRoot(maybeRequests.map(BodyValidation::requestsRoot).orElse(null));
       if (usage != null) {
         builder.blobGasUsed(usage.used.toLong()).excessBlobGas(usage.excessBlobGas);
@@ -310,11 +301,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
       final BlockBody blockBody =
           new BlockBody(
-              transactionResults.getSelectedTransactions(),
-              ommers,
-              withdrawals,
-              maybeDeposits,
-              maybeRequests);
+              transactionResults.getSelectedTransactions(), ommers, withdrawals, maybeRequests);
       final Block block = new Block(blockHeader, blockBody);
 
       operationTracer.traceEndBlock(blockHeader, blockBody);

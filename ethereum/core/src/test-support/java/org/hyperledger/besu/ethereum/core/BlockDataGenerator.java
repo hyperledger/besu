@@ -303,7 +303,6 @@ public class BlockDataGenerator {
             .mixHash(hash())
             .nonce(blockNonce)
             .withdrawalsRoot(options.getWithdrawalsRoot(null))
-            .depositsRoot(options.getDepositsRoot(null))
             .requestsRoot(options.getRequestsRoot(null))
             .blockHeaderFunctions(
                 options.getBlockHeaderFunctions(new MainnetBlockHeaderFunctions()));
@@ -333,7 +332,6 @@ public class BlockDataGenerator {
         options.getTransactions(defaultTxs),
         ommers,
         options.getWithdrawals(Optional.empty()),
-        options.getDeposits(Optional.empty()),
         options.getRequests(Optional.empty()));
   }
 
@@ -640,7 +638,6 @@ public class BlockDataGenerator {
     private final List<BlockHeader> ommers = new ArrayList<>();
 
     private Optional<Optional<List<Withdrawal>>> withdrawals = Optional.empty();
-    private Optional<Optional<List<Deposit>>> deposits = Optional.empty();
     private Optional<Optional<List<Request>>> requests = Optional.empty();
     private Optional<Bytes> extraData = Optional.empty();
     private Optional<BlockHeaderFunctions> blockHeaderFunctions = Optional.empty();
@@ -657,7 +654,6 @@ public class BlockDataGenerator {
     private Optional<Optional<Wei>> maybeBaseFee = Optional.empty();
 
     private Optional<Hash> withdrawalsRoot = Optional.empty();
-    private Optional<Hash> depositsRoot = Optional.empty();
     private Optional<Hash> requestsRoot = Optional.empty();
 
     private Optional<Optional<Wei>> maybeMaxFeePerBlobGas = Optional.empty();
@@ -727,14 +723,6 @@ public class BlockDataGenerator {
       return withdrawals.orElse(defaultValue);
     }
 
-    public Hash getDepositsRoot(final Hash defaultValue) {
-      return depositsRoot.orElse(defaultValue);
-    }
-
-    public Optional<List<Deposit>> getDeposits(final Optional<List<Deposit>> defaultValue) {
-      return deposits.orElse(defaultValue);
-    }
-
     public Hash getRequestsRoot(final Hash defaultValue) {
       return requestsRoot.orElse(defaultValue);
     }
@@ -767,11 +755,6 @@ public class BlockDataGenerator {
 
     public BlockOptions setWithdrawals(final Optional<List<Withdrawal>> withdrawals) {
       this.withdrawals = Optional.of(withdrawals);
-      return this;
-    }
-
-    public BlockOptions setDeposits(final Optional<List<Deposit>> deposits) {
-      this.deposits = Optional.of(deposits);
       return this;
     }
 
@@ -865,11 +848,6 @@ public class BlockDataGenerator {
 
     public BlockOptions setWithdrawalsRoot(final Hash withdrawalsRoot) {
       this.withdrawalsRoot = Optional.of(withdrawalsRoot);
-      return this;
-    }
-
-    public BlockOptions setDepositsRoot(final Hash depositsRoot) {
-      this.depositsRoot = Optional.of(depositsRoot);
       return this;
     }
 

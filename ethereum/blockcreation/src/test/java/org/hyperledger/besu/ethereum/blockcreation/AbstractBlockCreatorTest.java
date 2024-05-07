@@ -16,7 +16,8 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSpecs.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
@@ -54,6 +55,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -69,7 +71,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.AbstractPendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.eth.transactions.sorter.GasPricePendingTransactionsSorter;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
@@ -155,10 +156,10 @@ abstract class AbstractBlockCreatorTest {
             1L,
             false);
 
-    List<Deposit> deposits = emptyList();
-    final Hash depositsRoot = BodyValidation.depositsRoot(deposits);
-    assertThat(blockCreationResult.getBlock().getHeader().getDepositsRoot()).hasValue(depositsRoot);
-    assertThat(blockCreationResult.getBlock().getBody().getDeposits()).hasValue(deposits);
+    List<Request> deposits = emptyList();
+    final Hash requestsRoot = BodyValidation.requestsRoot(deposits);
+    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).hasValue(requestsRoot);
+    assertThat(blockCreationResult.getBlock().getBody().getRequests()).hasValue(deposits);
   }
 
   @Test
@@ -175,8 +176,8 @@ abstract class AbstractBlockCreatorTest {
             1L,
             false);
 
-    assertThat(blockCreationResult.getBlock().getHeader().getDepositsRoot()).isEmpty();
-    assertThat(blockCreationResult.getBlock().getBody().getDeposits()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getBody().getRequests()).isEmpty();
   }
 
   @Test
@@ -193,8 +194,8 @@ abstract class AbstractBlockCreatorTest {
             1L,
             false);
 
-    assertThat(blockCreationResult.getBlock().getHeader().getDepositsRoot()).isEmpty();
-    assertThat(blockCreationResult.getBlock().getBody().getDeposits()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).isEmpty();
+    assertThat(blockCreationResult.getBlock().getBody().getRequests()).isEmpty();
   }
 
   private AbstractBlockCreator blockCreatorWithAllowedDeposits(
@@ -203,17 +204,14 @@ abstract class AbstractBlockCreatorTest {
         ProtocolSpecAdapters.create(
             0,
             specBuilder ->
-                specBuilder.depositsValidator(
-                    new DepositsValidator.AllowedDeposits(depositContractAddress.orElse(null))));
+                specBuilder.requestsValidator(
+                    pragueRequestsValidator(DEFAULT_DEPOSIT_CONTRACT_ADDRESS)));
     return createBlockCreator(protocolSpecAdapters, depositContractAddress);
   }
 
   private AbstractBlockCreator blockCreatorWithProhibitedDeposits() {
     final ProtocolSpecAdapters protocolSpecAdapters =
-        ProtocolSpecAdapters.create(
-            0,
-            specBuilder ->
-                specBuilder.depositsValidator(new DepositsValidator.ProhibitedDeposits()));
+        ProtocolSpecAdapters.create(0, specBuilder -> specBuilder);
     return createBlockCreator(protocolSpecAdapters, Optional.of(DEFAULT_DEPOSIT_CONTRACT_ADDRESS));
   }
 

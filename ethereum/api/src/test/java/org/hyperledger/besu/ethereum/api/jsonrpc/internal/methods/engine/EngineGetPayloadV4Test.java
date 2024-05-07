@@ -132,7 +132,6 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
                     List.of(blobTx),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
-                    Optional.of(Collections.emptyList()),
                     Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
 

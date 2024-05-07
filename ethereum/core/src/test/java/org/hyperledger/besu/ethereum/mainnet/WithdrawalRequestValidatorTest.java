@@ -65,7 +65,7 @@ class WithdrawalRequestValidatorTest {
     var list = param.expectedWithdrawalRequest;
     var requests = new ArrayList<Request>(list).stream().toList();
 
-    assertThat(new ProhibitedRequestsValidator().validate(param.block, requests))
+    assertThat(new ProhibitedRequestsValidator().validate(param.block, requests, List.of()))
         .isEqualTo(expectedValidity);
   }
 

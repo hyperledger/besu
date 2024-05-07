@@ -492,7 +492,6 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         .number(parentBlockHeader.getNumber() + 1)
         .timestamp(parentBlockHeader.getTimestamp() + 1)
         .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
-        .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
         .parentBeaconBlockRoot(maybeParentBeaconBlockRoot);
   }
 

@@ -77,7 +77,6 @@ public class ProtocolSpecBuilder {
   private WithdrawalsValidator withdrawalsValidator =
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
-  private DepositsValidator depositsValidator = new DepositsValidator.ProhibitedDeposits();
   private RequestValidator requestValidator = new ProhibitedRequestsValidator();
   private RequestProcessor requestProcessor;
 
@@ -265,11 +264,6 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder depositsValidator(final DepositsValidator depositsValidator) {
-    this.depositsValidator = depositsValidator;
-    return this;
-  }
-
   public ProtocolSpecBuilder requestsValidator(final RequestValidator requestValidator) {
     this.requestValidator = requestValidator;
     return this;
@@ -398,7 +392,6 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(powHasher),
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),
-        depositsValidator,
         requestValidator,
         Optional.ofNullable(requestProcessor),
         isPoS,

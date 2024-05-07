@@ -16,10 +16,13 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
 import java.util.Optional;
 
 public interface RequestProcessor {
-  Optional<List<Request>> process(final MutableWorldState mutableWorldState);
+  Optional<List<Request>> process(
+      final MutableWorldState mutableWorldState,
+      final List<TransactionReceipt> transactionReceipts);
 }

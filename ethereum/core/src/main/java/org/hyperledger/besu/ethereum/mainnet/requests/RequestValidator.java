@@ -16,13 +16,15 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
 import java.util.Optional;
 
 /** Interface for request validation logic. */
 public interface RequestValidator {
-  boolean validate(final Block block, final List<Request> request);
+  boolean validate(
+      final Block block, final List<Request> request, final List<TransactionReceipt> receipts);
 
   boolean validateParameter(final Optional<List<Request>> request);
 }

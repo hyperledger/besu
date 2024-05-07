@@ -42,7 +42,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class WithdrawalRequestContractHelper {
 
   public static final Address WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS =
-      Address.fromHexString("0xEd8EA01d70Cb49726175BCf2778B9C982912e017");
+      Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
 
   @VisibleForTesting
   // Storage slot to store the difference between number of withdrawal requests since last block and

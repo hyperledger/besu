@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 
 import java.util.List;
@@ -40,7 +41,8 @@ public class RequestsDelegateValidator implements RequestValidator {
   }
 
   @Override
-  public boolean validate(final Block block, final List<Request> requests) {
+  public boolean validate(
+      final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
     if (!validateRequestSorting(requests)) {
       final Hash blockHash = block.getHash();
       LOG.warn("Block {} the ordering across requests must be ascending by type", blockHash);
@@ -49,7 +51,7 @@ public class RequestsDelegateValidator implements RequestValidator {
       return false;
     }
     for (final RequestType type : requestTypes(requests)) {
-      if (!validateRequest(type, block, requests)) {
+      if (!validateRequest(type, block, requests, receipts)) {
         return false;
       }
     }
@@ -84,18 +86,13 @@ public class RequestsDelegateValidator implements RequestValidator {
     return true;
   }
 
-  /**
-   * Validates requests of a specific type within a block.
-   *
-   * @param type The type of requests to validate.
-   * @param block The block containing the requests.
-   * @param requests The list of requests to validate.
-   * @return true if the requests are valid, false otherwise.
-   */
   private boolean validateRequest(
-      final RequestType type, final Block block, final List<Request> requests) {
+      final RequestType type,
+      final Block block,
+      final List<Request> requests,
+      final List<TransactionReceipt> receipts) {
     return getRequestValidator(type)
-        .map(validator -> validator.validate(block, requests))
+        .map(validator -> validator.validate(block, requests, receipts))
         .orElseGet(
             () -> {
               LOG.warn("Block {} contains prohibited requests of type: {}", block.getHash(), type);

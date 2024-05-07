@@ -66,8 +66,8 @@ class PragueRequestsValidatorTest {
   public void validateWithdrawalRequestsInBlock_WhenPrague(
       final WithdrawalRequestTestParameter param, final boolean expectedValidity) {
     assertThat(
-            pragueRequestsValidator()
-                .validate(param.block, new ArrayList<>(param.expectedWithdrawalRequest)))
+            pragueRequestsValidator(null)
+                .validate(param.block, new ArrayList<>(param.expectedWithdrawalRequest), List.of()))
         .isEqualTo(expectedValidity);
   }
 

@@ -16,14 +16,13 @@
 
 package org.hyperledger.besu.ethereum.mainnet;
 
-import static com.google.common.base.Preconditions.checkArgument;
-
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
 import org.hyperledger.besu.evm.log.Log;
 
 import java.util.ArrayList;
@@ -33,115 +32,53 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public interface DepositsValidator {
+public class DepositsValidator implements RequestValidator {
 
-  boolean validateDepositParameter(Optional<List<Deposit>> deposits);
+  private static final Logger LOG = LoggerFactory.getLogger(DepositsValidator.class);
+  private final Address depositContractAddress;
 
-  boolean validateDeposits(Block block, List<TransactionReceipt> receipts);
-
-  boolean validateDepositsRoot(Block block);
-
-  class ProhibitedDeposits implements DepositsValidator {
-
-    private static final Logger LOG = LoggerFactory.getLogger(ProhibitedDeposits.class);
-
-    @Override
-    public boolean validateDepositParameter(final Optional<List<Deposit>> deposits) {
-      return deposits.isEmpty();
-    }
-
-    @Override
-    public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
-      Optional<List<Deposit>> deposits = block.getBody().getDeposits();
-      final boolean isValid = deposits.isEmpty();
-      if (!isValid) {
-        LOG.warn("Deposits must be empty when Deposits are prohibited but were: {}", deposits);
-      }
-      return isValid;
-    }
-
-    @Override
-    public boolean validateDepositsRoot(final Block block) {
-      final Optional<Hash> depositsRoot = block.getHeader().getDepositsRoot();
-      if (depositsRoot.isPresent()) {
-        LOG.warn(
-            "DepositsRoot must be null when Deposits are prohibited but was: {}",
-            depositsRoot.get());
-        return false;
-      }
-
-      return true;
-    }
+  public DepositsValidator(final Address depositContractAddress) {
+    this.depositContractAddress = depositContractAddress;
   }
 
-  class AllowedDeposits implements DepositsValidator {
+  @Override
+  public boolean validateParameter(final Optional<List<Request>> deposits) {
+    return deposits.isPresent();
+  }
 
-    private static final Logger LOG = LoggerFactory.getLogger(AllowedDeposits.class);
-    private final Address depositContractAddress;
+  public boolean validateDeposits(
+      final Block block,
+      final List<Deposit> actualDeposits,
+      final List<TransactionReceipt> receipts) {
 
-    public AllowedDeposits(final Address depositContractAddress) {
-      this.depositContractAddress = depositContractAddress;
-    }
+    List<Deposit> expectedDeposits = new ArrayList<>();
 
-    @Override
-    public boolean validateDepositParameter(final Optional<List<Deposit>> deposits) {
-      return deposits.isPresent();
-    }
-
-    @Override
-    public boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
-      if (block.getBody().getDeposits().isEmpty()) {
-        LOG.warn("Deposits must not be empty when Deposits are activated");
-        return false;
-      }
-
-      List<Deposit> actualDeposits = new ArrayList<>(block.getBody().getDeposits().get());
-      List<Deposit> expectedDeposits = new ArrayList<>();
-
-      for (TransactionReceipt receipt : receipts) {
-        for (Log log : receipt.getLogsList()) {
-          if (depositContractAddress.equals(log.getLogger())) {
-            Deposit deposit = DepositDecoder.decodeFromLog(log);
-            expectedDeposits.add(deposit);
-          }
+    for (TransactionReceipt receipt : receipts) {
+      for (Log log : receipt.getLogsList()) {
+        if (depositContractAddress.equals(log.getLogger())) {
+          Deposit deposit = DepositDecoder.decodeFromLog(log);
+          expectedDeposits.add(deposit);
         }
       }
-
-      boolean isValid = actualDeposits.equals(expectedDeposits);
-
-      if (!isValid) {
-        LOG.warn(
-            "Deposits validation failed. Deposits from block body do not match deposits from logs. Block hash: {}",
-            block.getHash());
-        LOG.debug(
-            "Deposits from logs: {}, deposits from block body: {}",
-            expectedDeposits,
-            actualDeposits);
-      }
-
-      return isValid;
     }
 
-    @Override
-    public boolean validateDepositsRoot(final Block block) {
-      checkArgument(block.getBody().getDeposits().isPresent(), "Block body must contain deposits");
-      final Optional<Hash> depositsRoot = block.getHeader().getDepositsRoot();
-      if (depositsRoot.isEmpty()) {
-        LOG.warn("depositsRoot must not be null when Deposits are activated");
-        return false;
-      }
+    boolean isValid = actualDeposits.equals(expectedDeposits);
 
-      final List<Deposit> deposits = block.getBody().getDeposits().get();
-      final Hash expectedDepositsRoot = BodyValidation.depositsRoot(deposits);
-      if (!expectedDepositsRoot.equals(depositsRoot.get())) {
-        LOG.info(
-            "Invalid block: depositsRoot mismatch (expected={}, actual={})",
-            expectedDepositsRoot,
-            depositsRoot.get());
-        return false;
-      }
-
-      return true;
+    if (!isValid) {
+      LOG.warn(
+          "Deposits validation failed. Deposits from block body do not match deposits from logs. Block hash: {}",
+          block.getHash());
+      LOG.debug(
+          "Deposits from logs: {}, deposits from block body: {}", expectedDeposits, actualDeposits);
     }
+
+    return isValid;
+  }
+
+  @Override
+  public boolean validate(
+      final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
+    var deposits = Request.filterRequestsOfType(requests, Deposit.class);
+    return validateDeposits(block, deposits, receipts);
   }
 }

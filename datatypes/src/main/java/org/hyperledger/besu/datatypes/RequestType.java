@@ -19,6 +19,8 @@ import java.util.Arrays;
 
 /** Enum representing different types of requests with associated serialized type values. */
 public enum RequestType {
+  /** DEPOSITS */
+  DEPOSIT(0x00),
   /** WITHDRAWAL */
   WITHDRAWAL(0x01);
 

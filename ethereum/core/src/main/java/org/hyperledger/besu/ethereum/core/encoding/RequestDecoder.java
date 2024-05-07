@@ -30,13 +30,18 @@ import org.apache.tuweni.bytes.Bytes;
  * <p>This class provides functionality to decode requests based on their type.
  */
 public class RequestDecoder {
+
   @FunctionalInterface
   interface Decoder {
     Request decode(RLPInput input);
   }
 
   private static final ImmutableMap<RequestType, Decoder> DECODERS =
-      ImmutableMap.of(RequestType.WITHDRAWAL, WithdrawalRequestDecoder::decode);
+      ImmutableMap.of(
+          RequestType.WITHDRAWAL,
+          WithdrawalRequestDecoder::decode,
+          RequestType.DEPOSIT,
+          DepositDecoder::decode);
 
   /**
    * Decodes a request from its RLP encoded bytes.

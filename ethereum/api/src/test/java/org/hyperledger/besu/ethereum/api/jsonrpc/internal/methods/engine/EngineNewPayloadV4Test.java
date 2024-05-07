@@ -281,7 +281,6 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
-            .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
             .requestsRoot(
                 maybeWithdrawalRequests
                     .map(

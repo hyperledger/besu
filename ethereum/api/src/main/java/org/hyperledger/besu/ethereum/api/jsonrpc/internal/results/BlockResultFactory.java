@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
@@ -174,10 +175,14 @@ public class BlockResultFactory {
         blockWithReceipts.getHeader(),
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
-        blockWithReceipts.getBlock().getBody().getDeposits(),
+        getDepositRequest(blockWithReceipts.getBlock().getBody().getRequests()),
         getWithdrawalRequest(blockWithReceipts.getBlock().getBody().getRequests()),
         Quantity.create(blockValue),
         blobsBundleV1);
+  }
+
+  private Optional<List<Deposit>> getDepositRequest(final Optional<List<Request>> requests) {
+    return requests.map(requestList -> Request.filterRequestsOfType(requestList, Deposit.class));
   }
 
   private Optional<List<WithdrawalRequest>> getWithdrawalRequest(

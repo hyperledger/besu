@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,17 +38,12 @@ public class RequestDelegateProcessor implements RequestProcessor {
     this.processors = processors;
   }
 
-  /**
-   * Processes all requests for the available request types in the processors map.
-   *
-   * @param mutableWorldState The mutable world state to be used by the processors.
-   * @return A list of requests.
-   */
   @Override
-  public Optional<List<Request>> process(final MutableWorldState mutableWorldState) {
+  public Optional<List<Request>> process(
+      final MutableWorldState mutableWorldState, final List<TransactionReceipt> receipts) {
     List<Request> requests = new ArrayList<>();
     processors.values().stream()
-        .map(processor -> processor.process(mutableWorldState))
+        .map(processor -> processor.process(mutableWorldState, receipts))
         .filter(Optional::isPresent)
         .map(Optional::get)
         .forEach(requests::addAll);

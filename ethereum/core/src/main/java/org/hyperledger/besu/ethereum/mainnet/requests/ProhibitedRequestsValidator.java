@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.List;
 import java.util.Optional;
@@ -27,16 +28,9 @@ import org.slf4j.LoggerFactory;
 public class ProhibitedRequestsValidator implements RequestValidator {
   private static final Logger LOG = LoggerFactory.getLogger(ProhibitedRequestsValidator.class);
 
-  /**
-   * Validates that the given block does not contain requests or a requests_root, indicating that
-   * requests are prohibited.
-   *
-   * @param block The block to validate.
-   * @param request The list of requests to validate, which should be empty or null.
-   * @return true if the block does not contain requests or a requests_root, false otherwise.
-   */
   @Override
-  public boolean validate(final Block block, final List<Request> request) {
+  public boolean validate(
+      final Block block, final List<Request> request, final List<TransactionReceipt> receipts) {
     boolean hasRequests = block.getBody().getRequests().isPresent();
     boolean hasRequestsRoot = block.getHeader().getRequestsRoot().isPresent();
 

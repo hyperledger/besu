@@ -50,7 +50,6 @@ public class BlockHeaderTestFixture {
   private Hash mixHash = Hash.EMPTY;
   private long nonce = 0;
   private Optional<Hash> withdrawalsRoot = Optional.empty();
-  private Optional<Hash> depositsRoot = Optional.empty();
   private Optional<Hash> requestRoot = Optional.empty();
   private BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
   private Optional<BlobGas> excessBlobGas = Optional.empty();
@@ -79,7 +78,6 @@ public class BlockHeaderTestFixture {
     withdrawalsRoot.ifPresent(builder::withdrawalsRoot);
     excessBlobGas.ifPresent(builder::excessBlobGas);
     blobGasUsed.ifPresent(builder::blobGasUsed);
-    depositsRoot.ifPresent(builder::depositsRoot);
     requestRoot.ifPresent(builder::requestsRoot);
     parentBeaconBlockRoot.ifPresent(builder::parentBeaconBlockRoot);
     builder.blockHeaderFunctions(blockHeaderFunctions);
@@ -174,11 +172,6 @@ public class BlockHeaderTestFixture {
 
   public BlockHeaderTestFixture withdrawalsRoot(final Hash withdrawalsRoot) {
     this.withdrawalsRoot = Optional.ofNullable(withdrawalsRoot);
-    return this;
-  }
-
-  public BlockHeaderTestFixture depositsRoot(final Hash depositsRoot) {
-    this.depositsRoot = Optional.ofNullable(depositsRoot);
     return this;
   }
 
