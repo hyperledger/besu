@@ -38,6 +38,9 @@ public class KeyPairUtil {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
+  /** Default constructor */
+  private KeyPairUtil() {}
+
   /**
    * Load resource file string.
    *
