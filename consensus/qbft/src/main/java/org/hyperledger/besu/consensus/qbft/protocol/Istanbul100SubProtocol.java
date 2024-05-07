@@ -30,7 +30,7 @@ public class Istanbul100SubProtocol implements SubProtocol {
   private static final Istanbul100SubProtocol INSTANCE = new Istanbul100SubProtocol();
 
   /** Default constructor */
-  private Istanbul100SubProtocol() {}
+  Istanbul100SubProtocol() {}
 
   /**
    * Get istanbul100 sub protocol.
