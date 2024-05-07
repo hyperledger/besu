@@ -108,7 +108,7 @@ public class GeneralStateReferenceTestTools {
     params.ignore("/stEOF/");
 
     // None of the Prague tests have withdrawls and deposits handling
-    params.ignore("\\[Prague\\]");
+    params.ignore("-Prague$");
   }
 
   private GeneralStateReferenceTestTools() {
