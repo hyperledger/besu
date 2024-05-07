@@ -31,6 +31,9 @@ public class CliqueDifficultyValidationRule implements AttachedBlockHeaderValida
 
   private static final Logger LOG = LoggerFactory.getLogger(CliqueDifficultyValidationRule.class);
 
+  /** Default constructor. */
+  public CliqueDifficultyValidationRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
