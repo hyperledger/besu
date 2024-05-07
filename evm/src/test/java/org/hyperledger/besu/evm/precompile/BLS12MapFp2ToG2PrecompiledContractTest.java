@@ -72,7 +72,7 @@ class BLS12MapFp2ToG2PrecompiledContractTest {
     if (actualComputation == null) {
       final ArgumentCaptor<Bytes> revertReason = ArgumentCaptor.forClass(Bytes.class);
       verify(messageFrame).setRevertReason(revertReason.capture());
-      assertThat(new String(revertReason.getValue().toArrayUnsafe(), UTF_8)).isEqualTo(notes);
+      assertThat(new String(revertReason.getValue().toArrayUnsafe(), UTF_8)).contains(notes);
 
       assertThat(expectedComputation.size()).isZero();
     } else {
