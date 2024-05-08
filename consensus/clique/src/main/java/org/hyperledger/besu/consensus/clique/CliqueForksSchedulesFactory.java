@@ -24,6 +24,8 @@ import org.hyperledger.besu.consensus.common.ForksScheduleFactory;
 
 /** The Clique forks schedules factory. */
 public class CliqueForksSchedulesFactory {
+  /** Default constructor. */
+  CliqueForksSchedulesFactory() {}
 
   /**
    * Create forks schedule.

@@ -184,16 +184,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       } else {
         // start from scratch
         worldStateStorageCoordinator.clear();
-        // we have to upgrade to full flat db mode if we are in bonsai mode
-        if (snapSyncConfiguration.isFlatDbHealingEnabled()) {
-          worldStateStorageCoordinator.applyOnMatchingStrategy(
-              DataStorageFormat.BONSAI,
-              strategy -> {
-                BonsaiWorldStateKeyValueStorage onBonsai =
-                    (BonsaiWorldStateKeyValueStorage) strategy;
-                onBonsai.upgradeToFullFlatDbMode();
-              });
-        }
         ranges.forEach(
             (key, value) ->
                 newDownloadState.enqueueRequest(

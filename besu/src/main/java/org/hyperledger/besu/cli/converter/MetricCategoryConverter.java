@@ -29,6 +29,9 @@ public class MetricCategoryConverter implements CommandLine.ITypeConverter<Metri
 
   private final Map<String, MetricCategory> metricCategories = new HashMap<>();
 
+  /** Default Constructor. */
+  public MetricCategoryConverter() {}
+
   @Override
   public MetricCategory convert(final String value) {
     final MetricCategory category = metricCategories.get(value);

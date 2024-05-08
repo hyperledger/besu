@@ -79,17 +79,6 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L))
         },
         new Object[] {
-          NetworkName.GOERLI,
-          List.of(
-              new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
-              new ForkId(Bytes.ofUnsignedInt(0xc25efa5cL), 4460644L),
-              new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 5062605L),
-              new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 1678832736L),
-              new ForkId(Bytes.ofUnsignedInt(0xf9843abfL), 1705473120),
-              new ForkId(Bytes.ofUnsignedInt(0x70cc14e2L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x70cc14e2L), 0L))
-        },
-        new Object[] {
           NetworkName.MAINNET,
           List.of(
               new ForkId(Bytes.ofUnsignedInt(0xfc64ec04L), 1150000L),

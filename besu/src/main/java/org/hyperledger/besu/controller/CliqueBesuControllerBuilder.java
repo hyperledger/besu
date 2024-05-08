@@ -57,6 +57,9 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   private final BlockInterface blockInterface = new CliqueBlockInterface();
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
+  /** Default constructor. */
+  public CliqueBesuControllerBuilder() {}
+
   @Override
   protected void prepForBuild() {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());

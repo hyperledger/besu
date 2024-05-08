@@ -24,6 +24,9 @@ import org.bouncycastle.util.BigIntegers;
 
 /** The Ec point util class. */
 public class ECPointUtil {
+  /** Default constructor. */
+  private ECPointUtil() {}
+
   /**
    * From bouncy castle ec point to ECPoint.
    *
