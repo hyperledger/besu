@@ -27,6 +27,9 @@ public class IncrementalTimestampRule extends MergeConsensusRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(IncrementalTimestampRule.class);
 
+  /** Default Constructor. */
+  public IncrementalTimestampRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {

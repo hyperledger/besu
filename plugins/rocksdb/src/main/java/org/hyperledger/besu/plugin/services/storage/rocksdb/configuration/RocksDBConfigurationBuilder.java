@@ -31,6 +31,9 @@ public class RocksDBConfigurationBuilder {
   private int backgroundThreadCount = DEFAULT_BACKGROUND_THREAD_COUNT;
   private boolean isHighSpec = DEFAULT_IS_HIGH_SPEC;
 
+  /** Instantiates a new Rocks db configuration builder. */
+  public RocksDBConfigurationBuilder() {}
+
   /**
    * Database dir.
    *

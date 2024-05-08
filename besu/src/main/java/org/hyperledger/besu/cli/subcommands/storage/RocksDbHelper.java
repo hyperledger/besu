@@ -35,6 +35,9 @@ import org.slf4j.LoggerFactory;
 public class RocksDbHelper {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDbHelper.class);
 
+  /** Default Constructor. */
+  RocksDbHelper() {}
+
   static void forEachColumnFamily(
       final String dbPath, final BiConsumer<RocksDB, ColumnFamilyHandle> task) {
     RocksDB.loadLibrary();

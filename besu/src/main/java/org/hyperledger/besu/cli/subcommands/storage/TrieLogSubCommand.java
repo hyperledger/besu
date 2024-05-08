@@ -71,6 +71,9 @@ public class TrieLogSubCommand implements Runnable {
   @CommandLine.Spec
   private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
 
+  /** Default Constructor. */
+  TrieLogSubCommand() {}
+
   @Override
   public void run() {
     final PrintWriter out = spec.commandLine().getOut();
