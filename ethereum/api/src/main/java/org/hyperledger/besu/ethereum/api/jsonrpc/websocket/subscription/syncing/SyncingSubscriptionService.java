@@ -24,10 +24,17 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 
 import java.util.Optional;
 
+/** The type Syncing subscription service. */
 public class SyncingSubscriptionService {
 
   private final SubscriptionManager subscriptionManager;
 
+  /**
+   * Instantiates a new Syncing subscription service.
+   *
+   * @param subscriptionManager the subscription manager
+   * @param synchronizer the synchronizer
+   */
   public SyncingSubscriptionService(
       final SubscriptionManager subscriptionManager, final Synchronizer synchronizer) {
     this.subscriptionManager = subscriptionManager;

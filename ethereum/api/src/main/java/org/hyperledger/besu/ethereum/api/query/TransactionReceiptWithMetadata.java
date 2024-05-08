@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.Optional;
 
+/** The type Transaction receipt with metadata. */
 public class TransactionReceiptWithMetadata {
   private final TransactionReceipt receipt;
   private final Hash transactionHash;
@@ -59,6 +60,22 @@ public class TransactionReceiptWithMetadata {
     this.logIndexOffset = logIndexOffset;
   }
 
+  /**
+   * Create transaction receipt with metadata.
+   *
+   * @param receipt the receipt
+   * @param transaction the transaction
+   * @param transactionHash the transaction hash
+   * @param transactionIndex the transaction index
+   * @param gasUsed the gas used
+   * @param baseFee the base fee
+   * @param blockHash the block hash
+   * @param blockNumber the block number
+   * @param blobGasUsed the blob gas used
+   * @param blobGasPrice the blob gas price
+   * @param logIndexOffset the log index offset
+   * @return the transaction receipt with metadata
+   */
   public static TransactionReceiptWithMetadata create(
       final TransactionReceipt receipt,
       final Transaction transaction,
@@ -85,48 +102,103 @@ public class TransactionReceiptWithMetadata {
         logIndexOffset);
   }
 
+  /**
+   * Gets receipt.
+   *
+   * @return the receipt
+   */
   public TransactionReceipt getReceipt() {
     return receipt;
   }
 
+  /**
+   * Gets transaction hash.
+   *
+   * @return the transaction hash
+   */
   public Hash getTransactionHash() {
     return transactionHash;
   }
 
+  /**
+   * Gets transaction.
+   *
+   * @return the transaction
+   */
   public Transaction getTransaction() {
     return transaction;
   }
 
+  /**
+   * Gets transaction index.
+   *
+   * @return the transaction index
+   */
   public int getTransactionIndex() {
     return transactionIndex;
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   public Hash getBlockHash() {
     return blockHash;
   }
 
+  /**
+   * Gets block number.
+   *
+   * @return the block number
+   */
   public long getBlockNumber() {
     return blockNumber;
   }
 
+  /**
+   * Gets gas used.
+   *
+   * @return the gas used
+   */
   // The gas used for this particular transaction (as opposed to cumulativeGas which is included in
   // the receipt itself)
   public long getGasUsed() {
     return gasUsed;
   }
 
+  /**
+   * Gets base fee.
+   *
+   * @return the base fee
+   */
   public Optional<Wei> getBaseFee() {
     return baseFee;
   }
 
+  /**
+   * Gets blob gas used.
+   *
+   * @return the blob gas used
+   */
   public Optional<Long> getBlobGasUsed() {
     return blobGasUsed;
   }
 
+  /**
+   * Gets blob gas price.
+   *
+   * @return the blob gas price
+   */
   public Optional<Wei> getBlobGasPrice() {
     return blobGasPrice;
   }
 
+  /**
+   * Gets log index offset.
+   *
+   * @return the log index offset
+   */
   public int getLogIndexOffset() {
     return logIndexOffset;
   }

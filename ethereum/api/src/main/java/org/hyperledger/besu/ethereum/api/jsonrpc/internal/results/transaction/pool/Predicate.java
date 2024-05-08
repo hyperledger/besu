@@ -22,9 +22,13 @@ import java.util.stream.Stream;
  */
 @SuppressWarnings({"unchecked", "rawtypes"})
 public enum Predicate {
+  /** Eq predicate. */
   EQ((left, right) -> left.compareTo(right) == 0),
+  /** Lt predicate. */
   LT((left, right) -> left.compareTo(right) < 0),
+  /** Gt predicate. */
   GT((left, right) -> left.compareTo(right) > 0),
+  /** Action predicate. */
   ACTION((left, right) -> false);
 
   private final Operator operator;
@@ -33,15 +37,34 @@ public enum Predicate {
     this.operator = predicate;
   }
 
+  /**
+   * Gets operator.
+   *
+   * @return the operator
+   */
   public Operator getOperator() {
     return operator;
   }
 
+  /** The interface Operator. */
   @FunctionalInterface
   public interface Operator {
+    /**
+     * Apply boolean.
+     *
+     * @param left the left
+     * @param right the right
+     * @return the boolean
+     */
     boolean apply(final Comparable left, final Comparable right);
   }
 
+  /**
+   * From value optional.
+   *
+   * @param value the value
+   * @return the optional
+   */
   public static Optional<Predicate> fromValue(final String value) {
     return Stream.of(values()).filter(predicate -> predicate.name().equals(value)).findFirst();
   }

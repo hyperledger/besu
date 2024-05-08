@@ -24,34 +24,60 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
+/** The interface Transaction trace params. */
 @Value.Immutable
 @JsonSerialize(as = ImmutableTransactionTraceParams.class)
 @JsonDeserialize(as = ImmutableTransactionTraceParams.class)
 @JsonIgnoreProperties(ignoreUnknown = true)
 public interface TransactionTraceParams {
 
+  /**
+   * Gets transaction hash.
+   *
+   * @return the transaction hash
+   */
   @JsonProperty("txHash")
   @Nullable
   String getTransactionHash();
 
+  /**
+   * Disable storage boolean.
+   *
+   * @return the boolean
+   */
   @JsonProperty(value = "disableStorage")
   @Value.Default
   default boolean disableStorage() {
     return false;
   }
 
+  /**
+   * Disable memory boolean.
+   *
+   * @return the boolean
+   */
   @JsonProperty(value = "disableMemory")
   @Value.Default
   default boolean disableMemory() {
     return false;
   }
 
+  /**
+   * Disable stack boolean.
+   *
+   * @return the boolean
+   */
   @JsonProperty(value = "disableStack")
   @Value.Default
   default boolean disableStack() {
     return false;
   }
 
+  /**
+   * Trace options trace options.
+   *
+   * @return the trace options
+   */
   default TraceOptions traceOptions() {
     return new TraceOptions(!disableStorage(), !disableMemory(), !disableStack());
   }

@@ -26,44 +26,112 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.immutables.value.Value;
 
+/** The interface Fee history. */
 @Value.Immutable
 public interface FeeHistory {
 
+  /**
+   * Gets oldest block.
+   *
+   * @return the oldest block
+   */
   long getOldestBlock();
 
+  /**
+   * Gets base fee per gas.
+   *
+   * @return the base fee per gas
+   */
   List<Wei> getBaseFeePerGas();
 
+  /**
+   * Gets base fee per blob gas.
+   *
+   * @return the base fee per blob gas
+   */
   List<Wei> getBaseFeePerBlobGas();
 
+  /**
+   * Gets gas used ratio.
+   *
+   * @return the gas used ratio
+   */
   List<Double> getGasUsedRatio();
 
+  /**
+   * Gets blob gas used ratio.
+   *
+   * @return the blob gas used ratio
+   */
   List<Double> getBlobGasUsedRatio();
 
+  /**
+   * Gets reward.
+   *
+   * @return the reward
+   */
   Optional<List<List<Wei>>> getReward();
 
+  /** The interface Fee history result. */
   @Value.Immutable
   @Value.Style(allParameters = true)
   @JsonInclude(JsonInclude.Include.NON_NULL)
   interface FeeHistoryResult {
+    /**
+     * Gets oldest block.
+     *
+     * @return the oldest block
+     */
     @JsonProperty("oldestBlock")
     String getOldestBlock();
 
+    /**
+     * Gets base fee per gas.
+     *
+     * @return the base fee per gas
+     */
     @JsonProperty("baseFeePerGas")
     List<String> getBaseFeePerGas();
 
+    /**
+     * Gets base fee per blob gas.
+     *
+     * @return the base fee per blob gas
+     */
     @JsonProperty("baseFeePerBlobGas")
     List<String> getBaseFeePerBlobGas();
 
+    /**
+     * Gets gas used ratio.
+     *
+     * @return the gas used ratio
+     */
     @JsonProperty("gasUsedRatio")
     List<Double> getGasUsedRatio();
 
+    /**
+     * Gets blob gas used ratio.
+     *
+     * @return the blob gas used ratio
+     */
     @JsonProperty("blobGasUsedRatio")
     List<Double> getBlobGasUsedRatio();
 
+    /**
+     * Gets reward.
+     *
+     * @return the reward
+     */
     @Nullable
     @JsonProperty("reward")
     List<List<String>> getReward();
 
+    /**
+     * From fee history result.
+     *
+     * @param feeHistory the fee history
+     * @return the fee history result
+     */
     static FeeHistoryResult from(final FeeHistory feeHistory) {
       return ImmutableFeeHistoryResult.of(
           Quantity.create(feeHistory.getOldestBlock()),

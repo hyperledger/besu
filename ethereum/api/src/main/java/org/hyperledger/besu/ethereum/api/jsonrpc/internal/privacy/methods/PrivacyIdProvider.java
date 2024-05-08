@@ -22,11 +22,24 @@ import java.util.Optional;
 
 import io.vertx.ext.auth.User;
 
+/** The interface Privacy id provider. */
 @FunctionalInterface
 public interface PrivacyIdProvider {
 
+  /**
+   * Gets privacy user id.
+   *
+   * @param user the user
+   * @return the privacy user id
+   */
   String getPrivacyUserId(Optional<User> user);
 
+  /**
+   * Build privacy id provider.
+   *
+   * @param privacyParameters the privacy parameters
+   * @return the privacy id provider
+   */
   static PrivacyIdProvider build(final PrivacyParameters privacyParameters) {
     if (privacyParameters.isMultiTenancyEnabled()) {
       return multiTenancyPrivacyUserIdProvider();

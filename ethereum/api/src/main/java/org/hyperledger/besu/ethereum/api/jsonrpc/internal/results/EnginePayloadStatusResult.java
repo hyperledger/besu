@@ -22,12 +22,25 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Engine payload status result. */
 @JsonPropertyOrder({"status", "latestValidHash", "validationError"})
 public class EnginePayloadStatusResult {
+  /** The Status. */
   EngineStatus status;
+
+  /** The Latest valid hash. */
   Optional<Hash> latestValidHash;
+
+  /** The Validation error. */
   Optional<String> validationError;
 
+  /**
+   * Instantiates a new Engine payload status result.
+   *
+   * @param status the status
+   * @param latestValidHash the latest valid hash
+   * @param validationError the validation error
+   */
   public EnginePayloadStatusResult(
       final EngineStatus status,
       final Hash latestValidHash,
@@ -37,24 +50,49 @@ public class EnginePayloadStatusResult {
     this.validationError = validationError;
   }
 
+  /**
+   * Gets status as string.
+   *
+   * @return the status as string
+   */
   @JsonGetter(value = "status")
   public String getStatusAsString() {
     return status.name();
   }
 
+  /**
+   * Gets status.
+   *
+   * @return the status
+   */
   public EngineStatus getStatus() {
     return status;
   }
 
+  /**
+   * Gets latest valid hash as string.
+   *
+   * @return the latest valid hash as string
+   */
   @JsonGetter(value = "latestValidHash")
   public String getLatestValidHashAsString() {
     return latestValidHash.map(Hash::toHexString).orElse(null);
   }
 
+  /**
+   * Gets latest valid hash.
+   *
+   * @return the latest valid hash
+   */
   public Optional<Hash> getLatestValidHash() {
     return latestValidHash;
   }
 
+  /**
+   * Gets error.
+   *
+   * @return the error
+   */
   @JsonGetter(value = "validationError")
   public String getError() {
     return validationError.orElse(null);

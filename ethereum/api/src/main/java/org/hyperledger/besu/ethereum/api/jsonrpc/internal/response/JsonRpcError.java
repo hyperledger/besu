@@ -27,6 +27,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The type Json rpc error. */
 @JsonInclude(value = JsonInclude.Include.NON_NULL)
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public class JsonRpcError {
@@ -35,6 +36,13 @@ public class JsonRpcError {
   private final String data;
   private String reason;
 
+  /**
+   * Instantiates a new Json rpc error.
+   *
+   * @param code the code
+   * @param message the message
+   * @param data the data
+   */
   @JsonCreator
   public JsonRpcError(
       @JsonProperty("code") final int code,
@@ -45,6 +53,12 @@ public class JsonRpcError {
     this.data = data;
   }
 
+  /**
+   * Instantiates a new Json rpc error.
+   *
+   * @param errorType the error type
+   * @param data the data
+   */
   public JsonRpcError(final RpcMethodError errorType, final String data) {
     this(errorType.getCode(), errorType.getMessage(), data);
 
@@ -53,10 +67,21 @@ public class JsonRpcError {
     }
   }
 
+  /**
+   * Instantiates a new Json rpc error.
+   *
+   * @param errorType the error type
+   */
   public JsonRpcError(final RpcErrorType errorType) {
     this(errorType, null);
   }
 
+  /**
+   * From json rpc error.
+   *
+   * @param validationResult the validation result
+   * @return the json rpc error
+   */
   public static JsonRpcError from(
       final ValidationResult<TransactionInvalidReason> validationResult) {
     final var jsonRpcError =
@@ -67,16 +92,31 @@ public class JsonRpcError {
     return jsonRpcError;
   }
 
+  /**
+   * Gets code.
+   *
+   * @return the code
+   */
   @JsonGetter("code")
   public int getCode() {
     return code;
   }
 
+  /**
+   * Gets message.
+   *
+   * @return the message
+   */
   @JsonGetter("message")
   public String getMessage() {
     return (reason == null ? message : message + ": " + reason);
   }
 
+  /**
+   * Gets data.
+   *
+   * @return the data
+   */
   @JsonGetter("data")
   public String getData() {
     return data;

@@ -53,6 +53,7 @@ import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import java.nio.file.Path;
 import java.util.Map;
 
+/** The type Debug json rpc methods. */
 public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockResultFactory blockResult = new BlockResultFactory();
@@ -66,6 +67,18 @@ public class DebugJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final Path dataDir;
   private final ApiConfiguration apiConfiguration;
 
+  /**
+   * Instantiates a new Debug json rpc methods.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param metricsSystem the metrics system
+   * @param transactionPool the transaction pool
+   * @param synchronizer the synchronizer
+   * @param dataDir the data dir
+   * @param apiConfiguration the api configuration
+   */
   DebugJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolContext protocolContext,

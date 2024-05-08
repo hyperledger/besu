@@ -35,11 +35,18 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import java.util.Map;
 import java.util.Optional;
 
+/** The type Perm json rpc methods. */
 public class PermJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Optional<AccountLocalConfigPermissioningController> accountsAllowlistController;
   private final Optional<NodeLocalConfigPermissioningController> nodeAllowlistController;
 
+  /**
+   * Instantiates a new Perm json rpc methods.
+   *
+   * @param accountsAllowlistController the accounts allowlist controller
+   * @param nodeAllowlistController the node allowlist controller
+   */
   public PermJsonRpcMethods(
       final Optional<AccountLocalConfigPermissioningController> accountsAllowlistController,
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistController) {

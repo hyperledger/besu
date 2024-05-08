@@ -30,6 +30,7 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 
+/** The type Net json rpc methods. */
 public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final P2PNetwork p2pNetwork;
@@ -38,6 +39,15 @@ public class NetJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final WebSocketConfiguration webSocketConfiguration;
   private final MetricsConfiguration metricsConfiguration;
 
+  /**
+   * Instantiates a new Net json rpc methods.
+   *
+   * @param p2pNetwork the p 2 p network
+   * @param networkId the network id
+   * @param jsonRpcConfiguration the json rpc configuration
+   * @param webSocketConfiguration the web socket configuration
+   * @param metricsConfiguration the metrics configuration
+   */
   public NetJsonRpcMethods(
       final P2PNetwork p2pNetwork,
       final BigInteger networkId,

@@ -31,11 +31,18 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
 
+/** The type Privacy queries. */
 public class PrivacyQueries {
 
   private final BlockchainQueries blockchainQueries;
   private final PrivateWorldStateReader privateWorldStateReader;
 
+  /**
+   * Instantiates a new Privacy queries.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param privateWorldStateReader the private world state reader
+   */
   public PrivacyQueries(
       final BlockchainQueries blockchainQueries,
       final PrivateWorldStateReader privateWorldStateReader) {
@@ -43,6 +50,15 @@ public class PrivacyQueries {
     this.privateWorldStateReader = privateWorldStateReader;
   }
 
+  /**
+   * Matching logs list.
+   *
+   * @param privacyGroupId the privacy group id
+   * @param fromBlockNumber the from block number
+   * @param toBlockNumber the to block number
+   * @param query the query
+   * @return the list
+   */
   public List<LogWithMetadata> matchingLogs(
       final String privacyGroupId,
       final long fromBlockNumber,
@@ -58,6 +74,14 @@ public class PrivacyQueries {
         .collect(Collectors.toList());
   }
 
+  /**
+   * Matching logs list.
+   *
+   * @param privacyGroupId the privacy group id
+   * @param blockHash the block hash
+   * @param query the query
+   * @return the list
+   */
   public List<LogWithMetadata> matchingLogs(
       final String privacyGroupId, final Hash blockHash, final LogsQuery query) {
 

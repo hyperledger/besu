@@ -31,13 +31,27 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Engine get payload result v4. */
 @JsonPropertyOrder({"executionPayload", "blockValue", "blobsBundle", "shouldOverrideBuilder"})
 public class EngineGetPayloadResultV4 {
+  /** The Execution payload. */
   protected final PayloadResult executionPayload;
+
   private final String blockValue;
   private final BlobsBundleV1 blobsBundle;
   private final boolean shouldOverrideBuilder;
 
+  /**
+   * Instantiates a new Engine get payload result v4.
+   *
+   * @param header the header
+   * @param transactions the transactions
+   * @param withdrawals the withdrawals
+   * @param deposits the deposits
+   * @param withdrawalRequests the withdrawal requests
+   * @param blockValue the block value
+   * @param blobsBundle the blobs bundle
+   */
   public EngineGetPayloadResultV4(
       final BlockHeader header,
       final List<String> transactions,
@@ -53,29 +67,52 @@ public class EngineGetPayloadResultV4 {
     this.shouldOverrideBuilder = false;
   }
 
+  /**
+   * Gets execution payload.
+   *
+   * @return the execution payload
+   */
   @JsonGetter(value = "executionPayload")
   public PayloadResult getExecutionPayload() {
     return executionPayload;
   }
 
+  /**
+   * Gets block value.
+   *
+   * @return the block value
+   */
   @JsonGetter(value = "blockValue")
   public String getBlockValue() {
     return blockValue;
   }
 
+  /**
+   * Gets blobs bundle.
+   *
+   * @return the blobs bundle
+   */
   @JsonGetter(value = "blobsBundle")
   public BlobsBundleV1 getBlobsBundle() {
     return blobsBundle;
   }
 
+  /**
+   * Should override builder boolean.
+   *
+   * @return the boolean
+   */
   @JsonGetter(value = "shouldOverrideBuilder")
   public boolean shouldOverrideBuilder() {
     return shouldOverrideBuilder;
   }
 
+  /** The type Payload result. */
   public static class PayloadResult {
 
+    /** The Block hash. */
     protected final String blockHash;
+
     private final String parentHash;
     private final String feeRecipient;
     private final String stateRoot;
@@ -92,11 +129,22 @@ public class EngineGetPayloadResultV4 {
     private final String blobGasUsed;
     private final String parentBeaconBlockRoot;
 
+    /** The Transactions. */
     protected final List<String> transactions;
+
     private final List<WithdrawalParameter> withdrawals;
     private final List<DepositParameter> deposits;
     private final List<WithdrawalRequestParameter> withdrawalRequests;
 
+    /**
+     * Instantiates a new Payload result.
+     *
+     * @param header the header
+     * @param transactions the transactions
+     * @param withdrawals the withdrawals
+     * @param deposits the deposits
+     * @param withdrawalRequests the withdrawal requests
+     */
     public PayloadResult(
         final BlockHeader header,
         final List<String> transactions,
@@ -145,102 +193,202 @@ public class EngineGetPayloadResultV4 {
           header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
     }
 
+    /**
+     * Gets number.
+     *
+     * @return the number
+     */
     @JsonGetter(value = "blockNumber")
     public String getNumber() {
       return blockNumber;
     }
 
+    /**
+     * Gets hash.
+     *
+     * @return the hash
+     */
     @JsonGetter(value = "blockHash")
     public String getHash() {
       return blockHash;
     }
 
+    /**
+     * Gets parent hash.
+     *
+     * @return the parent hash
+     */
     @JsonGetter(value = "parentHash")
     public String getParentHash() {
       return parentHash;
     }
 
+    /**
+     * Gets logs bloom.
+     *
+     * @return the logs bloom
+     */
     @JsonGetter(value = "logsBloom")
     public String getLogsBloom() {
       return logsBloom;
     }
 
+    /**
+     * Gets prev randao.
+     *
+     * @return the prev randao
+     */
     @JsonGetter(value = "prevRandao")
     public String getPrevRandao() {
       return prevRandao;
     }
 
+    /**
+     * Gets state root.
+     *
+     * @return the state root
+     */
     @JsonGetter(value = "stateRoot")
     public String getStateRoot() {
       return stateRoot;
     }
 
+    /**
+     * Gets receipt root.
+     *
+     * @return the receipt root
+     */
     @JsonGetter(value = "receiptsRoot")
     public String getReceiptRoot() {
       return receiptsRoot;
     }
 
+    /**
+     * Gets extra data.
+     *
+     * @return the extra data
+     */
     @JsonGetter(value = "extraData")
     public String getExtraData() {
       return extraData;
     }
 
+    /**
+     * Gets base fee per gas.
+     *
+     * @return the base fee per gas
+     */
     @JsonGetter(value = "baseFeePerGas")
     public String getBaseFeePerGas() {
       return baseFeePerGas;
     }
 
+    /**
+     * Gets gas limit.
+     *
+     * @return the gas limit
+     */
     @JsonGetter(value = "gasLimit")
     public String getGasLimit() {
       return gasLimit;
     }
 
+    /**
+     * Gets gas used.
+     *
+     * @return the gas used
+     */
     @JsonGetter(value = "gasUsed")
     public String getGasUsed() {
       return gasUsed;
     }
 
+    /**
+     * Gets timestamp.
+     *
+     * @return the timestamp
+     */
     @JsonGetter(value = "timestamp")
     public String getTimestamp() {
       return timestamp;
     }
 
+    /**
+     * Gets transactions.
+     *
+     * @return the transactions
+     */
     @JsonGetter(value = "transactions")
     public List<String> getTransactions() {
       return transactions;
     }
 
+    /**
+     * Gets withdrawals.
+     *
+     * @return the withdrawals
+     */
     @JsonGetter(value = "withdrawals")
     public List<WithdrawalParameter> getWithdrawals() {
       return withdrawals;
     }
 
+    /**
+     * Gets deposits.
+     *
+     * @return the deposits
+     */
     @JsonGetter(value = "depositReceipts")
     public List<DepositParameter> getDeposits() {
       return deposits;
     }
 
+    /**
+     * Gets withdrawal requests.
+     *
+     * @return the withdrawal requests
+     */
     @JsonGetter(value = "withdrawalRequests")
     public List<WithdrawalRequestParameter> getWithdrawalRequests() {
       return withdrawalRequests;
     }
 
+    /**
+     * Gets fee recipient.
+     *
+     * @return the fee recipient
+     */
     @JsonGetter(value = "feeRecipient")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getFeeRecipient() {
       return feeRecipient;
     }
 
+    /**
+     * Gets excess blob gas.
+     *
+     * @return the excess blob gas
+     */
     @JsonGetter(value = "excessBlobGas")
     public String getExcessBlobGas() {
       return excessBlobGas;
     }
 
+    /**
+     * Gets blob gas useds.
+     *
+     * @return the blob gas useds
+     */
     @JsonGetter(value = "blobGasUsed")
     public String getBlobGasUseds() {
       return blobGasUsed;
     }
 
+    /**
+     * Gets parent beacon block root.
+     *
+     * @return the parent beacon block root
+     */
     @JsonGetter(value = "parentBeaconBlockRoot")
     public String getParentBeaconBlockRoot() {
       return parentBeaconBlockRoot;

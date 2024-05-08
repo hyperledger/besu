@@ -18,10 +18,20 @@ import java.util.Optional;
 
 import io.vertx.ext.auth.User;
 
+/** The type Multi tenancy user util. */
 public class MultiTenancyUserUtil {
   private static final String PRIVACY_USER_ID_CLAIM = "privacyUserId";
   private static final String ENCLAVE_PRIVACY_PUBLIC_KEY_CLAIM = "privacyPublicKey";
 
+  /** Default constructor. */
+  private MultiTenancyUserUtil() {}
+
+  /**
+   * Privacy user id optional.
+   *
+   * @param user the user
+   * @return the optional
+   */
   public static Optional<String> privacyUserId(final Optional<User> user) {
     return user.map(
         u -> {

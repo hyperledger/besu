@@ -33,12 +33,19 @@ import graphql.com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Privx find flexible privacy group. */
 public class PrivxFindFlexiblePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivxFindFlexiblePrivacyGroup.class);
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Privx find flexible privacy group.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivxFindFlexiblePrivacyGroup(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;

@@ -18,6 +18,7 @@ import java.nio.file.Path;
 import java.util.Objects;
 import java.util.Optional;
 
+/** The type Tls client auth configuration. */
 public class TlsClientAuthConfiguration {
   private final Optional<Path> knownClientsFile;
   private final boolean caClientsEnabled;
@@ -28,34 +29,67 @@ public class TlsClientAuthConfiguration {
     this.caClientsEnabled = caClientsEnabled;
   }
 
+  /**
+   * Gets known clients file.
+   *
+   * @return the known clients file
+   */
   public Optional<Path> getKnownClientsFile() {
     return knownClientsFile;
   }
 
+  /**
+   * Is ca clients enabled boolean.
+   *
+   * @return the boolean
+   */
   public boolean isCaClientsEnabled() {
     return caClientsEnabled;
   }
 
+  /** The type Builder. */
   public static final class Builder {
     private Path knownClientsFile;
     private boolean caClientsEnabled;
 
     private Builder() {}
 
+    /**
+     * A tls client auth configuration builder.
+     *
+     * @return the builder
+     */
     public static Builder aTlsClientAuthConfiguration() {
       return new Builder();
     }
 
+    /**
+     * With known clients file builder.
+     *
+     * @param knownClientsFile the known clients file
+     * @return the builder
+     */
     public Builder withKnownClientsFile(final Path knownClientsFile) {
       this.knownClientsFile = knownClientsFile;
       return this;
     }
 
+    /**
+     * With ca clients enabled builder.
+     *
+     * @param caClientsEnabled the ca clients enabled
+     * @return the builder
+     */
     public Builder withCaClientsEnabled(final boolean caClientsEnabled) {
       this.caClientsEnabled = caClientsEnabled;
       return this;
     }
 
+    /**
+     * Build tls client auth configuration.
+     *
+     * @return the tls client auth configuration
+     */
     public TlsClientAuthConfiguration build() {
       if (!caClientsEnabled) {
         Objects.requireNonNull(knownClientsFile, "Known Clients File is required");

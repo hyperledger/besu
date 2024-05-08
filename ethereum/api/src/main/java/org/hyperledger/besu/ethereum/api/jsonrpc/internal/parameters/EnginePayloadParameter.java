@@ -25,6 +25,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Engine payload parameter. */
 public class EnginePayloadParameter {
   private final Hash blockHash;
   private final Hash parentHash;
@@ -112,78 +113,173 @@ public class EnginePayloadParameter {
     this.withdrawalRequests = withdrawalRequestParameters;
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   public Hash getBlockHash() {
     return blockHash;
   }
 
+  /**
+   * Gets parent hash.
+   *
+   * @return the parent hash
+   */
   public Hash getParentHash() {
     return parentHash;
   }
 
+  /**
+   * Gets fee recipient.
+   *
+   * @return the fee recipient
+   */
   public Address getFeeRecipient() {
     return feeRecipient;
   }
 
+  /**
+   * Gets state root.
+   *
+   * @return the state root
+   */
   public Hash getStateRoot() {
     return stateRoot;
   }
 
+  /**
+   * Gets block number.
+   *
+   * @return the block number
+   */
   public long getBlockNumber() {
     return blockNumber;
   }
 
+  /**
+   * Gets base fee per gas.
+   *
+   * @return the base fee per gas
+   */
   public Wei getBaseFeePerGas() {
     return baseFeePerGas;
   }
 
+  /**
+   * Gets gas limit.
+   *
+   * @return the gas limit
+   */
   public long getGasLimit() {
     return gasLimit;
   }
 
+  /**
+   * Gets gas used.
+   *
+   * @return the gas used
+   */
   public long getGasUsed() {
     return gasUsed;
   }
 
+  /**
+   * Gets timestamp.
+   *
+   * @return the timestamp
+   */
   public long getTimestamp() {
     return timestamp;
   }
 
+  /**
+   * Gets extra data.
+   *
+   * @return the extra data
+   */
   public String getExtraData() {
     return extraData;
   }
 
+  /**
+   * Gets receipts root.
+   *
+   * @return the receipts root
+   */
   public Hash getReceiptsRoot() {
     return receiptsRoot;
   }
 
+  /**
+   * Gets logs bloom.
+   *
+   * @return the logs bloom
+   */
   public LogsBloomFilter getLogsBloom() {
     return logsBloom;
   }
 
+  /**
+   * Gets prev randao.
+   *
+   * @return the prev randao
+   */
   public Bytes32 getPrevRandao() {
     return prevRandao;
   }
 
+  /**
+   * Gets transactions.
+   *
+   * @return the transactions
+   */
   public List<String> getTransactions() {
     return transactions;
   }
 
+  /**
+   * Gets withdrawals.
+   *
+   * @return the withdrawals
+   */
   public List<WithdrawalParameter> getWithdrawals() {
     return withdrawals;
   }
 
+  /**
+   * Gets blob gas used.
+   *
+   * @return the blob gas used
+   */
   public Long getBlobGasUsed() {
     return blobGasUsed;
   }
 
+  /**
+   * Gets excess blob gas.
+   *
+   * @return the excess blob gas
+   */
   public String getExcessBlobGas() {
     return excessBlobGas;
   }
 
+  /**
+   * Gets deposits.
+   *
+   * @return the deposits
+   */
   public List<DepositParameter> getDeposits() {
     return deposits;
   }
 
+  /**
+   * Gets withdrawal requests.
+   *
+   * @return the withdrawal requests
+   */
   public List<WithdrawalRequestParameter> getWithdrawalRequests() {
     return withdrawalRequests;
   }

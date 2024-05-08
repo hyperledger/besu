@@ -28,6 +28,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
+/** The type Deposit parameter. */
 public class DepositParameter {
 
   private final String pubkey;
@@ -38,6 +39,15 @@ public class DepositParameter {
   private final String signature;
   private final String index;
 
+  /**
+   * Instantiates a new Deposit parameter.
+   *
+   * @param pubkey the pubkey
+   * @param withdrawalCredentials the withdrawal credentials
+   * @param amount the amount
+   * @param signature the signature
+   * @param index the index
+   */
   @JsonCreator
   public DepositParameter(
       @JsonProperty("pubkey") final String pubkey,
@@ -52,6 +62,12 @@ public class DepositParameter {
     this.index = index;
   }
 
+  /**
+   * From deposit deposit parameter.
+   *
+   * @param deposit the deposit
+   * @return the deposit parameter
+   */
   public static DepositParameter fromDeposit(final Deposit deposit) {
     return new DepositParameter(
         deposit.getPubkey().toString(),
@@ -61,6 +77,11 @@ public class DepositParameter {
         deposit.getIndex().toBytes().toQuantityHexString());
   }
 
+  /**
+   * To deposit deposit.
+   *
+   * @return the deposit
+   */
   public Deposit toDeposit() {
     return new Deposit(
         BLSPublicKey.fromHexString(pubkey),
@@ -70,6 +91,11 @@ public class DepositParameter {
         UInt64.fromHexString(index));
   }
 
+  /**
+   * As json object json object.
+   *
+   * @return the json object
+   */
   public JsonObject asJsonObject() {
     return new JsonObject()
         .put("pubkey", pubkey)
@@ -79,26 +105,51 @@ public class DepositParameter {
         .put("index", index);
   }
 
+  /**
+   * Gets pubkey.
+   *
+   * @return the pubkey
+   */
   @JsonGetter
   public String getPubkey() {
     return pubkey;
   }
 
+  /**
+   * Gets withdrawal credentials.
+   *
+   * @return the withdrawal credentials
+   */
   @JsonGetter
   public String getWithdrawalCredentials() {
     return withdrawalCredentials;
   }
 
+  /**
+   * Gets amount.
+   *
+   * @return the amount
+   */
   @JsonGetter
   public String getAmount() {
     return amount;
   }
 
+  /**
+   * Gets signature.
+   *
+   * @return the signature
+   */
   @JsonGetter
   public String getSignature() {
     return signature;
   }
 
+  /**
+   * Gets index.
+   *
+   * @return the index
+   */
   @JsonGetter
   public String getIndex() {
     return index;

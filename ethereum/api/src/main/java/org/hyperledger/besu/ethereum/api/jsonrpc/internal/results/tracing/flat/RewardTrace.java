@@ -21,8 +21,23 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
+/** The type Reward trace. */
 public class RewardTrace extends FlatTrace {
 
+  /**
+   * Instantiates a new Reward trace.
+   *
+   * @param actionBuilder the action builder
+   * @param resultBuilder the result builder
+   * @param subtraces the subtraces
+   * @param traceAddress the trace address
+   * @param type the type
+   * @param blockNumber the block number
+   * @param blockHash the block hash
+   * @param transactionPosition the transaction position
+   * @param transactionHash the transaction hash
+   * @param error the error
+   */
   protected RewardTrace(
       final Action.Builder actionBuilder,
       final Result.Builder resultBuilder,
@@ -71,12 +86,19 @@ public class RewardTrace extends FlatTrace {
     return super.getTransactionPosition();
   }
 
+  /**
+   * Builder builder.
+   *
+   * @return the builder
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /** The type Builder. */
   public static final class Builder extends FlatTrace.Builder {
 
+    /** Instantiates a new Builder. */
     public Builder() {
       super();
     }

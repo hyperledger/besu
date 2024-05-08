@@ -31,6 +31,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 
+/** The type Filter parameter. */
 public class FilterParameter {
 
   private final BlockParameter fromBlock;
@@ -44,6 +45,19 @@ public class FilterParameter {
   private final Optional<Integer> after, count;
   private final boolean isValid;
 
+  /**
+   * Instantiates a new Filter parameter.
+   *
+   * @param fromBlock the from block
+   * @param toBlock the to block
+   * @param fromAddress the from address
+   * @param toAddress the to address
+   * @param address the address
+   * @param topics the topics
+   * @param blockHash the block hash
+   * @param after the after
+   * @param count the count
+   */
   @JsonCreator
   public FilterParameter(
       @JsonProperty("fromBlock") final BlockParameter fromBlock,
@@ -73,42 +87,92 @@ public class FilterParameter {
     this.count = Optional.ofNullable(count);
   }
 
+  /**
+   * Gets from block.
+   *
+   * @return the from block
+   */
   public BlockParameter getFromBlock() {
     return fromBlock;
   }
 
+  /**
+   * Gets to block.
+   *
+   * @return the to block
+   */
   public BlockParameter getToBlock() {
     return toBlock;
   }
 
+  /**
+   * Gets from address.
+   *
+   * @return the from address
+   */
   public List<Address> getFromAddress() {
     return fromAddress;
   }
 
+  /**
+   * Gets to address.
+   *
+   * @return the to address
+   */
   public List<Address> getToAddress() {
     return toAddress;
   }
 
+  /**
+   * Gets addresses.
+   *
+   * @return the addresses
+   */
   public List<Address> getAddresses() {
     return addresses;
   }
 
+  /**
+   * Gets topics.
+   *
+   * @return the topics
+   */
   public List<List<LogTopic>> getTopics() {
     return topics;
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   public Optional<Hash> getBlockHash() {
     return maybeBlockHash;
   }
 
+  /**
+   * Gets logs query.
+   *
+   * @return the logs query
+   */
   public LogsQuery getLogsQuery() {
     return logsQuery;
   }
 
+  /**
+   * Gets after.
+   *
+   * @return the after
+   */
   public Optional<Integer> getAfter() {
     return after;
   }
 
+  /**
+   * Gets count.
+   *
+   * @return the count
+   */
   public Optional<Integer> getCount() {
     return count;
   }
@@ -175,6 +239,11 @@ public class FilterParameter {
         + '}';
   }
 
+  /**
+   * Is valid boolean.
+   *
+   * @return the boolean
+   */
   public boolean isValid() {
     return isValid;
   }

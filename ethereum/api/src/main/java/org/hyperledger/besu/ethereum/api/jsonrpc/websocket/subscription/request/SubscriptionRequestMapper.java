@@ -21,10 +21,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcR
 
 import java.util.Optional;
 
+/** The type Subscription request mapper. */
 public class SubscriptionRequestMapper {
 
+  /** Instantiates a new Subscription request mapper. */
   public SubscriptionRequestMapper() {}
 
+  /**
+   * Map subscribe request subscribe request.
+   *
+   * @param jsonRpcRequestContext the json rpc request context
+   * @return the subscribe request
+   * @throws InvalidSubscriptionRequestException the invalid subscription request exception
+   */
   public SubscribeRequest mapSubscribeRequest(final JsonRpcRequestContext jsonRpcRequestContext)
       throws InvalidSubscriptionRequestException {
     try {
@@ -75,6 +84,13 @@ public class SubscriptionRequestMapper {
         SubscriptionType.LOGS, filterParameter, null, request.getConnectionId());
   }
 
+  /**
+   * Map unsubscribe request unsubscribe request.
+   *
+   * @param jsonRpcRequestContext the json rpc request context
+   * @return the unsubscribe request
+   * @throws InvalidSubscriptionRequestException the invalid subscription request exception
+   */
   public UnsubscribeRequest mapUnsubscribeRequest(final JsonRpcRequestContext jsonRpcRequestContext)
       throws InvalidSubscriptionRequestException {
     try {
@@ -88,6 +104,14 @@ public class SubscriptionRequestMapper {
     }
   }
 
+  /**
+   * Map private subscribe request private subscribe request.
+   *
+   * @param jsonRpcRequestContext the json rpc request context
+   * @param privacyUserId the privacy user id
+   * @return the private subscribe request
+   * @throws InvalidSubscriptionRequestException the invalid subscription request exception
+   */
   public PrivateSubscribeRequest mapPrivateSubscribeRequest(
       final JsonRpcRequestContext jsonRpcRequestContext, final String privacyUserId)
       throws InvalidSubscriptionRequestException {
@@ -122,6 +146,13 @@ public class SubscriptionRequestMapper {
     }
   }
 
+  /**
+   * Map private unsubscribe request private unsubscribe request.
+   *
+   * @param jsonRpcRequestContext the json rpc request context
+   * @return the private unsubscribe request
+   * @throws InvalidSubscriptionRequestException the invalid subscription request exception
+   */
   public PrivateUnsubscribeRequest mapPrivateUnsubscribeRequest(
       final JsonRpcRequestContext jsonRpcRequestContext)
       throws InvalidSubscriptionRequestException {

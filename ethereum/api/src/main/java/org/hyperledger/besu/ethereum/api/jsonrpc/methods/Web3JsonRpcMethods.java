@@ -21,10 +21,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Web3Sha3;
 
 import java.util.Map;
 
+/** The type Web 3 json rpc methods. */
 public class Web3JsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final String clientVersion;
 
+  /**
+   * Instantiates a new Web 3 json rpc methods.
+   *
+   * @param clientVersion the client version
+   */
   public Web3JsonRpcMethods(final String clientVersion) {
     this.clientVersion = clientVersion;
   }

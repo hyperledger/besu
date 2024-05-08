@@ -21,9 +21,19 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
+/** The interface Trace formatter. */
 @FunctionalInterface
 public interface TraceFormatter {
 
+  /**
+   * Format stream.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param transactionTrace the transaction trace
+   * @param block the block
+   * @param traceCounter the trace counter
+   * @return the stream
+   */
   Stream<Trace> format(
       ProtocolSchedule protocolSchedule,
       TransactionTrace transactionTrace,

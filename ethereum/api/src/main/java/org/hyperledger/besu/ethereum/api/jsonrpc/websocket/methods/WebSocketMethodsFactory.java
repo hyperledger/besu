@@ -21,10 +21,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import java.util.HashMap;
 import java.util.Map;
 
+/** The type Web socket methods factory. */
 public class WebSocketMethodsFactory {
 
   private final Map<String, JsonRpcMethod> methods = new HashMap<>();
 
+  /**
+   * Instantiates a new Web socket methods factory.
+   *
+   * @param subscriptionManager the subscription manager
+   * @param jsonRpcMethods the json rpc methods
+   */
   public WebSocketMethodsFactory(
       final SubscriptionManager subscriptionManager,
       final Map<String, JsonRpcMethod> jsonRpcMethods) {
@@ -38,10 +45,20 @@ public class WebSocketMethodsFactory {
         new EthUnsubscribe(subscriptionManager, new SubscriptionRequestMapper()));
   }
 
+  /**
+   * Methods map.
+   *
+   * @return the map
+   */
   public Map<String, JsonRpcMethod> methods() {
     return methods;
   }
 
+  /**
+   * Add methods.
+   *
+   * @param rpcMethods the rpc methods
+   */
   public void addMethods(final JsonRpcMethod... rpcMethods) {
     for (final JsonRpcMethod rpcMethod : rpcMethods) {
       methods.put(rpcMethod.getName(), rpcMethod);

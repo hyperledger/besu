@@ -23,11 +23,18 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 import org.immutables.value.Value;
 
+/** The interface Protocols result. */
 @JsonPropertyOrder({"difficulty", "head", "version"})
 @Value.Immutable
 @Value.Style(allParameters = true)
 public interface ProtocolsResult {
 
+  /**
+   * From eth peer protocols result.
+   *
+   * @param ethPeer the eth peer
+   * @return the protocols result
+   */
   static ProtocolsResult fromEthPeer(final EthPeer ethPeer) {
     final BestBlock bestBlock = ethPeer.chainState().getBestBlock();
     return ImmutableProtocolsResult.builder()
@@ -37,9 +44,24 @@ public interface ProtocolsResult {
         .build();
   }
 
+  /**
+   * Gets difficulty.
+   *
+   * @return the difficulty
+   */
   String getDifficulty();
 
+  /**
+   * Gets head.
+   *
+   * @return the head
+   */
   String getHead();
 
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
   int getVersion();
 }

@@ -18,16 +18,27 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
+/** The type Struct log with error. */
 public class StructLogWithError extends StructLog {
 
   private final String[] error;
 
+  /**
+   * Instantiates a new Struct log with error.
+   *
+   * @param traceFrame the trace frame
+   */
   StructLogWithError(final TraceFrame traceFrame) {
     super(traceFrame);
     error =
         traceFrame.getExceptionalHaltReason().map(ehr -> new String[] {ehr.name()}).orElse(null);
   }
 
+  /**
+   * Get error string [ ].
+   *
+   * @return the string [ ]
+   */
   @JsonGetter("error")
   public String[] getError() {
     return error;

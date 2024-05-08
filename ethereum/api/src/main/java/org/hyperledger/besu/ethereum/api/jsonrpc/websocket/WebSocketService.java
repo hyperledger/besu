@@ -48,6 +48,7 @@ import io.vertx.ext.web.handler.BodyHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Web socket service. */
 public class WebSocketService {
 
   private static final Logger LOG = LoggerFactory.getLogger(WebSocketService.class);
@@ -64,8 +65,17 @@ public class WebSocketService {
 
   private HttpServer httpServer;
 
+  /** The Authentication service. */
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
+  /**
+   * Instantiates a new Web socket service.
+   *
+   * @param vertx the vertx
+   * @param configuration the configuration
+   * @param websocketMessageHandler the websocket message handler
+   * @param metricsSystem the metrics system
+   */
   public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
@@ -79,6 +89,15 @@ public class WebSocketService {
         metricsSystem);
   }
 
+  /**
+   * Instantiates a new Web socket service.
+   *
+   * @param vertx the vertx
+   * @param configuration the configuration
+   * @param websocketMessageHandler the websocket message handler
+   * @param authenticationService the authentication service
+   * @param metricsSystem the metrics system
+   */
   public WebSocketService(
       final Vertx vertx,
       final WebSocketConfiguration configuration,
@@ -98,6 +117,11 @@ public class WebSocketService {
         activeConnectionsCount::intValue);
   }
 
+  /**
+   * Start completable future.
+   *
+   * @return the completable future
+   */
   public CompletableFuture<?> start() {
     LOG.info(
         "Starting Websocket service on {}:{}", configuration.getHost(), configuration.getPort());
@@ -255,6 +279,11 @@ public class WebSocketService {
     };
   }
 
+  /**
+   * Stop completable future.
+   *
+   * @return the completable future
+   */
   public CompletableFuture<?> stop() {
     if (httpServer == null) {
       return CompletableFuture.completedFuture(null);
@@ -275,6 +304,11 @@ public class WebSocketService {
     return resultFuture;
   }
 
+  /**
+   * Socket address inet socket address.
+   *
+   * @return the inet socket address
+   */
   public InetSocketAddress socketAddress() {
     if (httpServer == null) {
       return EMPTY_SOCKET_ADDRESS;
@@ -308,6 +342,12 @@ public class WebSocketService {
     };
   }
 
+  /**
+   * Check host in allowlist boolean.
+   *
+   * @param host the host
+   * @return the boolean
+   */
   @VisibleForTesting
   boolean checkHostInAllowlist(final Optional<String> host) {
     return configuration.getHostsAllowlist().contains("*")

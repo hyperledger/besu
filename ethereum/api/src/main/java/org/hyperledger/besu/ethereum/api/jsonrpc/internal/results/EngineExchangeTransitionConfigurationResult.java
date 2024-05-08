@@ -20,12 +20,20 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Engine exchange transition configuration result. */
 @JsonPropertyOrder({"terminalTotalDifficulty", "terminalBlockHash", "terminalBlockNumber"})
 public class EngineExchangeTransitionConfigurationResult {
   private final Difficulty terminalTotalDifficulty;
   private final Hash terminalBlockHash;
   private final long terminalBlockNumber;
 
+  /**
+   * Instantiates a new Engine exchange transition configuration result.
+   *
+   * @param terminalTotalDifficulty the terminal total difficulty
+   * @param terminalBlockHash the terminal block hash
+   * @param terminalBlockNumber the terminal block number
+   */
   public EngineExchangeTransitionConfigurationResult(
       final Difficulty terminalTotalDifficulty,
       final Hash terminalBlockHash,
@@ -35,29 +43,59 @@ public class EngineExchangeTransitionConfigurationResult {
     this.terminalBlockNumber = terminalBlockNumber;
   }
 
+  /**
+   * Gets terminal total difficulty as string.
+   *
+   * @return the terminal total difficulty as string
+   */
   @JsonGetter(value = "terminalTotalDifficulty")
   public String getTerminalTotalDifficultyAsString() {
     return Quantity.create(this.terminalTotalDifficulty.getAsBigInteger());
   }
 
+  /**
+   * Gets terminal total difficulty.
+   *
+   * @return the terminal total difficulty
+   */
   public Difficulty getTerminalTotalDifficulty() {
     return terminalTotalDifficulty;
   }
 
+  /**
+   * Gets terminal block hash as string.
+   *
+   * @return the terminal block hash as string
+   */
   @JsonGetter(value = "terminalBlockHash")
   public String getTerminalBlockHashAsString() {
     return terminalBlockHash.toHexString();
   }
 
+  /**
+   * Gets terminal block hash.
+   *
+   * @return the terminal block hash
+   */
   public Hash getTerminalBlockHash() {
     return terminalBlockHash;
   }
 
+  /**
+   * Gets terminal block number as string.
+   *
+   * @return the terminal block number as string
+   */
   @JsonGetter(value = "terminalBlockNumber")
   public String getTerminalBlockNumberAsString() {
     return Quantity.create(this.terminalBlockNumber);
   }
 
+  /**
+   * Gets terminal block number.
+   *
+   * @return the terminal block number
+   */
   public Long getTerminalBlockNumber() {
     return terminalBlockNumber;
   }

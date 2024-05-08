@@ -14,7 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing;
 
+/** The interface Trace writer. */
 @FunctionalInterface
 public interface TraceWriter {
+  /**
+   * Write.
+   *
+   * @param trace the trace
+   */
   void write(Trace trace);
 }

@@ -19,10 +19,16 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+/** The type String list parameter. */
 public class StringListParameter {
 
   private final List<String> stringList = new ArrayList<>();
 
+  /**
+   * Instantiates a new String list parameter.
+   *
+   * @param strings the strings
+   */
   @JsonCreator
   public StringListParameter(final List<String> strings) {
     if (strings != null) {
@@ -30,6 +36,11 @@ public class StringListParameter {
     }
   }
 
+  /**
+   * Gets string list.
+   *
+   * @return the string list
+   */
   public List<String> getStringList() {
     return stringList;
   }

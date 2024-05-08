@@ -26,29 +26,54 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Log bloom cache metadata. */
 public class LogBloomCacheMetadata {
   private static final Logger LOG = LoggerFactory.getLogger(LogBloomCacheMetadata.class);
 
+  /** The constant DEFAULT_VERSION. */
   public static final int DEFAULT_VERSION = 3;
 
   private static final String METADATA_FILENAME = "CACHE_METADATA.json";
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private final int version;
 
+  /**
+   * Instantiates a new Log bloom cache metadata.
+   *
+   * @param version the version
+   */
   @JsonCreator
   public LogBloomCacheMetadata(@JsonProperty("version") final int version) {
     this.version = version;
   }
 
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
   public int getVersion() {
     return version;
   }
 
+  /**
+   * Look up from log bloom cache metadata.
+   *
+   * @param dataDir the data dir
+   * @return the log bloom cache metadata
+   * @throws IOException the io exception
+   */
   public static LogBloomCacheMetadata lookUpFrom(final Path dataDir) throws IOException {
     LOG.info("Lookup cache metadata file in data directory: {}", dataDir.toString());
     return resolveDatabaseMetadata(getDefaultMetadataFile(dataDir));
   }
 
+  /**
+   * Write to directory.
+   *
+   * @param dataDir the data dir
+   * @throws IOException the io exception
+   */
   public void writeToDirectory(final Path dataDir) throws IOException {
     MAPPER.writeValue(getDefaultMetadataFile(dataDir), this);
   }

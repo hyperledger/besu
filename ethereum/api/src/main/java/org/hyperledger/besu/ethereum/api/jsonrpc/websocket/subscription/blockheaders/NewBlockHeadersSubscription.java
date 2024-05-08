@@ -17,16 +17,29 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.blockhe
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 
+/** The type New block headers subscription. */
 public class NewBlockHeadersSubscription extends Subscription {
 
   private final boolean includeTransactions;
 
+  /**
+   * Instantiates a new New block headers subscription.
+   *
+   * @param subscriptionId the subscription id
+   * @param connectionId the connection id
+   * @param includeTransactions the include transactions
+   */
   public NewBlockHeadersSubscription(
       final Long subscriptionId, final String connectionId, final boolean includeTransactions) {
     super(subscriptionId, connectionId, SubscriptionType.NEW_BLOCK_HEADERS, Boolean.FALSE);
     this.includeTransactions = includeTransactions;
   }
 
+  /**
+   * Gets include transactions.
+   *
+   * @return the include transactions
+   */
   public boolean getIncludeTransactions() {
     return includeTransactions;
   }

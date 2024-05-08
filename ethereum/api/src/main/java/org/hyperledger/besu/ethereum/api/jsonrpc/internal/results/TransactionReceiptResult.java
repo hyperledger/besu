@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Transaction receipt result. */
 @JsonPropertyOrder({
   "blockHash",
   "blockNumber",
@@ -66,12 +67,20 @@ public abstract class TransactionReceiptResult {
   private final String transactionIndex;
   private final String revertReason;
 
+  /** The Receipt. */
   protected final TransactionReceipt receipt;
+
+  /** The Type. */
   protected final String type;
 
   private final String blobGasUsed;
   private final String blobGasPrice;
 
+  /**
+   * Instantiates a new Transaction receipt result.
+   *
+   * @param receiptWithMetadata the receipt with metadata
+   */
   protected TransactionReceiptResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
     final Transaction txn = receiptWithMetadata.getTransaction();
     this.receipt = receiptWithMetadata.getReceipt();
@@ -105,83 +114,163 @@ public abstract class TransactionReceiptResult {
             : Quantity.create(txn.getType().getSerializedType());
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   @JsonGetter(value = "blockHash")
   public String getBlockHash() {
     return blockHash;
   }
 
+  /**
+   * Gets block number.
+   *
+   * @return the block number
+   */
   @JsonGetter(value = "blockNumber")
   public String getBlockNumber() {
     return blockNumber;
   }
 
+  /**
+   * Gets contract address.
+   *
+   * @return the contract address
+   */
   @JsonGetter(value = "contractAddress")
   public String getContractAddress() {
     return contractAddress;
   }
 
+  /**
+   * Gets cumulative gas used.
+   *
+   * @return the cumulative gas used
+   */
   @JsonGetter(value = "cumulativeGasUsed")
   public String getCumulativeGasUsed() {
     return cumulativeGasUsed;
   }
 
+  /**
+   * Gets from.
+   *
+   * @return the from
+   */
   @JsonGetter(value = "from")
   public String getFrom() {
     return from;
   }
 
+  /**
+   * Gets gas used.
+   *
+   * @return the gas used
+   */
   @JsonGetter(value = "gasUsed")
   public String getGasUsed() {
     return gasUsed;
   }
 
+  /**
+   * Gets blob gas used.
+   *
+   * @return the blob gas used
+   */
   @JsonGetter(value = "blobGasUsed")
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public String getBlobGasUsed() {
     return blobGasUsed;
   }
 
+  /**
+   * Gets blob gas price.
+   *
+   * @return the blob gas price
+   */
   @JsonGetter(value = "blobGasPrice")
   @JsonInclude(JsonInclude.Include.NON_NULL)
   public String getBlobGasPrice() {
     return blobGasPrice;
   }
 
+  /**
+   * Gets effective gas price.
+   *
+   * @return the effective gas price
+   */
   @JsonGetter(value = "effectiveGasPrice")
   public String getEffectiveGasPrice() {
     return effectiveGasPrice;
   }
 
+  /**
+   * Gets logs.
+   *
+   * @return the logs
+   */
   @JsonGetter(value = "logs")
   public List<TransactionReceiptLogResult> getLogs() {
     return logs;
   }
 
+  /**
+   * Gets logs bloom.
+   *
+   * @return the logs bloom
+   */
   @JsonGetter(value = "logsBloom")
   public String getLogsBloom() {
     return logsBloom;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   @JsonGetter(value = "to")
   public String getTo() {
     return to;
   }
 
+  /**
+   * Gets transaction hash.
+   *
+   * @return the transaction hash
+   */
   @JsonGetter(value = "transactionHash")
   public String getTransactionHash() {
     return transactionHash;
   }
 
+  /**
+   * Gets transaction index.
+   *
+   * @return the transaction index
+   */
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
     return transactionIndex;
   }
 
+  /**
+   * Gets type.
+   *
+   * @return the type
+   */
   @JsonGetter(value = "type")
   public String getType() {
     return type;
   }
 
+  /**
+   * Gets revert reason.
+   *
+   * @return the revert reason
+   */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter(value = "revertReason")
   public String getRevertReason() {

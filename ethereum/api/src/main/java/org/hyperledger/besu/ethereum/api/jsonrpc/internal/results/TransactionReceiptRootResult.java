@@ -18,15 +18,26 @@ import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
+/** The type Transaction receipt root result. */
 public class TransactionReceiptRootResult extends TransactionReceiptResult {
 
   private final String root;
 
+  /**
+   * Instantiates a new Transaction receipt root result.
+   *
+   * @param receiptWithMetadata the receipt with metadata
+   */
   public TransactionReceiptRootResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
     super(receiptWithMetadata);
     root = receipt.getStateRoot().toString();
   }
 
+  /**
+   * Gets root.
+   *
+   * @return the root
+   */
   @JsonGetter(value = "root")
   public String getRoot() {
     return root;

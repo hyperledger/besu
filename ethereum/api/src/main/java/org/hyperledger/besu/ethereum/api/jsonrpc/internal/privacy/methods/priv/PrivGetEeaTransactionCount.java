@@ -40,6 +40,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Priv get eea transaction count. */
 public class PrivGetEeaTransactionCount implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivGetEeaTransactionCount.class);
@@ -47,6 +48,12 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv get eea transaction count.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivGetEeaTransactionCount(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;

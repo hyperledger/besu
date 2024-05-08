@@ -29,12 +29,19 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Priv delete privacy group. */
 public class PrivDeletePrivacyGroup implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivDeletePrivacyGroup.class);
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv delete privacy group.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivDeletePrivacyGroup(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;

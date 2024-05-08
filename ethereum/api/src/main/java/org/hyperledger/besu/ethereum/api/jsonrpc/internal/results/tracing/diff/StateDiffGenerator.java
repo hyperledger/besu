@@ -33,8 +33,17 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type State diff generator. */
 public class StateDiffGenerator {
+  /** Default constructor. */
+  public StateDiffGenerator() {}
 
+  /**
+   * Generate state diff stream.
+   *
+   * @param transactionTrace the transaction trace
+   * @return the stream
+   */
   public Stream<Trace> generateStateDiff(final TransactionTrace transactionTrace) {
     final List<TraceFrame> traceFrames = transactionTrace.getTraceFrames();
     if (traceFrames.isEmpty()) {

@@ -24,6 +24,7 @@ import io.vertx.core.http.WebSocketFrame;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Json response streamer. */
 class JsonResponseStreamer extends OutputStream {
 
   private static final Logger LOG = LoggerFactory.getLogger(JsonResponseStreamer.class);
@@ -36,6 +37,11 @@ class JsonResponseStreamer extends OutputStream {
   private Buffer buffer = EMPTY_BUFFER;
   private final AtomicReference<Throwable> failure = new AtomicReference<>();
 
+  /**
+   * Instantiates a new Json response streamer.
+   *
+   * @param response the response
+   */
   public JsonResponseStreamer(final ServerWebSocket response) {
     this.response = response;
     this.response.exceptionHandler(

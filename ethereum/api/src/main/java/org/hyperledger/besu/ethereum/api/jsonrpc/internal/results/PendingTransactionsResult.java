@@ -21,15 +21,26 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/** The type Pending transactions result. */
 public class PendingTransactionsResult implements TransactionResult {
 
   private final List<PendingTransactionResult> pendingTransactionResults;
 
+  /**
+   * Instantiates a new Pending transactions result.
+   *
+   * @param pendingTransactionSet the pending transaction set
+   */
   public PendingTransactionsResult(final Collection<PendingTransaction> pendingTransactionSet) {
     pendingTransactionResults =
         pendingTransactionSet.stream().map(PendingTransactionResult::new).toList();
   }
 
+  /**
+   * Gets results.
+   *
+   * @return the results
+   */
   @JsonValue
   public List<PendingTransactionResult> getResults() {
     return pendingTransactionResults;

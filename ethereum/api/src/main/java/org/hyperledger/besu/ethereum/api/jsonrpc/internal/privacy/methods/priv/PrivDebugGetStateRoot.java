@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Priv debug get state root. */
 public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivDebugGetStateRoot.class);
@@ -44,6 +45,13 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
   private final PrivacyIdProvider privacyIdProvider;
   private final PrivacyController privacyController;
 
+  /**
+   * Instantiates a new Priv debug get state root.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param privacyIdProvider the privacy id provider
+   * @param privacyController the privacy controller
+   */
   public PrivDebugGetStateRoot(
       final BlockchainQueries blockchainQueries,
       final PrivacyIdProvider privacyIdProvider,

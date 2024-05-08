@@ -33,6 +33,7 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Priv find privacy group. */
 @SuppressWarnings("MockNotUsedInProduction")
 public class PrivFindPrivacyGroup implements JsonRpcMethod {
 
@@ -40,6 +41,12 @@ public class PrivFindPrivacyGroup implements JsonRpcMethod {
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv find privacy group.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivFindPrivacyGroup(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;

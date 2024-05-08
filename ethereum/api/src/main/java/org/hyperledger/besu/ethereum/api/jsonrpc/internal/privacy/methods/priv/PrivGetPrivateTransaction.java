@@ -35,6 +35,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Priv get private transaction. */
 public class PrivGetPrivateTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivGetPrivateTransaction.class);
@@ -42,6 +43,12 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv get private transaction.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivGetPrivateTransaction(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;

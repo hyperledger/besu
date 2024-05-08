@@ -22,15 +22,22 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
+/** The type Vm trace. */
 public class VmTrace implements Trace {
 
   private String code;
   private final List<VmOperation> vmOperations;
 
+  /** Instantiates a new Vm trace. */
   public VmTrace() {
     this("0x");
   }
 
+  /**
+   * Instantiates a new Vm trace.
+   *
+   * @param code the code
+   */
   public VmTrace(final String code) {
     this(code, new ArrayList<>());
   }
@@ -40,18 +47,38 @@ public class VmTrace implements Trace {
     this.vmOperations = vmOperations;
   }
 
+  /**
+   * Add.
+   *
+   * @param vmOperation the vm operation
+   */
   public void add(final VmOperation vmOperation) {
     vmOperations.add(vmOperation);
   }
 
+  /**
+   * Gets code.
+   *
+   * @return the code
+   */
   public String getCode() {
     return code;
   }
 
+  /**
+   * Sets code.
+   *
+   * @param code the code
+   */
   public void setCode(final String code) {
     this.code = code;
   }
 
+  /**
+   * Gets vm operations.
+   *
+   * @return the vm operations
+   */
   @JsonGetter("ops")
   public List<VmOperation> getVmOperations() {
     return vmOperations;

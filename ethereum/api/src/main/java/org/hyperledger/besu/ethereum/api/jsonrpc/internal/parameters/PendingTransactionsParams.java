@@ -37,11 +37,22 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The type Pending transactions params. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class PendingTransactionsParams {
 
   private final Map<String, String> from, to, gas, gasPrice, value, nonce;
 
+  /**
+   * Instantiates a new Pending transactions params.
+   *
+   * @param from the from
+   * @param to the to
+   * @param gas the gas
+   * @param gasPrice the gas price
+   * @param value the value
+   * @param nonce the nonce
+   */
   @JsonCreator()
   public PendingTransactionsParams(
       @JsonProperty(FROM_FIELD) final Map<String, String> from,
@@ -58,6 +69,12 @@ public class PendingTransactionsParams {
     this.nonce = nonce;
   }
 
+  /**
+   * Filters list.
+   *
+   * @return the list
+   * @throws IllegalArgumentException the illegal argument exception
+   */
   public List<Filter> filters() throws IllegalArgumentException {
     final List<Filter> createdFilters = new ArrayList<>();
     getFilter(FROM_FIELD, from).ifPresent(createdFilters::add);

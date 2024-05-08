@@ -46,6 +46,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Priv distribute raw transaction. */
 public class PrivDistributeRawTransaction implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivDistributeRawTransaction.class);
@@ -53,6 +54,13 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
   private final PrivacyIdProvider privacyIdProvider;
   private final boolean flexiblePrivacyGroupsEnabled;
 
+  /**
+   * Instantiates a new Priv distribute raw transaction.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   * @param flexiblePrivacyGroupsEnabled the flexible privacy groups enabled
+   */
   public PrivDistributeRawTransaction(
       final PrivacyController privacyController,
       final PrivacyIdProvider privacyIdProvider,

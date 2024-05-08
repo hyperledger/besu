@@ -25,13 +25,24 @@ import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+/** The type Trace type parameter. */
 public class TraceTypeParameter {
 
+  /** The enum Trace type. */
   public enum TraceType {
+    /** Trace trace type. */
     TRACE,
+    /** Vm trace trace type. */
     VM_TRACE,
+    /** State diff trace type. */
     STATE_DIFF;
 
+    /**
+     * From string trace type.
+     *
+     * @param traceType the trace type
+     * @return the trace type
+     */
     @JsonCreator
     static TraceType fromString(final String traceType) {
       if (traceType.equalsIgnoreCase("trace")) {
@@ -49,6 +60,11 @@ public class TraceTypeParameter {
 
   private final Set<TraceType> traceTypes;
 
+  /**
+   * Instantiates a new Trace type parameter.
+   *
+   * @param traceTypesInput the trace types input
+   */
   @JsonCreator
   public TraceTypeParameter(final List<String> traceTypesInput) {
     validateTraceTypes(traceTypesInput);
@@ -60,6 +76,11 @@ public class TraceTypeParameter {
             .collect(Collectors.toSet());
   }
 
+  /**
+   * Gets trace types.
+   *
+   * @return the trace types
+   */
   public Set<TraceType> getTraceTypes() {
     return traceTypes;
   }

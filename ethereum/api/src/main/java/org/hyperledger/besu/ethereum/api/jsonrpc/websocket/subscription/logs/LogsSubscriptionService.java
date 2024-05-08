@@ -27,11 +27,18 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+/** The type Logs subscription service. */
 public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
 
   private final SubscriptionManager subscriptionManager;
   private final Optional<PrivacyQueries> privacyQueries;
 
+  /**
+   * Instantiates a new Logs subscription service.
+   *
+   * @param subscriptionManager the subscription manager
+   * @param privacyQueries the privacy queries
+   */
   public LogsSubscriptionService(
       final SubscriptionManager subscriptionManager,
       final Optional<PrivacyQueries> privacyQueries) {
@@ -57,6 +64,11 @@ public class LogsSubscriptionService implements Consumer<LogWithMetadata> {
         .forEach(logsSubscription -> sendLogToSubscription(logWithMetadata, logsSubscription));
   }
 
+  /**
+   * Check private logs.
+   *
+   * @param event the event
+   */
   public void checkPrivateLogs(final BlockAddedEvent event) {
     privacyQueries.ifPresent(
         pq ->

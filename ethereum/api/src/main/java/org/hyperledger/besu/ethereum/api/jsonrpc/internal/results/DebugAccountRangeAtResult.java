@@ -18,21 +18,38 @@ import java.util.Map;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
+/** The type Debug account range at result. */
 public class DebugAccountRangeAtResult implements JsonRpcResult {
 
   private final Map<String, String> addressMap;
   private final String nextKey;
 
+  /**
+   * Instantiates a new Debug account range at result.
+   *
+   * @param addressMap the address map
+   * @param nextKey the next key
+   */
   public DebugAccountRangeAtResult(final Map<String, String> addressMap, final String nextKey) {
     this.addressMap = addressMap;
     this.nextKey = nextKey;
   }
 
+  /**
+   * Gets address map.
+   *
+   * @return the address map
+   */
   @JsonGetter(value = "addressMap")
   public Map<String, String> getAddressMap() {
     return addressMap;
   }
 
+  /**
+   * Gets next key.
+   *
+   * @return the next key
+   */
   @JsonGetter(value = "nextKey")
   public String getNextKey() {
     return nextKey;

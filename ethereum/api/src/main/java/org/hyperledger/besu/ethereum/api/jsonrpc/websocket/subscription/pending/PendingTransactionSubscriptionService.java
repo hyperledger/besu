@@ -22,10 +22,16 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedLis
 
 import java.util.List;
 
+/** The type Pending transaction subscription service. */
 public class PendingTransactionSubscriptionService implements PendingTransactionAddedListener {
 
   private final SubscriptionManager subscriptionManager;
 
+  /**
+   * Instantiates a new Pending transaction subscription service.
+   *
+   * @param subscriptionManager the subscription manager
+   */
   public PendingTransactionSubscriptionService(final SubscriptionManager subscriptionManager) {
     this.subscriptionManager = subscriptionManager;
   }

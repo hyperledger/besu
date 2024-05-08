@@ -23,10 +23,16 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Map;
 
+/** The type Tx pool json rpc methods. */
 public class TxPoolJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final TransactionPool transactionPool;
 
+  /**
+   * Instantiates a new Tx pool json rpc methods.
+   *
+   * @param transactionPool the transaction pool
+   */
   public TxPoolJsonRpcMethods(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
   }

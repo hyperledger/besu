@@ -14,4 +14,5 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+/** The interface Transaction result. */
 public interface TransactionResult {}

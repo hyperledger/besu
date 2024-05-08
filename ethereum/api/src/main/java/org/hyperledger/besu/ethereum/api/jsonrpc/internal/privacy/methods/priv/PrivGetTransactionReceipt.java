@@ -41,6 +41,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Priv get transaction receipt. */
 public class PrivGetTransactionReceipt implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivGetTransactionReceipt.class);
@@ -49,6 +50,13 @@ public class PrivGetTransactionReceipt implements JsonRpcMethod {
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv get transaction receipt.
+   *
+   * @param privateStateStorage the private state storage
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivGetTransactionReceipt(
       final PrivateStateStorage privateStateStorage,
       final PrivacyController privacyController,

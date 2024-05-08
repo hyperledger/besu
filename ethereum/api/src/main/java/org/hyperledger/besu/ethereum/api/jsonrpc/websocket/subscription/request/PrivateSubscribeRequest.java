@@ -18,11 +18,22 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParam
 
 import java.util.Objects;
 
+/** The type Private subscribe request. */
 public class PrivateSubscribeRequest extends SubscribeRequest {
 
   private final String privacyGroupId;
   private final String privacyUserId;
 
+  /**
+   * Instantiates a new Private subscribe request.
+   *
+   * @param subscriptionType the subscription type
+   * @param filterParameter the filter parameter
+   * @param includeTransaction the include transaction
+   * @param connectionId the connection id
+   * @param privacyGroupId the privacy group id
+   * @param privacyUserId the privacy user id
+   */
   public PrivateSubscribeRequest(
       final SubscriptionType subscriptionType,
       final FilterParameter filterParameter,
@@ -35,10 +46,20 @@ public class PrivateSubscribeRequest extends SubscribeRequest {
     this.privacyUserId = privacyUserId;
   }
 
+  /**
+   * Gets privacy group id.
+   *
+   * @return the privacy group id
+   */
   public String getPrivacyGroupId() {
     return privacyGroupId;
   }
 
+  /**
+   * Gets privacy user id.
+   *
+   * @return the privacy user id
+   */
   public String getPrivacyUserId() {
     return privacyUserId;
   }

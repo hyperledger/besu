@@ -19,9 +19,15 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 
 import java.util.Optional;
 
+/** The type Perm remove accounts from whitelist. */
 @Deprecated
 public class PermRemoveAccountsFromWhitelist extends PermRemoveAccountsFromAllowlist {
 
+  /**
+   * Instantiates a new Perm remove accounts from whitelist.
+   *
+   * @param allowlistController the allowlist controller
+   */
   public PermRemoveAccountsFromWhitelist(
       final Optional<AccountLocalConfigPermissioningController> allowlistController) {
     super(allowlistController);

@@ -14,16 +14,29 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request;
 
+/** The type Invalid subscription request exception. */
 public class InvalidSubscriptionRequestException extends RuntimeException {
 
+  /** Instantiates a new Invalid subscription request exception. */
   public InvalidSubscriptionRequestException() {
     super();
   }
 
+  /**
+   * Instantiates a new Invalid subscription request exception.
+   *
+   * @param message the message
+   */
   public InvalidSubscriptionRequestException(final String message) {
     super(message);
   }
 
+  /**
+   * Instantiates a new Invalid subscription request exception.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
   public InvalidSubscriptionRequestException(final String message, final Throwable cause) {
     super(message, cause);
   }

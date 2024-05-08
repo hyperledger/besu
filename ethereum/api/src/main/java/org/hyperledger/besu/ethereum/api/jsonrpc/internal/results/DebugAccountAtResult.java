@@ -16,13 +16,37 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.immutables.value.Value;
 
+/** The type Debug account at result. */
 @Value.Immutable
 public abstract class DebugAccountAtResult implements JsonRpcResult {
+  /** Default Constructor */
+  public DebugAccountAtResult() {}
+
+  /**
+   * Gets code.
+   *
+   * @return the code
+   */
   public abstract String getCode();
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   public abstract String getNonce();
 
+  /**
+   * Gets balance.
+   *
+   * @return the balance
+   */
   public abstract String getBalance();
 
+  /**
+   * Gets codehash.
+   *
+   * @return the codehash
+   */
   public abstract String getCodehash();
 }

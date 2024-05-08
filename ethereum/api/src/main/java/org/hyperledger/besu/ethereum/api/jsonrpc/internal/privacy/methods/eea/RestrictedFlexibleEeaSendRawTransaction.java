@@ -37,11 +37,21 @@ import java.util.Optional;
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Restricted flexible eea send raw transaction. */
 public class RestrictedFlexibleEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Restricted flexible eea send raw transaction.
+   *
+   * @param transactionPool the transaction pool
+   * @param privacyIdProvider the privacy id provider
+   * @param privateMarkerTransactionFactory the private marker transaction factory
+   * @param publicNonceProvider the public nonce provider
+   * @param privacyController the privacy controller
+   */
   public RestrictedFlexibleEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider,

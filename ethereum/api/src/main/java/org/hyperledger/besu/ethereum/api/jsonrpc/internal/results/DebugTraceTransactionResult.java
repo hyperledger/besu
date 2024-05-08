@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Debug trace transaction result. */
 @JsonPropertyOrder({"gas", "failed", "returnValue", "structLogs"})
 public class DebugTraceTransactionResult {
 
@@ -32,6 +33,11 @@ public class DebugTraceTransactionResult {
   private final long gas;
   private final boolean failed;
 
+  /**
+   * Instantiates a new Debug trace transaction result.
+   *
+   * @param transactionTrace the transaction trace
+   */
   public DebugTraceTransactionResult(final TransactionTrace transactionTrace) {
     gas = transactionTrace.getGas();
     returnValue = transactionTrace.getResult().getOutput().toString().substring(2);
@@ -42,6 +48,12 @@ public class DebugTraceTransactionResult {
     failed = !transactionTrace.getResult().isSuccessful();
   }
 
+  /**
+   * Of collection.
+   *
+   * @param traces the traces
+   * @return the collection
+   */
   public static Collection<DebugTraceTransactionResult> of(
       final Collection<TransactionTrace> traces) {
     return traces.stream().map(DebugTraceTransactionResult::new).collect(Collectors.toList());
@@ -54,21 +66,41 @@ public class DebugTraceTransactionResult {
         .orElse(new StructLog(frame));
   }
 
+  /**
+   * Gets struct logs.
+   *
+   * @return the struct logs
+   */
   @JsonGetter(value = "structLogs")
   public List<StructLog> getStructLogs() {
     return structLogs;
   }
 
+  /**
+   * Gets return value.
+   *
+   * @return the return value
+   */
   @JsonGetter(value = "returnValue")
   public String getReturnValue() {
     return returnValue;
   }
 
+  /**
+   * Gets gas.
+   *
+   * @return the gas
+   */
   @JsonGetter(value = "gas")
   public long getGas() {
     return gas;
   }
 
+  /**
+   * Failed boolean.
+   *
+   * @return the boolean
+   */
   @JsonGetter(value = "failed")
   public boolean failed() {
     return failed;

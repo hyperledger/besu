@@ -44,15 +44,23 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Transaction log bloom cacher. */
 public class TransactionLogBloomCacher {
 
   private static final Logger LOG = LoggerFactory.getLogger(TransactionLogBloomCacher.class);
   private static final String NO_SPACE_LEFT_ON_DEVICE = "No space left on device";
 
+  /** The constant BLOCKS_PER_BLOOM_CACHE. */
   public static final int BLOCKS_PER_BLOOM_CACHE = 100_000;
+
+  /** The constant BLOOM_BITS_LENGTH. */
   public static final int BLOOM_BITS_LENGTH = 256;
+
   private static final int EXPECTED_BLOOM_FILE_SIZE = BLOCKS_PER_BLOOM_CACHE * BLOOM_BITS_LENGTH;
+
+  /** The constant CURRENT. */
   public static final String CURRENT = "current";
+
   private final Map<Long, Boolean> cachedSegments;
 
   private final Lock submissionLock = new ReentrantLock();
@@ -64,6 +72,13 @@ public class TransactionLogBloomCacher {
 
   private final CachingStatus cachingStatus = new CachingStatus();
 
+  /**
+   * Instantiates a new Transaction log bloom cacher.
+   *
+   * @param blockchain the blockchain
+   * @param cacheDir the cache dir
+   * @param scheduler the scheduler
+   */
   public TransactionLogBloomCacher(
       final Blockchain blockchain, final Path cacheDir, final EthScheduler scheduler) {
     this.blockchain = blockchain;
@@ -72,10 +87,16 @@ public class TransactionLogBloomCacher {
     this.cachedSegments = new TreeMap<>();
   }
 
+  /**
+   * Gets caching status.
+   *
+   * @return the caching status
+   */
   public CachingStatus getCachingStatus() {
     return cachingStatus;
   }
 
+  /** Cache all. */
   void cacheAll() {
     ensurePreviousSegmentsArePresent(blockchain.getChainHeadBlockNumber(), false);
   }
@@ -88,6 +109,13 @@ public class TransactionLogBloomCacher {
     return calculateCacheFileName(Long.toString(blockNumber / BLOCKS_PER_BLOOM_CACHE), cacheDir);
   }
 
+  /**
+   * Generate log bloom cache caching status.
+   *
+   * @param start the start
+   * @param stop the stop
+   * @return the caching status
+   */
   public CachingStatus generateLogBloomCache(final long start, final long stop) {
     checkArgument(
         start % BLOCKS_PER_BLOOM_CACHE == 0, "Start block must be at the beginning of a file");
@@ -148,6 +176,13 @@ public class TransactionLogBloomCacher {
     }
   }
 
+  /**
+   * Cache logs bloom for block header.
+   *
+   * @param blockHeader the block header
+   * @param commonAncestorBlockHeader the common ancestor block header
+   * @param reusedCacheFile the reused cache file
+   */
   void cacheLogsBloomForBlockHeader(
       final BlockHeader blockHeader,
       final Optional<BlockHeader> commonAncestorBlockHeader,
@@ -246,6 +281,12 @@ public class TransactionLogBloomCacher {
     return false;
   }
 
+  /**
+   * Remove segments.
+   *
+   * @param startBlock the start block
+   * @param stopBlock the stop block
+   */
   public void removeSegments(final Long startBlock, final Long stopBlock) {
     if (!cachingStatus.isCaching()) {
       LOG.info(
@@ -281,6 +322,12 @@ public class TransactionLogBloomCacher {
     }
   }
 
+  /**
+   * Ensure previous segments are present.
+   *
+   * @param blockNumber the block number
+   * @param overrideCacheCheck the override cache check
+   */
   public void ensurePreviousSegmentsArePresent(
       final long blockNumber, final boolean overrideCacheCheck) {
     if (!cachingStatus.isCaching()) {
@@ -323,6 +370,13 @@ public class TransactionLogBloomCacher {
     return logs;
   }
 
+  /**
+   * Request caching caching status.
+   *
+   * @param fromBlock the from block
+   * @param toBlock the to block
+   * @return the caching status
+   */
   public CachingStatus requestCaching(final long fromBlock, final long toBlock) {
     boolean requestAccepted = false;
     try {
@@ -348,46 +402,98 @@ public class TransactionLogBloomCacher {
     return cachingStatus;
   }
 
+  /**
+   * Gets scheduler.
+   *
+   * @return the scheduler
+   */
   EthScheduler getScheduler() {
     return scheduler;
   }
 
+  /**
+   * Gets cache dir.
+   *
+   * @return the cache dir
+   */
   Path getCacheDir() {
     return cacheDir;
   }
 
+  /** The type Caching status. */
   public static final class CachingStatus {
+    /** The Start block. */
     long startBlock;
+
+    /** The End block. */
     long endBlock;
+
+    /** The Current block. */
     volatile long currentBlock;
+
+    /** The Caching count. */
     AtomicInteger cachingCount = new AtomicInteger(0);
+
+    /** The Request accepted. */
     boolean requestAccepted;
 
+    /** Default constructor. */
+    public CachingStatus() {}
+
+    /**
+     * Gets start block.
+     *
+     * @return the start block
+     */
     @JsonGetter
     public String getStartBlock() {
       return "0x" + Long.toHexString(startBlock);
     }
 
+    /**
+     * Gets end block.
+     *
+     * @return the end block
+     */
     @JsonGetter
     public String getEndBlock() {
       return endBlock == Long.MAX_VALUE ? "latest" : "0x" + Long.toHexString(endBlock);
     }
 
+    /**
+     * Gets current block.
+     *
+     * @return the current block
+     */
     @JsonGetter
     public String getCurrentBlock() {
       return "0x" + Long.toHexString(currentBlock);
     }
 
+    /**
+     * Is caching boolean.
+     *
+     * @return the boolean
+     */
     @JsonGetter
     public boolean isCaching() {
       return cachingCount.get() > 0;
     }
 
+    /**
+     * Is request accepted boolean.
+     *
+     * @return the boolean
+     */
     @JsonGetter
     public boolean isRequestAccepted() {
       return requestAccepted;
     }
   }
 
-  public static class InvalidCacheException extends Exception {}
+  /** The type Invalid cache exception. */
+  public static class InvalidCacheException extends Exception {
+    /** Default constructor. */
+    public InvalidCacheException() {}
+  }
 }

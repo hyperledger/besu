@@ -24,8 +24,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing.
 
 import java.util.function.Function;
 
+/** The type Subscription builder. */
 public class SubscriptionBuilder {
+  /** Default constructor. */
+  public SubscriptionBuilder() {}
 
+  /**
+   * Build subscription.
+   *
+   * @param subscriptionId the subscription id
+   * @param connectionId the connection id
+   * @param request the request
+   * @return the subscription
+   */
   public Subscription build(
       final long subscriptionId, final String connectionId, final SubscribeRequest request) {
     final SubscriptionType subscriptionType = request.getSubscriptionType();
@@ -65,6 +76,13 @@ public class SubscriptionBuilder {
     }
   }
 
+  /**
+   * Map to subscription class function.
+   *
+   * @param <T> the type parameter
+   * @param clazz the clazz
+   * @return the function
+   */
   @SuppressWarnings("unchecked")
   public <T> Function<Subscription, T> mapToSubscriptionClass(final Class<T> clazz) {
     return subscription -> {

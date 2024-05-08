@@ -27,10 +27,16 @@ import io.vertx.ext.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Multi tenancy rpc method decorator. */
 public class MultiTenancyRpcMethodDecorator implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(MultiTenancyRpcMethodDecorator.class);
   private final JsonRpcMethod rpcMethod;
 
+  /**
+   * Instantiates a new Multi tenancy rpc method decorator.
+   *
+   * @param rpcMethod the rpc method
+   */
   public MultiTenancyRpcMethodDecorator(final JsonRpcMethod rpcMethod) {
     this.rpcMethod = rpcMethod;
   }

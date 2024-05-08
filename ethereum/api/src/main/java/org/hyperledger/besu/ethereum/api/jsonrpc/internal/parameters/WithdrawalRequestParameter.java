@@ -26,12 +26,20 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
 
+/** The type Withdrawal request parameter. */
 public class WithdrawalRequestParameter {
 
   private final String sourceAddress;
   private final String validatorPubKey;
   private final String amount;
 
+  /**
+   * Instantiates a new Withdrawal request parameter.
+   *
+   * @param sourceAddress the source address
+   * @param validatorPubKey the validator pub key
+   * @param amount the amount
+   */
   @JsonCreator
   public WithdrawalRequestParameter(
       @JsonProperty("sourceAddress") final String sourceAddress,
@@ -42,6 +50,12 @@ public class WithdrawalRequestParameter {
     this.amount = amount;
   }
 
+  /**
+   * From withdrawal request withdrawal request parameter.
+   *
+   * @param withdrawalRequest the withdrawal request
+   * @return the withdrawal request parameter
+   */
   public static WithdrawalRequestParameter fromWithdrawalRequest(
       final WithdrawalRequest withdrawalRequest) {
     return new WithdrawalRequestParameter(
@@ -50,6 +64,11 @@ public class WithdrawalRequestParameter {
         withdrawalRequest.getAmount().toShortHexString());
   }
 
+  /**
+   * To withdrawal request withdrawal request.
+   *
+   * @return the withdrawal request
+   */
   public WithdrawalRequest toWithdrawalRequest() {
     return new WithdrawalRequest(
         Address.fromHexString(sourceAddress),
@@ -57,6 +76,11 @@ public class WithdrawalRequestParameter {
         GWei.fromHexString(amount));
   }
 
+  /**
+   * As json object json object.
+   *
+   * @return the json object
+   */
   public JsonObject asJsonObject() {
     return new JsonObject()
         .put("sourceAddress", sourceAddress)
@@ -64,16 +88,31 @@ public class WithdrawalRequestParameter {
         .put("amount", amount);
   }
 
+  /**
+   * Gets source address.
+   *
+   * @return the source address
+   */
   @JsonGetter
   public String getSourceAddress() {
     return sourceAddress;
   }
 
+  /**
+   * Gets validator pub key.
+   *
+   * @return the validator pub key
+   */
   @JsonGetter
   public String getValidatorPubKey() {
     return validatorPubKey;
   }
 
+  /**
+   * Gets amount.
+   *
+   * @return the amount
+   */
   @JsonGetter
   public String getAmount() {
     return amount;

@@ -28,6 +28,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Get proof result. */
 public class GetProofResult {
 
   private final List<Bytes> accountProof;
@@ -44,6 +45,17 @@ public class GetProofResult {
 
   private final List<StorageEntryProof> storageEntries;
 
+  /**
+   * Instantiates a new Get proof result.
+   *
+   * @param address the address
+   * @param balance the balance
+   * @param codeHash the code hash
+   * @param nonce the nonce
+   * @param storageHash the storage hash
+   * @param accountProof the account proof
+   * @param storageEntries the storage entries
+   */
   public GetProofResult(
       final Address address,
       final Wei balance,
@@ -61,6 +73,13 @@ public class GetProofResult {
     this.storageEntries = storageEntries;
   }
 
+  /**
+   * Build get proof result get proof result.
+   *
+   * @param address the address
+   * @param worldStateProof the world state proof
+   * @return the get proof result
+   */
   public static GetProofResult buildGetProofResult(
       final Address address, final WorldStateProof worldStateProof) {
 
@@ -87,36 +106,71 @@ public class GetProofResult {
         storageEntries);
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   @JsonGetter(value = "address")
   public String getAddress() {
     return address.toString();
   }
 
+  /**
+   * Gets balance.
+   *
+   * @return the balance
+   */
   @JsonGetter(value = "balance")
   public String getBalance() {
     return Quantity.create(balance);
   }
 
+  /**
+   * Gets code hash.
+   *
+   * @return the code hash
+   */
   @JsonGetter(value = "codeHash")
   public String getCodeHash() {
     return codeHash.toString();
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   @JsonGetter(value = "nonce")
   public String getNonce() {
     return Quantity.create(nonce);
   }
 
+  /**
+   * Gets storage hash.
+   *
+   * @return the storage hash
+   */
   @JsonGetter(value = "storageHash")
   public String getStorageHash() {
     return storageHash.toString();
   }
 
+  /**
+   * Gets account proof.
+   *
+   * @return the account proof
+   */
   @JsonGetter(value = "accountProof")
   public List<String> getAccountProof() {
     return accountProof.stream().map(Bytes::toString).collect(Collectors.toList());
   }
 
+  /**
+   * Gets storage proof.
+   *
+   * @return the storage proof
+   */
   @JsonGetter(value = "storageProof")
   public List<StorageEntryProof> getStorageProof() {
     return storageEntries;

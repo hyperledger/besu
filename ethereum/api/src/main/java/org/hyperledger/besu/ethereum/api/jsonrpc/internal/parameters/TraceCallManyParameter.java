@@ -24,9 +24,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 
+/** The type Trace call many parameter. */
 public class TraceCallManyParameter {
+  /** The Params. */
   TraceCallParameterTuple params;
 
+  /**
+   * Instantiates a new Trace call many parameter.
+   *
+   * @param parameters the parameters
+   */
   @JsonCreator
   public TraceCallManyParameter(
       @JsonDeserialize(using = TraceCallParameterDeserializer.class)
@@ -34,17 +41,29 @@ public class TraceCallManyParameter {
     this.params = parameters;
   }
 
+  /**
+   * Gets tuple.
+   *
+   * @return the tuple
+   */
   public TraceCallParameterTuple getTuple() {
     return this.params;
   }
 }
 
+/** The type Trace call parameter deserializer. */
 class TraceCallParameterDeserializer extends StdDeserializer<TraceCallParameterTuple> {
 
+  /**
+   * Instantiates a new Trace call parameter deserializer.
+   *
+   * @param vc the vc
+   */
   public TraceCallParameterDeserializer(final Class<?> vc) {
     super(vc);
   }
 
+  /** Instantiates a new Trace call parameter deserializer. */
   public TraceCallParameterDeserializer() {
     this(null);
   }

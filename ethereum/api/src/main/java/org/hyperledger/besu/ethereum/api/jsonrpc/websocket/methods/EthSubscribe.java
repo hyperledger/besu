@@ -26,8 +26,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscribeRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
 
+/** The type Eth subscribe. */
 public class EthSubscribe extends AbstractSubscriptionMethod {
 
+  /**
+   * Instantiates a new Eth subscribe.
+   *
+   * @param subscriptionManager the subscription manager
+   * @param mapper the mapper
+   */
   EthSubscribe(
       final SubscriptionManager subscriptionManager, final SubscriptionRequestMapper mapper) {
     super(subscriptionManager, mapper);

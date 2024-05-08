@@ -23,12 +23,20 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
+/** The type Priv uninstall filter. */
 public class PrivUninstallFilter implements JsonRpcMethod {
 
   private final FilterManager filterManager;
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv uninstall filter.
+   *
+   * @param filterManager the filter manager
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivUninstallFilter(
       final FilterManager filterManager,
       final PrivacyController privacyController,

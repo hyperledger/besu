@@ -29,8 +29,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
+/** The type Priv subscribe. */
 public class PrivSubscribe extends AbstractPrivateSubscriptionMethod {
 
+  /**
+   * Instantiates a new Priv subscribe.
+   *
+   * @param subscriptionManager the subscription manager
+   * @param mapper the mapper
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivSubscribe(
       final SubscriptionManager subscriptionManager,
       final SubscriptionRequestMapper mapper,

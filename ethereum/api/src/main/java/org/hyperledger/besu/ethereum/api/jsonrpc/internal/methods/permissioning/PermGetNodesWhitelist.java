@@ -19,9 +19,15 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 
 import java.util.Optional;
 
+/** The type Perm get nodes whitelist. */
 @Deprecated
 public class PermGetNodesWhitelist extends PermGetNodesAllowlist {
 
+  /**
+   * Instantiates a new Perm get nodes whitelist.
+   *
+   * @param nodeAllowlistPermissioningController the node allowlist permissioning controller
+   */
   public PermGetNodesWhitelist(
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistPermissioningController) {
     super(nodeAllowlistPermissioningController);

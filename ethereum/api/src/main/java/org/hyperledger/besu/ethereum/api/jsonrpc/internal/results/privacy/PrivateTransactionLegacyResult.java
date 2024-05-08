@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Private transaction legacy result. */
 @JsonPropertyOrder({
   "from",
   "gas",
@@ -46,12 +47,22 @@ import org.apache.tuweni.bytes.Bytes;
 public class PrivateTransactionLegacyResult extends PrivateTransactionResult {
   private final List<String> privateFor;
 
+  /**
+   * Instantiates a new Private transaction legacy result.
+   *
+   * @param tx the tx
+   */
   public PrivateTransactionLegacyResult(final PrivateTransaction tx) {
     super(tx);
     this.privateFor =
         tx.getPrivateFor().get().stream().map(Bytes::toBase64String).collect(Collectors.toList());
   }
 
+  /**
+   * Gets private for.
+   *
+   * @return the private for
+   */
   @JsonGetter(value = "privateFor")
   public List<String> getPrivateFor() {
     return privateFor;

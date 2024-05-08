@@ -21,20 +21,40 @@ import java.util.List;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
+/** The type Create access list result. */
 public class CreateAccessListResult {
+  /** The Access list list. */
   List<AccessListEntry> accessListList;
+
+  /** The Gas used. */
   String gasUsed;
 
+  /**
+   * Instantiates a new Create access list result.
+   *
+   * @param accessListEntries the access list entries
+   * @param gasUsed the gas used
+   */
   public CreateAccessListResult(final List<AccessListEntry> accessListEntries, final long gasUsed) {
     this.accessListList = accessListEntries;
     this.gasUsed = Quantity.create(gasUsed);
   }
 
+  /**
+   * Gets access list.
+   *
+   * @return the access list
+   */
   @JsonGetter(value = "accessList")
   public Collection<AccessListEntry> getAccessList() {
     return accessListList;
   }
 
+  /**
+   * Gets gas used.
+   *
+   * @return the gas used
+   */
   @JsonGetter(value = "gasUsed")
   public String getGasUsed() {
     return gasUsed;

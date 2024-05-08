@@ -18,15 +18,26 @@ import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
+/** The type Transaction receipt status result. */
 public class TransactionReceiptStatusResult extends TransactionReceiptResult {
 
   private final String status;
 
+  /**
+   * Instantiates a new Transaction receipt status result.
+   *
+   * @param receiptWithMetadata the receipt with metadata
+   */
   public TransactionReceiptStatusResult(final TransactionReceiptWithMetadata receiptWithMetadata) {
     super(receiptWithMetadata);
     status = Quantity.create(receipt.getStatus());
   }
 
+  /**
+   * Gets status.
+   *
+   * @return the status
+   */
   @JsonGetter(value = "status")
   public String getStatus() {
     return status;

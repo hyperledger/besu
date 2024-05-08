@@ -26,11 +26,18 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 
 import java.util.Optional;
 
+/** The type Perm reload permissions from file. */
 public class PermReloadPermissionsFromFile implements JsonRpcMethod {
 
   private final Optional<AccountLocalConfigPermissioningController> accountAllowlistController;
   private final Optional<NodeLocalConfigPermissioningController> nodesAllowlistController;
 
+  /**
+   * Instantiates a new Perm reload permissions from file.
+   *
+   * @param accountAllowlistController the account allowlist controller
+   * @param nodesAllowlistController the nodes allowlist controller
+   */
   public PermReloadPermissionsFromFile(
       final Optional<AccountLocalConfigPermissioningController> accountAllowlistController,
       final Optional<NodeLocalConfigPermissioningController> nodesAllowlistController) {

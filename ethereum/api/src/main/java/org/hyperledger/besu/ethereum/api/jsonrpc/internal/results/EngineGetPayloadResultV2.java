@@ -27,14 +27,25 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Engine get payload result v2. */
 @JsonPropertyOrder({
   "executionPayload",
   "blockValue",
 })
 public class EngineGetPayloadResultV2 {
+  /** The Execution payload. */
   protected final PayloadResult executionPayload;
+
   private final String blockValue;
 
+  /**
+   * Instantiates a new Engine get payload result v2.
+   *
+   * @param header the header
+   * @param transactions the transactions
+   * @param withdrawals the withdrawals
+   * @param blockValue the block value
+   */
   public EngineGetPayloadResultV2(
       final BlockHeader header,
       final List<String> transactions,
@@ -44,19 +55,32 @@ public class EngineGetPayloadResultV2 {
     this.blockValue = blockValue;
   }
 
+  /**
+   * Gets execution payload.
+   *
+   * @return the execution payload
+   */
   @JsonGetter(value = "executionPayload")
   public PayloadResult getExecutionPayload() {
     return executionPayload;
   }
 
+  /**
+   * Gets block value.
+   *
+   * @return the block value
+   */
   @JsonGetter(value = "blockValue")
   public String getBlockValue() {
     return blockValue;
   }
 
+  /** The type Payload result. */
   public static class PayloadResult {
 
+    /** The Block hash. */
     protected final String blockHash;
+
     private final String parentHash;
     private final String feeRecipient;
     private final String stateRoot;
@@ -69,9 +93,19 @@ public class EngineGetPayloadResultV2 {
     private final String timestamp;
     private final String extraData;
     private final String baseFeePerGas;
+
+    /** The Transactions. */
     protected final List<String> transactions;
+
     private final List<WithdrawalParameter> withdrawals;
 
+    /**
+     * Instantiates a new Payload result.
+     *
+     * @param header the header
+     * @param transactions the transactions
+     * @param withdrawals the withdrawals
+     */
     public PayloadResult(
         final BlockHeader header,
         final List<String> transactions,
@@ -100,76 +134,151 @@ public class EngineGetPayloadResultV2 {
               .orElse(null);
     }
 
+    /**
+     * Gets number.
+     *
+     * @return the number
+     */
     @JsonGetter(value = "blockNumber")
     public String getNumber() {
       return blockNumber;
     }
 
+    /**
+     * Gets hash.
+     *
+     * @return the hash
+     */
     @JsonGetter(value = "blockHash")
     public String getHash() {
       return blockHash;
     }
 
+    /**
+     * Gets parent hash.
+     *
+     * @return the parent hash
+     */
     @JsonGetter(value = "parentHash")
     public String getParentHash() {
       return parentHash;
     }
 
+    /**
+     * Gets logs bloom.
+     *
+     * @return the logs bloom
+     */
     @JsonGetter(value = "logsBloom")
     public String getLogsBloom() {
       return logsBloom;
     }
 
+    /**
+     * Gets prev randao.
+     *
+     * @return the prev randao
+     */
     @JsonGetter(value = "prevRandao")
     public String getPrevRandao() {
       return prevRandao;
     }
 
+    /**
+     * Gets state root.
+     *
+     * @return the state root
+     */
     @JsonGetter(value = "stateRoot")
     public String getStateRoot() {
       return stateRoot;
     }
 
+    /**
+     * Gets receipt root.
+     *
+     * @return the receipt root
+     */
     @JsonGetter(value = "receiptsRoot")
     public String getReceiptRoot() {
       return receiptsRoot;
     }
 
+    /**
+     * Gets extra data.
+     *
+     * @return the extra data
+     */
     @JsonGetter(value = "extraData")
     public String getExtraData() {
       return extraData;
     }
 
+    /**
+     * Gets base fee per gas.
+     *
+     * @return the base fee per gas
+     */
     @JsonGetter(value = "baseFeePerGas")
     public String getBaseFeePerGas() {
       return baseFeePerGas;
     }
 
+    /**
+     * Gets gas limit.
+     *
+     * @return the gas limit
+     */
     @JsonGetter(value = "gasLimit")
     public String getGasLimit() {
       return gasLimit;
     }
 
+    /**
+     * Gets gas used.
+     *
+     * @return the gas used
+     */
     @JsonGetter(value = "gasUsed")
     public String getGasUsed() {
       return gasUsed;
     }
 
+    /**
+     * Gets timestamp.
+     *
+     * @return the timestamp
+     */
     @JsonGetter(value = "timestamp")
     public String getTimestamp() {
       return timestamp;
     }
 
+    /**
+     * Gets transactions.
+     *
+     * @return the transactions
+     */
     @JsonGetter(value = "transactions")
     public List<String> getTransactions() {
       return transactions;
     }
 
+    /**
+     * Gets withdrawals.
+     *
+     * @return the withdrawals
+     */
     @JsonGetter(value = "withdrawals")
     public List<WithdrawalParameter> getWithdrawals() {
       return withdrawals;
     }
 
+    /**
+     * Gets fee recipient.
+     *
+     * @return the fee recipient
+     */
     @JsonGetter(value = "feeRecipient")
     @JsonInclude(JsonInclude.Include.NON_NULL)
     public String getFeeRecipient() {

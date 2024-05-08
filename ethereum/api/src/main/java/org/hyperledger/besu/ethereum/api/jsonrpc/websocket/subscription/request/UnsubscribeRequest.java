@@ -16,20 +16,37 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request
 
 import java.util.Objects;
 
+/** The type Unsubscribe request. */
 public class UnsubscribeRequest {
 
   private final Long subscriptionId;
   private final String connectionId;
 
+  /**
+   * Instantiates a new Unsubscribe request.
+   *
+   * @param subscriptionId the subscription id
+   * @param connectionId the connection id
+   */
   public UnsubscribeRequest(final Long subscriptionId, final String connectionId) {
     this.subscriptionId = subscriptionId;
     this.connectionId = connectionId;
   }
 
+  /**
+   * Gets subscription id.
+   *
+   * @return the subscription id
+   */
   public Long getSubscriptionId() {
     return subscriptionId;
   }
 
+  /**
+   * Gets connection id.
+   *
+   * @return the connection id
+   */
   public String getConnectionId() {
     return connectionId;
   }

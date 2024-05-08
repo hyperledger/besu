@@ -27,12 +27,20 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
+/** The type Priv new filter. */
 public class PrivNewFilter implements JsonRpcMethod {
 
   private final FilterManager filterManager;
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv new filter.
+   *
+   * @param filterManager the filter manager
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivNewFilter(
       final FilterManager filterManager,
       final PrivacyController privacyController,

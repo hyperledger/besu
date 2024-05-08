@@ -76,6 +76,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import java.util.Map;
 import java.util.Set;
 
+/** The type Eth json rpc methods. */
 public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockResultFactory blockResult = new BlockResultFactory();
@@ -89,6 +90,18 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final Set<Capability> supportedCapabilities;
   private final ApiConfiguration apiConfiguration;
 
+  /**
+   * Instantiates a new Eth json rpc methods.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param synchronizer the synchronizer
+   * @param protocolSchedule the protocol schedule
+   * @param filterManager the filter manager
+   * @param transactionPool the transaction pool
+   * @param miningCoordinator the mining coordinator
+   * @param supportedCapabilities the supported capabilities
+   * @param apiConfiguration the api configuration
+   */
   public EthJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final Synchronizer synchronizer,

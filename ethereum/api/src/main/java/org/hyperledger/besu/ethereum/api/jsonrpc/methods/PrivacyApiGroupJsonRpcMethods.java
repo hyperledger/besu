@@ -42,6 +42,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
+/** The type Privacy api group json rpc methods. */
 public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
@@ -51,6 +52,14 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
   private final PrivateNonceProvider privateNonceProvider;
   private final PrivacyQueries privacyQueries;
 
+  /**
+   * Instantiates a new Privacy api group json rpc methods.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionPool the transaction pool
+   * @param privacyParameters the privacy parameters
+   */
   protected PrivacyApiGroupJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
@@ -71,22 +80,47 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
         new PrivacyQueries(blockchainQueries, privacyParameters.getPrivateWorldStateReader());
   }
 
+  /**
+   * Gets blockchain queries.
+   *
+   * @return the blockchain queries
+   */
   public BlockchainQueries getBlockchainQueries() {
     return blockchainQueries;
   }
 
+  /**
+   * Gets protocol schedule.
+   *
+   * @return the protocol schedule
+   */
   public ProtocolSchedule getProtocolSchedule() {
     return protocolSchedule;
   }
 
+  /**
+   * Gets transaction pool.
+   *
+   * @return the transaction pool
+   */
   public TransactionPool getTransactionPool() {
     return transactionPool;
   }
 
+  /**
+   * Gets privacy parameters.
+   *
+   * @return the privacy parameters
+   */
   public PrivacyParameters getPrivacyParameters() {
     return privacyParameters;
   }
 
+  /**
+   * Gets gas calculator.
+   *
+   * @return the gas calculator
+   */
   public GasCalculator getGasCalculator() {
     return protocolSchedule
         .getByBlockHeader(blockchainQueries.headBlockHeader())
@@ -108,6 +142,14 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
                 entry -> createPrivacyMethod(privacyParameters, entry.getValue())));
   }
 
+  /**
+   * Create map.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   * @param markerTransactionFactory the marker transaction factory
+   * @return the map
+   */
   protected abstract Map<String, JsonRpcMethod> create(
       final PrivacyController privacyController,
       final PrivacyIdProvider privacyIdProvider,
@@ -162,6 +204,11 @@ public abstract class PrivacyApiGroupJsonRpcMethods extends ApiGroupJsonRpcMetho
     }
   }
 
+  /**
+   * Gets privacy queries.
+   *
+   * @return the privacy queries
+   */
   PrivacyQueries getPrivacyQueries() {
     return privacyQueries;
   }

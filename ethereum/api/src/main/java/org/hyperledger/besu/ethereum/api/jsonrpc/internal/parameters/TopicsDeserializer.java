@@ -27,11 +27,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.deser.std.StdDeserializer;
 import com.google.common.collect.Lists;
 
+/** The type Topics deserializer. */
 public class TopicsDeserializer extends StdDeserializer<List<List<LogTopic>>> {
+  /** Instantiates a new Topics deserializer. */
   public TopicsDeserializer() {
     this(null);
   }
 
+  /**
+   * Instantiates a new Topics deserializer.
+   *
+   * @param vc the vc
+   */
   public TopicsDeserializer(final Class<?> vc) {
     super(vc);
   }

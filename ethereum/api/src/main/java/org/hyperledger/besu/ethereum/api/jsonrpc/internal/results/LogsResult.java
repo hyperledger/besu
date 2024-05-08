@@ -26,6 +26,11 @@ public class LogsResult {
 
   private final List<LogResult> results;
 
+  /**
+   * Instantiates a new Logs result.
+   *
+   * @param logs the logs
+   */
   public LogsResult(final List<LogWithMetadata> logs) {
     results = new ArrayList<>(logs.size());
 
@@ -34,6 +39,11 @@ public class LogsResult {
     }
   }
 
+  /**
+   * Gets results.
+   *
+   * @return the results
+   */
   @JsonValue
   public List<LogResult> getResults() {
     return results;

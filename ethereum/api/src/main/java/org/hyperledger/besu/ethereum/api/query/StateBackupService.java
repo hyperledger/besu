@@ -55,6 +55,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type State backup service. */
 public class StateBackupService {
 
   private static final Logger LOG = LoggerFactory.getLogger(StateBackupService.class);
@@ -77,6 +78,15 @@ public class StateBackupService {
   private Path backupDir;
   private RollingFileWriter accountFileWriter;
 
+  /**
+   * Instantiates a new State backup service.
+   *
+   * @param besuVersion the besu version
+   * @param blockchain the blockchain
+   * @param backupDir the backup dir
+   * @param scheduler the scheduler
+   * @param worldStateKeyValueStorage the world state key value storage
+   */
   public StateBackupService(
       final String besuVersion,
       final Blockchain blockchain,
@@ -90,10 +100,23 @@ public class StateBackupService {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
   }
 
+  /**
+   * Gets backup dir.
+   *
+   * @return the backup dir
+   */
   public Path getBackupDir() {
     return backupDir;
   }
 
+  /**
+   * Request backup backup status.
+   *
+   * @param block the block
+   * @param compress the compress
+   * @param backupDir the backup dir
+   * @return the backup status
+   */
   public BackupStatus requestBackup(
       final long block, final boolean compress, final Optional<Path> backupDir) {
     boolean requestAccepted = false;
@@ -128,10 +151,25 @@ public class StateBackupService {
     return backupStatus;
   }
 
+  /**
+   * Data file to index path.
+   *
+   * @param dataName the data name
+   * @return the path
+   */
   public static Path dataFileToIndex(final Path dataName) {
     return Path.of(dataName.toString().replaceAll("(.*)[-.]\\d\\d\\d\\d\\.(.)dat", "$1.$2idx"));
   }
 
+  /**
+   * Account file name path.
+   *
+   * @param backupDir the backup dir
+   * @param targetBlock the target block
+   * @param fileNumber the file number
+   * @param compressed the compressed
+   * @return the path
+   */
   public static Path accountFileName(
       final Path backupDir,
       final long targetBlock,
@@ -143,18 +181,42 @@ public class StateBackupService {
             targetBlock, fileNumber, compressed ? "c" : "r"));
   }
 
+  /**
+   * Header file name path.
+   *
+   * @param backupDir the backup dir
+   * @param fileNumber the file number
+   * @param compressed the compressed
+   * @return the path
+   */
   public static Path headerFileName(
       final Path backupDir, final int fileNumber, final boolean compressed) {
     return backupDir.resolve(
         String.format("besu-header-backup-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
   }
 
+  /**
+   * Body file name path.
+   *
+   * @param backupDir the backup dir
+   * @param fileNumber the file number
+   * @param compressed the compressed
+   * @return the path
+   */
   public static Path bodyFileName(
       final Path backupDir, final int fileNumber, final boolean compressed) {
     return backupDir.resolve(
         String.format("besu-body-backup-%04d.%sdat", fileNumber, compressed ? "c" : "r"));
   }
 
+  /**
+   * Receipt file name path.
+   *
+   * @param backupDir the backup dir
+   * @param fileNumber the file number
+   * @param compressed the compressed
+   * @return the path
+   */
   public static Path receiptFileName(
       final Path backupDir, final int fileNumber, final boolean compressed) {
     return backupDir.resolve(
@@ -338,67 +400,143 @@ public class StateBackupService {
     return State.CONTINUE;
   }
 
+  /** The type Backup status. */
   public static final class BackupStatus {
+    /** The Target block. */
     long targetBlock;
+
+    /** The Stored block. */
     long storedBlock;
+
+    /** The Compressed. */
     boolean compressed;
+
+    /** The Current account. */
     Bytes32 currentAccount;
+
+    /** The Current storage. */
     Bytes32 currentStorage;
+
+    /** The Account count. */
     AtomicLong accountCount = new AtomicLong(0);
+
+    /** The Code size. */
     AtomicLong codeSize = new AtomicLong(0);
+
+    /** The Storage count. */
     AtomicLong storageCount = new AtomicLong(0);
+
+    /** The Request accepted. */
     boolean requestAccepted;
 
+    /** Default constructor. */
+    public BackupStatus() {}
+
+    /**
+     * Gets target block.
+     *
+     * @return the target block
+     */
     @JsonGetter
     public String getTargetBlock() {
       return "0x" + Long.toHexString(targetBlock);
     }
 
+    /**
+     * Gets stored block.
+     *
+     * @return the stored block
+     */
     @JsonGetter
     public String getStoredBlock() {
       return "0x" + Long.toHexString(storedBlock);
     }
 
+    /**
+     * Gets current account.
+     *
+     * @return the current account
+     */
     @JsonGetter
     public String getCurrentAccount() {
       return currentAccount.toHexString();
     }
 
+    /**
+     * Gets current storage.
+     *
+     * @return the current storage
+     */
     @JsonGetter
     public String getCurrentStorage() {
       return currentStorage.toHexString();
     }
 
+    /**
+     * Is backing up boolean.
+     *
+     * @return the boolean
+     */
     @JsonGetter
     public boolean isBackingUp() {
       return currentAccount != null;
     }
 
+    /**
+     * Gets account count.
+     *
+     * @return the account count
+     */
     @JsonIgnore
     public long getAccountCount() {
       return accountCount.get();
     }
 
+    /**
+     * Gets code size.
+     *
+     * @return the code size
+     */
     @JsonIgnore
     public long getCodeSize() {
       return codeSize.get();
     }
 
+    /**
+     * Gets storage count.
+     *
+     * @return the storage count
+     */
     @JsonIgnore
     public long getStorageCount() {
       return storageCount.get();
     }
 
+    /**
+     * Gets current account bytes.
+     *
+     * @return the current account bytes
+     */
     @JsonIgnore
     public Bytes getCurrentAccountBytes() {
       return currentAccount;
     }
 
+    /**
+     * Gets stored block num.
+     *
+     * @return the stored block num
+     */
     @JsonIgnore
     public long getStoredBlockNum() {
       return storedBlock;
     }
 
+    /**
+     * Gets target block num.
+     *
+     * @return the target block num
+     */
     @JsonIgnore
     public long getTargetBlockNum() {
       return targetBlock;

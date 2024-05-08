@@ -17,15 +17,26 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type U int 256 parameter. */
 public class UInt256Parameter {
 
   private final UInt256 value;
 
+  /**
+   * Instantiates a new U int 256 parameter.
+   *
+   * @param value the value
+   */
   @JsonCreator
   public UInt256Parameter(final String value) {
     this.value = UInt256.fromHexString(value);
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public UInt256 getValue() {
     return value;
   }

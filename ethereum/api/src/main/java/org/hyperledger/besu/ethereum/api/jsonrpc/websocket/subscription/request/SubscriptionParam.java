@@ -17,15 +17,26 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The type Subscription param. */
 class SubscriptionParam {
 
   private final boolean includeTransaction;
 
+  /**
+   * Instantiates a new Subscription param.
+   *
+   * @param includeTransaction the include transaction
+   */
   @JsonCreator
   SubscriptionParam(@JsonProperty("includeTransactions") final boolean includeTransaction) {
     this.includeTransaction = includeTransaction;
   }
 
+  /**
+   * Include transaction boolean.
+   *
+   * @return the boolean
+   */
   boolean includeTransaction() {
     return includeTransaction;
   }

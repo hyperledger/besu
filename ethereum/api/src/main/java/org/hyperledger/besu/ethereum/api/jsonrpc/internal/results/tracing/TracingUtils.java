@@ -23,8 +23,17 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Tracing utils. */
 public class TracingUtils {
+  /** Default constructor. */
+  private TracingUtils() {}
 
+  /**
+   * Dump memory string.
+   *
+   * @param maybeMemory the maybe memory
+   * @return the string
+   */
   public static String dumpMemory(final Optional<Bytes32[]> maybeMemory) {
     return maybeMemory.map(TracingUtils::dumpMemory).orElse("");
   }
@@ -37,6 +46,12 @@ public class TracingUtils {
     return Arrays.stream(memory).map(Bytes::toUnprefixedHexString).collect(Collectors.joining());
   }
 
+  /**
+   * Dump memory and trim trailing zeros string.
+   *
+   * @param memory the memory
+   * @return the string
+   */
   public static String dumpMemoryAndTrimTrailingZeros(final Bytes32[] memory) {
     final String memoryString = dumpMemoryUnprefixed(memory);
     final Bytes value = Bytes.fromHexString(memoryString);
@@ -57,6 +72,12 @@ public class TracingUtils {
     return bytes.size();
   }
 
+  /**
+   * Wei as hex string.
+   *
+   * @param balance the balance
+   * @return the string
+   */
   public static String weiAsHex(final Wei balance) {
     return balance.isZero() ? "0x0" : balance.toShortHexString();
   }

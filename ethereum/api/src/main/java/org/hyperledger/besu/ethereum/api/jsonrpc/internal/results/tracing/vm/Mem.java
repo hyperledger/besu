@@ -14,20 +14,37 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
+/** The type Mem. */
 public class Mem {
 
   private final String data;
   private final long off;
 
+  /**
+   * Instantiates a new Mem.
+   *
+   * @param data the data
+   * @param off the off
+   */
   public Mem(final String data, final long off) {
     this.data = data;
     this.off = off;
   }
 
+  /**
+   * Gets data.
+   *
+   * @return the data
+   */
   public String getData() {
     return data;
   }
 
+  /**
+   * Gets off.
+   *
+   * @return the off
+   */
   public long getOff() {
     return off;
   }

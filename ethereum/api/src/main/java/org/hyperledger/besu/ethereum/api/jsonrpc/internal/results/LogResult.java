@@ -47,6 +47,11 @@ public class LogResult implements JsonRpcResult {
   private final List<String> topics;
   private final boolean removed;
 
+  /**
+   * Instantiates a new Log result.
+   *
+   * @param logWithMetadata the log with metadata
+   */
   public LogResult(final LogWithMetadata logWithMetadata) {
     this.logIndex = Quantity.create(logWithMetadata.getLogIndex());
     this.blockNumber = Quantity.create(logWithMetadata.getBlockNumber());
@@ -63,46 +68,91 @@ public class LogResult implements JsonRpcResult {
     }
   }
 
+  /**
+   * Gets log index.
+   *
+   * @return the log index
+   */
   @JsonGetter(value = "logIndex")
   public String getLogIndex() {
     return logIndex;
   }
 
+  /**
+   * Gets block number.
+   *
+   * @return the block number
+   */
   @JsonGetter(value = "blockNumber")
   public String getBlockNumber() {
     return blockNumber;
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   @JsonGetter(value = "blockHash")
   public String getBlockHash() {
     return blockHash;
   }
 
+  /**
+   * Gets transaction hash.
+   *
+   * @return the transaction hash
+   */
   @JsonGetter(value = "transactionHash")
   public String getTransactionHash() {
     return transactionHash;
   }
 
+  /**
+   * Gets transaction index.
+   *
+   * @return the transaction index
+   */
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
     return transactionIndex;
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   @JsonGetter(value = "address")
   public String getAddress() {
     return address;
   }
 
+  /**
+   * Gets data.
+   *
+   * @return the data
+   */
   @JsonGetter(value = "data")
   public String getData() {
     return data;
   }
 
+  /**
+   * Gets topics.
+   *
+   * @return the topics
+   */
   @JsonGetter(value = "topics")
   public List<String> getTopics() {
     return topics;
   }
 
+  /**
+   * Is removed boolean.
+   *
+   * @return the boolean
+   */
   @JsonGetter(value = "removed")
   public boolean isRemoved() {
     return removed;

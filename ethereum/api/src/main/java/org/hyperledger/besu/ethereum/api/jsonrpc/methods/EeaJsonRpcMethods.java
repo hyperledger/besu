@@ -32,12 +32,21 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 
 import java.util.Map;
 
+/** The type Eea json rpc methods. */
 public class EeaJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   private final TransactionPool transactionPool;
   private final PrivacyParameters privacyParameters;
   private final NonceProvider nonceProvider;
 
+  /**
+   * Instantiates a new Eea json rpc methods.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionPool the transaction pool
+   * @param privacyParameters the privacy parameters
+   */
   public EeaJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,

@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Subscription response result. */
 @JsonPropertyOrder({"subscription", "privacyGroupId", "result"})
 public class SubscriptionResponseResult {
 
@@ -30,10 +31,23 @@ public class SubscriptionResponseResult {
   @JsonInclude(Include.NON_NULL)
   private final String privacyGroupId;
 
+  /**
+   * Instantiates a new Subscription response result.
+   *
+   * @param subscription the subscription
+   * @param result the result
+   */
   SubscriptionResponseResult(final String subscription, final JsonRpcResult result) {
     this(subscription, result, null);
   }
 
+  /**
+   * Instantiates a new Subscription response result.
+   *
+   * @param subscription the subscription
+   * @param result the result
+   * @param privacyGroupId the privacy group id
+   */
   SubscriptionResponseResult(
       final String subscription, final JsonRpcResult result, final String privacyGroupId) {
     this.subscription = subscription;
@@ -41,16 +55,31 @@ public class SubscriptionResponseResult {
     this.privacyGroupId = privacyGroupId;
   }
 
+  /**
+   * Gets subscription.
+   *
+   * @return the subscription
+   */
   @JsonGetter("subscription")
   public String getSubscription() {
     return subscription;
   }
 
+  /**
+   * Gets result.
+   *
+   * @return the result
+   */
   @JsonGetter("result")
   public JsonRpcResult getResult() {
     return result;
   }
 
+  /**
+   * Gets privacy group id.
+   *
+   * @return the privacy group id
+   */
   @JsonGetter("privacyGroupId")
   public String getPrivacyGroupId() {
     return privacyGroupId;

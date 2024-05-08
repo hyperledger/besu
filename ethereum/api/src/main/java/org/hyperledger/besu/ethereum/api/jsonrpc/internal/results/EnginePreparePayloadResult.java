@@ -22,21 +22,38 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Engine prepare payload result. */
 @JsonPropertyOrder({"status", "payloadId"})
 public class EnginePreparePayloadResult {
   private final EngineStatus status;
   private final PayloadIdentifier payloadId;
 
+  /**
+   * Instantiates a new Engine prepare payload result.
+   *
+   * @param status the status
+   * @param payloadId the payload id
+   */
   public EnginePreparePayloadResult(final EngineStatus status, final PayloadIdentifier payloadId) {
     this.status = status;
     this.payloadId = payloadId;
   }
 
+  /**
+   * Gets status.
+   *
+   * @return the status
+   */
   @JsonGetter(value = "status")
   public String getStatus() {
     return status.name();
   }
 
+  /**
+   * Gets payload id.
+   *
+   * @return the payload id
+   */
   @JsonGetter(value = "payloadId")
   public String getPayloadId() {
     return Optional.ofNullable(payloadId).map(PayloadIdentifier::toShortHexString).orElse("");

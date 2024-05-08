@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
+/** The type Disabled privacy rpc method. */
 public class DisabledPrivacyRpcMethod implements JsonRpcMethod {
 
   private final String methodName;
@@ -29,6 +30,11 @@ public class DisabledPrivacyRpcMethod implements JsonRpcMethod {
     return methodName;
   }
 
+  /**
+   * Instantiates a new Disabled privacy rpc method.
+   *
+   * @param methodName the method name
+   */
   public DisabledPrivacyRpcMethod(final String methodName) {
     this.methodName = methodName;
   }

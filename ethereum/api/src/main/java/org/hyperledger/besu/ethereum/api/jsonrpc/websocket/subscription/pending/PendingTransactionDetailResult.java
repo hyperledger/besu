@@ -24,6 +24,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Pending transaction detail result. */
 @JsonPropertyOrder({
   "from",
   "gas",
@@ -54,6 +55,11 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
   private final String r;
   private final String s;
 
+  /**
+   * Instantiates a new Pending transaction detail result.
+   *
+   * @param tx the tx
+   */
   public PendingTransactionDetailResult(final Transaction tx) {
     TransactionType transactionType = tx.getType();
     this.from = tx.getSender().toString();
@@ -81,68 +87,133 @@ public class PendingTransactionDetailResult implements JsonRpcResult {
     this.s = Quantity.create(tx.getS());
   }
 
+  /**
+   * Gets from.
+   *
+   * @return the from
+   */
   @JsonGetter(value = "from")
   public String getFrom() {
     return from;
   }
 
+  /**
+   * Gets gas.
+   *
+   * @return the gas
+   */
   @JsonGetter(value = "gas")
   public String getGas() {
     return gas;
   }
 
+  /**
+   * Gets gas price.
+   *
+   * @return the gas price
+   */
   @JsonGetter(value = "gasPrice")
   public String getGasPrice() {
     return gasPrice;
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   @JsonGetter(value = "hash")
   public String getHash() {
     return hash;
   }
 
+  /**
+   * Gets input.
+   *
+   * @return the input
+   */
   @JsonGetter(value = "input")
   public String getInput() {
     return input;
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   @JsonGetter(value = "nonce")
   public String getNonce() {
     return nonce;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   @JsonGetter(value = "to")
   public String getTo() {
     return to;
   }
 
+  /**
+   * Gets type.
+   *
+   * @return the type
+   */
   @JsonGetter(value = "type")
   public String getType() {
     return type;
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   @JsonGetter(value = "value")
   public String getValue() {
     return value;
   }
 
+  /**
+   * Gets parity.
+   *
+   * @return the parity
+   */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter(value = "yParity")
   public String getyParity() {
     return yParity;
   }
 
+  /**
+   * Gets v.
+   *
+   * @return the v
+   */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter(value = "v")
   public String getV() {
     return v;
   }
 
+  /**
+   * Gets r.
+   *
+   * @return the r
+   */
   @JsonGetter(value = "r")
   public String getR() {
     return r;
   }
 
+  /**
+   * Gets s.
+   *
+   * @return the s
+   */
   @JsonGetter(value = "s")
   public String getS() {
     return s;

@@ -26,11 +26,15 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+/** The type Reward trace generator. */
 public class RewardTraceGenerator {
 
   private static final String REWARD_LABEL = "reward";
   private static final String BLOCK_LABEL = "block";
   private static final String UNCLE_LABEL = "uncle";
+
+  /** Default constructor. */
+  private RewardTraceGenerator() {}
 
   /**
    * Generates a stream of reward {@link Trace} from the passed {@link Block} data.

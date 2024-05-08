@@ -32,6 +32,7 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Vm trace generator. */
 public class VmTraceGenerator {
 
   private int currentIndex = 0;
@@ -43,6 +44,11 @@ public class VmTraceGenerator {
   private final Deque<VmTrace> parentTraces = new ArrayDeque<>();
   private int lastDepth = 0;
 
+  /**
+   * Instantiates a new Vm trace generator.
+   *
+   * @param transactionTrace the transaction trace
+   */
   public VmTraceGenerator(final TransactionTrace transactionTrace) {
     this.transactionTrace = transactionTrace;
   }

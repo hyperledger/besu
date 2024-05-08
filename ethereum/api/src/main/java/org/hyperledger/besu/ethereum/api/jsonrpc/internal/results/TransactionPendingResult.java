@@ -29,6 +29,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Transaction pending result. */
 @JsonPropertyOrder({
   "blockHash",
   "blockNumber",
@@ -86,6 +87,11 @@ public class TransactionPendingResult implements TransactionResult {
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final List<VersionedHash> versionedHashes;
 
+  /**
+   * Instantiates a new Transaction pending result.
+   *
+   * @param transaction the transaction
+   */
   public TransactionPendingResult(final Transaction transaction) {
     final TransactionType transactionType = transaction.getType();
     this.accessList = transaction.getAccessList().orElse(null);
@@ -125,123 +131,243 @@ public class TransactionPendingResult implements TransactionResult {
     this.versionedHashes = transaction.getVersionedHashes().orElse(null);
   }
 
+  /**
+   * Gets access list.
+   *
+   * @return the access list
+   */
   @JsonGetter(value = "accessList")
   public List<AccessListEntry> getAccessList() {
     return accessList;
   }
 
+  /**
+   * Gets chain id.
+   *
+   * @return the chain id
+   */
   @JsonGetter(value = "chainId")
   public String getChainId() {
     return chainId;
   }
 
+  /**
+   * Gets from.
+   *
+   * @return the from
+   */
   @JsonGetter(value = "from")
   public String getFrom() {
     return from;
   }
 
+  /**
+   * Gets gas.
+   *
+   * @return the gas
+   */
   @JsonGetter(value = "gas")
   public String getGas() {
     return gas;
   }
 
+  /**
+   * Gets gas price.
+   *
+   * @return the gas price
+   */
   @JsonGetter(value = "gasPrice")
   public String getGasPrice() {
     return gasPrice;
   }
 
+  /**
+   * Gets max priority fee per gas.
+   *
+   * @return the max priority fee per gas
+   */
   @JsonGetter(value = "maxPriorityFeePerGas")
   public String getMaxPriorityFeePerGas() {
     return maxPriorityFeePerGas;
   }
 
+  /**
+   * Gets max fee per gas.
+   *
+   * @return the max fee per gas
+   */
   @JsonGetter(value = "maxFeePerGas")
   public String getMaxFeePerGas() {
     return maxFeePerGas;
   }
 
+  /**
+   * Gets max fee per blob gas.
+   *
+   * @return the max fee per blob gas
+   */
   @JsonGetter(value = "maxFeePerBlobGas")
   public String getMaxFeePerBlobGas() {
     return maxFeePerBlobGas;
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   @JsonGetter(value = "hash")
   public String getHash() {
     return hash;
   }
 
+  /**
+   * Gets input.
+   *
+   * @return the input
+   */
   @JsonGetter(value = "input")
   public String getInput() {
     return input;
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   @JsonGetter(value = "nonce")
   public String getNonce() {
     return nonce;
   }
 
+  /**
+   * Gets public key.
+   *
+   * @return the public key
+   */
   @JsonGetter(value = "publicKey")
   public String getPublicKey() {
     return publicKey;
   }
 
+  /**
+   * Gets raw.
+   *
+   * @return the raw
+   */
   @JsonGetter(value = "raw")
   public String getRaw() {
     return raw;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   @JsonGetter(value = "to")
   public String getTo() {
     return to;
   }
 
+  /**
+   * Gets type.
+   *
+   * @return the type
+   */
   @JsonGetter(value = "type")
   public String getType() {
     return type;
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   @JsonGetter(value = "value")
   public String getValue() {
     return value;
   }
 
+  /**
+   * Gets y parity.
+   *
+   * @return the y parity
+   */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter(value = "yParity")
   public String getYParity() {
     return yParity;
   }
 
+  /**
+   * Gets v.
+   *
+   * @return the v
+   */
   @JsonInclude(JsonInclude.Include.NON_NULL)
   @JsonGetter(value = "v")
   public String getV() {
     return v;
   }
 
+  /**
+   * Gets r.
+   *
+   * @return the r
+   */
   @JsonGetter(value = "r")
   public String getR() {
     return r;
   }
 
+  /**
+   * Gets s.
+   *
+   * @return the s
+   */
   @JsonGetter(value = "s")
   public String getS() {
     return s;
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   @JsonGetter(value = "blockHash")
   public String getBlockHash() {
     return null;
   }
 
+  /**
+   * Gets block number.
+   *
+   * @return the block number
+   */
   @JsonGetter(value = "blockNumber")
   public String getBlockNumber() {
     return null;
   }
 
+  /**
+   * Gets transaction index.
+   *
+   * @return the transaction index
+   */
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
     return null;
   }
 
+  /**
+   * Gets versioned hashes.
+   *
+   * @return the versioned hashes
+   */
   @JsonGetter(value = "blobVersionedHashes")
   public List<VersionedHash> getVersionedHashes() {
     return versionedHashes;

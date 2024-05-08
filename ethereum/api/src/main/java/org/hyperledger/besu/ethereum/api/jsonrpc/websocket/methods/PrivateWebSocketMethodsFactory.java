@@ -35,6 +35,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.Set;
 
+/** The type Private web socket methods factory. */
 public class PrivateWebSocketMethodsFactory {
 
   private final PrivacyParameters privacyParameters;
@@ -42,6 +43,14 @@ public class PrivateWebSocketMethodsFactory {
   private final ProtocolSchedule protocolSchedule;
   private final BlockchainQueries blockchainQueries;
 
+  /**
+   * Instantiates a new Private web socket methods factory.
+   *
+   * @param privacyParameters the privacy parameters
+   * @param subscriptionManager the subscription manager
+   * @param protocolSchedule the protocol schedule
+   * @param blockchainQueries the blockchain queries
+   */
   public PrivateWebSocketMethodsFactory(
       final PrivacyParameters privacyParameters,
       final SubscriptionManager subscriptionManager,
@@ -53,6 +62,11 @@ public class PrivateWebSocketMethodsFactory {
     this.blockchainQueries = blockchainQueries;
   }
 
+  /**
+   * Methods collection.
+   *
+   * @return the collection
+   */
   public Collection<JsonRpcMethod> methods() {
     final SubscriptionRequestMapper subscriptionRequestMapper = new SubscriptionRequestMapper();
     final PrivacyIdProvider privacyIdProvider = PrivacyIdProvider.build(privacyParameters);

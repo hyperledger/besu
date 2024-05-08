@@ -14,21 +14,38 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.vm;
 
+/** The type Store. */
 public class Store {
 
   private final String key;
 
   private final String val;
 
+  /**
+   * Instantiates a new Store.
+   *
+   * @param key the key
+   * @param val the val
+   */
   Store(final String key, final String val) {
     this.key = key;
     this.val = val;
   }
 
+  /**
+   * Gets key.
+   *
+   * @return the key
+   */
   public String getKey() {
     return key;
   }
 
+  /**
+   * Gets val.
+   *
+   * @return the val
+   */
   public String getVal() {
     return val;
   }

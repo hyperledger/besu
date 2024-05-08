@@ -54,15 +54,31 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** Used to produce debug traces of transactions */
 public class TransactionTracer {
 
+  /** The constant TRACE_PATH. */
   public static final String TRACE_PATH = "traces";
+
   private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
   private final BlockReplay blockReplay;
 
+  /**
+   * Instantiates a new Transaction tracer.
+   *
+   * @param blockReplay the block replay
+   */
   public TransactionTracer(final BlockReplay blockReplay) {
     this.blockReplay = blockReplay;
   }
 
+  /**
+   * Trace transaction optional.
+   *
+   * @param mutableWorldState the mutable world state
+   * @param blockHash the block hash
+   * @param transactionHash the transaction hash
+   * @param tracer the tracer
+   * @return the optional
+   */
   public Optional<TransactionTrace> traceTransaction(
       final Tracer.TraceableState mutableWorldState,
       final Hash blockHash,
@@ -86,6 +102,15 @@ public class TransactionTracer {
         });
   }
 
+  /**
+   * Trace transaction to file list.
+   *
+   * @param mutableWorldState the mutable world state
+   * @param blockHash the block hash
+   * @param transactionTraceParams the transaction trace params
+   * @param traceDir the trace dir
+   * @return the list
+   */
   public List<String> traceTransactionToFile(
       final MutableWorldState mutableWorldState,
       final Hash blockHash,
@@ -198,6 +223,14 @@ public class TransactionTracer {
         blobGasPrice);
   }
 
+  /**
+   * Summary trace string.
+   *
+   * @param transaction the transaction
+   * @param timer the timer
+   * @param result the result
+   * @return the string
+   */
   public static String summaryTrace(
       final Transaction transaction, final long timer, final TransactionProcessingResult result) {
     final ObjectNode summaryLine = OBJECT_MAPPER.createObjectNode();

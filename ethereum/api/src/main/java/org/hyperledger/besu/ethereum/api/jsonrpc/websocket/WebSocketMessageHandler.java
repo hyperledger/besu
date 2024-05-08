@@ -45,6 +45,7 @@ import io.vertx.ext.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Web socket message handler. */
 public class WebSocketMessageHandler {
 
   private static final ObjectMapper jsonObjectMapper =
@@ -61,9 +62,20 @@ public class WebSocketMessageHandler {
 
   private final Vertx vertx;
   private final JsonRpcExecutor jsonRpcExecutor;
+
+  /** The Eth scheduler. */
   final EthScheduler ethScheduler;
+
   private final long timeoutSec;
 
+  /**
+   * Instantiates a new Web socket message handler.
+   *
+   * @param vertx the vertx
+   * @param jsonRpcExecutor the json rpc executor
+   * @param ethScheduler the eth scheduler
+   * @param timeoutSec the timeout sec
+   */
   public WebSocketMessageHandler(
       final Vertx vertx,
       final JsonRpcExecutor jsonRpcExecutor,
@@ -75,6 +87,13 @@ public class WebSocketMessageHandler {
     this.timeoutSec = timeoutSec;
   }
 
+  /**
+   * Handle.
+   *
+   * @param websocket the websocket
+   * @param buffer the buffer
+   * @param user the user
+   */
   public void handle(
       final ServerWebSocket websocket, final Buffer buffer, final Optional<User> user) {
     if (buffer.length() == 0) {

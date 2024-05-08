@@ -24,43 +24,89 @@ public class VmOperationExecutionReport {
   private Store store;
   private long used;
 
+  /** Instantiates a new Vm operation execution report. */
   public VmOperationExecutionReport() {
     push = new ArrayList<>();
   }
 
+  /**
+   * Gets mem.
+   *
+   * @return the mem
+   */
   public Mem getMem() {
     return mem;
   }
 
+  /**
+   * Gets push.
+   *
+   * @return the push
+   */
   public List<String> getPush() {
     return push;
   }
 
+  /**
+   * Add push.
+   *
+   * @param value the value
+   */
   public void addPush(final String value) {
     push.add(0, value);
   }
 
+  /**
+   * Single push.
+   *
+   * @param value the value
+   */
   public void singlePush(final String value) {
     push.clear();
     push.add(value);
   }
 
+  /**
+   * Gets store.
+   *
+   * @return the store
+   */
   public Store getStore() {
     return store;
   }
 
+  /**
+   * Gets used.
+   *
+   * @return the used
+   */
   public long getUsed() {
     return used;
   }
 
+  /**
+   * Sets mem.
+   *
+   * @param mem the mem
+   */
   public void setMem(final Mem mem) {
     this.mem = mem;
   }
 
+  /**
+   * Sets store.
+   *
+   * @param store the store
+   */
   public void setStore(final Store store) {
     this.store = store;
   }
 
+  /**
+   * Sets used.
+   *
+   * @param used the used
+   */
   public void setUsed(final long used) {
     this.used = used;
   }

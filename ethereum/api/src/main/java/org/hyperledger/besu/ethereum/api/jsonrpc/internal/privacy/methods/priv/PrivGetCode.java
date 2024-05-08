@@ -25,11 +25,19 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Priv get code. */
 public class PrivGetCode extends AbstractBlockParameterMethod {
 
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv get code.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivGetCode(
       final BlockchainQueries blockchainQueries,
       final PrivacyController privacyController,

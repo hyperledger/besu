@@ -32,12 +32,19 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Priv get transaction count. */
 public class PrivGetTransactionCount implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivGetTransactionCount.class);
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv get transaction count.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivGetTransactionCount(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     this.privacyController = privacyController;

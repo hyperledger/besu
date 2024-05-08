@@ -18,16 +18,29 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParam
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 
+/** The type Logs subscription. */
 public class LogsSubscription extends Subscription {
 
   private final FilterParameter filterParameter;
 
+  /**
+   * Instantiates a new Logs subscription.
+   *
+   * @param subscriptionId the subscription id
+   * @param connectionId the connection id
+   * @param filterParameter the filter parameter
+   */
   public LogsSubscription(
       final Long subscriptionId, final String connectionId, final FilterParameter filterParameter) {
     super(subscriptionId, connectionId, SubscriptionType.LOGS, Boolean.FALSE);
     this.filterParameter = filterParameter;
   }
 
+  /**
+   * Gets filter parameter.
+   *
+   * @return the filter parameter
+   */
   public FilterParameter getFilterParameter() {
     return filterParameter;
   }

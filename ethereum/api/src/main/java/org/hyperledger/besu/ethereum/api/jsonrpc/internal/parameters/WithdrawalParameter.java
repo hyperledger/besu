@@ -26,6 +26,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.units.bigints.UInt64;
 
+/** The type Withdrawal parameter. */
 public class WithdrawalParameter {
 
   private final String index;
@@ -33,6 +34,14 @@ public class WithdrawalParameter {
   private final String address;
   private final String amount;
 
+  /**
+   * Instantiates a new Withdrawal parameter.
+   *
+   * @param index the index
+   * @param validatorIndex the validator index
+   * @param address the address
+   * @param amount the amount
+   */
   @JsonCreator
   public WithdrawalParameter(
       @JsonProperty("index") final String index,
@@ -45,6 +54,12 @@ public class WithdrawalParameter {
     this.amount = amount;
   }
 
+  /**
+   * From withdrawal withdrawal parameter.
+   *
+   * @param withdrawal the withdrawal
+   * @return the withdrawal parameter
+   */
   public static WithdrawalParameter fromWithdrawal(final Withdrawal withdrawal) {
     return new WithdrawalParameter(
         withdrawal.getIndex().toBytes().toQuantityHexString(),
@@ -53,6 +68,11 @@ public class WithdrawalParameter {
         withdrawal.getAmount().toShortHexString());
   }
 
+  /**
+   * To withdrawal withdrawal.
+   *
+   * @return the withdrawal
+   */
   public Withdrawal toWithdrawal() {
     return new Withdrawal(
         UInt64.fromHexString(index),
@@ -61,6 +81,11 @@ public class WithdrawalParameter {
         GWei.fromHexString(amount));
   }
 
+  /**
+   * As json object json object.
+   *
+   * @return the json object
+   */
   public JsonObject asJsonObject() {
     return new JsonObject()
         .put("index", index)
@@ -69,21 +94,41 @@ public class WithdrawalParameter {
         .put("amount", amount);
   }
 
+  /**
+   * Gets index.
+   *
+   * @return the index
+   */
   @JsonGetter
   public String getIndex() {
     return index;
   }
 
+  /**
+   * Gets validator index.
+   *
+   * @return the validator index
+   */
   @JsonGetter
   public String getValidatorIndex() {
     return validatorIndex;
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   @JsonGetter
   public String getAddress() {
     return address;
   }
 
+  /**
+   * Gets amount.
+   *
+   * @return the amount
+   */
   @JsonGetter
   public String getAmount() {
     return amount;

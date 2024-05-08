@@ -24,10 +24,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.CoinbaseNotSetException;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
+/** The type Miner start. */
 public class MinerStart implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
 
+  /**
+   * Instantiates a new Miner start.
+   *
+   * @param miningCoordinator the mining coordinator
+   */
   public MinerStart(final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }

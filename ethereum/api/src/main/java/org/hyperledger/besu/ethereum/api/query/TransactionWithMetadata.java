@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.util.Optional;
 
+/** The type Transaction with metadata. */
 public class TransactionWithMetadata {
 
   private final Transaction transaction;
@@ -28,6 +29,11 @@ public class TransactionWithMetadata {
   private final Optional<Hash> blockHash;
   private final Optional<Integer> transactionIndex;
 
+  /**
+   * Instantiates a new Transaction with metadata.
+   *
+   * @param transaction the transaction
+   */
   public TransactionWithMetadata(final Transaction transaction) {
     this.transaction = transaction;
     this.blockNumber = Optional.empty();
@@ -36,6 +42,15 @@ public class TransactionWithMetadata {
     this.transactionIndex = Optional.empty();
   }
 
+  /**
+   * Instantiates a new Transaction with metadata.
+   *
+   * @param transaction the transaction
+   * @param blockNumber the block number
+   * @param baseFee the base fee
+   * @param blockHash the block hash
+   * @param transactionIndex the transaction index
+   */
   public TransactionWithMetadata(
       final Transaction transaction,
       final long blockNumber,
@@ -49,22 +64,47 @@ public class TransactionWithMetadata {
     this.transactionIndex = Optional.of(transactionIndex);
   }
 
+  /**
+   * Gets transaction.
+   *
+   * @return the transaction
+   */
   public Transaction getTransaction() {
     return transaction;
   }
 
+  /**
+   * Gets block number.
+   *
+   * @return the block number
+   */
   public Optional<Long> getBlockNumber() {
     return blockNumber;
   }
 
+  /**
+   * Gets base fee.
+   *
+   * @return the base fee
+   */
   public Optional<Wei> getBaseFee() {
     return baseFee;
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   public Optional<Hash> getBlockHash() {
     return blockHash;
   }
 
+  /**
+   * Gets transaction index.
+   *
+   * @return the transaction index
+   */
   public Optional<Integer> getTransactionIndex() {
     return transactionIndex;
   }

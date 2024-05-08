@@ -29,11 +29,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.immutables.value.Value;
 
+/** The interface Peer result. */
 @JsonPropertyOrder({"version", "name", "caps", "network", "port", "id", "protocols", "enode"})
 @Value.Immutable
 @Value.Style(allParameters = true)
 public interface PeerResult {
 
+  /**
+   * From eth peer peer result.
+   *
+   * @param peer the peer
+   * @return the peer result
+   */
   static PeerResult fromEthPeer(final EthPeer peer) {
     final PeerConnection connection = peer.getConnection();
     final PeerInfo peerInfo = connection.getPeerInfo();
@@ -53,27 +60,67 @@ public interface PeerResult {
         .build();
   }
 
+  /**
+   * Gets version.
+   *
+   * @return the version
+   */
   @JsonGetter(value = "version")
   String getVersion();
 
+  /**
+   * Gets name.
+   *
+   * @return the name
+   */
   @JsonGetter(value = "name")
   String getName();
 
+  /**
+   * Gets caps.
+   *
+   * @return the caps
+   */
   @JsonGetter(value = "caps")
   List<JsonNode> getCaps();
 
+  /**
+   * Gets network.
+   *
+   * @return the network
+   */
   @JsonGetter(value = "network")
   NetworkResult getNetwork();
 
+  /**
+   * Gets port.
+   *
+   * @return the port
+   */
   @JsonGetter(value = "port")
   String getPort();
 
+  /**
+   * Gets id.
+   *
+   * @return the id
+   */
   @JsonGetter(value = "id")
   String getId();
 
+  /**
+   * Gets protocols.
+   *
+   * @return the protocols
+   */
   @JsonGetter(value = "protocols")
   Map<String, ProtocolsResult> getProtocols();
 
+  /**
+   * Gets enode.
+   *
+   * @return the enode
+   */
   @JsonGetter(value = "enode")
   String getEnode();
 }

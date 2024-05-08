@@ -18,21 +18,38 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionRequestMapper;
 
+/** The type Abstract subscription method. */
 abstract class AbstractSubscriptionMethod implements JsonRpcMethod {
 
   private final SubscriptionManager subscriptionManager;
   private final SubscriptionRequestMapper mapper;
 
+  /**
+   * Instantiates a new Abstract subscription method.
+   *
+   * @param subscriptionManager the subscription manager
+   * @param mapper the mapper
+   */
   AbstractSubscriptionMethod(
       final SubscriptionManager subscriptionManager, final SubscriptionRequestMapper mapper) {
     this.subscriptionManager = subscriptionManager;
     this.mapper = mapper;
   }
 
+  /**
+   * Subscription manager subscription manager.
+   *
+   * @return the subscription manager
+   */
   SubscriptionManager subscriptionManager() {
     return subscriptionManager;
   }
 
+  /**
+   * Gets mapper.
+   *
+   * @return the mapper
+   */
   public SubscriptionRequestMapper getMapper() {
     return mapper;
   }

@@ -36,6 +36,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
+/** The type Priv get logs. */
 public class PrivGetLogs implements JsonRpcMethod {
 
   private final BlockchainQueries blockchainQueries;
@@ -43,6 +44,14 @@ public class PrivGetLogs implements JsonRpcMethod {
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Priv get logs.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param privacyQueries the privacy queries
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivGetLogs(
       final BlockchainQueries blockchainQueries,
       final PrivacyQueries privacyQueries,

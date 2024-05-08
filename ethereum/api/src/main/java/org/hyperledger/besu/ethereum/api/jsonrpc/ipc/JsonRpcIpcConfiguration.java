@@ -18,18 +18,27 @@ import java.nio.file.Path;
 import java.util.Collection;
 import java.util.Collections;
 
+/** The type Json rpc ipc configuration. */
 public class JsonRpcIpcConfiguration {
 
   private final boolean enabled;
   private final Path ipcPath;
   private final Collection<String> enabledApis;
 
+  /** Instantiates a new Json rpc ipc configuration. */
   public JsonRpcIpcConfiguration() {
     enabled = false;
     ipcPath = null;
     enabledApis = Collections.emptyList();
   }
 
+  /**
+   * Instantiates a new Json rpc ipc configuration.
+   *
+   * @param enabled the enabled
+   * @param ipcPath the ipc path
+   * @param enabledApis the enabled apis
+   */
   public JsonRpcIpcConfiguration(
       final boolean enabled, final Path ipcPath, final Collection<String> enabledApis) {
     this.enabled = enabled;
@@ -37,14 +46,29 @@ public class JsonRpcIpcConfiguration {
     this.enabledApis = enabledApis;
   }
 
+  /**
+   * Is enabled boolean.
+   *
+   * @return the boolean
+   */
   public boolean isEnabled() {
     return enabled;
   }
 
+  /**
+   * Gets path.
+   *
+   * @return the path
+   */
   public Path getPath() {
     return ipcPath;
   }
 
+  /**
+   * Gets enabled apis.
+   *
+   * @return the enabled apis
+   */
   public Collection<String> getEnabledApis() {
     return enabledApis;
   }

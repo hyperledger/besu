@@ -20,11 +20,19 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The type Engine exchange transition configuration parameter. */
 public class EngineExchangeTransitionConfigurationParameter {
   private final Difficulty terminalTotalDifficulty;
   private final Hash terminalBlockHash;
   private final long terminalBlockNumber;
 
+  /**
+   * Instantiates a new Engine exchange transition configuration parameter.
+   *
+   * @param terminalTotalDifficulty the terminal total difficulty
+   * @param terminalBlockHash the terminal block hash
+   * @param terminalBlockNumber the terminal block number
+   */
   @JsonCreator
   public EngineExchangeTransitionConfigurationParameter(
       @JsonProperty("terminalTotalDifficulty") final String terminalTotalDifficulty,
@@ -35,24 +43,49 @@ public class EngineExchangeTransitionConfigurationParameter {
     this.terminalBlockNumber = terminalBlockNumber.getValue();
   }
 
+  /**
+   * Gets terminal total difficulty.
+   *
+   * @return the terminal total difficulty
+   */
   public Difficulty getTerminalTotalDifficulty() {
     return terminalTotalDifficulty;
   }
 
+  /**
+   * Gets terminal total difficulty as hex string.
+   *
+   * @return the terminal total difficulty as hex string
+   */
   @JsonProperty("terminalTotalDifficulty")
   public String getTerminalTotalDifficultyAsHexString() {
     return terminalTotalDifficulty.toShortHexString();
   }
 
+  /**
+   * Gets terminal block hash.
+   *
+   * @return the terminal block hash
+   */
   public Hash getTerminalBlockHash() {
     return terminalBlockHash;
   }
 
+  /**
+   * Gets terminal block hash as hex string.
+   *
+   * @return the terminal block hash as hex string
+   */
   @JsonProperty("terminalBlockHash")
   public String getTerminalBlockHashAsHexString() {
     return terminalBlockHash.toShortHexString();
   }
 
+  /**
+   * Gets terminal block number.
+   *
+   * @return the terminal block number
+   */
   public long getTerminalBlockNumber() {
     return terminalBlockNumber;
   }

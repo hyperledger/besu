@@ -28,28 +28,46 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Engine get payload bodies result v 1. */
 @JsonPropertyOrder({"payloadBodies"})
 public class EngineGetPayloadBodiesResultV1 {
 
   private final List<PayloadBody> payloadBodies;
 
+  /** Instantiates a new Engine get payload bodies result v 1. */
   public EngineGetPayloadBodiesResultV1() {
     this.payloadBodies = Collections.<PayloadBody>emptyList();
   }
 
+  /**
+   * Instantiates a new Engine get payload bodies result v 1.
+   *
+   * @param payloadBody the payload body
+   */
   public EngineGetPayloadBodiesResultV1(final List<PayloadBody> payloadBody) {
     this.payloadBodies = payloadBody;
   }
 
+  /**
+   * Gets payload bodies.
+   *
+   * @return the payload bodies
+   */
   @JsonValue
   public List<PayloadBody> getPayloadBodies() {
     return payloadBodies;
   }
 
+  /** The type Payload body. */
   public static class PayloadBody {
     private final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
 
+    /**
+     * Instantiates a new Payload body.
+     *
+     * @param blockBody the block body
+     */
     public PayloadBody(final BlockBody blockBody) {
       this.transactions =
           blockBody.getTransactions().stream()
@@ -69,11 +87,21 @@ public class EngineGetPayloadBodiesResultV1 {
               .orElse(null);
     }
 
+    /**
+     * Gets transactions.
+     *
+     * @return the transactions
+     */
     @JsonGetter(value = "transactions")
     public List<String> getTransactions() {
       return transactions;
     }
 
+    /**
+     * Gets withdrawals.
+     *
+     * @return the withdrawals
+     */
     @JsonGetter(value = "withdrawals")
     public List<WithdrawalParameter> getWithdrawals() {
       return withdrawals;

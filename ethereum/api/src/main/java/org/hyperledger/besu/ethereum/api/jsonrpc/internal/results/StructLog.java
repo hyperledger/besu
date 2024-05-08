@@ -27,6 +27,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Struct log. */
 @JsonPropertyOrder({"pc", "op", "gas", "gasCost", "depth", "stack", "memory", "storage"})
 public class StructLog {
 
@@ -39,8 +40,15 @@ public class StructLog {
   private final String[] stack;
   private final Object storage;
   private final String reason;
+
+  /** The Bytes 32 zero string. */
   static final String bytes32ZeroString = Bytes32.ZERO.toUnprefixedHexString();
 
+  /**
+   * Instantiates a new Struct log.
+   *
+   * @param traceFrame the trace frame
+   */
   public StructLog(final TraceFrame traceFrame) {
     depth = traceFrame.getDepth() + 1;
     gas = traceFrame.getGasRemaining();
@@ -82,46 +90,91 @@ public class StructLog {
     return formattedStorage;
   }
 
+  /**
+   * Depth int.
+   *
+   * @return the int
+   */
   @JsonGetter("depth")
   public int depth() {
     return depth;
   }
 
+  /**
+   * Gas long.
+   *
+   * @return the long
+   */
   @JsonGetter("gas")
   public long gas() {
     return gas;
   }
 
+  /**
+   * Gas cost long.
+   *
+   * @return the long
+   */
   @JsonGetter("gasCost")
   public long gasCost() {
     return gasCost;
   }
 
+  /**
+   * Memory string [ ].
+   *
+   * @return the string [ ]
+   */
   @JsonGetter("memory")
   public String[] memory() {
     return memory;
   }
 
+  /**
+   * Op string.
+   *
+   * @return the string
+   */
   @JsonGetter("op")
   public String op() {
     return op;
   }
 
+  /**
+   * Pc int.
+   *
+   * @return the int
+   */
   @JsonGetter("pc")
   public int pc() {
     return pc;
   }
 
+  /**
+   * Stack string [ ].
+   *
+   * @return the string [ ]
+   */
   @JsonGetter("stack")
   public String[] stack() {
     return stack;
   }
 
+  /**
+   * Storage object.
+   *
+   * @return the object
+   */
   @JsonGetter("storage")
   public Object storage() {
     return storage;
   }
 
+  /**
+   * Reason string.
+   *
+   * @return the string
+   */
   @JsonGetter("reason")
   public String reason() {
     return reason;

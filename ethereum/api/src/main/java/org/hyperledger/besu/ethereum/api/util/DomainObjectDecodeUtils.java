@@ -22,8 +22,17 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Domain object decode utils. */
 public class DomainObjectDecodeUtils {
+  private DomainObjectDecodeUtils() {}
 
+  /**
+   * Decode raw transaction transaction.
+   *
+   * @param rawTransaction the raw transaction
+   * @return the transaction
+   * @throws InvalidJsonRpcRequestException the invalid json rpc request exception
+   */
   public static Transaction decodeRawTransaction(final String rawTransaction)
       throws InvalidJsonRpcRequestException {
     try {

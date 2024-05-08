@@ -27,11 +27,17 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import java.util.List;
 import java.util.Optional;
 
+/** The type Perm get nodes allowlist. */
 public class PermGetNodesAllowlist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
       nodeAllowlistPermissioningController;
 
+  /**
+   * Instantiates a new Perm get nodes allowlist.
+   *
+   * @param nodeAllowlistPermissioningController the node allowlist permissioning controller
+   */
   public PermGetNodesAllowlist(
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistPermissioningController) {
     this.nodeAllowlistPermissioningController = nodeAllowlistPermissioningController;

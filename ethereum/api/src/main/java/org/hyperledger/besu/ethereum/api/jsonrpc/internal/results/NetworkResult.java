@@ -19,22 +19,39 @@ import java.net.SocketAddress;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Network result. */
 @JsonPropertyOrder({"localAddress", "remoteAddress"})
 public class NetworkResult {
 
   private final String localAddress;
   private final String remoteAddress;
 
+  /**
+   * Instantiates a new Network result.
+   *
+   * @param localAddress the local address
+   * @param remoteAddress the remote address
+   */
   public NetworkResult(final SocketAddress localAddress, final SocketAddress remoteAddress) {
     this.localAddress = removeTrailingSlash(localAddress.toString());
     this.remoteAddress = removeTrailingSlash(remoteAddress.toString());
   }
 
+  /**
+   * Gets local address.
+   *
+   * @return the local address
+   */
   @JsonGetter(value = "localAddress")
   public String getLocalAddress() {
     return localAddress;
   }
 
+  /**
+   * Gets remote address.
+   *
+   * @return the remote address
+   */
   @JsonGetter(value = "remoteAddress")
   public String getRemoteAddress() {
     return remoteAddress;

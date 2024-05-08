@@ -29,11 +29,17 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 import java.util.List;
 import java.util.Optional;
 
+/** The type Perm remove nodes from allowlist. */
 public class PermRemoveNodesFromAllowlist implements JsonRpcMethod {
 
   private final Optional<NodeLocalConfigPermissioningController>
       nodeAllowlistPermissioningController;
 
+  /**
+   * Instantiates a new Perm remove nodes from allowlist.
+   *
+   * @param nodeAllowlistPermissioningController the node allowlist permissioning controller
+   */
   public PermRemoveNodesFromAllowlist(
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistPermissioningController) {
     this.nodeAllowlistPermissioningController = nodeAllowlistPermissioningController;

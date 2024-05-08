@@ -14,20 +14,37 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
+/** The type Trace call parameter tuple. */
 public class TraceCallParameterTuple {
   private final JsonCallParameter jsonCallParameter;
   private final TraceTypeParameter traceTypeParameter;
 
+  /**
+   * Instantiates a new Trace call parameter tuple.
+   *
+   * @param callParameter the call parameter
+   * @param traceTypeParameter the trace type parameter
+   */
   public TraceCallParameterTuple(
       final JsonCallParameter callParameter, final TraceTypeParameter traceTypeParameter) {
     this.jsonCallParameter = callParameter;
     this.traceTypeParameter = traceTypeParameter;
   }
 
+  /**
+   * Gets json call parameter.
+   *
+   * @return the json call parameter
+   */
   public JsonCallParameter getJsonCallParameter() {
     return jsonCallParameter;
   }
 
+  /**
+   * Gets trace type parameter.
+   *
+   * @return the trace type parameter
+   */
   public TraceTypeParameter getTraceTypeParameter() {
     return traceTypeParameter;
   }

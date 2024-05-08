@@ -16,16 +16,29 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request
 
 import java.util.Objects;
 
+/** The type Private unsubscribe request. */
 public class PrivateUnsubscribeRequest extends UnsubscribeRequest {
 
   private final String privacyGroupId;
 
+  /**
+   * Instantiates a new Private unsubscribe request.
+   *
+   * @param subscriptionId the subscription id
+   * @param connectionId the connection id
+   * @param privacyGroupId the privacy group id
+   */
   public PrivateUnsubscribeRequest(
       final Long subscriptionId, final String connectionId, final String privacyGroupId) {
     super(subscriptionId, connectionId);
     this.privacyGroupId = privacyGroupId;
   }
 
+  /**
+   * Gets privacy group id.
+   *
+   * @return the privacy group id
+   */
   public String getPrivacyGroupId() {
     return privacyGroupId;
   }

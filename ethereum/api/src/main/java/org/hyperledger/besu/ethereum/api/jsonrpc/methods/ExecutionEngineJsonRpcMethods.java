@@ -48,6 +48,7 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
+/** The type Execution engine json rpc methods. */
 public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockResultFactory blockResultFactory = new BlockResultFactory();
@@ -58,6 +59,15 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final EthPeers ethPeers;
   private final Vertx consensusEngineServer;
 
+  /**
+   * Instantiates a new Execution engine json rpc methods.
+   *
+   * @param miningCoordinator the mining coordinator
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param ethPeers the eth peers
+   * @param consensusEngineServer the consensus engine server
+   */
   ExecutionEngineJsonRpcMethods(
       final MiningCoordinator miningCoordinator,
       final ProtocolSchedule protocolSchedule,

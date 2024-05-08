@@ -50,6 +50,7 @@ import io.vertx.core.net.SocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Json rpc ipc service. */
 public class JsonRpcIpcService {
 
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcIpcService.class);
@@ -65,12 +66,24 @@ public class JsonRpcIpcService {
   private final JsonRpcExecutor jsonRpcExecutor;
   private NetServer netServer;
 
+  /**
+   * Instantiates a new Json rpc ipc service.
+   *
+   * @param vertx the vertx
+   * @param path the path
+   * @param rpcExecutor the rpc executor
+   */
   public JsonRpcIpcService(final Vertx vertx, final Path path, final JsonRpcExecutor rpcExecutor) {
     this.vertx = vertx;
     this.path = path;
     this.jsonRpcExecutor = rpcExecutor;
   }
 
+  /**
+   * Start future.
+   *
+   * @return the future
+   */
   public Future<NetServer> start() {
     netServer = vertx.createNetServer(buildNetServerOptions());
     netServer.connectHandler(
@@ -182,6 +195,11 @@ public class JsonRpcIpcService {
         .onFailure(throwable -> LOG.error("Unable to open IPC endpoint", throwable));
   }
 
+  /**
+   * Stop future.
+   *
+   * @return the future
+   */
   public Future<Void> stop() {
     if (netServer == null) {
       return Future.succeededFuture();

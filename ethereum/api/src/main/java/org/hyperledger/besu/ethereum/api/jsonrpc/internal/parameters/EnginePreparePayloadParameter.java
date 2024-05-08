@@ -25,14 +25,28 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Engine prepare payload parameter. */
 public class EnginePreparePayloadParameter {
   private final Optional<Hash> parentHash;
   private final Address feeRecipient;
   private final Bytes32 prevRandao;
   private final Optional<Long> timestamp;
+
+  /** The Withdrawals. */
   final List<WithdrawalParameter> withdrawals;
+
   private final Optional<Bytes32> parentBeaconBlockRoot;
 
+  /**
+   * Instantiates a new Engine prepare payload parameter.
+   *
+   * @param parentHash the parent hash
+   * @param feeRecipient the fee recipient
+   * @param timestamp the timestamp
+   * @param prevRandao the prev randao
+   * @param withdrawals the withdrawals
+   * @param parentBeaconBlockRoot the parent beacon block root
+   */
   @JsonCreator
   public EnginePreparePayloadParameter(
       @JsonProperty("parentHash") final Optional<Hash> parentHash,
@@ -49,26 +63,56 @@ public class EnginePreparePayloadParameter {
     this.parentBeaconBlockRoot = parentBeaconBlockRoot;
   }
 
+  /**
+   * Gets parent hash.
+   *
+   * @return the parent hash
+   */
   public Optional<Hash> getParentHash() {
     return parentHash;
   }
 
+  /**
+   * Gets fee recipient.
+   *
+   * @return the fee recipient
+   */
   public Address getFeeRecipient() {
     return feeRecipient;
   }
 
+  /**
+   * Gets timestamp.
+   *
+   * @return the timestamp
+   */
   public Optional<Long> getTimestamp() {
     return timestamp;
   }
 
+  /**
+   * Gets prev randao.
+   *
+   * @return the prev randao
+   */
   public Bytes32 getPrevRandao() {
     return prevRandao;
   }
 
+  /**
+   * Gets withdrawals.
+   *
+   * @return the withdrawals
+   */
   public List<WithdrawalParameter> getWithdrawals() {
     return withdrawals;
   }
 
+  /**
+   * Gets parent beacon block root.
+   *
+   * @return the parent beacon block root
+   */
   public Optional<Bytes32> getParentBeaconBlockRoot() {
     return parentBeaconBlockRoot;
   }

@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Private transaction receipt result. */
 @JsonPropertyOrder({
   "contractAddress",
   "from",
@@ -67,6 +68,24 @@ public class PrivateTransactionReceiptResult {
   private final String privacyGroupId;
   private final String logsBloom;
 
+  /**
+   * Instantiates a new Private transaction receipt result.
+   *
+   * @param contractAddress the contract address
+   * @param from the from
+   * @param to the to
+   * @param logs the logs
+   * @param output the output
+   * @param blockHash the block hash
+   * @param blockNumber the block number
+   * @param txIndex the tx index
+   * @param commitmentHash the commitment hash
+   * @param privateFrom the private from
+   * @param privateFor the private for
+   * @param privacyGroupId the privacy group id
+   * @param revertReason the revert reason
+   * @param status the status
+   */
   public PrivateTransactionReceiptResult(
       final String contractAddress,
       final String from,
@@ -105,76 +124,151 @@ public class PrivateTransactionReceiptResult {
     this.transactionIndex = Quantity.create(txIndex);
   }
 
+  /**
+   * Gets contract address.
+   *
+   * @return the contract address
+   */
   @JsonGetter(value = "contractAddress")
   public String getContractAddress() {
     return contractAddress;
   }
 
+  /**
+   * Gets from.
+   *
+   * @return the from
+   */
   @JsonGetter(value = "from")
   public String getFrom() {
     return from;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   @JsonGetter(value = "to")
   public String getTo() {
     return to;
   }
 
+  /**
+   * Gets output.
+   *
+   * @return the output
+   */
   @JsonGetter(value = "output")
   public String getOutput() {
     return output;
   }
 
+  /**
+   * Gets logs.
+   *
+   * @return the logs
+   */
   @JsonGetter(value = "logs")
   public List<TransactionReceiptLogResult> getLogs() {
     return logs;
   }
 
+  /**
+   * Gets logs bloom.
+   *
+   * @return the logs bloom
+   */
   @JsonGetter(value = "logsBloom")
   public String getLogsBloom() {
     return logsBloom;
   }
 
+  /**
+   * Gets commitment hash.
+   *
+   * @return the commitment hash
+   */
   @JsonGetter("commitmentHash")
   public String getCommitmentHash() {
     return commitmentHash;
   }
 
+  /**
+   * Gets private from.
+   *
+   * @return the private from
+   */
   @JsonGetter("privateFrom")
   public String getPrivateFrom() {
     return privateFrom;
   }
 
+  /**
+   * Gets private for.
+   *
+   * @return the private for
+   */
   @JsonGetter("privateFor")
   public List<String> getPrivateFor() {
     return privateFor;
   }
 
+  /**
+   * Gets privacy group id.
+   *
+   * @return the privacy group id
+   */
   @JsonGetter("privacyGroupId")
   public String getPrivacyGroupId() {
     return privacyGroupId;
   }
 
+  /**
+   * Gets revert reason.
+   *
+   * @return the revert reason
+   */
   @JsonGetter("revertReason")
   public String getRevertReason() {
     return revertReason;
   }
 
+  /**
+   * Gets status.
+   *
+   * @return the status
+   */
   @JsonGetter("status")
   public String getStatus() {
     return status;
   }
 
+  /**
+   * Gets transaction index.
+   *
+   * @return the transaction index
+   */
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
     return transactionIndex;
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   @JsonGetter(value = "blockHash")
   public String getBlockHash() {
     return blockHash;
   }
 
+  /**
+   * Gets block number.
+   *
+   * @return the block number
+   */
   @JsonGetter(value = "blockNumber")
   public String getBlockNumber() {
     return blockNumber;

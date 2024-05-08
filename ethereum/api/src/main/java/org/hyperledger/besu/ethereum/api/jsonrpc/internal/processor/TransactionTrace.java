@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import java.util.List;
 import java.util.Optional;
 
+/** The type Transaction trace. */
 public class TransactionTrace {
 
   private final Transaction transaction;
@@ -29,6 +30,11 @@ public class TransactionTrace {
   private final List<TraceFrame> traceFrames;
   private final Optional<Block> block;
 
+  /**
+   * Instantiates a new Transaction trace.
+   *
+   * @param block the block
+   */
   public TransactionTrace(final Optional<Block> block) {
     this.transaction = null;
     this.result = null;
@@ -36,6 +42,13 @@ public class TransactionTrace {
     this.block = block;
   }
 
+  /**
+   * Instantiates a new Transaction trace.
+   *
+   * @param transaction the transaction
+   * @param result the result
+   * @param traceFrames the trace frames
+   */
   public TransactionTrace(
       final Transaction transaction,
       final TransactionProcessingResult result,
@@ -46,6 +59,14 @@ public class TransactionTrace {
     this.block = Optional.empty();
   }
 
+  /**
+   * Instantiates a new Transaction trace.
+   *
+   * @param transaction the transaction
+   * @param result the result
+   * @param traceFrames the trace frames
+   * @param block the block
+   */
   public TransactionTrace(
       final Transaction transaction,
       final TransactionProcessingResult result,
@@ -57,6 +78,12 @@ public class TransactionTrace {
     this.block = block;
   }
 
+  /**
+   * Instantiates a new Transaction trace.
+   *
+   * @param transaction the transaction
+   * @param block the block
+   */
   public TransactionTrace(final Transaction transaction, final Optional<Block> block) {
     this.transaction = transaction;
     this.result = null;
@@ -64,26 +91,56 @@ public class TransactionTrace {
     this.block = block;
   }
 
+  /**
+   * Gets transaction.
+   *
+   * @return the transaction
+   */
   public Transaction getTransaction() {
     return transaction;
   }
 
+  /**
+   * Gets gas.
+   *
+   * @return the gas
+   */
   public long getGas() {
     return transaction.getGasLimit() - result.getGasRemaining();
   }
 
+  /**
+   * Gets gas limit.
+   *
+   * @return the gas limit
+   */
   public long getGasLimit() {
     return transaction.getGasLimit();
   }
 
+  /**
+   * Gets result.
+   *
+   * @return the result
+   */
   public TransactionProcessingResult getResult() {
     return result;
   }
 
+  /**
+   * Gets trace frames.
+   *
+   * @return the trace frames
+   */
   public List<TraceFrame> getTraceFrames() {
     return traceFrames;
   }
 
+  /**
+   * Gets block.
+   *
+   * @return the block
+   */
   public Optional<Block> getBlock() {
     return block;
   }

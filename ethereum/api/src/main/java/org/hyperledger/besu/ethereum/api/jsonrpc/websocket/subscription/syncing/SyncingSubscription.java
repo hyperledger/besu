@@ -17,9 +17,17 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.syncing
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.Subscription;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request.SubscriptionType;
 
+/** The type Syncing subscription. */
 public class SyncingSubscription extends Subscription {
   private boolean firstMessageHasBeenSent = false;
 
+  /**
+   * Instantiates a new Syncing subscription.
+   *
+   * @param subscriptionId the subscription id
+   * @param connectionId the connection id
+   * @param subscriptionType the subscription type
+   */
   public SyncingSubscription(
       final Long subscriptionId,
       final String connectionId,
@@ -27,10 +35,20 @@ public class SyncingSubscription extends Subscription {
     super(subscriptionId, connectionId, subscriptionType, Boolean.FALSE);
   }
 
+  /**
+   * Sets first message has been sent.
+   *
+   * @param firstMessageHasBeenSent the first message has been sent
+   */
   public void setFirstMessageHasBeenSent(final boolean firstMessageHasBeenSent) {
     this.firstMessageHasBeenSent = firstMessageHasBeenSent;
   }
 
+  /**
+   * Is first message has been sent boolean.
+   *
+   * @return the boolean
+   */
   public boolean isFirstMessageHasBeenSent() {
     return firstMessageHasBeenSent;
   }

@@ -19,6 +19,7 @@ import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Result. */
 @JsonInclude(NON_NULL)
 @JsonPropertyOrder({"address", "code", "gasUsed", "output"})
 public class Result {
@@ -26,6 +27,14 @@ public class Result {
   private final String output;
   private final String code;
 
+  /**
+   * Instantiates a new Result.
+   *
+   * @param gasUsed the gas used
+   * @param output the output
+   * @param code the code
+   * @param address the address
+   */
   public Result(
       final String gasUsed, final String output, final String code, final String address) {
     this.gasUsed = gasUsed;
@@ -36,26 +45,52 @@ public class Result {
 
   private final String address;
 
+  /**
+   * Gets gas used.
+   *
+   * @return the gas used
+   */
   public String getGasUsed() {
     return gasUsed;
   }
 
+  /**
+   * Gets output.
+   *
+   * @return the output
+   */
   public String getOutput() {
     return output;
   }
 
+  /**
+   * Gets code.
+   *
+   * @return the code
+   */
   public String getCode() {
     return code;
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   public String getAddress() {
     return address;
   }
 
+  /**
+   * Builder builder.
+   *
+   * @return the builder
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /** The type Builder. */
   public static final class Builder {
 
     private static final String GAS_USED_EMPTY = "0x0";
@@ -67,39 +102,84 @@ public class Result {
 
     private Builder() {}
 
+    /**
+     * Gas used builder.
+     *
+     * @param gasUsed the gas used
+     * @return the builder
+     */
     public Builder gasUsed(final String gasUsed) {
       this.gasUsed = gasUsed;
       return this;
     }
 
+    /**
+     * Is gas used empty boolean.
+     *
+     * @return the boolean
+     */
     public boolean isGasUsedEmpty() {
       return GAS_USED_EMPTY.equals(gasUsed);
     }
 
+    /**
+     * Output builder.
+     *
+     * @param output the output
+     * @return the builder
+     */
     public Builder output(final String output) {
       this.output = output;
       return this;
     }
 
+    /**
+     * Code builder.
+     *
+     * @param code the code
+     * @return the builder
+     */
     public Builder code(final String code) {
       this.code = code;
       this.output = null;
       return this;
     }
 
+    /**
+     * Gets code.
+     *
+     * @return the code
+     */
     public String getCode() {
       return code;
     }
 
+    /**
+     * Address builder.
+     *
+     * @param address the address
+     * @return the builder
+     */
     public Builder address(final String address) {
       this.address = address;
       return this;
     }
 
+    /**
+     * Gets address.
+     *
+     * @return the address
+     */
     public String getAddress() {
       return address;
     }
 
+    /**
+     * Of builder.
+     *
+     * @param result the result
+     * @return the builder
+     */
     public static Builder of(final Result result) {
       final Builder builder = new Builder();
       if (result != null) {
@@ -111,6 +191,11 @@ public class Result {
       return builder;
     }
 
+    /**
+     * Build result.
+     *
+     * @return the result
+     */
     public Result build() {
       return new Result(gasUsed, output, code, address);
     }

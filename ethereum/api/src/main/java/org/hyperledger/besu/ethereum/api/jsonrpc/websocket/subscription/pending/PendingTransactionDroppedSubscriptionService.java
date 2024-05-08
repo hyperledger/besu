@@ -23,11 +23,17 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedL
 
 import java.util.List;
 
+/** The type Pending transaction dropped subscription service. */
 public class PendingTransactionDroppedSubscriptionService
     implements PendingTransactionDroppedListener {
 
   private final SubscriptionManager subscriptionManager;
 
+  /**
+   * Instantiates a new Pending transaction dropped subscription service.
+   *
+   * @param subscriptionManager the subscription manager
+   */
   public PendingTransactionDroppedSubscriptionService(
       final SubscriptionManager subscriptionManager) {
     this.subscriptionManager = subscriptionManager;

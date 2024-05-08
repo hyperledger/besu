@@ -20,6 +20,7 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
+/** The type Subscription. */
 public class Subscription {
 
   private final Long subscriptionId;
@@ -27,6 +28,14 @@ public class Subscription {
   private final SubscriptionType subscriptionType;
   private final Boolean includeTransaction;
 
+  /**
+   * Instantiates a new Subscription.
+   *
+   * @param subscriptionId the subscription id
+   * @param connectionId the connection id
+   * @param subscriptionType the subscription type
+   * @param includeTransaction the include transaction
+   */
   public Subscription(
       final Long subscriptionId,
       final String connectionId,
@@ -38,18 +47,38 @@ public class Subscription {
     this.includeTransaction = includeTransaction;
   }
 
+  /**
+   * Gets subscription type.
+   *
+   * @return the subscription type
+   */
   public SubscriptionType getSubscriptionType() {
     return subscriptionType;
   }
 
+  /**
+   * Gets subscription id.
+   *
+   * @return the subscription id
+   */
   public Long getSubscriptionId() {
     return subscriptionId;
   }
 
+  /**
+   * Gets connection id.
+   *
+   * @return the connection id
+   */
   public String getConnectionId() {
     return connectionId;
   }
 
+  /**
+   * Gets include transaction.
+   *
+   * @return the include transaction
+   */
   public Boolean getIncludeTransaction() {
     return includeTransaction;
   }
@@ -64,6 +93,12 @@ public class Subscription {
         .toString();
   }
 
+  /**
+   * Is type boolean.
+   *
+   * @param type the type
+   * @return the boolean
+   */
   public boolean isType(final SubscriptionType type) {
     return this.subscriptionType == type;
   }

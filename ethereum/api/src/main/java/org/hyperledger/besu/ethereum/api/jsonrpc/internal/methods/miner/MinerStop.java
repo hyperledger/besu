@@ -21,10 +21,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
+/** The type Miner stop. */
 public class MinerStop implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
 
+  /**
+   * Instantiates a new Miner stop.
+   *
+   * @param miningCoordinator the mining coordinator
+   */
   public MinerStop(final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }

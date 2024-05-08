@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs.Pri
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Subscription response. */
 @JsonPropertyOrder({"jsonrpc", "method", "params"})
 public class SubscriptionResponse {
 
@@ -32,6 +33,12 @@ public class SubscriptionResponse {
   private final String methodName;
   private final SubscriptionResponseResult params;
 
+  /**
+   * Instantiates a new Subscription response.
+   *
+   * @param subscription the subscription
+   * @param result the result
+   */
   public SubscriptionResponse(final Subscription subscription, final JsonRpcResult result) {
     if (subscription instanceof PrivateLogsSubscription) {
       final String privacyGroupId = ((PrivateLogsSubscription) subscription).getPrivacyGroupId();
@@ -46,16 +53,31 @@ public class SubscriptionResponse {
     }
   }
 
+  /**
+   * Gets jsonrpc.
+   *
+   * @return the jsonrpc
+   */
   @JsonGetter("jsonrpc")
   public String getJsonrpc() {
     return JSON_RPC_VERSION;
   }
 
+  /**
+   * Gets method.
+   *
+   * @return the method
+   */
   @JsonGetter("method")
   public String getMethod() {
     return methodName;
   }
 
+  /**
+   * Gets params.
+   *
+   * @return the params
+   */
   @JsonGetter("params")
   public SubscriptionResponseResult getParams() {
     return params;

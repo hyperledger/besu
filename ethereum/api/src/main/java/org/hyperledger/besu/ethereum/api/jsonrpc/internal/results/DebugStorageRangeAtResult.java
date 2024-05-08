@@ -27,11 +27,19 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Debug storage range at result. */
 public class DebugStorageRangeAtResult implements JsonRpcResult {
 
   private final NavigableMap<String, StorageEntry> storage = new TreeMap<>();
   private final String nextKey;
 
+  /**
+   * Instantiates a new Debug storage range at result.
+   *
+   * @param entries the entries
+   * @param nextKey the next key
+   * @param shortValues the short values
+   */
   public DebugStorageRangeAtResult(
       final NavigableMap<Bytes32, AccountStorageEntry> entries,
       final Bytes32 nextKey,
@@ -66,26 +74,48 @@ public class DebugStorageRangeAtResult implements JsonRpcResult {
     return "0x" + hex.substring(i);
   }
 
+  /**
+   * Gets storage.
+   *
+   * @return the storage
+   */
   @JsonGetter(value = "storage")
   public NavigableMap<String, StorageEntry> getStorage() {
     return storage;
   }
 
+  /**
+   * Gets next key.
+   *
+   * @return the next key
+   */
   @JsonGetter(value = "nextKey")
   public String getNextKey() {
     return nextKey;
   }
 
+  /**
+   * Gets complete.
+   *
+   * @return the complete
+   */
   @JsonGetter(value = "complete")
   public boolean getComplete() {
     return nextKey == null;
   }
 
+  /** The type Storage entry. */
   @JsonPropertyOrder(value = {"key", "value"})
   public static class StorageEntry {
     private final String value;
     private final String key;
 
+    /**
+     * Instantiates a new Storage entry.
+     *
+     * @param entry the entry
+     * @param shortValues the short values
+     */
     public StorageEntry(final AccountStorageEntry entry, final boolean shortValues) {
       if (shortValues) {
         this.value = entry.getValue().toMinimalBytes().toHexString();
@@ -102,11 +132,21 @@ public class DebugStorageRangeAtResult implements JsonRpcResult {
       }
     }
 
+    /**
+     * Gets key.
+     *
+     * @return the key
+     */
     @JsonGetter(value = "key")
     public String getKey() {
       return key;
     }
 
+    /**
+     * Gets value.
+     *
+     * @return the value
+     */
     @JsonGetter(value = "value")
     public String getValue() {
       return value;

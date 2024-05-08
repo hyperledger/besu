@@ -22,32 +22,57 @@ import com.fasterxml.jackson.databind.SerializerProvider;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.StdSerializer;
 
+/** The type Diff node. */
 @JsonSerialize(using = DiffNode.Serializer.class)
 public final class DiffNode {
 
   private final Optional<String> from;
   private final Optional<String> to;
 
+  /**
+   * Instantiates a new Diff node.
+   *
+   * @param from the from
+   * @param to the to
+   */
   DiffNode(final String from, final String to) {
     this.from = Optional.ofNullable(from);
     this.to = Optional.ofNullable(to);
   }
 
+  /**
+   * Instantiates a new Diff node.
+   *
+   * @param from the from
+   * @param to the to
+   */
   DiffNode(final Optional<String> from, final Optional<String> to) {
     this.from = from;
     this.to = to;
   }
 
+  /**
+   * Has difference boolean.
+   *
+   * @return the boolean
+   */
   boolean hasDifference() {
     return from.map(it -> !it.equals(to.get())).orElse(to.isPresent());
   }
 
+  /** The type Serializer. */
   public static class Serializer extends StdSerializer<DiffNode> {
 
+    /** Instantiates a new Serializer. */
     public Serializer() {
       this(null);
     }
 
+    /**
+     * Instantiates a new Serializer.
+     *
+     * @param t the t
+     */
     protected Serializer(final Class<DiffNode> t) {
       super(t);
     }

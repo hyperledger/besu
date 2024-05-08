@@ -50,6 +50,7 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
 
   private static final Logger LOG = LoggerFactory.getLogger(SubscriptionManager.class);
 
+  /** The constant EVENTBUS_REMOVE_SUBSCRIPTIONS_ADDRESS. */
   public static final String EVENTBUS_REMOVE_SUBSCRIPTIONS_ADDRESS =
       "SubscriptionManager::removeSubscriptions";
 
@@ -60,12 +61,23 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
   private final LabelledMetric<Counter> unsubscribeCounter;
   private final List<PrivateTransactionEvent> privateTransactionEvents = new ArrayList<>();
 
+  /**
+   * Instantiates a new Subscription manager.
+   *
+   * @param metricsSystem the metrics system
+   * @param blockchainQueries the blockchain queries
+   */
   public SubscriptionManager(
       final MetricsSystem metricsSystem, final Blockchain blockchainQueries) {
     this(metricsSystem);
     blockchainQueries.observeBlockAdded(event -> onBlockAdded());
   }
 
+  /**
+   * Instantiates a new Subscription manager.
+   *
+   * @param metricsSystem the metrics system
+   */
   public SubscriptionManager(final MetricsSystem metricsSystem) {
     subscribeCounter =
         metricsSystem.createLabelledCounter(
@@ -86,6 +98,12 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
     vertx.eventBus().consumer(EVENTBUS_REMOVE_SUBSCRIPTIONS_ADDRESS, this::removeSubscriptions);
   }
 
+  /**
+   * Subscribe long.
+   *
+   * @param request the request
+   * @return the long
+   */
   public Long subscribe(final SubscribeRequest request) {
     LOG.debug("Subscribe request {}", request);
     subscribeCounter.labels(request.getSubscriptionType().getCode()).inc();
@@ -98,6 +116,12 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
     return subscription.getSubscriptionId();
   }
 
+  /**
+   * Unsubscribe boolean.
+   *
+   * @param request the request
+   * @return the boolean
+   */
   public boolean unsubscribe(final UnsubscribeRequest request) {
     final Long subscriptionId = request.getSubscriptionId();
     final String connectionId = request.getConnectionId();
@@ -134,10 +158,24 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
         .forEach(subscription -> destroySubscription(subscription.getSubscriptionId()));
   }
 
+  /**
+   * Gets subscription by id.
+   *
+   * @param subscriptionId the subscription id
+   * @return the subscription by id
+   */
   public Subscription getSubscriptionById(final Long subscriptionId) {
     return subscriptions.get(subscriptionId);
   }
 
+  /**
+   * Subscriptions of type list.
+   *
+   * @param <T> the type parameter
+   * @param type the type
+   * @param clazz the clazz
+   * @return the list
+   */
   public <T> List<T> subscriptionsOfType(final SubscriptionType type, final Class<T> clazz) {
     return subscriptions.values().stream()
         .filter(subscription -> subscription.isType(type))
@@ -145,6 +183,12 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
         .collect(Collectors.toList());
   }
 
+  /**
+   * Send message.
+   *
+   * @param subscriptionId the subscription id
+   * @param msg the msg
+   */
   public void sendMessage(final Long subscriptionId, final JsonRpcResult msg) {
     final Subscription subscription = subscriptions.get(subscriptionId);
 
@@ -154,6 +198,14 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
     }
   }
 
+  /**
+   * Notify subscribers on worker thread.
+   *
+   * @param <T> the type parameter
+   * @param subscriptionType the subscription type
+   * @param clazz the clazz
+   * @param runnable the runnable
+   */
   public <T> void notifySubscribersOnWorkerThread(
       final SubscriptionType subscriptionType,
       final Class<T> clazz,
@@ -176,6 +228,7 @@ public class SubscriptionManager extends AbstractVerticle implements PrivateTran
     privateTransactionEvents.add(event);
   }
 
+  /** On block added. */
   void onBlockAdded() {
     privateTransactionEvents.forEach(this::processPrivateTransactionEvents);
   }

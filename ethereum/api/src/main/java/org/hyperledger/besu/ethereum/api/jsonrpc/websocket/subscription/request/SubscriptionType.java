@@ -16,19 +16,25 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The enum Subscription type. */
 public enum SubscriptionType {
+  /** New block headers subscription type. */
   @JsonProperty("newHeads")
   NEW_BLOCK_HEADERS("newHeads"),
 
+  /** Logs subscription type. */
   @JsonProperty("logs")
   LOGS("logs"),
 
+  /** New pending transactions subscription type. */
   @JsonProperty("newPendingTransactions")
   NEW_PENDING_TRANSACTIONS("newPendingTransactions"),
 
+  /** Dropped pending transactions subscription type. */
   @JsonProperty("droppedPendingTransactions")
   DROPPED_PENDING_TRANSACTIONS("droppedPendingTransactions"),
 
+  /** Syncing subscription type. */
   @JsonProperty("syncing")
   SYNCING("syncing");
 
@@ -38,10 +44,21 @@ public enum SubscriptionType {
     this.code = code;
   }
 
+  /**
+   * Gets code.
+   *
+   * @return the code
+   */
   public String getCode() {
     return code;
   }
 
+  /**
+   * From code subscription type.
+   *
+   * @param code the code
+   * @return the subscription type
+   */
   public static SubscriptionType fromCode(final String code) {
     for (final SubscriptionType subscriptionType : SubscriptionType.values()) {
       if (code.equals(subscriptionType.getCode())) {

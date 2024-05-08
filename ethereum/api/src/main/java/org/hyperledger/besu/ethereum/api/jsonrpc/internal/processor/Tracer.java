@@ -28,8 +28,20 @@ import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Tracer. */
 public class Tracer {
+  /** Default constructor. */
+  private Tracer() {}
 
+  /**
+   * Process tracing optional.
+   *
+   * @param <TRACE> the type parameter
+   * @param blockchainQueries the blockchain queries
+   * @param blockHash the block hash
+   * @param mapper the mapper
+   * @return the optional
+   */
   public static <TRACE> Optional<TRACE> processTracing(
       final BlockchainQueries blockchainQueries,
       final Hash blockHash,
@@ -38,6 +50,15 @@ public class Tracer {
         blockchainQueries, blockchainQueries.getBlockHeaderByHash(blockHash), mapper);
   }
 
+  /**
+   * Process tracing optional.
+   *
+   * @param <TRACE> the type parameter
+   * @param blockchainQueries the blockchain queries
+   * @param blockHeader the block header
+   * @param mapper the mapper
+   * @return the optional
+   */
   public static <TRACE> Optional<TRACE> processTracing(
       final BlockchainQueries blockchainQueries,
       final Optional<BlockHeader> blockHeader,

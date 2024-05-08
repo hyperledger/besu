@@ -18,10 +18,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
+/** The type Privx find onchain privacy group. */
 // Use PrivxFindFlexiblePrivacyGroup instead
 @Deprecated
 public class PrivxFindOnchainPrivacyGroup extends PrivxFindFlexiblePrivacyGroup {
 
+  /**
+   * Instantiates a new Privx find onchain privacy group.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivxFindOnchainPrivacyGroup(
       final PrivacyController privacyController, final PrivacyIdProvider privacyIdProvider) {
     super(privacyController, privacyIdProvider);

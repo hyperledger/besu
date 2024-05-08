@@ -14,7 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+/** The type Json rpc no response. */
 public class JsonRpcNoResponse implements JsonRpcResponse {
+  /** Default constructor. */
+  public JsonRpcNoResponse() {}
 
   @Override
   public JsonRpcResponseType getType() {

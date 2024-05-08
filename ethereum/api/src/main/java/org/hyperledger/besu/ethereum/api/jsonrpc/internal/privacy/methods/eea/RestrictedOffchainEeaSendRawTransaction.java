@@ -35,11 +35,23 @@ import java.util.Optional;
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Restricted offchain eea send raw transaction. */
 public class RestrictedOffchainEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
 
+  /** The Privacy controller. */
   final PrivacyController privacyController;
+
   private final PrivacyIdProvider privacyIdProvider;
 
+  /**
+   * Instantiates a new Restricted offchain eea send raw transaction.
+   *
+   * @param transactionPool the transaction pool
+   * @param privacyIdProvider the privacy id provider
+   * @param privateMarkerTransactionFactory the private marker transaction factory
+   * @param publicNonceProvider the public nonce provider
+   * @param privacyController the privacy controller
+   */
   public RestrictedOffchainEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider,

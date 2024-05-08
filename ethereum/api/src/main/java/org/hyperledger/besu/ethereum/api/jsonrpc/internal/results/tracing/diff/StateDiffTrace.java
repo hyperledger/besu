@@ -18,4 +18,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 
 import java.util.TreeMap;
 
-public class StateDiffTrace extends TreeMap<String, AccountDiff> implements Trace {}
+/** The type State diff trace. */
+public class StateDiffTrace extends TreeMap<String, AccountDiff> implements Trace {
+  /** Default constructor. */
+  public StateDiffTrace() {}
+}

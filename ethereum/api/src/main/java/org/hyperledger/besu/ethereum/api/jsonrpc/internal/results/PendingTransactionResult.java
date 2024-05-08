@@ -21,6 +21,7 @@ import java.time.Instant;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Pending transaction result. */
 @JsonPropertyOrder({"hash", "isReceivedFromLocalSource"})
 public class PendingTransactionResult implements TransactionResult {
 
@@ -28,22 +29,42 @@ public class PendingTransactionResult implements TransactionResult {
   private final boolean isReceivedFromLocalSource;
   private final Instant addedToPoolAt;
 
+  /**
+   * Instantiates a new Pending transaction result.
+   *
+   * @param pendingTransaction the pending transaction
+   */
   public PendingTransactionResult(final PendingTransaction pendingTransaction) {
     hash = pendingTransaction.getHash().toString();
     isReceivedFromLocalSource = pendingTransaction.isReceivedFromLocalSource();
     addedToPoolAt = Instant.ofEpochMilli(pendingTransaction.getAddedAt());
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   @JsonGetter(value = "hash")
   public String getHash() {
     return hash;
   }
 
+  /**
+   * Gets added to pool at.
+   *
+   * @return the added to pool at
+   */
   @JsonGetter(value = "addedToPoolAt")
   public String getAddedToPoolAt() {
     return addedToPoolAt.toString();
   }
 
+  /**
+   * Is received from local source boolean.
+   *
+   * @return the boolean
+   */
   @JsonGetter(value = "isReceivedFromLocalSource")
   public boolean isReceivedFromLocalSource() {
     return isReceivedFromLocalSource;

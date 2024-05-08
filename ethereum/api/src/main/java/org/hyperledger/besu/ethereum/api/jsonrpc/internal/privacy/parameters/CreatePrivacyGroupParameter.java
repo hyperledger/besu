@@ -20,6 +20,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The type Create privacy group parameter. */
 public class CreatePrivacyGroupParameter {
 
   private final List<String> addresses;
@@ -30,6 +31,13 @@ public class CreatePrivacyGroupParameter {
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final String description;
 
+  /**
+   * Instantiates a new Create privacy group parameter.
+   *
+   * @param addresses the addresses
+   * @param name the name
+   * @param description the description
+   */
   @JsonCreator
   public CreatePrivacyGroupParameter(
       @JsonProperty(value = "addresses", required = true) final List<String> addresses,
@@ -40,14 +48,29 @@ public class CreatePrivacyGroupParameter {
     this.description = description;
   }
 
+  /**
+   * Gets addresses.
+   *
+   * @return the addresses
+   */
   public List<String> getAddresses() {
     return addresses;
   }
 
+  /**
+   * Gets name.
+   *
+   * @return the name
+   */
   public String getName() {
     return name;
   }
 
+  /**
+   * Gets description.
+   *
+   * @return the description
+   */
   public String getDescription() {
     return description;
   }

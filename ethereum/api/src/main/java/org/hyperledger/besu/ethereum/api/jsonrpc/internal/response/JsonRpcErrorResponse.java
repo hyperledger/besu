@@ -33,6 +33,7 @@ import org.web3j.abi.datatypes.AbiTypes;
 import org.web3j.abi.datatypes.Type;
 import org.web3j.abi.datatypes.Utf8String;
 
+/** The type Json rpc error response. */
 @JsonPropertyOrder({"jsonrpc", "id", "error"})
 public class JsonRpcErrorResponse implements JsonRpcResponse {
 
@@ -40,19 +41,38 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
   private final JsonRpcError error;
   @JsonIgnore private final RpcErrorType errorType;
 
+  /** The constant errorMethodABI. */
   // Encoding of "Error(string)" to check for at the start of the revert reason
   static final String errorMethodABI = "0x08c379a0";
 
+  /**
+   * Instantiates a new Json rpc error response.
+   *
+   * @param id the id
+   * @param error the error
+   */
   public JsonRpcErrorResponse(final Object id, final JsonRpcError error) {
     this.id = id;
     this.error = error;
     this.errorType = findErrorType(error.getCode(), error.getMessage());
   }
 
+  /**
+   * Instantiates a new Json rpc error response.
+   *
+   * @param id the id
+   * @param error the error
+   */
   public JsonRpcErrorResponse(final Object id, final RpcErrorType error) {
     this(id, new JsonRpcError(error));
   }
 
+  /**
+   * Instantiates a new Json rpc error response.
+   *
+   * @param id the id
+   * @param validationResult the validation result
+   */
   public JsonRpcErrorResponse(
       final Object id, final ValidationResult<RpcErrorType> validationResult) {
     this(
@@ -60,11 +80,21 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
         new JsonRpcError(validationResult.getInvalidReason(), validationResult.getErrorMessage()));
   }
 
+  /**
+   * Gets id.
+   *
+   * @return the id
+   */
   @JsonGetter("id")
   public Object getId() {
     return id;
   }
 
+  /**
+   * Gets error.
+   *
+   * @return the error
+   */
   @JsonGetter("error")
   public JsonRpcError getError() {
     return error;
@@ -98,6 +128,11 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
     return MoreObjects.toStringHelper(this).add("id", id).add("error", error).toString();
   }
 
+  /**
+   * Gets error type.
+   *
+   * @return the error type
+   */
   @JsonIgnore
   public RpcErrorType getErrorType() {
     return errorType;
@@ -110,6 +145,12 @@ public class JsonRpcErrorResponse implements JsonRpcResponse {
         .orElse(RpcErrorType.UNKNOWN);
   }
 
+  /**
+   * Decode revert reason optional.
+   *
+   * @param revertReason the revert reason
+   * @return the optional
+   */
   @SuppressWarnings({"unchecked", "rawtypes"})
   public static Optional<String> decodeRevertReason(final Bytes revertReason) {
     if (revertReason.toHexString().startsWith(errorMethodABI)) {

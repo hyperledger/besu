@@ -19,9 +19,15 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 
 import java.util.Optional;
 
+/** The type Perm add accounts to whitelist. */
 @Deprecated
 public class PermAddAccountsToWhitelist extends PermAddAccountsToAllowlist {
 
+  /**
+   * Instantiates a new Perm add accounts to whitelist.
+   *
+   * @param allowlistController the allowlist controller
+   */
   public PermAddAccountsToWhitelist(
       final Optional<AccountLocalConfigPermissioningController> allowlistController) {
     super(allowlistController);

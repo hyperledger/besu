@@ -16,14 +16,25 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/** The type Transaction hash result. */
 public class TransactionHashResult implements TransactionResult {
 
   private final String hash;
 
+  /**
+   * Instantiates a new Transaction hash result.
+   *
+   * @param hash the hash
+   */
   public TransactionHashResult(final String hash) {
     this.hash = hash;
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   @JsonValue
   public String getHash() {
     return hash;

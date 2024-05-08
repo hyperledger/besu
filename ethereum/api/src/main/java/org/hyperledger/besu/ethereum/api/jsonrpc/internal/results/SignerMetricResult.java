@@ -21,6 +21,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Signer metric result. */
 @JsonPropertyOrder({"address", "proposedBlockCount", "lastProposedBlockNumber"})
 public class SignerMetricResult {
 
@@ -28,6 +29,11 @@ public class SignerMetricResult {
   private long proposedBlockCount;
   private long lastProposedBlockNumber;
 
+  /**
+   * Instantiates a new Signer metric result.
+   *
+   * @param address the address
+   */
   public SignerMetricResult(final Address address) {
     this.address = address.toString();
   }
@@ -51,25 +57,46 @@ public class SignerMetricResult {
     return Objects.hash(address, proposedBlockCount, lastProposedBlockNumber);
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   @JsonGetter(value = "address")
   public String getAddress() {
     return address;
   }
 
+  /**
+   * Gets proposed block count.
+   *
+   * @return the proposed block count
+   */
   @JsonGetter(value = "proposedBlockCount")
   public String getProposedBlockCount() {
     return Quantity.create(proposedBlockCount);
   }
 
+  /**
+   * Gets last proposed block number.
+   *
+   * @return the last proposed block number
+   */
   @JsonGetter(value = "lastProposedBlockNumber")
   public String getLastProposedBlockNumber() {
     return Quantity.create(lastProposedBlockNumber);
   }
 
+  /** Incremente nb block. */
   public void incrementeNbBlock() {
     this.proposedBlockCount++;
   }
 
+  /**
+   * Sets last proposed block number.
+   *
+   * @param lastProposedBlockNumber the last proposed block number
+   */
   public void setLastProposedBlockNumber(final long lastProposedBlockNumber) {
     this.lastProposedBlockNumber = lastProposedBlockNumber;
   }

@@ -18,22 +18,38 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
+/** The type Unsigned int parameter. */
 public class UnsignedIntParameter {
 
   private final int value;
 
+  /**
+   * Instantiates a new Unsigned int parameter.
+   *
+   * @param value the value
+   */
   @JsonCreator
   public UnsignedIntParameter(final String value) {
     this.value = Integer.decode(value);
     checkArgument(this.value >= 0);
   }
 
+  /**
+   * Instantiates a new Unsigned int parameter.
+   *
+   * @param value the value
+   */
   @JsonCreator
   public UnsignedIntParameter(final int value) {
     this.value = value;
     checkArgument(this.value >= 0);
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public int getValue() {
     return value;
   }

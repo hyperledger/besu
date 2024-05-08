@@ -25,10 +25,16 @@ import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioni
 
 import java.util.Optional;
 
+/** The type Perm get accounts allowlist. */
 public class PermGetAccountsAllowlist implements JsonRpcMethod {
 
   private final Optional<AccountLocalConfigPermissioningController> allowlistController;
 
+  /**
+   * Instantiates a new Perm get accounts allowlist.
+   *
+   * @param allowlistController the allowlist controller
+   */
   public PermGetAccountsAllowlist(
       final Optional<AccountLocalConfigPermissioningController> allowlistController) {
     this.allowlistController = allowlistController;

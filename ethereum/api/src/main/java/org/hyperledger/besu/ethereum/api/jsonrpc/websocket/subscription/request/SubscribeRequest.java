@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParam
 
 import java.util.Objects;
 
+/** The type Subscribe request. */
 public class SubscribeRequest {
 
   private final SubscriptionType subscriptionType;
@@ -25,6 +26,14 @@ public class SubscribeRequest {
   private final FilterParameter filterParameter;
   private final String connectionId;
 
+  /**
+   * Instantiates a new Subscribe request.
+   *
+   * @param subscriptionType the subscription type
+   * @param filterParameter the filter parameter
+   * @param includeTransaction the include transaction
+   * @param connectionId the connection id
+   */
   public SubscribeRequest(
       final SubscriptionType subscriptionType,
       final FilterParameter filterParameter,
@@ -36,18 +45,38 @@ public class SubscribeRequest {
     this.connectionId = connectionId;
   }
 
+  /**
+   * Gets subscription type.
+   *
+   * @return the subscription type
+   */
   public SubscriptionType getSubscriptionType() {
     return subscriptionType;
   }
 
+  /**
+   * Gets filter parameter.
+   *
+   * @return the filter parameter
+   */
   public FilterParameter getFilterParameter() {
     return filterParameter;
   }
 
+  /**
+   * Gets include transaction.
+   *
+   * @return the include transaction
+   */
   public Boolean getIncludeTransaction() {
     return includeTransaction;
   }
 
+  /**
+   * Gets connection id.
+   *
+   * @return the connection id
+   */
   public String getConnectionId() {
     return this.connectionId;
   }

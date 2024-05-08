@@ -22,6 +22,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Vm operation. */
 @JsonPropertyOrder({"cost", "operation", "ex", "pc", "sub"})
 public class VmOperation {
   private long cost;
@@ -31,46 +32,97 @@ public class VmOperation {
   private long pc;
   private VmTrace sub;
 
+  /** Instantiates a new Vm operation. */
   VmOperation() {}
 
+  /**
+   * Gets cost.
+   *
+   * @return the cost
+   */
   public long getCost() {
     return cost;
   }
 
+  /**
+   * Gets vm operation execution report.
+   *
+   * @return the vm operation execution report
+   */
   @JsonGetter("ex")
   public VmOperationExecutionReport getVmOperationExecutionReport() {
     return vmOperationExecutionReport;
   }
 
+  /**
+   * Gets pc.
+   *
+   * @return the pc
+   */
   public long getPc() {
     return pc;
   }
 
+  /**
+   * Gets sub.
+   *
+   * @return the sub
+   */
   public VmTrace getSub() {
     return sub;
   }
 
+  /**
+   * Sets cost.
+   *
+   * @param cost the cost
+   */
   public void setCost(final long cost) {
     this.cost = cost;
   }
 
+  /**
+   * Sets vm operation execution report.
+   *
+   * @param vmOperationExecutionReport the vm operation execution report
+   */
   void setVmOperationExecutionReport(final VmOperationExecutionReport vmOperationExecutionReport) {
     this.vmOperationExecutionReport = vmOperationExecutionReport;
   }
 
+  /**
+   * Sets pc.
+   *
+   * @param pc the pc
+   */
   public void setPc(final long pc) {
     this.pc = pc;
   }
 
+  /**
+   * Sets sub.
+   *
+   * @param sub the sub
+   */
   public void setSub(final VmTrace sub) {
     this.sub = sub;
   }
 
+  /**
+   * Gets operation.
+   *
+   * @return the operation
+   */
   @JsonInclude(NON_NULL)
   public String getOperation() {
     return operation;
   }
 
+  /**
+   * Sets operation.
+   *
+   * @param operation the operation
+   */
   public void setOperation(final String operation) {
     this.operation = operation;
   }

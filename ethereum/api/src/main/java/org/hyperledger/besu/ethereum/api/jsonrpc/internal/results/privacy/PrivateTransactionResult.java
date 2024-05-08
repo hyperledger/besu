@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
+/** The type Private transaction result. */
 public abstract class PrivateTransactionResult {
   private final String from;
   private final String gas;
@@ -36,6 +37,11 @@ public abstract class PrivateTransactionResult {
   private final String privateFrom;
   private final String restriction;
 
+  /**
+   * Instantiates a new Private transaction result.
+   *
+   * @param tx the tx
+   */
   protected PrivateTransactionResult(final PrivateTransaction tx) {
     this.from = tx.getSender().toString();
     this.gas = Quantity.create(tx.getGasLimit());
@@ -51,61 +57,121 @@ public abstract class PrivateTransactionResult {
     this.restriction = new String(tx.getRestriction().getBytes().toArrayUnsafe(), UTF_8);
   }
 
+  /**
+   * Gets from.
+   *
+   * @return the from
+   */
   @JsonGetter(value = "from")
   public String getFrom() {
     return from;
   }
 
+  /**
+   * Gets gas.
+   *
+   * @return the gas
+   */
   @JsonGetter(value = "gas")
   public String getGas() {
     return gas;
   }
 
+  /**
+   * Gets gas price.
+   *
+   * @return the gas price
+   */
   @JsonGetter(value = "gasPrice")
   public String getGasPrice() {
     return gasPrice;
   }
 
+  /**
+   * Gets input.
+   *
+   * @return the input
+   */
   @JsonGetter(value = "input")
   public String getInput() {
     return input;
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   @JsonGetter(value = "nonce")
   public String getNonce() {
     return nonce;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   @JsonGetter(value = "to")
   public String getTo() {
     return to;
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   @JsonGetter(value = "value")
   public String getValue() {
     return value;
   }
 
+  /**
+   * Gets v.
+   *
+   * @return the v
+   */
   @JsonGetter(value = "v")
   public String getV() {
     return v;
   }
 
+  /**
+   * Gets r.
+   *
+   * @return the r
+   */
   @JsonGetter(value = "r")
   public String getR() {
     return r;
   }
 
+  /**
+   * Gets s.
+   *
+   * @return the s
+   */
   @JsonGetter(value = "s")
   public String getS() {
     return s;
   }
 
+  /**
+   * Gets private from.
+   *
+   * @return the private from
+   */
   @JsonGetter(value = "privateFrom")
   public String getPrivateFrom() {
     return privateFrom;
   }
 
+  /**
+   * Gets restriction.
+   *
+   * @return the restriction
+   */
   @JsonGetter(value = "restriction")
   public String getRestriction() {
     return restriction;

@@ -21,10 +21,19 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
+/** The type Web socket rpc request. */
 public class WebSocketRpcRequest extends JsonRpcRequest {
 
   private String connectionId;
 
+  /**
+   * Instantiates a new Web socket rpc request.
+   *
+   * @param version the version
+   * @param method the method
+   * @param params the params
+   * @param connectionId the connection id
+   */
   @JsonCreator
   public WebSocketRpcRequest(
       @JsonProperty("jsonrpc") final String version,
@@ -35,11 +44,21 @@ public class WebSocketRpcRequest extends JsonRpcRequest {
     this.connectionId = connectionId;
   }
 
+  /**
+   * Sets connection id.
+   *
+   * @param connectionId the connection id
+   */
   @JsonSetter("connectionId")
   public void setConnectionId(final String connectionId) {
     this.connectionId = connectionId;
   }
 
+  /**
+   * Gets connection id.
+   *
+   * @return the connection id
+   */
   @JsonGetter("connectionId")
   public String getConnectionId() {
     return this.connectionId;

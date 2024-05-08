@@ -20,8 +20,20 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.Optional;
 
+/** The type Priv util. */
 public class PrivUtil {
+  /** Default constructor. */
+  private PrivUtil() {}
 
+  /**
+   * Check membership for authenticated user.
+   *
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   * @param request the request
+   * @param privacyGroupId the privacy group id
+   * @param blockNumber the block number
+   */
   public static void checkMembershipForAuthenticatedUser(
       final PrivacyController privacyController,
       final PrivacyIdProvider privacyIdProvider,

@@ -16,11 +16,21 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.logs;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 
+/** The type Private logs subscription. */
 public class PrivateLogsSubscription extends LogsSubscription {
 
   private final String privacyGroupId;
   private final String privacyUserId;
 
+  /**
+   * Instantiates a new Private logs subscription.
+   *
+   * @param subscriptionId the subscription id
+   * @param connectionId the connection id
+   * @param filterParameter the filter parameter
+   * @param privacyGroupId the privacy group id
+   * @param privacyUserId the privacy user id
+   */
   public PrivateLogsSubscription(
       final Long subscriptionId,
       final String connectionId,
@@ -32,10 +42,20 @@ public class PrivateLogsSubscription extends LogsSubscription {
     this.privacyUserId = privacyUserId;
   }
 
+  /**
+   * Gets privacy group id.
+   *
+   * @return the privacy group id
+   */
   public String getPrivacyGroupId() {
     return privacyGroupId;
   }
 
+  /**
+   * Gets privacy user id.
+   *
+   * @return the privacy user id
+   */
   public String getPrivacyUserId() {
     return privacyUserId;
   }

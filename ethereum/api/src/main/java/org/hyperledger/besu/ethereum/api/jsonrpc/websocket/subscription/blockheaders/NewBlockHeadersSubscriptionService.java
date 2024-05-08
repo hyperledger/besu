@@ -31,12 +31,19 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
+/** The type New block headers subscription service. */
 public class NewBlockHeadersSubscriptionService implements BlockAddedObserver {
 
   private final SubscriptionManager subscriptionManager;
   private final BlockchainQueries blockchainQueries;
   private final BlockResultFactory blockResult = new BlockResultFactory();
 
+  /**
+   * Instantiates a new New block headers subscription service.
+   *
+   * @param subscriptionManager the subscription manager
+   * @param blockchainQueries the blockchain queries
+   */
   public NewBlockHeadersSubscriptionService(
       final SubscriptionManager subscriptionManager, final BlockchainQueries blockchainQueries) {
     this.subscriptionManager = subscriptionManager;

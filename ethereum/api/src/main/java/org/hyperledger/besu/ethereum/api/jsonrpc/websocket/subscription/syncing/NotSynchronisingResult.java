@@ -18,8 +18,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/** The type Not synchronising result. */
 public class NotSynchronisingResult implements JsonRpcResult {
+  /** Default constructor. */
+  public NotSynchronisingResult() {}
 
+  /**
+   * Gets result.
+   *
+   * @return the result
+   */
   @JsonValue
   public boolean getResult() {
     return false;

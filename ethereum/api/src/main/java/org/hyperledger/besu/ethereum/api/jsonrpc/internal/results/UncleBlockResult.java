@@ -21,7 +21,10 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 
 import java.util.Collections;
 
+/** The type Uncle block result. */
 public class UncleBlockResult {
+  /** Default constructor. */
+  private UncleBlockResult() {}
 
   /**
    * Returns an uncle block, which doesn't include transactions or ommers.

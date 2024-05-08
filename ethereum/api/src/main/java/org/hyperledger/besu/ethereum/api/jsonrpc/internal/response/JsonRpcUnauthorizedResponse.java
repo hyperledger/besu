@@ -21,6 +21,7 @@ import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Json rpc unauthorized response. */
 @JsonPropertyOrder({"jsonrpc", "id", "error"})
 public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
 
@@ -28,21 +29,43 @@ public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
   private final JsonRpcError error;
   @JsonIgnore private final RpcErrorType errorType;
 
+  /**
+   * Instantiates a new Json rpc unauthorized response.
+   *
+   * @param id the id
+   * @param error the error
+   */
   public JsonRpcUnauthorizedResponse(final Object id, final JsonRpcError error) {
     this.id = id;
     this.error = error;
     this.errorType = findErrorType(error.getCode(), error.getMessage());
   }
 
+  /**
+   * Instantiates a new Json rpc unauthorized response.
+   *
+   * @param id the id
+   * @param error the error
+   */
   public JsonRpcUnauthorizedResponse(final Object id, final RpcErrorType error) {
     this(id, new JsonRpcError(error));
   }
 
+  /**
+   * Gets id.
+   *
+   * @return the id
+   */
   @JsonGetter("id")
   public Object getId() {
     return id;
   }
 
+  /**
+   * Gets error.
+   *
+   * @return the error
+   */
   @JsonGetter("error")
   public JsonRpcError getError() {
     return error;
@@ -71,6 +94,11 @@ public class JsonRpcUnauthorizedResponse implements JsonRpcResponse {
     return Objects.hash(id, error);
   }
 
+  /**
+   * Gets error type.
+   *
+   * @return the error type
+   */
   @JsonIgnore
   public RpcErrorType getErrorType() {
     return errorType;

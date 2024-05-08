@@ -24,6 +24,7 @@ import java.util.List;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Transaction receipt log result. */
 @JsonPropertyOrder({
   "address",
   "topics",
@@ -47,6 +48,16 @@ public class TransactionReceiptLogResult {
   private final String logIndex;
   private final boolean removed;
 
+  /**
+   * Instantiates a new Transaction receipt log result.
+   *
+   * @param log the log
+   * @param blockNumber the block number
+   * @param transactionHash the transaction hash
+   * @param blockHash the block hash
+   * @param transactionIndex the transaction index
+   * @param logIndex the log index
+   */
   public TransactionReceiptLogResult(
       final Log log,
       final long blockNumber,
@@ -72,46 +83,91 @@ public class TransactionReceiptLogResult {
     this.removed = false;
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   @JsonGetter(value = "address")
   public String getAddress() {
     return address;
   }
 
+  /**
+   * Gets topics.
+   *
+   * @return the topics
+   */
   @JsonGetter(value = "topics")
   public List<String> getTopics() {
     return topics;
   }
 
+  /**
+   * Gets data.
+   *
+   * @return the data
+   */
   @JsonGetter(value = "data")
   public String getData() {
     return data;
   }
 
+  /**
+   * Gets block number.
+   *
+   * @return the block number
+   */
   @JsonGetter(value = "blockNumber")
   public String getBlockNumber() {
     return blockNumber;
   }
 
+  /**
+   * Gets transaction hash.
+   *
+   * @return the transaction hash
+   */
   @JsonGetter(value = "transactionHash")
   public String getTransactionHash() {
     return transactionHash;
   }
 
+  /**
+   * Gets transaction index.
+   *
+   * @return the transaction index
+   */
   @JsonGetter(value = "transactionIndex")
   public String getTransactionIndex() {
     return transactionIndex;
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   @JsonGetter(value = "blockHash")
   public String getBlockHash() {
     return blockHash;
   }
 
+  /**
+   * Gets log index.
+   *
+   * @return the log index
+   */
   @JsonGetter(value = "logIndex")
   public String getLogIndex() {
     return logIndex;
   }
 
+  /**
+   * Is removed boolean.
+   *
+   * @return the boolean
+   */
   @JsonGetter(value = "removed")
   public boolean isRemoved() {
     return removed;

@@ -23,6 +23,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Syncing result. */
 @JsonPropertyOrder({"startingBlock", "currentBlock", "highestBlock"})
 public class SyncingResult implements JsonRpcResult {
 
@@ -32,6 +33,11 @@ public class SyncingResult implements JsonRpcResult {
   private final String pullStates;
   private final String knownStates;
 
+  /**
+   * Instantiates a new Syncing result.
+   *
+   * @param syncStatus the sync status
+   */
   public SyncingResult(final SyncStatus syncStatus) {
 
     this.startingBlock = Quantity.create(syncStatus.getStartingBlock());
@@ -41,27 +47,52 @@ public class SyncingResult implements JsonRpcResult {
     this.knownStates = syncStatus.getKnownStates().map(Quantity::create).orElse(null);
   }
 
+  /**
+   * Gets starting block.
+   *
+   * @return the starting block
+   */
   @JsonGetter(value = "startingBlock")
   public String getStartingBlock() {
     return startingBlock;
   }
 
+  /**
+   * Gets current block.
+   *
+   * @return the current block
+   */
   @JsonGetter(value = "currentBlock")
   public String getCurrentBlock() {
     return currentBlock;
   }
 
+  /**
+   * Gets highest block.
+   *
+   * @return the highest block
+   */
   @JsonGetter(value = "highestBlock")
   public String getHighestBlock() {
     return highestBlock;
   }
 
+  /**
+   * Gets pull states.
+   *
+   * @return the pull states
+   */
   @JsonInclude(value = Include.NON_NULL)
   @JsonGetter(value = "pulledStates")
   public String getPullStates() {
     return pullStates;
   }
 
+  /**
+   * Gets known states.
+   *
+   * @return the known states
+   */
   @JsonInclude(value = Include.NON_NULL)
   @JsonGetter(value = "knownStates")
   public String getKnownStates() {

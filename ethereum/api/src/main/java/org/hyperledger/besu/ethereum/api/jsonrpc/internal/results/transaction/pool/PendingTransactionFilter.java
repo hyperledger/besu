@@ -34,14 +34,36 @@ import java.util.Optional;
  * value, nonce
  */
 public class PendingTransactionFilter {
-
+  /** The constant FROM_FIELD. */
   public static final String FROM_FIELD = "from";
+
+  /** The constant TO_FIELD. */
   public static final String TO_FIELD = "to";
+
+  /** The constant GAS_FIELD. */
   public static final String GAS_FIELD = "gas";
+
+  /** The constant GAS_PRICE_FIELD. */
   public static final String GAS_PRICE_FIELD = "gasPrice";
+
+  /** The constant VALUE_FIELD. */
   public static final String VALUE_FIELD = "value";
+
+  /** The constant NONCE_FIELD. */
   public static final String NONCE_FIELD = "nonce";
 
+  /** Default constructor. */
+  public PendingTransactionFilter() {}
+
+  /**
+   * Reduce collection.
+   *
+   * @param pendingTransactions the pending transactions
+   * @param filters the filters
+   * @param limit the limit
+   * @return the collection
+   * @throws InvalidJsonRpcParameters the invalid json rpc parameters
+   */
   public Collection<Transaction> reduce(
       final Collection<PendingTransaction> pendingTransactions,
       final List<Filter> filters,
@@ -126,26 +148,49 @@ public class PendingTransactionFilter {
     return predicate.getOperator().apply(transactionWei, Wei.fromHexString(value));
   }
 
+  /** The type Filter. */
   public static class Filter {
 
     private final String fieldName;
     private final String fieldValue;
     private final Predicate predicate;
 
+    /**
+     * Instantiates a new Filter.
+     *
+     * @param fieldName the field name
+     * @param fieldValue the field value
+     * @param predicate the predicate
+     */
     public Filter(final String fieldName, final String fieldValue, final Predicate predicate) {
       this.fieldName = fieldName;
       this.fieldValue = fieldValue;
       this.predicate = predicate;
     }
 
+    /**
+     * Gets field name.
+     *
+     * @return the field name
+     */
     public String getFieldName() {
       return fieldName;
     }
 
+    /**
+     * Gets field value.
+     *
+     * @return the field value
+     */
     public String getFieldValue() {
       return fieldValue;
     }
 
+    /**
+     * Gets predicate.
+     *
+     * @return the predicate
+     */
     public Predicate getPredicate() {
       return predicate;
     }

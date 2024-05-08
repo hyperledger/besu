@@ -14,11 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.api.tls;
 
+/** The type Tls configuration exception. */
 public class TlsConfigurationException extends RuntimeException {
+  /**
+   * Instantiates a new Tls configuration exception.
+   *
+   * @param message the message
+   */
   public TlsConfigurationException(final String message) {
     super(message);
   }
 
+  /**
+   * Instantiates a new Tls configuration exception.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
   public TlsConfigurationException(final String message, final Throwable cause) {
     super(message, cause);
   }

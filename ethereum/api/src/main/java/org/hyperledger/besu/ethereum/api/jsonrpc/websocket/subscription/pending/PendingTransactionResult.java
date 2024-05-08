@@ -19,14 +19,25 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.JsonRpcResult;
 
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/** The type Pending transaction result. */
 public class PendingTransactionResult implements JsonRpcResult {
 
   private final String hash;
 
+  /**
+   * Instantiates a new Pending transaction result.
+   *
+   * @param hash the hash
+   */
   public PendingTransactionResult(final Hash hash) {
     this.hash = hash.toString();
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   @JsonValue
   public String getHash() {
     return hash;

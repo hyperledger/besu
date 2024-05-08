@@ -43,10 +43,20 @@ import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFact
 
 import java.util.Map;
 
+/** The type Priv json rpc methods. */
 public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   private final FilterManager filterManager;
 
+  /**
+   * Instantiates a new Priv json rpc methods.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionPool the transaction pool
+   * @param privacyParameters the privacy parameters
+   * @param filterManager the filter manager
+   */
   public PrivJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,

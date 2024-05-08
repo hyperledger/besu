@@ -14,15 +14,27 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription;
 
+/** The type Subscription not found exception. */
 public class SubscriptionNotFoundException extends RuntimeException {
 
+  /** The Subscription id. */
   private final Long subscriptionId;
 
+  /**
+   * Instantiates a new Subscription not found exception.
+   *
+   * @param subscriptionId the subscription id
+   */
   public SubscriptionNotFoundException(final Long subscriptionId) {
     super(String.format("Subscription not found (id=%s)", subscriptionId));
     this.subscriptionId = subscriptionId;
   }
 
+  /**
+   * Gets subscription id.
+   *
+   * @return the subscription id
+   */
   public Long getSubscriptionId() {
     return subscriptionId;
   }

@@ -34,6 +34,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Json call parameter. */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonCallParameter extends CallParameter {
 
@@ -41,6 +42,23 @@ public class JsonCallParameter extends CallParameter {
 
   private final Optional<Boolean> strict;
 
+  /**
+   * Instantiates a new Json call parameter.
+   *
+   * @param from the from
+   * @param to the to
+   * @param gasLimit the gas limit
+   * @param gasPrice the gas price
+   * @param maxPriorityFeePerGas the max priority fee per gas
+   * @param maxFeePerGas the max fee per gas
+   * @param value the value
+   * @param data the data
+   * @param input the input
+   * @param strict the strict
+   * @param accessList the access list
+   * @param maxFeePerBlobGas the max fee per blob gas
+   * @param blobVersionedHashes the blob versioned hashes
+   */
   @JsonCreator
   public JsonCallParameter(
       @JsonProperty("from") final Address from,
@@ -78,10 +96,21 @@ public class JsonCallParameter extends CallParameter {
     this.strict = Optional.ofNullable(strict);
   }
 
+  /**
+   * Is maybe strict optional.
+   *
+   * @return the optional
+   */
   public Optional<Boolean> isMaybeStrict() {
     return strict;
   }
 
+  /**
+   * Log unknown properties.
+   *
+   * @param key the key
+   * @param value the value
+   */
   @JsonAnySetter
   public void logUnknownProperties(final String key, final Object value) {
     LOG.debug(

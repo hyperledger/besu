@@ -28,11 +28,21 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
+/** The type Web socket configuration. */
 public class WebSocketConfiguration {
+  /** The constant DEFAULT_WEBSOCKET_HOST. */
   public static final String DEFAULT_WEBSOCKET_HOST = "127.0.0.1";
+
+  /** The constant DEFAULT_WEBSOCKET_PORT. */
   public static final int DEFAULT_WEBSOCKET_PORT = 8546;
+
+  /** The constant DEFAULT_WEBSOCKET_ENGINE_PORT. */
   public static final int DEFAULT_WEBSOCKET_ENGINE_PORT = 8551;
+
+  /** The constant DEFAULT_WEBSOCKET_MAX_FRAME_SIZE. */
   public static final int DEFAULT_WEBSOCKET_MAX_FRAME_SIZE = 1024 * 1024;
+
+  /** The constant DEFAULT_MAX_ACTIVE_CONNECTIONS. */
   public static final int DEFAULT_MAX_ACTIVE_CONNECTIONS = 80;
 
   private boolean enabled;
@@ -49,6 +59,11 @@ public class WebSocketConfiguration {
   private int maxActiveConnections;
   private int maxFrameSize;
 
+  /**
+   * Create default web socket configuration.
+   *
+   * @return the web socket configuration
+   */
   public static WebSocketConfiguration createDefault() {
     final WebSocketConfiguration config = new WebSocketConfiguration();
     config.setEnabled(false);
@@ -61,6 +76,11 @@ public class WebSocketConfiguration {
     return config;
   }
 
+  /**
+   * Create engine default web socket configuration.
+   *
+   * @return the web socket configuration
+   */
   public static WebSocketConfiguration createEngineDefault() {
     final WebSocketConfiguration config = createDefault();
     config.setPort(DEFAULT_WEBSOCKET_ENGINE_PORT);
@@ -71,90 +91,200 @@ public class WebSocketConfiguration {
 
   private WebSocketConfiguration() {}
 
+  /**
+   * Is enabled boolean.
+   *
+   * @return the boolean
+   */
   public boolean isEnabled() {
     return enabled;
   }
 
+  /**
+   * Sets enabled.
+   *
+   * @param enabled the enabled
+   */
   public void setEnabled(final boolean enabled) {
     this.enabled = enabled;
   }
 
+  /**
+   * Sets host.
+   *
+   * @param host the host
+   */
   public void setHost(final String host) {
     this.host = host;
   }
 
+  /**
+   * Gets host.
+   *
+   * @return the host
+   */
   public String getHost() {
     return host;
   }
 
+  /**
+   * Sets port.
+   *
+   * @param port the port
+   */
   public void setPort(final int port) {
     this.port = port;
   }
 
+  /**
+   * Gets port.
+   *
+   * @return the port
+   */
   public int getPort() {
     return port;
   }
 
+  /**
+   * Gets rpc apis.
+   *
+   * @return the rpc apis
+   */
   public Collection<String> getRpcApis() {
     return rpcApis;
   }
 
+  /**
+   * Sets rpc apis.
+   *
+   * @param rpcApis the rpc apis
+   */
   public void setRpcApis(final List<String> rpcApis) {
     this.rpcApis = rpcApis;
   }
 
+  /**
+   * Gets rpc apis no auth.
+   *
+   * @return the rpc apis no auth
+   */
   public Collection<String> getRpcApisNoAuth() {
     return rpcApisNoAuth;
   }
 
+  /**
+   * Sets rpc apis no auth.
+   *
+   * @param rpcApis the rpc apis
+   */
   public void setRpcApisNoAuth(final List<String> rpcApis) {
     this.rpcApisNoAuth = rpcApis;
   }
 
+  /**
+   * Is authentication enabled boolean.
+   *
+   * @return the boolean
+   */
   public boolean isAuthenticationEnabled() {
     return authenticationEnabled;
   }
 
+  /**
+   * Sets authentication enabled.
+   *
+   * @param authenticationEnabled the authentication enabled
+   */
   public void setAuthenticationEnabled(final boolean authenticationEnabled) {
     this.authenticationEnabled = authenticationEnabled;
   }
 
+  /**
+   * Sets authentication credentials file.
+   *
+   * @param authenticationCredentialsFile the authentication credentials file
+   */
   public void setAuthenticationCredentialsFile(final String authenticationCredentialsFile) {
     this.authenticationCredentialsFile = authenticationCredentialsFile;
   }
 
+  /**
+   * Gets authentication credentials file.
+   *
+   * @return the authentication credentials file
+   */
   public String getAuthenticationCredentialsFile() {
     return authenticationCredentialsFile;
   }
 
+  /**
+   * Sets hosts allowlist.
+   *
+   * @param hostsAllowlist the hosts allowlist
+   */
   public void setHostsAllowlist(final List<String> hostsAllowlist) {
     this.hostsAllowlist = hostsAllowlist;
   }
 
+  /**
+   * Gets hosts allowlist.
+   *
+   * @return the hosts allowlist
+   */
   public Collection<String> getHostsAllowlist() {
     return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
+  /**
+   * Gets authentication public key file.
+   *
+   * @return the authentication public key file
+   */
   public File getAuthenticationPublicKeyFile() {
     return authenticationPublicKeyFile;
   }
 
+  /**
+   * Sets authentication public key file.
+   *
+   * @param authenticationPublicKeyFile the authentication public key file
+   */
   public void setAuthenticationPublicKeyFile(final File authenticationPublicKeyFile) {
     this.authenticationPublicKeyFile = authenticationPublicKeyFile;
   }
 
+  /**
+   * Gets authentication algorithm.
+   *
+   * @return the authentication algorithm
+   */
   public JwtAlgorithm getAuthenticationAlgorithm() {
     return authenticationAlgorithm;
   }
 
+  /**
+   * Sets authentication algorithm.
+   *
+   * @param algorithm the algorithm
+   */
   public void setAuthenticationAlgorithm(final JwtAlgorithm algorithm) {
     authenticationAlgorithm = algorithm;
   }
 
+  /**
+   * Gets timeout sec.
+   *
+   * @return the timeout sec
+   */
   public long getTimeoutSec() {
     return timeoutSec;
   }
 
+  /**
+   * Sets timeout sec.
+   *
+   * @param timeoutSec the timeout sec
+   */
   public void setTimeoutSec(final long timeoutSec) {
     this.timeoutSec = timeoutSec;
   }
@@ -208,18 +338,38 @@ public class WebSocketConfiguration {
         .toString();
   }
 
+  /**
+   * Gets max active connections.
+   *
+   * @return the max active connections
+   */
   public int getMaxActiveConnections() {
     return maxActiveConnections;
   }
 
+  /**
+   * Sets max active connections.
+   *
+   * @param maxActiveConnections the max active connections
+   */
   public void setMaxActiveConnections(final int maxActiveConnections) {
     this.maxActiveConnections = maxActiveConnections;
   }
 
+  /**
+   * Sets max frame size.
+   *
+   * @param maxFrameSize the max frame size
+   */
   public void setMaxFrameSize(final int maxFrameSize) {
     this.maxFrameSize = maxFrameSize;
   }
 
+  /**
+   * Gets max frame size.
+   *
+   * @return the max frame size
+   */
   public Integer getMaxFrameSize() {
     return maxFrameSize;
   }

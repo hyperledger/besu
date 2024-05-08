@@ -29,12 +29,20 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.List;
 
+/** The type Priv get filter changes. */
 public class PrivGetFilterChanges implements JsonRpcMethod {
 
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
   private final FilterManager filterManager;
 
+  /**
+   * Instantiates a new Priv get filter changes.
+   *
+   * @param filterManager the filter manager
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivGetFilterChanges(
       final FilterManager filterManager,
       final PrivacyController privacyController,

@@ -21,10 +21,16 @@ import org.hyperledger.besu.plugin.BesuPlugin;
 
 import java.util.Map;
 
+/** The type Plugins json rpc methods. */
 public class PluginsJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final Map<String, BesuPlugin> namedPlugins;
 
+  /**
+   * Instantiates a new Plugins json rpc methods.
+   *
+   * @param namedPlugins the named plugins
+   */
   public PluginsJsonRpcMethods(final Map<String, BesuPlugin> namedPlugins) {
     this.namedPlugins = namedPlugins;
   }

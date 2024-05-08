@@ -19,9 +19,15 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 
 import java.util.Optional;
 
+/** The type Perm add nodes to whitelist. */
 @Deprecated
 public class PermAddNodesToWhitelist extends PermAddNodesToAllowlist {
 
+  /**
+   * Instantiates a new Perm add nodes to whitelist.
+   *
+   * @param nodeAllowlistPermissioningController the node allowlist permissioning controller
+   */
   public PermAddNodesToWhitelist(
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistPermissioningController) {
     super(nodeAllowlistPermissioningController);

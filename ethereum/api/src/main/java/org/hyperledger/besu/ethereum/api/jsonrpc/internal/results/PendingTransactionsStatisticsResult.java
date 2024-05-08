@@ -16,12 +16,20 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
+/** The type Pending transactions statistics result. */
 public class PendingTransactionsStatisticsResult {
 
   private final long maxSize;
   private final long localCount;
   private final long remoteCount;
 
+  /**
+   * Instantiates a new Pending transactions statistics result.
+   *
+   * @param maxSize the max size
+   * @param localCount the local count
+   * @param remoteCount the remote count
+   */
   public PendingTransactionsStatisticsResult(
       final long maxSize, final long localCount, final long remoteCount) {
     this.maxSize = maxSize;
@@ -29,16 +37,31 @@ public class PendingTransactionsStatisticsResult {
     this.remoteCount = remoteCount;
   }
 
+  /**
+   * Gets max size.
+   *
+   * @return the max size
+   */
   @JsonGetter
   public long getMaxSize() {
     return maxSize;
   }
 
+  /**
+   * Gets local count.
+   *
+   * @return the local count
+   */
   @JsonGetter
   public long getLocalCount() {
     return localCount;
   }
 
+  /**
+   * Gets remote count.
+   *
+   * @return the remote count
+   */
   @JsonGetter
   public long getRemoteCount() {
     return remoteCount;

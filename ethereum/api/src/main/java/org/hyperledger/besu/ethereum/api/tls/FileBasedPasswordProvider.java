@@ -22,9 +22,15 @@ import java.nio.file.Path;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
+/** The type File based password provider. */
 public class FileBasedPasswordProvider implements Supplier<String> {
   private final Path passwordFile;
 
+  /**
+   * Instantiates a new File based password provider.
+   *
+   * @param passwordFile the password file
+   */
   public FileBasedPasswordProvider(final Path passwordFile) {
     requireNonNull(passwordFile, "Password file path cannot be null");
     this.passwordFile = passwordFile;

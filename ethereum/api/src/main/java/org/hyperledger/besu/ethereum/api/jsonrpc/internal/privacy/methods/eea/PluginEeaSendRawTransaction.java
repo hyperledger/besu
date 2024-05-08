@@ -33,11 +33,22 @@ import java.util.Optional;
 import io.vertx.ext.auth.User;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Plugin eea send raw transaction. */
 public class PluginEeaSendRawTransaction extends AbstractEeaSendRawTransaction {
   private final PrivacyController privacyController;
   private final PrivacyIdProvider privacyIdProvider;
   private final GasCalculator gasCalculator;
 
+  /**
+   * Instantiates a new Plugin eea send raw transaction.
+   *
+   * @param transactionPool the transaction pool
+   * @param privacyIdProvider the privacy id provider
+   * @param privateMarkerTransactionFactory the private marker transaction factory
+   * @param publicNonceProvider the public nonce provider
+   * @param privacyController the privacy controller
+   * @param gasCalculator the gas calculator
+   */
   public PluginEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider,

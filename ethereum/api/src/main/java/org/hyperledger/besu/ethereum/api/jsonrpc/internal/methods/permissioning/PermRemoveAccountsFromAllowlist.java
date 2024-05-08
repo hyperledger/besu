@@ -27,10 +27,16 @@ import org.hyperledger.besu.ethereum.permissioning.AllowlistOperationResult;
 import java.util.List;
 import java.util.Optional;
 
+/** The type Perm remove accounts from allowlist. */
 public class PermRemoveAccountsFromAllowlist implements JsonRpcMethod {
 
   private final Optional<AccountLocalConfigPermissioningController> allowlistController;
 
+  /**
+   * Instantiates a new Perm remove accounts from allowlist.
+   *
+   * @param allowlistController the allowlist controller
+   */
   public PermRemoveAccountsFromAllowlist(
       final Optional<AccountLocalConfigPermissioningController> allowlistController) {
     this.allowlistController = allowlistController;

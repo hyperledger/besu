@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransaction;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Private transaction group result. */
 @JsonPropertyOrder({
   "from",
   "gas",
@@ -41,11 +42,21 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 public class PrivateTransactionGroupResult extends PrivateTransactionResult {
   private final String privacyGroupId;
 
+  /**
+   * Instantiates a new Private transaction group result.
+   *
+   * @param tx the tx
+   */
   public PrivateTransactionGroupResult(final PrivateTransaction tx) {
     super(tx);
     this.privacyGroupId = tx.getPrivacyGroupId().get().toBase64String();
   }
 
+  /**
+   * Gets privacy group id.
+   *
+   * @return the privacy group id
+   */
   @JsonGetter(value = "privacyGroupId")
   public String getPrivacyGroupId() {
     return privacyGroupId;

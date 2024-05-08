@@ -49,11 +49,15 @@ import com.google.common.collect.Streams;
 import com.google.common.util.concurrent.Atomics;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Flat trace generator. */
 public class FlatTraceGenerator {
 
   private static final String ZERO_ADDRESS_STRING = Address.ZERO.toHexString();
 
   private static final int EIP_150_DIVISOR = 64;
+
+  /** Default constructor. */
+  private FlatTraceGenerator() {}
 
   /**
    * Generates a stream of {@link Trace} from the passed {@link TransactionTrace} data.
@@ -229,6 +233,16 @@ public class FlatTraceGenerator {
         protocolSchedule, transactionTrace, block, traceCounter, true);
   }
 
+  /**
+   * Generate from transaction trace stream.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param transactionTrace the transaction trace
+   * @param block the block
+   * @param traceCounter the trace counter
+   * @param includeCreationMethod the include creation method
+   * @return the stream
+   */
   public static Stream<Trace> generateFromTransactionTrace(
       final ProtocolSchedule protocolSchedule,
       final TransactionTrace transactionTrace,

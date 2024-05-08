@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+/** The type Engine forkchoice updated parameter. */
 public class EngineForkchoiceUpdatedParameter {
   private final Hash headBlockHash;
 
@@ -26,18 +27,40 @@ public class EngineForkchoiceUpdatedParameter {
 
   private final Hash finalizedBlockHash;
 
+  /**
+   * Gets head block hash.
+   *
+   * @return the head block hash
+   */
   public Hash getHeadBlockHash() {
     return headBlockHash;
   }
 
+  /**
+   * Gets finalized block hash.
+   *
+   * @return the finalized block hash
+   */
   public Hash getFinalizedBlockHash() {
     return finalizedBlockHash;
   }
 
+  /**
+   * Gets safe block hash.
+   *
+   * @return the safe block hash
+   */
   public Hash getSafeBlockHash() {
     return safeBlockHash;
   }
 
+  /**
+   * Instantiates a new Engine forkchoice updated parameter.
+   *
+   * @param headBlockHash the head block hash
+   * @param finalizedBlockHash the finalized block hash
+   * @param safeBlockHash the safe block hash
+   */
   @JsonCreator
   public EngineForkchoiceUpdatedParameter(
       @JsonProperty("headBlockHash") final Hash headBlockHash,

@@ -24,20 +24,24 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 
+/** The type Json rpc parameter. */
 public class JsonRpcParameter {
 
   private static final ObjectMapper mapper =
       new ObjectMapper()
           .registerModule(new Jdk8Module()); // Handle JDK8 Optionals (de)serialization
 
+  /** Default constructor. */
+  public JsonRpcParameter() {}
+
   /**
    * Retrieves a required parameter at the given index interpreted as the given class. Throws
    * InvalidJsonRpcParameters if parameter is missing or of the wrong type.
    *
+   * @param <T> The type of parameter.
    * @param params the list of objects from which to extract a typed object.
    * @param index Which index of the params array to access.
    * @param paramClass What type is expected at this index.
-   * @param <T> The type of parameter.
    * @return Returns the parameter cast as T if available, otherwise throws exception.
    */
   public <T> T required(final Object[] params, final int index, final Class<T> paramClass) {
@@ -52,10 +56,10 @@ public class JsonRpcParameter {
    * Retrieves an optional parameter at the given index interpreted as the given class. Throws
    * InvalidJsonRpcParameters if parameter is of the wrong type.
    *
+   * @param <T> The type of parameter.
    * @param params the list of objects from which to extract a typed object.
    * @param index Which index of the params array to access.
    * @param paramClass What type is expected at this index.
-   * @param <T> The type of parameter.
    * @return Returns the parameter cast as T if available.
    */
   @SuppressWarnings("unchecked")
@@ -87,6 +91,15 @@ public class JsonRpcParameter {
     return Optional.of(param);
   }
 
+  /**
+   * Optional list optional.
+   *
+   * @param <T> the type parameter
+   * @param params the params
+   * @param index the index
+   * @param listClass the list class
+   * @return the optional
+   */
   public <T> Optional<List<T>> optionalList(
       final Object[] params, final int index, final Class<T> listClass) {
     if (params == null || params.length <= index || params[index] == null) {

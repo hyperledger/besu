@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 
 import java.util.Map;
 
+/** The type Trace json rpc methods. */
 public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final BlockchainQueries blockchainQueries;
@@ -42,6 +43,14 @@ public class TraceJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ApiConfiguration apiConfiguration;
   private final ProtocolContext protocolContext;
 
+  /**
+   * Instantiates a new Trace json rpc methods.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param apiConfiguration the api configuration
+   */
   TraceJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,

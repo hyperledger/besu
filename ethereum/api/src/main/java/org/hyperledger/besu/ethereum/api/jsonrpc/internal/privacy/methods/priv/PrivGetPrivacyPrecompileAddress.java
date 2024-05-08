@@ -22,10 +22,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 
+/** The type Priv get privacy precompile address. */
 public class PrivGetPrivacyPrecompileAddress implements JsonRpcMethod {
 
   private final Address privacyAddress;
 
+  /**
+   * Instantiates a new Priv get privacy precompile address.
+   *
+   * @param privacyParameters the privacy parameters
+   */
   public PrivGetPrivacyPrecompileAddress(final PrivacyParameters privacyParameters) {
     privacyAddress = privacyParameters.getPrivacyAddress();
   }

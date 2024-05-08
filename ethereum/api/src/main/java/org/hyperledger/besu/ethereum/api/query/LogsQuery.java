@@ -36,6 +36,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.google.common.collect.Lists;
 
+/** The type Logs query. */
 public class LogsQuery {
 
   private final List<Address> addresses;
@@ -43,6 +44,12 @@ public class LogsQuery {
   private final List<LogsBloomFilter> addressBlooms;
   private final List<List<LogsBloomFilter>> topicsBlooms;
 
+  /**
+   * Instantiates a new Logs query.
+   *
+   * @param addresses the addresses
+   * @param topics the topics
+   */
   @JsonCreator
   public LogsQuery(
       @JsonFormat(with = JsonFormat.Feature.ACCEPT_SINGLE_VALUE_AS_ARRAY) @JsonProperty("address")
@@ -75,6 +82,12 @@ public class LogsQuery {
             .collect(toUnmodifiableList());
   }
 
+  /**
+   * Could match boolean.
+   *
+   * @param bloom the bloom
+   * @return the boolean
+   */
   public boolean couldMatch(final LogsBloomFilter bloom) {
     return (addressBlooms.isEmpty() || addressBlooms.stream().anyMatch(bloom::couldContain))
         && (topicsBlooms.isEmpty()
@@ -83,6 +96,12 @@ public class LogsQuery {
                     topics -> topics.isEmpty() || topics.stream().anyMatch(bloom::couldContain)));
   }
 
+  /**
+   * Matches boolean.
+   *
+   * @param log the log
+   * @return the boolean
+   */
   public boolean matches(final Log log) {
     return matchesAddresses(log.getLogger()) && matchesTopics(log.getTopics());
   }
@@ -122,10 +141,20 @@ public class LogsQuery {
     return Objects.hash(addresses, topics);
   }
 
+  /** The type Builder. */
   public static class Builder {
     private final List<Address> queryAddresses = Lists.newArrayList();
     private final List<List<LogTopic>> queryTopics = Lists.newArrayList();
 
+    /** Default constructor. */
+    public Builder() {}
+
+    /**
+     * Address builder.
+     *
+     * @param address the address
+     * @return the builder
+     */
     public Builder address(final Address address) {
       if (address != null) {
         queryAddresses.add(address);
@@ -133,6 +162,12 @@ public class LogsQuery {
       return this;
     }
 
+    /**
+     * Addresses builder.
+     *
+     * @param addresses the addresses
+     * @return the builder
+     */
     public Builder addresses(final Address... addresses) {
       if (addresses != null && addresses.length > 0) {
         queryAddresses.addAll(Arrays.asList(addresses));
@@ -140,6 +175,12 @@ public class LogsQuery {
       return this;
     }
 
+    /**
+     * Addresses builder.
+     *
+     * @param addresses the addresses
+     * @return the builder
+     */
     public Builder addresses(final List<Address> addresses) {
       if (addresses != null && !addresses.isEmpty()) {
         queryAddresses.addAll(addresses);
@@ -147,6 +188,12 @@ public class LogsQuery {
       return this;
     }
 
+    /**
+     * Topics builder.
+     *
+     * @param topics the topics
+     * @return the builder
+     */
     public Builder topics(final List<List<LogTopic>> topics) {
       if (topics != null && !topics.isEmpty()) {
         queryTopics.addAll(topics);
@@ -154,6 +201,11 @@ public class LogsQuery {
       return this;
     }
 
+    /**
+     * Build logs query.
+     *
+     * @return the logs query
+     */
     public LogsQuery build() {
       return new LogsQuery(queryAddresses, queryTopics);
     }

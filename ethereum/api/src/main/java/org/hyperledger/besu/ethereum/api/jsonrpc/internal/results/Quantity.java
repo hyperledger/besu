@@ -31,38 +31,88 @@ import org.apache.tuweni.units.bigints.UInt64Value;
 public class Quantity {
 
   private static final String HEX_PREFIX = "0x";
+
+  /** The constant HEX_ZERO. */
   public static final String HEX_ZERO = "0x0";
 
   private Quantity() {}
 
+  /**
+   * Create string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String create(final UInt256Value<?> value) {
     return uint256ToHex(value);
   }
 
+  /**
+   * Create string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String create(final UInt64Value<?> value) {
     return (value == null || value.isZero()) ? HEX_ZERO : value.toMinimalBytes().toShortHexString();
   }
 
+  /**
+   * Create string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String create(final int value) {
     return uint256ToHex(UInt256.valueOf(value));
   }
 
+  /**
+   * Create string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String create(final long value) {
     return uint256ToHex(UInt256.fromHexString(Long.toHexString(value)));
   }
 
+  /**
+   * Create string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String create(final Bytes value) {
     return create(value.toArrayUnsafe());
   }
 
+  /**
+   * Create string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String create(final byte[] value) {
     return uint256ToHex(UInt256.fromBytes(Bytes32.leftPad(Bytes.wrap(value))));
   }
 
+  /**
+   * Create string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String create(final BigInteger value) {
     return uint256ToHex(UInt256.valueOf(value));
   }
 
+  /**
+   * Create string.
+   *
+   * @param value the value
+   * @return the string
+   */
   public static String create(final byte value) {
     return formatMinimalValue(Integer.toHexString(value));
   }

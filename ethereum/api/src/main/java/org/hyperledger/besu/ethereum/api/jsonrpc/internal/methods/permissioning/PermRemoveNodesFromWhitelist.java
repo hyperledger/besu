@@ -19,9 +19,15 @@ import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningC
 
 import java.util.Optional;
 
+/** The type Perm remove nodes from whitelist. */
 @Deprecated
 public class PermRemoveNodesFromWhitelist extends PermRemoveNodesFromAllowlist {
 
+  /**
+   * Instantiates a new Perm remove nodes from whitelist.
+   *
+   * @param nodeAllowlistPermissioningController the node allowlist permissioning controller
+   */
   public PermRemoveNodesFromWhitelist(
       final Optional<NodeLocalConfigPermissioningController> nodeAllowlistPermissioningController) {
     super(nodeAllowlistPermissioningController);

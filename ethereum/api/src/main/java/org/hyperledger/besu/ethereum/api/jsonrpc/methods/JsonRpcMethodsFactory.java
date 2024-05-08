@@ -51,8 +51,44 @@ import java.util.Set;
 
 import io.vertx.core.Vertx;
 
+/** The type Json rpc methods factory. */
 public class JsonRpcMethodsFactory {
+  /** Default constructor. */
+  public JsonRpcMethodsFactory() {}
 
+  /**
+   * Methods map.
+   *
+   * @param clientVersion the client version
+   * @param networkId the network id
+   * @param genesisConfigOptions the genesis config options
+   * @param p2pNetwork the p 2 p network
+   * @param blockchainQueries the blockchain queries
+   * @param synchronizer the synchronizer
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param filterManager the filter manager
+   * @param transactionPool the transaction pool
+   * @param miningParameters the mining parameters
+   * @param miningCoordinator the mining coordinator
+   * @param metricsSystem the metrics system
+   * @param supportedCapabilities the supported capabilities
+   * @param accountsAllowlistController the accounts allowlist controller
+   * @param nodeAllowlistController the node allowlist controller
+   * @param rpcApis the rpc apis
+   * @param privacyParameters the privacy parameters
+   * @param jsonRpcConfiguration the json rpc configuration
+   * @param webSocketConfiguration the web socket configuration
+   * @param metricsConfiguration the metrics configuration
+   * @param natService the nat service
+   * @param namedPlugins the named plugins
+   * @param dataDir the data dir
+   * @param ethPeers the eth peers
+   * @param consensusEngineServer the consensus engine server
+   * @param apiConfiguration the api configuration
+   * @param enodeDnsConfiguration the enode dns configuration
+   * @return the map
+   */
   public Map<String, JsonRpcMethod> methods(
       final String clientVersion,
       final BigInteger networkId,

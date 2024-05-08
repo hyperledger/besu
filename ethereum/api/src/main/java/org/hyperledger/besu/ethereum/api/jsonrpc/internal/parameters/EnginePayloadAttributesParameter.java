@@ -24,14 +24,32 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Engine payload attributes parameter. */
 public class EnginePayloadAttributesParameter {
 
+  /** The Timestamp. */
   final Long timestamp;
+
+  /** The Prev randao. */
   final Bytes32 prevRandao;
+
+  /** The Suggested fee recipient. */
   final Address suggestedFeeRecipient;
+
+  /** The Withdrawals. */
   final List<WithdrawalParameter> withdrawals;
+
   private final Bytes32 parentBeaconBlockRoot;
 
+  /**
+   * Instantiates a new Engine payload attributes parameter.
+   *
+   * @param timestamp the timestamp
+   * @param prevRandao the prev randao
+   * @param suggestedFeeRecipient the suggested fee recipient
+   * @param withdrawals the withdrawals
+   * @param parentBeaconBlockRoot the parent beacon block root
+   */
   @JsonCreator
   public EnginePayloadAttributesParameter(
       @JsonProperty("timestamp") final String timestamp,
@@ -47,26 +65,56 @@ public class EnginePayloadAttributesParameter {
         parentBeaconBlockRoot == null ? null : Bytes32.fromHexString(parentBeaconBlockRoot);
   }
 
+  /**
+   * Gets timestamp.
+   *
+   * @return the timestamp
+   */
   public Long getTimestamp() {
     return timestamp;
   }
 
+  /**
+   * Gets prev randao.
+   *
+   * @return the prev randao
+   */
   public Bytes32 getPrevRandao() {
     return prevRandao;
   }
 
+  /**
+   * Gets suggested fee recipient.
+   *
+   * @return the suggested fee recipient
+   */
   public Address getSuggestedFeeRecipient() {
     return suggestedFeeRecipient;
   }
 
+  /**
+   * Gets parent beacon block root.
+   *
+   * @return the parent beacon block root
+   */
   public Bytes32 getParentBeaconBlockRoot() {
     return parentBeaconBlockRoot;
   }
 
+  /**
+   * Gets withdrawals.
+   *
+   * @return the withdrawals
+   */
   public List<WithdrawalParameter> getWithdrawals() {
     return withdrawals;
   }
 
+  /**
+   * Serialize string.
+   *
+   * @return the string
+   */
   public String serialize() {
     final JsonObject json =
         new JsonObject()

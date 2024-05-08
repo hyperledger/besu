@@ -28,13 +28,24 @@ import java.util.Optional;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Engine update forkchoice result. */
 @JsonPropertyOrder({"payloadStatus", "payloadId"})
 public class EngineUpdateForkchoiceResult {
   private final EnginePayloadStatusResult payloadStatus;
   private final PayloadIdentifier payloadId;
+
+  /** The Fork choice engine status. */
   static final EnumSet<EngineStatus> FORK_CHOICE_ENGINE_STATUS =
       EnumSet.of(VALID, INVALID, SYNCING);
 
+  /**
+   * Instantiates a new Engine update forkchoice result.
+   *
+   * @param status the status
+   * @param latestValidHash the latest valid hash
+   * @param payloadId the payload id
+   * @param errorMessage the error message
+   */
   public EngineUpdateForkchoiceResult(
       final EngineStatus status,
       final Hash latestValidHash,
@@ -50,11 +61,21 @@ public class EngineUpdateForkchoiceResult {
     this.payloadId = payloadId;
   }
 
+  /**
+   * Gets payload status.
+   *
+   * @return the payload status
+   */
   @JsonGetter(value = "payloadStatus")
   public EnginePayloadStatusResult getPayloadStatus() {
     return payloadStatus;
   }
 
+  /**
+   * Gets payload id.
+   *
+   * @return the payload id
+   */
   @JsonGetter(value = "payloadId")
   public String getPayloadId() {
     return Optional.ofNullable(payloadId).map(PayloadIdentifier::toHexString).orElse(null);

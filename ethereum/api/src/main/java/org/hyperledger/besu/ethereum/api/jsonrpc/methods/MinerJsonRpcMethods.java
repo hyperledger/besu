@@ -30,11 +30,18 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import java.util.Map;
 
+/** The type Miner json rpc methods. */
 public class MinerJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final MiningCoordinator miningCoordinator;
   private final MiningParameters miningParameters;
 
+  /**
+   * Instantiates a new Miner json rpc methods.
+   *
+   * @param miningParameters the mining parameters
+   * @param miningCoordinator the mining coordinator
+   */
   public MinerJsonRpcMethods(
       final MiningParameters miningParameters, final MiningCoordinator miningCoordinator) {
     this.miningParameters = miningParameters;

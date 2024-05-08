@@ -32,11 +32,19 @@ import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
+/** The type Priv call. */
 public class PrivCall extends AbstractBlockParameterMethod {
 
   private final PrivacyIdProvider privacyIdProvider;
   private final PrivacyController privacyController;
 
+  /**
+   * Instantiates a new Priv call.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param privacyController the privacy controller
+   * @param privacyIdProvider the privacy id provider
+   */
   public PrivCall(
       final BlockchainQueries blockchainQueries,
       final PrivacyController privacyController,
