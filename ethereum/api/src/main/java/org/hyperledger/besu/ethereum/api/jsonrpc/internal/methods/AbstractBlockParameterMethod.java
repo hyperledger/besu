@@ -29,41 +29,95 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
+/** The type Abstract block parameter method. */
 public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
 
+  /** The Blockchain queries supplier. */
   protected final Supplier<BlockchainQueries> blockchainQueriesSupplier;
 
+  /**
+   * Instantiates a new Abstract block parameter method.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   protected AbstractBlockParameterMethod(final BlockchainQueries blockchainQueries) {
     this(Suppliers.ofInstance(blockchainQueries));
   }
 
+  /**
+   * Instantiates a new Abstract block parameter method.
+   *
+   * @param blockchainQueriesSupplier the blockchain queries supplier
+   */
   protected AbstractBlockParameterMethod(
       final Supplier<BlockchainQueries> blockchainQueriesSupplier) {
     this.blockchainQueriesSupplier = blockchainQueriesSupplier;
   }
 
+  /**
+   * Block parameter block parameter.
+   *
+   * @param request the request
+   * @return the block parameter
+   */
   protected abstract BlockParameter blockParameter(JsonRpcRequestContext request);
 
+  /**
+   * Result by block number object.
+   *
+   * @param request the request
+   * @param blockNumber the block number
+   * @return the object
+   */
   protected abstract Object resultByBlockNumber(JsonRpcRequestContext request, long blockNumber);
 
+  /**
+   * Gets blockchain queries.
+   *
+   * @return the blockchain queries
+   */
   protected BlockchainQueries getBlockchainQueries() {
     return blockchainQueriesSupplier.get();
   }
 
+  /**
+   * Pending result object.
+   *
+   * @param request the request
+   * @return the object
+   */
   protected Object pendingResult(final JsonRpcRequestContext request) {
     // TODO: Update once we mine and better understand pending semantics.
     // For now act like we are not mining and just return latest.
     return latestResult(request);
   }
 
+  /**
+   * Latest result object.
+   *
+   * @param request the request
+   * @return the object
+   */
   protected Object latestResult(final JsonRpcRequestContext request) {
     return resultByBlockNumber(request, blockchainQueriesSupplier.get().headBlockNumber());
   }
 
+  /**
+   * Finalized result object.
+   *
+   * @param request the request
+   * @return the object
+   */
   protected Object finalizedResult(final JsonRpcRequestContext request) {
     return posRelatedResult(request, BlockchainQueries::finalizedBlockHeader);
   }
 
+  /**
+   * Safe result object.
+   *
+   * @param request the request
+   * @return the object
+   */
   protected Object safeResult(final JsonRpcRequestContext request) {
     return posRelatedResult(request, BlockchainQueries::safeBlockHeader);
   }
@@ -80,6 +134,12 @@ public abstract class AbstractBlockParameterMethod implements JsonRpcMethod {
                 new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_BLOCK));
   }
 
+  /**
+   * Find result by param type object.
+   *
+   * @param request the request
+   * @return the object
+   */
   protected Object findResultByParamType(final JsonRpcRequestContext request) {
     final BlockParameter blockParam = blockParameter(request);
     final Optional<Long> blockNumber = blockParam.getNumber();

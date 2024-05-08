@@ -37,11 +37,24 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+/** The type Abstract trace by hash. */
 public abstract class AbstractTraceByHash implements JsonRpcMethod {
+  /** The Block tracer supplier. */
   protected final Supplier<BlockTracer> blockTracerSupplier;
+
+  /** The Blockchain queries. */
   protected final BlockchainQueries blockchainQueries;
+
+  /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
 
+  /**
+   * Instantiates a new Abstract trace by hash.
+   *
+   * @param blockTracerSupplier the block tracer supplier
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   */
   protected AbstractTraceByHash(
       final Supplier<BlockTracer> blockTracerSupplier,
       final BlockchainQueries blockchainQueries,
@@ -51,6 +64,12 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
     this.protocolSchedule = protocolSchedule;
   }
 
+  /**
+   * Result by transaction hash stream.
+   *
+   * @param transactionHash the transaction hash
+   * @return the stream
+   */
   public Stream<FlatTrace> resultByTransactionHash(final Hash transactionHash) {
     return blockchainQueries
         .transactionByHash(transactionHash)
@@ -100,6 +119,12 @@ public abstract class AbstractTraceByHash implements JsonRpcMethod {
         .map(FlatTrace.class::cast);
   }
 
+  /**
+   * Array node from trace stream json node.
+   *
+   * @param traceStream the trace stream
+   * @return the json node
+   */
   protected JsonNode arrayNodeFromTraceStream(final Stream<FlatTrace> traceStream) {
     final ObjectMapper mapper = new ObjectMapper();
     final ArrayNode resultArrayNode = mapper.createArrayNode();

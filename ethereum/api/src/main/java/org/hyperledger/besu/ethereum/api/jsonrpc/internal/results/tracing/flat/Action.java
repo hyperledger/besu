@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
+/** The type Action. */
 @JsonInclude(NON_NULL)
 @JsonPropertyOrder({
   "creationMethod",
@@ -84,62 +85,133 @@ public class Action {
     this.rewardType = rewardType;
   }
 
+  /**
+   * Instantiates new Builder.
+   *
+   * @return the builder
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /**
+   * Gets creation method.
+   *
+   * @return the creation method
+   */
   public String getCreationMethod() {
     return creationMethod;
   }
 
+  /**
+   * Gets call type.
+   *
+   * @return the call type
+   */
   public String getCallType() {
     return callType;
   }
 
+  /**
+   * Gets from.
+   *
+   * @return the from
+   */
   public String getFrom() {
     return from;
   }
 
+  /**
+   * Gets gas.
+   *
+   * @return the gas
+   */
   public String getGas() {
     return gas;
   }
 
+  /**
+   * Gets input.
+   *
+   * @return the input
+   */
   public String getInput() {
     return input;
   }
 
+  /**
+   * Gets to.
+   *
+   * @return the to
+   */
   public String getTo() {
     return to;
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public String getValue() {
     return value;
   }
 
+  /**
+   * Gets init.
+   *
+   * @return the init
+   */
   public String getInit() {
     return init;
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   public String getAddress() {
     return address;
   }
 
+  /**
+   * Gets balance.
+   *
+   * @return the balance
+   */
   public String getBalance() {
     return balance;
   }
 
+  /**
+   * Gets refund address.
+   *
+   * @return the refund address
+   */
   public String getRefundAddress() {
     return refundAddress;
   }
 
+  /**
+   * Gets author.
+   *
+   * @return the author
+   */
   public String getAuthor() {
     return author;
   }
 
+  /**
+   * Gets reward type.
+   *
+   * @return the reward type
+   */
   public String getRewardType() {
     return rewardType;
   }
 
+  /** The type Builder. */
   public static final class Builder {
     private String creationMethod;
     private String callType;
@@ -157,6 +229,12 @@ public class Action {
 
     private Builder() {}
 
+    /**
+     * Of builder.
+     *
+     * @param action the action
+     * @return the builder
+     */
     public static Builder of(final Action action) {
       final Builder builder = new Builder();
       builder.creationMethod = action.creationMethod;
@@ -175,6 +253,12 @@ public class Action {
       return builder;
     }
 
+    /**
+     * From builder.
+     *
+     * @param trace the trace
+     * @return the builder
+     */
     public static Builder from(final TransactionTrace trace) {
       final Builder builder =
           new Builder()
@@ -191,87 +275,190 @@ public class Action {
       return builder;
     }
 
+    /**
+     * Creation method builder.
+     *
+     * @param creationMethod the creation method
+     * @return the builder
+     */
     public Builder creationMethod(final String creationMethod) {
       this.creationMethod = creationMethod;
       return this;
     }
 
+    /**
+     * Call type builder.
+     *
+     * @param callType the call type
+     * @return the builder
+     */
     public Builder callType(final String callType) {
       this.callType = callType;
       return this;
     }
 
+    /**
+     * Gets call type.
+     *
+     * @return the call type
+     */
     public String getCallType() {
       return callType;
     }
 
+    /**
+     * From builder.
+     *
+     * @param from the from
+     * @return the builder
+     */
     public Builder from(final String from) {
       this.from = from;
       return this;
     }
 
+    /**
+     * Gets from.
+     *
+     * @return the from
+     */
     public String getFrom() {
       return from;
     }
 
+    /**
+     * Gas builder.
+     *
+     * @param gas the gas
+     * @return the builder
+     */
     public Builder gas(final String gas) {
       this.gas = gas;
       return this;
     }
 
+    /**
+     * Input builder.
+     *
+     * @param input the input
+     * @return the builder
+     */
     public Builder input(final String input) {
       this.input = input;
       return this;
     }
 
+    /**
+     * To builder.
+     *
+     * @param to the to
+     * @return the builder
+     */
     public Builder to(final String to) {
       this.to = to;
       return this;
     }
 
+    /**
+     * Author builder.
+     *
+     * @param author the author
+     * @return the builder
+     */
     public Builder author(final String author) {
       this.author = author;
       return this;
     }
 
+    /**
+     * Reward type builder.
+     *
+     * @param rewardType the reward type
+     * @return the builder
+     */
     public Builder rewardType(final String rewardType) {
       this.rewardType = rewardType;
       return this;
     }
 
+    /**
+     * Gets to.
+     *
+     * @return the to
+     */
     public String getTo() {
       return to;
     }
 
+    /**
+     * Init builder.
+     *
+     * @param init the init
+     * @return the builder
+     */
     public Builder init(final String init) {
       this.init = init;
       return this;
     }
 
+    /**
+     * Value builder.
+     *
+     * @param value the value
+     * @return the builder
+     */
     public Builder value(final String value) {
       this.value = value;
       return this;
     }
 
+    /**
+     * Address builder.
+     *
+     * @param address the address
+     * @return the builder
+     */
     public Builder address(final String address) {
       this.address = address;
       return this;
     }
 
+    /**
+     * Balance builder.
+     *
+     * @param balance the balance
+     * @return the builder
+     */
     public Builder balance(final String balance) {
       this.balance = balance;
       return this;
     }
 
+    /**
+     * Refund address builder.
+     *
+     * @param refundAddress the refund address
+     * @return the builder
+     */
     Builder refundAddress(final String refundAddress) {
       this.refundAddress = refundAddress;
       return this;
     }
 
+    /**
+     * Gets gas.
+     *
+     * @return the gas
+     */
     public String getGas() {
       return gas;
     }
 
+    /**
+     * Build action.
+     *
+     * @return the action
+     */
     public Action build() {
       return new Action(
           creationMethod,

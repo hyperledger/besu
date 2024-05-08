@@ -46,6 +46,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Abstract eea send raw transaction. */
 public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEeaSendRawTransaction.class);
   private final TransactionPool transactionPool;
@@ -53,6 +54,14 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
   private final PrivateMarkerTransactionFactory privateMarkerTransactionFactory;
   private final NonceProvider publicNonceProvider;
 
+  /**
+   * Instantiates a new Abstract eea send raw transaction.
+   *
+   * @param transactionPool the transaction pool
+   * @param privacyIdProvider the privacy id provider
+   * @param privateMarkerTransactionFactory the private marker transaction factory
+   * @param publicNonceProvider the public nonce provider
+   */
   protected AbstractEeaSendRawTransaction(
       final TransactionPool transactionPool,
       final PrivacyIdProvider privacyIdProvider,
@@ -109,6 +118,13 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
     }
   }
 
+  /**
+   * Gets json rpc error response.
+   *
+   * @param id the id
+   * @param errorReason the error reason
+   * @return the json rpc error response
+   */
   JsonRpcErrorResponse getJsonRpcErrorResponse(
       final Object id, final TransactionInvalidReason errorReason) {
     if (errorReason.equals(TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT)) {
@@ -117,12 +133,37 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
     return new JsonRpcErrorResponse(id, convertTransactionInvalidReason(errorReason));
   }
 
+  /**
+   * Validate private transaction validation result.
+   *
+   * @param privateTransaction the private transaction
+   * @param user the user
+   * @return the validation result
+   */
   protected abstract ValidationResult<TransactionInvalidReason> validatePrivateTransaction(
       final PrivateTransaction privateTransaction, final Optional<User> user);
 
+  /**
+   * Create private marker transaction transaction.
+   *
+   * @param sender the sender
+   * @param privateTransaction the private transaction
+   * @param user the user
+   * @return the transaction
+   */
   protected abstract Transaction createPrivateMarkerTransaction(
       final Address sender, final PrivateTransaction privateTransaction, final Optional<User> user);
 
+  /**
+   * Create private marker transaction transaction.
+   *
+   * @param sender the sender
+   * @param privacyPrecompileAddress the privacy precompile address
+   * @param pmtPayload the pmt payload
+   * @param privateTransaction the private transaction
+   * @param privacyUserId the privacy user id
+   * @return the transaction
+   */
   protected Transaction createPrivateMarkerTransaction(
       final Address sender,
       final Address privacyPrecompileAddress,
@@ -150,5 +191,12 @@ public abstract class AbstractEeaSendRawTransaction implements JsonRpcMethod {
     return Transaction.readFrom(rlpBytes);
   }
 
+  /**
+   * Gets gas limit.
+   *
+   * @param privateTransaction the private transaction
+   * @param pmtPayload the pmt payload
+   * @return the gas limit
+   */
   protected abstract long getGasLimit(PrivateTransaction privateTransaction, String pmtPayload);
 }

@@ -24,19 +24,36 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 
-// Represents a block parameter that can be a special value ("pending", "earliest", "latest",
-// "finalized", "safe") or a number formatted as a hex string.
+/**
+ * Represents a block parameter that can be a special value ("pending", "earliest", "latest",
+ * "finalized", "safe") or a number formatted as a hex string.
+ */
 // See: https://github.com/ethereum/wiki/wiki/JSON-RPC#the-default-block-parameter
 public class BlockParameter {
 
   private final BlockParameterType type;
   private final Optional<Long> number;
+
+  /** The constant EARLIEST. */
   public static final BlockParameter EARLIEST = new BlockParameter("earliest");
+
+  /** The constant LATEST. */
   public static final BlockParameter LATEST = new BlockParameter("latest");
+
+  /** The constant PENDING. */
   public static final BlockParameter PENDING = new BlockParameter("pending");
+
+  /** The constant FINALIZED. */
   public static final BlockParameter FINALIZED = new BlockParameter("finalized");
+
+  /** The constant SAFE. */
   public static final BlockParameter SAFE = new BlockParameter("safe");
 
+  /**
+   * Instantiates a new Block parameter.
+   *
+   * @param value the value
+   */
   @JsonCreator
   public BlockParameter(final String value) {
     final String normalizedValue = value.toLowerCase(Locale.ROOT);
@@ -69,39 +86,85 @@ public class BlockParameter {
     }
   }
 
+  /**
+   * Instantiates a new Block parameter.
+   *
+   * @param value the value
+   */
   public BlockParameter(final long value) {
     type = BlockParameterType.NUMERIC;
     number = Optional.of(value);
   }
 
+  /**
+   * Gets number.
+   *
+   * @return the number
+   */
   public Optional<Long> getNumber() {
     return number;
   }
 
+  /**
+   * Is pending boolean.
+   *
+   * @return the boolean
+   */
   public boolean isPending() {
     return this.type == BlockParameterType.PENDING;
   }
 
+  /**
+   * Is latest boolean.
+   *
+   * @return the boolean
+   */
   public boolean isLatest() {
     return this.type == BlockParameterType.LATEST;
   }
 
+  /**
+   * Is earliest boolean.
+   *
+   * @return the boolean
+   */
   public boolean isEarliest() {
     return this.type == BlockParameterType.EARLIEST;
   }
 
+  /**
+   * Is finalized boolean.
+   *
+   * @return the boolean
+   */
   public boolean isFinalized() {
     return this.type == BlockParameterType.FINALIZED;
   }
 
+  /**
+   * Is safe boolean.
+   *
+   * @return the boolean
+   */
   public boolean isSafe() {
     return this.type == BlockParameterType.SAFE;
   }
 
+  /**
+   * Is numeric boolean.
+   *
+   * @return the boolean
+   */
   public boolean isNumeric() {
     return this.type == BlockParameterType.NUMERIC;
   }
 
+  /**
+   * Gets block number.
+   *
+   * @param blockchain the blockchain
+   * @return the block number
+   */
   public Optional<Long> getBlockNumber(final BlockchainQueries blockchain) {
     if (this.isFinalized()) {
       return blockchain.finalizedBlockHeader().map(ProcessableBlockHeader::getNumber);
@@ -137,11 +200,17 @@ public class BlockParameter {
   }
 
   private enum BlockParameterType {
+    /** Earliest block parameter type. */
     EARLIEST,
+    /** Latest block parameter type. */
     LATEST,
+    /** Pending block parameter type. */
     PENDING,
+    /** Numeric block parameter type. */
     NUMERIC,
+    /** Finalized block parameter type. */
     FINALIZED,
+    /** Safe block parameter type. */
     SAFE
   }
 }

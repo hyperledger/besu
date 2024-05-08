@@ -28,10 +28,18 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.Json;
 import io.vertx.ext.web.RoutingContext;
 
+/** The type Authentication handler. */
 public class AuthenticationHandler {
 
   private AuthenticationHandler() {}
 
+  /**
+   * Handler handler.
+   *
+   * @param authenticationService the authentication service
+   * @param noAuthRpcApis the no auth rpc apis
+   * @return the handler
+   */
   public static Handler<RoutingContext> handler(
       final AuthenticationService authenticationService, final Collection<String> noAuthRpcApis) {
     return ctx -> {

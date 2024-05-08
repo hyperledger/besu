@@ -23,19 +23,35 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Access list entry adapter. */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class AccessListEntryAdapter extends AdapterBase {
   private final AccessListEntry accessListEntry;
 
+  /**
+   * Instantiates a new Access list entry adapter.
+   *
+   * @param accessListEntry the access list entry
+   */
   public AccessListEntryAdapter(final AccessListEntry accessListEntry) {
     this.accessListEntry = accessListEntry;
   }
 
+  /**
+   * Gets storage keys.
+   *
+   * @return the storage keys
+   */
   public List<Bytes32> getStorageKeys() {
     final var storage = accessListEntry.storageKeys();
     return new ArrayList<>(storage);
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   public Optional<Address> getAddress() {
     return Optional.of(accessListEntry.address());
   }

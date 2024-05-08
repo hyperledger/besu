@@ -29,10 +29,17 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Admin add peer. */
 public class AdminAddPeer extends AdminModifyPeer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AdminAddPeer.class);
 
+  /**
+   * Instantiates a new Admin add peer.
+   *
+   * @param peerNetwork the peer network
+   * @param enodeDnsConfiguration the enode dns configuration
+   */
   public AdminAddPeer(
       final P2PNetwork peerNetwork, final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
     super(peerNetwork, enodeDnsConfiguration);

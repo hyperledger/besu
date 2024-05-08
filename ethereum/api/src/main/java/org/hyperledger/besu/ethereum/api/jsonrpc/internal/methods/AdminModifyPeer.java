@@ -25,11 +25,21 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 
 import java.util.Optional;
 
+/** The type Admin modify peer. */
 public abstract class AdminModifyPeer implements JsonRpcMethod {
 
+  /** The Peer network. */
   protected final P2PNetwork peerNetwork;
+
+  /** The Enode dns configuration. */
   protected final Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
+  /**
+   * Instantiates a new Admin modify peer.
+   *
+   * @param peerNetwork the peer network
+   * @param enodeDnsConfiguration the enode dns configuration
+   */
   protected AdminModifyPeer(
       final P2PNetwork peerNetwork, final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
     this.peerNetwork = peerNetwork;
@@ -72,5 +82,12 @@ public abstract class AdminModifyPeer implements JsonRpcMethod {
     }
   }
 
+  /**
+   * Perform operation json rpc response.
+   *
+   * @param id the id
+   * @param enode the enode
+   * @return the json rpc response
+   */
   protected abstract JsonRpcResponse performOperation(final Object id, final String enode);
 }

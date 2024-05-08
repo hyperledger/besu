@@ -51,11 +51,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.spi.LoggingEventBuilder;
 
+/** The type Abstract engine forkchoice updated. */
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
   private final MergeMiningCoordinator mergeCoordinator;
+
+  /** The Cancun timestamp. */
   protected final Long cancunTimestamp;
 
+  /**
+   * Instantiates a new Abstract engine forkchoice updated.
+   *
+   * @param vertx the vertx
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param mergeCoordinator the merge coordinator
+   * @param engineCallListener the engine call listener
+   */
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,
@@ -70,6 +82,13 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     cancunTimestamp = cancun.map(ScheduledProtocolSpec.Hardfork::milestone).orElse(Long.MAX_VALUE);
   }
 
+  /**
+   * Validate parameter validation result.
+   *
+   * @param forkchoiceUpdatedParameter the forkchoice updated parameter
+   * @param maybePayloadAttributes the maybe payload attributes
+   * @return the validation result
+   */
   protected ValidationResult<RpcErrorType> validateParameter(
       final EngineForkchoiceUpdatedParameter forkchoiceUpdatedParameter,
       final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes) {
@@ -230,9 +249,24 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
             Optional.empty()));
   }
 
+  /**
+   * Is payload attributes valid optional.
+   *
+   * @param requestId the request id
+   * @param payloadAttribute the payload attribute
+   * @return the optional
+   */
   protected abstract Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
       final Object requestId, final EnginePayloadAttributesParameter payloadAttribute);
 
+  /**
+   * Is payload attribute relevant to new head optional.
+   *
+   * @param requestId the request id
+   * @param payloadAttributes the payload attributes
+   * @param headBlockHeader the head block header
+   * @return the optional
+   */
   protected Optional<JsonRpcErrorResponse> isPayloadAttributeRelevantToNewHead(
       final Object requestId,
       final EnginePayloadAttributesParameter payloadAttributes,
@@ -360,14 +394,29 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
         requestId, new EngineUpdateForkchoiceResult(SYNCING, null, null, Optional.empty()));
   }
 
+  /**
+   * Require terminal po w block validation boolean.
+   *
+   * @return the boolean
+   */
   protected boolean requireTerminalPoWBlockValidation() {
     return false;
   }
 
+  /**
+   * Gets invalid parameters error.
+   *
+   * @return the invalid parameters error
+   */
   protected RpcErrorType getInvalidParametersError() {
     return RpcErrorType.INVALID_PARAMS;
   }
 
+  /**
+   * Gets invalid payload attributes error.
+   *
+   * @return the invalid payload attributes error
+   */
   protected RpcErrorType getInvalidPayloadAttributesError() {
     return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }

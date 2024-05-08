@@ -24,9 +24,15 @@ import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 import java.util.Map;
 import java.util.Optional;
 
+/** The type Admin logs repair cache. */
 public class AdminLogsRepairCache implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
 
+  /**
+   * Instantiates a new Admin logs repair cache.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public AdminLogsRepairCache(final BlockchainQueries blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
   }

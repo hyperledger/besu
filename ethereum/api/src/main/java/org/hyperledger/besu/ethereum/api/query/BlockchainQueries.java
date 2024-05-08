@@ -63,6 +63,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Blockchain queries. */
 public class BlockchainQueries {
   private static final Logger LOG = LoggerFactory.getLogger(BlockchainQueries.class);
 
@@ -73,10 +74,23 @@ public class BlockchainQueries {
   private final Optional<EthScheduler> ethScheduler;
   private final ApiConfiguration apiConfig;
 
+  /**
+   * Instantiates a new Blockchain queries.
+   *
+   * @param blockchain the blockchain
+   * @param worldStateArchive the world state archive
+   */
   public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
     this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
   }
 
+  /**
+   * Instantiates a new Blockchain queries.
+   *
+   * @param blockchain the blockchain
+   * @param worldStateArchive the world state archive
+   * @param scheduler the scheduler
+   */
   public BlockchainQueries(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
@@ -84,6 +98,14 @@ public class BlockchainQueries {
     this(blockchain, worldStateArchive, Optional.empty(), Optional.ofNullable(scheduler));
   }
 
+  /**
+   * Instantiates a new Blockchain queries.
+   *
+   * @param blockchain the blockchain
+   * @param worldStateArchive the world state archive
+   * @param cachePath the cache path
+   * @param scheduler the scheduler
+   */
   public BlockchainQueries(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
@@ -97,6 +119,15 @@ public class BlockchainQueries {
         ImmutableApiConfiguration.builder().build());
   }
 
+  /**
+   * Instantiates a new Blockchain queries.
+   *
+   * @param blockchain the blockchain
+   * @param worldStateArchive the world state archive
+   * @param cachePath the cache path
+   * @param scheduler the scheduler
+   * @param apiConfig the api config
+   */
   public BlockchainQueries(
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
@@ -115,14 +146,29 @@ public class BlockchainQueries {
     this.apiConfig = apiConfig;
   }
 
+  /**
+   * Gets blockchain.
+   *
+   * @return the blockchain
+   */
   public Blockchain getBlockchain() {
     return blockchain;
   }
 
+  /**
+   * Gets world state archive.
+   *
+   * @return the world state archive
+   */
   public WorldStateArchive getWorldStateArchive() {
     return worldStateArchive;
   }
 
+  /**
+   * Gets transaction log bloom cacher.
+   *
+   * @return the transaction log bloom cacher
+   */
   public Optional<TransactionLogBloomCacher> getTransactionLogBloomCacher() {
     return transactionLogBloomCacher;
   }
@@ -495,14 +541,32 @@ public class BlockchainQueries {
     return blockchain.getBlockHashByNumber(blockNumber).flatMap(this::blockByHashWithTxHashes);
   }
 
+  /**
+   * Gets block header by hash.
+   *
+   * @param hash the hash
+   * @return the block header by hash
+   */
   public Optional<BlockHeader> getBlockHeaderByHash(final Hash hash) {
     return blockchain.getBlockHeader(hash);
   }
 
+  /**
+   * Gets block header by number.
+   *
+   * @param number the number
+   * @return the block header by number
+   */
   public Optional<BlockHeader> getBlockHeaderByNumber(final long number) {
     return blockchain.getBlockHeader(number);
   }
 
+  /**
+   * Block is on canonical chain boolean.
+   *
+   * @param hash the hash
+   * @return the boolean
+   */
   public boolean blockIsOnCanonicalChain(final Hash hash) {
     return blockchain.blockIsOnCanonicalChain(hash);
   }
@@ -595,6 +659,12 @@ public class BlockchainQueries {
         txs.get(txIndex), header.getNumber(), header.getBaseFee(), blockHeaderHash, txIndex);
   }
 
+  /**
+   * Transaction location by hash optional.
+   *
+   * @param transactionHash the transaction hash
+   * @return the optional
+   */
   public Optional<TransactionLocation> transactionLocationByHash(final Hash transactionHash) {
     return blockchain.getTransactionLocation(transactionHash);
   }
@@ -603,6 +673,7 @@ public class BlockchainQueries {
    * Returns the transaction receipt associated with the given transaction hash.
    *
    * @param transactionHash The hash of the transaction that corresponds to the receipt to retrieve.
+   * @param protocolSchedule the protocol schedule
    * @return The transaction receipt associated with the referenced transaction.
    */
   public Optional<TransactionReceiptWithMetadata> transactionReceiptByTransactionHash(
@@ -813,6 +884,14 @@ public class BlockchainQueries {
     return results;
   }
 
+  /**
+   * Matching logs list.
+   *
+   * @param blockHash the block hash
+   * @param query the query
+   * @param isQueryAlive the is query alive
+   * @return the list
+   */
   public List<LogWithMetadata> matchingLogs(
       final Hash blockHash, final LogsQuery query, final Supplier<Boolean> isQueryAlive) {
     try {
@@ -855,6 +934,14 @@ public class BlockchainQueries {
     }
   }
 
+  /**
+   * Matching logs list.
+   *
+   * @param blockHash the block hash
+   * @param transactionWithMetaData the transaction with meta data
+   * @param isQueryAlive the is query alive
+   * @return the list
+   */
   public List<LogWithMetadata> matchingLogs(
       final Hash blockHash,
       final TransactionWithMetadata transactionWithMetaData,
@@ -943,6 +1030,11 @@ public class BlockchainQueries {
     return getAndMapWorldState(blockHash, mapper);
   }
 
+  /**
+   * Gas price optional.
+   *
+   * @return the optional
+   */
   public Optional<Long> gasPrice() {
     final long blockHeight = headBlockNumber();
     final long[] gasCollection =
@@ -973,6 +1065,11 @@ public class BlockchainQueries {
                             (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))])));
   }
 
+  /**
+   * Gas priority fee optional.
+   *
+   * @return the optional
+   */
   public Optional<Wei> gasPriorityFee() {
     final long blockHeight = headBlockNumber();
     final BigInteger[] gasCollection =
@@ -1076,6 +1173,11 @@ public class BlockchainQueries {
     return logIndexOffset;
   }
 
+  /**
+   * Gets eth scheduler.
+   *
+   * @return the eth scheduler
+   */
   public Optional<EthScheduler> getEthScheduler() {
     return ethScheduler;
   }

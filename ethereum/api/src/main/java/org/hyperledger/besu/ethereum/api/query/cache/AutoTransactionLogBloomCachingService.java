@@ -31,6 +31,7 @@ import java.util.stream.Stream;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Auto transaction log bloom caching service. */
 public class AutoTransactionLogBloomCachingService {
   private static final Logger LOG =
       LoggerFactory.getLogger(AutoTransactionLogBloomCachingService.class);
@@ -38,12 +39,19 @@ public class AutoTransactionLogBloomCachingService {
   private final TransactionLogBloomCacher transactionLogBloomCacher;
   private OptionalLong blockAddedSubscriptionId = OptionalLong.empty();
 
+  /**
+   * Instantiates a new Auto transaction log bloom caching service.
+   *
+   * @param blockchain the blockchain
+   * @param transactionLogBloomCacher the transaction log bloom cacher
+   */
   public AutoTransactionLogBloomCachingService(
       final Blockchain blockchain, final TransactionLogBloomCacher transactionLogBloomCacher) {
     this.blockchain = blockchain;
     this.transactionLogBloomCacher = transactionLogBloomCacher;
   }
 
+  /** Start. */
   public void start() {
     try {
       LOG.info("Starting auto transaction log bloom caching service.");
@@ -93,6 +101,7 @@ public class AutoTransactionLogBloomCachingService {
     }
   }
 
+  /** Stop. */
   public void stop() {
     LOG.info("Shutting down Auto transaction logs caching service.");
     blockAddedSubscriptionId.ifPresent(blockchain::removeObserver);

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.diff;
 
 import java.util.Map;
 
+/** The type Account diff. */
 public final class AccountDiff {
 
   private final DiffNode balance;
@@ -23,6 +24,14 @@ public final class AccountDiff {
   private final DiffNode nonce;
   private final Map<String, DiffNode> storage;
 
+  /**
+   * Instantiates a new Account diff.
+   *
+   * @param balance the balance
+   * @param code the code
+   * @param nonce the nonce
+   * @param storage the storage
+   */
   AccountDiff(
       final DiffNode balance,
       final DiffNode code,
@@ -34,22 +43,47 @@ public final class AccountDiff {
     this.storage = storage;
   }
 
+  /**
+   * Gets balance.
+   *
+   * @return the balance
+   */
   public DiffNode getBalance() {
     return balance;
   }
 
+  /**
+   * Gets code.
+   *
+   * @return the code
+   */
   public DiffNode getCode() {
     return code;
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   public DiffNode getNonce() {
     return nonce;
   }
 
+  /**
+   * Gets storage.
+   *
+   * @return the storage
+   */
   public Map<String, DiffNode> getStorage() {
     return storage;
   }
 
+  /**
+   * Has difference boolean.
+   *
+   * @return the boolean
+   */
   boolean hasDifference() {
     return balance.hasDifference()
         || code.hasDifference()

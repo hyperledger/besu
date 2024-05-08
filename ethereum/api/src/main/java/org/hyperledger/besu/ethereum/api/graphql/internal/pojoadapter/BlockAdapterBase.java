@@ -48,15 +48,27 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Block adapter base. */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class BlockAdapterBase extends AdapterBase {
 
   private final BlockHeader header;
 
+  /**
+   * Instantiates a new Block adapter base.
+   *
+   * @param header the header
+   */
   BlockAdapterBase(final BlockHeader header) {
     this.header = header;
   }
 
+  /**
+   * Gets parent.
+   *
+   * @param environment the environment
+   * @return the parent
+   */
   public Optional<NormalBlockAdapter> getParent(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash parentHash = header.getParentHash();
@@ -65,28 +77,59 @@ public class BlockAdapterBase extends AdapterBase {
     return block.map(NormalBlockAdapter::new);
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   public Bytes32 getHash() {
     return header.getHash();
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   public Bytes getNonce() {
     final long nonce = header.getNonce();
     final byte[] bytes = Longs.toByteArray(nonce);
     return Bytes.wrap(bytes);
   }
 
+  /**
+   * Gets transactions root.
+   *
+   * @return the transactions root
+   */
   public Bytes32 getTransactionsRoot() {
     return header.getTransactionsRoot();
   }
 
+  /**
+   * Gets state root.
+   *
+   * @return the state root
+   */
   public Bytes32 getStateRoot() {
     return header.getStateRoot();
   }
 
+  /**
+   * Gets receipts root.
+   *
+   * @return the receipts root
+   */
   public Bytes32 getReceiptsRoot() {
     return header.getReceiptsRoot();
   }
 
+  /**
+   * Gets miner.
+   *
+   * @param environment the environment
+   * @return the miner
+   */
   public AccountAdapter getMiner(final DataFetchingEnvironment environment) {
 
     final BlockchainQueries query = getBlockchainQueries(environment);
@@ -102,46 +145,102 @@ public class BlockAdapterBase extends AdapterBase {
         .orElseGet(() -> new EmptyAccountAdapter(header.getCoinbase()));
   }
 
+  /**
+   * Gets extra data.
+   *
+   * @return the extra data
+   */
   public Bytes getExtraData() {
     return header.getExtraData();
   }
 
+  /**
+   * Gets base fee per gas.
+   *
+   * @return the base fee per gas
+   */
   public Optional<Wei> getBaseFeePerGas() {
     return header.getBaseFee();
   }
 
+  /**
+   * Gets gas limit.
+   *
+   * @return the gas limit
+   */
   public Long getGasLimit() {
     return header.getGasLimit();
   }
 
+  /**
+   * Gets gas used.
+   *
+   * @return the gas used
+   */
   public Long getGasUsed() {
     return header.getGasUsed();
   }
 
+  /**
+   * Gets timestamp.
+   *
+   * @return the timestamp
+   */
   public Long getTimestamp() {
     return header.getTimestamp();
   }
 
+  /**
+   * Gets logs bloom.
+   *
+   * @return the logs bloom
+   */
   public Bytes getLogsBloom() {
     return header.getLogsBloom();
   }
 
+  /**
+   * Gets mix hash.
+   *
+   * @return the mix hash
+   */
   public Bytes32 getMixHash() {
     return header.getMixHash();
   }
 
+  /**
+   * Gets difficulty.
+   *
+   * @return the difficulty
+   */
   public Difficulty getDifficulty() {
     return header.getDifficulty();
   }
 
+  /**
+   * Gets ommer hash.
+   *
+   * @return the ommer hash
+   */
   public Bytes32 getOmmerHash() {
     return header.getOmmersHash();
   }
 
+  /**
+   * Gets number.
+   *
+   * @return the number
+   */
   public Long getNumber() {
     return header.getNumber();
   }
 
+  /**
+   * Gets account.
+   *
+   * @param environment the environment
+   * @return the account
+   */
   public AccountAdapter getAccount(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final long bn = header.getNumber();
@@ -152,6 +251,12 @@ public class BlockAdapterBase extends AdapterBase {
         .get();
   }
 
+  /**
+   * Gets logs.
+   *
+   * @param environment the environment
+   * @return the logs
+   */
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
 
     final Map<String, Object> filter = environment.getArgument("filter");
@@ -183,11 +288,23 @@ public class BlockAdapterBase extends AdapterBase {
     return results;
   }
 
+  /**
+   * Gets estimate gas.
+   *
+   * @param environment the environment
+   * @return the estimate gas
+   */
   public Long getEstimateGas(final DataFetchingEnvironment environment) {
     final Optional<CallResult> result = executeCall(environment);
     return result.map(CallResult::getGasUsed).orElse(0L);
   }
 
+  /**
+   * Gets call.
+   *
+   * @param environment the environment
+   * @return the call
+   */
   public Optional<CallResult> getCall(final DataFetchingEnvironment environment) {
     return executeCall(environment);
   }
@@ -259,12 +376,23 @@ public class BlockAdapterBase extends AdapterBase {
         header);
   }
 
+  /**
+   * Gets raw header.
+   *
+   * @return the raw header
+   */
   Bytes getRawHeader() {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     header.writeTo(rlpOutput);
     return rlpOutput.encoded();
   }
 
+  /**
+   * Gets raw.
+   *
+   * @param environment the environment
+   * @return the raw
+   */
   Bytes getRaw(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     return query
@@ -279,10 +407,21 @@ public class BlockAdapterBase extends AdapterBase {
         .orElse(Bytes.EMPTY);
   }
 
+  /**
+   * Gets withdrawals root.
+   *
+   * @return the withdrawals root
+   */
   Optional<Bytes32> getWithdrawalsRoot() {
     return header.getWithdrawalsRoot().map(Function.identity());
   }
 
+  /**
+   * Gets withdrawals.
+   *
+   * @param environment the environment
+   * @return the withdrawals
+   */
   Optional<List<WithdrawalAdapter>> getWithdrawals(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     return query
@@ -295,10 +434,20 @@ public class BlockAdapterBase extends AdapterBase {
                     .map(wl -> wl.stream().map(WithdrawalAdapter::new).toList()));
   }
 
+  /**
+   * Gets blob gas used.
+   *
+   * @return the blob gas used
+   */
   public Optional<Long> getBlobGasUsed() {
     return header.getBlobGasUsed();
   }
 
+  /**
+   * Gets excess blob gas.
+   *
+   * @return the excess blob gas
+   */
   public Optional<Long> getExcessBlobGas() {
     return header.getExcessBlobGas().map(BlobGas::toLong);
   }

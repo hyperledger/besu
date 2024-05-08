@@ -30,9 +30,13 @@ import io.vertx.core.json.JsonObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Base json rpc processor. */
 public class BaseJsonRpcProcessor implements JsonRpcProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(BaseJsonRpcProcessor.class);
+
+  /** Default constructor */
+  public BaseJsonRpcProcessor() {}
 
   @Override
   public JsonRpcResponse process(

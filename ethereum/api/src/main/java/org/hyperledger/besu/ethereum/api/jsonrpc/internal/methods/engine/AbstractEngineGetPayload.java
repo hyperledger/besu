@@ -35,12 +35,26 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Abstract engine get payload. */
 public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMethod {
 
   private final MergeMiningCoordinator mergeMiningCoordinator;
+
+  /** The Block result factory. */
   protected final BlockResultFactory blockResultFactory;
+
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineGetPayload.class);
 
+  /**
+   * Instantiates a new Abstract engine get payload.
+   *
+   * @param vertx the vertx
+   * @param schedule the schedule
+   * @param protocolContext the protocol context
+   * @param mergeMiningCoordinator the merge mining coordinator
+   * @param blockResultFactory the block result factory
+   * @param engineCallListener the engine call listener
+   */
   public AbstractEngineGetPayload(
       final Vertx vertx,
       final ProtocolSchedule schedule,
@@ -53,6 +67,15 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     this.blockResultFactory = blockResultFactory;
   }
 
+  /**
+   * Instantiates a new Abstract engine get payload.
+   *
+   * @param vertx the vertx
+   * @param protocolContext the protocol context
+   * @param mergeMiningCoordinator the merge mining coordinator
+   * @param blockResultFactory the block result factory
+   * @param engineCallListener the engine call listener
+   */
   public AbstractEngineGetPayload(
       final Vertx vertx,
       final ProtocolContext protocolContext,
@@ -90,6 +113,13 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
     return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_PAYLOAD);
   }
 
+  /**
+   * Log proposal.
+   *
+   * @param payloadId the payload id
+   * @param proposal the proposal
+   * @param maybeReward the maybe reward
+   */
   protected void logProposal(
       final PayloadIdentifier payloadId,
       final BlockWithReceipts proposal,
@@ -114,6 +144,14 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
         .log();
   }
 
+  /**
+   * Create response json rpc response.
+   *
+   * @param request the request
+   * @param payloadId the payload id
+   * @param blockWithReceipts the block with receipts
+   * @return the json rpc response
+   */
   protected abstract JsonRpcResponse createResponse(
       final JsonRpcRequestContext request,
       final PayloadIdentifier payloadId,

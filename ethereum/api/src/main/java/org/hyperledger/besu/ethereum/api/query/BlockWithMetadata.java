@@ -21,6 +21,12 @@ import org.hyperledger.besu.ethereum.core.Withdrawal;
 import java.util.List;
 import java.util.Optional;
 
+/**
+ * The type Block with metadata.
+ *
+ * @param <T> the type parameter
+ * @param <O> the type parameter
+ */
 public class BlockWithMetadata<T, O> {
 
   private final BlockHeader header;
@@ -31,6 +37,8 @@ public class BlockWithMetadata<T, O> {
   private final Optional<List<Withdrawal>> withdrawals;
 
   /**
+   * Instantiates a new Block with metadata.
+   *
    * @param header The block header
    * @param transactions Block transactions in generic format
    * @param ommers Block ommers in generic format
@@ -46,6 +54,16 @@ public class BlockWithMetadata<T, O> {
     this(header, transactions, ommers, totalDifficulty, size, Optional.empty());
   }
 
+  /**
+   * Instantiates a new Block with metadata.
+   *
+   * @param header the header
+   * @param transactions the transactions
+   * @param ommers the ommers
+   * @param totalDifficulty the total difficulty
+   * @param size the size
+   * @param withdrawals the withdrawals
+   */
   public BlockWithMetadata(
       final BlockHeader header,
       final List<T> transactions,
@@ -61,26 +79,56 @@ public class BlockWithMetadata<T, O> {
     this.withdrawals = withdrawals;
   }
 
+  /**
+   * Gets header.
+   *
+   * @return the header
+   */
   public BlockHeader getHeader() {
     return header;
   }
 
+  /**
+   * Gets ommers.
+   *
+   * @return the ommers
+   */
   public List<O> getOmmers() {
     return ommers;
   }
 
+  /**
+   * Gets transactions.
+   *
+   * @return the transactions
+   */
   public List<T> getTransactions() {
     return transactions;
   }
 
+  /**
+   * Gets total difficulty.
+   *
+   * @return the total difficulty
+   */
   public Difficulty getTotalDifficulty() {
     return totalDifficulty;
   }
 
+  /**
+   * Gets size.
+   *
+   * @return the size
+   */
   public int getSize() {
     return size;
   }
 
+  /**
+   * Gets withdrawals.
+   *
+   * @return the withdrawals
+   */
   public Optional<List<Withdrawal>> getWithdrawals() {
     return withdrawals;
   }

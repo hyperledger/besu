@@ -16,14 +16,25 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import java.util.List;
 
+/** The type Block trace. */
 public class BlockTrace {
 
   private final List<TransactionTrace> transactionTraces;
 
+  /**
+   * Instantiates a new Block trace.
+   *
+   * @param transactionTraces the transaction traces
+   */
   public BlockTrace(final List<TransactionTrace> transactionTraces) {
     this.transactionTraces = transactionTraces;
   }
 
+  /**
+   * Gets transaction traces.
+   *
+   * @return the transaction traces
+   */
   public List<TransactionTrace> getTransactionTraces() {
     return transactionTraces;
   }

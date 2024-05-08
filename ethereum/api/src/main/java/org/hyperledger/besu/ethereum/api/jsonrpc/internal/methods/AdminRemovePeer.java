@@ -28,10 +28,17 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Admin remove peer. */
 public class AdminRemovePeer extends AdminModifyPeer {
 
   private static final Logger LOG = LoggerFactory.getLogger(AdminRemovePeer.class);
 
+  /**
+   * Instantiates a new Admin remove peer.
+   *
+   * @param peerNetwork the peer network
+   * @param enodeDnsConfiguration the enode dns configuration
+   */
   public AdminRemovePeer(
       final P2PNetwork peerNetwork, final Optional<EnodeDnsConfiguration> enodeDnsConfiguration) {
     super(peerNetwork, enodeDnsConfiguration);

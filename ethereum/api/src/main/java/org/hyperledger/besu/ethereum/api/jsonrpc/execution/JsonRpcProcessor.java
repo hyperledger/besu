@@ -21,7 +21,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 
 import io.opentelemetry.api.trace.Span;
 
+/** The interface Json rpc processor. */
 public interface JsonRpcProcessor {
+  /**
+   * Process json rpc response.
+   *
+   * @param id the id
+   * @param method the method
+   * @param metricSpan the metric span
+   * @param request the request
+   * @return the json rpc response
+   */
   JsonRpcResponse process(
       final JsonRpcRequestId id,
       final JsonRpcMethod method,

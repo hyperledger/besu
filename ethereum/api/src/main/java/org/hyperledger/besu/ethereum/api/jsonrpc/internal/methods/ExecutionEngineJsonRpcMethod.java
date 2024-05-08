@@ -33,24 +33,51 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Execution engine json rpc method. */
 public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
+  /** The enum Engine status. */
   public enum EngineStatus {
+    /** Valid engine status. */
     VALID,
+    /** Invalid engine status. */
     INVALID,
+    /** Syncing engine status. */
     SYNCING,
+    /** Accepted engine status. */
     ACCEPTED,
+    /** Invalid block hash engine status. */
     INVALID_BLOCK_HASH;
   }
 
+  /** The constant ENGINE_API_LOGGING_THRESHOLD. */
   public static final long ENGINE_API_LOGGING_THRESHOLD = 60000L;
+
   private final Vertx syncVertx;
   private static final Logger LOG = LoggerFactory.getLogger(ExecutionEngineJsonRpcMethod.class);
+
+  /** The Merge context optional. */
   protected final Optional<MergeContext> mergeContextOptional;
+
+  /** The Merge context. */
   protected final Supplier<MergeContext> mergeContext;
+
+  /** The Protocol schedule. */
   protected final Optional<ProtocolSchedule> protocolSchedule;
+
+  /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+
+  /** The Engine call listener. */
   protected final EngineCallListener engineCallListener;
 
+  /**
+   * Instantiates a new Execution engine json rpc method.
+   *
+   * @param vertx the vertx
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param engineCallListener the engine call listener
+   */
   protected ExecutionEngineJsonRpcMethod(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,
@@ -64,6 +91,13 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     this.engineCallListener = engineCallListener;
   }
 
+  /**
+   * Instantiates a new Execution engine json rpc method.
+   *
+   * @param vertx the vertx
+   * @param protocolContext the protocol context
+   * @param engineCallListener the engine call listener
+   */
   protected ExecutionEngineJsonRpcMethod(
       final Vertx vertx,
       final ProtocolContext protocolContext,
@@ -122,8 +156,20 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
     }
   }
 
+  /**
+   * Sync response json rpc response.
+   *
+   * @param request the request
+   * @return the json rpc response
+   */
   public abstract JsonRpcResponse syncResponse(final JsonRpcRequestContext request);
 
+  /**
+   * Validate fork supported validation result.
+   *
+   * @param blockTimestamp the block timestamp
+   * @return the validation result
+   */
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     return ValidationResult.valid();
   }

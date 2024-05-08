@@ -23,20 +23,53 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Backend query. */
 public class BackendQuery {
   private static final Logger LOG = LoggerFactory.getLogger(BackendQuery.class);
 
+  /** Default constructor */
+  private BackendQuery() {}
+
+  /**
+   * Run if task is alive.
+   *
+   * @param <T> the task type parameter
+   * @param task the task
+   * @param alive the alive boolean supplier
+   * @return the task with type T
+   * @throws Exception the exception
+   */
   public static <T> T runIfAlive(final Callable<T> task, final Supplier<Boolean> alive)
       throws Exception {
     return runIfAlive(Optional.empty(), task, alive);
   }
 
+  /**
+   * Run if alive t.
+   *
+   * @param <T> the type parameter
+   * @param taskName the task name
+   * @param task the task
+   * @param alive the alive
+   * @return the t
+   * @throws Exception the exception
+   */
   public static <T> T runIfAlive(
       final String taskName, final Callable<T> task, final Supplier<Boolean> alive)
       throws Exception {
     return runIfAlive(Optional.ofNullable(taskName), task, alive);
   }
 
+  /**
+   * Run if alive t.
+   *
+   * @param <T> the type parameter
+   * @param taskName the task name
+   * @param task the task
+   * @param alive the alive
+   * @return the t
+   * @throws Exception the exception
+   */
   public static <T> T runIfAlive(
       final Optional<String> taskName, final Callable<T> task, final Supplier<Boolean> alive)
       throws Exception {
@@ -48,6 +81,12 @@ public class BackendQuery {
     return task.call();
   }
 
+  /**
+   * Stop if expired.
+   *
+   * @param alive the alive
+   * @throws Exception the exception
+   */
   public static void stopIfExpired(final Supplier<Boolean> alive) throws Exception {
     runIfAlive(() -> null, alive);
   }

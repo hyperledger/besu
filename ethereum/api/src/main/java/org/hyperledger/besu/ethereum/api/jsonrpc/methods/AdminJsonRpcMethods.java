@@ -37,6 +37,7 @@ import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
 
+/** The type Admin json rpc methods. */
 public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final String clientVersion;
@@ -49,6 +50,19 @@ public class AdminJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final EthPeers ethPeers;
   private final Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
+  /**
+   * Instantiates a new Admin json rpc methods.
+   *
+   * @param clientVersion the client version
+   * @param networkId the network id
+   * @param genesisConfigOptions the genesis config options
+   * @param p2pNetwork the p 2 p network
+   * @param blockchainQueries the blockchain queries
+   * @param namedPlugins the named plugins
+   * @param natService the nat service
+   * @param ethPeers the eth peers
+   * @param enodeDnsConfiguration the enode dns configuration
+   */
   public AdminJsonRpcMethods(
       final String clientVersion,
       final BigInteger networkId,

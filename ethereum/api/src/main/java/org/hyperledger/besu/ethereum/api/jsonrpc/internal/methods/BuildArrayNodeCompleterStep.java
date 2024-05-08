@@ -18,10 +18,16 @@ import org.hyperledger.besu.ethereum.api.util.ArrayNodeWrapper;
 
 import java.util.function.Consumer;
 
+/** The type Build array node completer step. */
 public class BuildArrayNodeCompleterStep implements Consumer<Object> {
 
   private final ArrayNodeWrapper resultArrayNode;
 
+  /**
+   * Instantiates a new Build array node completer step.
+   *
+   * @param resultArrayNode the result array node
+   */
   public BuildArrayNodeCompleterStep(final ArrayNodeWrapper resultArrayNode) {
     this.resultArrayNode = resultArrayNode;
   }
@@ -31,6 +37,11 @@ public class BuildArrayNodeCompleterStep implements Consumer<Object> {
     resultArrayNode.addPOJO(object);
   }
 
+  /**
+   * Gets result array node.
+   *
+   * @return the result array node
+   */
   public ArrayNodeWrapper getResultArrayNode() {
     return this.resultArrayNode;
   }

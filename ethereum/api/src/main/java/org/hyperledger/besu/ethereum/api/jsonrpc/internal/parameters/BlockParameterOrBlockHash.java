@@ -42,6 +42,12 @@ public class BlockParameterOrBlockHash {
   private final Optional<Hash> blockHash;
   private final boolean requireCanonical;
 
+  /**
+   * Instantiates a new Block parameter or block hash.
+   *
+   * @param value the value
+   * @throws JsonProcessingException the json processing exception
+   */
   @JsonCreator
   public BlockParameterOrBlockHash(final Object value) throws JsonProcessingException {
     if (value instanceof String) {
@@ -105,53 +111,110 @@ public class BlockParameterOrBlockHash {
     }
   }
 
+  /**
+   * Gets number.
+   *
+   * @return the number
+   */
   public OptionalLong getNumber() {
     return number;
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   public Optional<Hash> getHash() {
     return blockHash;
   }
 
+  /**
+   * Gets require canonical.
+   *
+   * @return the require canonical
+   */
   public boolean getRequireCanonical() {
     return requireCanonical;
   }
 
+  /**
+   * Is pending boolean.
+   *
+   * @return the boolean
+   */
   public boolean isPending() {
     return this.type == BlockParameterType.PENDING;
   }
 
+  /**
+   * Is latest boolean.
+   *
+   * @return the boolean
+   */
   public boolean isLatest() {
     return this.type == BlockParameterType.LATEST;
   }
 
+  /**
+   * Is safe boolean.
+   *
+   * @return the boolean
+   */
   public boolean isSafe() {
     return this.type == BlockParameterType.SAFE;
   }
 
+  /**
+   * Is finalized boolean.
+   *
+   * @return the boolean
+   */
   public boolean isFinalized() {
     return this.type == BlockParameterType.FINALIZED;
   }
 
+  /**
+   * Is earliest boolean.
+   *
+   * @return the boolean
+   */
   public boolean isEarliest() {
     return this.type == BlockParameterType.EARLIEST;
   }
 
+  /**
+   * Is numeric boolean.
+   *
+   * @return the boolean
+   */
   public boolean isNumeric() {
     return this.type == BlockParameterType.NUMERIC;
   }
 
+  /**
+   * Gets block hash.
+   *
+   * @return the block hash
+   */
   public boolean getBlockHash() {
     return this.type == BlockParameterType.HASH;
   }
 
   private enum BlockParameterType {
+    /** Earliest block parameter type. */
     EARLIEST,
+    /** Latest block parameter type. */
     LATEST,
+    /** Pending block parameter type. */
     PENDING,
+    /** Safe block parameter type. */
     SAFE,
+    /** Finalized block parameter type. */
     FINALIZED,
+    /** Numeric block parameter type. */
     NUMERIC,
+    /** Hash block parameter type. */
     HASH
   }
 }

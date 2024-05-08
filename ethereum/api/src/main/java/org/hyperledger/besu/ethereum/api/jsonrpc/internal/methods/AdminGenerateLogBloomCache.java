@@ -23,10 +23,16 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import java.util.Optional;
 
+/** The type Admin generate log bloom cache. */
 public class AdminGenerateLogBloomCache implements JsonRpcMethod {
 
   private final BlockchainQueries blockchainQueries;
 
+  /**
+   * Instantiates a new Admin generate log bloom cache.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public AdminGenerateLogBloomCache(final BlockchainQueries blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
   }

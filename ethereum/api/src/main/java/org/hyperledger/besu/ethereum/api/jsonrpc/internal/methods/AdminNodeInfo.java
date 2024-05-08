@@ -39,6 +39,7 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Admin node info. */
 public class AdminNodeInfo implements JsonRpcMethod {
 
   private final String clientVersion;
@@ -48,6 +49,16 @@ public class AdminNodeInfo implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
   private final NatService natService;
 
+  /**
+   * Instantiates a new Admin node info.
+   *
+   * @param clientVersion the client version
+   * @param networkId the network id
+   * @param genesisConfigOptions the genesis config options
+   * @param peerNetwork the peer network
+   * @param blockchainQueries the blockchain queries
+   * @param natService the nat service
+   */
   public AdminNodeInfo(
       final String clientVersion,
       final BigInteger networkId,

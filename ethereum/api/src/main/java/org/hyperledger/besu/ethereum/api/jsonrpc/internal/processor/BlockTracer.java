@@ -33,10 +33,23 @@ public class BlockTracer {
   // Either the initial block state or the state of the prior TX, including miner rewards.
   private WorldUpdater chainedUpdater;
 
+  /**
+   * Instantiates a new Block tracer.
+   *
+   * @param blockReplay the block replay
+   */
   public BlockTracer(final BlockReplay blockReplay) {
     this.blockReplay = blockReplay;
   }
 
+  /**
+   * Trace optional.
+   *
+   * @param mutableWorldState the mutable world state
+   * @param blockHash the block hash
+   * @param tracer the tracer
+   * @return the optional
+   */
   public Optional<BlockTrace> trace(
       final Tracer.TraceableState mutableWorldState,
       final Hash blockHash,
@@ -44,6 +57,14 @@ public class BlockTracer {
     return blockReplay.block(blockHash, prepareReplayAction(mutableWorldState, tracer));
   }
 
+  /**
+   * Trace optional.
+   *
+   * @param mutableWorldState the mutable world state
+   * @param block the block
+   * @param tracer the tracer
+   * @return the optional
+   */
   public Optional<BlockTrace> trace(
       final Tracer.TraceableState mutableWorldState,
       final Block block,

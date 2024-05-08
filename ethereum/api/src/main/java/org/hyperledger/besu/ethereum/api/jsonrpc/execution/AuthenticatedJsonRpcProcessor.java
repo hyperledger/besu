@@ -26,12 +26,20 @@ import java.util.Collection;
 
 import io.opentelemetry.api.trace.Span;
 
+/** The type Authenticated json rpc processor. */
 public class AuthenticatedJsonRpcProcessor implements JsonRpcProcessor {
 
   private final JsonRpcProcessor rpcProcessor;
   private final AuthenticationService authenticationService;
   private final Collection<String> noAuthRpcApis;
 
+  /**
+   * Instantiates a new Authenticated json rpc processor.
+   *
+   * @param rpcProcessor the rpc processor
+   * @param authenticationService the authentication service
+   * @param noAuthRpcApis the no auth rpc apis
+   */
   public AuthenticatedJsonRpcProcessor(
       final JsonRpcProcessor rpcProcessor,
       final AuthenticationService authenticationService,

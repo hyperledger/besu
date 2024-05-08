@@ -22,6 +22,7 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
+/** The interface Bad block result. */
 @Value.Immutable
 @Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutableBadBlockResult.class)
@@ -29,15 +30,37 @@ import org.immutables.value.Value;
 @JsonPropertyOrder({"block", "hash", "rlp"})
 public interface BadBlockResult {
 
+  /**
+   * Gets block result.
+   *
+   * @return the block result
+   */
   @JsonProperty("block")
   BlockResult getBlockResult();
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   @JsonProperty("hash")
   String getHash();
 
+  /**
+   * Gets rlp.
+   *
+   * @return the rlp
+   */
   @JsonProperty("rlp")
   String getRlp();
 
+  /**
+   * From bad block result.
+   *
+   * @param blockResult the block result
+   * @param block the block
+   * @return the bad block result
+   */
   static BadBlockResult from(final BlockResult blockResult, final Block block) {
     return ImmutableBadBlockResult.of(
         blockResult, block.getHash().toHexString(), block.toRlp().toHexString());

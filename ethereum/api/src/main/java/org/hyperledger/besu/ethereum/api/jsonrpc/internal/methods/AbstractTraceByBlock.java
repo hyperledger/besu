@@ -43,13 +43,25 @@ import java.util.concurrent.atomic.AtomicInteger;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/** The type Abstract trace by block. */
 public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
     implements JsonRpcMethod {
+  /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
+
+  /** The Transaction simulator. */
   protected final TransactionSimulator transactionSimulator;
 
+  /** The constant mapper. */
   protected static final ObjectMapper mapper = new ObjectMapper();
 
+  /**
+   * Instantiates a new Abstract trace by block.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionSimulator the transaction simulator
+   */
   protected AbstractTraceByBlock(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
@@ -72,6 +84,16 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
     return BlockParameter.LATEST;
   }
 
+  /**
+   * Gets trace call result.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param traceTypes the trace types
+   * @param simulatorResult the simulator result
+   * @param transactionTrace the transaction trace
+   * @param block the block
+   * @return the trace call result
+   */
   protected JsonNode getTraceCallResult(
       final ProtocolSchedule protocolSchedule,
       final Set<TraceTypeParameter.TraceType> traceTypes,
@@ -108,12 +130,23 @@ public abstract class AbstractTraceByBlock extends AbstractBlockParameterMethod
     return mapper.valueToTree(builder.build());
   }
 
+  /**
+   * Build transaction validation params transaction validation params.
+   *
+   * @return the transaction validation params
+   */
   protected TransactionValidationParams buildTransactionValidationParams() {
     return ImmutableTransactionValidationParams.builder()
         .from(TransactionValidationParams.transactionSimulator())
         .build();
   }
 
+  /**
+   * Build trace options trace options.
+   *
+   * @param traceTypes the trace types
+   * @return the trace options
+   */
   protected TraceOptions buildTraceOptions(final Set<TraceTypeParameter.TraceType> traceTypes) {
     return new TraceOptions(
         traceTypes.contains(TraceType.STATE_DIFF),

@@ -19,6 +19,13 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import java.util.Collection;
 import java.util.Map;
 
+/** The interface Json rpc methods. */
 public interface JsonRpcMethods {
+  /**
+   * Create map.
+   *
+   * @param enabledRpcApis the enabled rpc apis
+   * @return the map
+   */
   Map<String, JsonRpcMethod> create(Collection<String> enabledRpcApis);
 }

@@ -35,19 +35,34 @@ import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
 
 import java.util.Optional;
 
+/** The type Abstract estimate gas. */
 public abstract class AbstractEstimateGas implements JsonRpcMethod {
 
   private static final double SUB_CALL_REMAINING_GAS_RATIO = 65D / 64D;
 
+  /** The Blockchain queries. */
   protected final BlockchainQueries blockchainQueries;
+
+  /** The Transaction simulator. */
   protected final TransactionSimulator transactionSimulator;
 
+  /**
+   * Instantiates a new Abstract estimate gas.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param transactionSimulator the transaction simulator
+   */
   public AbstractEstimateGas(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
     this.blockchainQueries = blockchainQueries;
     this.transactionSimulator = transactionSimulator;
   }
 
+  /**
+   * Block header block header.
+   *
+   * @return the block header
+   */
   protected BlockHeader blockHeader() {
     final Blockchain theChain = blockchainQueries.getBlockchain();
 
@@ -61,6 +76,13 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
         .orElse(null);
   }
 
+  /**
+   * Override gas limit and price call parameter.
+   *
+   * @param callParams the call params
+   * @param gasLimit the gas limit
+   * @return the call parameter
+   */
   protected CallParameter overrideGasLimitAndPrice(
       final JsonCallParameter callParams, final long gasLimit) {
     return new CallParameter(
@@ -94,6 +116,12 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
     return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
   }
 
+  /**
+   * Validate and get call params json call parameter.
+   *
+   * @param request the request
+   * @return the json call parameter
+   */
   protected JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
     final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
     if (callParams.getGasPrice() != null
@@ -104,6 +132,13 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
     return callParams;
   }
 
+  /**
+   * Error response json rpc error response.
+   *
+   * @param request the request
+   * @param result the result
+   * @return the json rpc error response
+   */
   protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final TransactionSimulatorResult result) {
 
@@ -129,11 +164,25 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
     }
   }
 
+  /**
+   * Error response json rpc error response.
+   *
+   * @param request the request
+   * @param rpcErrorType the rpc error type
+   * @return the json rpc error response
+   */
   protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final RpcErrorType rpcErrorType) {
     return errorResponse(request, new JsonRpcError(rpcErrorType));
   }
 
+  /**
+   * Error response json rpc error response.
+   *
+   * @param request the request
+   * @param jsonRpcError the json rpc error
+   * @return the json rpc error response
+   */
   protected JsonRpcErrorResponse errorResponse(
       final JsonRpcRequestContext request, final JsonRpcError jsonRpcError) {
     return new JsonRpcErrorResponse(request.getRequest().getId(), jsonRpcError);

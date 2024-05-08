@@ -23,10 +23,20 @@ public class BlockReceiptsResult {
 
   private final List<TransactionReceiptResult> results;
 
+  /**
+   * Instantiates a new Block receipts result.
+   *
+   * @param receipts the receipts
+   */
   public BlockReceiptsResult(final List<TransactionReceiptResult> receipts) {
     results = receipts;
   }
 
+  /**
+   * Gets results.
+   *
+   * @return the results
+   */
   @JsonValue
   public List<TransactionReceiptResult> getResults() {
     return results;

@@ -30,11 +30,15 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Admin change log level. */
 public class AdminChangeLogLevel implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(AdminChangeLogLevel.class);
   private static final Set<String> VALID_PARAMS =
       Set.of("OFF", "ERROR", "WARN", "INFO", "DEBUG", "TRACE", "ALL");
+
+  /** Default constructor */
+  public AdminChangeLogLevel() {}
 
   @Override
   public String getName() {

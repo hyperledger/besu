@@ -26,9 +26,15 @@ import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException
 
 import java.util.stream.Collectors;
 
+/** The type Admin peers. */
 public class AdminPeers implements JsonRpcMethod {
   private final EthPeers ethPeers;
 
+  /**
+   * Instantiates a new Admin peers.
+   *
+   * @param ethPeers the eth peers
+   */
   public AdminPeers(final EthPeers ethPeers) {
     this.ethPeers = ethPeers;
   }

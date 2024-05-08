@@ -31,6 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Blobs bundle v1. */
 @JsonPropertyOrder({"commitments", "proofs", "blobs"})
 public class BlobsBundleV1 {
 
@@ -41,6 +42,11 @@ public class BlobsBundleV1 {
 
   private final List<String> blobs;
 
+  /**
+   * Instantiates a new Blobs bundle v1.
+   *
+   * @param transactions the transactions
+   */
   public BlobsBundleV1(final List<Transaction> transactions) {
     final List<BlobsWithCommitments> blobsWithCommitments =
         transactions.stream()
@@ -79,6 +85,13 @@ public class BlobsBundleV1 {
         blobs.size());
   }
 
+  /**
+   * Instantiates a new Blobs bundle v1.
+   *
+   * @param commitments the commitments
+   * @param proofs the proofs
+   * @param blobs the blobs
+   */
   public BlobsBundleV1(
       final List<String> commitments, final List<String> proofs, final List<String> blobs) {
     if (blobs.size() != commitments.size() || blobs.size() != proofs.size()) {
@@ -90,16 +103,31 @@ public class BlobsBundleV1 {
     this.blobs = blobs;
   }
 
+  /**
+   * Gets commitments.
+   *
+   * @return the commitments
+   */
   @JsonGetter("commitments")
   public List<String> getCommitments() {
     return commitments;
   }
 
+  /**
+   * Gets proofs.
+   *
+   * @return the proofs
+   */
   @JsonGetter("proofs")
   public List<String> getProofs() {
     return proofs;
   }
 
+  /**
+   * Gets blobs.
+   *
+   * @return the blobs
+   */
   @JsonGetter("blobs")
   public List<String> getBlobs() {
     return blobs;

@@ -24,13 +24,38 @@ import io.vertx.ext.auth.User;
 import io.vertx.ext.auth.jwt.JWTAuth;
 import io.vertx.ext.web.RoutingContext;
 
+/** The interface Authentication service. */
 public interface AuthenticationService {
+  /**
+   * Handle login.
+   *
+   * @param routingContext the routing context
+   */
   void handleLogin(RoutingContext routingContext);
 
+  /**
+   * Gets jwt auth provider.
+   *
+   * @return the jwt auth provider
+   */
   JWTAuth getJwtAuthProvider();
 
+  /**
+   * Authenticate.
+   *
+   * @param token the token
+   * @param handler the handler
+   */
   void authenticate(String token, Handler<Optional<User>> handler);
 
+  /**
+   * Is permitted boolean.
+   *
+   * @param optionalUser the optional user
+   * @param jsonRpcMethod the json rpc method
+   * @param noAuthMethods the no auth methods
+   * @return the boolean
+   */
   boolean isPermitted(
       final Optional<User> optionalUser,
       final JsonRpcMethod jsonRpcMethod,

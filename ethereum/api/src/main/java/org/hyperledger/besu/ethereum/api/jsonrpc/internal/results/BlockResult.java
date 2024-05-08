@@ -32,6 +32,7 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Block result. */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 @JsonPropertyOrder({
   "number",
@@ -61,7 +62,10 @@ import org.apache.tuweni.bytes.Bytes32;
 public class BlockResult implements JsonRpcResult {
 
   private final String number;
+
+  /** The Hash. */
   protected final String hash;
+
   private final String mixHash;
   private final String parentHash;
   private final String nonce;
@@ -79,7 +83,10 @@ public class BlockResult implements JsonRpcResult {
   private final String gasLimit;
   private final String gasUsed;
   private final String timestamp;
+
+  /** The Transactions. */
   protected final List<TransactionResult> transactions;
+
   private final List<JsonNode> ommers;
   private final String coinbase;
   private final String withdrawalsRoot;
@@ -89,6 +96,15 @@ public class BlockResult implements JsonRpcResult {
   private final String excessBlobGas;
   private final String parentBeaconBlockRoot;
 
+  /**
+   * Instantiates a new Block result.
+   *
+   * @param header the header
+   * @param transactions the transactions
+   * @param ommers the ommers
+   * @param totalDifficulty the total difficulty
+   * @param size the size
+   */
   public BlockResult(
       final BlockHeader header,
       final List<TransactionResult> transactions,
@@ -98,6 +114,17 @@ public class BlockResult implements JsonRpcResult {
     this(header, transactions, ommers, totalDifficulty, size, false, Optional.empty());
   }
 
+  /**
+   * Instantiates a new Block result.
+   *
+   * @param header the header
+   * @param transactions the transactions
+   * @param ommers the ommers
+   * @param totalDifficulty the total difficulty
+   * @param size the size
+   * @param includeCoinbase the include coinbase
+   * @param withdrawals the withdrawals
+   */
   public BlockResult(
       final BlockHeader header,
       final List<TransactionResult> transactions,
@@ -140,137 +167,272 @@ public class BlockResult implements JsonRpcResult {
         header.getParentBeaconBlockRoot().map(Bytes32::toHexString).orElse(null);
   }
 
+  /**
+   * Gets number.
+   *
+   * @return the number
+   */
   @JsonGetter(value = "number")
   public String getNumber() {
     return number;
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   @JsonGetter(value = "hash")
   public String getHash() {
     return hash;
   }
 
+  /**
+   * Gets mix hash.
+   *
+   * @return the mix hash
+   */
   @JsonGetter(value = "mixHash")
   public String getMixHash() {
     return mixHash;
   }
 
+  /**
+   * Gets parent hash.
+   *
+   * @return the parent hash
+   */
   @JsonGetter(value = "parentHash")
   public String getParentHash() {
     return parentHash;
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   @JsonGetter(value = "nonce")
   public String getNonce() {
     return nonce;
   }
 
+  /**
+   * Gets sha 3 uncles.
+   *
+   * @return the sha 3 uncles
+   */
   @JsonGetter(value = "sha3Uncles")
   public String getSha3Uncles() {
     return sha3Uncles;
   }
 
+  /**
+   * Gets logs bloom.
+   *
+   * @return the logs bloom
+   */
   @JsonGetter(value = "logsBloom")
   public String getLogsBloom() {
     return logsBloom;
   }
 
+  /**
+   * Gets transactions root.
+   *
+   * @return the transactions root
+   */
   @JsonGetter(value = "transactionsRoot")
   public String getTransactionsRoot() {
     return transactionsRoot;
   }
 
+  /**
+   * Gets state root.
+   *
+   * @return the state root
+   */
   @JsonGetter(value = "stateRoot")
   public String getStateRoot() {
     return stateRoot;
   }
 
+  /**
+   * Gets receipts root.
+   *
+   * @return the receipts root
+   */
   @JsonGetter(value = "receiptsRoot")
   public String getReceiptsRoot() {
     return receiptsRoot;
   }
 
+  /**
+   * Gets miner.
+   *
+   * @return the miner
+   */
   @JsonGetter(value = "miner")
   public String getMiner() {
     return miner;
   }
 
+  /**
+   * Gets difficulty.
+   *
+   * @return the difficulty
+   */
   @JsonGetter(value = "difficulty")
   public String getDifficulty() {
     return difficulty;
   }
 
+  /**
+   * Gets total difficulty.
+   *
+   * @return the total difficulty
+   */
   @JsonGetter(value = "totalDifficulty")
   public String getTotalDifficulty() {
     return totalDifficulty;
   }
 
+  /**
+   * Gets extra data.
+   *
+   * @return the extra data
+   */
   @JsonGetter(value = "extraData")
   public String getExtraData() {
     return extraData;
   }
 
+  /**
+   * Gets base fee per gas.
+   *
+   * @return the base fee per gas
+   */
   @JsonGetter(value = "baseFeePerGas")
   public String getBaseFeePerGas() {
     return baseFeePerGas;
   }
 
+  /**
+   * Gets size.
+   *
+   * @return the size
+   */
   @JsonGetter(value = "size")
   public String getSize() {
     return size;
   }
 
+  /**
+   * Gets gas limit.
+   *
+   * @return the gas limit
+   */
   @JsonGetter(value = "gasLimit")
   public String getGasLimit() {
     return gasLimit;
   }
 
+  /**
+   * Gets gas used.
+   *
+   * @return the gas used
+   */
   @JsonGetter(value = "gasUsed")
   public String getGasUsed() {
     return gasUsed;
   }
 
+  /**
+   * Gets timestamp.
+   *
+   * @return the timestamp
+   */
   @JsonGetter(value = "timestamp")
   public String getTimestamp() {
     return timestamp;
   }
 
+  /**
+   * Gets ommers.
+   *
+   * @return the ommers
+   */
   @JsonGetter(value = "uncles")
   public List<JsonNode> getOmmers() {
     return ommers;
   }
 
+  /**
+   * Gets transactions.
+   *
+   * @return the transactions
+   */
   @JsonGetter(value = "transactions")
   public List<TransactionResult> getTransactions() {
     return transactions;
   }
 
+  /**
+   * Gets coinbase.
+   *
+   * @return the coinbase
+   */
   @JsonGetter(value = "author")
   @JsonInclude(Include.NON_NULL)
   public String getCoinbase() {
     return coinbase;
   }
 
+  /**
+   * Gets withdrawals root.
+   *
+   * @return the withdrawals root
+   */
   @JsonGetter(value = "withdrawalsRoot")
   public String getWithdrawalsRoot() {
     return withdrawalsRoot;
   }
 
+  /**
+   * Gets withdrawals.
+   *
+   * @return the withdrawals
+   */
   @JsonGetter(value = "withdrawals")
   public List<WithdrawalParameter> getWithdrawals() {
     return withdrawals;
   }
 
+  /**
+   * Gets blob gas used.
+   *
+   * @return the blob gas used
+   */
   @JsonGetter(value = "blobGasUsed")
   public String getBlobGasUsed() {
     return blobGasUsed;
   }
 
+  /**
+   * Gets excess blob gas.
+   *
+   * @return the excess blob gas
+   */
   @JsonGetter(value = "excessBlobGas")
   public String getExcessBlobGas() {
     return excessBlobGas;
   }
 
+  /**
+   * Gets parent beacon block root.
+   *
+   * @return the parent beacon block root
+   */
   @JsonGetter(value = "parentBeaconBlockRoot")
   public String getParentBeaconBlockRoot() {
     return parentBeaconBlockRoot;

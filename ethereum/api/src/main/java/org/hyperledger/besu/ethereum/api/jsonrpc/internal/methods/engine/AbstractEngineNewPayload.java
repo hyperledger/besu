@@ -81,6 +81,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Abstract engine new payload. */
 public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMethod {
 
   private static final Hash OMMERS_HASH_CONSTANT = Hash.EMPTY_LIST_HASH;
@@ -89,6 +90,16 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   private final MergeMiningCoordinator mergeCoordinator;
   private final EthPeers ethPeers;
 
+  /**
+   * Instantiates a new Abstract engine new payload.
+   *
+   * @param vertx the vertx
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param mergeCoordinator the merge coordinator
+   * @param ethPeers the eth peers
+   * @param engineCallListener the engine call listener
+   */
   public AbstractEngineNewPayload(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,
@@ -370,6 +381,15 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
   }
 
+  /**
+   * Respond with json rpc response.
+   *
+   * @param requestId the request id
+   * @param param the param
+   * @param latestValidHash the latest valid hash
+   * @param status the status
+   * @return the json rpc response
+   */
   JsonRpcResponse respondWith(
       final Object requestId,
       final EnginePayloadParameter param,
@@ -395,6 +415,16 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   // engine api calls are synchronous, no need for volatile
   private long lastInvalidWarn = 0;
 
+  /**
+   * Respond with invalid json rpc response.
+   *
+   * @param requestId the request id
+   * @param param the param
+   * @param latestValidHash the latest valid hash
+   * @param invalidStatus the invalid status
+   * @param validationError the validation error
+   * @return the json rpc response
+   */
   JsonRpcResponse respondWithInvalid(
       final Object requestId,
       final EnginePayloadParameter param,
@@ -427,10 +457,23 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
             invalidStatus, latestValidHash, Optional.of(validationError)));
   }
 
+  /**
+   * Gets invalid block hash status.
+   *
+   * @return the invalid block hash status
+   */
   protected EngineStatus getInvalidBlockHashStatus() {
     return INVALID;
   }
 
+  /**
+   * Validate parameters validation result.
+   *
+   * @param parameter the parameter
+   * @param maybeVersionedHashParam the maybe versioned hash param
+   * @param maybeBeaconBlockRootParam the maybe beacon block root param
+   * @return the validation result
+   */
   protected ValidationResult<RpcErrorType> validateParameters(
       final EnginePayloadParameter parameter,
       final Optional<List<String>> maybeVersionedHashParam,
@@ -438,6 +481,16 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     return ValidationResult.valid();
   }
 
+  /**
+   * Validate blobs validation result.
+   *
+   * @param blobTransactions the blob transactions
+   * @param header the header
+   * @param maybeParentHeader the maybe parent header
+   * @param maybeVersionedHashes the maybe versioned hashes
+   * @param protocolSpec the protocol spec
+   * @return the validation result
+   */
   protected ValidationResult<RpcErrorType> validateBlobs(
       final List<Transaction> blobTransactions,
       final BlockHeader header,

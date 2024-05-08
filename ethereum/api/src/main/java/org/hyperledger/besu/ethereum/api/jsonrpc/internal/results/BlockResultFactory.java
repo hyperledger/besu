@@ -36,13 +36,29 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.TextNode;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Block result factory. */
 public class BlockResultFactory {
+  /** Default constructor. */
+  public BlockResultFactory() {}
 
+  /**
+   * Transaction complete block result.
+   *
+   * @param blockWithMetadata the block with metadata
+   * @return the block result
+   */
   public BlockResult transactionComplete(
       final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata) {
     return transactionComplete(blockWithMetadata, false);
   }
 
+  /**
+   * Transaction complete block result.
+   *
+   * @param blockWithMetadata the block with metadata
+   * @param includeCoinbase the include coinbase
+   * @return the block result
+   */
   public BlockResult transactionComplete(
       final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetadata,
       final boolean includeCoinbase) {
@@ -65,6 +81,12 @@ public class BlockResultFactory {
         blockWithMetadata.getWithdrawals());
   }
 
+  /**
+   * Transaction complete block result.
+   *
+   * @param block the block
+   * @return the block result
+   */
   public BlockResult transactionComplete(final Block block) {
 
     final int count = block.getBody().getTransactions().size();
@@ -93,6 +115,12 @@ public class BlockResultFactory {
         block.getHeader(), txs, ommers, block.getHeader().getDifficulty(), block.calculateSize());
   }
 
+  /**
+   * Payload transaction complete v 1 engine get payload result v 1.
+   *
+   * @param block the block
+   * @return the engine get payload result v 1
+   */
   public EngineGetPayloadResultV1 payloadTransactionCompleteV1(final Block block) {
     final List<String> txs =
         block.getBody().getTransactions().stream()
@@ -105,6 +133,12 @@ public class BlockResultFactory {
     return new EngineGetPayloadResultV1(block.getHeader(), txs);
   }
 
+  /**
+   * Payload transaction complete v 2 engine get payload result v 2.
+   *
+   * @param blockWithReceipts the block with receipts
+   * @return the engine get payload result v 2
+   */
   public EngineGetPayloadResultV2 payloadTransactionCompleteV2(
       final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =
@@ -123,6 +157,12 @@ public class BlockResultFactory {
         Quantity.create(blockValue));
   }
 
+  /**
+   * Payload bodies complete v 1 engine get payload bodies result v 1.
+   *
+   * @param blockBodies the block bodies
+   * @return the engine get payload bodies result v 1
+   */
   public EngineGetPayloadBodiesResultV1 payloadBodiesCompleteV1(
       final List<Optional<BlockBody>> blockBodies) {
     final List<PayloadBody> payloadBodies =
@@ -132,6 +172,12 @@ public class BlockResultFactory {
     return new EngineGetPayloadBodiesResultV1(payloadBodies);
   }
 
+  /**
+   * Payload transaction complete v 3 engine get payload result v 3.
+   *
+   * @param blockWithReceipts the block with receipts
+   * @return the engine get payload result v 3
+   */
   public EngineGetPayloadResultV3 payloadTransactionCompleteV3(
       final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =
@@ -154,6 +200,12 @@ public class BlockResultFactory {
         blobsBundleV1);
   }
 
+  /**
+   * Payload transaction complete v 4 engine get payload result v 4.
+   *
+   * @param blockWithReceipts the block with receipts
+   * @return the engine get payload result v 4
+   */
   public EngineGetPayloadResultV4 payloadTransactionCompleteV4(
       final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =
@@ -178,10 +230,23 @@ public class BlockResultFactory {
         blobsBundleV1);
   }
 
+  /**
+   * Transaction hash block result.
+   *
+   * @param blockWithMetadata the block with metadata
+   * @return the block result
+   */
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
     return transactionHash(blockWithMetadata, false);
   }
 
+  /**
+   * Transaction hash block result.
+   *
+   * @param blockWithMetadata the block with metadata
+   * @param includeCoinbase the include coinbase
+   * @return the block result
+   */
   public BlockResult transactionHash(
       final BlockWithMetadata<Hash, Hash> blockWithMetadata, final boolean includeCoinbase) {
     final List<TransactionResult> txs =

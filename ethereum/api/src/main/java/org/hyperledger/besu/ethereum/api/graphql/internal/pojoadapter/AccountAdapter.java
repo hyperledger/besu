@@ -28,6 +28,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Account adapter. */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class AccountAdapter extends AdapterBase {
 
@@ -35,18 +36,42 @@ public class AccountAdapter extends AdapterBase {
   private final Address address;
   private final Optional<Long> blockNumber;
 
+  /**
+   * Instantiates a new Account adapter.
+   *
+   * @param account the account
+   */
   public AccountAdapter(final Account account) {
     this(account == null ? null : account.getAddress(), account, Optional.empty());
   }
 
+  /**
+   * Instantiates a new Account adapter.
+   *
+   * @param account the account
+   * @param blockNumber the block number
+   */
   public AccountAdapter(final Account account, final Optional<Long> blockNumber) {
     this(account == null ? null : account.getAddress(), account, blockNumber);
   }
 
+  /**
+   * Instantiates a new Account adapter.
+   *
+   * @param address the address
+   * @param account the account
+   */
   public AccountAdapter(final Address address, final Account account) {
     this(address, account, Optional.empty());
   }
 
+  /**
+   * Instantiates a new Account adapter.
+   *
+   * @param address the address
+   * @param account the account
+   * @param blockNumber the block number
+   */
   public AccountAdapter(
       final Address address, final Account account, final Optional<Long> blockNumber) {
     this.account = Optional.ofNullable(account);
@@ -54,18 +79,39 @@ public class AccountAdapter extends AdapterBase {
     this.blockNumber = blockNumber;
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   public Address getAddress() {
     return address;
   }
 
+  /**
+   * Gets balance.
+   *
+   * @return the balance
+   */
   public Wei getBalance() {
     return account.map(AccountState::getBalance).orElse(Wei.ZERO);
   }
 
+  /**
+   * Gets transaction count.
+   *
+   * @return the transaction count
+   */
   public Long getTransactionCount() {
     return account.map(AccountState::getNonce).orElse(0L);
   }
 
+  /**
+   * Gets code.
+   *
+   * @param environment the environment
+   * @return the code
+   */
   public Bytes getCode(final DataFetchingEnvironment environment) {
 
     if (account.get() instanceof BonsaiAccount) {
@@ -80,6 +126,12 @@ public class AccountAdapter extends AdapterBase {
     }
   }
 
+  /**
+   * Gets storage.
+   *
+   * @param environment the environment
+   * @return the storage
+   */
   public Bytes32 getStorage(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Bytes32 slot = environment.getArgument("slot");

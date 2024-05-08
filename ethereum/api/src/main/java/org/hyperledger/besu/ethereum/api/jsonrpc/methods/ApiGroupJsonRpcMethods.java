@@ -23,22 +23,47 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/** The type Api group json rpc methods. */
 public abstract class ApiGroupJsonRpcMethods implements JsonRpcMethods {
+  /** Instantiates a new Api group json rpc methods. */
+  protected ApiGroupJsonRpcMethods() {}
 
   @Override
   public Map<String, JsonRpcMethod> create(final Collection<String> apis) {
     return apis.contains(getApiGroup()) ? create() : Collections.emptyMap();
   }
 
+  /**
+   * Gets api group.
+   *
+   * @return the api group
+   */
   protected abstract String getApiGroup();
 
+  /**
+   * Create map.
+   *
+   * @return the map
+   */
   protected abstract Map<String, JsonRpcMethod> create();
 
+  /**
+   * Map of map.
+   *
+   * @param methods the methods
+   * @return the map
+   */
   protected Map<String, JsonRpcMethod> mapOf(final JsonRpcMethod... methods) {
     return Arrays.stream(methods)
         .collect(Collectors.toMap(JsonRpcMethod::getName, method -> method));
   }
 
+  /**
+   * Map of map.
+   *
+   * @param methods the methods
+   * @return the map
+   */
   protected Map<String, JsonRpcMethod> mapOf(final List<JsonRpcMethod> methods) {
     return methods.stream().collect(Collectors.toMap(JsonRpcMethod::getName, method -> method));
   }

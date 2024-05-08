@@ -20,6 +20,7 @@ import java.util.Optional;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 
+/** The type Array node wrapper. */
 public class ArrayNodeWrapper {
 
   private final ArrayNode arrayNode;
@@ -27,10 +28,22 @@ public class ArrayNodeWrapper {
   private final Optional<Integer> maybeCount;
   private int currentOffset;
 
+  /**
+   * Instantiates a new Array node wrapper.
+   *
+   * @param arrayNode the array node
+   */
   public ArrayNodeWrapper(final ArrayNode arrayNode) {
     this(arrayNode, Optional.empty(), Optional.empty());
   }
 
+  /**
+   * Instantiates a new Array node wrapper.
+   *
+   * @param arrayNode the array node
+   * @param maybeAfter the maybe after
+   * @param maybeCount the maybe count
+   */
   public ArrayNodeWrapper(
       final ArrayNode arrayNode,
       final Optional<Integer> maybeAfter,
@@ -41,6 +54,11 @@ public class ArrayNodeWrapper {
     this.maybeCount = maybeCount;
   }
 
+  /**
+   * Add pojo.
+   *
+   * @param object the object
+   */
   public void addPOJO(final Object object) {
     final boolean isValidOffset = maybeAfter.map(after -> currentOffset >= after).orElse(true);
     final boolean isValidSize = maybeCount.map(count -> count > arrayNode.size()).orElse(true);
@@ -50,6 +68,11 @@ public class ArrayNodeWrapper {
     currentOffset++;
   }
 
+  /**
+   * Add all.
+   *
+   * @param wrapper the wrapper
+   */
   public void addAll(final ArrayNodeWrapper wrapper) {
     final Iterator<JsonNode> elements = wrapper.arrayNode.elements();
     while (!isFull() && elements.hasNext()) {
@@ -57,10 +80,20 @@ public class ArrayNodeWrapper {
     }
   }
 
+  /**
+   * Is full boolean.
+   *
+   * @return the boolean
+   */
   public boolean isFull() {
     return maybeCount.map(count -> count <= arrayNode.size()).orElse(false);
   }
 
+  /**
+   * Gets array node.
+   *
+   * @return the array node
+   */
   public ArrayNode getArrayNode() {
     return arrayNode;
   }

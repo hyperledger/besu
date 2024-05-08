@@ -36,12 +36,20 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import java.util.List;
 import java.util.Optional;
 
+/** The type Block replay. */
 public class BlockReplay {
 
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
   private final ProtocolContext protocolContext;
 
+  /**
+   * Instantiates a new Block replay.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param blockchain the blockchain
+   */
   public BlockReplay(
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
@@ -51,6 +59,13 @@ public class BlockReplay {
     this.blockchain = blockchain;
   }
 
+  /**
+   * Block optional.
+   *
+   * @param block the block
+   * @param action the action
+   * @return the optional
+   */
   public Optional<BlockTrace> block(
       final Block block, final TransactionAction<TransactionTrace> action) {
     return performActionWithBlock(
@@ -77,11 +92,28 @@ public class BlockReplay {
         });
   }
 
+  /**
+   * Block optional.
+   *
+   * @param blockHash the block hash
+   * @param action the action
+   * @return the optional
+   */
   public Optional<BlockTrace> block(
       final Hash blockHash, final TransactionAction<TransactionTrace> action) {
     return getBlock(blockHash).flatMap(block -> block(block, action));
   }
 
+  /**
+   * Before transaction in block optional.
+   *
+   * @param <T> the type parameter
+   * @param mutableWorldState the mutable world state
+   * @param blockHash the block hash
+   * @param transactionHash the transaction hash
+   * @param action the action
+   * @return the optional
+   */
   public <T> Optional<T> beforeTransactionInBlock(
       final TraceableState mutableWorldState,
       final Hash blockHash,
@@ -121,6 +153,16 @@ public class BlockReplay {
         });
   }
 
+  /**
+   * After transaction in block optional.
+   *
+   * @param <T> the type parameter
+   * @param mutableWorldState the mutable world state
+   * @param blockHash the block hash
+   * @param transactionHash the transaction hash
+   * @param action the action
+   * @return the optional
+   */
   public <T> Optional<T> afterTransactionInBlock(
       final TraceableState mutableWorldState,
       final Hash blockHash,
@@ -146,6 +188,14 @@ public class BlockReplay {
         });
   }
 
+  /**
+   * Perform action with block optional.
+   *
+   * @param <T> the type parameter
+   * @param blockHash the block hash
+   * @param action the action
+   * @return the optional
+   */
   public <T> Optional<T> performActionWithBlock(final Hash blockHash, final BlockAction<T> action) {
     Optional<Block> maybeBlock = getBlock(blockHash);
     if (maybeBlock.isEmpty()) {
@@ -180,8 +230,23 @@ public class BlockReplay {
     return Optional.empty();
   }
 
+  /**
+   * The interface Block action.
+   *
+   * @param <T> the type parameter
+   */
   @FunctionalInterface
   public interface BlockAction<T> {
+    /**
+     * Perform optional.
+     *
+     * @param body the body
+     * @param blockHeader the block header
+     * @param blockchain the blockchain
+     * @param transactionProcessor the transaction processor
+     * @param protocolSpec the protocol spec
+     * @return the optional
+     */
     Optional<T> perform(
         BlockBody body,
         BlockHeader blockHeader,
@@ -190,8 +255,23 @@ public class BlockReplay {
         ProtocolSpec protocolSpec);
   }
 
+  /**
+   * The interface Transaction action.
+   *
+   * @param <T> the type parameter
+   */
   @FunctionalInterface
   public interface TransactionAction<T> {
+    /**
+     * Perform action t.
+     *
+     * @param transaction the transaction
+     * @param blockHeader the block header
+     * @param blockchain the blockchain
+     * @param transactionProcessor the transaction processor
+     * @param blobGasPrice the blob gas price
+     * @return the t
+     */
     T performAction(
         Transaction transaction,
         BlockHeader blockHeader,

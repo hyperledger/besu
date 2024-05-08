@@ -33,6 +33,7 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Abstract trace call. */
 public abstract class AbstractTraceCall extends AbstractTraceByBlock {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTraceCall.class);
 
@@ -43,6 +44,14 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
    */
   private final boolean recordChildCallGas;
 
+  /**
+   * Instantiates a new Abstract trace call.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionSimulator the transaction simulator
+   * @param recordChildCallGas the record child call gas
+   */
   protected AbstractTraceCall(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
@@ -86,8 +95,21 @@ public abstract class AbstractTraceCall extends AbstractTraceByBlock {
             () -> new JsonRpcErrorResponse(requestContext.getRequest().getId(), INTERNAL_ERROR));
   }
 
+  /**
+   * Gets trace options.
+   *
+   * @param requestContext the request context
+   * @return the trace options
+   */
   protected abstract TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext);
 
+  /**
+   * Gets simulator result handler.
+   *
+   * @param requestContext the request context
+   * @param tracer the tracer
+   * @return the simulator result handler
+   */
   protected abstract PreCloseStateHandler<Object> getSimulatorResultHandler(
       final JsonRpcRequestContext requestContext, final DebugOperationTracer tracer);
 }

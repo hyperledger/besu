@@ -28,9 +28,15 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Map;
 import java.util.Optional;
 
+/** The type Admin logs remove cache. */
 public class AdminLogsRemoveCache implements JsonRpcMethod {
   private final BlockchainQueries blockchainQueries;
 
+  /**
+   * Instantiates a new Admin logs remove cache.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public AdminLogsRemoveCache(final BlockchainQueries blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
   }

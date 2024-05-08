@@ -16,8 +16,16 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.authentication;
 
 import java.util.Optional;
 
+/** The type Authentication utils. */
 public class AuthenticationUtils {
+  private AuthenticationUtils() {}
 
+  /**
+   * Gets jwt token from authorization header value.
+   *
+   * @param value the value
+   * @return the jwt token from authorization header value
+   */
   public static String getJwtTokenFromAuthorizationHeaderValue(final String value) {
     if (value != null) {
       final String bearerSchemaName = "Bearer ";
@@ -28,6 +36,12 @@ public class AuthenticationUtils {
     return null;
   }
 
+  /**
+   * Trunc token string.
+   *
+   * @param jwtToken the jwt token
+   * @return the string
+   */
   public static String truncToken(final String jwtToken) {
     return Optional.ofNullable(jwtToken)
         .map(
