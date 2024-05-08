@@ -31,7 +31,8 @@ import javax.annotation.Nonnull;
  * increases the global mark, so a mark set in once collection is usable across all
  * UndoableCollection instances.
  *
- * @param <V> The type of the collection.
+ * @param <K> The type of the keys maintained by this map.
+ * @param <V> The type of mapped values.
  */
 public class UndoMap<K, V> implements Map<K, V>, Undoable {
 
