@@ -48,6 +48,9 @@ public class QbftExtraDataCodec extends BftExtraDataCodec {
           VoteType.ADD, ADD_BYTE_VALUE,
           VoteType.DROP, DROP_BYTE_VALUE);
 
+  /** Default constructor */
+  public QbftExtraDataCodec() {}
+
   /**
    * Encode from addresses.
    *

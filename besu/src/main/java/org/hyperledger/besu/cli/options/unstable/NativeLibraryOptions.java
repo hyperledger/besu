@@ -55,6 +55,9 @@ public class NativeLibraryOptions {
       arity = "1")
   private final Boolean nativeModExp = Boolean.TRUE;
 
+  /** Default constructor. */
+  NativeLibraryOptions() {}
+
   /**
    * Create native library options.
    *

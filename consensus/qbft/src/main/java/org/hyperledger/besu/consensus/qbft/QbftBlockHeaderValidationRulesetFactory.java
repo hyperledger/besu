@@ -37,6 +37,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Qbft block header validation ruleset factory. */
 public class QbftBlockHeaderValidationRulesetFactory {
+  /** Default constructor */
+  private QbftBlockHeaderValidationRulesetFactory() {}
 
   /**
    * Produces a BlockHeaderValidator configured for assessing bft block headers which are to form

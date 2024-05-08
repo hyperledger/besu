@@ -25,6 +25,9 @@ public class MetricCategoryRegistryImpl implements MetricCategoryRegistry {
 
   private final List<MetricCategory> metricCategories = new ArrayList<>();
 
+  /** Default constructor */
+  public MetricCategoryRegistryImpl() {}
+
   /**
    * Gets metric categories.
    *

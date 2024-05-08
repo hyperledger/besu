@@ -22,6 +22,8 @@ import picocli.CommandLine;
 
 /** The Node private key file Cli option. */
 public class NodePrivateKeyFileOption {
+  /** Default constructor. */
+  NodePrivateKeyFileOption() {}
 
   /**
    * Create node private key file option.

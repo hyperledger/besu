@@ -242,7 +242,7 @@ public abstract class AbstractTransactionPoolTest {
     doNothing().when(ethScheduler).scheduleSyncWorkerTask(syncTaskCapture.capture());
     doReturn(ethScheduler).when(ethContext).getScheduler();
 
-    peerTransactionTracker = new PeerTransactionTracker();
+    peerTransactionTracker = new PeerTransactionTracker(ethContext.getEthPeers());
     transactionBroadcaster =
         spy(
             new TransactionBroadcaster(

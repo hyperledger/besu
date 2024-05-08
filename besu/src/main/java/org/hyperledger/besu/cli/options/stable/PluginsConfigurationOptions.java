@@ -37,6 +37,9 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
       arity = "1..*")
   private List<PluginInfo> plugins;
 
+  /** Default Constructor. */
+  public PluginsConfigurationOptions() {}
+
   @Override
   public PluginConfiguration toDomainObject() {
     return new PluginConfiguration(plugins);
