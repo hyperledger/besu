@@ -70,7 +70,8 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
   }
 
   @Override
-  protected Optional<ByteBuf> nextHandshakeMessage(final ByteBuf msg) {
+  protected Optional<ByteBuf> nextHandshakeMessage(
+      final ByteBuf msg, final ChannelHandlerContext ctx) {
     final Optional<ByteBuf> nextMsg;
     if (handshaker.getStatus() == Handshaker.HandshakeStatus.IN_PROGRESS) {
       nextMsg = handshaker.handleMessage(msg);
@@ -88,7 +89,9 @@ final class HandshakeHandlerOutbound extends AbstractHandshakeHandler {
             f -> {
               if (f.isSuccess()) {
                 LOG.trace(
-                    "Wrote initial crypto handshake message to {}.", ctx.channel().remoteAddress());
+                    "OUTBOUND Wrote initial crypto handshake message to {}, message {}.",
+                    ctx.channel().remoteAddress(),
+                    first);
               }
             });
   }
