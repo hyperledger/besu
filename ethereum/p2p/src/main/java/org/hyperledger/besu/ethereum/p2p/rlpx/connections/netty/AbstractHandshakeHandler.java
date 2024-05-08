@@ -98,6 +98,10 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
   protected final void channelRead0(final ChannelHandlerContext ctx, final ByteBuf msg) {
     final Optional<ByteBuf> nextMsg = nextHandshakeMessage(msg);
     if (nextMsg.isPresent()) {
+      LOG.atTrace()
+          .setMessage("Sending next handshake message to peer {}")
+          .addArgument(ctx.channel().remoteAddress())
+          .log();
       ctx.writeAndFlush(nextMsg.get());
     } else if (handshaker.getStatus() != Handshaker.HandshakeStatus.SUCCESS) {
       LOG.debug("waiting for more bytes");
@@ -111,7 +115,7 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
         return;
       }
 
-      LOG.trace("Sending framed hello");
+      LOG.trace("Sending framed hello to peer {}", ctx.channel().remoteAddress());
 
       // Exchange keys done
       final Framer framer = this.framerProvider.buildFramer(handshaker.secrets());
