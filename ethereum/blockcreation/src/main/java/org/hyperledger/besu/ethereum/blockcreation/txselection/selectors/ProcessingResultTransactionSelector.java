@@ -35,6 +35,11 @@ public class ProcessingResultTransactionSelector extends AbstractTransactionSele
   private static final Logger LOG =
       LoggerFactory.getLogger(ProcessingResultTransactionSelector.class);
 
+  /**
+   * Instantiates a new Processing result transaction selector.
+   *
+   * @param context the context
+   */
   public ProcessingResultTransactionSelector(final BlockSelectionContext context) {
     super(context);
   }

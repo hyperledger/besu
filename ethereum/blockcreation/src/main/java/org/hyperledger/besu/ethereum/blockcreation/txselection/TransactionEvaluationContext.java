@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 
 import com.google.common.base.Stopwatch;
 
+/** The type Transaction evaluation context. */
 public class TransactionEvaluationContext
     implements org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext<
         PendingTransaction> {
@@ -29,6 +30,14 @@ public class TransactionEvaluationContext
   private final Wei transactionGasPrice;
   private final Wei minGasPrice;
 
+  /**
+   * Instantiates a new Transaction evaluation context.
+   *
+   * @param pendingTransaction the pending transaction
+   * @param evaluationTimer the evaluation timer
+   * @param transactionGasPrice the transaction gas price
+   * @param minGasPrice the min gas price
+   */
   public TransactionEvaluationContext(
       final PendingTransaction pendingTransaction,
       final Stopwatch evaluationTimer,
@@ -40,6 +49,11 @@ public class TransactionEvaluationContext
     this.minGasPrice = minGasPrice;
   }
 
+  /**
+   * Gets transaction.
+   *
+   * @return the transaction
+   */
   public Transaction getTransaction() {
     return pendingTransaction.getTransaction();
   }

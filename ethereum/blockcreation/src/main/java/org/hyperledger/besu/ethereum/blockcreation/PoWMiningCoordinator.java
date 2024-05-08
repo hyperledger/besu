@@ -46,6 +46,15 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
 
   private volatile Optional<Long> cachedHashesPerSecond = Optional.empty();
 
+  /**
+   * Instantiates a new Po w mining coordinator.
+   *
+   * @param blockchain the blockchain
+   * @param executor the executor
+   * @param syncState the sync state
+   * @param remoteSealersLimit the remote sealers limit
+   * @param remoteSealersTimeToLive the remote sealers time to live
+   */
   public PoWMiningCoordinator(
       final Blockchain blockchain,
       final PoWMinerExecutor executor,
@@ -66,6 +75,11 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
     executor.setCoinbase(coinbase);
   }
 
+  /**
+   * Sets stratum mining enabled.
+   *
+   * @param stratumMiningEnabled the stratum mining enabled
+   */
   public void setStratumMiningEnabled(final boolean stratumMiningEnabled) {
     executor.setStratumMiningEnabled(stratumMiningEnabled);
   }
@@ -143,6 +157,11 @@ public class PoWMiningCoordinator extends AbstractMiningCoordinator<PoWBlockMine
     return true;
   }
 
+  /**
+   * Gets epoch calculator.
+   *
+   * @return the epoch calculator
+   */
   public EpochCalculator getEpochCalculator() {
     return executor.epochCalculator;
   }

@@ -34,6 +34,16 @@ import java.util.function.Function;
  */
 public class PoWBlockMiner extends BlockMiner<PoWBlockCreator> {
 
+  /**
+   * Instantiates a new Po w block miner.
+   *
+   * @param blockCreator the block creator
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param observers the observers
+   * @param scheduler the scheduler
+   * @param parentHeader the parent header
+   */
   public PoWBlockMiner(
       final Function<BlockHeader, PoWBlockCreator> blockCreator,
       final ProtocolSchedule protocolSchedule,
@@ -44,14 +54,30 @@ public class PoWBlockMiner extends BlockMiner<PoWBlockCreator> {
     super(blockCreator, protocolSchedule, protocolContext, observers, scheduler, parentHeader);
   }
 
+  /**
+   * Gets work definition.
+   *
+   * @return the work definition
+   */
   public Optional<PoWSolverInputs> getWorkDefinition() {
     return minerBlockCreator.getWorkDefinition();
   }
 
+  /**
+   * Gets hashes per second.
+   *
+   * @return the hashes per second
+   */
   public Optional<Long> getHashesPerSecond() {
     return minerBlockCreator.getHashesPerSecond();
   }
 
+  /**
+   * Submit work boolean.
+   *
+   * @param solution the solution
+   * @return the boolean
+   */
   public boolean submitWork(final PoWSolution solution) {
     return minerBlockCreator.submitWork(solution);
   }

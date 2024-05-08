@@ -26,10 +26,16 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Noop mining coordinator. */
 public class NoopMiningCoordinator implements MiningCoordinator {
 
   private final MiningParameters miningParameters;
 
+  /**
+   * Instantiates a new Noop mining coordinator.
+   *
+   * @param miningParameters the mining parameters
+   */
   public NoopMiningCoordinator(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
   }

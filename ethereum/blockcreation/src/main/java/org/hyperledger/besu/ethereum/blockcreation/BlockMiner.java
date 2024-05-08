@@ -43,21 +43,39 @@ import org.slf4j.LoggerFactory;
  *
  * <p>This class is responsible for mining a single block only - the AbstractBlockCreator maintains
  * state so must be destroyed between block mining activities.
+ *
+ * @param <M> the type parameter
  */
 public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
 
   private static final Logger LOG = LoggerFactory.getLogger(BlockMiner.class);
 
+  /** The Block creator factory. */
   protected final Function<BlockHeader, M> blockCreatorFactory;
+
+  /** The Miner block creator. */
   protected final M minerBlockCreator;
 
+  /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+
+  /** The Parent header. */
   protected final BlockHeader parentHeader;
 
   private final ProtocolSchedule protocolSchedule;
   private final Subscribers<MinedBlockObserver> observers;
   private final AbstractBlockScheduler scheduler;
 
+  /**
+   * Instantiates a new Block miner.
+   *
+   * @param blockCreatorFactory the block creator factory
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param observers the observers
+   * @param scheduler the scheduler
+   * @param parentHeader the parent header
+   */
   public BlockMiner(
       final Function<BlockHeader, M> blockCreatorFactory,
       final ProtocolSchedule protocolSchedule,
@@ -124,10 +142,23 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     return blockCreator.createBlock(Optional.empty(), Optional.empty(), timestamp);
   }
 
+  /**
+   * Should import block boolean.
+   *
+   * @param block the block
+   * @return the boolean
+   * @throws InterruptedException the interrupted exception
+   */
   protected boolean shouldImportBlock(final Block block) throws InterruptedException {
     return true;
   }
 
+  /**
+   * Mine block boolean.
+   *
+   * @return the boolean
+   * @throws InterruptedException the interrupted exception
+   */
   protected boolean mineBlock() throws InterruptedException {
     // Ensure the block is allowed to be mined - i.e. the timestamp on the new block is sufficiently
     // ahead of the parent, and still within allowable clock tolerance.
@@ -181,6 +212,7 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
             blockCreationTiming));
   }
 
+  /** Cancel. */
   public void cancel() {
     minerBlockCreator.cancel();
   }
@@ -189,6 +221,11 @@ public class BlockMiner<M extends AbstractBlockCreator> implements Runnable {
     observers.forEach(obs -> obs.blockMined(block));
   }
 
+  /**
+   * Gets parent header.
+   *
+   * @return the parent header
+   */
   public BlockHeader getParentHeader() {
     return parentHeader;
   }

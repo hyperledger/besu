@@ -16,10 +16,16 @@ package org.hyperledger.besu.ethereum.blockcreation;
 
 import java.util.Iterator;
 
+/** The type Incrementing nonce generator. */
 public class IncrementingNonceGenerator implements Iterable<Long> {
 
   private long nextValue;
 
+  /**
+   * Instantiates a new Incrementing nonce generator.
+   *
+   * @param nextValue the next value
+   */
   public IncrementingNonceGenerator(final long nextValue) {
     this.nextValue = nextValue;
   }

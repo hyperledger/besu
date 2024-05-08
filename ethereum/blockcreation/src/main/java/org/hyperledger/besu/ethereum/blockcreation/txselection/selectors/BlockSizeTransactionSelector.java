@@ -32,6 +32,11 @@ import org.slf4j.LoggerFactory;
 public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockSizeTransactionSelector.class);
 
+  /**
+   * Instantiates a new Block size transaction selector.
+   *
+   * @param context the context
+   */
   public BlockSizeTransactionSelector(final BlockSelectionContext context) {
     super(context);
   }

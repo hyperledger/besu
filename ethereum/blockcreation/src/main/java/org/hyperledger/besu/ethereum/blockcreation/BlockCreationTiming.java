@@ -21,19 +21,31 @@ import java.util.Map;
 
 import com.google.common.base.Stopwatch;
 
+/** The type Block creation timing. */
 public class BlockCreationTiming {
   private final Map<String, Duration> timing = new LinkedHashMap<>();
   private final Stopwatch stopwatch;
   private final Instant startedAt = Instant.now();
 
+  /** Instantiates a new Block creation timing. */
   public BlockCreationTiming() {
     this.stopwatch = Stopwatch.createStarted();
   }
 
+  /**
+   * Register.
+   *
+   * @param step the step
+   */
   public void register(final String step) {
     timing.put(step, stopwatch.elapsed());
   }
 
+  /**
+   * Register all.
+   *
+   * @param subTiming the sub timing
+   */
   public void registerAll(final BlockCreationTiming subTiming) {
     final var offset = Duration.between(startedAt, subTiming.startedAt);
     for (final var entry : subTiming.timing.entrySet()) {
@@ -41,6 +53,12 @@ public class BlockCreationTiming {
     }
   }
 
+  /**
+   * End duration.
+   *
+   * @param step the step
+   * @return the duration
+   */
   public Duration end(final String step) {
     final var elapsed = stopwatch.stop().elapsed();
     timing.put(step, elapsed);

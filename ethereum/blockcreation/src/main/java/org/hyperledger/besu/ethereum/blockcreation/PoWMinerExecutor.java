@@ -31,11 +31,26 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Optional;
 import java.util.function.Function;
 
+/** The type Po w miner executor. */
 public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
 
+  /** The Stratum mining enabled. */
   protected boolean stratumMiningEnabled;
+
+  /** The Epoch calculator. */
   protected final EpochCalculator epochCalculator;
 
+  /**
+   * Instantiates a new Po w miner executor.
+   *
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param transactionPool the transaction pool
+   * @param miningParams the mining params
+   * @param blockScheduler the block scheduler
+   * @param epochCalculator the epoch calculator
+   * @param ethScheduler the eth scheduler
+   */
   public PoWMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -100,6 +115,11 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
         blockCreator, protocolSchedule, protocolContext, observers, blockScheduler, parentHeader);
   }
 
+  /**
+   * Sets coinbase.
+   *
+   * @param coinbase the coinbase
+   */
   public void setCoinbase(final Address coinbase) {
     if (coinbase == null) {
       throw new IllegalArgumentException("Coinbase cannot be unset.");
@@ -108,6 +128,11 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     }
   }
 
+  /**
+   * Sets stratum mining enabled.
+   *
+   * @param stratumMiningEnabled the stratum mining enabled
+   */
   void setStratumMiningEnabled(final boolean stratumMiningEnabled) {
     this.stratumMiningEnabled = stratumMiningEnabled;
   }
@@ -117,6 +142,11 @@ public class PoWMinerExecutor extends AbstractMinerExecutor<PoWBlockMiner> {
     return miningParameters.getCoinbase();
   }
 
+  /**
+   * Gets epoch calculator.
+   *
+   * @return the epoch calculator
+   */
   public EpochCalculator getEpochCalculator() {
     return epochCalculator;
   }

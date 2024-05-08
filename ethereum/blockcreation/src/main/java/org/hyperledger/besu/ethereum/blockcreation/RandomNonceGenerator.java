@@ -24,6 +24,7 @@ public class RandomNonceGenerator implements Iterable<Long> {
 
   private final Random longGenerator;
 
+  /** Instantiates a new Random nonce generator. */
   public RandomNonceGenerator() {
     this.longGenerator = SecureRandomProvider.publicSecureRandom();
   }

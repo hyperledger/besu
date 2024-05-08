@@ -14,8 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+/** The type Coinbase not set exception. */
 public class CoinbaseNotSetException extends RuntimeException {
 
+  /**
+   * Instantiates a new Coinbase not set exception.
+   *
+   * @param message the message
+   */
   public CoinbaseNotSetException(final String message) {
     super(message);
   }

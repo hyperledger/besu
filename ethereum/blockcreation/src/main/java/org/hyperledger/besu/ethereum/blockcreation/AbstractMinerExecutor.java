@@ -38,20 +38,48 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The type Abstract miner executor.
+ *
+ * @param <M> the type parameter
+ */
 public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends AbstractBlockCreator>> {
 
   private static final Logger LOG = LoggerFactory.getLogger(AbstractMinerExecutor.class);
 
   private final ExecutorService executorService =
       Executors.newCachedThreadPool(r -> new Thread(r, "MinerExecutor"));
+
+  /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+
+  /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
+
+  /** The Transaction pool. */
   protected final TransactionPool transactionPool;
+
+  /** The Block scheduler. */
   protected final AbstractBlockScheduler blockScheduler;
+
+  /** The Mining parameters. */
   protected final MiningParameters miningParameters;
+
+  /** The Eth scheduler. */
   protected final EthScheduler ethScheduler;
+
   private final AtomicBoolean stopped = new AtomicBoolean(false);
 
+  /**
+   * Instantiates a new Abstract miner executor.
+   *
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param transactionPool the transaction pool
+   * @param miningParams the mining params
+   * @param blockScheduler the block scheduler
+   * @param ethScheduler the eth scheduler
+   */
   protected AbstractMinerExecutor(
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
@@ -67,6 +95,14 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
     this.ethScheduler = ethScheduler;
   }
 
+  /**
+   * Start async mining optional.
+   *
+   * @param observers the observers
+   * @param ethHashObservers the eth hash observers
+   * @param parentHeader the parent header
+   * @return the optional
+   */
   public Optional<M> startAsyncMining(
       final Subscribers<MinedBlockObserver> observers,
       final Subscribers<PoWObserver> ethHashObservers,
@@ -81,41 +117,85 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
     }
   }
 
+  /** Shut down. */
   public void shutDown() {
     if (stopped.compareAndSet(false, true)) {
       executorService.shutdownNow();
     }
   }
 
+  /**
+   * Await shutdown.
+   *
+   * @throws InterruptedException the interrupted exception
+   */
   public void awaitShutdown() throws InterruptedException {
     if (!executorService.awaitTermination(30, TimeUnit.SECONDS)) {
       LOG.error("Failed to shutdown {}.", this.getClass().getSimpleName());
     }
   }
 
+  /**
+   * Create miner m.
+   *
+   * @param subscribers the subscribers
+   * @param ethHashObservers the eth hash observers
+   * @param parentHeader the parent header
+   * @return the m
+   */
   public abstract M createMiner(
       final Subscribers<MinedBlockObserver> subscribers,
       final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader);
 
+  /**
+   * Sets extra data.
+   *
+   * @param extraData the extra data
+   */
   public void setExtraData(final Bytes extraData) {
     miningParameters.setExtraData(extraData.copy());
   }
 
+  /**
+   * Sets min transaction gas price.
+   *
+   * @param minTransactionGasPrice the min transaction gas price
+   */
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
     miningParameters.setMinTransactionGasPrice(minTransactionGasPrice);
   }
 
+  /**
+   * Gets min transaction gas price.
+   *
+   * @return the min transaction gas price
+   */
   public Wei getMinTransactionGasPrice() {
     return miningParameters.getMinTransactionGasPrice();
   }
 
+  /**
+   * Gets min priority fee per gas.
+   *
+   * @return the min priority fee per gas
+   */
   public Wei getMinPriorityFeePerGas() {
     return miningParameters.getMinPriorityFeePerGas();
   }
 
+  /**
+   * Gets coinbase.
+   *
+   * @return the coinbase
+   */
   public abstract Optional<Address> getCoinbase();
 
+  /**
+   * Change target gas limit.
+   *
+   * @param newTargetGasLimit the new target gas limit
+   */
   public void changeTargetGasLimit(final Long newTargetGasLimit) {
     if (AbstractGasLimitSpecification.isValidTargetGasLimit(newTargetGasLimit)) {
     } else {

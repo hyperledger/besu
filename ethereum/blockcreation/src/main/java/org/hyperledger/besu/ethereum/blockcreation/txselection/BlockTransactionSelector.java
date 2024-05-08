@@ -79,8 +79,8 @@ import org.slf4j.LoggerFactory;
  *   <li>A list of transactions evaluated but not included in the block being constructed.
  * </ul>
  *
- * Once "used" this class must be discarded and another created. This class contains state which is
- * not cleared between executions of buildTransactionListForBlock().
+ * <p>Once "used" this class must be discarded and another created. This class contains state which
+ * is not cleared between executions of buildTransactionListForBlock().
  */
 public class BlockTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlockTransactionSelector.class);
@@ -100,6 +100,25 @@ public class BlockTransactionSelector {
   private final long blockTxsSelectionMaxTime;
   private WorldUpdater blockWorldStateUpdater;
 
+  /**
+   * Instantiates a new Block transaction selector.
+   *
+   * @param miningParameters the mining parameters
+   * @param transactionProcessor the transaction processor
+   * @param blockchain the blockchain
+   * @param worldState the world state
+   * @param transactionPool the transaction pool
+   * @param processableBlockHeader the processable block header
+   * @param transactionReceiptFactory the transaction receipt factory
+   * @param isCancelled the is cancelled
+   * @param miningBeneficiary the mining beneficiary
+   * @param blobGasPrice the blob gas price
+   * @param feeMarket the fee market
+   * @param gasCalculator the gas calculator
+   * @param gasLimitCalculator the gas limit calculator
+   * @param pluginTransactionSelector the plugin transaction selector
+   * @param ethScheduler the eth scheduler
+   */
   public BlockTransactionSelector(
       final MiningParameters miningParameters,
       final MainnetTransactionProcessor transactionProcessor,

@@ -28,12 +28,20 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The interface Mining coordinator. */
 public interface MiningCoordinator {
 
+  /** Start. */
   void start();
 
+  /** Stop. */
   void stop();
 
+  /**
+   * Await stop.
+   *
+   * @throws InterruptedException the interrupted exception
+   */
   void awaitStop() throws InterruptedException;
 
   /**
@@ -50,34 +58,82 @@ public interface MiningCoordinator {
    */
   boolean disable();
 
+  /**
+   * Is mining boolean.
+   *
+   * @return the boolean
+   */
   boolean isMining();
 
+  /** On resume mining. */
   default void onResumeMining() {}
 
+  /** On pause mining. */
   default void onPauseMining() {}
 
+  /**
+   * Gets min transaction gas price.
+   *
+   * @return the min transaction gas price
+   */
   Wei getMinTransactionGasPrice();
 
+  /**
+   * Gets min priority fee per gas.
+   *
+   * @return the min priority fee per gas
+   */
   Wei getMinPriorityFeePerGas();
 
+  /**
+   * Sets extra data.
+   *
+   * @param extraData the extra data
+   */
   void setExtraData(Bytes extraData);
 
+  /**
+   * Sets coinbase.
+   *
+   * @param coinbase the coinbase
+   */
   default void setCoinbase(final Address coinbase) {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents setting coinbase.");
   }
 
+  /**
+   * Gets coinbase.
+   *
+   * @return the coinbase
+   */
   Optional<Address> getCoinbase();
 
+  /**
+   * Hashes per second optional.
+   *
+   * @return the optional
+   */
   default Optional<Long> hashesPerSecond() {
     return Optional.empty();
   }
 
+  /**
+   * Gets work definition.
+   *
+   * @return the work definition
+   */
   default Optional<PoWSolverInputs> getWorkDefinition() {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents querying work definition.");
   }
 
+  /**
+   * Submit work boolean.
+   *
+   * @param solution the solution
+   * @return the boolean
+   */
   default boolean submitWork(final PoWSolution solution) {
     throw new UnsupportedOperationException(
         "Current consensus mechanism prevents submission of work solutions.");
@@ -116,10 +172,25 @@ public interface MiningCoordinator {
    */
   Optional<Block> createBlock(final BlockHeader parentHeader, final long timestamp);
 
+  /**
+   * Add eth hash observer.
+   *
+   * @param observer the observer
+   */
   default void addEthHashObserver(final PoWObserver observer) {}
 
+  /**
+   * Change target gas limit.
+   *
+   * @param targetGasLimit the target gas limit
+   */
   void changeTargetGasLimit(final Long targetGasLimit);
 
+  /**
+   * Is compatible with engine api boolean.
+   *
+   * @return the boolean
+   */
   default boolean isCompatibleWithEngineApi() {
     return false;
   }

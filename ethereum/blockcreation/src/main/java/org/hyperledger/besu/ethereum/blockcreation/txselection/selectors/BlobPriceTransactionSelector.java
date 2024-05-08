@@ -32,6 +32,11 @@ import org.slf4j.LoggerFactory;
 public class BlobPriceTransactionSelector extends AbstractTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlobPriceTransactionSelector.class);
 
+  /**
+   * Instantiates a new Blob price transaction selector.
+   *
+   * @param context the context
+   */
   public BlobPriceTransactionSelector(final BlockSelectionContext context) {
     super(context);
   }

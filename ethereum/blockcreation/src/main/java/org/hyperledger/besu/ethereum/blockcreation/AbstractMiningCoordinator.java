@@ -34,13 +34,21 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * The type Abstract mining coordinator.
+ *
+ * @param <M> the type parameter
+ */
 public abstract class AbstractMiningCoordinator<
         M extends BlockMiner<? extends AbstractBlockCreator>>
     implements BlockAddedObserver, MiningCoordinator {
 
   private enum State {
+    /** Idle state. */
     IDLE,
+    /** Running state. */
     RUNNING,
+    /** Stopped state. */
     STOPPED
   }
 
@@ -50,12 +58,23 @@ public abstract class AbstractMiningCoordinator<
   private final SyncState syncState;
   private final AtomicReference<Optional<Long>> remineOnNewHeadListenerId =
       new AtomicReference<>(Optional.empty());
+
+  /** The Blockchain. */
   protected final Blockchain blockchain;
 
   private State state = State.IDLE;
   private boolean isEnabled = false;
+
+  /** The Current running miner. */
   protected Optional<M> currentRunningMiner = Optional.empty();
 
+  /**
+   * Instantiates a new Abstract mining coordinator.
+   *
+   * @param blockchain the blockchain
+   * @param executor the executor
+   * @param syncState the sync state
+   */
   protected AbstractMiningCoordinator(
       final Blockchain blockchain,
       final AbstractMinerExecutor<M> executor,
@@ -167,6 +186,11 @@ public abstract class AbstractMiningCoordinator<
     return wasHalted.get();
   }
 
+  /**
+   * Halt miner.
+   *
+   * @param miner the miner
+   */
   protected void haltMiner(final M miner) {
     miner.cancel();
   }
@@ -182,6 +206,11 @@ public abstract class AbstractMiningCoordinator<
     }
   }
 
+  /**
+   * In sync changed.
+   *
+   * @param inSync the in sync
+   */
   void inSyncChanged(final boolean inSync) {
     synchronized (this) {
       if (inSync && startMiningIfPossible()) {
@@ -193,6 +222,11 @@ public abstract class AbstractMiningCoordinator<
     }
   }
 
+  /**
+   * Add mined block observer.
+   *
+   * @param obs the obs
+   */
   public void addMinedBlockObserver(final MinedBlockObserver obs) {
     minedBlockObservers.subscribe(obs);
   }
@@ -222,6 +256,12 @@ public abstract class AbstractMiningCoordinator<
     return executor.getCoinbase();
   }
 
+  /**
+   * New chain head invalidates mining operation boolean.
+   *
+   * @param newChainHeadHeader the new chain head header
+   * @return the boolean
+   */
   protected abstract boolean newChainHeadInvalidatesMiningOperation(
       final BlockHeader newChainHeadHeader);
 

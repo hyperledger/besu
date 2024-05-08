@@ -14,9 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation;
 
+/** The interface Async block creator. */
 public interface AsyncBlockCreator extends BlockCreator {
 
+  /** Cancel. */
   void cancel();
 
+  /**
+   * Is cancelled boolean.
+   *
+   * @return the boolean
+   */
   boolean isCancelled();
 }

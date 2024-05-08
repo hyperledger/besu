@@ -32,6 +32,7 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Transaction selection results. */
 public class TransactionSelectionResults {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionSelectionResults.class);
 
@@ -50,6 +51,17 @@ public class TransactionSelectionResults {
   private long cumulativeGasUsed = 0;
   private long cumulativeBlobGasUsed = 0;
 
+  /** Default constructor */
+  public TransactionSelectionResults() {}
+
+  /**
+   * Update selected.
+   *
+   * @param transaction the transaction
+   * @param receipt the receipt
+   * @param gasUsed the gas used
+   * @param blobGasUsed the blob gas used
+   */
   void updateSelected(
       final Transaction transaction,
       final TransactionReceipt receipt,
@@ -72,35 +84,73 @@ public class TransactionSelectionResults {
         .log();
   }
 
+  /**
+   * Update not selected.
+   *
+   * @param transaction the transaction
+   * @param res the res
+   */
   public void updateNotSelected(
       final Transaction transaction, final TransactionSelectionResult res) {
     notSelectedTransactions.put(transaction, res);
   }
 
+  /**
+   * Gets selected transactions.
+   *
+   * @return the selected transactions
+   */
   public List<Transaction> getSelectedTransactions() {
     return selectedTransactions;
   }
 
+  /**
+   * Gets transactions by type.
+   *
+   * @param type the type
+   * @return the transactions by type
+   */
   public List<Transaction> getTransactionsByType(final TransactionType type) {
     return transactionsByType.getOrDefault(type, List.of());
   }
 
+  /**
+   * Gets receipts.
+   *
+   * @return the receipts
+   */
   public List<TransactionReceipt> getReceipts() {
     return receipts;
   }
 
+  /**
+   * Gets cumulative gas used.
+   *
+   * @return the cumulative gas used
+   */
   public long getCumulativeGasUsed() {
     return cumulativeGasUsed;
   }
 
+  /**
+   * Gets cumulative blob gas used.
+   *
+   * @return the cumulative blob gas used
+   */
   public long getCumulativeBlobGasUsed() {
     return cumulativeBlobGasUsed;
   }
 
+  /**
+   * Gets not selected transactions.
+   *
+   * @return the not selected transactions
+   */
   public Map<Transaction, TransactionSelectionResult> getNotSelectedTransactions() {
     return Map.copyOf(notSelectedTransactions);
   }
 
+  /** Log selection stats. */
   public void logSelectionStats() {
     if (LOG.isDebugEnabled()) {
       final var notSelectedTxs = getNotSelectedTransactions();
@@ -151,6 +201,11 @@ public class TransactionSelectionResults {
         cumulativeBlobGasUsed);
   }
 
+  /**
+   * To trace log string.
+   *
+   * @return the string
+   */
   public String toTraceLog() {
     return "cumulativeGasUsed="
         + cumulativeGasUsed

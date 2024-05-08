@@ -22,11 +22,19 @@ import java.util.function.ToLongFunction;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/** The type Default block scheduler. */
 public class DefaultBlockScheduler extends AbstractBlockScheduler {
 
   private final long acceptableClockDriftSeconds;
   private final ToLongFunction<BlockHeader> calcMinimumSecondsSinceParent;
 
+  /**
+   * Instantiates a new Default block scheduler.
+   *
+   * @param calcMinimumSecondsSinceParent the calc minimum seconds since parent
+   * @param acceptableClockDriftSeconds the acceptable clock drift seconds
+   * @param clock the clock
+   */
   public DefaultBlockScheduler(
       final long calcMinimumSecondsSinceParent,
       final long acceptableClockDriftSeconds,
@@ -34,6 +42,13 @@ public class DefaultBlockScheduler extends AbstractBlockScheduler {
     this((bh) -> calcMinimumSecondsSinceParent, acceptableClockDriftSeconds, clock);
   }
 
+  /**
+   * Instantiates a new Default block scheduler.
+   *
+   * @param calcMinimumSecondsSinceParent the calc minimum seconds since parent
+   * @param acceptableClockDriftSeconds the acceptable clock drift seconds
+   * @param clock the clock
+   */
   protected DefaultBlockScheduler(
       final ToLongFunction<BlockHeader> calcMinimumSecondsSinceParent,
       final long acceptableClockDriftSeconds,

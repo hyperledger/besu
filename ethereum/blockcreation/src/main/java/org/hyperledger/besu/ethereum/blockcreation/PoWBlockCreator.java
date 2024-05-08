@@ -34,10 +34,23 @@ import java.util.concurrent.ExecutionException;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Po w block creator. */
 public class PoWBlockCreator extends AbstractBlockCreator {
 
   private final PoWSolver nonceSolver;
 
+  /**
+   * Instantiates a new Po w block creator.
+   *
+   * @param miningParameters the mining parameters
+   * @param extraDataCalculator the extra data calculator
+   * @param transactionPool the transaction pool
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param nonceSolver the nonce solver
+   * @param parentHeader the parent header
+   * @param ethScheduler the eth scheduler
+   */
   public PoWBlockCreator(
       final MiningParameters miningParameters,
       final ExtraDataCalculator extraDataCalculator,
@@ -91,14 +104,30 @@ public class PoWBlockCreator extends AbstractBlockCreator {
         target, EthHash.hashHeader(sealableBlockHeader), sealableBlockHeader.getNumber());
   }
 
+  /**
+   * Gets work definition.
+   *
+   * @return the work definition
+   */
   public Optional<PoWSolverInputs> getWorkDefinition() {
     return nonceSolver.getWorkDefinition();
   }
 
+  /**
+   * Gets hashes per second.
+   *
+   * @return the hashes per second
+   */
   public Optional<Long> getHashesPerSecond() {
     return nonceSolver.hashesPerSecond();
   }
 
+  /**
+   * Submit work boolean.
+   *
+   * @param solution the solution
+   * @return the boolean
+   */
   public boolean submitWork(final PoWSolution solution) {
     return nonceSolver.submitSolution(solution);
   }

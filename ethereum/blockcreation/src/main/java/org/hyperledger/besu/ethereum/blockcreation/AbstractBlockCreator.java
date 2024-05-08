@@ -76,10 +76,18 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Abstract block creator. */
 public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
+  /** The interface Extra data calculator. */
   public interface ExtraDataCalculator {
 
+    /**
+     * Get bytes.
+     *
+     * @param parent the parent
+     * @return the bytes
+     */
     Bytes get(final BlockHeader parent);
   }
 
@@ -88,15 +96,39 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   private final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private final ExtraDataCalculator extraDataCalculator;
   private final TransactionPool transactionPool;
+
+  /** The Mining parameters. */
   protected final MiningParameters miningParameters;
+
+  /** The Protocol context. */
   protected final ProtocolContext protocolContext;
+
+  /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
+
+  /** The Block header functions. */
   protected final BlockHeaderFunctions blockHeaderFunctions;
+
+  /** The Parent header. */
   protected final BlockHeader parentHeader;
+
   private final Optional<Address> depositContractAddress;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
+  /**
+   * Instantiates a new Abstract block creator.
+   *
+   * @param miningParameters the mining parameters
+   * @param miningBeneficiaryCalculator the mining beneficiary calculator
+   * @param extraDataCalculator the extra data calculator
+   * @param transactionPool the transaction pool
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param parentHeader the parent header
+   * @param depositContractAddress the deposit contract address
+   * @param ethScheduler the eth scheduler
+   */
   protected AbstractBlockCreator(
       final MiningParameters miningParameters,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
@@ -167,6 +199,15 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     throw new UnsupportedOperationException("Only used by BFT block creators");
   }
 
+  /**
+   * Create block block creation result.
+   *
+   * @param maybeTransactions the maybe transactions
+   * @param maybeOmmers the maybe ommers
+   * @param maybeWithdrawals the maybe withdrawals
+   * @param timestamp the timestamp
+   * @return the block creation result
+   */
   public BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
@@ -182,6 +223,18 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         true);
   }
 
+  /**
+   * Create block block creation result.
+   *
+   * @param maybeTransactions the maybe transactions
+   * @param maybeOmmers the maybe ommers
+   * @param maybeWithdrawals the maybe withdrawals
+   * @param maybePrevRandao the maybe prev randao
+   * @param maybeParentBeaconBlockRoot the maybe parent beacon block root
+   * @param timestamp the timestamp
+   * @param rewardCoinbase the reward coinbase
+   * @return the block creation result
+   */
   protected BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
@@ -337,6 +390,12 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     }
   }
 
+  /**
+   * Find deposits from receipts list.
+   *
+   * @param transactionResults the transaction results
+   * @return the list
+   */
   @VisibleForTesting
   List<Deposit> findDepositsFromReceipts(final TransactionSelectionResults transactionResults) {
     return transactionResults.getReceipts().stream()
@@ -346,6 +405,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
         .toList();
   }
 
+  /** The type Gas usage. */
   record GasUsage(BlobGas excessBlobGas, BlobGas used) {}
 
   private GasUsage computeExcessBlobGas(
@@ -493,6 +553,18 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     }
   }
 
+  /**
+   * Reward beneficiary boolean.
+   *
+   * @param worldState the world state
+   * @param header the header
+   * @param ommers the ommers
+   * @param miningBeneficiary the mining beneficiary
+   * @param blockReward the block reward
+   * @param skipZeroBlockRewards the skip zero block rewards
+   * @param protocolSpec the protocol spec
+   * @return the boolean
+   */
   /* Copied from BlockProcessor (with modifications). */
   boolean rewardBeneficiary(
       final MutableWorldState worldState,
@@ -540,11 +612,24 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     return true;
   }
 
+  /**
+   * Create final block header block header.
+   *
+   * @param sealableBlockHeader the sealable block header
+   * @return the block header
+   */
   protected abstract BlockHeader createFinalBlockHeader(
       final SealableBlockHeader sealableBlockHeader);
 
+  /** The interface Mining beneficiary calculator. */
   @FunctionalInterface
   protected interface MiningBeneficiaryCalculator {
+    /**
+     * Gets mining beneficiary.
+     *
+     * @param blockNumber the block number
+     * @return the mining beneficiary
+     */
     Address getMiningBeneficiary(long blockNumber);
   }
 }

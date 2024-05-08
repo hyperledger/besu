@@ -25,8 +25,14 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
  * transactions.
  */
 public abstract class AbstractTransactionSelector {
+  /** The Context. */
   final BlockSelectionContext context;
 
+  /**
+   * Instantiates a new Abstract transaction selector.
+   *
+   * @param context the context
+   */
   public AbstractTransactionSelector(final BlockSelectionContext context) {
     this.context = context;
   }

@@ -23,6 +23,18 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
+/**
+ * Contextual information required for block selection.
+ *
+ * @param miningParameters the mining parameters
+ * @param gasCalculator the gas calculator
+ * @param gasLimitCalculator the gas limit calculator
+ * @param processableBlockHeader the processable block header
+ * @param feeMarket the fee market
+ * @param blobGasPrice the gas price to use for blob transactions
+ * @param miningBeneficiary the mining beneficiary
+ * @param transactionPool the transaction pool
+ */
 public record BlockSelectionContext(
     MiningParameters miningParameters,
     GasCalculator gasCalculator,

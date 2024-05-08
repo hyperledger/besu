@@ -22,12 +22,21 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import java.util.List;
 import java.util.Optional;
 
+/** The interface Block creator. */
 public interface BlockCreator {
+  /** The type Block creation result. */
   class BlockCreationResult {
     private final Block block;
     private final TransactionSelectionResults transactionSelectionResults;
     private final BlockCreationTiming blockCreationTiming;
 
+    /**
+     * Instantiates a new Block creation result.
+     *
+     * @param block the block
+     * @param transactionSelectionResults the transaction selection results
+     * @param timings the timings
+     */
     public BlockCreationResult(
         final Block block,
         final TransactionSelectionResults transactionSelectionResults,
@@ -37,26 +46,69 @@ public interface BlockCreator {
       this.blockCreationTiming = timings;
     }
 
+    /**
+     * Gets block.
+     *
+     * @return the block
+     */
     public Block getBlock() {
       return block;
     }
 
+    /**
+     * Gets transaction selection results.
+     *
+     * @return the transaction selection results
+     */
     public TransactionSelectionResults getTransactionSelectionResults() {
       return transactionSelectionResults;
     }
 
+    /**
+     * Gets block creation timings.
+     *
+     * @return the block creation timings
+     */
     public BlockCreationTiming getBlockCreationTimings() {
       return blockCreationTiming;
     }
   }
 
+  /**
+   * Create block block creation result.
+   *
+   * @param timestamp the timestamp
+   * @return the block creation result
+   */
   BlockCreationResult createBlock(final long timestamp);
 
+  /**
+   * Create empty withdrawals block block creation result.
+   *
+   * @param timestamp the timestamp
+   * @return the block creation result
+   */
   BlockCreationResult createEmptyWithdrawalsBlock(final long timestamp);
 
+  /**
+   * Create block block creation result.
+   *
+   * @param transactions the transactions
+   * @param ommers the ommers
+   * @param timestamp the timestamp
+   * @return the block creation result
+   */
   BlockCreationResult createBlock(
       final List<Transaction> transactions, final List<BlockHeader> ommers, final long timestamp);
 
+  /**
+   * Create block block creation result.
+   *
+   * @param maybeTransactions the maybe transactions
+   * @param maybeOmmers the maybe ommers
+   * @param timestamp the timestamp
+   * @return the block creation result
+   */
   BlockCreationResult createBlock(
       final Optional<List<Transaction>> maybeTransactions,
       final Optional<List<BlockHeader>> maybeOmmers,
