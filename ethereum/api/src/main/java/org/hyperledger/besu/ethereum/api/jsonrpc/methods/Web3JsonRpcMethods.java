@@ -27,7 +27,7 @@ public class Web3JsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final String clientVersion;
 
   /**
-   * Instantiates a new Web 3 json rpc methods.
+   * Instantiates a new Web3 json rpc methods.
    *
    * @param clientVersion the client version
    */

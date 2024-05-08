@@ -24,7 +24,7 @@ public class VmOperationExecutionReport {
   private Store store;
   private long used;
 
-  /** Instantiates a new Vm operation execution report. */
+  /** Instantiates a new VM operation execution report. */
   public VmOperationExecutionReport() {
     push = new ArrayList<>();
   }

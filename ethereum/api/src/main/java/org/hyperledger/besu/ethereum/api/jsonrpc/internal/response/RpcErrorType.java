@@ -157,7 +157,7 @@ public enum RpcErrorType implements RpcMethodError {
       -32011, "The node is not attempting to target a gas limit so the target can't be changed"),
 
   /** The Coinbase not specified. */
-  // Wallet errors
+  // coinbase errors
   COINBASE_NOT_SPECIFIED(-32000, "Coinbase must be explicitly specified"),
 
   /** The No account found. */
