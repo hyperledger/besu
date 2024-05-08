@@ -28,6 +28,8 @@ import java.math.BigInteger;
 
 /** Provides EVMs supporting the appropriate operations for ETC network upgrades. */
 public class ClassicEVMs {
+  /** Default constructor. */
+  private ClassicEVMs() {}
 
   /**
    * spiral evm.

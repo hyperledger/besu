@@ -34,7 +34,9 @@ import com.google.errorprone.annotations.CanIgnoreReturnValue;
  * increases the global mark, so a mark set in once collection is usable across all
  * UndoableCollection instances.
  *
- * @param <V> The type of the collection.
+ * @param <R> the type of the table row keys
+ * @param <C> the type of the table column keys
+ * @param <V> the type of the mapped values
  */
 public class UndoTable<R, C, V> implements Table<R, C, V>, Undoable {
 
