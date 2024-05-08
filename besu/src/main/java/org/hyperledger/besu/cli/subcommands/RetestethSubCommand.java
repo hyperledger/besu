@@ -89,6 +89,9 @@ public class RetestethSubCommand implements Runnable {
 
   private InetAddress autoDiscoveredDefaultIP;
 
+  /** Default Constructor. */
+  public RetestethSubCommand() {}
+
   // Used to discover the default IP of the client.
   // Loopback IP is used by default as this is how smokeTests require it to be
   // and it's probably a good security behaviour to default only on the localhost.

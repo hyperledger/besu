@@ -106,6 +106,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private ValidatorPeers peers;
   private TransactionValidatorProvider transactionValidatorProvider;
 
+  /** Default Constructor. */
+  public QbftBesuControllerBuilder() {}
+
   @Override
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
     return Suppliers.memoize(

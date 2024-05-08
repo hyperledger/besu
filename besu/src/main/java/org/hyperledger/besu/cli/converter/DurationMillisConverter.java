@@ -24,6 +24,9 @@ import picocli.CommandLine;
 public class DurationMillisConverter
     implements CommandLine.ITypeConverter<Duration>, TypeFormatter<Duration> {
 
+  /** Default constructor. */
+  public DurationMillisConverter() {}
+
   @Override
   public Duration convert(final String value) throws DurationConversionException {
     try {

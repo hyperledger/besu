@@ -103,6 +103,9 @@ public class P2PTLSConfigOptions {
           "Whether to send a SNI header in the TLS ClientHello message (default: ${DEFAULT-VALUE})")
   private final Boolean p2pTlsClientHelloSniHeaderEnabled = false;
 
+  /** Default constructor. */
+  P2PTLSConfigOptions() {}
+
   /**
    * Generate P2p tls configuration.
    *

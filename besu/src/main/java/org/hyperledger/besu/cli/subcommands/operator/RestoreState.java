@@ -83,6 +83,9 @@ public class RestoreState implements Runnable {
   private BesuController besuController;
   private ForestWorldStateKeyValueStorage.Updater updater;
 
+  /** Default Constructor. */
+  RestoreState() {}
+
   private Path accountFileName(final int fileNumber, final boolean compressed) {
     return StateBackupService.accountFileName(backupDir, targetBlock, fileNumber, compressed);
   }

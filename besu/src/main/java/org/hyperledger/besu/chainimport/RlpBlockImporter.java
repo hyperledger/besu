@@ -65,6 +65,9 @@ public class RlpBlockImporter implements Closeable {
   private final Stopwatch segmentTimer = Stopwatch.createUnstarted();
   private static final long SEGMENT_SIZE = 1000;
 
+  /** Default Constructor. */
+  public RlpBlockImporter() {}
+
   /**
    * Imports blocks that are stored as concatenated RLP sections in the given file into Besu's block
    * storage.

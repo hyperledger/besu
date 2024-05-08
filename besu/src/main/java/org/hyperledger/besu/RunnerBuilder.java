@@ -194,6 +194,9 @@ public class RunnerBuilder {
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
 
+  /** Instantiates a new Runner builder. */
+  public RunnerBuilder() {}
+
   /**
    * Add Vertx.
    *
