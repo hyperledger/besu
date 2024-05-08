@@ -63,7 +63,7 @@ public class DepositParameter {
   }
 
   /**
-   * From deposit deposit parameter.
+   * Deposit parameter from deposit.
    *
    * @param deposit the deposit
    * @return the deposit parameter
@@ -78,7 +78,7 @@ public class DepositParameter {
   }
 
   /**
-   * To deposit deposit.
+   * To deposit.
    *
    * @return the deposit
    */

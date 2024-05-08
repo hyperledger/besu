@@ -28,19 +28,19 @@ import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.fasterxml.jackson.annotation.JsonValue;
 import org.apache.tuweni.bytes.Bytes;
 
-/** The type Engine get payload bodies result v 1. */
+/** The type Engine get payload bodies result v1. */
 @JsonPropertyOrder({"payloadBodies"})
 public class EngineGetPayloadBodiesResultV1 {
 
   private final List<PayloadBody> payloadBodies;
 
-  /** Instantiates a new Engine get payload bodies result v 1. */
+  /** Instantiates a new Engine get payload bodies result v1. */
   public EngineGetPayloadBodiesResultV1() {
     this.payloadBodies = Collections.<PayloadBody>emptyList();
   }
 
   /**
-   * Instantiates a new Engine get payload bodies result v 1.
+   * Instantiates a new Engine get payload bodies result v1.
    *
    * @param payloadBody the payload body
    */
