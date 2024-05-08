@@ -1428,6 +1428,9 @@ public class MessageFrame {
 
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
+    /** Instantiates a new Builder. */
+    public Builder() {}
+
     /**
      * The "parent" message frame. When present some fields will be populated from the parent and
      * ignored if passed in via builder
