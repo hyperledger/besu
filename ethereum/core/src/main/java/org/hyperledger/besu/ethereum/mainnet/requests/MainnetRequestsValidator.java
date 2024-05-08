@@ -26,8 +26,9 @@ public class MainnetRequestsValidator {
         .build();
   }
 
-  public static RequestProcessor pragueRequestsProcessors(final Address depositContractAddress) {
-    return new RequestDelegateProcessor.Builder()
+  public static RequestProcessorCoordinator pragueRequestsProcessors(
+      final Address depositContractAddress) {
+    return new RequestProcessorCoordinator.Builder()
         .addProcessor(RequestType.WITHDRAWAL, new WithdrawalRequestProcessor())
         .addProcessor(RequestType.DEPOSIT, new DepositRequestProcessor(depositContractAddress))
         .build();

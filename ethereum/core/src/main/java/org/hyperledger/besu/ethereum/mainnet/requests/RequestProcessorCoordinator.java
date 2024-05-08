@@ -26,7 +26,7 @@ import java.util.Optional;
 import com.google.common.collect.ImmutableMap;
 
 /** Processes various types of requests based on their RequestType. */
-public class RequestDelegateProcessor implements RequestProcessor {
+public class RequestProcessorCoordinator {
   private final ImmutableMap<RequestType, RequestProcessor> processors;
 
   /**
@@ -34,11 +34,11 @@ public class RequestDelegateProcessor implements RequestProcessor {
    *
    * @param processors A map associating RequestType with their corresponding RequestProcessor.
    */
-  private RequestDelegateProcessor(final ImmutableMap<RequestType, RequestProcessor> processors) {
+  private RequestProcessorCoordinator(
+      final ImmutableMap<RequestType, RequestProcessor> processors) {
     this.processors = processors;
   }
 
-  @Override
   public Optional<List<Request>> process(
       final MutableWorldState mutableWorldState, final List<TransactionReceipt> receipts) {
     List<Request> requests = null;
@@ -58,14 +58,14 @@ public class RequestDelegateProcessor implements RequestProcessor {
     private final ImmutableMap.Builder<RequestType, RequestProcessor> requestProcessorBuilder =
         ImmutableMap.builder();
 
-    public RequestDelegateProcessor.Builder addProcessor(
+    public RequestProcessorCoordinator.Builder addProcessor(
         final RequestType type, final RequestProcessor processor) {
       this.requestProcessorBuilder.put(type, processor);
       return this;
     }
 
-    public RequestDelegateProcessor build() {
-      return new RequestDelegateProcessor(requestProcessorBuilder.build());
+    public RequestProcessorCoordinator build() {
+      return new RequestProcessorCoordinator(requestProcessorBuilder.build());
     }
   }
 }

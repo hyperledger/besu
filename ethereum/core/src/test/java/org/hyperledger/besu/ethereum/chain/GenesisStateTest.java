@@ -297,7 +297,7 @@ final class GenesisStateTest {
         GenesisState.fromJson(
             dataStorageConfiguration,
             Resources.toString(
-                GenesisStateTest.class.getResource("genesis_prague2.json"), Charsets.UTF_8),
+                GenesisStateTest.class.getResource("genesis_prague.json"), Charsets.UTF_8),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())

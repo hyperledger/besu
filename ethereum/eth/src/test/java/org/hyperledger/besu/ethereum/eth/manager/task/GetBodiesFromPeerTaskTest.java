@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.PeerMessageTaskTest;
@@ -83,7 +84,6 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
             emptyList(),
             emptyList(),
             Optional.of(List.of(withdrawal)),
-            Optional.empty(),
             Optional.empty());
 
     assertThat(
@@ -94,7 +94,7 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
 
   @Test
   public void assertBodyIdentifierUsesDepositsToGenerateBodyIdentifiers() {
-    final Deposit deposit =
+    final Request deposit =
         new Deposit(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
@@ -113,8 +113,7 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
             emptyList(),
             emptyList(),
             Optional.empty(),
-            Optional.of(List.of(deposit)),
-            Optional.empty());
+            Optional.of(List.of(deposit)));
 
     assertThat(
             new GetBodiesFromPeerTask.BodyIdentifier(emptyBodyBlock)
@@ -138,7 +137,6 @@ public class GetBodiesFromPeerTaskTest extends PeerMessageTaskTest<List<Block>> 
         new BlockBody(
             emptyList(),
             emptyList(),
-            Optional.empty(),
             Optional.empty(),
             Optional.of(List.of(withdrawalRequest)));
 

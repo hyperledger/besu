@@ -77,7 +77,7 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositsValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestDelegateProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
@@ -209,8 +209,8 @@ abstract class AbstractBlockCreatorTest {
                                 RequestType.DEPOSIT,
                                 new DepositsValidator((depositContractAddress)))
                             .build())
-                    .requestsProcessor(
-                        new RequestDelegateProcessor.Builder()
+                    .requestProcessorCoordinator(
+                        new RequestProcessorCoordinator.Builder()
                             .addProcessor(
                                 RequestType.DEPOSIT,
                                 new DepositRequestProcessor(depositContractAddress))

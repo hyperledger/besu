@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.evm.EVM;
@@ -78,7 +78,7 @@ public class ProtocolSpec {
   private final WithdrawalsValidator withdrawalsValidator;
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
   private final RequestsValidatorCoordinator requestsValidatorCoordinator;
-  private final Optional<RequestProcessor> requestProcessor;
+  private final Optional<RequestProcessorCoordinator> requestProcessorCoordinator;
 
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
@@ -110,7 +110,7 @@ public class ProtocolSpec {
    * @param powHasher the proof-of-work hasher
    * @param withdrawalsProcessor the Withdrawals processor to use
    * @param requestsValidatorCoordinator the request validator to use
-   * @param requestProcessor the request processor to use
+   * @param requestProcessorCoordinator the request processor to use
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
@@ -141,7 +141,7 @@ public class ProtocolSpec {
       final WithdrawalsValidator withdrawalsValidator,
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final RequestsValidatorCoordinator requestsValidatorCoordinator,
-      final Optional<RequestProcessor> requestProcessor,
+      final Optional<RequestProcessorCoordinator> requestProcessorCoordinator,
       final boolean isPoS,
       final boolean isReplayProtectionSupported) {
     this.name = name;
@@ -169,7 +169,7 @@ public class ProtocolSpec {
     this.withdrawalsValidator = withdrawalsValidator;
     this.withdrawalsProcessor = withdrawalsProcessor;
     this.requestsValidatorCoordinator = requestsValidatorCoordinator;
-    this.requestProcessor = requestProcessor;
+    this.requestProcessorCoordinator = requestProcessorCoordinator;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
   }
@@ -375,8 +375,8 @@ public class ProtocolSpec {
     return requestsValidatorCoordinator;
   }
 
-  public Optional<RequestProcessor> getRequestProcessor() {
-    return requestProcessor;
+  public Optional<RequestProcessorCoordinator> getRequestProcessorCoordinator() {
+    return requestProcessorCoordinator;
   }
 
   /**
