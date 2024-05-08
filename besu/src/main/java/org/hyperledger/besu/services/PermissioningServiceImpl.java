@@ -28,6 +28,9 @@ public class PermissioningServiceImpl implements PermissioningService {
   private final List<NodeConnectionPermissioningProvider> connectionPermissioningProviders =
       Lists.newArrayList();
 
+  /** Default Constructor. */
+  public PermissioningServiceImpl() {}
+
   @Override
   public void registerNodePermissioningProvider(
       final NodeConnectionPermissioningProvider provider) {

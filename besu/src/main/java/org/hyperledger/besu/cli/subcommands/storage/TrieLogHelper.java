@@ -59,6 +59,9 @@ public class TrieLogHelper {
   private static final int ROCKSDB_MAX_INSERTS_PER_TRANSACTION = 1000;
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogHelper.class);
 
+  /** Default Constructor. */
+  public TrieLogHelper() {}
+
   boolean prune(
       final DataStorageConfiguration config,
       final BonsaiWorldStateKeyValueStorage rootWorldStateStorage,

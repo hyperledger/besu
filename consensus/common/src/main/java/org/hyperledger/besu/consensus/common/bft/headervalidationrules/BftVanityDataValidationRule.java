@@ -29,6 +29,9 @@ public class BftVanityDataValidationRule implements AttachedBlockHeaderValidatio
 
   private static final Logger LOG = LoggerFactory.getLogger(BftVanityDataValidationRule.class);
 
+  /** Default constructor. */
+  public BftVanityDataValidationRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {

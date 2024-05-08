@@ -34,6 +34,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /** The Json util class. */
 public class JsonUtil {
+  /** Default constructor. */
+  private JsonUtil() {}
 
   /**
    * Converts all the object keys (but none of the string values) to lowercase for easier lookup.

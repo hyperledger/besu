@@ -247,6 +247,9 @@ public class MessageFrame {
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;
 
+  /** mutated by AUTH operation */
+  private Address authorizedBy = null;
+
   /**
    * Builder builder.
    *
@@ -1371,6 +1374,24 @@ public class MessageFrame {
     return txValues.versionedHashes();
   }
 
+  /**
+   * Accessor for address that authorized future AUTHCALLs.
+   *
+   * @return the revert reason
+   */
+  public Address getAuthorizedBy() {
+    return authorizedBy;
+  }
+
+  /**
+   * Mutator for address that authorizes future AUTHCALLs, set by AUTH opcode
+   *
+   * @param authorizedBy the address that authorizes future AUTHCALLs
+   */
+  public void setAuthorizedBy(final Address authorizedBy) {
+    this.authorizedBy = authorizedBy;
+  }
+
   /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
@@ -1406,6 +1427,9 @@ public class MessageFrame {
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
+
+    /** Instantiates a new Builder. */
+    public Builder() {}
 
     /**
      * The "parent" message frame. When present some fields will be populated from the parent and

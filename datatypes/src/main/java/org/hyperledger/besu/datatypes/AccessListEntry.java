@@ -22,7 +22,12 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/** An access list entry as defined in EIP-2930 */
+/**
+ * An access list entry as defined in EIP-2930
+ *
+ * @param address The Address
+ * @param storageKeys List of storage keys
+ */
 public record AccessListEntry(Address address, List<Bytes32> storageKeys) {
   /**
    * Create access list entry.

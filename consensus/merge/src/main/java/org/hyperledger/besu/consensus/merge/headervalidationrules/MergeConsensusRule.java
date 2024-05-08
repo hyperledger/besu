@@ -31,6 +31,9 @@ import org.slf4j.LoggerFactory;
 public abstract class MergeConsensusRule implements AttachedBlockHeaderValidationRule {
   private static final Logger LOG = LoggerFactory.getLogger(MergeConsensusRule.class);
 
+  /** Default Constructor. */
+  public MergeConsensusRule() {}
+
   /**
    * Should use post merge rules.
    *

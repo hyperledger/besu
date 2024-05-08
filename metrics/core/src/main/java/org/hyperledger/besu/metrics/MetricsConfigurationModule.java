@@ -24,6 +24,9 @@ import dagger.Provides;
 /** Dagger module for providing the {@link MetricsConfiguration} instance. */
 @Module
 public class MetricsConfigurationModule {
+  /** Default constructor */
+  public MetricsConfigurationModule() {}
+
   @Provides
   @Singleton
   MetricsConfiguration provideMetricsConfiguration() {

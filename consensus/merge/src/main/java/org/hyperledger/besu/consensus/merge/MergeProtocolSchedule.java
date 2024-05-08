@@ -39,6 +39,9 @@ public class MergeProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(1);
 
+  /** Default constructor. */
+  MergeProtocolSchedule() {}
+
   /**
    * Create protocol schedule.
    *

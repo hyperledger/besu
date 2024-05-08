@@ -17,6 +17,11 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
-/** Wrapper for payload plus extra info. */
+/**
+ * Wrapper for payload plus extra info.
+ *
+ * @param payloadIdentifier Payload identifier
+ * @param blockWithReceipts Block With Receipts
+ */
 public record PayloadWrapper(
     PayloadIdentifier payloadIdentifier, BlockWithReceipts blockWithReceipts) {}
