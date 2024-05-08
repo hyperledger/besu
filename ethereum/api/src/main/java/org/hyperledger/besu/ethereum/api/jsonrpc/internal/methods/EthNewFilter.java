@@ -23,10 +23,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
+/** The type Eth new filter. */
 public class EthNewFilter implements JsonRpcMethod {
 
   private final FilterManager filterManager;
 
+  /**
+   * Instantiates a new Eth new filter.
+   *
+   * @param filterManager the filter manager
+   */
   public EthNewFilter(final FilterManager filterManager) {
     this.filterManager = filterManager;
   }

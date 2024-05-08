@@ -26,10 +26,16 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 
 import java.util.List;
 
+/** The type Eth get filter logs. */
 public class EthGetFilterLogs implements JsonRpcMethod {
 
   private final FilterManager filterManager;
 
+  /**
+   * Instantiates a new Eth get filter logs.
+   *
+   * @param filterManager the filter manager
+   */
   public EthGetFilterLogs(final FilterManager filterManager) {
     this.filterManager = filterManager;
   }

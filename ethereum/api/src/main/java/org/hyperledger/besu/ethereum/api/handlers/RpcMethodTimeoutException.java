@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.handlers;
 
+/** The type Rpc method timeout exception. */
 public class RpcMethodTimeoutException extends RuntimeException {
+  /** Instantiates a new Rpc method timeout exception. */
   public RpcMethodTimeoutException() {
     super("Timeout expired");
   }

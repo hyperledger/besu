@@ -30,10 +30,17 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/** The type Debug trace block by number. */
 public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
 
   private final Supplier<BlockTracer> blockTracerSupplier;
 
+  /**
+   * Instantiates a new Debug trace block by number.
+   *
+   * @param blockTracerSupplier the block tracer supplier
+   * @param blockchain the blockchain
+   */
   public DebugTraceBlockByNumber(
       final Supplier<BlockTracer> blockTracerSupplier, final BlockchainQueries blockchain) {
     super(blockchain);

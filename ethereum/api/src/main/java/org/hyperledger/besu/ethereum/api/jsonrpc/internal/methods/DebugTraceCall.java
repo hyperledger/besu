@@ -36,9 +36,17 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Debug trace call. */
 public class DebugTraceCall extends AbstractTraceCall {
   private static final Logger LOG = LoggerFactory.getLogger(DebugTraceCall.class);
 
+  /**
+   * Instantiates a new Debug trace call.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionSimulator the transaction simulator
+   */
   public DebugTraceCall(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,

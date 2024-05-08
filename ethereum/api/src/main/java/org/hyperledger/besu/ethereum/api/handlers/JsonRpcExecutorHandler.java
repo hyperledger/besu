@@ -31,11 +31,21 @@ import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Json rpc executor handler. */
 public class JsonRpcExecutorHandler {
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcExecutorHandler.class);
 
   private JsonRpcExecutorHandler() {}
 
+  /**
+   * Handler handler.
+   *
+   * @param jsonObjectMapper the json object mapper
+   * @param jsonRpcExecutor the json rpc executor
+   * @param tracer the tracer
+   * @param jsonRpcConfiguration the json rpc configuration
+   * @return the handler
+   */
   public static Handler<RoutingContext> handler(
       final ObjectMapper jsonObjectMapper,
       final JsonRpcExecutor jsonRpcExecutor,
@@ -44,6 +54,14 @@ public class JsonRpcExecutorHandler {
     return handler(jsonRpcExecutor, tracer, jsonRpcConfiguration);
   }
 
+  /**
+   * Handler handler.
+   *
+   * @param jsonRpcExecutor the json rpc executor
+   * @param tracer the tracer
+   * @param jsonRpcConfiguration the json rpc configuration
+   * @return the handler
+   */
   public static Handler<RoutingContext> handler(
       final JsonRpcExecutor jsonRpcExecutor,
       final Tracer tracer,

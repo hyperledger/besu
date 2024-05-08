@@ -23,8 +23,19 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.Prohibit
 
 import java.util.Optional;
 
+/** The type Withdrawal request validator provider. */
 public class WithdrawalRequestValidatorProvider {
+  /** Default constructor. */
+  private WithdrawalRequestValidatorProvider() {}
 
+  /**
+   * Gets withdrawal request validator.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param blockTimestamp the block timestamp
+   * @param blockNumber the block number
+   * @return the withdrawal request validator
+   */
   static WithdrawalRequestValidator getWithdrawalRequestValidator(
       final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
 

@@ -22,8 +22,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.UncleBlockResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
+/** The type Eth get uncle by block number and index. */
 public class EthGetUncleByBlockNumberAndIndex extends AbstractBlockParameterMethod {
 
+  /**
+   * Instantiates a new Eth get uncle by block number and index.
+   *
+   * @param blockchain the blockchain
+   */
   public EthGetUncleByBlockNumberAndIndex(final BlockchainQueries blockchain) {
     super(blockchain);
   }

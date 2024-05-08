@@ -20,10 +20,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+/** The type Eth uninstall filter. */
 public class EthUninstallFilter implements JsonRpcMethod {
 
   private final FilterManager filterManager;
 
+  /**
+   * Instantiates a new Eth uninstall filter.
+   *
+   * @param filterManager the filter manager
+   */
   public EthUninstallFilter(final FilterManager filterManager) {
     this.filterManager = filterManager;
   }

@@ -29,10 +29,21 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
+/** The type Engine new payload v4. */
 public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
 
   private final Optional<ScheduledProtocolSpec.Hardfork> prague;
 
+  /**
+   * Instantiates a new Engine new payload v4.
+   *
+   * @param vertx the vertx
+   * @param timestampSchedule the timestamp schedule
+   * @param protocolContext the protocol context
+   * @param mergeCoordinator the merge coordinator
+   * @param ethPeers the eth peers
+   * @param engineCallListener the engine call listener
+   */
   public EngineNewPayloadV4(
       final Vertx vertx,
       final ProtocolSchedule timestampSchedule,

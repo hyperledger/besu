@@ -20,8 +20,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
+/** The type Eth get block transaction count by number. */
 public class EthGetBlockTransactionCountByNumber extends AbstractBlockParameterMethod {
 
+  /**
+   * Instantiates a new Eth get block transaction count by number.
+   *
+   * @param blockchain the blockchain
+   */
   public EthGetBlockTransactionCountByNumber(final BlockchainQueries blockchain) {
     super(blockchain);
   }

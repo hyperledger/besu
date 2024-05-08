@@ -39,9 +39,18 @@ import java.util.Optional;
 import graphql.VisibleForTesting;
 import io.vertx.core.Vertx;
 
+/** The type Engine prepare payload debug. */
 public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
   private final MergeMiningCoordinator mergeCoordinator;
 
+  /**
+   * Instantiates a new Engine prepare payload debug.
+   *
+   * @param vertx the vertx
+   * @param protocolContext the protocol context
+   * @param engineCallListener the engine call listener
+   * @param mergeCoordinator the merge coordinator
+   */
   public EnginePreparePayloadDebug(
       final Vertx vertx,
       final ProtocolContext protocolContext,
@@ -84,6 +93,12 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
         .orElseGet(() -> new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
   }
 
+  /**
+   * Generate payload optional.
+   *
+   * @param param the param
+   * @return the optional
+   */
   @VisibleForTesting
   Optional<PayloadIdentifier> generatePayload(final EnginePreparePayloadParameter param) {
     final List<Withdrawal> withdrawals =

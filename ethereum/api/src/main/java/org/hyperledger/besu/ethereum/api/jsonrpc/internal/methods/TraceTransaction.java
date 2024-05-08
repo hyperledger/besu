@@ -28,9 +28,17 @@ import java.util.function.Supplier;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Trace transaction. */
 public class TraceTransaction extends AbstractTraceByHash implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceTransaction.class);
 
+  /**
+   * Instantiates a new Trace transaction.
+   *
+   * @param blockTracerSupplier the block tracer supplier
+   * @param protocolSchedule the protocol schedule
+   * @param blockchainQueries the blockchain queries
+   */
   public TraceTransaction(
       final Supplier<BlockTracer> blockTracerSupplier,
       final ProtocolSchedule protocolSchedule,

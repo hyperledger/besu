@@ -27,9 +27,15 @@ import java.util.Optional;
 
 import graphql.schema.DataFetchingEnvironment;
 
+/** The type Normal block adapter. */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class NormalBlockAdapter extends BlockAdapterBase {
 
+  /**
+   * Instantiates a new Normal block adapter.
+   *
+   * @param blockWithMetaData the block with meta data
+   */
   public NormalBlockAdapter(
       final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetaData) {
     super(blockWithMetaData.getHeader());
@@ -38,18 +44,39 @@ public class NormalBlockAdapter extends BlockAdapterBase {
 
   private final BlockWithMetadata<TransactionWithMetadata, Hash> blockWithMetaData;
 
+  /**
+   * Gets transaction count.
+   *
+   * @return the transaction count
+   */
   public Optional<Integer> getTransactionCount() {
     return Optional.of(blockWithMetaData.getTransactions().size());
   }
 
+  /**
+   * Gets total difficulty.
+   *
+   * @return the total difficulty
+   */
   public Difficulty getTotalDifficulty() {
     return blockWithMetaData.getTotalDifficulty();
   }
 
+  /**
+   * Gets ommer count.
+   *
+   * @return the ommer count
+   */
   public Optional<Integer> getOmmerCount() {
     return Optional.of(blockWithMetaData.getOmmers().size());
   }
 
+  /**
+   * Gets ommers.
+   *
+   * @param environment the environment
+   * @return the ommers
+   */
   public List<UncleBlockAdapter> getOmmers(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final List<Hash> ommers = blockWithMetaData.getOmmers();
@@ -63,6 +90,12 @@ public class NormalBlockAdapter extends BlockAdapterBase {
     return results;
   }
 
+  /**
+   * Gets ommer at.
+   *
+   * @param environment the environment
+   * @return the ommer at
+   */
   public Optional<UncleBlockAdapter> getOmmerAt(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final int index = ((Number) environment.getArgument("index")).intValue();
@@ -75,6 +108,11 @@ public class NormalBlockAdapter extends BlockAdapterBase {
     return Optional.empty();
   }
 
+  /**
+   * Gets transactions.
+   *
+   * @return the transactions
+   */
   public List<TransactionAdapter> getTransactions() {
     final List<TransactionWithMetadata> trans = blockWithMetaData.getTransactions();
     final List<TransactionAdapter> results = new ArrayList<>();
@@ -84,6 +122,12 @@ public class NormalBlockAdapter extends BlockAdapterBase {
     return results;
   }
 
+  /**
+   * Gets transaction at.
+   *
+   * @param environment the environment
+   * @return the transaction at
+   */
   public Optional<TransactionAdapter> getTransactionAt(final DataFetchingEnvironment environment) {
     final int index = ((Number) environment.getArgument("index")).intValue();
     final List<TransactionWithMetadata> trans = blockWithMetaData.getTransactions();

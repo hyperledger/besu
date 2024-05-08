@@ -17,26 +17,53 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.plugin.data.Withdrawal;
 
+/** The type Withdrawal adapter. */
 public class WithdrawalAdapter {
 
+  /** The Withdrawal. */
   Withdrawal withdrawal;
 
+  /**
+   * Instantiates a new Withdrawal adapter.
+   *
+   * @param withdrawal the withdrawal
+   */
   public WithdrawalAdapter(final Withdrawal withdrawal) {
     this.withdrawal = withdrawal;
   }
 
+  /**
+   * Gets index.
+   *
+   * @return the index
+   */
   public Long getIndex() {
     return withdrawal.getIndex().toLong();
   }
 
+  /**
+   * Gets validator.
+   *
+   * @return the validator
+   */
   public Long getValidator() {
     return withdrawal.getValidatorIndex().toLong();
   }
 
+  /**
+   * Gets address.
+   *
+   * @return the address
+   */
   public Address getAddress() {
     return withdrawal.getAddress();
   }
 
+  /**
+   * Gets amount.
+   *
+   * @return the amount
+   */
   public Long getAmount() {
     return withdrawal.getAmount().getAsBigInteger().longValue();
   }

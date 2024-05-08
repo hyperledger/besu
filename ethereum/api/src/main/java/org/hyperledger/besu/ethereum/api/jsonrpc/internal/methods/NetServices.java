@@ -26,6 +26,7 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import com.google.common.collect.ImmutableMap;
 
+/** The type Net services. */
 public class NetServices implements JsonRpcMethod {
 
   private final JsonRpcConfiguration jsonRpcConfiguration;
@@ -33,6 +34,14 @@ public class NetServices implements JsonRpcMethod {
   private final P2PNetwork p2pNetwork;
   private final MetricsConfiguration metricsConfiguration;
 
+  /**
+   * Instantiates a new Net services.
+   *
+   * @param jsonRpcConfiguration the json rpc configuration
+   * @param webSocketConfiguration the web socket configuration
+   * @param p2pNetwork the p 2 p network
+   * @param metricsConfiguration the metrics configuration
+   */
   public NetServices(
       final JsonRpcConfiguration jsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,

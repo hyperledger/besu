@@ -22,8 +22,19 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 
 import java.util.Optional;
 
+/** The type Withdrawals validator provider. */
 public class WithdrawalsValidatorProvider {
+  /** Default constructor. */
+  private WithdrawalsValidatorProvider() {}
 
+  /**
+   * Gets withdrawals validator.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param blockTimestamp the block timestamp
+   * @param blockNumber the block number
+   * @return the withdrawals validator
+   */
   static WithdrawalsValidator getWithdrawalsValidator(
       final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
 
@@ -35,6 +46,14 @@ public class WithdrawalsValidatorProvider {
     return getWithdrawalsValidator(protocolSchedule.getByBlockHeader(blockHeader));
   }
 
+  /**
+   * Gets withdrawals validator.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param parentBlockHeader the parent block header
+   * @param timestampForNextBlock the timestamp for next block
+   * @return the withdrawals validator
+   */
   static WithdrawalsValidator getWithdrawalsValidator(
       final ProtocolSchedule protocolSchedule,
       final BlockHeader parentBlockHeader,

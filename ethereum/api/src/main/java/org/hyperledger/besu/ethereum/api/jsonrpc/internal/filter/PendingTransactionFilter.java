@@ -24,18 +24,34 @@ class PendingTransactionFilter extends Filter {
 
   private final List<Hash> transactionHashes = new ArrayList<>();
 
+  /**
+   * Instantiates a new Pending transaction filter.
+   *
+   * @param id the id
+   */
   PendingTransactionFilter(final String id) {
     super(id);
   }
 
+  /**
+   * Add transaction hash.
+   *
+   * @param hash the hash
+   */
   void addTransactionHash(final Hash hash) {
     transactionHashes.add(hash);
   }
 
+  /**
+   * Transaction hashes list.
+   *
+   * @return the list
+   */
   List<Hash> transactionHashes() {
     return transactionHashes;
   }
 
+  /** Clear transaction hashes. */
   void clearTransactionHashes() {
     transactionHashes.clear();
   }

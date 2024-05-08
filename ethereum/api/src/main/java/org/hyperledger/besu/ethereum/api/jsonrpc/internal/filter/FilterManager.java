@@ -49,6 +49,15 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
   private final Optional<PrivacyQueries> privacyQueries;
   private final List<PrivateTransactionEvent> removalEvents;
 
+  /**
+   * Instantiates a new Filter manager.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param transactionPool the transaction pool
+   * @param privacyQueries the privacy queries
+   * @param filterIdGenerator the filter id generator
+   * @param filterRepository the filter repository
+   */
   FilterManager(
       final BlockchainQueries blockchainQueries,
       final TransactionPool transactionPool,
@@ -158,6 +167,11 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
     }
   }
 
+  /**
+   * Record block event.
+   *
+   * @param event the event
+   */
   public void recordBlockEvent(final BlockAddedEvent event) {
     final Hash blockHash = event.getBlock().getHash();
     final Collection<BlockFilter> blockFilters =
@@ -208,6 +222,11 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
     removalEvents.add(event);
   }
 
+  /**
+   * Record pending transaction event.
+   *
+   * @param transaction the transaction
+   */
   @VisibleForTesting
   void recordPendingTransactionEvent(final Transaction transaction) {
     final Collection<PendingTransactionFilter> pendingTransactionFilters =
@@ -224,6 +243,11 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
         });
   }
 
+  /**
+   * Process removal event.
+   *
+   * @param event the event
+   */
   @VisibleForTesting
   void processRemovalEvent(final PrivateTransactionEvent event) {
     // when user removed from privacy group, remove all filters created by that user in that group
@@ -281,6 +305,12 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
     return hashes;
   }
 
+  /**
+   * Logs changes list.
+   *
+   * @param filterId the filter id
+   * @return the list
+   */
   public List<LogWithMetadata> logsChanges(final String filterId) {
     final LogFilter filter = filterRepository.getFilter(filterId, LogFilter.class).orElse(null);
     if (filter == null) {
@@ -296,6 +326,12 @@ public class FilterManager extends AbstractVerticle implements PrivateTransactio
     return logs;
   }
 
+  /**
+   * Logs list.
+   *
+   * @param filterId the filter id
+   * @return the list
+   */
   public List<LogWithMetadata> logs(final String filterId) {
     final LogFilter filter = filterRepository.getFilter(filterId, LogFilter.class).orElse(null);
     if (filter == null) {

@@ -52,11 +52,18 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Trace replay block transactions. */
 public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceReplayBlockTransactions.class);
   private final ProtocolSchedule protocolSchedule;
   private static final ObjectMapper MAPPER = new ObjectMapper();
 
+  /**
+   * Instantiates a new Trace replay block transactions.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param queries the queries
+   */
   public TraceReplayBlockTransactions(
       final ProtocolSchedule protocolSchedule, final BlockchainQueries queries) {
     super(queries);

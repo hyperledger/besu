@@ -35,12 +35,18 @@ import com.google.common.io.BaseEncoding;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Eth get work. */
 public class EthGetWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;
   private static final Logger LOG = LoggerFactory.getLogger(EthGetWork.class);
   private final EpochCalculator epochCalculator;
 
+  /**
+   * Instantiates a new Eth get work.
+   *
+   * @param miner the miner
+   */
   public EthGetWork(final MiningCoordinator miner) {
     this.miner = miner;
     if (miner instanceof PoWMiningCoordinator) {
@@ -70,6 +76,12 @@ public class EthGetWork implements JsonRpcMethod {
     }
   }
 
+  /**
+   * Raw response list.
+   *
+   * @param rawResult the raw result
+   * @return the list
+   */
   public List<String> rawResponse(final PoWSolverInputs rawResult) {
     final byte[] dagSeed =
         DirectAcyclicGraphSeed.dagSeed(rawResult.getBlockNumber(), epochCalculator);

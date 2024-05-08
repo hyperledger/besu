@@ -24,8 +24,14 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 
 import java.util.Optional;
 
+/** The type Eth get transaction by block number and index. */
 public class EthGetTransactionByBlockNumberAndIndex extends AbstractBlockParameterMethod {
 
+  /**
+   * Instantiates a new Eth get transaction by block number and index.
+   *
+   * @param blockchain the blockchain
+   */
   public EthGetTransactionByBlockNumberAndIndex(final BlockchainQueries blockchain) {
     super(blockchain);
   }

@@ -31,6 +31,11 @@ import java.util.Optional;
 public class NetVersion implements JsonRpcMethod {
   private final String networkId;
 
+  /**
+   * Instantiates a new Net version.
+   *
+   * @param netId the net id
+   */
   public NetVersion(final Optional<BigInteger> netId) {
     this.networkId = String.valueOf(netId.orElse(null));
   }

@@ -20,10 +20,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 
+/** The type Net listening. */
 public class NetListening implements JsonRpcMethod {
 
   private final P2PNetwork p2pNetwork;
 
+  /**
+   * Instantiates a new Net listening.
+   *
+   * @param p2pNetwork the p 2 p network
+   */
   public NetListening(final P2PNetwork p2pNetwork) {
     this.p2pNetwork = p2pNetwork;
   }

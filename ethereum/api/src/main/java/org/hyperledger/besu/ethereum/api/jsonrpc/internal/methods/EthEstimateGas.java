@@ -35,10 +35,17 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Eth estimate gas. */
 public class EthEstimateGas extends AbstractEstimateGas {
 
   private static final Logger LOG = LoggerFactory.getLogger(EthEstimateGas.class);
 
+  /**
+   * Instantiates a new Eth estimate gas.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param transactionSimulator the transaction simulator
+   */
   public EthEstimateGas(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
     super(blockchainQueries, transactionSimulator);

@@ -29,8 +29,18 @@ import io.opentelemetry.api.trace.Tracer;
 import io.vertx.core.Handler;
 import io.vertx.ext.web.RoutingContext;
 
+/** The type Handler factory. */
 public class HandlerFactory {
+  /** Default constructor. */
+  private HandlerFactory() {}
 
+  /**
+   * Timeout handler.
+   *
+   * @param globalOptions the global options
+   * @param methods the methods
+   * @return the handler
+   */
   public static Handler<RoutingContext> timeout(
       final TimeoutOptions globalOptions, final Map<String, JsonRpcMethod> methods) {
     assert methods != null && globalOptions != null;
@@ -40,15 +50,35 @@ public class HandlerFactory {
             .collect(Collectors.toMap(Function.identity(), ignored -> globalOptions)));
   }
 
+  /**
+   * Authentication handler.
+   *
+   * @param authenticationService the authentication service
+   * @param noAuthRpcApis the no auth rpc apis
+   * @return the handler
+   */
   public static Handler<RoutingContext> authentication(
       final AuthenticationService authenticationService, final Collection<String> noAuthRpcApis) {
     return AuthenticationHandler.handler(authenticationService, noAuthRpcApis);
   }
 
+  /**
+   * Json rpc parser handler.
+   *
+   * @return the handler
+   */
   public static Handler<RoutingContext> jsonRpcParser() {
     return JsonRpcParserHandler.handler();
   }
 
+  /**
+   * Json rpc executor handler.
+   *
+   * @param jsonRpcExecutor the json rpc executor
+   * @param tracer the tracer
+   * @param jsonRpcConfiguration the json rpc configuration
+   * @return the handler
+   */
   public static Handler<RoutingContext> jsonRpcExecutor(
       final JsonRpcExecutor jsonRpcExecutor,
       final Tracer tracer,

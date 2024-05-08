@@ -39,21 +39,35 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Engine auth service. */
 public class EngineAuthService implements AuthenticationService {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineAuthService.class);
   private static final int JWT_EXPIRATION_TIME_IN_SECONDS = 60;
 
+  /** The constant EPHEMERAL_JWT_FILE. */
   public static final String EPHEMERAL_JWT_FILE = "jwt.hex";
 
   private final JWTAuth jwtAuthProvider;
 
+  /**
+   * Instantiates a new Engine auth service.
+   *
+   * @param vertx the vertx
+   * @param signingKey the signing key
+   * @param datadir the datadir
+   */
   public EngineAuthService(final Vertx vertx, final Optional<File> signingKey, final Path datadir) {
     final JWTAuthOptions jwtAuthOptions =
         engineApiJWTOptions(JwtAlgorithm.HS256, signingKey, datadir);
     this.jwtAuthProvider = JWTAuth.create(vertx, jwtAuthOptions);
   }
 
+  /**
+   * Create token string.
+   *
+   * @return the string
+   */
   public String createToken() {
     JsonObject claims = new JsonObject();
     claims.put("iat", System.currentTimeMillis() / 1000);

@@ -23,8 +23,18 @@ import io.vertx.core.Handler;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
+/** The type Timeout handler. */
 public class TimeoutHandler {
+  /** Default constructor. */
+  private TimeoutHandler() {}
 
+  /**
+   * Handler handler.
+   *
+   * @param globalOptions the global options
+   * @param timeoutOptionsByMethod the timeout options by method
+   * @return the handler
+   */
   public static Handler<RoutingContext> handler(
       final Optional<TimeoutOptions> globalOptions,
       final Map<String, TimeoutOptions> timeoutOptionsByMethod) {

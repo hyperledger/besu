@@ -24,9 +24,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.exceptions.P2PDisabledException;
 
+/** The type Net peer count. */
 public class NetPeerCount implements JsonRpcMethod {
   private final P2PNetwork p2pNetwork;
 
+  /**
+   * Instantiates a new Net peer count.
+   *
+   * @param p2pNetwork the p 2 p network
+   */
   public NetPeerCount(final P2PNetwork p2pNetwork) {
     this.p2pNetwork = p2pNetwork;
   }

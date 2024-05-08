@@ -22,9 +22,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 
+/** The type Miner get min gas price. */
 public class MinerGetMinGasPrice implements JsonRpcMethod {
   private final MiningParameters miningParameters;
 
+  /**
+   * Instantiates a new Miner get min gas price.
+   *
+   * @param miningParameters the mining parameters
+   */
   public MinerGetMinGasPrice(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
   }

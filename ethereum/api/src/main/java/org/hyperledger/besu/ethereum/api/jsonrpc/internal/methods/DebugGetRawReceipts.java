@@ -26,8 +26,14 @@ import java.util.List;
 
 import com.google.common.base.Suppliers;
 
+/** The type Debug get raw receipts. */
 public class DebugGetRawReceipts extends AbstractBlockParameterOrBlockHashMethod {
 
+  /**
+   * Instantiates a new Debug get raw receipts.
+   *
+   * @param blockchain the blockchain
+   */
   public DebugGetRawReceipts(final BlockchainQueries blockchain) {
     super(Suppliers.ofInstance(blockchain));
   }

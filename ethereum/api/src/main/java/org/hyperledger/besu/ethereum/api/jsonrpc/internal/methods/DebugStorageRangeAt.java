@@ -40,17 +40,31 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Debug storage range at. */
 public class DebugStorageRangeAt implements JsonRpcMethod {
 
   private final Supplier<BlockchainQueries> blockchainQueries;
   private final Supplier<BlockReplay> blockReplay;
   private final boolean shortValues;
 
+  /**
+   * Instantiates a new Debug storage range at.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param blockReplay the block replay
+   */
   public DebugStorageRangeAt(
       final BlockchainQueries blockchainQueries, final BlockReplay blockReplay) {
     this(Suppliers.ofInstance(blockchainQueries), Suppliers.ofInstance(blockReplay), false);
   }
 
+  /**
+   * Instantiates a new Debug storage range at.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param blockReplay the block replay
+   * @param shortValues the short values
+   */
   public DebugStorageRangeAt(
       final Supplier<BlockchainQueries> blockchainQueries,
       final Supplier<BlockReplay> blockReplay,

@@ -45,14 +45,28 @@ import org.slf4j.LoggerFactory;
 /** Provides authentication handlers for use in the http and websocket services */
 public class DefaultAuthenticationService implements AuthenticationService {
 
+  /** The constant USERNAME. */
   public static final String USERNAME = "username";
+
+  /** The constant PASSWORD. */
   public static final String PASSWORD = "password";
+
   private final JWTAuth jwtAuthProvider;
+
+  /** The Jwt auth options. */
   @VisibleForTesting public final JWTAuthOptions jwtAuthOptions;
+
   private final Optional<AuthenticationProvider> credentialAuthProvider;
   private static final JWTAuthOptionsFactory jwtAuthOptionsFactory = new JWTAuthOptionsFactory();
   private static final Logger LOG = LoggerFactory.getLogger(DefaultAuthenticationService.class);
 
+  /**
+   * Instantiates a new Default authentication service.
+   *
+   * @param jwtAuthProvider the jwt auth provider
+   * @param jwtAuthOptions the jwt auth options
+   * @param credentialAuthProvider the credential auth provider
+   */
   public DefaultAuthenticationService(
       final JWTAuth jwtAuthProvider,
       final JWTAuthOptions jwtAuthOptions,

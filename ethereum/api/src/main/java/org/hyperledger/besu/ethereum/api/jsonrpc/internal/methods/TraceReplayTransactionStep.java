@@ -31,6 +31,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Function;
 
+/** The type Trace replay transaction step. */
 public class TraceReplayTransactionStep
     implements Function<TransactionTrace, CompletableFuture<TraceReplayResult>> {
 
@@ -38,6 +39,13 @@ public class TraceReplayTransactionStep
   private final Block block;
   private final Set<TraceType> traceTypes;
 
+  /**
+   * Instantiates a new Trace replay transaction step.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param block the block
+   * @param traceTypes the trace types
+   */
   public TraceReplayTransactionStep(
       final ProtocolSchedule protocolSchedule, final Block block, final Set<TraceType> traceTypes) {
     this.protocolSchedule = protocolSchedule;

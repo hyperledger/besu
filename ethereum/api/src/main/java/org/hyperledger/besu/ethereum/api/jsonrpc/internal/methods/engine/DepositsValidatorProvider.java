@@ -22,8 +22,18 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
 import java.util.Optional;
 
+/** The type Deposits validator provider. */
 public class DepositsValidatorProvider {
+  private DepositsValidatorProvider() {}
 
+  /**
+   * Gets deposits validator.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param blockTimestamp the block timestamp
+   * @param blockNumber the block number
+   * @return the deposits validator
+   */
   static DepositsValidator getDepositsValidator(
       final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
 

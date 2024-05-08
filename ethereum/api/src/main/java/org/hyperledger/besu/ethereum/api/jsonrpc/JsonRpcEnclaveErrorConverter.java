@@ -20,8 +20,17 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** The type Json rpc enclave error converter. */
 public class JsonRpcEnclaveErrorConverter {
+  /** Default constructor. */
+  private JsonRpcEnclaveErrorConverter() {}
 
+  /**
+   * Convert enclave invalid reason rpc error type.
+   *
+   * @param reason the reason
+   * @return the rpc error type
+   */
   public static RpcErrorType convertEnclaveInvalidReason(final String reason) {
 
     final List<RpcErrorType> err =

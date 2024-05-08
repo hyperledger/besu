@@ -23,11 +23,18 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import io.opentelemetry.api.trace.Span;
 
+/** The type Timed json rpc processor. */
 public class TimedJsonRpcProcessor implements JsonRpcProcessor {
 
   private final JsonRpcProcessor rpcProcessor;
   private final LabelledMetric<OperationTimer> requestTimer;
 
+  /**
+   * Instantiates a new Timed json rpc processor.
+   *
+   * @param rpcProcessor the rpc processor
+   * @param requestTimer the request timer
+   */
   public TimedJsonRpcProcessor(
       final JsonRpcProcessor rpcProcessor, final LabelledMetric<OperationTimer> requestTimer) {
     this.rpcProcessor = rpcProcessor;

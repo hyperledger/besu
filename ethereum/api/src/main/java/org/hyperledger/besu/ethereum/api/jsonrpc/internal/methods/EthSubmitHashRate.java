@@ -22,10 +22,16 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Eth submit hash rate. */
 public class EthSubmitHashRate implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
 
+  /**
+   * Instantiates a new Eth submit hash rate.
+   *
+   * @param miningCoordinator the mining coordinator
+   */
   public EthSubmitHashRate(final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }

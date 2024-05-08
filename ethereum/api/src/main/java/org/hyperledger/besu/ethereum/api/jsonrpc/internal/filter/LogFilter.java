@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import java.util.ArrayList;
 import java.util.List;
 
+/** The type Log filter. */
 class LogFilter extends Filter {
 
   private final BlockParameter fromBlock;
@@ -29,6 +30,14 @@ class LogFilter extends Filter {
 
   private final List<LogWithMetadata> logs = new ArrayList<>();
 
+  /**
+   * Instantiates a new Log filter.
+   *
+   * @param id the id
+   * @param fromBlock the from block
+   * @param toBlock the to block
+   * @param logsQuery the logs query
+   */
   LogFilter(
       final String id,
       final BlockParameter fromBlock,
@@ -40,26 +49,52 @@ class LogFilter extends Filter {
     this.logsQuery = logsQuery;
   }
 
+  /**
+   * Gets from block.
+   *
+   * @return the from block
+   */
   public BlockParameter getFromBlock() {
     return fromBlock;
   }
 
+  /**
+   * Gets to block.
+   *
+   * @return the to block
+   */
   public BlockParameter getToBlock() {
     return toBlock;
   }
 
+  /**
+   * Gets logs query.
+   *
+   * @return the logs query
+   */
   public LogsQuery getLogsQuery() {
     return logsQuery;
   }
 
+  /**
+   * Add logs.
+   *
+   * @param logs the logs
+   */
   void addLogs(final List<LogWithMetadata> logs) {
     this.logs.addAll(logs);
   }
 
+  /**
+   * Logs list.
+   *
+   * @return the list
+   */
   List<LogWithMetadata> logs() {
     return logs;
   }
 
+  /** Clear logs. */
   void clearLogs() {
     logs.clear();
   }

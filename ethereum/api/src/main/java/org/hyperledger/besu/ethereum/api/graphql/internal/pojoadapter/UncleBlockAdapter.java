@@ -22,37 +22,78 @@ import java.util.Optional;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Uncle block adapter. */
 @SuppressWarnings("unused") // reflected by GraphQL
 class UncleBlockAdapter extends BlockAdapterBase {
 
+  /**
+   * Instantiates a new Uncle block adapter.
+   *
+   * @param uncleHeader the uncle header
+   */
   UncleBlockAdapter(final BlockHeader uncleHeader) {
     super(uncleHeader);
   }
 
+  /**
+   * Gets transaction count.
+   *
+   * @return the transaction count
+   */
   public Optional<Integer> getTransactionCount() {
     return Optional.of(0);
   }
 
+  /**
+   * Gets total difficulty.
+   *
+   * @return the total difficulty
+   */
   public UInt256 getTotalDifficulty() {
     return UInt256.ZERO;
   }
 
+  /**
+   * Gets ommer count.
+   *
+   * @return the ommer count
+   */
   public Optional<Integer> getOmmerCount() {
     return Optional.empty();
   }
 
+  /**
+   * Gets ommers.
+   *
+   * @return the ommers
+   */
   public List<NormalBlockAdapter> getOmmers() {
     return new ArrayList<>();
   }
 
+  /**
+   * Gets ommer at.
+   *
+   * @return the ommer at
+   */
   public Optional<NormalBlockAdapter> getOmmerAt() {
     return Optional.empty();
   }
 
+  /**
+   * Gets transactions.
+   *
+   * @return the transactions
+   */
   public List<TransactionAdapter> getTransactions() {
     return new ArrayList<>();
   }
 
+  /**
+   * Gets transaction at.
+   *
+   * @return the transaction at
+   */
   public Optional<TransactionAdapter> getTransactionAt() {
     return Optional.empty();
   }

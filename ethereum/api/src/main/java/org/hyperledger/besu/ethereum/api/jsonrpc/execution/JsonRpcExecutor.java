@@ -42,6 +42,7 @@ import io.vertx.ext.auth.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Json rpc executor. */
 public class JsonRpcExecutor {
 
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcExecutor.class);
@@ -49,12 +50,29 @@ public class JsonRpcExecutor {
   private final JsonRpcProcessor rpcProcessor;
   private final Map<String, JsonRpcMethod> rpcMethods;
 
+  /**
+   * Instantiates a new Json rpc executor.
+   *
+   * @param rpcProcessor the rpc processor
+   * @param rpcMethods the rpc methods
+   */
   public JsonRpcExecutor(
       final JsonRpcProcessor rpcProcessor, final Map<String, JsonRpcMethod> rpcMethods) {
     this.rpcProcessor = rpcProcessor;
     this.rpcMethods = rpcMethods;
   }
 
+  /**
+   * Execute json rpc response.
+   *
+   * @param optionalUser the optional user
+   * @param tracer the tracer
+   * @param spanContext the span context
+   * @param alive the alive
+   * @param jsonRpcRequest the json rpc request
+   * @param requestBodyProvider the request body provider
+   * @return the json rpc response
+   */
   public JsonRpcResponse execute(
       final Optional<User> optionalUser,
       final Tracer tracer,

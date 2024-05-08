@@ -17,11 +17,22 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 
+/** The type Private log filter. */
 public class PrivateLogFilter extends LogFilter {
 
   private final String privacyGroupId;
   private final String privacyUserId;
 
+  /**
+   * Instantiates a new Private log filter.
+   *
+   * @param id the id
+   * @param privacyGroupId the privacy group id
+   * @param privacyUserId the privacy user id
+   * @param fromBlock the from block
+   * @param toBlock the to block
+   * @param logsQuery the logs query
+   */
   PrivateLogFilter(
       final String id,
       final String privacyGroupId,
@@ -34,10 +45,20 @@ public class PrivateLogFilter extends LogFilter {
     this.privacyUserId = privacyUserId;
   }
 
+  /**
+   * Gets privacy group id.
+   *
+   * @return the privacy group id
+   */
   public String getPrivacyGroupId() {
     return privacyGroupId;
   }
 
+  /**
+   * Gets privacy user id.
+   *
+   * @return the privacy user id
+   */
   public String getPrivacyUserId() {
     return privacyUserId;
   }

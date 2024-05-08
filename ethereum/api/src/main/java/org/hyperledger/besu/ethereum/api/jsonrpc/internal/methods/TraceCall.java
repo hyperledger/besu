@@ -34,9 +34,17 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Trace call. */
 public class TraceCall extends AbstractTraceCall {
   private static final Logger LOG = LoggerFactory.getLogger(TraceCall.class);
 
+  /**
+   * Instantiates a new Trace call.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionSimulator the transaction simulator
+   */
   public TraceCall(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,

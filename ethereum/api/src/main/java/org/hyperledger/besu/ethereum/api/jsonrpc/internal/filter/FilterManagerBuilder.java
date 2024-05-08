@@ -23,6 +23,7 @@ import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/** The type Filter manager builder. */
 public class FilterManagerBuilder {
 
   private BlockchainQueries blockchainQueries;
@@ -32,37 +33,81 @@ public class FilterManagerBuilder {
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
   private Optional<PrivacyQueries> privacyQueries = Optional.empty();
 
+  /** Default constructor. */
+  public FilterManagerBuilder() {}
+
+  /**
+   * Filter id generator filter manager builder.
+   *
+   * @param filterIdGenerator the filter id generator
+   * @return the filter manager builder
+   */
   public FilterManagerBuilder filterIdGenerator(final FilterIdGenerator filterIdGenerator) {
     this.filterIdGenerator = filterIdGenerator;
     return this;
   }
 
+  /**
+   * Filter repository filter manager builder.
+   *
+   * @param filterRepository the filter repository
+   * @return the filter manager builder
+   */
   public FilterManagerBuilder filterRepository(final FilterRepository filterRepository) {
     this.filterRepository = filterRepository;
     return this;
   }
 
+  /**
+   * Blockchain queries filter manager builder.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @return the filter manager builder
+   */
   public FilterManagerBuilder blockchainQueries(final BlockchainQueries blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
     return this;
   }
 
+  /**
+   * Transaction pool filter manager builder.
+   *
+   * @param transactionPool the transaction pool
+   * @return the filter manager builder
+   */
   public FilterManagerBuilder transactionPool(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
     return this;
   }
 
+  /**
+   * Privacy parameters filter manager builder.
+   *
+   * @param privacyParameters the privacy parameters
+   * @return the filter manager builder
+   */
   public FilterManagerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     this.privacyParameters = Optional.ofNullable(privacyParameters);
     return this;
   }
 
+  /**
+   * Privacy queries filter manager builder.
+   *
+   * @param privacyQueries the privacy queries
+   * @return the filter manager builder
+   */
   @VisibleForTesting
   FilterManagerBuilder privacyQueries(final PrivacyQueries privacyQueries) {
     this.privacyQueries = Optional.ofNullable(privacyQueries);
     return this;
   }
 
+  /**
+   * Build filter manager.
+   *
+   * @return the filter manager
+   */
   public FilterManager build() {
     if (blockchainQueries == null) {
       throw new IllegalStateException("BlockchainQueries is required to build FilterManager");

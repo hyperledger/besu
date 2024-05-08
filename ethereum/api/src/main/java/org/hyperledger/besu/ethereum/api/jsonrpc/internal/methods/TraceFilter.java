@@ -65,11 +65,20 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Trace filter. */
 public class TraceFilter extends TraceBlock {
 
   private static final Logger LOG = LoggerFactory.getLogger(TraceFilter.class);
   private final Long maxRange;
 
+  /**
+   * Instantiates a new Trace filter.
+   *
+   * @param blockTracerSupplier the block tracer supplier
+   * @param protocolSchedule the protocol schedule
+   * @param blockchainQueries the blockchain queries
+   * @param maxRange the max range
+   */
   public TraceFilter(
       final Supplier<BlockTracer> blockTracerSupplier,
       final ProtocolSchedule protocolSchedule,
@@ -227,6 +236,12 @@ public class TraceFilter extends TraceBlock {
     return blockList;
   }
 
+  /**
+   * Create transaction block map map.
+   *
+   * @param blockList the block list
+   * @return the map
+   */
   public Map<Transaction, Block> createTransactionBlockMap(final List<Block> blockList) {
     Map<Transaction, Block> transactionBlockMap = new HashMap<>();
     for (Block block : blockList) {

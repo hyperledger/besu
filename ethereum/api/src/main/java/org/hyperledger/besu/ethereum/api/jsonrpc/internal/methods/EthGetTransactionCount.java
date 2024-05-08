@@ -27,14 +27,27 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
+/** The type Eth get transaction count. */
 public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMethod {
   private final Supplier<TransactionPool> transactionPoolSupplier;
 
+  /**
+   * Instantiates a new Eth get transaction count.
+   *
+   * @param blockchain the blockchain
+   * @param transactionPoolSupplier the transaction pool supplier
+   */
   public EthGetTransactionCount(
       final BlockchainQueries blockchain, final TransactionPool transactionPoolSupplier) {
     this(Suppliers.ofInstance(blockchain), Suppliers.ofInstance(transactionPoolSupplier));
   }
 
+  /**
+   * Instantiates a new Eth get transaction count.
+   *
+   * @param blockchain the blockchain
+   * @param transactionPoolSupplier the transaction pool supplier
+   */
   public EthGetTransactionCount(
       final Supplier<BlockchainQueries> blockchain,
       final Supplier<TransactionPool> transactionPoolSupplier) {

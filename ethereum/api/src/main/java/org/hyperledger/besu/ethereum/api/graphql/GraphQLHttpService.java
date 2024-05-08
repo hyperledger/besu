@@ -68,6 +68,7 @@ import io.vertx.ext.web.handler.TimeoutHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Graph ql http service. */
 public class GraphQLHttpService {
 
   private static final Logger LOG = LoggerFactory.getLogger(GraphQLHttpService.class);
@@ -126,6 +127,11 @@ public class GraphQLHttpService {
     checkArgument(config.getHost() != null, "Required host is not configured.");
   }
 
+  /**
+   * Start completable future.
+   *
+   * @return the completable future
+   */
   public CompletableFuture<?> start() {
     LOG.info("Starting GraphQL HTTP service on {}:{}", config.getHost(), config.getPort());
     // Create the HTTP server and a router object.
@@ -230,6 +236,11 @@ public class GraphQLHttpService {
     }
   }
 
+  /**
+   * Stop completable future.
+   *
+   * @return the completable future
+   */
   public CompletableFuture<?> stop() {
     if (httpServer == null) {
       return CompletableFuture.completedFuture(null);
@@ -248,6 +259,11 @@ public class GraphQLHttpService {
     return resultFuture;
   }
 
+  /**
+   * Socket address inet socket address.
+   *
+   * @return the inet socket address
+   */
   public InetSocketAddress socketAddress() {
     if (httpServer == null) {
       return EMPTY_SOCKET_ADDRESS;
@@ -255,6 +271,11 @@ public class GraphQLHttpService {
     return new InetSocketAddress(config.getHost(), httpServer.actualPort());
   }
 
+  /**
+   * Url string.
+   *
+   * @return the string
+   */
   @VisibleForTesting
   public String url() {
     if (httpServer == null) {

@@ -25,12 +25,23 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Eth get code. */
 public class EthGetCode extends AbstractBlockParameterOrBlockHashMethod {
 
+  /**
+   * Instantiates a new Eth get code.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public EthGetCode(final BlockchainQueries blockchainQueries) {
     super(blockchainQueries);
   }
 
+  /**
+   * Instantiates a new Eth get code.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public EthGetCode(final Supplier<BlockchainQueries> blockchainQueries) {
     super(blockchainQueries);
   }

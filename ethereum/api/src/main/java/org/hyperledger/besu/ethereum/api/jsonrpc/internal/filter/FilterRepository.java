@@ -22,22 +22,44 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+/** The type Filter repository. */
 public class FilterRepository {
 
   private final Map<String, Filter> filters = new ConcurrentHashMap<>();
 
+  /** Instantiates a new Filter repository. */
   public FilterRepository() {}
 
+  /**
+   * Gets filters.
+   *
+   * @return the filters
+   */
   Collection<Filter> getFilters() {
     return new ArrayList<>(filters.values());
   }
 
+  /**
+   * Gets filters of type.
+   *
+   * @param <T> the type parameter
+   * @param filterClass the filter class
+   * @return the filters of type
+   */
   <T extends Filter> Collection<T> getFiltersOfType(final Class<T> filterClass) {
     return filters.values().stream()
         .flatMap(f -> getIfTypeMatches(f, filterClass).map(Stream::of).orElseGet(Stream::empty))
         .collect(Collectors.toList());
   }
 
+  /**
+   * Gets filter.
+   *
+   * @param <T> the type parameter
+   * @param filterId the filter id
+   * @param filterClass the filter class
+   * @return the filter
+   */
   <T extends Filter> Optional<T> getFilter(final String filterId, final Class<T> filterClass) {
     final Filter filter = filters.get(filterId);
     return getIfTypeMatches(filter, filterClass);
@@ -57,10 +79,21 @@ public class FilterRepository {
     return Optional.of((T) filter);
   }
 
+  /**
+   * Exists boolean.
+   *
+   * @param id the id
+   * @return the boolean
+   */
   boolean exists(final String id) {
     return filters.containsKey(id);
   }
 
+  /**
+   * Save.
+   *
+   * @param filter the filter
+   */
   void save(final Filter filter) {
     if (filter == null) {
       throw new IllegalArgumentException("Can't save null filter");
@@ -74,10 +107,16 @@ public class FilterRepository {
     filters.put(filter.getId(), filter);
   }
 
+  /**
+   * Delete.
+   *
+   * @param id the id
+   */
   void delete(final String id) {
     filters.remove(id);
   }
 
+  /** Delete all. */
   void deleteAll() {
     filters.clear();
   }

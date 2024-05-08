@@ -37,8 +37,15 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Function;
 
+/** The type Eth create access list. */
 public class EthCreateAccessList extends AbstractEstimateGas {
 
+  /**
+   * Instantiates a new Eth create access list.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param transactionSimulator the transaction simulator
+   */
   public EthCreateAccessList(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
     super(blockchainQueries, transactionSimulator);
@@ -158,6 +165,14 @@ public class EthCreateAccessList extends AbstractEstimateGas {
     return new AccessListSimulatorResult(result, tracer);
   }
 
+  /**
+   * Override access list call parameter.
+   *
+   * @param callParams the call params
+   * @param gasLimit the gas limit
+   * @param accessListEntries the access list entries
+   * @return the call parameter
+   */
   protected CallParameter overrideAccessList(
       final JsonCallParameter callParams,
       final long gasLimit,
@@ -175,19 +190,38 @@ public class EthCreateAccessList extends AbstractEstimateGas {
   }
 
   private static class AccessListSimulatorResult {
+    /** The Result. */
     final Optional<TransactionSimulatorResult> result;
+
+    /** The Tracer. */
     final AccessListOperationTracer tracer;
 
+    /**
+     * Instantiates a new Access list simulator result.
+     *
+     * @param result the result
+     * @param tracer the tracer
+     */
     public AccessListSimulatorResult(
         final Optional<TransactionSimulatorResult> result, final AccessListOperationTracer tracer) {
       this.result = result;
       this.tracer = tracer;
     }
 
+    /**
+     * Gets result.
+     *
+     * @return the result
+     */
     public Optional<TransactionSimulatorResult> getResult() {
       return result;
     }
 
+    /**
+     * Gets tracer.
+     *
+     * @return the tracer
+     */
     public AccessListOperationTracer getTracer() {
       return tracer;
     }

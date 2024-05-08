@@ -19,7 +19,14 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import graphql.schema.DataFetchingEnvironment;
 
+/** The type Adapter base. */
 abstract class AdapterBase {
+  /**
+   * Gets blockchain queries.
+   *
+   * @param environment the environment
+   * @return the blockchain queries
+   */
   BlockchainQueries getBlockchainQueries(final DataFetchingEnvironment environment) {
     return environment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
   }

@@ -38,15 +38,28 @@ import java.util.function.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.units.bigints.BaseUInt256Value;
 
+/** The type Eth get miner data by block hash. */
 public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
   private final Supplier<BlockchainQueries> blockchain;
   private final ProtocolSchedule protocolSchedule;
 
+  /**
+   * Instantiates a new Eth get miner data by block hash.
+   *
+   * @param blockchain the blockchain
+   * @param protocolSchedule the protocol schedule
+   */
   public EthGetMinerDataByBlockHash(
       final BlockchainQueries blockchain, final ProtocolSchedule protocolSchedule) {
     this(Suppliers.ofInstance(blockchain), protocolSchedule);
   }
 
+  /**
+   * Instantiates a new Eth get miner data by block hash.
+   *
+   * @param blockchain the blockchain
+   * @param protocolSchedule the protocol schedule
+   */
   public EthGetMinerDataByBlockHash(
       final Supplier<BlockchainQueries> blockchain, final ProtocolSchedule protocolSchedule) {
     this.blockchain = blockchain;
@@ -73,6 +86,14 @@ public class EthGetMinerDataByBlockHash implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), minerDataResult);
   }
 
+  /**
+   * Create miner data result miner data result.
+   *
+   * @param block the block
+   * @param protocolSchedule the protocol schedule
+   * @param blockchainQueries the blockchain queries
+   * @return the miner data result
+   */
   public static MinerDataResult createMinerDataResult(
       final BlockWithMetadata<TransactionWithMetadata, Hash> block,
       final ProtocolSchedule protocolSchedule,

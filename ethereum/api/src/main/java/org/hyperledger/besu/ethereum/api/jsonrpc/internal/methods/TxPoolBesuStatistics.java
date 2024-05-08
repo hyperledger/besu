@@ -24,10 +24,16 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Collection;
 
+/** The type Tx pool besu statistics. */
 public class TxPoolBesuStatistics implements JsonRpcMethod {
 
   private final TransactionPool transactionPool;
 
+  /**
+   * Instantiates a new Tx pool besu statistics.
+   *
+   * @param transactionPool the transaction pool
+   */
   public TxPoolBesuStatistics(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
   }

@@ -31,11 +31,17 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Eth submit work. */
 public class EthSubmitWork implements JsonRpcMethod {
 
   private final MiningCoordinator miner;
   private static final Logger LOG = LoggerFactory.getLogger(EthSubmitWork.class);
 
+  /**
+   * Instantiates a new Eth submit work.
+   *
+   * @param miner the miner
+   */
   public EthSubmitWork(final MiningCoordinator miner) {
     this.miner = miner;
   }

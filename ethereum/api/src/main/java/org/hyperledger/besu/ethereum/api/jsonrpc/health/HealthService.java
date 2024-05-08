@@ -21,11 +21,16 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
+/** The type Health service. */
 public final class HealthService {
 
+  /** The constant ALWAYS_HEALTHY. */
   public static final HealthService ALWAYS_HEALTHY = new HealthService(params -> true);
 
+  /** The constant LIVENESS_PATH. */
   public static final String LIVENESS_PATH = "/liveness";
+
+  /** The constant READINESS_PATH. */
   public static final String READINESS_PATH = "/readiness";
 
   private static final int HEALTHY_STATUS_CODE = HttpResponseStatus.OK.code();
@@ -35,10 +40,20 @@ public final class HealthService {
 
   private final HealthCheck healthCheck;
 
+  /**
+   * Instantiates a new Health service.
+   *
+   * @param healthCheck the health check
+   */
   public HealthService(final HealthCheck healthCheck) {
     this.healthCheck = healthCheck;
   }
 
+  /**
+   * Handle request.
+   *
+   * @param routingContext the routing context
+   */
   public void handleRequest(final RoutingContext routingContext) {
     final int statusCode;
     final String statusText;
@@ -57,13 +72,27 @@ public final class HealthService {
     }
   }
 
+  /** The interface Health check. */
   @FunctionalInterface
   public interface HealthCheck {
+    /**
+     * Is healthy boolean.
+     *
+     * @param paramSource the param source
+     * @return the boolean
+     */
     boolean isHealthy(ParamSource paramSource);
   }
 
+  /** The interface Param source. */
   @FunctionalInterface
   public interface ParamSource {
+    /**
+     * Gets param.
+     *
+     * @param name the name
+     * @return the param
+     */
     String getParam(String name);
   }
 }

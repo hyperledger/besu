@@ -40,9 +40,16 @@ import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
+/** The type Eth call. */
 public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
   private final TransactionSimulator transactionSimulator;
 
+  /**
+   * Instantiates a new Eth call.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param transactionSimulator the transaction simulator
+   */
   public EthCall(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
     super(blockchainQueries);

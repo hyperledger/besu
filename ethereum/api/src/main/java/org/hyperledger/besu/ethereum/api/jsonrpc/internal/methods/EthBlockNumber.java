@@ -25,15 +25,27 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
+/** The type Eth block number. */
 public class EthBlockNumber implements JsonRpcMethod {
 
   private final Supplier<BlockchainQueries> blockchain;
   private final boolean resultAsInteger;
 
+  /**
+   * Instantiates a new Eth block number.
+   *
+   * @param blockchain the blockchain
+   */
   public EthBlockNumber(final BlockchainQueries blockchain) {
     this(Suppliers.ofInstance(blockchain), false);
   }
 
+  /**
+   * Instantiates a new Eth block number.
+   *
+   * @param blockchain the blockchain
+   * @param resultAsInteger the result as integer
+   */
   public EthBlockNumber(
       final Supplier<BlockchainQueries> blockchain, final boolean resultAsInteger) {
     this.blockchain = blockchain;

@@ -23,10 +23,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
+/** The type Miner change target gas limit. */
 public class MinerChangeTargetGasLimit implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
 
+  /**
+   * Instantiates a new Miner change target gas limit.
+   *
+   * @param miningCoordinator the mining coordinator
+   */
   public MinerChangeTargetGasLimit(final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }

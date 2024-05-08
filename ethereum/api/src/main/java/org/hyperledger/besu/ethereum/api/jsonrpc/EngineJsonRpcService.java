@@ -98,6 +98,7 @@ import io.vertx.ext.web.handler.CorsHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Engine json rpc service. */
 public class EngineJsonRpcService {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineJsonRpcService.class);
@@ -143,6 +144,7 @@ public class EngineJsonRpcService {
   private final WebSocketConfiguration socketConfiguration;
   private final Optional<WebSocketMessageHandler> webSocketMessageHandler;
 
+  /** The Authentication service. */
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
   private HttpServer httpServer;
@@ -219,6 +221,11 @@ public class EngineJsonRpcService {
     this.metricsSystem = metricsSystem;
   }
 
+  /**
+   * Start completable future.
+   *
+   * @return the completable future
+   */
   public CompletableFuture<Void> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
     LOG.debug("max number of active connections {}", maxActiveConnections);
@@ -275,6 +282,11 @@ public class EngineJsonRpcService {
     return resultFuture;
   }
 
+  /**
+   * Stop completable future.
+   *
+   * @return the completable future
+   */
   public CompletableFuture<Void> stop() {
     if (httpServer == null) {
       return CompletableFuture.completedFuture(null);
@@ -633,6 +645,11 @@ public class EngineJsonRpcService {
     }
   }
 
+  /**
+   * Socket address inet socket address.
+   *
+   * @return the inet socket address
+   */
   public InetSocketAddress socketAddress() {
     if (httpServer == null) {
       return EMPTY_SOCKET_ADDRESS;
@@ -644,6 +661,11 @@ public class EngineJsonRpcService {
     return String.format("host=%s, port=%d", socketAddress.host(), socketAddress.port());
   }
 
+  /**
+   * Url string.
+   *
+   * @return the string
+   */
   @VisibleForTesting
   public String url() {
     if (httpServer == null) {

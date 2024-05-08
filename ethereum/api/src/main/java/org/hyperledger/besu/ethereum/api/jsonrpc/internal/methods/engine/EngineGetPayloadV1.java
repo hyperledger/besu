@@ -28,8 +28,18 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
+/** The type Engine get payload v1. */
 public class EngineGetPayloadV1 extends AbstractEngineGetPayload {
 
+  /**
+   * Instantiates a new Engine get payload v1.
+   *
+   * @param vertx the vertx
+   * @param protocolContext the protocol context
+   * @param mergeMiningCoordinator the merge mining coordinator
+   * @param blockResultFactory the block result factory
+   * @param engineCallListener the engine call listener
+   */
   public EngineGetPayloadV1(
       final Vertx vertx,
       final ProtocolContext protocolContext,

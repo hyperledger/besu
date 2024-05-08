@@ -24,6 +24,7 @@ import io.vertx.core.net.SocketAddress;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Json response streamer. */
 public class JsonResponseStreamer extends OutputStream {
 
   private static final Logger LOG = LoggerFactory.getLogger(JsonResponseStreamer.class);
@@ -35,6 +36,12 @@ public class JsonResponseStreamer extends OutputStream {
   private boolean closed = false;
   private final AtomicReference<Throwable> failure = new AtomicReference<>();
 
+  /**
+   * Instantiates a new Json response streamer.
+   *
+   * @param response the response
+   * @param socketAddress the socket address
+   */
   public JsonResponseStreamer(
       final HttpServerResponse response, final SocketAddress socketAddress) {
     this.response = response;

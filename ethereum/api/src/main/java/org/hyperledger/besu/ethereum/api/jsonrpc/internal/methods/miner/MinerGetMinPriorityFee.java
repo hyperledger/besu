@@ -22,9 +22,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 
+/** The type Miner get min priority fee. */
 public class MinerGetMinPriorityFee implements JsonRpcMethod {
   private final MiningParameters miningParameters;
 
+  /**
+   * Instantiates a new Miner get min priority fee.
+   *
+   * @param miningParameters the mining parameters
+   */
   public MinerGetMinPriorityFee(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
   }

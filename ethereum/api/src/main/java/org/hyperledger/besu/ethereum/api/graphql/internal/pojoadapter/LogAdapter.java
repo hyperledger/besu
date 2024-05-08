@@ -28,27 +28,54 @@ import java.util.Optional;
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Log adapter. */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class LogAdapter extends AdapterBase {
   private final LogWithMetadata logWithMetadata;
 
+  /**
+   * Instantiates a new Log adapter.
+   *
+   * @param logWithMetadata the log with metadata
+   */
   public LogAdapter(final LogWithMetadata logWithMetadata) {
     this.logWithMetadata = logWithMetadata;
   }
 
+  /**
+   * Gets index.
+   *
+   * @return the index
+   */
   public Integer getIndex() {
     return logWithMetadata.getLogIndex();
   }
 
+  /**
+   * Gets topics.
+   *
+   * @return the topics
+   */
   public List<LogTopic> getTopics() {
     final List<LogTopic> topics = logWithMetadata.getTopics();
     return new ArrayList<>(topics);
   }
 
+  /**
+   * Gets data.
+   *
+   * @return the data
+   */
   public Bytes getData() {
     return logWithMetadata.getData();
   }
 
+  /**
+   * Gets transaction.
+   *
+   * @param environment the environment
+   * @return the transaction
+   */
   public TransactionAdapter getTransaction(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Hash hash = logWithMetadata.getTransactionHash();
@@ -56,6 +83,12 @@ public class LogAdapter extends AdapterBase {
     return tran.map(TransactionAdapter::new).orElseThrow();
   }
 
+  /**
+   * Gets account.
+   *
+   * @param environment the environment
+   * @return the account
+   */
   public AccountAdapter getAccount(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     long blockNumber = logWithMetadata.getBlockNumber();

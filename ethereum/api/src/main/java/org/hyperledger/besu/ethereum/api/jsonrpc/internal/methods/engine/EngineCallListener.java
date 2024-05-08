@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+/** The interface Engine call listener. */
 public interface EngineCallListener {
+  /** Execution engine called. */
   void executionEngineCalled();
 }

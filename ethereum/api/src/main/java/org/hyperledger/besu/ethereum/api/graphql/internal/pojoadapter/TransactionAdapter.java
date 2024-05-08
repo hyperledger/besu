@@ -37,11 +37,17 @@ import javax.annotation.Nonnull;
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Transaction adapter. */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class TransactionAdapter extends AdapterBase {
   private final TransactionWithMetadata transactionWithMetadata;
   private Optional<TransactionReceiptWithMetadata> transactionReceiptWithMetadata;
 
+  /**
+   * Instantiates a new Transaction adapter.
+   *
+   * @param transactionWithMetadata the transaction with metadata
+   */
   public TransactionAdapter(final @Nonnull TransactionWithMetadata transactionWithMetadata) {
     this.transactionWithMetadata = transactionWithMetadata;
   }
@@ -64,22 +70,48 @@ public class TransactionAdapter extends AdapterBase {
     return transactionReceiptWithMetadata;
   }
 
+  /**
+   * Gets hash.
+   *
+   * @return the hash
+   */
   public Hash getHash() {
     return transactionWithMetadata.getTransaction().getHash();
   }
 
+  /**
+   * Gets type.
+   *
+   * @return the type
+   */
   public Optional<Integer> getType() {
     return Optional.of(transactionWithMetadata.getTransaction().getType().ordinal());
   }
 
+  /**
+   * Gets nonce.
+   *
+   * @return the nonce
+   */
   public Long getNonce() {
     return transactionWithMetadata.getTransaction().getNonce();
   }
 
+  /**
+   * Gets index.
+   *
+   * @return the index
+   */
   public Optional<Integer> getIndex() {
     return transactionWithMetadata.getTransactionIndex();
   }
 
+  /**
+   * Gets from.
+   *
+   * @param environment the environment
+   * @return the from
+   */
   public AccountAdapter getFrom(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Long blockNumber =
@@ -95,6 +127,12 @@ public class TransactionAdapter extends AdapterBase {
         .orElse(new EmptyAccountAdapter(addr));
   }
 
+  /**
+   * Gets to.
+   *
+   * @param environment the environment
+   * @return the to
+   */
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Long blockNumber =
@@ -114,39 +152,86 @@ public class TransactionAdapter extends AdapterBase {
                     .or(() -> Optional.of(new EmptyAccountAdapter(address))));
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   public Wei getValue() {
     return transactionWithMetadata.getTransaction().getValue();
   }
 
+  /**
+   * Gets gas price.
+   *
+   * @return the gas price
+   */
   public Wei getGasPrice() {
     return transactionWithMetadata.getTransaction().getGasPrice().orElse(Wei.ZERO);
   }
 
+  /**
+   * Gets max fee per gas.
+   *
+   * @return the max fee per gas
+   */
   public Optional<Wei> getMaxFeePerGas() {
     return transactionWithMetadata.getTransaction().getMaxFeePerGas();
   }
 
+  /**
+   * Gets max priority fee per gas.
+   *
+   * @return the max priority fee per gas
+   */
   public Optional<Wei> getMaxPriorityFeePerGas() {
     return transactionWithMetadata.getTransaction().getMaxPriorityFeePerGas();
   }
 
+  /**
+   * Gets max fee per blob gas.
+   *
+   * @return the max fee per blob gas
+   */
   public Optional<Wei> getMaxFeePerBlobGas() {
     return transactionWithMetadata.getTransaction().getMaxFeePerBlobGas();
   }
 
+  /**
+   * Gets effective tip.
+   *
+   * @param environment the environment
+   * @return the effective tip
+   */
   public Optional<Wei> getEffectiveTip(final DataFetchingEnvironment environment) {
     return getReceipt(environment)
         .map(rwm -> rwm.getTransaction().getEffectivePriorityFeePerGas(rwm.getBaseFee()));
   }
 
+  /**
+   * Gets gas.
+   *
+   * @return the gas
+   */
   public Long getGas() {
     return transactionWithMetadata.getTransaction().getGasLimit();
   }
 
+  /**
+   * Gets input data.
+   *
+   * @return the input data
+   */
   public Bytes getInputData() {
     return transactionWithMetadata.getTransaction().getPayload();
   }
 
+  /**
+   * Gets block.
+   *
+   * @param environment the environment
+   * @return the block
+   */
   public Optional<NormalBlockAdapter> getBlock(final DataFetchingEnvironment environment) {
     return transactionWithMetadata
         .getBlockHash()
@@ -154,6 +239,12 @@ public class TransactionAdapter extends AdapterBase {
         .map(NormalBlockAdapter::new);
   }
 
+  /**
+   * Gets status.
+   *
+   * @param environment the environment
+   * @return the status
+   */
   public Optional<Long> getStatus(final DataFetchingEnvironment environment) {
     return getReceipt(environment)
         .map(TransactionReceiptWithMetadata::getReceipt)
@@ -164,27 +255,63 @@ public class TransactionAdapter extends AdapterBase {
                     : Optional.of((long) receipt.getStatus()));
   }
 
+  /**
+   * Gets gas used.
+   *
+   * @param environment the environment
+   * @return the gas used
+   */
   public Optional<Long> getGasUsed(final DataFetchingEnvironment environment) {
     return getReceipt(environment).map(TransactionReceiptWithMetadata::getGasUsed);
   }
 
+  /**
+   * Gets cumulative gas used.
+   *
+   * @param environment the environment
+   * @return the cumulative gas used
+   */
   public Optional<Long> getCumulativeGasUsed(final DataFetchingEnvironment environment) {
     return getReceipt(environment).map(rpt -> rpt.getReceipt().getCumulativeGasUsed());
   }
 
+  /**
+   * Gets effective gas price.
+   *
+   * @param environment the environment
+   * @return the effective gas price
+   */
   public Optional<Wei> getEffectiveGasPrice(final DataFetchingEnvironment environment) {
     return getReceipt(environment)
         .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
   }
 
+  /**
+   * Gets blob gas used.
+   *
+   * @param environment the environment
+   * @return the blob gas used
+   */
   public Optional<Long> getBlobGasUsed(final DataFetchingEnvironment environment) {
     return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasUsed);
   }
 
+  /**
+   * Gets blob gas price.
+   *
+   * @param environment the environment
+   * @return the blob gas price
+   */
   public Optional<Wei> getBlobGasPrice(final DataFetchingEnvironment environment) {
     return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasPrice);
   }
 
+  /**
+   * Gets created contract.
+   *
+   * @param environment the environment
+   * @return the created contract
+   */
   public Optional<AccountAdapter> getCreatedContract(final DataFetchingEnvironment environment) {
     final boolean contractCreated = transactionWithMetadata.getTransaction().isContractCreation();
     if (contractCreated) {
@@ -207,6 +334,12 @@ public class TransactionAdapter extends AdapterBase {
     return Optional.empty();
   }
 
+  /**
+   * Gets logs.
+   *
+   * @param environment the environment
+   * @return the logs
+   */
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule protocolSchedule =
@@ -239,22 +372,47 @@ public class TransactionAdapter extends AdapterBase {
     return results;
   }
 
+  /**
+   * Gets r.
+   *
+   * @return the r
+   */
   public BigInteger getR() {
     return transactionWithMetadata.getTransaction().getR();
   }
 
+  /**
+   * Gets s.
+   *
+   * @return the s
+   */
   public BigInteger getS() {
     return transactionWithMetadata.getTransaction().getS();
   }
 
+  /**
+   * Gets v.
+   *
+   * @return the v
+   */
   public Optional<BigInteger> getV() {
     return Optional.ofNullable(transactionWithMetadata.getTransaction().getV());
   }
 
+  /**
+   * Gets y parity.
+   *
+   * @return the y parity
+   */
   public Optional<BigInteger> getYParity() {
     return Optional.ofNullable(transactionWithMetadata.getTransaction().getYParity());
   }
 
+  /**
+   * Gets access list.
+   *
+   * @return the access list
+   */
   public List<AccessListEntryAdapter> getAccessList() {
     return transactionWithMetadata
         .getTransaction()
@@ -263,12 +421,23 @@ public class TransactionAdapter extends AdapterBase {
         .orElse(List.of());
   }
 
+  /**
+   * Gets raw.
+   *
+   * @return the raw
+   */
   public Optional<Bytes> getRaw() {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     transactionWithMetadata.getTransaction().writeTo(rlpOutput);
     return Optional.of(rlpOutput.encoded());
   }
 
+  /**
+   * Gets raw receipt.
+   *
+   * @param environment the environment
+   * @return the raw receipt
+   */
   public Optional<Bytes> getRawReceipt(final DataFetchingEnvironment environment) {
     return getReceipt(environment)
         .map(
@@ -279,6 +448,11 @@ public class TransactionAdapter extends AdapterBase {
             });
   }
 
+  /**
+   * Gets blob versioned hashes.
+   *
+   * @return the blob versioned hashes
+   */
   public List<VersionedHash> getBlobVersionedHashes() {
     return transactionWithMetadata.getTransaction().getVersionedHashes().orElse(List.of());
   }

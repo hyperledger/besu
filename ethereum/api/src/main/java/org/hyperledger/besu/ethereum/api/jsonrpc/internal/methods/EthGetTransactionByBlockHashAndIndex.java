@@ -27,10 +27,16 @@ import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 
 import java.util.Optional;
 
+/** The type Eth get transaction by block hash and index. */
 public class EthGetTransactionByBlockHashAndIndex implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
 
+  /**
+   * Instantiates a new Eth get transaction by block hash and index.
+   *
+   * @param blockchain the blockchain
+   */
   public EthGetTransactionByBlockHashAndIndex(final BlockchainQueries blockchain) {
     this.blockchain = blockchain;
   }

@@ -26,10 +26,16 @@ import io.vertx.core.json.Json;
 import io.vertx.core.json.JsonArray;
 import io.vertx.ext.web.RoutingContext;
 
+/** The type Json rpc parser handler. */
 public class JsonRpcParserHandler {
 
   private JsonRpcParserHandler() {}
 
+  /**
+   * Handler handler.
+   *
+   * @return the handler
+   */
   public static Handler<RoutingContext> handler() {
     return ctx -> {
       final HttpServerResponse response = ctx.response();

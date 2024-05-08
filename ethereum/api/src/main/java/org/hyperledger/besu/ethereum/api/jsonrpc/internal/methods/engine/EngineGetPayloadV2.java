@@ -33,10 +33,21 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
+/** The type Engine get payload v2. */
 public class EngineGetPayloadV2 extends AbstractEngineGetPayload {
 
   private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
 
+  /**
+   * Instantiates a new Engine get payload v2.
+   *
+   * @param vertx the vertx
+   * @param protocolContext the protocol context
+   * @param mergeMiningCoordinator the merge mining coordinator
+   * @param blockResultFactory the block result factory
+   * @param engineCallListener the engine call listener
+   * @param schedule the schedule
+   */
   public EngineGetPayloadV2(
       final Vertx vertx,
       final ProtocolContext protocolContext,

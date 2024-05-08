@@ -22,10 +22,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 
+/** The type Debug resync worldstate. */
 public class DebugResyncWorldstate implements JsonRpcMethod {
   private final Synchronizer synchronizer;
   private final BadBlockManager badBlockManager;
 
+  /**
+   * Instantiates a new Debug resync worldstate.
+   *
+   * @param protocolContext the protocol context
+   * @param synchronizer the synchronizer
+   */
   public DebugResyncWorldstate(
       final ProtocolContext protocolContext, final Synchronizer synchronizer) {
     this.synchronizer = synchronizer;

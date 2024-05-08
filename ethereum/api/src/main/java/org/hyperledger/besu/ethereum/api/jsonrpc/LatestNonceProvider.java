@@ -21,11 +21,18 @@ import org.hyperledger.besu.ethereum.util.NonceProvider;
 
 import java.util.OptionalLong;
 
+/** The type Latest nonce provider. */
 public class LatestNonceProvider implements NonceProvider {
 
   private final BlockchainQueries blockchainQueries;
   private final TransactionPool transactionPool;
 
+  /**
+   * Instantiates a new Latest nonce provider.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param transactionPool the transaction pool
+   */
   public LatestNonceProvider(
       final BlockchainQueries blockchainQueries, final TransactionPool transactionPool) {
     this.blockchainQueries = blockchainQueries;

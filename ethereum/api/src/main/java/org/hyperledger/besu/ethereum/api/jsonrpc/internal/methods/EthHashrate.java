@@ -23,10 +23,16 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
 import java.util.Optional;
 
+/** The type Eth hashrate. */
 public class EthHashrate implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
 
+  /**
+   * Instantiates a new Eth hashrate.
+   *
+   * @param miningCoordinator the mining coordinator
+   */
   public EthHashrate(final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }

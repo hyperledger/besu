@@ -31,11 +31,20 @@ import java.nio.file.Path;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/** The type Debug standard trace bad block to file. */
 public class DebugStandardTraceBadBlockToFile extends DebugStandardTraceBlockToFile
     implements JsonRpcMethod {
 
   private final ProtocolContext protocolContext;
 
+  /**
+   * Instantiates a new Debug standard trace bad block to file.
+   *
+   * @param transactionTracerSupplier the transaction tracer supplier
+   * @param blockchainQueries the blockchain queries
+   * @param protocolContext the protocol context
+   * @param dataDir the data dir
+   */
   public DebugStandardTraceBadBlockToFile(
       final Supplier<TransactionTracer> transactionTracerSupplier,
       final BlockchainQueries blockchainQueries,

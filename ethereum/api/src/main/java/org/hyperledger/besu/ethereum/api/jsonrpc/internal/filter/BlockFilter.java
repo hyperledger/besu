@@ -24,18 +24,34 @@ class BlockFilter extends Filter {
 
   private final List<Hash> blockHashes = new ArrayList<>();
 
+  /**
+   * Instantiates a new Block filter.
+   *
+   * @param id the id
+   */
   BlockFilter(final String id) {
     super(id);
   }
 
+  /**
+   * Add block hash.
+   *
+   * @param hash the hash
+   */
   void addBlockHash(final Hash hash) {
     blockHashes.add(hash);
   }
 
+  /**
+   * Block hashes list.
+   *
+   * @return the list
+   */
   List<Hash> blockHashes() {
     return blockHashes;
   }
 
+  /** Clear block hashes. */
   void clearBlockHashes() {
     blockHashes.clear();
   }

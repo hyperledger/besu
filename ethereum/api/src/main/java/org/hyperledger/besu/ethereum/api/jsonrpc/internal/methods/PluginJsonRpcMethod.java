@@ -27,6 +27,7 @@ import java.util.function.Function;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Plugin json rpc method. */
 public class PluginJsonRpcMethod implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginJsonRpcMethod.class);
@@ -34,6 +35,12 @@ public class PluginJsonRpcMethod implements JsonRpcMethod {
   private final String name;
   private final Function<PluginRpcRequest, ?> function;
 
+  /**
+   * Instantiates a new Plugin json rpc method.
+   *
+   * @param name the name
+   * @param function the function
+   */
   public PluginJsonRpcMethod(final String name, final Function<PluginRpcRequest, ?> function) {
     this.name = name;
     this.function = function;

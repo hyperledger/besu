@@ -41,9 +41,17 @@ import java.util.Set;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Trace raw transaction. */
 public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceRawTransaction.class);
 
+  /**
+   * Instantiates a new Trace raw transaction.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param blockchainQueries the blockchain queries
+   * @param transactionSimulator the transaction simulator
+   */
   public TraceRawTransaction(
       final ProtocolSchedule protocolSchedule,
       final BlockchainQueries blockchainQueries,

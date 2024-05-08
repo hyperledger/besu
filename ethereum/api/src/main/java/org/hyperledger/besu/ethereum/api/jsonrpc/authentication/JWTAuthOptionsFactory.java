@@ -33,14 +33,31 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.bouncycastle.util.io.pem.PemObject;
 import org.bouncycastle.util.io.pem.PemReader;
 
+/** The type Jwt auth options factory. */
 public class JWTAuthOptionsFactory {
 
   private static final JwtAlgorithm DEFAULT = JwtAlgorithm.RS256;
 
+  /** Default constructor. */
+  public JWTAuthOptionsFactory() {}
+
+  /**
+   * Create for external public key jwt auth options.
+   *
+   * @param externalPublicKeyFile the external public key file
+   * @return the jwt auth options
+   */
   public JWTAuthOptions createForExternalPublicKey(final File externalPublicKeyFile) {
     return createForExternalPublicKeyWithAlgorithm(externalPublicKeyFile, DEFAULT);
   }
 
+  /**
+   * Create for external public key with algorithm jwt auth options.
+   *
+   * @param externalPublicKeyFile the external public key file
+   * @param algorithm the algorithm
+   * @return the jwt auth options
+   */
   public JWTAuthOptions createForExternalPublicKeyWithAlgorithm(
       final File externalPublicKeyFile, final JwtAlgorithm algorithm) {
     final byte[] externalJwtPublicKey = readPublicKey(externalPublicKeyFile);
@@ -51,6 +68,12 @@ public class JWTAuthOptionsFactory {
                 .setBuffer(keyPairToPublicPemString(externalJwtPublicKey)));
   }
 
+  /**
+   * Create with generated key pair jwt auth options.
+   *
+   * @param jwtAlgorithm the jwt algorithm
+   * @return the jwt auth options
+   */
   public JWTAuthOptions createWithGeneratedKeyPair(final JwtAlgorithm jwtAlgorithm) {
     if (jwtAlgorithm.toString().startsWith("H")) {
       throw new IllegalArgumentException(
@@ -68,6 +91,12 @@ public class JWTAuthOptionsFactory {
                 .setBuffer(keyPairToPrivatePemString(keypair)));
   }
 
+  /**
+   * Engine api jwt options jwt auth options.
+   *
+   * @param jwtAlgorithm the jwt algorithm
+   * @return the jwt auth options
+   */
   public JWTAuthOptions engineApiJWTOptions(final JwtAlgorithm jwtAlgorithm) {
     byte[] ephemeralKey = Bytes32.random().toArray();
     return new JWTAuthOptions()
@@ -78,6 +107,11 @@ public class JWTAuthOptionsFactory {
                 .setBuffer(Buffer.buffer(ephemeralKey)));
   }
 
+  /**
+   * Create with generated key pair jwt auth options.
+   *
+   * @return the jwt auth options
+   */
   public JWTAuthOptions createWithGeneratedKeyPair() {
     return createWithGeneratedKeyPair(JwtAlgorithm.RS256);
   }

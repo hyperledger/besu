@@ -35,13 +35,24 @@ import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.base.Suppliers;
 
+/** The type Debug batch send raw transaction. */
 public class DebugBatchSendRawTransaction implements JsonRpcMethod {
   private final Supplier<TransactionPool> transactionPool;
 
+  /**
+   * Instantiates a new Debug batch send raw transaction.
+   *
+   * @param transactionPool the transaction pool
+   */
   public DebugBatchSendRawTransaction(final TransactionPool transactionPool) {
     this(Suppliers.ofInstance(transactionPool));
   }
 
+  /**
+   * Instantiates a new Debug batch send raw transaction.
+   *
+   * @param transactionPool the transaction pool
+   */
   public DebugBatchSendRawTransaction(final Supplier<TransactionPool> transactionPool) {
     this.transactionPool = transactionPool;
   }
@@ -77,32 +88,60 @@ public class DebugBatchSendRawTransaction implements JsonRpcMethod {
     }
   }
 
+  /** The type Execution status. */
   @JsonPropertyOrder({"index", "success", "errorMessage"})
   static class ExecutionStatus {
     private final int index;
     private final boolean success;
     private final String errorMessage;
 
+    /**
+     * Instantiates a new Execution status.
+     *
+     * @param index the index
+     */
     ExecutionStatus(final int index) {
       this(index, true, null);
     }
 
+    /**
+     * Instantiates a new Execution status.
+     *
+     * @param index the index
+     * @param success the success
+     * @param errorMessage the error message
+     */
     ExecutionStatus(final int index, final boolean success, final String errorMessage) {
       this.index = index;
       this.success = success;
       this.errorMessage = errorMessage;
     }
 
+    /**
+     * Gets index.
+     *
+     * @return the index
+     */
     @JsonGetter(value = "index")
     public int getIndex() {
       return index;
     }
 
+    /**
+     * Is success boolean.
+     *
+     * @return the boolean
+     */
     @JsonGetter(value = "success")
     public boolean isSuccess() {
       return success;
     }
 
+    /**
+     * Gets error message.
+     *
+     * @return the error message
+     */
     @JsonGetter(value = "errorMessage")
     @JsonInclude(Include.NON_NULL)
     public String getErrorMessage() {

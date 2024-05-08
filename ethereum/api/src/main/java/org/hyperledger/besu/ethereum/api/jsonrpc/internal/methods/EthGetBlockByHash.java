@@ -27,17 +27,31 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
+/** The type Eth get block by hash. */
 public class EthGetBlockByHash implements JsonRpcMethod {
 
   private final BlockResultFactory blockResult;
   private final Supplier<BlockchainQueries> blockchain;
   private final boolean includeCoinbase;
 
+  /**
+   * Instantiates a new Eth get block by hash.
+   *
+   * @param blockchain the blockchain
+   * @param blockResult the block result
+   */
   public EthGetBlockByHash(
       final BlockchainQueries blockchain, final BlockResultFactory blockResult) {
     this(Suppliers.ofInstance(blockchain), blockResult, false);
   }
 
+  /**
+   * Instantiates a new Eth get block by hash.
+   *
+   * @param blockchain the blockchain
+   * @param blockResult the block result
+   * @param includeCoinbase the include coinbase
+   */
   public EthGetBlockByHash(
       final Supplier<BlockchainQueries> blockchain,
       final BlockResultFactory blockResult,

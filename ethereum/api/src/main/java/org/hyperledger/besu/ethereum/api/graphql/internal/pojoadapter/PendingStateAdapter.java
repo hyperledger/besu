@@ -36,19 +36,35 @@ import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Pending state adapter. */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class PendingStateAdapter extends AdapterBase {
 
   private final TransactionPool transactionPool;
 
+  /**
+   * Instantiates a new Pending state adapter.
+   *
+   * @param transactionPool the transaction pool
+   */
   public PendingStateAdapter(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
   }
 
+  /**
+   * Gets transaction count.
+   *
+   * @return the transaction count
+   */
   public Integer getTransactionCount() {
     return transactionPool.count();
   }
 
+  /**
+   * Gets transactions.
+   *
+   * @return the transactions
+   */
   public List<TransactionAdapter> getTransactions() {
     return transactionPool.getPendingTransactions().stream()
         .map(PendingTransaction::getTransaction)
@@ -57,6 +73,12 @@ public class PendingStateAdapter extends AdapterBase {
         .toList();
   }
 
+  /**
+   * Gets account.
+   *
+   * @param dataFetchingEnvironment the data fetching environment
+   * @return the account
+   */
   // until the miner can expose the current "proposed block" we have no
   // speculative environment, so estimate against latest.
   public AccountAdapter getAccount(final DataFetchingEnvironment dataFetchingEnvironment) {
@@ -71,6 +93,12 @@ public class PendingStateAdapter extends AdapterBase {
         .orElseGet(() -> new AccountAdapter(null));
   }
 
+  /**
+   * Gets estimate gas.
+   *
+   * @param environment the environment
+   * @return the estimate gas
+   */
   // until the miner can expose the current "proposed block" we have no
   // speculative environment, so estimate against latest.
   public Optional<Long> getEstimateGas(final DataFetchingEnvironment environment) {
@@ -78,6 +106,12 @@ public class PendingStateAdapter extends AdapterBase {
     return result.map(CallResult::getGasUsed);
   }
 
+  /**
+   * Gets call.
+   *
+   * @param environment the environment
+   * @return the call
+   */
   // until the miner can expose the current "proposed block" we have no
   // speculative environment, so estimate against latest.
   public Optional<CallResult> getCall(final DataFetchingEnvironment environment) {

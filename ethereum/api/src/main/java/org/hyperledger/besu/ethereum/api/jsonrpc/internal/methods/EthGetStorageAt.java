@@ -24,7 +24,13 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Eth get storage at. */
 public class EthGetStorageAt extends AbstractBlockParameterOrBlockHashMethod {
+  /**
+   * Instantiates a new Eth get storage at.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public EthGetStorageAt(final BlockchainQueries blockchainQueries) {
     super(blockchainQueries);
   }

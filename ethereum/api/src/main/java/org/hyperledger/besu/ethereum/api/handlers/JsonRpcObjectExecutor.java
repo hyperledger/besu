@@ -35,9 +35,18 @@ import io.vertx.core.http.HttpServerResponse;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
+/** The type Json rpc object executor. */
 public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
   private final ObjectWriter jsonObjectWriter = createObjectWriter();
 
+  /**
+   * Instantiates a new Json rpc object executor.
+   *
+   * @param jsonRpcExecutor the json rpc executor
+   * @param tracer the tracer
+   * @param ctx the ctx
+   * @param jsonRpcConfiguration the json rpc configuration
+   */
   public JsonRpcObjectExecutor(
       final JsonRpcExecutor jsonRpcExecutor,
       final Tracer tracer,

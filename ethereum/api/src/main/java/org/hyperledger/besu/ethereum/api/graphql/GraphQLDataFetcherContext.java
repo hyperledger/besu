@@ -21,18 +21,49 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+/** The interface Graph ql data fetcher context. */
 public interface GraphQLDataFetcherContext {
 
+  /**
+   * Gets transaction pool.
+   *
+   * @return the transaction pool
+   */
   TransactionPool getTransactionPool();
 
+  /**
+   * Gets blockchain queries.
+   *
+   * @return the blockchain queries
+   */
   BlockchainQueries getBlockchainQueries();
 
+  /**
+   * Gets mining coordinator.
+   *
+   * @return the mining coordinator
+   */
   MiningCoordinator getMiningCoordinator();
 
+  /**
+   * Gets synchronizer.
+   *
+   * @return the synchronizer
+   */
   Synchronizer getSynchronizer();
 
+  /**
+   * Gets protocol schedule.
+   *
+   * @return the protocol schedule
+   */
   ProtocolSchedule getProtocolSchedule();
 
+  /**
+   * Gets is alive handler.
+   *
+   * @return the is alive handler
+   */
   default IsAliveHandler getIsAliveHandler() {
     return new IsAliveHandler(true);
   }

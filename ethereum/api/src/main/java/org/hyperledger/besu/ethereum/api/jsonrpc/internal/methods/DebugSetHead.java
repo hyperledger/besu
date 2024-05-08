@@ -27,9 +27,16 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import java.util.Optional;
 
+/** The type Debug set head. */
 public class DebugSetHead extends AbstractBlockParameterMethod {
   private final ProtocolContext protocolContext;
 
+  /**
+   * Instantiates a new Debug set head.
+   *
+   * @param blockchain the blockchain
+   * @param protocolContext the protocol context
+   */
   public DebugSetHead(final BlockchainQueries blockchain, final ProtocolContext protocolContext) {
     super(blockchain);
 

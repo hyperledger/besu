@@ -31,12 +31,19 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** The type Tx pool besu pending transactions. */
 public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
 
+  /** The Pending transaction filter. */
   final PendingTransactionFilter pendingTransactionFilter;
 
   private final TransactionPool transactionPool;
 
+  /**
+   * Instantiates a new Tx pool besu pending transactions.
+   *
+   * @param transactionPool the transaction pool
+   */
   public TxPoolBesuPendingTransactions(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
     this.pendingTransactionFilter = new PendingTransactionFilter();

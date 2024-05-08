@@ -23,12 +23,18 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
+/** The type Transaction source. */
 public class TransactionSource implements Iterator<TransactionTrace> {
 
   private final List<Transaction> transactions;
   private final AtomicInteger currentIndex = new AtomicInteger(0);
   private final Block block;
 
+  /**
+   * Instantiates a new Transaction source.
+   *
+   * @param block the block
+   */
   public TransactionSource(final Block block) {
     this.block = block;
     this.transactions = block.getBody().getTransactions();

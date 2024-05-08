@@ -24,8 +24,14 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 
 import com.google.common.base.Suppliers;
 
+/** The type Debug get raw header. */
 public class DebugGetRawHeader extends AbstractBlockParameterMethod {
 
+  /**
+   * Instantiates a new Debug get raw header.
+   *
+   * @param blockchain the blockchain
+   */
   public DebugGetRawHeader(final BlockchainQueries blockchain) {
     super(Suppliers.ofInstance(blockchain));
   }

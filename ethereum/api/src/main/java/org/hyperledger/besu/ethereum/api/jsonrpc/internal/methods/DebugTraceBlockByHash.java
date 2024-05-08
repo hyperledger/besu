@@ -31,11 +31,18 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import java.util.Collection;
 import java.util.function.Supplier;
 
+/** The type Debug trace block by hash. */
 public class DebugTraceBlockByHash implements JsonRpcMethod {
 
   private final Supplier<BlockTracer> blockTracerSupplier;
   private final Supplier<BlockchainQueries> blockchainQueries;
 
+  /**
+   * Instantiates a new Debug trace block by hash.
+   *
+   * @param blockTracerSupplier the block tracer supplier
+   * @param blockchainQueriesSupplier the blockchain queries supplier
+   */
   public DebugTraceBlockByHash(
       final Supplier<BlockTracer> blockTracerSupplier,
       final Supplier<BlockchainQueries> blockchainQueriesSupplier) {

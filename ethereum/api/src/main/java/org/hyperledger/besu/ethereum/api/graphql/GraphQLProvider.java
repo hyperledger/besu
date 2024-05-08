@@ -31,12 +31,21 @@ import graphql.schema.idl.SchemaParser;
 import graphql.schema.idl.TypeDefinitionRegistry;
 import graphql.schema.idl.TypeRuntimeWiring;
 
+/** The type Graph ql provider. */
 public class GraphQLProvider {
 
+  /** The constant MAX_COMPLEXITY. */
   public static final int MAX_COMPLEXITY = 200;
 
   private GraphQLProvider() {}
 
+  /**
+   * Build graph ql graph ql.
+   *
+   * @param graphQLDataFetchers the graph ql data fetchers
+   * @return the graph ql
+   * @throws IOException the io exception
+   */
   public static GraphQL buildGraphQL(final GraphQLDataFetchers graphQLDataFetchers)
       throws IOException {
     final URL url = Resources.getResource("schema.graphqls");

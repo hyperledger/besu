@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import java.util.ArrayList;
 import java.util.List;
 
+/** The interface Json rpc method. */
 public interface JsonRpcMethod {
 
   /**

@@ -21,10 +21,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.PendingTransactionsResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
+/** The type Tx pool besu transactions. */
 public class TxPoolBesuTransactions implements JsonRpcMethod {
 
   private final TransactionPool transactionPool;
 
+  /**
+   * Instantiates a new Tx pool besu transactions.
+   *
+   * @param transactionPool the transaction pool
+   */
   public TxPoolBesuTransactions(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
   }

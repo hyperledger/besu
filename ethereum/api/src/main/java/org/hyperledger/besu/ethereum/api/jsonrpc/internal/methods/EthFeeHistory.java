@@ -56,6 +56,7 @@ import com.github.benmanes.caffeine.cache.Caffeine;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Streams;
 
+/** The type Eth fee history. */
 public class EthFeeHistory implements JsonRpcMethod {
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
@@ -64,8 +65,17 @@ public class EthFeeHistory implements JsonRpcMethod {
   private final Cache<RewardCacheKey, List<Wei>> cache;
   private static final int MAXIMUM_CACHE_SIZE = 100_000;
 
+  /** The type Reward cache key. */
   record RewardCacheKey(Hash blockHash, List<Double> rewardPercentiles) {}
 
+  /**
+   * Instantiates a new Eth fee history.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param blockchain the blockchain
+   * @param miningCoordinator the mining coordinator
+   * @param apiConfiguration the api configuration
+   */
   public EthFeeHistory(
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
@@ -212,8 +222,16 @@ public class EthFeeHistory implements JsonRpcMethod {
             });
   }
 
+  /** The type Transaction info. */
   record TransactionInfo(Transaction transaction, Long gasUsed, Wei effectivePriorityFeePerGas) {}
 
+  /**
+   * Compute rewards list.
+   *
+   * @param rewardPercentiles the reward percentiles
+   * @param block the block
+   * @return the list
+   */
   @VisibleForTesting
   public List<Wei> computeRewards(final List<Double> rewardPercentiles, final Block block) {
     final List<Transaction> transactions = block.getBody().getTransactions();

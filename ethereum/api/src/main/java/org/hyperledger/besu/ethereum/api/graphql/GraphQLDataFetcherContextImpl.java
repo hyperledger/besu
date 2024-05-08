@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+/** The type Graph ql data fetcher context. */
 public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext {
 
   private final BlockchainQueries blockchainQueries;
@@ -30,6 +31,12 @@ public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext 
   private final TransactionPool transactionPool;
   private final IsAliveHandler isAliveHandler;
 
+  /**
+   * Instantiates a new Graph ql data fetcher context.
+   *
+   * @param context the context
+   * @param isAliveHandler the is alive handler
+   */
   public GraphQLDataFetcherContextImpl(
       final GraphQLDataFetcherContext context, final IsAliveHandler isAliveHandler) {
     this(
@@ -41,6 +48,15 @@ public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext 
         isAliveHandler);
   }
 
+  /**
+   * Instantiates a new Graph ql data fetcher context.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionPool the transaction pool
+   * @param miningCoordinator the mining coordinator
+   * @param synchronizer the synchronizer
+   */
   public GraphQLDataFetcherContextImpl(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
@@ -56,6 +72,16 @@ public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext 
         new IsAliveHandler(true));
   }
 
+  /**
+   * Instantiates a new Graph ql data fetcher context.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionPool the transaction pool
+   * @param miningCoordinator the mining coordinator
+   * @param synchronizer the synchronizer
+   * @param isAliveHandler the is alive handler
+   */
   public GraphQLDataFetcherContextImpl(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,

@@ -19,30 +19,48 @@ import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonGetter;
 
+/** The enum Graph ql error. */
 @JsonFormat(shape = JsonFormat.Shape.OBJECT)
 public enum GraphQLError {
+  /** The Invalid params. */
   // Standard errors
   INVALID_PARAMS(-32602, "Invalid params"),
+  /** The Internal error. */
   INTERNAL_ERROR(-32603, "Internal error"),
 
+  /** The Nonce too low. */
   // Transaction validation failures
   NONCE_TOO_LOW(-32001, "Nonce too low"),
+  /** The Invalid transaction signature. */
   INVALID_TRANSACTION_SIGNATURE(-32002, "Invalid signature"),
+  /** The Intrinsic gas exceeds limit. */
   INTRINSIC_GAS_EXCEEDS_LIMIT(-32003, "Intrinsic gas exceeds gas limit"),
+  /** The Transaction upfront cost exceeds balance. */
   TRANSACTION_UPFRONT_COST_EXCEEDS_BALANCE(-32004, "Upfront cost exceeds account balance"),
+  /** The Exceeds block gas limit. */
   EXCEEDS_BLOCK_GAS_LIMIT(-32005, "Transaction gas limit exceeds block gas limit"),
+  /** The Incorrect nonce. */
   INCORRECT_NONCE(-32006, "Nonce too high"),
+  /** The Tx sender not authorized. */
   TX_SENDER_NOT_AUTHORIZED(-32007, "Sender account not authorized to send transactions"),
+  /** The Chain head world state not available. */
   CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
+  /** The Gas price too low. */
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
+  /** The Wrong chain id. */
   WRONG_CHAIN_ID(-32000, "Wrong Chain ID in transaction signature"),
+  /** The Replay protected signatures not supported. */
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(
       -32000, "Signatures with replay protection are not supported"),
+  /** The Tx feecap exceeded. */
   TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
 
+  /** The Private transaction failed. */
   // Private Transaction Errors
   PRIVATE_TRANSACTION_FAILED(-32000, "Private transaction failed"),
+  /** The Private nonce too low. */
   PRIVATE_NONCE_TOO_LOW(-50100, "Private transaction nonce too low"),
+  /** The Incorrect private nonce. */
   INCORRECT_PRIVATE_NONCE(-50100, "Private transaction nonce is incorrect");
 
   private final int code;
@@ -53,16 +71,32 @@ public enum GraphQLError {
     this.message = message;
   }
 
+  /**
+   * Gets code.
+   *
+   * @return the code
+   */
   @JsonGetter("code")
   public int getCode() {
     return code;
   }
 
+  /**
+   * Gets message.
+   *
+   * @return the message
+   */
   @JsonGetter("message")
   public String getMessage() {
     return message;
   }
 
+  /**
+   * Of graph ql error.
+   *
+   * @param transactionInvalidReason the transaction invalid reason
+   * @return the graph ql error
+   */
   public static GraphQLError of(final TransactionInvalidReason transactionInvalidReason) {
     switch (transactionInvalidReason) {
       case WRONG_CHAIN_ID:

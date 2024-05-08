@@ -34,12 +34,21 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Engine get payload bodies by hash v1. */
 public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod {
 
   private static final int MAX_REQUEST_BLOCKS = 1024;
   private static final Logger LOG = LoggerFactory.getLogger(EngineGetPayloadBodiesByHashV1.class);
   private final BlockResultFactory blockResultFactory;
 
+  /**
+   * Instantiates a new Engine get payload bodies by hash v1.
+   *
+   * @param vertx the vertx
+   * @param protocolContext the protocol context
+   * @param blockResultFactory the block result factory
+   * @param engineCallListener the engine call listener
+   */
   public EngineGetPayloadBodiesByHashV1(
       final Vertx vertx,
       final ProtocolContext protocolContext,
@@ -81,6 +90,11 @@ public class EngineGetPayloadBodiesByHashV1 extends ExecutionEngineJsonRpcMethod
     return new JsonRpcSuccessResponse(reqId, engineGetPayloadBodiesResultV1);
   }
 
+  /**
+   * Gets max request blocks.
+   *
+   * @return the max request blocks
+   */
   protected int getMaxRequestBlocks() {
     return MAX_REQUEST_BLOCKS;
   }

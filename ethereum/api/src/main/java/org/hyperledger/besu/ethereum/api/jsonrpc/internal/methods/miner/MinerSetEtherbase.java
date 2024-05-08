@@ -19,10 +19,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 
+/** The type Miner set etherbase. */
 public class MinerSetEtherbase implements JsonRpcMethod {
 
   private final MinerSetCoinbase minerSetCoinbaseMethod;
 
+  /**
+   * Instantiates a new Miner set etherbase.
+   *
+   * @param minerSetCoinbaseMethod the miner set coinbase method
+   */
   public MinerSetEtherbase(final MinerSetCoinbase minerSetCoinbaseMethod) {
 
     this.minerSetCoinbaseMethod = minerSetCoinbaseMethod;

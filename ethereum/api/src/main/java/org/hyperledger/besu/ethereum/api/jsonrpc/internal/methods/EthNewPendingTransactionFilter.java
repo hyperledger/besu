@@ -20,10 +20,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+/** The type Eth new pending transaction filter. */
 public class EthNewPendingTransactionFilter implements JsonRpcMethod {
 
   private final FilterManager filterManager;
 
+  /**
+   * Instantiates a new Eth new pending transaction filter.
+   *
+   * @param filterManager the filter manager
+   */
   public EthNewPendingTransactionFilter(final FilterManager filterManager) {
     this.filterManager = filterManager;
   }

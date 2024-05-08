@@ -35,7 +35,13 @@ import java.util.stream.Collectors;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Eth get proof. */
 public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
+  /**
+   * Instantiates a new Eth get proof.
+   *
+   * @param blockchain the blockchain
+   */
   public EthGetProof(final BlockchainQueries blockchain) {
     super(blockchain);
   }

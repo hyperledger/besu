@@ -23,10 +23,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import java.math.BigInteger;
 import java.util.Optional;
 
+/** The type Eth chain id. */
 public class EthChainId implements JsonRpcMethod {
 
   private final Optional<BigInteger> chainId;
 
+  /**
+   * Instantiates a new Eth chain id.
+   *
+   * @param chainId the chain id
+   */
   public EthChainId(final Optional<BigInteger> chainId) {
     this.chainId = chainId;
   }

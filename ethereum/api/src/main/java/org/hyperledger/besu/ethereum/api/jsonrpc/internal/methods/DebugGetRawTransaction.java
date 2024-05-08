@@ -23,10 +23,17 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
+/** The type Debug get raw transaction. */
 public class DebugGetRawTransaction implements JsonRpcMethod {
 
+  /** The Blockchain queries. */
   protected final BlockchainQueries blockchainQueries;
 
+  /**
+   * Instantiates a new Debug get raw transaction.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public DebugGetRawTransaction(final BlockchainQueries blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
   }

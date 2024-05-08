@@ -24,6 +24,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
+/** The type Trace filter source. */
 public class TraceFilterSource implements Iterator<TransactionTrace> {
 
   private final ArrayNodeWrapper resultArrayNode;
@@ -31,6 +32,12 @@ public class TraceFilterSource implements Iterator<TransactionTrace> {
   private Iterator<TransactionTrace> transactionTraceIterator;
   private Block currentBlock;
 
+  /**
+   * Instantiates a new Trace filter source.
+   *
+   * @param blockList the block list
+   * @param resultArrayNode the result array node
+   */
   public TraceFilterSource(final List<Block> blockList, final ArrayNodeWrapper resultArrayNode) {
     this.resultArrayNode = resultArrayNode;
     this.blockIterator = blockList.iterator();

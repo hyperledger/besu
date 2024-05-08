@@ -18,11 +18,23 @@ import java.util.function.Supplier;
 
 import io.vertx.ext.web.RoutingContext;
 
+/** The enum Context key. */
 public enum ContextKey {
+  /** Request body as json object context key. */
   REQUEST_BODY_AS_JSON_OBJECT,
+  /** Request body as json array context key. */
   REQUEST_BODY_AS_JSON_ARRAY,
+  /** Authenticated user context key. */
   AUTHENTICATED_USER;
 
+  /**
+   * Extract from t.
+   *
+   * @param <T> the type parameter
+   * @param ctx the ctx
+   * @param defaultSupplier the default supplier
+   * @return the t
+   */
   public <T> T extractFrom(final RoutingContext ctx, final Supplier<T> defaultSupplier) {
     final T value = ctx.get(this.name());
     return value != null ? value : defaultSupplier.get();

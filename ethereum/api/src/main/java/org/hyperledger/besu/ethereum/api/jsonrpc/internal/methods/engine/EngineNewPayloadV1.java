@@ -33,8 +33,19 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
+/** The type Engine new payload v1. */
 public class EngineNewPayloadV1 extends AbstractEngineNewPayload {
 
+  /**
+   * Instantiates a new Engine new payload v1.
+   *
+   * @param vertx the vertx
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param mergeCoordinator the merge coordinator
+   * @param ethPeers the eth peers
+   * @param engineCallListener the engine call listener
+   */
   public EngineNewPayloadV1(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,

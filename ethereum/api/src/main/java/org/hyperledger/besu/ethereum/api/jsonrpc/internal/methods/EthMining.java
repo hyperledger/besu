@@ -20,10 +20,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
+/** The type Eth mining. */
 public class EthMining implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
 
+  /**
+   * Instantiates a new Eth mining.
+   *
+   * @param miningCoordinator the mining coordinator
+   */
   public EthMining(final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }

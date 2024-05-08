@@ -19,25 +19,49 @@ import java.nio.file.Paths;
 
 import io.vertx.core.Vertx;
 
+/** The type Toml auth options. */
 public class TomlAuthOptions {
 
   private Path tomlPath;
 
+  /** Instantiates a new Toml auth options. */
   public TomlAuthOptions() {}
 
+  /**
+   * Instantiates a new Toml auth options.
+   *
+   * @param that the that
+   */
   public TomlAuthOptions(final TomlAuthOptions that) {
     tomlPath = that.tomlPath;
   }
 
+  /**
+   * Create provider toml auth.
+   *
+   * @param vertx the vertx
+   * @return the toml auth
+   */
   public TomlAuth createProvider(final Vertx vertx) {
     return new TomlAuth(vertx, this);
   }
 
+  /**
+   * Sets toml path.
+   *
+   * @param tomlPath the toml path
+   * @return the toml path
+   */
   public TomlAuthOptions setTomlPath(final String tomlPath) {
     this.tomlPath = Paths.get(tomlPath);
     return this;
   }
 
+  /**
+   * Gets toml path.
+   *
+   * @return the toml path
+   */
   public Path getTomlPath() {
     return tomlPath;
   }

@@ -17,8 +17,17 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 
+/** The type Json rpc error converter. */
 public class JsonRpcErrorConverter {
+  /** Default constructor. */
+  private JsonRpcErrorConverter() {}
 
+  /**
+   * Convert transaction invalid reason rpc error type.
+   *
+   * @param reason the reason
+   * @return the rpc error type
+   */
   public static RpcErrorType convertTransactionInvalidReason(
       final TransactionInvalidReason reason) {
     switch (reason) {

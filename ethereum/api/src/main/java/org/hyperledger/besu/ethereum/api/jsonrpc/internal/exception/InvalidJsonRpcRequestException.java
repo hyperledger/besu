@@ -14,11 +14,23 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception;
 
+/** The type Invalid json rpc request exception. */
 public class InvalidJsonRpcRequestException extends IllegalArgumentException {
+  /**
+   * Instantiates a new Invalid json rpc request exception.
+   *
+   * @param message the message
+   */
   public InvalidJsonRpcRequestException(final String message) {
     super(message);
   }
 
+  /**
+   * Instantiates a new Invalid json rpc request exception.
+   *
+   * @param message the message
+   * @param cause the cause
+   */
   public InvalidJsonRpcRequestException(final String message, final Throwable cause) {
     super(message, cause);
   }

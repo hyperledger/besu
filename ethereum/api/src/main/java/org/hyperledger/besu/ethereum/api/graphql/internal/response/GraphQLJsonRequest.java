@@ -19,36 +19,70 @@ import java.util.Map;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonSetter;
 
+/** The type Graph ql json request. */
 public class GraphQLJsonRequest {
   private String query;
   private String operationName;
   private Map<String, Object> variables;
 
+  /** Default constructor. */
+  public GraphQLJsonRequest() {}
+
+  /**
+   * Gets query.
+   *
+   * @return the query
+   */
   @JsonGetter
   public String getQuery() {
     return query;
   }
 
+  /**
+   * Sets query.
+   *
+   * @param query the query
+   */
   @JsonSetter
   public void setQuery(final String query) {
     this.query = query;
   }
 
+  /**
+   * Gets operation name.
+   *
+   * @return the operation name
+   */
   @JsonGetter
   public String getOperationName() {
     return operationName;
   }
 
+  /**
+   * Sets operation name.
+   *
+   * @param operationName the operation name
+   */
   @JsonSetter
   public void setOperationName(final String operationName) {
     this.operationName = operationName;
   }
 
+  /**
+   * Gets variables.
+   *
+   * @return the variables
+   */
   @JsonGetter
   public Map<String, Object> getVariables() {
     return variables;
   }
 
+  /**
+   * Sets variables.
+   *
+   * @param variables the variables
+   */
   @JsonSetter
   public void setVariables(final Map<String, Object> variables) {
     this.variables = variables;

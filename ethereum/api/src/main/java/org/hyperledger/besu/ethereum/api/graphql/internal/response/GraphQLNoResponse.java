@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
+/** The type Graph ql no response. */
 public class GraphQLNoResponse extends GraphQLResponse {
 
+  /** Instantiates a new Graph ql no response. */
   public GraphQLNoResponse() {
     super(null);
   }

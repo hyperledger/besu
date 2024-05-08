@@ -31,12 +31,21 @@ import org.apache.tuweni.toml.TomlParseResult;
 import org.apache.tuweni.toml.TomlTable;
 import org.springframework.security.crypto.bcrypt.BCrypt;
 
+/** The type Toml auth. */
 public class TomlAuth implements AuthenticationProvider {
 
+  /** The constant PRIVACY_PUBLIC_KEY. */
   public static final String PRIVACY_PUBLIC_KEY = "privacyPublicKey";
+
   private final Vertx vertx;
   private final TomlAuthOptions options;
 
+  /**
+   * Instantiates a new Toml auth.
+   *
+   * @param vertx the vertx
+   * @param options the options
+   */
   public TomlAuth(final Vertx vertx, final TomlAuthOptions options) {
     this.vertx = vertx;
     this.options = options;

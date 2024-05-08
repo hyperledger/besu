@@ -18,10 +18,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 
+/** The type Json call parameter util. */
 public class JsonCallParameterUtil {
 
   private JsonCallParameterUtil() {}
 
+  /**
+   * Validate and get call params json call parameter.
+   *
+   * @param request the request
+   * @return the json call parameter
+   */
   public static JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
     final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
 

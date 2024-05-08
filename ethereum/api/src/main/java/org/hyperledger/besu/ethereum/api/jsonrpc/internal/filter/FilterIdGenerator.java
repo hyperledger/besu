@@ -19,10 +19,19 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 
 import java.security.SecureRandom;
 
+/** The type Filter id generator. */
 public class FilterIdGenerator {
 
   private final SecureRandom secureRandom = SecureRandomProvider.createSecureRandom();
 
+  /** Default constructor. */
+  public FilterIdGenerator() {}
+
+  /**
+   * Next id string.
+   *
+   * @return the string
+   */
   public String nextId() {
     final byte[] randomBytes = new byte[16];
     secureRandom.nextBytes(randomBytes);

@@ -24,10 +24,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.UncleBlockResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
+/** The type Eth get uncle by block hash and index. */
 public class EthGetUncleByBlockHashAndIndex implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
 
+  /**
+   * Instantiates a new Eth get uncle by block hash and index.
+   *
+   * @param blockchain the blockchain
+   */
   public EthGetUncleByBlockHashAndIndex(final BlockchainQueries blockchain) {
     this.blockchain = blockchain;
   }

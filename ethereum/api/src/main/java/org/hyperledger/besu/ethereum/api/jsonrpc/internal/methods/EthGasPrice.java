@@ -27,12 +27,20 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+/** The type Eth gas price. */
 public class EthGasPrice implements JsonRpcMethod {
 
   private final Supplier<BlockchainQueries> blockchain;
   private final MiningCoordinator miningCoordinator;
   private final ApiConfiguration apiConfiguration;
 
+  /**
+   * Instantiates a new Eth gas price.
+   *
+   * @param blockchain the blockchain
+   * @param miningCoordinator the mining coordinator
+   * @param apiConfiguration the api configuration
+   */
   public EthGasPrice(
       final BlockchainQueries blockchain,
       final MiningCoordinator miningCoordinator,
@@ -40,6 +48,13 @@ public class EthGasPrice implements JsonRpcMethod {
     this(() -> blockchain, miningCoordinator, apiConfiguration);
   }
 
+  /**
+   * Instantiates a new Eth gas price.
+   *
+   * @param blockchain the blockchain
+   * @param miningCoordinator the mining coordinator
+   * @param apiConfiguration the api configuration
+   */
   public EthGasPrice(
       final Supplier<BlockchainQueries> blockchain,
       final MiningCoordinator miningCoordinator,

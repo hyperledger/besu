@@ -30,11 +30,18 @@ import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
 
+/** The type Debug trace transaction. */
 public class DebugTraceTransaction implements JsonRpcMethod {
 
   private final TransactionTracer transactionTracer;
   private final BlockchainQueries blockchain;
 
+  /**
+   * Instantiates a new Debug trace transaction.
+   *
+   * @param blockchain the blockchain
+   * @param transactionTracer the transaction tracer
+   */
   public DebugTraceTransaction(
       final BlockchainQueries blockchain, final TransactionTracer transactionTracer) {
     this.blockchain = blockchain;

@@ -51,11 +51,20 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Trace block. */
 public class TraceBlock extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceBlock.class);
   private static final ObjectMapper MAPPER = new ObjectMapper();
+
+  /** The Protocol schedule. */
   protected final ProtocolSchedule protocolSchedule;
 
+  /**
+   * Instantiates a new Trace block.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param queries the queries
+   */
   public TraceBlock(final ProtocolSchedule protocolSchedule, final BlockchainQueries queries) {
     super(queries);
     this.protocolSchedule = protocolSchedule;
@@ -88,6 +97,13 @@ public class TraceBlock extends AbstractBlockParameterMethod {
         .orElse(null);
   }
 
+  /**
+   * Trace block array node wrapper.
+   *
+   * @param block the block
+   * @param filterParameter the filter parameter
+   * @return the array node wrapper
+   */
   protected ArrayNodeWrapper traceBlock(
       final Block block, final Optional<FilterParameter> filterParameter) {
 
@@ -165,6 +181,14 @@ public class TraceBlock extends AbstractBlockParameterMethod {
         .orElse(emptyResult());
   }
 
+  /**
+   * Generate traces from transaction trace and block.
+   *
+   * @param filterParameter the filter parameter
+   * @param transactionTraces the transaction traces
+   * @param block the block
+   * @param resultArrayNode the result array node
+   */
   protected void generateTracesFromTransactionTraceAndBlock(
       final Optional<FilterParameter> filterParameter,
       final List<TransactionTrace> transactionTraces,
@@ -177,6 +201,13 @@ public class TraceBlock extends AbstractBlockParameterMethod {
                 .forEachOrdered(resultArrayNode::addPOJO));
   }
 
+  /**
+   * Generate rewards from block.
+   *
+   * @param maybeFilterParameter the maybe filter parameter
+   * @param block the block
+   * @param resultArrayNode the result array node
+   */
   protected void generateRewardsFromBlock(
       final Optional<FilterParameter> maybeFilterParameter,
       final Block block,
@@ -185,24 +216,46 @@ public class TraceBlock extends AbstractBlockParameterMethod {
         .forEachOrdered(resultArrayNode::addPOJO);
   }
 
+  /**
+   * Empty result array node wrapper.
+   *
+   * @return the array node wrapper
+   */
   ArrayNodeWrapper emptyResult() {
     return new ArrayNodeWrapper(MAPPER.createArrayNode());
   }
 
+  /** The type Chain updater. */
   public static class ChainUpdater {
 
     private final MutableWorldState worldState;
     private WorldUpdater updater;
 
+    /**
+     * Instantiates a new Chain updater.
+     *
+     * @param worldState the world state
+     */
     public ChainUpdater(final MutableWorldState worldState) {
       this.worldState = worldState;
     }
 
+    /**
+     * Instantiates a new Chain updater.
+     *
+     * @param worldState the world state
+     * @param updater the updater
+     */
     public ChainUpdater(final MutableWorldState worldState, final WorldUpdater updater) {
       this.worldState = worldState;
       this.updater = updater;
     }
 
+    /**
+     * Gets next updater.
+     *
+     * @return the next updater
+     */
     public WorldUpdater getNextUpdater() {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (updater == null) {

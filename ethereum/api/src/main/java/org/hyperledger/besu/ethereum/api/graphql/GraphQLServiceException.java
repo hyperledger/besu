@@ -14,8 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
+/** The type Graph ql service exception. */
 class GraphQLServiceException extends RuntimeException {
 
+  /**
+   * Instantiates a new Graph ql service exception.
+   *
+   * @param message the message
+   */
   public GraphQLServiceException(final String message) {
     super(message);
   }

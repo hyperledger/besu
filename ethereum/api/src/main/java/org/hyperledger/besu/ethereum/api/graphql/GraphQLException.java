@@ -23,9 +23,15 @@ import java.util.Map;
 import graphql.ErrorType;
 import graphql.language.SourceLocation;
 
+/** The type Graph ql exception. */
 class GraphQLException extends RuntimeException implements graphql.GraphQLError {
   private final GraphQLError error;
 
+  /**
+   * Instantiates a new Graph ql exception.
+   *
+   * @param error the error
+   */
   GraphQLException(final GraphQLError error) {
 
     super(error.getMessage());

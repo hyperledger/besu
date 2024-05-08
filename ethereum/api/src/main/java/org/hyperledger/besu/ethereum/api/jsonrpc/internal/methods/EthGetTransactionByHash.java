@@ -28,11 +28,18 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 
 import java.util.Optional;
 
+/** The type Eth get transaction by hash. */
 public class EthGetTransactionByHash implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
   private final TransactionPool transactionPool;
 
+  /**
+   * Instantiates a new Eth get transaction by hash.
+   *
+   * @param blockchain the blockchain
+   * @param transactionPool the transaction pool
+   */
   public EthGetTransactionByHash(
       final BlockchainQueries blockchain, final TransactionPool transactionPool) {
     this.blockchain = blockchain;

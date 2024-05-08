@@ -22,6 +22,7 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
+/** The type Json rpc request id. */
 public class JsonRpcRequestId {
 
   private static final Class<?>[] VALID_ID_TYPES =
@@ -31,6 +32,11 @@ public class JsonRpcRequestId {
 
   private final Object id;
 
+  /**
+   * Instantiates a new Json rpc request id.
+   *
+   * @param id the id
+   */
   @JsonCreator
   public JsonRpcRequestId(final Object id) {
     if (isRequestTypeInvalid(id)) {
@@ -39,6 +45,11 @@ public class JsonRpcRequestId {
     this.id = id;
   }
 
+  /**
+   * Gets value.
+   *
+   * @return the value
+   */
   @JsonValue
   public Object getValue() {
     return id;

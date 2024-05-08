@@ -20,10 +20,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+/** The type Eth new block filter. */
 public class EthNewBlockFilter implements JsonRpcMethod {
 
   private final FilterManager filterManager;
 
+  /**
+   * Instantiates a new Eth new block filter.
+   *
+   * @param filterManager the filter manager
+   */
   public EthNewBlockFilter(final FilterManager filterManager) {
     this.filterManager = filterManager;
   }

@@ -34,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
+/** The type Execute transaction step. */
 public class ExecuteTransactionStep implements Function<TransactionTrace, TransactionTrace> {
 
   private final TraceBlock.ChainUpdater chainUpdater;
@@ -43,6 +44,16 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
   private final ProtocolSpec protocolSpec;
   private final Block block;
 
+  /**
+   * Instantiates a new Execute transaction step.
+   *
+   * @param chainUpdater the chain updater
+   * @param transactionProcessor the transaction processor
+   * @param blockchain the blockchain
+   * @param tracer the tracer
+   * @param protocolSpec the protocol spec
+   * @param block the block
+   */
   public ExecuteTransactionStep(
       final TraceBlock.ChainUpdater chainUpdater,
       final MainnetTransactionProcessor transactionProcessor,
@@ -58,6 +69,15 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
     this.block = block;
   }
 
+  /**
+   * Instantiates a new Execute transaction step.
+   *
+   * @param chainUpdater the chain updater
+   * @param transactionProcessor the transaction processor
+   * @param blockchain the blockchain
+   * @param tracer the tracer
+   * @param protocolSpec the protocol spec
+   */
   public ExecuteTransactionStep(
       final TraceBlock.ChainUpdater chainUpdater,
       final MainnetTransactionProcessor transactionProcessor,

@@ -35,6 +35,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/** The type Scalars. */
 public class Scalars {
 
   private Scalars() {}
@@ -366,6 +367,11 @@ public class Scalars {
         }
       };
 
+  /**
+   * Address scalar graph ql scalar type.
+   *
+   * @return the graph ql scalar type
+   */
   public static GraphQLScalarType addressScalar() {
     return GraphQLScalarType.newScalar()
         .name("Address")
@@ -374,6 +380,11 @@ public class Scalars {
         .build();
   }
 
+  /**
+   * Big int scalar graph ql scalar type.
+   *
+   * @return the graph ql scalar type
+   */
   public static GraphQLScalarType bigIntScalar() {
     return GraphQLScalarType.newScalar()
         .name("BigInt")
@@ -382,6 +393,11 @@ public class Scalars {
         .build();
   }
 
+  /**
+   * Bytes scalar graph ql scalar type.
+   *
+   * @return the graph ql scalar type
+   */
   public static GraphQLScalarType bytesScalar() {
     return GraphQLScalarType.newScalar()
         .name("Bytes")
@@ -390,6 +406,11 @@ public class Scalars {
         .build();
   }
 
+  /**
+   * Bytes 32 scalar graph ql scalar type.
+   *
+   * @return the graph ql scalar type
+   */
   public static GraphQLScalarType bytes32Scalar() {
     return GraphQLScalarType.newScalar()
         .name("Bytes32")
@@ -398,6 +419,11 @@ public class Scalars {
         .build();
   }
 
+  /**
+   * Long scalar graph ql scalar type.
+   *
+   * @return the graph ql scalar type
+   */
   public static GraphQLScalarType longScalar() {
     return GraphQLScalarType.newScalar()
         .name("Long")

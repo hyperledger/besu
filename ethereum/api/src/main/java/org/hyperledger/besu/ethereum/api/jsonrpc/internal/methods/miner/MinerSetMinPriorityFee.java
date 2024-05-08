@@ -28,11 +28,17 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Miner set min priority fee. */
 public class MinerSetMinPriorityFee implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(MinerSetMinPriorityFee.class);
 
   private final MiningParameters miningParameters;
 
+  /**
+   * Instantiates a new Miner set min priority fee.
+   *
+   * @param miningParameters the mining parameters
+   */
   public MinerSetMinPriorityFee(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
   }

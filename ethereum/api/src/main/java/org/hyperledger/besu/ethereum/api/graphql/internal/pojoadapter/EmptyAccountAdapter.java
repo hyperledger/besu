@@ -21,9 +21,15 @@ import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Empty account adapter. */
 public class EmptyAccountAdapter extends AccountAdapter {
   private final Address address;
 
+  /**
+   * Instantiates a new Empty account adapter.
+   *
+   * @param address the address
+   */
   public EmptyAccountAdapter(final Address address) {
     super(null);
     this.address = address;

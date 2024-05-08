@@ -22,10 +22,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
+/** The type Eth get uncle count by block hash. */
 public class EthGetUncleCountByBlockHash implements JsonRpcMethod {
 
   private final BlockchainQueries blockchain;
 
+  /**
+   * Instantiates a new Eth get uncle count by block hash.
+   *
+   * @param blockchain the blockchain
+   */
   public EthGetUncleCountByBlockHash(final BlockchainQueries blockchain) {
     this.blockchain = blockchain;
   }

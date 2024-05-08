@@ -24,11 +24,22 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import java.util.function.Supplier;
 
+/** The type Eth get balance. */
 public class EthGetBalance extends AbstractBlockParameterOrBlockHashMethod {
+  /**
+   * Instantiates a new Eth get balance.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public EthGetBalance(final BlockchainQueries blockchainQueries) {
     super(blockchainQueries);
   }
 
+  /**
+   * Instantiates a new Eth get balance.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public EthGetBalance(final Supplier<BlockchainQueries> blockchainQueries) {
     super(blockchainQueries);
   }

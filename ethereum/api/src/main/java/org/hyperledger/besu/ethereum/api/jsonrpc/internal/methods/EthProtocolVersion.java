@@ -25,10 +25,16 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
 import java.util.OptionalInt;
 import java.util.Set;
 
+/** The type Eth protocol version. */
 public class EthProtocolVersion implements JsonRpcMethod {
 
   private final Integer highestEthVersion;
 
+  /**
+   * Instantiates a new Eth protocol version.
+   *
+   * @param supportedCapabilities the supported capabilities
+   */
   public EthProtocolVersion(final Set<Capability> supportedCapabilities) {
     final OptionalInt version =
         supportedCapabilities.stream()

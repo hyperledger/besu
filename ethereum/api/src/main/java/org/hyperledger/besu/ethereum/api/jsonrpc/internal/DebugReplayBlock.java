@@ -33,12 +33,20 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Debug replay block. */
 public class DebugReplayBlock extends AbstractBlockParameterMethod {
   private static final Logger LOG = LoggerFactory.getLogger(DebugReplayBlock.class);
 
   private final ProtocolContext protocolContext;
   private final ProtocolSchedule protocolSchedule;
 
+  /**
+   * Instantiates a new Debug replay block.
+   *
+   * @param blockchain the blockchain
+   * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   */
   public DebugReplayBlock(
       final BlockchainQueries blockchain,
       final ProtocolContext protocolContext,

@@ -32,9 +32,17 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Engine exchange capabilities. */
 public class EngineExchangeCapabilities extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EngineExchangeCapabilities.class);
 
+  /**
+   * Instantiates a new Engine exchange capabilities.
+   *
+   * @param vertx the vertx
+   * @param protocolContext the protocol context
+   * @param engineCallListener the engine call listener
+   */
   public EngineExchangeCapabilities(
       final Vertx vertx,
       final ProtocolContext protocolContext,

@@ -26,8 +26,18 @@ import java.util.Optional;
 
 import io.vertx.core.Vertx;
 
+/** The type Engine forkchoice updated v1. */
 public class EngineForkchoiceUpdatedV1 extends AbstractEngineForkchoiceUpdated {
 
+  /**
+   * Instantiates a new Engine forkchoice updated v1.
+   *
+   * @param vertx the vertx
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param mergeCoordinator the merge coordinator
+   * @param engineCallListener the engine call listener
+   */
   public EngineForkchoiceUpdatedV1(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,

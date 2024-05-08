@@ -21,6 +21,7 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Readiness check. */
 public class ReadinessCheck implements HealthService.HealthCheck {
   private static final Logger LOG = LoggerFactory.getLogger(ReadinessCheck.class);
   private static final int DEFAULT_MINIMUM_PEERS = 1;
@@ -28,6 +29,12 @@ public class ReadinessCheck implements HealthService.HealthCheck {
   private final P2PNetwork p2pNetwork;
   private final Synchronizer synchronizer;
 
+  /**
+   * Instantiates a new Readiness check.
+   *
+   * @param p2pNetwork the p 2 p network
+   * @param synchronizer the synchronizer
+   */
   public ReadinessCheck(final P2PNetwork p2pNetwork, final Synchronizer synchronizer) {
     this.p2pNetwork = p2pNetwork;
     this.synchronizer = synchronizer;

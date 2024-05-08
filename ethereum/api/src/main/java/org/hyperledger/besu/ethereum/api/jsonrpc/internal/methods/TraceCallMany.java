@@ -45,10 +45,18 @@ import com.fasterxml.jackson.databind.JsonNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Trace call many. */
 public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(TraceCallMany.class);
 
+  /**
+   * Instantiates a new Trace call many.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   * @param transactionSimulator the transaction simulator
+   */
   public TraceCallMany(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
@@ -175,12 +183,14 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
   }
 
   private static class TransactionInvalidException extends RuntimeException {
+    /** Instantiates a new Transaction invalid exception. */
     TransactionInvalidException() {
       super();
     }
   }
 
   private static class EmptySimulatorResultException extends RuntimeException {
+    /** Instantiates a new Empty simulator result exception. */
     EmptySimulatorResultException() {
       super();
     }

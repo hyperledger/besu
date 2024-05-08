@@ -24,10 +24,16 @@ import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/** The type Rpc modules. */
 public class RpcModules implements JsonRpcMethod {
 
   private final Map<String, String> moduleVersions;
 
+  /**
+   * Instantiates a new Rpc modules.
+   *
+   * @param modulesList the modules list
+   */
   public RpcModules(final Collection<String> modulesList) {
     this.moduleVersions =
         modulesList.stream()

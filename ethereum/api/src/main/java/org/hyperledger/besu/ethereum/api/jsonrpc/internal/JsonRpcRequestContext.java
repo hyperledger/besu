@@ -21,29 +21,61 @@ import java.util.function.Supplier;
 
 import io.vertx.ext.auth.User;
 
+/** The type Json rpc request context. */
 public class JsonRpcRequestContext {
 
   private final JsonRpcRequest jsonRpcRequest;
   private final Optional<User> user;
   private final Supplier<Boolean> alive;
 
+  /**
+   * Instantiates a new Json rpc request context.
+   *
+   * @param jsonRpcRequest the json rpc request
+   */
   public JsonRpcRequestContext(final JsonRpcRequest jsonRpcRequest) {
     this(jsonRpcRequest, () -> true);
   }
 
+  /**
+   * Instantiates a new Json rpc request context.
+   *
+   * @param jsonRpcRequest the json rpc request
+   * @param alive the alive
+   */
   public JsonRpcRequestContext(final JsonRpcRequest jsonRpcRequest, final Supplier<Boolean> alive) {
     this(jsonRpcRequest, Optional.empty(), alive);
   }
 
+  /**
+   * Instantiates a new Json rpc request context.
+   *
+   * @param jsonRpcRequest the json rpc request
+   * @param user the user
+   */
   public JsonRpcRequestContext(final JsonRpcRequest jsonRpcRequest, final User user) {
     this(jsonRpcRequest, Optional.of(user), () -> true);
   }
 
+  /**
+   * Instantiates a new Json rpc request context.
+   *
+   * @param jsonRpcRequest the json rpc request
+   * @param user the user
+   * @param alive the alive
+   */
   public JsonRpcRequestContext(
       final JsonRpcRequest jsonRpcRequest, final User user, final Supplier<Boolean> alive) {
     this(jsonRpcRequest, Optional.of(user), alive);
   }
 
+  /**
+   * Instantiates a new Json rpc request context.
+   *
+   * @param jsonRpcRequest the json rpc request
+   * @param user the user
+   * @param alive the alive
+   */
   public JsonRpcRequestContext(
       final JsonRpcRequest jsonRpcRequest,
       final Optional<User> user,
@@ -53,22 +85,56 @@ public class JsonRpcRequestContext {
     this.alive = alive;
   }
 
+  /**
+   * Gets request.
+   *
+   * @return the request
+   */
   public JsonRpcRequest getRequest() {
     return jsonRpcRequest;
   }
 
+  /**
+   * Gets user.
+   *
+   * @return the user
+   */
   public Optional<User> getUser() {
     return user;
   }
 
+  /**
+   * Gets required parameter.
+   *
+   * @param <T> the type parameter
+   * @param index the index
+   * @param paramClass the param class
+   * @return the required parameter
+   */
   public <T> T getRequiredParameter(final int index, final Class<T> paramClass) {
     return jsonRpcRequest.getRequiredParameter(index, paramClass);
   }
 
+  /**
+   * Gets optional parameter.
+   *
+   * @param <T> the type parameter
+   * @param index the index
+   * @param paramClass the param class
+   * @return the optional parameter
+   */
   public <T> Optional<T> getOptionalParameter(final int index, final Class<T> paramClass) {
     return jsonRpcRequest.getOptionalParameter(index, paramClass);
   }
 
+  /**
+   * Gets optional list.
+   *
+   * @param <T> the type parameter
+   * @param index the index
+   * @param listOf the list of
+   * @return the optional list
+   */
   public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> listOf) {
     return jsonRpcRequest.getOptionalList(index, listOf);
   }
@@ -90,6 +156,11 @@ public class JsonRpcRequestContext {
     return Objects.hash(jsonRpcRequest, user);
   }
 
+  /**
+   * Is alive boolean.
+   *
+   * @return the boolean
+   */
   public boolean isAlive() {
     return alive.get();
   }

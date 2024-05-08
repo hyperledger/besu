@@ -24,9 +24,16 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+/** The type Eth get miner data by block number. */
 public class EthGetMinerDataByBlockNumber extends AbstractBlockParameterMethod {
   private final ProtocolSchedule protocolSchedule;
 
+  /**
+   * Instantiates a new Eth get miner data by block number.
+   *
+   * @param blockchain the blockchain
+   * @param protocolSchedule the protocol schedule
+   */
   public EthGetMinerDataByBlockNumber(
       final BlockchainQueries blockchain, final ProtocolSchedule protocolSchedule) {
     super(blockchain);

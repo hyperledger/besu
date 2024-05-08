@@ -24,8 +24,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Web 3 sha 3. */
 public class Web3Sha3 implements JsonRpcMethod {
 
+  /** Instantiates a new Web 3 sha 3. */
   public Web3Sha3() {}
 
   @Override

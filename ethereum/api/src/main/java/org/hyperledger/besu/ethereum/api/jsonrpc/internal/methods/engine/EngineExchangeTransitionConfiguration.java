@@ -38,10 +38,12 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Engine exchange transition configuration. */
 public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG =
       LoggerFactory.getLogger(EngineExchangeTransitionConfiguration.class);
 
+  /** The constant FALLBACK_TTD_DEFAULT. */
   // use (2^256 - 2^10) if engine is enabled in the absence of a TTD configuration
   static final Difficulty FALLBACK_TTD_DEFAULT =
       Difficulty.fromHexString(
@@ -49,6 +51,13 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
 
   private static final Supplier<ObjectMapper> mapperSupplier = Suppliers.memoize(ObjectMapper::new);
 
+  /**
+   * Instantiates a new Engine exchange transition configuration.
+   *
+   * @param vertx the vertx
+   * @param protocolContext the protocol context
+   * @param engineCallListener the engine call listener
+   */
   public EngineExchangeTransitionConfiguration(
       final Vertx vertx,
       final ProtocolContext protocolContext,

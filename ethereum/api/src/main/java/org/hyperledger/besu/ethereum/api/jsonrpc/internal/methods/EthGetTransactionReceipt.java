@@ -27,12 +27,19 @@ import org.hyperledger.besu.ethereum.api.query.TransactionReceiptWithMetadata;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.TransactionReceiptType;
 
+/** The type Eth get transaction receipt. */
 public class EthGetTransactionReceipt implements JsonRpcMethod {
 
   private final BlockchainQueries blockchainQueries;
 
   private final ProtocolSchedule protocolSchedule;
 
+  /**
+   * Instantiates a new Eth get transaction receipt.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   */
   public EthGetTransactionReceipt(
       final BlockchainQueries blockchainQueries, final ProtocolSchedule protocolSchedule) {
     this.blockchainQueries = blockchainQueries;

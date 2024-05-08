@@ -19,10 +19,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+/** The type Web 3 client version. */
 public class Web3ClientVersion implements JsonRpcMethod {
 
   private final String clientVersion;
 
+  /**
+   * Instantiates a new Web 3 client version.
+   *
+   * @param clientVersion the client version
+   */
   public Web3ClientVersion(final String clientVersion) {
     this.clientVersion = clientVersion;
   }

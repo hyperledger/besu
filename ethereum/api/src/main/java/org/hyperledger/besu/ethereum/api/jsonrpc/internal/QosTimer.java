@@ -20,6 +20,7 @@ import java.util.function.Consumer;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 
+/** The type Qos timer. */
 public class QosTimer {
 
   private final Vertx timerVertx;
@@ -29,6 +30,13 @@ public class QosTimer {
   private final long periodMillis;
   private final Consumer<Long> consumerTask;
 
+  /**
+   * Instantiates a new Qos timer.
+   *
+   * @param timerVertx the timer vertx
+   * @param periodMillis the period millis
+   * @param consumerTask the consumer task
+   */
   public QosTimer(
       final Vertx timerVertx, final long periodMillis, final Consumer<Long> consumerTask) {
     this.timerVertx = timerVertx;
@@ -37,16 +45,27 @@ public class QosTimer {
     resetTimer();
   }
 
+  /** Reset timer. */
   public void resetTimer() {
     lastReset.set(System.currentTimeMillis());
     resetTimerHandler(timerHandler());
   }
 
+  /**
+   * Reset timer handler.
+   *
+   * @param timerHandler the timer handler
+   */
   void resetTimerHandler(final Handler<Long> timerHandler) {
     timerVertx.cancelTimer(timerId.get());
     timerId.set(timerVertx.setTimer(periodMillis, timerHandler));
   }
 
+  /**
+   * Timer handler handler.
+   *
+   * @return the handler
+   */
   Handler<Long> timerHandler() {
     return z -> {
       var lastCall = getLastCallMillis();
@@ -58,6 +77,11 @@ public class QosTimer {
     };
   }
 
+  /**
+   * Gets last call millis.
+   *
+   * @return the last call millis
+   */
   long getLastCallMillis() {
     return lastReset.get();
   }

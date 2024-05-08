@@ -28,11 +28,20 @@ import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
 
+/** The type Traced json rpc processor. */
 public class TracedJsonRpcProcessor implements JsonRpcProcessor {
 
   private final JsonRpcProcessor rpcProcessor;
+
+  /** The Rpc errors counter. */
   protected final LabelledMetric<Counter> rpcErrorsCounter;
 
+  /**
+   * Instantiates a new Traced json rpc processor.
+   *
+   * @param rpcProcessor the rpc processor
+   * @param metricsSystem the metrics system
+   */
   public TracedJsonRpcProcessor(
       final JsonRpcProcessor rpcProcessor, final MetricsSystem metricsSystem) {
     this.rpcProcessor = rpcProcessor;

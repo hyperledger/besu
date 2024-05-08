@@ -14,14 +14,21 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter;
 
+/** The type Filter timeout monitor. */
 class FilterTimeoutMonitor {
 
   private final FilterRepository filterRepository;
 
+  /**
+   * Instantiates a new Filter timeout monitor.
+   *
+   * @param filterRepository the filter repository
+   */
   FilterTimeoutMonitor(final FilterRepository filterRepository) {
     this.filterRepository = filterRepository;
   }
 
+  /** Check filters. */
   void checkFilters() {
     filterRepository
         .getFilters()

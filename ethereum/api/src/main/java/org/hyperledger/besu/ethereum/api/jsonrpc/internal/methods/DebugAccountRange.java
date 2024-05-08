@@ -35,14 +35,25 @@ import java.util.stream.Collectors;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Debug account range. */
 public class DebugAccountRange implements JsonRpcMethod {
 
   private final Supplier<BlockchainQueries> blockchainQueries;
 
+  /**
+   * Instantiates a new Debug account range.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public DebugAccountRange(final BlockchainQueries blockchainQueries) {
     this(Suppliers.ofInstance(blockchainQueries));
   }
 
+  /**
+   * Instantiates a new Debug account range.
+   *
+   * @param blockchainQueries the blockchain queries
+   */
   public DebugAccountRange(final Supplier<BlockchainQueries> blockchainQueries) {
     this.blockchainQueries = blockchainQueries;
   }

@@ -32,9 +32,17 @@ import java.util.stream.Collectors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Trace get. */
 public class TraceGet extends AbstractTraceByHash implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(TraceGet.class);
 
+  /**
+   * Instantiates a new Trace get.
+   *
+   * @param blockTracerSupplier the block tracer supplier
+   * @param blockchainQueries the blockchain queries
+   * @param protocolSchedule the protocol schedule
+   */
   public TraceGet(
       final Supplier<BlockTracer> blockTracerSupplier,
       final BlockchainQueries blockchainQueries,

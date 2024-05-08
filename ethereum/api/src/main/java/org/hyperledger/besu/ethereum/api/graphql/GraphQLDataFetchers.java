@@ -62,10 +62,16 @@ import graphql.schema.DataFetcher;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/** The type Graph ql data fetchers. */
 public class GraphQLDataFetchers {
 
   private final Integer highestEthVersion;
 
+  /**
+   * Instantiates a new Graph ql data fetchers.
+   *
+   * @param supportedCapabilities the supported capabilities
+   */
   public GraphQLDataFetchers(final Set<Capability> supportedCapabilities) {
     final OptionalInt version =
         supportedCapabilities.stream()
@@ -75,10 +81,20 @@ public class GraphQLDataFetchers {
     highestEthVersion = version.isPresent() ? version.getAsInt() : null;
   }
 
+  /**
+   * Gets protocol version data fetcher.
+   *
+   * @return the protocol version data fetcher
+   */
   DataFetcher<Optional<Integer>> getProtocolVersionDataFetcher() {
     return dataFetchingEnvironment -> Optional.of(highestEthVersion);
   }
 
+  /**
+   * Gets send raw transaction data fetcher.
+   *
+   * @return the send raw transaction data fetcher
+   */
   DataFetcher<Optional<Bytes32>> getSendRawTransactionDataFetcher() {
     return dataFetchingEnvironment -> {
       try {
@@ -100,6 +116,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets syncing data fetcher.
+   *
+   * @return the syncing data fetcher
+   */
   DataFetcher<Optional<SyncStateAdapter>> getSyncingDataFetcher() {
     return dataFetchingEnvironment -> {
       final Synchronizer synchronizer =
@@ -109,6 +130,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets pending state data fetcher.
+   *
+   * @return the pending state data fetcher
+   */
   DataFetcher<Optional<PendingStateAdapter>> getPendingStateDataFetcher() {
     return dataFetchingEnvironment -> {
       final TransactionPool txPool =
@@ -117,6 +143,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets gas price data fetcher.
+   *
+   * @return the gas price data fetcher
+   */
   DataFetcher<Optional<Wei>> getGasPriceDataFetcher() {
     return dataFetchingEnvironment -> {
       final GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
@@ -131,6 +162,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets chain id data fetcher.
+   *
+   * @return the chain id data fetcher
+   */
   public DataFetcher<Optional<BigInteger>> getChainIdDataFetcher() {
     return dataFetchingEnvironment -> {
       final GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
@@ -138,6 +174,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets max priority fee per gas data fetcher.
+   *
+   * @return the max priority fee per gas data fetcher
+   */
   public DataFetcher<Wei> getMaxPriorityFeePerGasDataFetcher() {
     return dataFetchingEnvironment -> {
       final BlockchainQueries blockchainQuery =
@@ -146,6 +187,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets range block data fetcher.
+   *
+   * @return the range block data fetcher
+   */
   DataFetcher<List<NormalBlockAdapter>> getRangeBlockDataFetcher() {
 
     return dataFetchingEnvironment -> {
@@ -173,6 +219,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets block data fetcher.
+   *
+   * @return the block data fetcher
+   */
   public DataFetcher<Optional<NormalBlockAdapter>> getBlockDataFetcher() {
 
     return dataFetchingEnvironment -> {
@@ -198,6 +249,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets account data fetcher.
+   *
+   * @return the account data fetcher
+   */
   DataFetcher<Optional<AccountAdapter>> getAccountDataFetcher() {
     return dataFetchingEnvironment -> {
       final BlockchainQueries blockchainQuery =
@@ -241,6 +297,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets logs data fetcher.
+   *
+   * @return the logs data fetcher
+   */
   DataFetcher<Optional<List<LogAdapter>>> getLogsDataFetcher() {
     return dataFetchingEnvironment -> {
       final BlockchainQueries blockchainQuery =
@@ -287,6 +348,11 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Gets transaction data fetcher.
+   *
+   * @return the transaction data fetcher
+   */
   DataFetcher<Optional<TransactionAdapter>> getTransactionDataFetcher() {
     return dataFetchingEnvironment -> {
       final BlockchainQueries blockchain =

@@ -17,8 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.health;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Liveness check. */
 public class LivenessCheck implements HealthService.HealthCheck {
   private static final Logger LOG = LoggerFactory.getLogger(LivenessCheck.class);
+
+  /** Default constructor. */
+  public LivenessCheck() {}
 
   @Override
   public boolean isHealthy(final HealthService.ParamSource params) {

@@ -38,6 +38,7 @@ import com.google.common.base.Suppliers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Eth send raw transaction. */
 public class EthSendRawTransaction implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(EthSendRawTransaction.class);
 
@@ -45,10 +46,21 @@ public class EthSendRawTransaction implements JsonRpcMethod {
 
   private final Supplier<TransactionPool> transactionPool;
 
+  /**
+   * Instantiates a new Eth send raw transaction.
+   *
+   * @param transactionPool the transaction pool
+   */
   public EthSendRawTransaction(final TransactionPool transactionPool) {
     this(Suppliers.ofInstance(transactionPool), false);
   }
 
+  /**
+   * Instantiates a new Eth send raw transaction.
+   *
+   * @param transactionPool the transaction pool
+   * @param sendEmptyHashOnInvalidBlock the send empty hash on invalid block
+   */
   public EthSendRawTransaction(
       final Supplier<TransactionPool> transactionPool, final boolean sendEmptyHashOnInvalidBlock) {
     this.transactionPool = transactionPool;

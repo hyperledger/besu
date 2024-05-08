@@ -37,12 +37,22 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
+/** The type Debug standard trace block to file. */
 public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
 
+  /** The Blockchain queries. */
   protected final Supplier<BlockchainQueries> blockchainQueries;
+
   private final Supplier<TransactionTracer> transactionTracerSupplier;
   private final Path dataDir;
 
+  /**
+   * Instantiates a new Debug standard trace block to file.
+   *
+   * @param transactionTracerSupplier the transaction tracer supplier
+   * @param blockchainQueries the blockchain queries
+   * @param dataDir the data dir
+   */
   public DebugStandardTraceBlockToFile(
       final Supplier<TransactionTracer> transactionTracerSupplier,
       final BlockchainQueries blockchainQueries,
@@ -78,6 +88,13 @@ public class DebugStandardTraceBlockToFile implements JsonRpcMethod {
                 requestContext.getRequest().getId(), RpcErrorType.BLOCK_NOT_FOUND));
   }
 
+  /**
+   * Trace block list.
+   *
+   * @param block the block
+   * @param transactionTraceParams the transaction trace params
+   * @return the list
+   */
   protected List<String> traceBlock(
       final Block block, final Optional<TransactionTraceParams> transactionTraceParams) {
     return Tracer.processTracing(

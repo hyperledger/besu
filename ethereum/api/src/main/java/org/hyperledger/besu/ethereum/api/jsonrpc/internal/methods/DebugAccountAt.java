@@ -42,15 +42,28 @@ import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
 
+/** The type Debug account at. */
 public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
   private final Supplier<BlockTracer> blockTracerSupplier;
 
+  /**
+   * Instantiates a new Debug account at.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param blockTracerSupplier the block tracer supplier
+   */
   public DebugAccountAt(
       final BlockchainQueries blockchainQueries, final Supplier<BlockTracer> blockTracerSupplier) {
     super(blockchainQueries);
     this.blockTracerSupplier = blockTracerSupplier;
   }
 
+  /**
+   * Instantiates a new Debug account at.
+   *
+   * @param blockchainQueries the blockchain queries
+   * @param blockTracerSupplier the block tracer supplier
+   */
   public DebugAccountAt(
       final Supplier<BlockchainQueries> blockchainQueries,
       final Supplier<BlockTracer> blockTracerSupplier) {
@@ -140,6 +153,15 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
                 requestContext.getRequest().getId(), RpcErrorType.WORLD_STATE_UNAVAILABLE));
   }
 
+  /**
+   * Debug account at result immutable debug account at result.
+   *
+   * @param code the code
+   * @param nonce the nonce
+   * @param balance the balance
+   * @param codeHash the code hash
+   * @return the immutable debug account at result
+   */
   protected ImmutableDebugAccountAtResult debugAccountAtResult(
       final Bytes code, final String nonce, final String balance, final String codeHash) {
     return ImmutableDebugAccountAtResult.builder()

@@ -30,6 +30,7 @@ import com.google.common.base.Suppliers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Eth get block by number. */
 public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
 
   private final BlockResultFactory blockResult;
@@ -37,6 +38,13 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
   private static final Logger LOGGER = LoggerFactory.getLogger(EthGetBlockByNumber.class);
   private final Synchronizer synchronizer;
 
+  /**
+   * Instantiates a new Eth get block by number.
+   *
+   * @param blockchain the blockchain
+   * @param blockResult the block result
+   * @param synchronizer the synchronizer
+   */
   public EthGetBlockByNumber(
       final BlockchainQueries blockchain,
       final BlockResultFactory blockResult,
@@ -44,6 +52,14 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
     this(Suppliers.ofInstance(blockchain), blockResult, synchronizer, false);
   }
 
+  /**
+   * Instantiates a new Eth get block by number.
+   *
+   * @param blockchain the blockchain
+   * @param blockResult the block result
+   * @param synchronizer the synchronizer
+   * @param includeCoinbase the include coinbase
+   */
   public EthGetBlockByNumber(
       final Supplier<BlockchainQueries> blockchain,
       final BlockResultFactory blockResult,

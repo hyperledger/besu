@@ -30,6 +30,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
+/** The type Trace flat transaction step. */
 public class TraceFlatTransactionStep
     implements Function<TransactionTrace, CompletableFuture<Stream<FlatTrace>>> {
 
@@ -37,6 +38,13 @@ public class TraceFlatTransactionStep
   private final Block block;
   private final Optional<FilterParameter> filterParameter;
 
+  /**
+   * Instantiates a new Trace flat transaction step.
+   *
+   * @param protocolSchedule the protocol schedule
+   * @param block the block
+   * @param filterParameter the filter parameter
+   */
   public TraceFlatTransactionStep(
       final ProtocolSchedule protocolSchedule,
       final Block block,

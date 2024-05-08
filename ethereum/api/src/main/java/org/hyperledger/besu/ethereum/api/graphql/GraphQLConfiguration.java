@@ -26,8 +26,11 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
+/** The type Graph ql configuration. */
 public class GraphQLConfiguration {
   private static final String DEFAULT_GRAPHQL_HTTP_HOST = "127.0.0.1";
+
+  /** The constant DEFAULT_GRAPHQL_HTTP_PORT. */
   public static final int DEFAULT_GRAPHQL_HTTP_PORT = 8547;
 
   private boolean enabled;
@@ -37,6 +40,11 @@ public class GraphQLConfiguration {
   private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
+  /**
+   * Create default graph ql configuration.
+   *
+   * @return the graph ql configuration
+   */
   public static GraphQLConfiguration createDefault() {
     final GraphQLConfiguration config = new GraphQLConfiguration();
     config.setEnabled(false);
@@ -48,52 +56,112 @@ public class GraphQLConfiguration {
 
   private GraphQLConfiguration() {}
 
+  /**
+   * Is enabled boolean.
+   *
+   * @return the boolean
+   */
   public boolean isEnabled() {
     return enabled;
   }
 
+  /**
+   * Sets enabled.
+   *
+   * @param enabled the enabled
+   */
   public void setEnabled(final boolean enabled) {
     this.enabled = enabled;
   }
 
+  /**
+   * Gets port.
+   *
+   * @return the port
+   */
   public int getPort() {
     return port;
   }
 
+  /**
+   * Sets port.
+   *
+   * @param port the port
+   */
   public void setPort(final int port) {
     this.port = port;
   }
 
+  /**
+   * Gets host.
+   *
+   * @return the host
+   */
   public String getHost() {
     return host;
   }
 
+  /**
+   * Sets host.
+   *
+   * @param host the host
+   */
   public void setHost(final String host) {
     this.host = host;
   }
 
+  /**
+   * Gets cors allowed domains.
+   *
+   * @return the cors allowed domains
+   */
   Collection<String> getCorsAllowedDomains() {
     return corsAllowedDomains;
   }
 
+  /**
+   * Sets cors allowed domains.
+   *
+   * @param corsAllowedDomains the cors allowed domains
+   */
   public void setCorsAllowedDomains(final List<String> corsAllowedDomains) {
     checkNotNull(corsAllowedDomains);
     this.corsAllowedDomains = corsAllowedDomains;
   }
 
+  /**
+   * Gets hosts allowlist.
+   *
+   * @return the hosts allowlist
+   */
   Collection<String> getHostsAllowlist() {
     return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
+  /**
+   * Sets hosts allowlist.
+   *
+   * @param hostsAllowlist the hosts allowlist
+   */
   public void setHostsAllowlist(final List<String> hostsAllowlist) {
     checkNotNull(hostsAllowlist);
     this.hostsAllowlist = hostsAllowlist;
   }
 
+  /**
+   * Gets http timeout sec.
+   *
+   * @return the http timeout sec
+   */
   public Long getHttpTimeoutSec() {
     return httpTimeoutSec;
   }
 
+  /**
+   * Sets http timeout sec.
+   *
+   * @param httpTimeoutSec the http timeout sec
+   */
   public void setHttpTimeoutSec(final long httpTimeoutSec) {
     this.httpTimeoutSec = httpTimeoutSec;
   }

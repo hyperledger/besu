@@ -25,11 +25,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFac
 import java.util.List;
 import java.util.stream.Collectors;
 
+/** The type Debug get bad blocks. */
 public class DebugGetBadBlocks implements JsonRpcMethod {
 
   private final ProtocolContext protocolContext;
   private final BlockResultFactory blockResultFactory;
 
+  /**
+   * Instantiates a new Debug get bad blocks.
+   *
+   * @param protocolContext the protocol context
+   * @param blockResultFactory the block result factory
+   */
   public DebugGetBadBlocks(
       final ProtocolContext protocolContext, final BlockResultFactory blockResultFactory) {
     this.protocolContext = protocolContext;

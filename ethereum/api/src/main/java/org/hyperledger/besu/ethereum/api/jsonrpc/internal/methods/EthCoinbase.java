@@ -25,10 +25,16 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
 import java.util.Optional;
 
+/** The type Eth coinbase. */
 public class EthCoinbase implements JsonRpcMethod {
 
   private final MiningCoordinator miningCoordinator;
 
+  /**
+   * Instantiates a new Eth coinbase.
+   *
+   * @param miningCoordinator the mining coordinator
+   */
   public EthCoinbase(final MiningCoordinator miningCoordinator) {
     this.miningCoordinator = miningCoordinator;
   }

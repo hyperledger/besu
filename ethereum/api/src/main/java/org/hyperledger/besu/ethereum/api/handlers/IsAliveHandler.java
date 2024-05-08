@@ -20,22 +20,46 @@ import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
+/** The type Is alive handler. */
 public class IsAliveHandler implements Supplier<Boolean> {
 
   private final AtomicBoolean alive;
 
+  /**
+   * Instantiates a new Is alive handler.
+   *
+   * @param alive the alive
+   */
   public IsAliveHandler(final boolean alive) {
     this(new AtomicBoolean(alive));
   }
 
+  /**
+   * Instantiates a new Is alive handler.
+   *
+   * @param alive the alive
+   */
   public IsAliveHandler(final AtomicBoolean alive) {
     this.alive = alive;
   }
 
+  /**
+   * Instantiates a new Is alive handler.
+   *
+   * @param ethScheduler the eth scheduler
+   * @param timeoutSec the timeout sec
+   */
   public IsAliveHandler(final EthScheduler ethScheduler, final long timeoutSec) {
     this(ethScheduler, new AtomicBoolean(true), timeoutSec);
   }
 
+  /**
+   * Instantiates a new Is alive handler.
+   *
+   * @param ethScheduler the eth scheduler
+   * @param alive the alive
+   * @param timeoutSec the timeout sec
+   */
   public IsAliveHandler(
       final EthScheduler ethScheduler, final AtomicBoolean alive, final long timeoutSec) {
     this.alive = alive;

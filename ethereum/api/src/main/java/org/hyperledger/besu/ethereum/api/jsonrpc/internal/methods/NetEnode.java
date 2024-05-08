@@ -25,10 +25,16 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 
 import java.util.Optional;
 
+/** The type Net enode. */
 public class NetEnode implements JsonRpcMethod {
 
   private final P2PNetwork p2pNetwork;
 
+  /**
+   * Instantiates a new Net enode.
+   *
+   * @param p2pNetwork the p 2 p network
+   */
   public NetEnode(final P2PNetwork p2pNetwork) {
     this.p2pNetwork = p2pNetwork;
   }

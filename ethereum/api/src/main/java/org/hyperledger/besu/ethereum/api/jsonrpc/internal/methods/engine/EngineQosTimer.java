@@ -21,12 +21,20 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Engine qos timer. */
 public class EngineQosTimer implements EngineCallListener {
+  /** The Qos timeout millis. */
   static final long QOS_TIMEOUT_MILLIS = 120000L;
+
   private static final Logger LOG = LoggerFactory.getLogger(EngineQosTimer.class);
 
   private final QosTimer qosTimer;
 
+  /**
+   * Instantiates a new Engine qos timer.
+   *
+   * @param vertx the vertx
+   */
   public EngineQosTimer(final Vertx vertx) {
     qosTimer = new QosTimer(vertx, QOS_TIMEOUT_MILLIS, lastCall -> logTimeoutWarning());
     qosTimer.resetTimer();
@@ -37,12 +45,18 @@ public class EngineQosTimer implements EngineCallListener {
     getQosTimer().resetTimer();
   }
 
+  /** Log timeout warning. */
   public void logTimeoutWarning() {
     LOG.warn(
         "Execution engine not called in {} seconds, consensus client may not be connected",
         QOS_TIMEOUT_MILLIS / 1000L);
   }
 
+  /**
+   * Gets qos timer.
+   *
+   * @return the qos timer
+   */
   @VisibleForTesting
   public QosTimer getQosTimer() {
     return qosTimer;

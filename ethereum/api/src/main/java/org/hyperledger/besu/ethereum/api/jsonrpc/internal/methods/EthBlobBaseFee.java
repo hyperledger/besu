@@ -27,12 +27,20 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 
+/** The type Eth blob base fee. */
 public class EthBlobBaseFee implements JsonRpcMethod {
 
+  /** The Blockchain. */
   final Blockchain blockchain;
 
   private final ProtocolSchedule protocolSchedule;
 
+  /**
+   * Instantiates a new Eth blob base fee.
+   *
+   * @param blockchain the blockchain
+   * @param protocolSchedule the protocol schedule
+   */
   public EthBlobBaseFee(final Blockchain blockchain, final ProtocolSchedule protocolSchedule) {
     this.blockchain = blockchain;
     this.protocolSchedule = protocolSchedule;

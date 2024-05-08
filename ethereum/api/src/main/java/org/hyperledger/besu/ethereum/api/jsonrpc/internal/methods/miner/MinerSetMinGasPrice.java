@@ -28,11 +28,17 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Miner set min gas price. */
 public class MinerSetMinGasPrice implements JsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(MinerSetMinGasPrice.class);
 
   private final MiningParameters miningParameters;
 
+  /**
+   * Instantiates a new Miner set min gas price.
+   *
+   * @param miningParameters the mining parameters
+   */
   public MinerSetMinGasPrice(final MiningParameters miningParameters) {
     this.miningParameters = miningParameters;
   }

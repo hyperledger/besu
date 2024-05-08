@@ -16,8 +16,14 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/** The type Graph ql success response. */
 public class GraphQLSuccessResponse extends GraphQLResponse {
 
+  /**
+   * Instantiates a new Graph ql success response.
+   *
+   * @param data the data
+   */
   public GraphQLSuccessResponse(final Object data) {
     super(data);
   }

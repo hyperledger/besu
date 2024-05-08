@@ -28,12 +28,22 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Engine forkchoice updated v2. */
 // TODO Withdrawals use composition instead? Want to make it more obvious that there is no
 // difference between V1/V2 code other than the method name
 public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
 
   private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV2.class);
 
+  /**
+   * Instantiates a new Engine forkchoice updated 2.
+   *
+   * @param vertx the vertx
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param mergeCoordinator the merge coordinator
+   * @param engineCallListener the engine call listener
+   */
   public EngineForkchoiceUpdatedV2(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,

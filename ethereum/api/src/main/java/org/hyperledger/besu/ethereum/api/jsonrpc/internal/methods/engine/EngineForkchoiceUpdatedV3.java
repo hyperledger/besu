@@ -31,11 +31,21 @@ import io.vertx.core.Vertx;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Engine forkchoice updated v3. */
 public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
   private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
   private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV3.class);
 
+  /**
+   * Instantiates a new Engine forkchoice updated v3.
+   *
+   * @param vertx the vertx
+   * @param protocolSchedule the protocol schedule
+   * @param protocolContext the protocol context
+   * @param mergeCoordinator the merge coordinator
+   * @param engineCallListener the engine call listener
+   */
   public EngineForkchoiceUpdatedV3(
       final Vertx vertx,
       final ProtocolSchedule protocolSchedule,

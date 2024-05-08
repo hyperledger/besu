@@ -87,6 +87,7 @@ import io.vertx.ext.web.handler.CorsHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Json rpc http service. */
 public class JsonRpcHttpService {
 
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcHttpService.class);
@@ -129,6 +130,7 @@ public class JsonRpcHttpService {
   private final int maxActiveConnections;
   private final AtomicInteger activeConnectionsCount = new AtomicInteger();
 
+  /** The Authentication service. */
   @VisibleForTesting public final Optional<AuthenticationService> authenticationService;
 
   private HttpServer httpServer;
@@ -169,6 +171,19 @@ public class JsonRpcHttpService {
         readinessService);
   }
 
+  /**
+   * Instantiates a new Json rpc http service.
+   *
+   * @param vertx the vertx
+   * @param dataDir the data dir
+   * @param config the config
+   * @param metricsSystem the metrics system
+   * @param natService the nat service
+   * @param methods the methods
+   * @param authenticationService the authentication service
+   * @param livenessService the liveness service
+   * @param readinessService the readiness service
+   */
   public JsonRpcHttpService(
       final Vertx vertx,
       final Path dataDir,
@@ -217,6 +232,11 @@ public class JsonRpcHttpService {
         config.getMaxActiveConnections() > 0, "Invalid max active connections configuration.");
   }
 
+  /**
+   * Start completable future.
+   *
+   * @return the completable future
+   */
   public CompletableFuture<?> start() {
     LOG.info("Starting JSON-RPC service on {}:{}", config.getHost(), config.getPort());
     LOG.debug("max number of active connections {}", maxActiveConnections);
@@ -523,6 +543,11 @@ public class JsonRpcHttpService {
     }
   }
 
+  /**
+   * Stop completable future.
+   *
+   * @return the completable future
+   */
   public CompletableFuture<?> stop() {
     if (httpServer == null) {
       return CompletableFuture.completedFuture(null);
@@ -541,6 +566,11 @@ public class JsonRpcHttpService {
     return resultFuture;
   }
 
+  /**
+   * Socket address inet socket address.
+   *
+   * @return the inet socket address
+   */
   public InetSocketAddress socketAddress() {
     if (httpServer == null) {
       return EMPTY_SOCKET_ADDRESS;
@@ -548,6 +578,11 @@ public class JsonRpcHttpService {
     return new InetSocketAddress(config.getHost(), httpServer.actualPort());
   }
 
+  /**
+   * Url string.
+   *
+   * @return the string
+   */
   @VisibleForTesting
   public String url() {
     if (httpServer == null) {

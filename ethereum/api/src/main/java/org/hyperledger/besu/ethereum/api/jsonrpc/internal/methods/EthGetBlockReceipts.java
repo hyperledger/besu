@@ -35,10 +35,17 @@ import java.util.stream.Collectors;
 
 import com.google.common.base.Suppliers;
 
+/** The type Eth get block receipts. */
 public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod {
 
   private final ProtocolSchedule protocolSchedule;
 
+  /**
+   * Instantiates a new Eth get block receipts.
+   *
+   * @param blockchain the blockchain
+   * @param protocolSchedule the protocol schedule
+   */
   public EthGetBlockReceipts(
       final BlockchainQueries blockchain, final ProtocolSchedule protocolSchedule) {
     super(Suppliers.ofInstance(blockchain));

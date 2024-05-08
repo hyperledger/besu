@@ -29,11 +29,17 @@ import java.util.concurrent.CompletableFuture;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Plugins reload configuration. */
 public class PluginsReloadConfiguration implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(PluginsReloadConfiguration.class);
   private final Map<String, BesuPlugin> namedPlugins;
 
+  /**
+   * Instantiates a new Plugins reload configuration.
+   *
+   * @param namedPlugins the named plugins
+   */
   public PluginsReloadConfiguration(final Map<String, BesuPlugin> namedPlugins) {
     this.namedPlugins = namedPlugins;
   }

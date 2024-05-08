@@ -20,7 +20,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
+/** The type Eth send transaction. */
 public class EthSendTransaction implements JsonRpcMethod {
+  /** Default constructor. */
+  public EthSendTransaction() {}
 
   @Override
   public String getName() {

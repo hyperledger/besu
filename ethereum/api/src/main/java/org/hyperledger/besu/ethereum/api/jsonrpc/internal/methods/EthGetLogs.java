@@ -32,6 +32,7 @@ import java.util.concurrent.atomic.AtomicReference;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Eth get logs. */
 public class EthGetLogs implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(EthGetLogs.class);
@@ -39,6 +40,12 @@ public class EthGetLogs implements JsonRpcMethod {
   private final BlockchainQueries blockchain;
   private final long maxLogRange;
 
+  /**
+   * Instantiates a new Eth get logs.
+   *
+   * @param blockchain the blockchain
+   * @param maxLogRange the max log range
+   */
   public EthGetLogs(final BlockchainQueries blockchain, final long maxLogRange) {
     this.blockchain = blockchain;
     this.maxLogRange = maxLogRange;

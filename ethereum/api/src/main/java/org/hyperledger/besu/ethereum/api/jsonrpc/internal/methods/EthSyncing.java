@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.SyncingResult;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 
+/** The type Eth syncing. */
 /*
  * SyncProgress retrieves the current progress of the syncing algorithm. If there's no sync
  * currently running, it returns false.
@@ -29,6 +30,11 @@ public class EthSyncing implements JsonRpcMethod {
 
   private final Synchronizer synchronizer;
 
+  /**
+   * Instantiates a new Eth syncing.
+   *
+   * @param synchronizer the synchronizer
+   */
   public EthSyncing(final Synchronizer synchronizer) {
     this.synchronizer = synchronizer;
   }

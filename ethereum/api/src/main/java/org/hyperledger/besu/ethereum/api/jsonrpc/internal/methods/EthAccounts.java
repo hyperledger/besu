@@ -19,7 +19,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 
+/** The type Eth accounts. */
 public class EthAccounts implements JsonRpcMethod {
+  /** Default constructor. */
+  public EthAccounts() {}
 
   @Override
   public String getName() {

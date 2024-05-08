@@ -41,6 +41,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Debug trace block. */
 public class DebugTraceBlock implements JsonRpcMethod {
 
   private static final Logger LOG = LoggerFactory.getLogger(DebugTraceBlock.class);
@@ -48,6 +49,13 @@ public class DebugTraceBlock implements JsonRpcMethod {
   private final BlockHeaderFunctions blockHeaderFunctions;
   private final BlockchainQueries blockchainQueries;
 
+  /**
+   * Instantiates a new Debug trace block.
+   *
+   * @param blockTracerSupplier the block tracer supplier
+   * @param blockHeaderFunctions the block header functions
+   * @param blockchainQueries the blockchain queries
+   */
   public DebugTraceBlock(
       final Supplier<BlockTracer> blockTracerSupplier,
       final BlockHeaderFunctions blockHeaderFunctions,

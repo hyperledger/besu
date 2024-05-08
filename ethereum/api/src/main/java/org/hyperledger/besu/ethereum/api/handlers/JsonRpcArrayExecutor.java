@@ -34,7 +34,16 @@ import io.vertx.core.json.JsonArray;
 import io.vertx.core.json.JsonObject;
 import io.vertx.ext.web.RoutingContext;
 
+/** The type Json rpc array executor. */
 public class JsonRpcArrayExecutor extends AbstractJsonRpcExecutor {
+  /**
+   * Instantiates a new Json rpc array executor.
+   *
+   * @param jsonRpcExecutor the json rpc executor
+   * @param tracer the tracer
+   * @param ctx the ctx
+   * @param jsonRpcConfiguration the json rpc configuration
+   */
   public JsonRpcArrayExecutor(
       final JsonRpcExecutor jsonRpcExecutor,
       final Tracer tracer,
@@ -67,6 +76,7 @@ public class JsonRpcArrayExecutor extends AbstractJsonRpcExecutor {
    *
    * @param rpcRequestBatch the batch of RPC requests.
    * @param streamer the JsonResponseStreamer to use.
+   * @throws IOException the io exception
    */
   public void executeRpcRequestBatch(
       final JsonArray rpcRequestBatch, final JsonResponseStreamer streamer) throws IOException {

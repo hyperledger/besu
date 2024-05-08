@@ -16,8 +16,14 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/** The type Graph ql error response. */
 public class GraphQLErrorResponse extends GraphQLResponse {
 
+  /**
+   * Instantiates a new Graph ql error response.
+   *
+   * @param errors the errors
+   */
   public GraphQLErrorResponse(final Object errors) {
     super(errors);
   }

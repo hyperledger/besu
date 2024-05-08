@@ -19,6 +19,7 @@ import java.time.Instant;
 
 import com.google.common.annotations.VisibleForTesting;
 
+/** The type Filter. */
 abstract class Filter {
 
   private static final Duration DEFAULT_EXPIRE_DURATION = Duration.ofMinutes(10);
@@ -26,28 +27,54 @@ abstract class Filter {
   private final String id;
   private Instant expireTime;
 
+  /**
+   * Instantiates a new Filter.
+   *
+   * @param id the id
+   */
   Filter(final String id) {
     this.id = id;
     resetExpireTime();
   }
 
+  /**
+   * Gets id.
+   *
+   * @return the id
+   */
   String getId() {
     return id;
   }
 
+  /** Reset expire time. */
   void resetExpireTime() {
     this.expireTime = Instant.now().plus(DEFAULT_EXPIRE_DURATION);
   }
 
+  /**
+   * Is expired boolean.
+   *
+   * @return the boolean
+   */
   boolean isExpired() {
     return Instant.now().isAfter(expireTime);
   }
 
+  /**
+   * Sets expire time.
+   *
+   * @param expireTime the expire time
+   */
   @VisibleForTesting
   void setExpireTime(final Instant expireTime) {
     this.expireTime = expireTime;
   }
 
+  /**
+   * Gets expire time.
+   *
+   * @return the expire time
+   */
   @VisibleForTesting
   Instant getExpireTime() {
     return expireTime;

@@ -14,8 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
+/** The type Json rpc service exception. */
 public class JsonRpcServiceException extends RuntimeException {
 
+  /**
+   * Instantiates a new Json rpc service exception.
+   *
+   * @param message the message
+   */
   public JsonRpcServiceException(final String message) {
     super(message);
   }

@@ -20,9 +20,13 @@ import io.vertx.ext.web.RoutingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/** The type Logging 403 error handler. */
 public class Logging403ErrorHandler implements Handler<RoutingContext> {
 
   private static final Logger LOG = LoggerFactory.getLogger(Logging403ErrorHandler.class);
+
+  /** Default constructor. */
+  public Logging403ErrorHandler() {}
 
   @Override
   public void handle(final RoutingContext event) {

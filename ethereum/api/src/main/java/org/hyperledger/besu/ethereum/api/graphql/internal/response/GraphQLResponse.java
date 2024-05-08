@@ -16,15 +16,31 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
 import java.util.Objects;
 
+/** The type Graph ql response. */
 public abstract class GraphQLResponse {
+  /**
+   * Gets type.
+   *
+   * @return the type
+   */
   public abstract GraphQLResponseType getType();
 
   private final Object result;
 
+  /**
+   * Instantiates a new Graph ql response.
+   *
+   * @param result the result
+   */
   GraphQLResponse(final Object result) {
     this.result = result;
   }
 
+  /**
+   * Gets result.
+   *
+   * @return the result
+   */
   public Object getResult() {
     return result;
   }

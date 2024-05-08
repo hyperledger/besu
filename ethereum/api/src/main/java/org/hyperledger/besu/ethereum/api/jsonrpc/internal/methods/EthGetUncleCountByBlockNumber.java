@@ -20,8 +20,14 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParame
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
+/** The type Eth get uncle count by block number. */
 public class EthGetUncleCountByBlockNumber extends AbstractBlockParameterMethod {
 
+  /**
+   * Instantiates a new Eth get uncle count by block number.
+   *
+   * @param blockchain the blockchain
+   */
   public EthGetUncleCountByBlockNumber(final BlockchainQueries blockchain) {
     super(blockchain);
   }
