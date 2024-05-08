@@ -18,27 +18,18 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 
-import com.google.common.collect.ImmutableMap;
-
 public class MainnetRequestsValidator {
   public static RequestValidator pragueRequestsValidator(final Address depositContractAddress) {
-    final ImmutableMap<RequestType, RequestValidator> validators =
-        ImmutableMap.of(
-            RequestType.WITHDRAWAL,
-            new WithdrawalRequestValidator(),
-            RequestType.DEPOSIT,
-            new DepositsValidator(depositContractAddress));
-
-    return new RequestsDelegateValidator(validators);
+    return new RequestsDelegateValidator.Builder()
+        .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
+        .addValidator(RequestType.DEPOSIT, new DepositsValidator(depositContractAddress))
+        .build();
   }
 
   public static RequestProcessor pragueRequestsProcessors(final Address depositContractAddress) {
-    ImmutableMap<RequestType, RequestProcessor> processors =
-        ImmutableMap.of(
-            RequestType.WITHDRAWAL,
-            new WithdrawalRequestProcessor(),
-            RequestType.DEPOSIT,
-            new DepositRequestProcessor(depositContractAddress));
-    return new RequestDelegateProcessor(processors);
+    return new RequestDelegateProcessor.Builder()
+        .addProcessor(RequestType.WITHDRAWAL, new WithdrawalRequestProcessor())
+        .addProcessor(RequestType.DEPOSIT, new DepositRequestProcessor(depositContractAddress))
+        .build();
   }
 }

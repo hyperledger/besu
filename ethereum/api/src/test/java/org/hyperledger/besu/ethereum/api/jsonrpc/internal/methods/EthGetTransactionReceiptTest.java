@@ -146,7 +146,6 @@ public class EthGetTransactionReceiptTest {
           null,
           Optional.empty(),
           null,
-          null,
           Optional.empty(),
           true,
           true);
@@ -176,7 +175,6 @@ public class EthGetTransactionReceiptTest {
           Optional.of(PoWHasher.ETHASH_LIGHT),
           null,
           Optional.empty(),
-          null,
           null,
           Optional.empty(),
           true,

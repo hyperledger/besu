@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -45,6 +46,7 @@ import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsDelegateValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
@@ -92,8 +94,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Test
   public void shouldReturnValidIfDepositsIsNull_WhenDepositsProhibited() {
     final List<DepositParameter> deposits = null;
-    when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.ProhibitedDeposits());
+    when(protocolSpec.getRequestValidator()).thenReturn(new ProhibitedRequestsValidator());
 
     BlockHeader mockHeader =
         setupValidPayload(
@@ -114,10 +115,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Test
   public void shouldReturnInvalidIfDepositsIsNull_WhenDepositsAllowed() {
     final List<DepositParameter> deposits = null;
-    lenient()
-        .when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.AllowedDeposits(depositContractAddress));
-
+    mockAllowedDepositsValidator();
     var resp =
         resp(
             mockEnginePayload(
@@ -135,8 +133,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnValidIfDepositsIsNotNull_WhenDepositsAllowed() {
     final List<DepositParameter> depositsParam = List.of(DEPOSIT_PARAM_1);
     final List<Deposit> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
-    when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.AllowedDeposits(depositContractAddress));
+    mockAllowedDepositsValidator();
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
@@ -157,8 +154,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnInvalidIfDepositsIsNotNull_WhenDepositsProhibited() {
     final List<DepositParameter> deposits = List.of();
     lenient()
-        .when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.ProhibitedDeposits());
+        .when(protocolSpec.getRequestValidator())
+        .thenReturn(new ProhibitedRequestsValidator());
 
     var resp =
         resp(
@@ -301,5 +298,13 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .orElseGet(() -> new Object[] {payload});
     return method.response(
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+  }
+
+  private void mockAllowedDepositsValidator() {
+    var validator =
+        new RequestsDelegateValidator.Builder()
+            .addValidator(RequestType.DEPOSIT, new DepositsValidator(depositContractAddress))
+            .build();
+    when(protocolSpec.getRequestValidator()).thenReturn(validator);
   }
 }

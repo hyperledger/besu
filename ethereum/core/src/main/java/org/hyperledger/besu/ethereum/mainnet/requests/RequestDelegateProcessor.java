@@ -34,7 +34,7 @@ public class RequestDelegateProcessor implements RequestProcessor {
    *
    * @param processors A map associating RequestType with their corresponding RequestProcessor.
    */
-  public RequestDelegateProcessor(final ImmutableMap<RequestType, RequestProcessor> processors) {
+  private RequestDelegateProcessor(final ImmutableMap<RequestType, RequestProcessor> processors) {
     this.processors = processors;
   }
 
@@ -48,5 +48,20 @@ public class RequestDelegateProcessor implements RequestProcessor {
         .map(Optional::get)
         .forEach(requests::addAll);
     return Optional.of(requests);
+  }
+
+  public static class Builder {
+    private final ImmutableMap.Builder<RequestType, RequestProcessor> requestProcessorBuilder =
+        ImmutableMap.builder();
+
+    public RequestDelegateProcessor.Builder addProcessor(
+        final RequestType type, final RequestProcessor processor) {
+      this.requestProcessorBuilder.put(type, processor);
+      return this;
+    }
+
+    public RequestDelegateProcessor build() {
+      return new RequestDelegateProcessor(requestProcessorBuilder.build());
+    }
   }
 }

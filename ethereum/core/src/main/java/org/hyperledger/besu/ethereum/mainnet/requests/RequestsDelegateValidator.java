@@ -32,40 +32,80 @@ import com.google.common.collect.ImmutableMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * Validates requests within a block against a set of predefined validators. This class delegates
+ * the validation of requests of specific types to corresponding validators. It ensures that
+ * requests are properly ordered, have a valid root, and meet the criteria defined by their
+ * validators.
+ */
 public class RequestsDelegateValidator implements RequestValidator {
-  private static final Logger LOG = LoggerFactory.getLogger(RequestValidator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(RequestsDelegateValidator.class);
   private final ImmutableMap<RequestType, RequestValidator> validators;
 
-  public RequestsDelegateValidator(final ImmutableMap<RequestType, RequestValidator> validators) {
+  /**
+   * Constructs a new RequestsDelegateValidator with a mapping of request types to their respective
+   * validators.
+   *
+   * @param validators An immutable map of request types to their corresponding validators.
+   */
+  private RequestsDelegateValidator(final ImmutableMap<RequestType, RequestValidator> validators) {
     this.validators = validators;
   }
 
+  /**
+   * Validates a block's requests by ensuring they are correctly ordered, have a valid root, and
+   * pass their respective type-specific validations.
+   *
+   * @param block The block containing the requests to be validated.
+   * @param requests The list of requests contained within the block.
+   * @param receipts The list of transaction receipts corresponding to the requests.
+   * @return true if all validations pass; false otherwise.
+   */
   @Override
   public boolean validate(
       final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
-    if (!validateRequestSorting(requests)) {
+    if (!isRequestOrderValid(requests)) {
       final Hash blockHash = block.getHash();
       LOG.warn("Block {} the ordering across requests must be ascending by type", blockHash);
-    }
-    if (!validateRequestRoot(block, requests)) {
       return false;
     }
-    for (final RequestType type : requestTypes(requests)) {
-      if (!validateRequest(type, block, requests, receipts)) {
-        return false;
-      }
+    if (!isRequestRootValid(block, requests)) {
+      return false;
     }
-    return true;
+    return validateRequests(block, requests, receipts);
   }
 
+  /**
+   * Validates the requests contained within a block against their respective type-specific
+   * validators.
+   *
+   * @param block The block containing the requests.
+   * @param requests The list of requests to be validated.
+   * @param receipts The list of transaction receipts corresponding to the requests.
+   * @return true if all requests pass their type-specific validations; false otherwise.
+   */
+  private boolean validateRequests(
+      final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
+    return requestTypes(requests).stream()
+        .allMatch(type -> validateRequestOfType(type, block, requests, receipts));
+  }
+
+  /**
+   * Validates the presence of a parameter.
+   *
+   * @param request The optional list of requests to be validated for presence.
+   * @return true if the parameter is present; false otherwise.
+   */
   @Override
   public boolean validateParameter(final Optional<List<Request>> request) {
     return request.isPresent();
   }
 
-  private boolean validateRequestRoot(final Block block, final List<Request> requests) {
+  private boolean isRequestRootValid(final Block block, final List<Request> requests) {
     final Hash blockHash = block.getHash();
-    if (block.getHeader().getRequestsRoot().isEmpty()) {
+    final Optional<Hash> maybeRequestsRoot = block.getHeader().getRequestsRoot();
+
+    if (maybeRequestsRoot.isEmpty()) {
       LOG.warn("Block {} must contain requests root", blockHash);
       return false;
     }
@@ -75,9 +115,8 @@ public class RequestsDelegateValidator implements RequestValidator {
       return false;
     }
 
-    // Validate requests root
     final Hash expectedRequestRoot = BodyValidation.requestsRoot(requests);
-    if (!expectedRequestRoot.equals(block.getHeader().getRequestsRoot().get())) {
+    if (!expectedRequestRoot.equals(maybeRequestsRoot.get())) {
       LOG.warn(
           "Block {} requests root does not match expected hash root for requests in block",
           blockHash);
@@ -86,36 +125,52 @@ public class RequestsDelegateValidator implements RequestValidator {
     return true;
   }
 
-  private boolean validateRequest(
+  private boolean validateRequestOfType(
       final RequestType type,
       final Block block,
       final List<Request> requests,
       final List<TransactionReceipt> receipts) {
-    return getRequestValidator(type)
-        .map(validator -> validator.validate(block, requests, receipts))
-        .orElseGet(
-            () -> {
-              LOG.warn("Block {} contains prohibited requests of type: {}", block.getHash(), type);
-              return false;
-            });
+
+    Optional<RequestValidator> requestValidator = getRequestValidator(type);
+    if (requestValidator.isEmpty()) {
+      LOG.warn("Block {} contains prohibited requests of type: {}", block.getHash(), type);
+      return false;
+    }
+    List<Request> typedRequests = filterRequestsOfType(requests, type);
+    return requestValidator.get().validate(block, typedRequests, receipts);
   }
 
-  /**
-   * Retrieves a validator for the specified request type, if available.
-   *
-   * @param requestType The type of request for which a validator is sought.
-   * @return An Optional containing the validator, if found.
-   */
   private Optional<RequestValidator> getRequestValidator(final RequestType requestType) {
     return Optional.ofNullable(validators.get(requestType));
   }
 
-  public static Set<RequestType> requestTypes(final List<Request> requests) {
+  private static Set<RequestType> requestTypes(final List<Request> requests) {
     return requests.stream().map(Request::getType).collect(Collectors.toSet());
   }
 
-  private static boolean validateRequestSorting(final List<Request> requests) {
+  private static boolean isRequestOrderValid(final List<Request> requests) {
     return IntStream.range(0, requests.size() - 1)
         .allMatch(i -> requests.get(i).getType().compareTo(requests.get(i + 1).getType()) <= 0);
+  }
+
+  private static List<Request> filterRequestsOfType(
+      final List<Request> requests, final RequestType type) {
+    return requests.stream()
+        .filter(request -> request.getType() == type)
+        .collect(Collectors.toList());
+  }
+
+  public static class Builder {
+    private final ImmutableMap.Builder<RequestType, RequestValidator> validatorsBuilder =
+        ImmutableMap.builder();
+
+    public Builder addValidator(final RequestType type, final RequestValidator validator) {
+      this.validatorsBuilder.put(type, validator);
+      return this;
+    }
+
+    public RequestsDelegateValidator build() {
+      return new RequestsDelegateValidator(validatorsBuilder.build());
+    }
   }
 }

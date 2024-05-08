@@ -29,13 +29,13 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsDelegateValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
@@ -212,8 +212,9 @@ public class DepositsValidatorTest {
   }
 
   static RequestValidator createAllowDepositValidator() {
-    final ImmutableMap<RequestType, RequestValidator> validators =
-        ImmutableMap.of(RequestType.DEPOSIT, new DepositsValidator(DEPOSIT_CONTRACT_ADDRESS));
-    return new RequestsDelegateValidator(validators);
+    return new RequestsDelegateValidator.Builder()
+        .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
+        .addValidator(RequestType.DEPOSIT, new DepositsValidator(DEPOSIT_CONTRACT_ADDRESS))
+        .build();
   }
 }
