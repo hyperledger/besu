@@ -62,6 +62,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -184,7 +185,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal request"));
     }
 
-    Optional<List<Request>> maybeRequests = Request.combine(maybeDeposits, maybeWithdrawalRequests);
+    Optional<List<Request>> maybeRequests =
+        RequestUtil.combine(maybeDeposits, maybeWithdrawalRequests);
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");

@@ -46,7 +46,7 @@ public class WithdrawalRequestValidator implements RequestValidator {
         block
             .getBody()
             .getRequests()
-            .map(requests -> Request.filterRequestsOfType(requests, WithdrawalRequest.class))
+            .map(requests -> RequestUtil.filterRequestsOfType(requests, WithdrawalRequest.class))
             .orElse(Collections.emptyList());
 
     // TODO Do we need to allow for customization? (e.g. if the value changes in the next fork)
@@ -75,7 +75,7 @@ public class WithdrawalRequestValidator implements RequestValidator {
   @Override
   public boolean validate(
       final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
-    var withdrawalRequests = Request.filterRequestsOfType(requests, WithdrawalRequest.class);
+    var withdrawalRequests = RequestUtil.filterRequestsOfType(requests, WithdrawalRequest.class);
     return validateWithdrawalRequestsInBlock(block, withdrawalRequests);
   }
 
@@ -84,7 +84,8 @@ public class WithdrawalRequestValidator implements RequestValidator {
     if (request.isEmpty()) {
       return false;
     }
-    var withdrawalRequests = Request.filterRequestsOfType(request.get(), WithdrawalRequest.class);
+    var withdrawalRequests =
+        RequestUtil.filterRequestsOfType(request.get(), WithdrawalRequest.class);
     return validateWithdrawalRequestParameter(Optional.of(withdrawalRequests));
   }
 }

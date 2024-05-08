@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -182,13 +183,14 @@ public class BlockResultFactory {
   }
 
   private Optional<List<Deposit>> getDepositRequest(final Optional<List<Request>> requests) {
-    return requests.map(requestList -> Request.filterRequestsOfType(requestList, Deposit.class));
+    return requests.map(
+        requestList -> RequestUtil.filterRequestsOfType(requestList, Deposit.class));
   }
 
   private Optional<List<WithdrawalRequest>> getWithdrawalRequest(
       final Optional<List<Request>> requests) {
     return requests.map(
-        requestList -> Request.filterRequestsOfType(requestList, WithdrawalRequest.class));
+        requestList -> RequestUtil.filterRequestsOfType(requestList, WithdrawalRequest.class));
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {

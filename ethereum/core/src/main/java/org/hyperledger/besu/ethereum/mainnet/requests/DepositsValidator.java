@@ -77,7 +77,7 @@ public class DepositsValidator implements RequestValidator {
   @Override
   public boolean validate(
       final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
-    var deposits = Request.filterRequestsOfType(requests, Deposit.class);
+    var deposits = RequestUtil.filterRequestsOfType(requests, Deposit.class);
     return validateDeposits(block, deposits, receipts);
   }
 }
