@@ -28,6 +28,8 @@ import dagger.Provides;
  */
 @Module
 public class MetricsSystemModule {
+  /** Default constructor */
+  public MetricsSystemModule() {}
 
   @Provides
   @Singleton
