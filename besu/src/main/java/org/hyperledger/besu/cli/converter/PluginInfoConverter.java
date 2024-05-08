@@ -26,6 +26,8 @@ import picocli.CommandLine;
  * intended for use with PicoCLI to process command line arguments that specify plugin information.
  */
 public class PluginInfoConverter implements CommandLine.ITypeConverter<List<PluginInfo>> {
+  /** Default Constructor. */
+  public PluginInfoConverter() {}
 
   /**
    * Converts a comma-separated string into a list of {@link PluginInfo}.

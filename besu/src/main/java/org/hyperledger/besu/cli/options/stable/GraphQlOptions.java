@@ -56,6 +56,9 @@ public class GraphQlOptions {
   private final CorsAllowedOriginsProperty graphQLHttpCorsAllowedOrigins =
       new CorsAllowedOriginsProperty();
 
+  /** Default constructor */
+  public GraphQlOptions() {}
+
   /**
    * Validates the GraphQL HTTP options.
    *
