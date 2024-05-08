@@ -95,7 +95,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
         isServingFromState() ? HISTORY_SERVE_WINDOW : BLOCKHASH_OLD_WINDOW;
 
     return soughtBlock >= Math.max(currentBlockNumber - historyServeWindow, 0)
-        && soughtBlock <= currentBlockNumber;
+        && soughtBlock < currentBlockNumber;
   }
 
   private Bytes32 getBlockHash(final MessageFrame frame, final long soughtBlock) {
