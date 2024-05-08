@@ -67,7 +67,7 @@ public class LocalPermissioningConfigurationValidatorTest {
             true,
             toml.toAbsolutePath().toString());
 
-    final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
+    final List<EnodeURL> enodeURIs = ethNetworkConfig.bootNodes();
     PermissioningConfigurationValidator.areAllNodesInAllowlist(
         enodeURIs, permissioningConfiguration);
   }
@@ -91,7 +91,7 @@ public class LocalPermissioningConfigurationValidatorTest {
             toml.toAbsolutePath().toString());
 
     try {
-      final List<EnodeURL> enodeURIs = ethNetworkConfig.getBootNodes();
+      final List<EnodeURL> enodeURIs = ethNetworkConfig.bootNodes();
       PermissioningConfigurationValidator.areAllNodesInAllowlist(
           enodeURIs, permissioningConfiguration);
       fail("expected exception because sepolia bootnodes are not in node-allowlist");

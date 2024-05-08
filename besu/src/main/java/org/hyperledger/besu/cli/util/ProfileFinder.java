@@ -34,6 +34,9 @@ import picocli.CommandLine;
 public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
   private static final String PROFILE_ENV_NAME = "BESU_PROFILE";
 
+  /** Default Constructor. */
+  public ProfileFinder() {}
+
   @Override
   protected String getConfigOptionName() {
     return PROFILE_OPTION_NAME;

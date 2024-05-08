@@ -44,6 +44,8 @@ import com.google.common.annotations.VisibleForTesting;
 
 /** The Block header validation ruleset factory. */
 public class BlockHeaderValidationRulesetFactory {
+  /** Default constructor. */
+  private BlockHeaderValidationRulesetFactory() {}
 
   /**
    * Creates a set of rules which when executed will determine if a given block header is valid with

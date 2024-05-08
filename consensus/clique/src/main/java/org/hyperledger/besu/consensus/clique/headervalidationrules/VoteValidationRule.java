@@ -26,6 +26,9 @@ public class VoteValidationRule implements DetachedBlockHeaderValidationRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(VoteValidationRule.class);
 
+  /** Default constructor. */
+  public VoteValidationRule() {}
+
   /**
    * Responsible for ensuring the nonce is either auth or drop.
    *

@@ -34,6 +34,9 @@ public class IbftExtraDataCLIAdapter implements JSONToRLP {
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final TypeReference<Collection<String>> TYPE_REF = new TypeReference<>() {};
 
+  /** Default constructor. */
+  public IbftExtraDataCLIAdapter() {}
+
   @Override
   public Bytes encode(final String json) throws IOException {
     return fromJsonAddresses(json);

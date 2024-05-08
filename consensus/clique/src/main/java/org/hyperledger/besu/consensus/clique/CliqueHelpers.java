@@ -27,6 +27,8 @@ import java.util.Comparator;
 
 /** The Clique helpers. */
 public class CliqueHelpers {
+  /** Default constructor. */
+  CliqueHelpers() {}
 
   /**
    * Gets proposer of block.

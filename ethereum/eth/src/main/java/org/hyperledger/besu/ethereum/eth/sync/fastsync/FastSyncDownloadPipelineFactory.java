@@ -125,7 +125,7 @@ public class FastSyncDownloadPipelineFactory implements DownloadPipelineFactory 
             ethContext.getScheduler(),
             target.peer(),
             getCommonAncestor(target),
-            syncConfig.getDownloaderCheckpointTimeoutsPermitted(),
+            syncConfig.getDownloaderCheckpointRetries(),
             SyncTerminationCondition.never());
     final DownloadHeadersStep downloadHeadersStep =
         new DownloadHeadersStep(

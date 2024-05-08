@@ -32,6 +32,8 @@ import java.util.Optional;
 
 /** Defines the protocol behaviours for a blockchain using a BFT consensus mechanism. */
 public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder {
+  /** Default constructor. */
+  protected IbftProtocolScheduleBuilder() {}
 
   /**
    * Create protocol schedule.

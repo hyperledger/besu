@@ -29,6 +29,8 @@ import picocli.CommandLine;
  * and trace filter range.
  */
 public class ApiConfigurationOptions {
+  /** Default constructor. */
+  public ApiConfigurationOptions() {}
 
   @CommandLine.Option(
       names = {"--api-gas-price-blocks"},

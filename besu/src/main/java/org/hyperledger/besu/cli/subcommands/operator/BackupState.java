@@ -45,6 +45,9 @@ import picocli.CommandLine.ParentCommand;
     versionProvider = VersionProvider.class)
 public class BackupState implements Runnable {
 
+  /** Default constructor. */
+  public BackupState() {}
+
   @Option(
       names = "--block",
       paramLabel = MANDATORY_LONG_FORMAT_HELP,
