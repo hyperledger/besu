@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.blockcreation;
 import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
-import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
@@ -37,11 +36,11 @@ import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
-import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
@@ -76,6 +75,10 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestDelegateProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
@@ -99,15 +102,11 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 abstract class AbstractBlockCreatorTest {
-  private static final Optional<Address> EMPTY_DEPOSIT_CONTRACT_ADDRESS = Optional.empty();
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
   protected EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @Test
   void findDepositsFromReceipts() {
-    final AbstractBlockCreator blockCreator =
-        blockCreatorWithAllowedDeposits(Optional.of(DEFAULT_DEPOSIT_CONTRACT_ADDRESS));
-    final TransactionSelectionResults transactionResults = mock(TransactionSelectionResults.class);
     BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
     TransactionReceipt receiptWithoutDeposit1 = blockDataGenerator.receipt();
     TransactionReceipt receiptWithoutDeposit2 = blockDataGenerator.receipt();
@@ -120,8 +119,8 @@ abstract class AbstractBlockCreatorTest {
                 LogTopic.fromHexString(
                     "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5")));
     final TransactionReceipt receiptWithDeposit = blockDataGenerator.receipt(List.of(depositLog));
-    when(transactionResults.getReceipts())
-        .thenReturn(List.of(receiptWithoutDeposit1, receiptWithDeposit, receiptWithoutDeposit2));
+    List<TransactionReceipt> receipts =
+        List.of(receiptWithoutDeposit1, receiptWithDeposit, receiptWithoutDeposit2);
 
     Deposit expectedDeposit =
         new Deposit(
@@ -135,16 +134,15 @@ abstract class AbstractBlockCreatorTest {
             UInt64.valueOf(539967));
     final List<Deposit> expectedDeposits = List.of(expectedDeposit);
 
-    final List<Deposit> depositsFromReceipts =
-        blockCreator.findDepositsFromReceipts(transactionResults);
-
-    assertThat(depositsFromReceipts).isEqualTo(expectedDeposits);
+    final Optional<List<Request>> depositsFromReceipts =
+        new DepositRequestProcessor(DEFAULT_DEPOSIT_CONTRACT_ADDRESS).process(null, receipts);
+    assertThat(depositsFromReceipts.get()).isEqualTo(expectedDeposits);
   }
 
   @Test
   void withAllowedDepositsAndContractAddress_DepositsAreParsed() {
     final AbstractBlockCreator blockCreator =
-        blockCreatorWithAllowedDeposits(Optional.of(DEFAULT_DEPOSIT_CONTRACT_ADDRESS));
+        blockCreatorWithAllowedDeposits(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
@@ -164,7 +162,7 @@ abstract class AbstractBlockCreatorTest {
 
   @Test
   void withAllowedDepositsAndNoContractAddress_DepositsAreNotParsed() {
-    final AbstractBlockCreator blockCreator = blockCreatorWithAllowedDeposits(Optional.empty());
+    final AbstractBlockCreator blockCreator = blockCreatorWithAllowedDeposits(null);
 
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
@@ -199,20 +197,31 @@ abstract class AbstractBlockCreatorTest {
   }
 
   private AbstractBlockCreator blockCreatorWithAllowedDeposits(
-      final Optional<Address> depositContractAddress) {
+      final Address depositContractAddress) {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
             0,
             specBuilder ->
-                specBuilder.requestsValidator(
-                    pragueRequestsValidator(DEFAULT_DEPOSIT_CONTRACT_ADDRESS)));
-    return createBlockCreator(protocolSpecAdapters, depositContractAddress);
+                specBuilder
+                    .requestsValidator(
+                        new RequestsValidatorCoordinator.Builder()
+                            .addValidator(
+                                RequestType.DEPOSIT,
+                                new DepositsValidator((depositContractAddress)))
+                            .build())
+                    .requestsProcessor(
+                        new RequestDelegateProcessor.Builder()
+                            .addProcessor(
+                                RequestType.DEPOSIT,
+                                new DepositRequestProcessor(depositContractAddress))
+                            .build()));
+    return createBlockCreator(protocolSpecAdapters);
   }
 
   private AbstractBlockCreator blockCreatorWithProhibitedDeposits() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(0, specBuilder -> specBuilder);
-    return createBlockCreator(protocolSpecAdapters, Optional.of(DEFAULT_DEPOSIT_CONTRACT_ADDRESS));
+    return createBlockCreator(protocolSpecAdapters);
   }
 
   @Test
@@ -334,23 +343,21 @@ abstract class AbstractBlockCreatorTest {
               specBuilder.withdrawalsProcessor(withdrawalsProcessor);
               return specBuilder;
             });
-    return createBlockCreator(protocolSpecAdapters, EMPTY_DEPOSIT_CONTRACT_ADDRESS);
+    return createBlockCreator(protocolSpecAdapters);
   }
 
   private AbstractBlockCreator blockCreatorWithWithdrawalsProcessor() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
             0, specBuilder -> specBuilder.withdrawalsProcessor(withdrawalsProcessor));
-    return createBlockCreator(protocolSpecAdapters, EMPTY_DEPOSIT_CONTRACT_ADDRESS);
+    return createBlockCreator(protocolSpecAdapters);
   }
 
   private AbstractBlockCreator blockCreatorWithoutWithdrawalsProcessor() {
-    return createBlockCreator(new ProtocolSpecAdapters(Map.of()), EMPTY_DEPOSIT_CONTRACT_ADDRESS);
+    return createBlockCreator(new ProtocolSpecAdapters(Map.of()));
   }
 
-  private AbstractBlockCreator createBlockCreator(
-      final ProtocolSpecAdapters protocolSpecAdapters,
-      final Optional<Address> depositContractAddress) {
+  private AbstractBlockCreator createBlockCreator(final ProtocolSpecAdapters protocolSpecAdapters) {
     final GenesisConfigOptions genesisConfigOptions = GenesisConfigFile.DEFAULT.getConfigOptions();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder()
@@ -407,7 +414,6 @@ abstract class AbstractBlockCreatorTest {
         executionContextTestFixture.getProtocolContext(),
         executionContextTestFixture.getProtocolSchedule(),
         blockchain.getChainHeadHeader(),
-        depositContractAddress,
         ethScheduler);
   }
 
@@ -421,7 +427,6 @@ abstract class AbstractBlockCreatorTest {
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
         final BlockHeader parentHeader,
-        final Optional<Address> depositContractAddress,
         final EthScheduler ethScheduler) {
       super(
           miningParameters,
@@ -431,7 +436,6 @@ abstract class AbstractBlockCreatorTest {
           protocolContext,
           protocolSchedule,
           parentHeader,
-          depositContractAddress,
           ethScheduler);
     }
 

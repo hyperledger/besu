@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -31,26 +32,32 @@ public class DepositRequestProcessor implements RequestProcessor {
   public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
       Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
-  private final Address depositContractAddress;
+  private final Optional<Address> depositContractAddress;
 
   public DepositRequestProcessor(final Address depositContractAddress) {
-    this.depositContractAddress =
-        Optional.ofNullable(depositContractAddress).orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
+    this.depositContractAddress = Optional.ofNullable(depositContractAddress);
   }
 
   @Override
   public Optional<List<Request>> process(
       final MutableWorldState ignored, final List<TransactionReceipt> transactionReceipts) {
+    if (depositContractAddress.isEmpty()) {
+      return Optional.empty();
+    }
     List<Deposit> deposits = findDepositsFromReceipts(transactionReceipts);
     return Optional.of(deposits.stream().map(r -> (Request) r).toList());
   }
 
   @VisibleForTesting
   List<Deposit> findDepositsFromReceipts(final List<TransactionReceipt> transactionReceipts) {
-    return transactionReceipts.stream()
-        .flatMap(receipt -> receipt.getLogsList().stream())
-        .filter(log -> depositContractAddress.equals(log.getLogger()))
-        .map(DepositDecoder::decodeFromLog)
-        .toList();
+    return depositContractAddress
+        .map(
+            address ->
+                transactionReceipts.stream()
+                    .flatMap(receipt -> receipt.getLogsList().stream())
+                    .filter(log -> address.equals(log.getLogger()))
+                    .map(DepositDecoder::decodeFromLog)
+                    .toList())
+        .orElse(Collections.emptyList());
   }
 }

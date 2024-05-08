@@ -14,7 +14,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
 import org.hyperledger.besu.evm.log.Log;
 
 import java.util.ArrayList;

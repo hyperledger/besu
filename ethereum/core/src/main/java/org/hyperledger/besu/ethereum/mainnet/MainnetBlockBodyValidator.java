@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
@@ -310,8 +310,8 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
   }
 
   private boolean validateRequests(final Block block, final List<TransactionReceipt> receipts) {
-    final RequestValidator requestValidator =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getRequestValidator();
+    final RequestsValidatorCoordinator requestValidator =
+        protocolSchedule.getByBlockHeader(block.getHeader()).getRequestsValidatorCoordinator();
     return block
         .getBody()
         .getRequests()

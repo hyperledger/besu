@@ -41,12 +41,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsDelegateValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
@@ -94,7 +94,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Test
   public void shouldReturnValidIfDepositsIsNull_WhenDepositsProhibited() {
     final List<DepositParameter> deposits = null;
-    when(protocolSpec.getRequestValidator()).thenReturn(new ProhibitedRequestsValidator());
+    mockProhibitedRequestsValidator();
 
     BlockHeader mockHeader =
         setupValidPayload(
@@ -115,7 +115,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Test
   public void shouldReturnInvalidIfDepositsIsNull_WhenDepositsAllowed() {
     final List<DepositParameter> deposits = null;
-    mockAllowedDepositsValidator();
+    mockAllowedDepositsRequestValidator();
     var resp =
         resp(
             mockEnginePayload(
@@ -133,7 +133,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnValidIfDepositsIsNotNull_WhenDepositsAllowed() {
     final List<DepositParameter> depositsParam = List.of(DEPOSIT_PARAM_1);
     final List<Deposit> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
-    mockAllowedDepositsValidator();
+
+    mockAllowedDepositsRequestValidator();
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
@@ -154,8 +155,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnInvalidIfDepositsIsNotNull_WhenDepositsProhibited() {
     final List<DepositParameter> deposits = List.of();
     lenient()
-        .when(protocolSpec.getRequestValidator())
-        .thenReturn(new ProhibitedRequestsValidator());
+        .when(protocolSpec.getRequestsValidatorCoordinator())
+        .thenReturn(new RequestsValidatorCoordinator.Builder().build());
 
     var resp =
         resp(
@@ -174,7 +175,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnValidIfWithdrawalRequestsIsNull_WhenWithdrawalRequestsAreProhibited() {
-    when(protocolSpec.getRequestValidator()).thenReturn(new ProhibitedRequestsValidator());
+    mockProhibitedRequestsValidator();
 
     BlockHeader mockHeader =
         setupValidPayload(
@@ -194,7 +195,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnInvalidIfWithdrawalRequestsIsNull_WhenWithdrawalRequestsAreAllowed() {
-    when(protocolSpec.getRequestValidator()).thenReturn(new WithdrawalRequestValidator());
+    mockAllowedWithdrawalsRequestValidator();
 
     var resp =
         resp(
@@ -215,8 +216,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
         List.of(WITHDRAWAL_REQUEST_PARAMETER_1);
     final List<WithdrawalRequest> withdrawalRequests =
         List.of(WITHDRAWAL_REQUEST_PARAMETER_1.toWithdrawalRequest());
-    when(protocolSpec.getRequestValidator()).thenReturn(new WithdrawalRequestValidator());
-
+    mockAllowedWithdrawalsRequestValidator();
     BlockHeader mockHeader =
         setupValidPayload(
             new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
@@ -239,7 +239,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void
       shouldReturnInvalidIfWithdrawalRequestsIsNotNull_WhenWithdrawalRequestsAreProhibited() {
     final List<WithdrawalRequestParameter> withdrawalRequests = List.of();
-    when(protocolSpec.getRequestValidator()).thenReturn(new ProhibitedRequestsValidator());
+    mockProhibitedRequestsValidator();
 
     var resp =
         resp(
@@ -269,6 +269,16 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .blobGasUsed(0L)
             .buildHeader();
 
+    Optional<List<Request>> maybeRequests;
+    if (maybeDeposits.isPresent() || maybeWithdrawalRequests.isPresent()) {
+      List<Request> requests = new ArrayList<>();
+      maybeDeposits.ifPresent(requests::addAll);
+      maybeWithdrawalRequests.ifPresent(requests::addAll);
+      maybeRequests = Optional.of(requests);
+    } else {
+      maybeRequests = Optional.empty();
+    }
+
     BlockHeader mockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
@@ -278,12 +288,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
-            .requestsRoot(
-                maybeWithdrawalRequests
-                    .map(
-                        withdrawalRequests ->
-                            BodyValidation.requestsRoot(new ArrayList<>(withdrawalRequests)))
-                    .orElse(null))
+            .requestsRoot(maybeRequests.map(BodyValidation::requestsRoot).orElse(null))
             .parentBeaconBlockRoot(
                 maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();
@@ -300,11 +305,24 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
   }
 
-  private void mockAllowedDepositsValidator() {
+  private void mockProhibitedRequestsValidator() {
+    var validator = new RequestsValidatorCoordinator.Builder().build();
+    when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
+  }
+
+  private void mockAllowedDepositsRequestValidator() {
     var validator =
-        new RequestsDelegateValidator.Builder()
+        new RequestsValidatorCoordinator.Builder()
             .addValidator(RequestType.DEPOSIT, new DepositsValidator(depositContractAddress))
             .build();
-    when(protocolSpec.getRequestValidator()).thenReturn(validator);
+    when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
+  }
+
+  private void mockAllowedWithdrawalsRequestValidator() {
+    var validator =
+        new RequestsValidatorCoordinator.Builder()
+            .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
+            .build();
+    when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
   }
 }

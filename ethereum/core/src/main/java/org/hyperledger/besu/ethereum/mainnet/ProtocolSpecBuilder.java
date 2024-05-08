@@ -30,9 +30,8 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPrecompiledContract;
-import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessor;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.EVM;
@@ -77,7 +76,8 @@ public class ProtocolSpecBuilder {
   private WithdrawalsValidator withdrawalsValidator =
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
-  private RequestValidator requestValidator = new ProhibitedRequestsValidator();
+  private RequestsValidatorCoordinator requestsValidatorCoordinator =
+      new RequestsValidatorCoordinator.Builder().build();
   private RequestProcessor requestProcessor;
 
   private FeeMarket feeMarket = FeeMarket.legacy();
@@ -264,8 +264,9 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder requestsValidator(final RequestValidator requestValidator) {
-    this.requestValidator = requestValidator;
+  public ProtocolSpecBuilder requestsValidator(
+      final RequestsValidatorCoordinator requestsValidatorCoordinator) {
+    this.requestsValidatorCoordinator = requestsValidatorCoordinator;
     return this;
   }
 
@@ -392,7 +393,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(powHasher),
         withdrawalsValidator,
         Optional.ofNullable(withdrawalsProcessor),
-        requestValidator,
+        requestsValidatorCoordinator,
         Optional.ofNullable(requestProcessor),
         isPoS,
         isReplayProtectionSupported);

@@ -41,13 +41,17 @@ public class RequestDelegateProcessor implements RequestProcessor {
   @Override
   public Optional<List<Request>> process(
       final MutableWorldState mutableWorldState, final List<TransactionReceipt> receipts) {
-    List<Request> requests = new ArrayList<>();
-    processors.values().stream()
-        .map(processor -> processor.process(mutableWorldState, receipts))
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .forEach(requests::addAll);
-    return Optional.of(requests);
+    List<Request> requests = null;
+    for (RequestProcessor requestProcessor : processors.values()) {
+      var r = requestProcessor.process(mutableWorldState, receipts);
+      if (r.isPresent()) {
+        if (requests == null) {
+          requests = new ArrayList<>();
+        }
+        requests.addAll(r.get());
+      }
+    }
+    return Optional.ofNullable(requests);
   }
 
   public static class Builder {

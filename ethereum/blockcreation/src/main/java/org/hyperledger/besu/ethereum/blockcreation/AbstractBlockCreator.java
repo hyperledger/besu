@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
@@ -38,7 +37,6 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.SealableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
@@ -67,7 +65,6 @@ import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -91,7 +88,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   protected final ProtocolSchedule protocolSchedule;
   protected final BlockHeaderFunctions blockHeaderFunctions;
   protected final BlockHeader parentHeader;
-  private final Optional<Address> depositContractAddress;
   private final EthScheduler ethScheduler;
   private final AtomicBoolean isCancelled = new AtomicBoolean(false);
 
@@ -103,7 +99,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       final ProtocolContext protocolContext,
       final ProtocolSchedule protocolSchedule,
       final BlockHeader parentHeader,
-      final Optional<Address> depositContractAddress,
       final EthScheduler ethScheduler) {
     this.miningParameters = miningParameters;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
@@ -112,7 +107,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.parentHeader = parentHeader;
-    this.depositContractAddress = depositContractAddress;
     this.ethScheduler = ethScheduler;
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
   }
@@ -315,15 +309,6 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       throw new IllegalStateException(
           "Block creation failed unexpectedly. Will restart on next block added to chain.", ex);
     }
-  }
-
-  @VisibleForTesting
-  List<Deposit> findDepositsFromReceipts(final TransactionSelectionResults transactionResults) {
-    return transactionResults.getReceipts().stream()
-        .flatMap(receipt -> receipt.getLogsList().stream())
-        .filter(log -> depositContractAddress.get().equals(log.getLogger()))
-        .map(DepositDecoder::decodeFromLog)
-        .toList();
   }
 
   record GasUsage(BlobGas excessBlobGas, BlobGas used) {}

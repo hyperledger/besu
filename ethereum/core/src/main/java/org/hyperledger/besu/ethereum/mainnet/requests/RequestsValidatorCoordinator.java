@@ -38,8 +38,8 @@ import org.slf4j.LoggerFactory;
  * requests are properly ordered, have a valid root, and meet the criteria defined by their
  * validators.
  */
-public class RequestsDelegateValidator implements RequestValidator {
-  private static final Logger LOG = LoggerFactory.getLogger(RequestsDelegateValidator.class);
+public class RequestsValidatorCoordinator {
+  private static final Logger LOG = LoggerFactory.getLogger(RequestsValidatorCoordinator.class);
   private final ImmutableMap<RequestType, RequestValidator> validators;
 
   /**
@@ -48,7 +48,8 @@ public class RequestsDelegateValidator implements RequestValidator {
    *
    * @param validators An immutable map of request types to their corresponding validators.
    */
-  private RequestsDelegateValidator(final ImmutableMap<RequestType, RequestValidator> validators) {
+  private RequestsValidatorCoordinator(
+      final ImmutableMap<RequestType, RequestValidator> validators) {
     this.validators = validators;
   }
 
@@ -61,7 +62,6 @@ public class RequestsDelegateValidator implements RequestValidator {
    * @param receipts The list of transaction receipts corresponding to the requests.
    * @return true if all validations pass; false otherwise.
    */
-  @Override
   public boolean validate(
       final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
     if (!isRequestOrderValid(requests)) {
@@ -88,17 +88,6 @@ public class RequestsDelegateValidator implements RequestValidator {
       final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
     return requestTypes(requests).stream()
         .allMatch(type -> validateRequestOfType(type, block, requests, receipts));
-  }
-
-  /**
-   * Validates the presence of a parameter.
-   *
-   * @param request The optional list of requests to be validated for presence.
-   * @return true if the parameter is present; false otherwise.
-   */
-  @Override
-  public boolean validateParameter(final Optional<List<Request>> request) {
-    return request.isPresent();
   }
 
   private boolean isRequestRootValid(final Block block, final List<Request> requests) {
@@ -140,7 +129,7 @@ public class RequestsDelegateValidator implements RequestValidator {
     return requestValidator.get().validate(block, typedRequests, receipts);
   }
 
-  private Optional<RequestValidator> getRequestValidator(final RequestType requestType) {
+  public Optional<RequestValidator> getRequestValidator(final RequestType requestType) {
     return Optional.ofNullable(validators.get(requestType));
   }
 
@@ -169,8 +158,8 @@ public class RequestsDelegateValidator implements RequestValidator {
       return this;
     }
 
-    public RequestsDelegateValidator build() {
-      return new RequestsDelegateValidator(validatorsBuilder.build());
+    public RequestsValidatorCoordinator build() {
+      return new RequestsValidatorCoordinator(validatorsBuilder.build());
     }
   }
 }

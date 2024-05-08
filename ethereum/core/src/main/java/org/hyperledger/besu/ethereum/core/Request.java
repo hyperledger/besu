@@ -21,8 +21,11 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -57,5 +60,19 @@ public abstract class Request implements org.hyperledger.besu.plugin.data.Reques
       return Collections.emptyList();
     }
     return requests.stream().filter(requestType::isInstance).map(requestType::cast).toList();
+  }
+
+  @SafeVarargs
+  public static Optional<List<Request>> combine(final Optional<List<Request>>... maybeRequests) {
+    return Arrays.stream(maybeRequests)
+        .filter(Optional::isPresent) // Filter out non-present Optionals
+        .flatMap(opt -> opt.get().stream()) // Convert to Stream<Request>
+        .collect(
+            Collectors.collectingAndThen(
+                Collectors.toList(),
+                list ->
+                    list.isEmpty()
+                        ? Optional.empty()
+                        : Optional.of(list))); // Collect into a List and wrap in Optional
   }
 }

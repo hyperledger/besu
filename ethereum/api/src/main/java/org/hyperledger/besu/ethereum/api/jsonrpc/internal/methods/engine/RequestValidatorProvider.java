@@ -15,18 +15,44 @@
 
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 
 import java.util.Optional;
 
 public class RequestValidatorProvider {
 
-  static RequestValidator getRequestValidator(
+  public static RequestValidator getDepositRequestValidator(
+      final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
+    return getRequestValidator(protocolSchedule, blockTimestamp, blockNumber, RequestType.DEPOSIT);
+  }
+
+  public static RequestValidator getWithdrawalRequestValidator(
+      final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
+    return getRequestValidator(
+        protocolSchedule, blockTimestamp, blockNumber, RequestType.WITHDRAWAL);
+  }
+
+  private static RequestValidator getRequestValidator(
+      final ProtocolSchedule protocolSchedule,
+      final long blockTimestamp,
+      final long blockNumber,
+      final RequestType requestType) {
+
+    RequestsValidatorCoordinator requestsValidatorCoordinator =
+        getRequestValidator(protocolSchedule, blockTimestamp, blockNumber);
+    return requestsValidatorCoordinator
+        .getRequestValidator(requestType)
+        .orElse(new ProhibitedRequestsValidator());
+  }
+
+  private static RequestsValidatorCoordinator getRequestValidator(
       final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
 
     final BlockHeader blockHeader =
@@ -37,9 +63,10 @@ public class RequestValidatorProvider {
     return getRequestValidator(protocolSchedule.getByBlockHeader(blockHeader));
   }
 
-  private static RequestValidator getRequestValidator(final ProtocolSpec protocolSchedule) {
+  private static RequestsValidatorCoordinator getRequestValidator(
+      final ProtocolSpec protocolSchedule) {
     return Optional.ofNullable(protocolSchedule)
-        .map(ProtocolSpec::getRequestValidator)
-        .orElseGet(ProhibitedRequestsValidator::new);
+        .map(ProtocolSpec::getRequestsValidatorCoordinator)
+        .orElseGet(() -> new RequestsValidatorCoordinator.Builder().build());
   }
 }

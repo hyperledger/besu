@@ -20,7 +20,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getRequestValidator;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getDepositRequestValidator;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getWithdrawalRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 
@@ -162,7 +163,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final Optional<List<Request>> maybeDeposits =
         Optional.ofNullable(blockParam.getDeposits())
             .map(ds -> ds.stream().map(DepositParameter::toDeposit).collect(toList()));
-    if (!getRequestValidator(
+    if (!getDepositRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateParameter(maybeDeposits)) {
       return new JsonRpcErrorResponse(
@@ -176,18 +177,14 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                     withdrawalRequest.stream()
                         .map(WithdrawalRequestParameter::toWithdrawalRequest)
                         .collect(toList()));
-    if (!getRequestValidator(
+    if (!getWithdrawalRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateParameter(maybeWithdrawalRequests)) {
       return new JsonRpcErrorResponse(
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal request"));
     }
 
-    Optional<List<Request>> maybeRequests = Optional.empty();
-    if (maybeWithdrawalRequests.isPresent()) {
-      // todo add deposits and other request types
-      maybeRequests = maybeWithdrawalRequests;
-    }
+    Optional<List<Request>> maybeRequests = Request.combine(maybeDeposits, maybeWithdrawalRequests);
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");

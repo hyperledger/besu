@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.RequestType;
-import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 
 public class MainnetRequestsValidator {
-  public static RequestValidator pragueRequestsValidator(final Address depositContractAddress) {
-    return new RequestsDelegateValidator.Builder()
+  public static RequestsValidatorCoordinator pragueRequestsValidator(
+      final Address depositContractAddress) {
+    return new RequestsValidatorCoordinator.Builder()
         .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
         .addValidator(RequestType.DEPOSIT, new DepositsValidator(depositContractAddress))
         .build();

@@ -27,8 +27,8 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestsDelegateValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
@@ -49,8 +49,8 @@ public class DepositsValidatorTest {
   private static Log LOG_1;
   private static Log LOG_2;
   private static Address DEPOSIT_CONTRACT_ADDRESS;
-
-  private static RequestValidator allowedDepositsValidator;
+  private static RequestsValidatorCoordinator requestsValidatorCoordinator;
+  private static DepositsValidator depositsValidator;
 
   @BeforeAll
   public static void setup() {
@@ -94,7 +94,7 @@ public class DepositsValidatorTest {
                 LogTopic.fromHexString(
                     "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5")));
     DEPOSIT_CONTRACT_ADDRESS = Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
-    allowedDepositsValidator = createAllowDepositValidator();
+    requestsValidatorCoordinator = createAllowDepositValidator();
   }
 
   @Test
@@ -109,7 +109,7 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(allowedDepositsValidator.validate(block, request, List.of(receipt))).isTrue();
+    assertThat(requestsValidatorCoordinator.validate(block, request, List.of(receipt))).isTrue();
   }
 
   @Test
@@ -128,7 +128,7 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt2 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(allowedDepositsValidator.validate(block, requests, List.of(receipt1, receipt2)))
+    assertThat(requestsValidatorCoordinator.validate(block, requests, List.of(receipt1, receipt2)))
         .isTrue();
   }
 
@@ -141,7 +141,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(allowedDepositsValidator.validate(block, List.of(), List.of(receipt1))).isFalse();
+    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+        .isFalse();
   }
 
   @Test
@@ -154,7 +155,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(allowedDepositsValidator.validate(block, List.of(), List.of(receipt1))).isFalse();
+    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+        .isFalse();
   }
 
   @Test
@@ -166,7 +168,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(allowedDepositsValidator.validate(block, List.of(), List.of(receipt1))).isFalse();
+    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+        .isFalse();
   }
 
   @Test
@@ -179,7 +182,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2, LOG_1), Optional.empty());
 
-    assertThat(allowedDepositsValidator.validate(block, List.of(), List.of(receipt1))).isFalse();
+    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+        .isFalse();
   }
 
   @Test
@@ -193,28 +197,30 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(allowedDepositsValidator.validate(block, List.of(), List.of(receipt1))).isFalse();
+    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+        .isFalse();
   }
 
   @Test
   public void validateAllowedDepositParams() {
     final Optional<List<Request>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
-    assertThat(allowedDepositsValidator.validateParameter(deposits)).isTrue();
+    assertThat(depositsValidator.validateParameter(deposits)).isTrue();
 
     final Optional<List<Request>> emptyDeposits = Optional.of(List.of());
-    assertThat(allowedDepositsValidator.validateParameter(emptyDeposits)).isTrue();
+    assertThat(depositsValidator.validateParameter(emptyDeposits)).isTrue();
   }
 
   @Test
   public void invalidateAllowedDepositParams() {
     final Optional<List<Request>> deposits = Optional.empty();
-    assertThat(allowedDepositsValidator.validateParameter(deposits)).isFalse();
+    assertThat(depositsValidator.validateParameter(deposits)).isFalse();
   }
 
-  static RequestValidator createAllowDepositValidator() {
-    return new RequestsDelegateValidator.Builder()
+  static RequestsValidatorCoordinator createAllowDepositValidator() {
+    depositsValidator = new DepositsValidator(DEPOSIT_CONTRACT_ADDRESS);
+    return new RequestsValidatorCoordinator.Builder()
         .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
-        .addValidator(RequestType.DEPOSIT, new DepositsValidator(DEPOSIT_CONTRACT_ADDRESS))
+        .addValidator(RequestType.DEPOSIT, depositsValidator)
         .build();
   }
 }
