@@ -83,6 +83,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private boolean zeroBaseFee = false;
   private boolean fixedBaseFee = false;
 
+  /** Default constructor. */
+  public StubGenesisConfigOptions() {}
+
   @Override
   public StubGenesisConfigOptions clone() {
     try {

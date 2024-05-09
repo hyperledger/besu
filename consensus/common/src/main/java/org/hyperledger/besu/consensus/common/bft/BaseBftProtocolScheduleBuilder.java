@@ -43,6 +43,9 @@ public abstract class BaseBftProtocolScheduleBuilder {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
 
+  /** Default constructor. */
+  protected BaseBftProtocolScheduleBuilder() {}
+
   /**
    * Create protocol schedule.
    *

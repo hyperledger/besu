@@ -58,6 +58,9 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
   private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
 
+  /** Default constructor. */
+  public MergeBesuControllerBuilder() {}
+
   @Override
   protected MiningCoordinator createMiningCoordinator(
       final ProtocolSchedule protocolSchedule,

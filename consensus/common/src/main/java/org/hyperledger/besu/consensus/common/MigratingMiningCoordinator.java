@@ -29,7 +29,6 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -106,11 +105,6 @@ public class MigratingMiningCoordinator implements MiningCoordinator, BlockAdded
   @Override
   public Wei getMinPriorityFeePerGas() {
     return activeMiningCoordinator.getMinPriorityFeePerGas();
-  }
-
-  @Override
-  public void setExtraData(final Bytes extraData) {
-    activeMiningCoordinator.setExtraData(extraData);
   }
 
   @Override

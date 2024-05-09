@@ -82,7 +82,7 @@ public class ConfigDefaultValueProviderStrategyTest {
         .thenReturn(mockConfigOptionSpec);
     lenient().when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(true);
     lenient().when(mockConfigOptionSpec.getter()).thenReturn(mockConfigOptionGetter);
-    levelOption = new LoggingLevelOption();
+    levelOption = LoggingLevelOption.create();
     levelOption.setLogLevel("INFO");
     configParsingHandler = new ConfigDefaultValueProviderStrategy(resultHandler, environment);
   }

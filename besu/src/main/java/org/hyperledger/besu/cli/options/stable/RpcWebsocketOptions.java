@@ -120,6 +120,9 @@ public class RpcWebsocketOptions {
       arity = "1")
   private final File rpcWsAuthenticationPublicKeyFile = null;
 
+  /** Default Constructor. */
+  public RpcWebsocketOptions() {}
+
   /**
    * Validates the WebSocket options.
    *

@@ -25,6 +25,9 @@ public class TransactionSelectionServiceImpl implements TransactionSelectionServ
 
   private Optional<PluginTransactionSelectorFactory> factory = Optional.empty();
 
+  /** Default Constructor. */
+  public TransactionSelectionServiceImpl() {}
+
   @Override
   public PluginTransactionSelector createPluginTransactionSelector() {
     return factory

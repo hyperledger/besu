@@ -28,6 +28,8 @@ import java.util.function.Predicate;
 
 /** The Combined protocol schedule factory. */
 public class CombinedProtocolScheduleFactory {
+  /** Default constructor. */
+  public CombinedProtocolScheduleFactory() {}
 
   /**
    * Create protocol schedule.

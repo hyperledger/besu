@@ -311,6 +311,8 @@ public class BesuController implements java.io.Closeable {
 
   /** The type Builder. */
   public static class Builder {
+    /** Instantiates a new Builder. */
+    public Builder() {}
 
     /**
      * From eth network config besu controller builder.

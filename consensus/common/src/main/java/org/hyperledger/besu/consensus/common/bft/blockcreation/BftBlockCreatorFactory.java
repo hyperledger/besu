@@ -125,16 +125,6 @@ public class BftBlockCreatorFactory<T extends BftConfigOptions> {
   }
 
   /**
-   * Sets extra data.
-   *
-   * @param extraData the extra data
-   */
-  public void setExtraData(final Bytes extraData) {
-
-    miningParameters.setExtraData(extraData.copy());
-  }
-
-  /**
    * Sets min transaction gas price.
    *
    * @param minTransactionGasPrice the min transaction gas price
