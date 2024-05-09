@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.fluent;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.Address;
@@ -32,7 +33,6 @@ import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
@@ -72,7 +72,7 @@ public class EVMExecutor {
   private Wei ethValue = Wei.ZERO;
   private Code code = CodeV0.EMPTY_CODE;
   private BlockValues blockValues = new SimpleBlockValues();
-  private BlockHashOperation.BlockHashLookup blockHashLookup = (h, n) -> null;
+  private BlockHashLookup blockHashLookup = (h, n) -> null;
   private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
@@ -971,7 +971,7 @@ public class EVMExecutor {
    * @param blockHashLookup the block hash lookup function
    * @return the evm executor
    */
-  public EVMExecutor blockHashLookup(final BlockHashOperation.BlockHashLookup blockHashLookup) {
+  public EVMExecutor blockHashLookup(final BlockHashLookup blockHashLookup) {
     this.blockHashLookup = blockHashLookup;
     return this;
   }

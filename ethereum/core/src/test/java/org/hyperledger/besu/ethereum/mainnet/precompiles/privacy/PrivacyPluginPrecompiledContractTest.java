@@ -21,6 +21,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVAT
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.readFrom;
 import static org.hyperledger.besu.ethereum.privacy.PrivateTransaction.serialize;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.nullable;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -45,7 +46,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -204,7 +204,7 @@ public class PrivacyPluginPrecompiledContractTest {
             nullable(PrivateTransaction.class),
             nullable(Address.class),
             nullable(OperationTracer.class),
-            nullable(BlockHashOperation.BlockHashLookup.class),
+            nullable(BlockHashLookup.class),
             nullable(Bytes.class)))
         .thenReturn(result);
 

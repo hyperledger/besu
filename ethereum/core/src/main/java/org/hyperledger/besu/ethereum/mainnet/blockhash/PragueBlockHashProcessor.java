@@ -14,13 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
@@ -70,7 +71,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   }
 
   @Override
-  public BlockHashOperation.BlockHashLookup getBlockHashLookup(
+  public BlockHashLookup getBlockHashLookup(
       final ProcessableBlockHeader currentHeader, final Blockchain blockchain) {
     return (frame, blockNumber) -> {
       long currentBlockNumber = frame.getBlockValues().getNumber();

@@ -14,9 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
+
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 public interface BlockHashProcessor {
@@ -26,6 +27,5 @@ public interface BlockHashProcessor {
       MutableWorldState worldState,
       ProcessableBlockHeader currentBlockHeader);
 
-  BlockHashOperation.BlockHashLookup getBlockHashLookup(
-      ProcessableBlockHeader currentHeader, Blockchain blockchain);
+  BlockHashLookup getBlockHashLookup(ProcessableBlockHeader currentHeader, Blockchain blockchain);
 }

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet.precompiles.privacy;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.eq;
@@ -46,7 +47,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -111,7 +111,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
             nullable(PrivateTransaction.class),
             nullable(Address.class),
             nullable(OperationTracer.class),
-            nullable(BlockHashOperation.BlockHashLookup.class),
+            nullable(BlockHashLookup.class),
             nullable(Bytes.class)))
         .thenReturn(result);
 

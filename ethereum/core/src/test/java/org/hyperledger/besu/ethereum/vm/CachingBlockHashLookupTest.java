@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
 import java.util.Optional;
 
@@ -49,7 +49,7 @@ class CachingBlockHashLookupTest {
 
   private static final int CURRENT_BLOCK_NUMBER = 300;
   private final BlockHeader[] headers = new BlockHeader[CURRENT_BLOCK_NUMBER];
-  private BlockHashOperation.BlockHashLookup lookup;
+  private BlockHashLookup lookup;
 
   @BeforeEach
   void setUp() {
@@ -111,7 +111,7 @@ class CachingBlockHashLookupTest {
 
   @Test
   void shouldReturnEmptyHashWhenParentBlockNotOnchain() {
-    final BlockHashOperation.BlockHashLookup lookupWithUnavailableParent =
+    final BlockHashLookup lookupWithUnavailableParent =
         new CachingBlockHashLookup(
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER + 20).buildHeader(),
             blockchain);

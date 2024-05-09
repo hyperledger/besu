@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.frame;
 
 import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.collections.undo.UndoScalar;
@@ -32,7 +33,6 @@ import org.hyperledger.besu.evm.internal.ReturnStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -1242,7 +1242,7 @@ public class MessageFrame {
    *
    * @return the block hash lookup
    */
-  public BlockHashOperation.BlockHashLookup getBlockHashLookup() {
+  public BlockHashLookup getBlockHashLookup() {
     return txValues.blockHashLookup();
   }
 
@@ -1419,7 +1419,7 @@ public class MessageFrame {
     private boolean isStatic = false;
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
-    private BlockHashOperation.BlockHashLookup blockHashLookup;
+    private BlockHashLookup blockHashLookup;
     private Map<String, Object> contextVariables;
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> accessListWarmAddresses = emptySet();
@@ -1646,7 +1646,7 @@ public class MessageFrame {
      * @param blockHashLookup the block hash lookup
      * @return the builder
      */
-    public Builder blockHashLookup(final BlockHashOperation.BlockHashLookup blockHashLookup) {
+    public Builder blockHashLookup(final BlockHashLookup blockHashLookup) {
       this.blockHashLookup = blockHashLookup;
       return this;
     }

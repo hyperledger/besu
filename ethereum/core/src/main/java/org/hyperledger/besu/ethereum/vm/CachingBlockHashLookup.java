@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.hyperledger.besu.datatypes.Hash.ZERO;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
@@ -33,7 +34,7 @@ import java.util.Map;
  * <p>A new BlockHashCache must be created for each block being processed but should be reused for
  * all transactions within that block.
  */
-public class CachingBlockHashLookup implements BlockHashOperation.BlockHashLookup {
+public class CachingBlockHashLookup implements BlockHashLookup {
 
   private ProcessableBlockHeader searchStartHeader;
   private final Blockchain blockchain;

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.testutils;
 
 import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -24,7 +25,6 @@ import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -54,7 +54,7 @@ public class TestMessageFrameBuilder {
   private int pc = 0;
   private int section = 0;
   private final List<Bytes> stackItems = new ArrayList<>();
-  private Optional<BlockHashOperation.BlockHashLookup> blockHashLookup = Optional.empty();
+  private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
   private Bytes memory = Bytes.EMPTY;
 
   public TestMessageFrameBuilder worldUpdater(final WorldUpdater worldUpdater) {
@@ -132,8 +132,7 @@ public class TestMessageFrameBuilder {
     return this;
   }
 
-  public TestMessageFrameBuilder blockHashLookup(
-      final BlockHashOperation.BlockHashLookup blockHashLookup) {
+  public TestMessageFrameBuilder blockHashLookup(final BlockHashLookup blockHashLookup) {
     this.blockHashLookup = Optional.of(blockHashLookup);
     return this;
   }

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -33,7 +34,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -71,7 +71,7 @@ class MainnetTransactionProcessorTest {
   @Mock private WorldUpdater worldState;
   @Mock private ProcessableBlockHeader blockHeader;
   @Mock private Transaction transaction;
-  @Mock private BlockHashOperation.BlockHashLookup blockHashLookup;
+  @Mock private BlockHashLookup blockHashLookup;
 
   @Mock private MutableAccount senderAccount;
   @Mock private MutableAccount receiverAccount;

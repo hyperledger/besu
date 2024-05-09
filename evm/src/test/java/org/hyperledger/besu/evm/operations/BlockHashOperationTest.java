@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -50,7 +51,7 @@ class BlockHashOperationTest {
       final long requestedBlock,
       final Bytes32 expectedOutput,
       final long currentBlockNumber,
-      final BlockHashOperation.BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup) {
     assertBlockHash(
         UInt256.valueOf(requestedBlock), expectedOutput, currentBlockNumber, blockHashLookup);
   }
@@ -59,7 +60,7 @@ class BlockHashOperationTest {
       final Bytes32 input,
       final Bytes32 expectedOutput,
       final long currentBlockNumber,
-      final BlockHashOperation.BlockHashLookup blockHashLookup) {
+      final BlockHashLookup blockHashLookup) {
     final MessageFrame frame =
         new TestMessageFrameBuilder()
             .blockHashLookup(blockHashLookup)

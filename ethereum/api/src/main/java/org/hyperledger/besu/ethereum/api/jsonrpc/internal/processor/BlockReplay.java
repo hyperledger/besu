@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor;
 
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
@@ -30,7 +31,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
 import java.util.List;
 import java.util.Optional;
@@ -89,7 +89,7 @@ public class BlockReplay {
     return performActionWithBlock(
         blockHash,
         (body, header, blockchain, transactionProcessor, protocolSpec) -> {
-          final BlockHashOperation.BlockHashLookup blockHashLookup =
+          final BlockHashLookup blockHashLookup =
               protocolSpec.getBlockHashProcessor().getBlockHashLookup(header, blockchain);
           final Wei blobGasPrice =
               protocolSpec

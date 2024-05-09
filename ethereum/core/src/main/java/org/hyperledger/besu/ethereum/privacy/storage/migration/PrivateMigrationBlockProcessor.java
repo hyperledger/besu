@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.privacy.storage.migration;
 
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
@@ -31,7 +33,6 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -78,7 +79,7 @@ public class PrivateMigrationBlockProcessor {
   public BlockProcessingResult processBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
-      final BlockHashOperation.BlockHashLookup blockHashLookup,
+      final BlockHashLookup blockHashLookup,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
