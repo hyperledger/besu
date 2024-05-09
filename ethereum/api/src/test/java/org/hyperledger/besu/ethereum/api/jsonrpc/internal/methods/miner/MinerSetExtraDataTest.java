@@ -76,7 +76,7 @@ public class MinerSetExtraDataTest {
   }
 
   @Test
-  public void shouldReturnFalseWhenExtraDataNotHex() {
+  public void shouldReturnErrorWhenExtraDataNotHex() {
     final var request = request("not hex string");
 
     final JsonRpcResponse expected =
@@ -91,7 +91,7 @@ public class MinerSetExtraDataTest {
   }
 
   @Test
-  public void shouldReturnFalseWhenExtraDataTooLong() {
+  public void shouldReturnErrorWhenExtraDataTooLong() {
     final var tooLongExtraData = "shouldReturnFalseWhenExtraDataTooLong";
     final var request =
         request(Bytes.wrap(tooLongExtraData.getBytes(StandardCharsets.UTF_8)).toHexString());
