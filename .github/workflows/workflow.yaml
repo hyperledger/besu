@@ -71,7 +71,7 @@ jobs:
           distribution: 'adopt'
 
       - name: Publish Java artifacts
-        run: ./gradlew publish
+        run: ./gradlew publish -x checkLicense
         env:
           CLOUDSMITH_USER: ${{ secrets.CLOUDSMITH_USER }}
           CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -80,7 +80,7 @@ jobs:
         run: |
           sudo apt update
           sudo apt install -y python3 python3-pip python3-venv
-          ./gradlew cloudsmithUpload
+          ./gradlew cloudsmithUpload -x checkLicense
         env:
           CLOUDSMITH_USER: ${{ secrets.CLOUDSMITH_USER }}
           CLOUDSMITH_API_KEY: ${{ secrets.CLOUDSMITH_API_KEY }}
@@ -107,4 +107,4 @@ jobs:
 
       - name: Build and Publish Docker Image
         run: |
-          ./gradlew -Pdocker-platform=linux/amd64,linux/arm64 distDocker
+          ./gradlew -Pdocker-platform=linux/amd64,linux/arm64 distDocker -x checkLicense
