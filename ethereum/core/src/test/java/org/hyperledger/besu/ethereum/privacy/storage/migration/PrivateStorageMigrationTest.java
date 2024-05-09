@@ -201,6 +201,7 @@ public class PrivateStorageMigrationTest {
         .processBlock(
             any(),
             any(),
+            any(),
             eq(blockWithPMT.getHeader()),
             eq(blockWithPMT.getBody().getTransactions()),
             eq(blockWithPMT.getBody().getOmmers()));
@@ -223,7 +224,7 @@ public class PrivateStorageMigrationTest {
     final ArgumentCaptor<List> txsCaptor = ArgumentCaptor.forClass(List.class);
 
     verify(privateMigrationBlockProcessor)
-        .processBlock(any(), any(), any(), txsCaptor.capture(), any());
+        .processBlock(any(), any(), any(), any(), txsCaptor.capture(), any());
 
     // won't process transaction after PMT, that's why we only process 2 txs
     final List<Transaction> processedTxs = txsCaptor.getValue();
