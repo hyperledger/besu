@@ -52,7 +52,7 @@ public class WithdrawalRequestEncoder {
     rlpOutput.endList();
   }
 
-  public static Bytes encodeOpaqueBytes(final WithdrawalRequest exit) {
-    return RLP.encode(rlpOutput -> encode(exit, rlpOutput));
+  public static Bytes encodeOpaqueBytes(final WithdrawalRequest withdrawalRequest) {
+    return RLP.encode(rlpOutput -> encode(withdrawalRequest, rlpOutput));
   }
 }

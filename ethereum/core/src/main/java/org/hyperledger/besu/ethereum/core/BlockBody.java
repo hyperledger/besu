@@ -112,7 +112,6 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
-    // deposits.ifPresent(deposits -> output.writeList(deposits, Deposit::writeTo));
     requests.ifPresent(requests -> output.writeList(requests, Request::writeTo));
   }
 

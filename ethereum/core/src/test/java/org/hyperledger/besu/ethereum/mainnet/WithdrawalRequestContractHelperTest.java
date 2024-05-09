@@ -86,9 +86,9 @@ class WithdrawalRequestContractHelperTest {
     assertContractStorageValue(
         WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, validatorWithdrawalRequests.size());
 
-    final List<WithdrawalRequest> poppedExits =
+    final List<WithdrawalRequest> poppedWithdrawalRequests =
         WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
-    assertThat(poppedExits).hasSize(16);
+    assertThat(poppedWithdrawalRequests).hasSize(16);
 
     // Check that queue pointers were updated successfully (head advanced to index 16)
     assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT, 16);
@@ -103,15 +103,15 @@ class WithdrawalRequestContractHelperTest {
 
   @Test
   public void popWithdrawalRequestsFromQueue_WhenNoMoreWithdrawalRequests_ZeroQueuePointers() {
-    final List<WithdrawalRequest> validatorExits =
+    final List<WithdrawalRequest> withdrawalRequests =
         List.of(createExit(), createExit(), createExit());
-    loadContractStorage(worldState, validatorExits);
+    loadContractStorage(worldState, withdrawalRequests);
     // After loading the contract, the exit count since last block should match the size of the list
-    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, validatorExits.size());
+    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, withdrawalRequests.size());
 
-    final List<WithdrawalRequest> poppedExits =
+    final List<WithdrawalRequest> poppedWithdrawalRequests =
         WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
-    assertThat(poppedExits).hasSize(3);
+    assertThat(poppedWithdrawalRequests).hasSize(3);
 
     // Check that queue pointers were updated successfully (head and tail zero because queue is
     // empty)
@@ -133,9 +133,9 @@ class WithdrawalRequestContractHelperTest {
     // WithdrawalRequests were added
     assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, 0);
 
-    final List<WithdrawalRequest> poppedExits =
+    final List<WithdrawalRequest> poppedWithdrawalRequests =
         WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
-    assertThat(poppedExits).hasSize(0);
+    assertThat(poppedWithdrawalRequests).hasSize(0);
 
     // Check that queue pointers are correct (head and tail are zero)
     assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT, 0);

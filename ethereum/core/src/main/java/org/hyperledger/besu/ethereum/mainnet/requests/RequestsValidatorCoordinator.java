@@ -69,7 +69,7 @@ public class RequestsValidatorCoordinator {
       LOG.warn("Block {} the ordering across requests must be ascending by type", blockHash);
       return false;
     }
-    if (!isRequestRootValid(block, requests)) {
+    if (!isRequestsRootValid(block, requests)) {
       return false;
     }
     return validateRequests(block, requests, receipts);
@@ -90,7 +90,7 @@ public class RequestsValidatorCoordinator {
         .allMatch(type -> validateRequestOfType(type, block, requests, receipts));
   }
 
-  private boolean isRequestRootValid(final Block block, final List<Request> requests) {
+  private boolean isRequestsRootValid(final Block block, final List<Request> requests) {
     final Hash blockHash = block.getHash();
     final Optional<Hash> maybeRequestsRoot = block.getHeader().getRequestsRoot();
 
@@ -104,8 +104,8 @@ public class RequestsValidatorCoordinator {
       return false;
     }
 
-    final Hash expectedRequestRoot = BodyValidation.requestsRoot(requests);
-    if (!expectedRequestRoot.equals(maybeRequestsRoot.get())) {
+    final Hash expectedRequestsRoot = BodyValidation.requestsRoot(requests);
+    if (!expectedRequestsRoot.equals(maybeRequestsRoot.get())) {
       LOG.warn(
           "Block {} requests root does not match expected hash root for requests in block",
           blockHash);

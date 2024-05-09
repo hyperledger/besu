@@ -43,9 +43,9 @@ class PragueRequestsValidatorTest {
   @MethodSource("paramsForValidateWithdrawalRequestParameter")
   public void validateWithdrawalRequestParameter(
       final String description,
-      final Optional<List<Request>> maybeExits,
+      final Optional<List<Request>> maybeWithdrawalRequests,
       final boolean expectedValidity) {
-    assertThat(new WithdrawalRequestValidator().validateParameter(maybeExits))
+    assertThat(new WithdrawalRequestValidator().validateParameter(maybeWithdrawalRequests))
         .isEqualTo(expectedValidity);
   }
 

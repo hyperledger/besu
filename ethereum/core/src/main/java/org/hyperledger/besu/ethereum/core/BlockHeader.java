@@ -64,7 +64,7 @@ public class BlockHeader extends SealableBlockHeader
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
-      final Hash requestRoot,
+      final Hash requestsRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -86,7 +86,7 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestRoot);
+        requestsRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -204,7 +204,7 @@ public class BlockHeader extends SealableBlockHeader
     final BlobGas excessBlobGas =
         !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
-    final Hash exitsHashRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final Hash requestsRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -227,7 +227,7 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        exitsHashRoot,
+        requestsRoot,
         blockHeaderFunctions);
   }
 

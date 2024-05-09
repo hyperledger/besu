@@ -39,9 +39,9 @@ class WithdrawalRequestValidatorTest {
   @MethodSource("paramsForValidateWithdrawalRequestParameter")
   public void validateWithdrawalRequestParameter(
       final String description,
-      final Optional<List<Request>> maybeExits,
+      final Optional<List<Request>> maybeWithdrawalRequests,
       final boolean expectedValidity) {
-    assertThat(new ProhibitedRequestsValidator().validateParameter(maybeExits))
+    assertThat(new ProhibitedRequestsValidator().validateParameter(maybeWithdrawalRequests))
         .isEqualTo(expectedValidity);
   }
 

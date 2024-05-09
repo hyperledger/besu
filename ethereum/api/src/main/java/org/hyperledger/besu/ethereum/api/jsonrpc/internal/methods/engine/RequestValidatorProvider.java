@@ -46,13 +46,13 @@ public class RequestValidatorProvider {
       final RequestType requestType) {
 
     RequestsValidatorCoordinator requestsValidatorCoordinator =
-        getRequestValidator(protocolSchedule, blockTimestamp, blockNumber);
+        getRequestValidatorCoordinator(protocolSchedule, blockTimestamp, blockNumber);
     return requestsValidatorCoordinator
         .getRequestValidator(requestType)
         .orElse(new ProhibitedRequestsValidator());
   }
 
-  private static RequestsValidatorCoordinator getRequestValidator(
+  private static RequestsValidatorCoordinator getRequestValidatorCoordinator(
       final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
 
     final BlockHeader blockHeader =
@@ -60,10 +60,10 @@ public class RequestValidatorProvider {
             .timestamp(blockTimestamp)
             .number(blockNumber)
             .buildBlockHeader();
-    return getRequestValidator(protocolSchedule.getByBlockHeader(blockHeader));
+    return getRequestValidatorCoordinator(protocolSchedule.getByBlockHeader(blockHeader));
   }
 
-  private static RequestsValidatorCoordinator getRequestValidator(
+  private static RequestsValidatorCoordinator getRequestValidatorCoordinator(
       final ProtocolSpec protocolSchedule) {
     return Optional.ofNullable(protocolSchedule)
         .map(ProtocolSpec::getRequestsValidatorCoordinator)
