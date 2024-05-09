@@ -136,7 +136,6 @@ public interface MainnetPrecompiledContracts {
     populateForIstanbul(registry, gasCalculator);
 
     // EIP-4844 - shard blob transactions
-    // TODO: allow override to be configured?
     registry.put(Address.KZG_POINT_EVAL, new KZGPointEvalPrecompiledContract());
   }
 
@@ -162,7 +161,16 @@ public interface MainnetPrecompiledContracts {
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForCancun(registry, gasCalculator);
 
-    // TODO: add Prague precompiles here
+    // EIP-2537 - BLS12-381 curve operations
+    registry.put(Address.BLS12_G1ADD, new BLS12G1AddPrecompiledContract());
+    registry.put(Address.BLS12_G1MUL, new BLS12G1MulPrecompiledContract());
+    registry.put(Address.BLS12_G1MULTIEXP, new BLS12G1MultiExpPrecompiledContract());
+    registry.put(Address.BLS12_G2ADD, new BLS12G2AddPrecompiledContract());
+    registry.put(Address.BLS12_G2MUL, new BLS12G2MulPrecompiledContract());
+    registry.put(Address.BLS12_G2MULTIEXP, new BLS12G2MultiExpPrecompiledContract());
+    registry.put(Address.BLS12_PAIRING, new BLS12PairingPrecompiledContract());
+    registry.put(Address.BLS12_MAP_FP_TO_G1, new BLS12MapFpToG1PrecompiledContract());
+    registry.put(Address.BLS12_MAP_FP2_TO_G2, new BLS12MapFp2ToG2PrecompiledContract());
   }
 
   /**
@@ -186,16 +194,5 @@ public interface MainnetPrecompiledContracts {
   static void populateForFutureEIPs(
       final PrecompileContractRegistry registry, final GasCalculator gasCalculator) {
     populateForCancun(registry, gasCalculator);
-
-    // EIP-2537 - BLS12-381 curve operations
-    registry.put(Address.BLS12_G1ADD, new BLS12G1AddPrecompiledContract());
-    registry.put(Address.BLS12_G1MUL, new BLS12G1MulPrecompiledContract());
-    registry.put(Address.BLS12_G1MULTIEXP, new BLS12G1MultiExpPrecompiledContract());
-    registry.put(Address.BLS12_G2ADD, new BLS12G2AddPrecompiledContract());
-    registry.put(Address.BLS12_G2MUL, new BLS12G2MulPrecompiledContract());
-    registry.put(Address.BLS12_G2MULTIEXP, new BLS12G2MultiExpPrecompiledContract());
-    registry.put(Address.BLS12_PAIRING, new BLS12PairingPrecompiledContract());
-    registry.put(Address.BLS12_MAP_FP_TO_G1, new BLS12MapFpToG1PrecompiledContract());
-    registry.put(Address.BLS12_MAP_FP2_TO_G2, new BLS12MapFp2ToG2PrecompiledContract());
   }
 }

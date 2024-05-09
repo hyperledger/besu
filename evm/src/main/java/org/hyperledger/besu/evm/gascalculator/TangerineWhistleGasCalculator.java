@@ -37,6 +37,9 @@ public class TangerineWhistleGasCalculator extends HomesteadGasCalculator {
 
   private static final long SLOAD_OPERATION_GAS_COST = 200L;
 
+  /** Default constructor. */
+  public TangerineWhistleGasCalculator() {}
+
   @Override
   public long getBalanceOperationGasCost() {
     return BALANCE_OPERATION_GAS_COST;

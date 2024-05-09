@@ -43,6 +43,9 @@ public class DnsOptions implements CLIOptions<EnodeDnsConfiguration> {
       arity = "1")
   private Boolean dnsUpdateEnabled = Boolean.FALSE;
 
+  /** Instantiates a new Dns options. */
+  DnsOptions() {}
+
   /**
    * Create dns options.
    *

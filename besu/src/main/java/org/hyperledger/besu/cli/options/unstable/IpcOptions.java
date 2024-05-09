@@ -25,6 +25,9 @@ import picocli.CommandLine;
 public class IpcOptions {
   private static final String DEFAULT_IPC_FILE = "besu.ipc";
 
+  /** Default constructor. */
+  IpcOptions() {}
+
   /**
    * Create ipc options.
    *

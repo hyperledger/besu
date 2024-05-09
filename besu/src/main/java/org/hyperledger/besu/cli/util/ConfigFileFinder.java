@@ -30,6 +30,9 @@ import picocli.CommandLine;
 public class ConfigFileFinder extends AbstractConfigurationFinder<File> {
   private static final String CONFIG_FILE_ENV_NAME = "BESU_CONFIG_FILE";
 
+  /** Default constructor. */
+  public ConfigFileFinder() {}
+
   /**
    * Returns the name of the configuration option.
    *

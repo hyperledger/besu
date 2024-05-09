@@ -30,6 +30,9 @@ public class NoNonceRule extends MergeConsensusRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoNonceRule.class);
 
+  /** Default Constructor. */
+  public NoNonceRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {
