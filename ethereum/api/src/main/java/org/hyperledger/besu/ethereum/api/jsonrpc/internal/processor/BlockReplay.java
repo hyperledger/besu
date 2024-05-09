@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
 import java.util.List;
@@ -91,7 +90,7 @@ public class BlockReplay {
         blockHash,
         (body, header, blockchain, transactionProcessor, protocolSpec) -> {
           final BlockHashOperation.BlockHashLookup blockHashLookup =
-                  protocolSpec.getBlockHashProcessor().getBlockHashLookup(header, blockchain);
+              protocolSpec.getBlockHashProcessor().getBlockHashLookup(header, blockchain);
           final Wei blobGasPrice =
               protocolSpec
                   .getFeeMarket()
@@ -138,7 +137,7 @@ public class BlockReplay {
               blockHeader,
               transaction,
               spec.getMiningBeneficiaryCalculator().calculateBeneficiary(blockHeader),
-                  spec.getBlockHashProcessor().getBlockHashLookup(blockHeader, blockchain),
+              spec.getBlockHashProcessor().getBlockHashLookup(blockHeader, blockchain),
               false,
               TransactionValidationParams.blockReplay(),
               blobGasPrice);

@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
@@ -256,9 +255,9 @@ public class T8nExecutor {
             .getFeeMarket()
             .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, blockHeader));
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
+    // because blockchain is null t8n tests cannot test at-transition backfill.
     protocolSpec
         .getBlockHashProcessor()
-            //FIXME make sure blockchain not being there won't ruin anything
         .processBlockHashes(null, worldStateUpdater.updater(), referenceTestEnv);
 
     List<TransactionReceipt> receipts = new ArrayList<>();

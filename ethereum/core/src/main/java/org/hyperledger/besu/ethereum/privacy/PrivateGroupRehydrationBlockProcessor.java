@@ -36,7 +36,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
@@ -91,6 +90,7 @@ public class PrivateGroupRehydrationBlockProcessor {
       final PrivateStateStorage privateStateStorage,
       final PrivateStateRootResolver privateStateRootResolver,
       final Block block,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Map<Hash, PrivateTransaction> forExecution,
       final List<BlockHeader> ommers) {
     long gasUsed = 0;
@@ -114,9 +114,6 @@ public class PrivateGroupRehydrationBlockProcessor {
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
-      //FIXME plumb through to protocol spec
-      final BlockHashOperation.BlockHashLookup blockHashLookup =
-          new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 

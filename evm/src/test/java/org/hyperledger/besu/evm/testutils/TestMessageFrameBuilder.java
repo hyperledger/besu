@@ -162,8 +162,7 @@ public class TestMessageFrameBuilder {
             .blockValues(blockValues.orElseGet(() -> new FakeBlockValues(1337)))
             .completer(c -> {})
             .miningBeneficiary(Address.ZERO)
-            .blockHashLookup(
-                blockHashLookup.orElse((f, n) -> Hash.hash(Words.longBytes(n))))
+            .blockHashLookup(blockHashLookup.orElse((f, n) -> Hash.hash(Words.longBytes(n))))
             .maxStackSize(maxStackSize)
             .build();
     frame.setPC(pc);

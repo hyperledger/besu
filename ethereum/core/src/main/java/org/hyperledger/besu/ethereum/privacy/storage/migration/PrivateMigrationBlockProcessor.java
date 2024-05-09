@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -79,6 +78,7 @@ public class PrivateMigrationBlockProcessor {
   public BlockProcessingResult processBlock(
       final Blockchain blockchain,
       final MutableWorldState worldState,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
       final List<BlockHeader> ommers) {
@@ -97,9 +97,6 @@ public class PrivateMigrationBlockProcessor {
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
-      //FIXME plumb via constructor
-      final BlockHashOperation.BlockHashLookup blockHashLookup =
-          new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 

@@ -35,17 +35,11 @@ public class CancunBlockHashProcessor implements BlockHashProcessor {
       final Blockchain blockchain,
       final WorldUpdater worldUpdater,
       final ProcessableBlockHeader currentBlockHeader) {
-    System.out.println("CancunWrite!");
     new Exception().printStackTrace();
     currentBlockHeader
         .getParentBeaconBlockRoot()
         .ifPresent(
             beaconBlockRoot -> {
-              System.out.println(
-                  "CancunWrite!"
-                      + currentBlockHeader.getTimestamp()
-                      + " "
-                      + beaconBlockRoot.toHexString());
               ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
                   worldUpdater, currentBlockHeader.getTimestamp(), beaconBlockRoot);
             });
