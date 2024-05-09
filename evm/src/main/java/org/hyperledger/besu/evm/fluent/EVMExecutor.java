@@ -32,6 +32,7 @@ import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.function.Function;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Multimap;
@@ -72,7 +72,7 @@ public class EVMExecutor {
   private Wei ethValue = Wei.ZERO;
   private Code code = CodeV0.EMPTY_CODE;
   private BlockValues blockValues = new SimpleBlockValues();
-  private Function<Long, Hash> blockHashLookup = h -> null;
+  private BlockHashOperation.BlockHashLookup blockHashLookup = (h, n) -> null;
   private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;
@@ -971,7 +971,7 @@ public class EVMExecutor {
    * @param blockHashLookup the block hash lookup function
    * @return the evm executor
    */
-  public EVMExecutor blockHashLookup(final Function<Long, Hash> blockHashLookup) {
+  public EVMExecutor blockHashLookup(final BlockHashOperation.BlockHashLookup blockHashLookup) {
     this.blockHashLookup = blockHashLookup;
     return this;
   }

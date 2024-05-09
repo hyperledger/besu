@@ -69,7 +69,7 @@ public class BlockTracer {
               transaction,
               header.getCoinbase(),
               tracer,
-              new CachingBlockHashLookup(header, blockchain),
+                  blockReplay.getProtocolSpec(header).getBlockHashProcessor().getBlockHashLookup(header, blockchain),
               false,
               blobGasPrice);
       final List<TraceFrame> traceFrames = tracer.copyTraceFrames();

@@ -208,10 +208,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
-      maybeParentBeaconBlockRoot.ifPresent(
-          bytes32 ->
-              ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-                  disposableWorldState.updater(), timestamp, bytes32));
+      final WorldUpdater updater = disposableWorldState.updater();
+      newProtocolSpec
+          .getBlockHashProcessor()
+          .processBlockHashes(protocolContext.getBlockchain(), updater, processableBlockHeader);
 
       throwIfStopped();
 

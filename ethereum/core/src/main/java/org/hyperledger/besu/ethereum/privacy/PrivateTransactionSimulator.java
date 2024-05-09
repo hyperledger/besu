@@ -140,7 +140,7 @@ public class PrivateTransactionSimulator {
             transaction,
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             OperationTracer.NO_TRACING,
-            new CachingBlockHashLookup(header, blockchain),
+            protocolSpec.getBlockHashProcessor().getBlockHashLookup(header, blockchain),
             privacyGroupId);
 
     return Optional.of(result);

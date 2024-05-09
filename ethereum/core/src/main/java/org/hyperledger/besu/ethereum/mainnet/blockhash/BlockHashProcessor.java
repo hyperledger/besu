@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,19 +12,18 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.vm;
+package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
-import java.util.function.Function;
+public interface BlockHashProcessor {
 
-/**
- * Calculates and caches block hashes by number following the chain for a specific branch. This is
- * used by {@link BlockHashOperation} and ensures that the correct block hash is returned even when
- * the block being imported is on a fork.
- *
- * <p>A new BlockHashCache must be created for each block being processed but should be reused for
- * all transactions within that block.
- */
-public interface BlockHashLookup extends Function<Long, Hash> {}
+  void processBlockHashes(
+      Blockchain blockchain, WorldUpdater worldUpdater, ProcessableBlockHeader currentBlockHeader);
+
+  BlockHashOperation.BlockHashLookup getBlockHashLookup(
+      ProcessableBlockHeader currentHeader, Blockchain blockchain);
+}

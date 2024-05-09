@@ -256,12 +256,10 @@ public class T8nExecutor {
             .getFeeMarket()
             .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, blockHeader));
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
-    referenceTestEnv
-        .getParentBeaconBlockRoot()
-        .ifPresent(
-            bytes32 ->
-                ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-                    worldStateUpdater.updater(), referenceTestEnv.getTimestamp(), bytes32));
+    protocolSpec
+        .getBlockHashProcessor()
+            //FIXME make sure blockchain not being there won't ruin anything
+        .processBlockHashes(null, worldStateUpdater.updater(), referenceTestEnv);
 
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);
@@ -297,7 +295,8 @@ public class T8nExecutor {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                blockNumber -> referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO),
+                (blockheight, blockNumber) ->
+                    referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,

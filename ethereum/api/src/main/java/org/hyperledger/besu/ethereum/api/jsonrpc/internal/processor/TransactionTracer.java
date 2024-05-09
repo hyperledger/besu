@@ -192,7 +192,7 @@ public class TransactionTracer {
         transaction,
         header.getCoinbase(),
         tracer,
-        new CachingBlockHashLookup(header, blockchain),
+            blockReplay.getProtocolSpec(header).getBlockHashProcessor().getBlockHashLookup(header, blockchain),
         false,
         ImmutableTransactionValidationParams.builder().isAllowFutureNonce(true).build(),
         blobGasPrice);

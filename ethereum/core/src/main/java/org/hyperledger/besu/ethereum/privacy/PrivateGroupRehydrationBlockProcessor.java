@@ -36,10 +36,10 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -114,7 +114,9 @@ public class PrivateGroupRehydrationBlockProcessor {
       }
 
       final WorldUpdater worldStateUpdater = worldState.updater();
-      final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
+      //FIXME plumb through to protocol spec
+      final BlockHashOperation.BlockHashLookup blockHashLookup =
+          new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
@@ -151,7 +153,7 @@ public class PrivateGroupRehydrationBlockProcessor {
                 privateTransaction,
                 miningBeneficiary,
                 OperationTracer.NO_TRACING,
-                new CachingBlockHashLookup(blockHeader, blockchain),
+                blockHashLookup,
                 privateTransaction.getPrivacyGroupId().get());
 
         privateWorldStateUpdater.commit();

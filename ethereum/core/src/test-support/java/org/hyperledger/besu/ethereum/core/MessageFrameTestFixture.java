@@ -19,11 +19,11 @@ import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -54,7 +54,7 @@ public class MessageFrameTestFixture {
   private Code code = CodeV0.EMPTY_CODE;
   private final List<UInt256> stackItems = new ArrayList<>();
   private Optional<BlockHeader> blockHeader = Optional.empty();
-  private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
+  private Optional<BlockHashOperation.BlockHashLookup> blockHashLookup = Optional.empty();
   private ExecutionContextTestFixture executionContextTestFixture;
 
   public MessageFrameTestFixture parentFrame(final MessageFrame parentFrame) {
@@ -148,7 +148,8 @@ public class MessageFrameTestFixture {
     return this;
   }
 
-  public MessageFrameTestFixture blockHashLookup(final BlockHashLookup blockHashLookup) {
+  public MessageFrameTestFixture blockHashLookup(
+      final BlockHashOperation.BlockHashLookup blockHashLookup) {
     this.blockHashLookup = Optional.of(blockHashLookup);
     return this;
   }

@@ -217,7 +217,7 @@ public class TraceServiceImpl implements TraceService {
                       transaction,
                       protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
                       tracer,
-                      new CachingBlockHashLookup(header, blockchain),
+                          protocolSpec.getBlockHashProcessor().getBlockHashLookup(header, blockchain),
                       false,
                       blobGasPrice);
 

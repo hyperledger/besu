@@ -430,7 +430,10 @@ public class EvmToolCommand implements Runnable {
                 .blockValues(blockHeader)
                 .completer(c -> {})
                 .miningBeneficiary(blockHeader.getCoinbase())
-                .blockHashLookup(new CachingBlockHashLookup(blockHeader, component.getBlockchain()))
+                .blockHashLookup(
+                    protocolSpec
+                        .getBlockHashProcessor()
+                        .getBlockHashLookup(blockHeader, component.getBlockchain()))
                 .accessListWarmAddresses(addressList)
                 .build();
         Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();

@@ -280,7 +280,7 @@ public class TransactionSimulator {
             protocolSpec
                 .getMiningBeneficiaryCalculator()
                 .calculateBeneficiary(blockHeaderToProcess),
-            new CachingBlockHashLookup(blockHeaderToProcess, blockchain),
+            protocolSpec.getBlockHashProcessor().getBlockHashLookup(blockHeaderToProcess, blockchain),
             false,
             transactionValidationParams,
             operationTracer,

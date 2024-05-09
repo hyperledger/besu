@@ -18,8 +18,9 @@ import static org.hyperledger.besu.datatypes.Hash.ZERO;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -32,21 +33,35 @@ import java.util.Map;
  * <p>A new BlockHashCache must be created for each block being processed but should be reused for
  * all transactions within that block.
  */
-public class CachingBlockHashLookup implements BlockHashLookup {
+public class CachingBlockHashLookup implements BlockHashOperation.BlockHashLookup {
 
   private ProcessableBlockHeader searchStartHeader;
   private final Blockchain blockchain;
+  private final long maxLookback;
+
   private final Map<Long, Hash> hashByNumber = new HashMap<>();
 
   public CachingBlockHashLookup(
       final ProcessableBlockHeader currentBlock, final Blockchain blockchain) {
+    this(currentBlock, blockchain, 255);
+  }
+
+  public CachingBlockHashLookup(
+      final ProcessableBlockHeader currentBlock,
+      final Blockchain blockchain,
+      final int maxLookback) {
     this.searchStartHeader = currentBlock;
     this.blockchain = blockchain;
+    this.maxLookback = maxLookback;
     hashByNumber.put(currentBlock.getNumber() - 1, currentBlock.getParentHash());
   }
 
   @Override
-  public Hash apply(final Long blockNumber) {
+  public Hash apply(final MessageFrame frame, final Long blockNumber) {
+    long currentBlockNumber = frame.getBlockValues().getNumber();
+    if (currentBlockNumber <= blockNumber || currentBlockNumber - blockNumber >= maxLookback) {
+      return Hash.ZERO;
+    }
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
       return cachedHash;

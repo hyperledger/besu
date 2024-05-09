@@ -28,6 +28,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -82,7 +82,7 @@ public class PrivateTransactionProcessor {
       final PrivateTransaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
-      final Function<Long, Hash> blockHashLookup,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Bytes privacyGroupId) {
     try {
       LOG.trace("Starting private execution of {}", transaction);

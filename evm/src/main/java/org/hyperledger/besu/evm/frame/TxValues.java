@@ -18,14 +18,13 @@ import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -36,8 +35,8 @@ import org.apache.tuweni.bytes.Bytes32;
  *
  * @param blockHashLookup The block hash lookup function
  * @param maxStackSize The maximum stack size
- * @param warmedUpAddresses The warmed up addresses
- * @param warmedUpStorage The warmed up storage
+ * @param warmedUpAddresses The warmed-up addresses
+ * @param warmedUpStorage The warmed-up storage
  * @param originator The originator address
  * @param gasPrice The gas price
  * @param blobGasPrice The blob gas price
@@ -51,7 +50,7 @@ import org.apache.tuweni.bytes.Bytes32;
  * @param gasRefunds The gas refunds
  */
 public record TxValues(
-    Function<Long, Hash> blockHashLookup,
+    BlockHashOperation.BlockHashLookup blockHashLookup,
     int maxStackSize,
     UndoSet<Address> warmedUpAddresses,
     UndoTable<Address, Bytes32, Boolean> warmedUpStorage,

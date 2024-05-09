@@ -31,13 +31,13 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -117,7 +117,7 @@ public class MainnetTransactionProcessor {
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
@@ -155,7 +155,7 @@ public class MainnetTransactionProcessor {
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
       final Address miningBeneficiary,
-      final BlockHashLookup blockHashLookup,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final OperationTracer operationTracer,
@@ -191,7 +191,7 @@ public class MainnetTransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final Wei blobGasPrice) {
     return processTransaction(
@@ -226,7 +226,7 @@ public class MainnetTransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
@@ -249,7 +249,7 @@ public class MainnetTransactionProcessor {
       final Transaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
-      final BlockHashLookup blockHashLookup,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Boolean isPersistingPrivateState,
       final TransactionValidationParams transactionValidationParams,
       final PrivateMetadataUpdater privateMetadataUpdater,

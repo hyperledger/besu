@@ -33,9 +33,8 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -106,11 +105,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
-    if (blockHeader.getParentBeaconBlockRoot().isPresent()) {
-      final WorldUpdater updater = worldState.updater();
-      ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-          updater, blockHeader.getTimestamp(), blockHeader.getParentBeaconBlockRoot().get());
-    }
+    final WorldUpdater updater = worldState.updater();
+    protocolSpec.getBlockHashProcessor().processBlockHashes(blockchain, updater, blockHeader);
 
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
@@ -119,7 +115,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       final WorldUpdater worldStateUpdater = worldState.updater();
 
-      final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
+      final BlockHashOperation.BlockHashLookup blockHashLookup =
+          protocolSpec.getBlockHashProcessor().getBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 

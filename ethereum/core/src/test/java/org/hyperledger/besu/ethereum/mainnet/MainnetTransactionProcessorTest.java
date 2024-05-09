@@ -28,12 +28,12 @@ import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -71,7 +71,7 @@ class MainnetTransactionProcessorTest {
   @Mock private WorldUpdater worldState;
   @Mock private ProcessableBlockHeader blockHeader;
   @Mock private Transaction transaction;
-  @Mock private BlockHashLookup blockHashLookup;
+  @Mock private BlockHashOperation.BlockHashLookup blockHashLookup;
 
   @Mock private MutableAccount senderAccount;
   @Mock private MutableAccount receiverAccount;
