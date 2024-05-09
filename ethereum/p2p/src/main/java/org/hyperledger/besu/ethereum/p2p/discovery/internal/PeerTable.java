@@ -19,12 +19,14 @@ import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +35,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Stream;
 
 import com.google.common.hash.BloomFilter;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -51,6 +54,10 @@ public class PeerTable {
   private final Map<Bytes, Integer> distanceCache;
   private BloomFilter<Bytes> idBloom;
   private int evictionCnt = 0;
+  private final LHMWithMaxSize<String, Integer> ipAddressCheckMap =
+      new LHMWithMaxSize<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
+  private final CircularFifoQueue<String> evictedIPs =
+      new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
 
   /**
    * Builds a new peer table, where distance is calculated using the provided nodeId as a baseline.
@@ -104,6 +111,9 @@ public class PeerTable {
    * @see AddOutcome
    */
   public AddResult tryAdd(final DiscoveryPeer peer) {
+    if (!checkIpAddress(peer.getEndpoint())) {
+      return AddResult.conflict();
+    }
     final Bytes id = peer.getId();
     final int distance = distanceFrom(peer);
 
@@ -200,6 +210,36 @@ public class PeerTable {
     return Arrays.stream(table).flatMap(e -> e.getPeers().stream());
   }
 
+  boolean checkIpAddress(final Endpoint endpoint) {
+    final String key = endpoint.getHost() + endpoint.getFunctionalTcpPort();
+    if (evictedIPs.contains(
+        key)) { // this goes through the entries in the evictedIPs queue, hash map might be better
+      return false;
+    }
+    if (ipAddressCheckMap.containsKey(key) && ipAddressCheckMap.get(key) != endpoint.getUdpPort()) {
+      // This peer runs multiple discovery services on the same IP address + TCP port.
+      evictedIPs.add(key);
+      for (final Bucket bucket : table) {
+        bucket.getPeers().stream()
+            .filter(p -> endpointFilter(endpoint, p))
+            .forEach(p -> evictAndStore(p, bucket, key));
+      }
+      return false;
+    } else {
+      return true;
+    }
+  }
+
+  private static boolean endpointFilter(final Endpoint endpoint, final DiscoveryPeer p) {
+    return p.getEndpoint().getHost().equals(endpoint.getHost())
+        && p.getEndpoint().getUdpPort() != endpoint.getUdpPort();
+  }
+
+  private void evictAndStore(final DiscoveryPeer peer, final Bucket bucket, final String key) {
+    bucket.evict(peer);
+    evictedIPs.add(key);
+  }
+
   /**
    * Calculates the XOR distance between the keccak-256 hashes of our node ID and the provided
    * {@link DiscoveryPeer}.
@@ -216,6 +256,8 @@ public class PeerTable {
 
   /** A class that encapsulates the result of a peer addition to the table. */
   public static class AddResult {
+
+
     /** The outcome of the operation. */
     public enum AddOutcome {
 
@@ -229,7 +271,10 @@ public class PeerTable {
       ALREADY_EXISTED,
 
       /** The caller requested to add ourselves. */
-      SELF
+      SELF,
+
+      /** The peer was not added because of IP address conflict. */
+      CONFLICT
     }
 
     private final AddOutcome outcome;
@@ -256,12 +301,30 @@ public class PeerTable {
       return new AddResult(AddOutcome.SELF, null);
     }
 
+    public static AddResult conflict() {
+      return new AddResult((AddOutcome.CONFLICT), null);
+    }
+
     public AddOutcome getOutcome() {
       return outcome;
     }
 
     public Peer getEvictionCandidate() {
       return evictionCandidate;
+    }
+  }
+
+  private static class LHMWithMaxSize<K, V> extends LinkedHashMap<K, V> {
+    private final int maxSize;
+
+    public LHMWithMaxSize(final int maxSize) {
+      super(maxSize, 0.75f, false);
+      this.maxSize = maxSize;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
+      return size() > maxSize;
     }
   }
 
