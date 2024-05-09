@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.Test;
 class BlockHashProcessorTest {
   private Blockchain blockchain;
   private WorldUpdater worldUpdater;
+  private MutableWorldState mutableWorldState;
   private MutableAccount account;
   private BlockHashProcessor processor;
 
@@ -45,8 +47,10 @@ class BlockHashProcessorTest {
   @BeforeEach
   void setUp() {
     blockchain = mock(Blockchain.class);
+    mutableWorldState = mock(MutableWorldState.class);
     worldUpdater = mock(WorldUpdater.class);
     account = mock(MutableAccount.class);
+    when(mutableWorldState.updater()).thenReturn(worldUpdater);
     when(worldUpdater.getOrCreate(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS))
         .thenReturn(account);
   }
@@ -58,7 +62,7 @@ class BlockHashProcessorTest {
     processor = new PragueBlockHashProcessor(forkTimestamp);
     BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
     mockAncestorHeaders(currentBlockHeader, 3);
-    processor.processBlockHashes(blockchain, worldUpdater, currentBlockHeader);
+    processor.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
     // only parent slot number must be set
     verify(account, times(1)).setStorageValue(any(), any());
     verifyAccount(currentBlock - 1, historicalWindow);
@@ -74,7 +78,7 @@ class BlockHashProcessorTest {
     BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
     mockAncestorHeaders(currentBlockHeader, 0);
 
-    processor.processBlockHashes(blockchain, worldUpdater, currentBlockHeader);
+    processor.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
     verifyNoInteractions(account);
   }
 
@@ -88,7 +92,7 @@ class BlockHashProcessorTest {
     BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
     mockAncestorHeaders(currentBlockHeader, 10);
 
-    processor.processBlockHashes(blockchain, worldUpdater, currentBlockHeader);
+    processor.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
     verify(account, times(1)).setStorageValue(any(), any());
     verifyAccount(0, historicalWindow);
   }
@@ -103,7 +107,7 @@ class BlockHashProcessorTest {
     BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
     mockAncestorHeaders(currentBlockHeader, 32);
 
-    processor.processBlockHashes(blockchain, worldUpdater, currentBlockHeader);
+    processor.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
     verifyAncestor(currentBlock, 32, historicalWindow);
   }
 
@@ -117,7 +121,7 @@ class BlockHashProcessorTest {
             forkTimestamp, PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS, historicalWindow);
     BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
     mockAncestorHeaders(currentBlockHeader, 10000);
-    processor.processBlockHashes(blockchain, worldUpdater, currentBlockHeader);
+    processor.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
 
     // Total of historicalWindow hashes were stored
     verify(account, times((int) historicalWindow)).setStorageValue(any(), any());
@@ -135,7 +139,7 @@ class BlockHashProcessorTest {
     processor = new PragueBlockHashProcessor(0);
     BlockHeader header = mockBlockHeader(1);
     mockAncestorHeaders(header, 1);
-    processor.processBlockHashes(blockchain, worldUpdater, header);
+    processor.processBlockHashes(blockchain, mutableWorldState, header);
     verify(account)
         .setStorageValue(UInt256.valueOf(0), UInt256.fromHexString(Hash.ZERO.toHexString()));
   }

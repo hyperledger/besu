@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -89,10 +90,11 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   @Override
   public void processBlockHashes(
       final Blockchain blockchain,
-      final WorldUpdater worldUpdater,
+      final MutableWorldState mutableWorldState,
       final ProcessableBlockHeader currentBlockHeader) {
-    super.processBlockHashes(blockchain, worldUpdater, currentBlockHeader);
+    super.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
 
+    WorldUpdater worldUpdater = mutableWorldState.updater();
     final MutableAccount historyStorageAccount = worldUpdater.getOrCreate(HISTORY_STORAGE_ADDRESS);
 
     if (currentBlockHeader.getNumber() > 0) {
@@ -112,6 +114,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
         }
       }
     }
+    worldUpdater.commit();
   }
 
   /**
@@ -142,6 +145,11 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
    * @param hash The hash to be stored.
    */
   private void storeHash(final MutableAccount account, final long number, final Hash hash) {
+    System.out.printf(
+        "Writing to %s %s=%s%n",
+        account.getAddress(),
+        UInt256.valueOf(number % historySaveWindow).toDecimalString(),
+        UInt256.fromBytes(hash).toHexString());
     account.setStorageValue(UInt256.valueOf(number % historySaveWindow), UInt256.fromBytes(hash));
   }
 }

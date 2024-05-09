@@ -249,17 +249,15 @@ public class T8nExecutor {
         protocolSchedule.getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
     final BlockHeader blockHeader = referenceTestEnv.updateFromParentValues(protocolSpec);
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
-    final WorldUpdater worldStateUpdater = worldState.updater();
     final Wei blobGasPrice =
         protocolSpec
             .getFeeMarket()
             .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, blockHeader));
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
     // because blockchain is null t8n tests cannot test at-transition backfill.
-    protocolSpec
-        .getBlockHashProcessor()
-        .processBlockHashes(null, worldStateUpdater.updater(), referenceTestEnv);
+    protocolSpec.getBlockHashProcessor().processBlockHashes(null, worldState, referenceTestEnv);
 
+    final WorldUpdater worldStateUpdater = worldState.updater();
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);
     List<Transaction> validTransactions = new ArrayList<>();

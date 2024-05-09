@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
@@ -33,15 +34,18 @@ public class CancunBlockHashProcessor implements BlockHashProcessor {
   @Override
   public void processBlockHashes(
       final Blockchain blockchain,
-      final WorldUpdater worldUpdater,
+      final MutableWorldState mutableWorldState,
       final ProcessableBlockHeader currentBlockHeader) {
-    new Exception().printStackTrace();
     currentBlockHeader
         .getParentBeaconBlockRoot()
         .ifPresent(
             beaconBlockRoot -> {
-              ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-                  worldUpdater, currentBlockHeader.getTimestamp(), beaconBlockRoot);
+              if (!beaconBlockRoot.isEmpty()) {
+                WorldUpdater worldUpdater = mutableWorldState.updater();
+                ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
+                    worldUpdater, currentBlockHeader.getTimestamp(), beaconBlockRoot);
+                worldUpdater.commit();
+              }
             });
   }
 }

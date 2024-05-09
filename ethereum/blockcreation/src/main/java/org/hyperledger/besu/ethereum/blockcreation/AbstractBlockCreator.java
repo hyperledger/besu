@@ -207,10 +207,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
-      final WorldUpdater updater = disposableWorldState.updater();
       newProtocolSpec
           .getBlockHashProcessor()
-          .processBlockHashes(protocolContext.getBlockchain(), updater, processableBlockHeader);
+          .processBlockHashes(
+              protocolContext.getBlockchain(), disposableWorldState, processableBlockHeader);
 
       throwIfStopped();
 

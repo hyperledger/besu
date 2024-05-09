@@ -105,8 +105,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
-    final WorldUpdater updater = worldState.updater();
-    protocolSpec.getBlockHashProcessor().processBlockHashes(blockchain, updater, blockHeader);
+    protocolSpec.getBlockHashProcessor().processBlockHashes(blockchain, worldState, blockHeader);
 
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
