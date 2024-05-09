@@ -404,7 +404,7 @@ public class PeerDiscoveryController {
   private boolean addToPeerTable(final DiscoveryPeer peer) {
     // Reset the last seen timestamp.
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
-    if (result.getOutcome() != PeerTable.AddResult.AddOutcome.CONFLICT) {
+    if (result.getOutcome() != PeerTable.AddResult.AddOutcome.INVALID) {
 
       final long now = System.currentTimeMillis();
       if (peer.getFirstDiscovered() == 0) {
@@ -705,7 +705,7 @@ public class PeerDiscoveryController {
 
   // Load the peer first from the table, then from bonding cache or use the instance that comes in.
   private DiscoveryPeer resolvePeer(final DiscoveryPeer peer) {
-    if (peerTable.checkIpAddress(peer.getEndpoint())) {
+    if (peerTable.ipAddressIsInvalid(peer.getEndpoint())) {
       return null;
     }
     final Optional<DiscoveryPeer> maybeKnownPeer =

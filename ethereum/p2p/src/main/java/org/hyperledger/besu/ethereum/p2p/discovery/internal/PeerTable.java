@@ -104,6 +104,7 @@ public class PeerTable {
    *   <li>the operation failed because the k-bucket was full, in which case a candidate is proposed
    *       for eviction.
    *   <li>the operation failed because the peer already existed.
+   *   <li>the operation failed because the IP address is invalid.
    * </ul>
    *
    * @param peer The peer to add.
@@ -111,8 +112,8 @@ public class PeerTable {
    * @see AddOutcome
    */
   public AddResult tryAdd(final DiscoveryPeer peer) {
-    if (!checkIpAddress(peer.getEndpoint())) {
-      return AddResult.conflict();
+    if (ipAddressIsInvalid(peer.getEndpoint())) {
+      return AddResult.invalid();
     }
     final Bytes id = peer.getId();
     final int distance = distanceFrom(peer);
@@ -139,10 +140,15 @@ public class PeerTable {
     if (!res.isPresent()) {
       idBloom.put(id);
       distanceCache.put(id, distance);
+      ipAddressCheckMap.put(getKey(peer.getEndpoint()), peer.getEndpoint().getUdpPort());
       return AddResult.added();
     }
 
     return res.map(AddResult::bucketFull).get();
+  }
+
+  private static String getKey(final Endpoint endpoint) {
+    return endpoint.getHost() + endpoint.getFunctionalTcpPort();
   }
 
   /**
@@ -210,11 +216,11 @@ public class PeerTable {
     return Arrays.stream(table).flatMap(e -> e.getPeers().stream());
   }
 
-  boolean checkIpAddress(final Endpoint endpoint) {
-    final String key = endpoint.getHost() + endpoint.getFunctionalTcpPort();
+  boolean ipAddressIsInvalid(final Endpoint endpoint) {
+    final String key = getKey(endpoint);
     if (evictedIPs.contains(
         key)) { // this goes through the entries in the evictedIPs queue, hash map might be better
-      return false;
+      return true;
     }
     if (ipAddressCheckMap.containsKey(key) && ipAddressCheckMap.get(key) != endpoint.getUdpPort()) {
       // This peer runs multiple discovery services on the same IP address + TCP port.
@@ -224,9 +230,9 @@ public class PeerTable {
             .filter(p -> endpointFilter(endpoint, p))
             .forEach(p -> evictAndStore(p, bucket, key));
       }
-      return false;
-    } else {
       return true;
+    } else {
+      return false;
     }
   }
 
@@ -257,7 +263,6 @@ public class PeerTable {
   /** A class that encapsulates the result of a peer addition to the table. */
   public static class AddResult {
 
-
     /** The outcome of the operation. */
     public enum AddOutcome {
 
@@ -273,8 +278,8 @@ public class PeerTable {
       /** The caller requested to add ourselves. */
       SELF,
 
-      /** The peer was not added because of IP address conflict. */
-      CONFLICT
+      /** The peer was not added because the IP address is invalid. */
+      INVALID
     }
 
     private final AddOutcome outcome;
@@ -301,8 +306,8 @@ public class PeerTable {
       return new AddResult(AddOutcome.SELF, null);
     }
 
-    public static AddResult conflict() {
-      return new AddResult((AddOutcome.CONFLICT), null);
+    public static AddResult invalid() {
+      return new AddResult((AddOutcome.INVALID), null);
     }
 
     public AddOutcome getOutcome() {
