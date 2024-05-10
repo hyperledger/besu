@@ -34,7 +34,7 @@ jobs:
       matrix:
         platform:
           - ubuntu-22.04
-          - besu-arm64
+          - [self-hosted, ARM64]
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Prepare
@@ -45,8 +45,6 @@ jobs:
               echo "PLATFORM_PAIR=linux-amd64" >> $GITHUB_OUTPUT
               echo "ARCH=amd64" >> $GITHUB_OUTPUT
             else
-              sudo apt-get update
-              sudo apt-get -y install docker.io
               echo "PLATFORM_PAIR=linux-arm64" >> $GITHUB_OUTPUT
               echo "ARCH=arm64" >> $GITHUB_OUTPUT
             fi
