@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -161,11 +160,6 @@ public class MigratingMiningCoordinatorTest {
         MIGRATION_BLOCK_NUMBER,
         coordinator2,
         coordinator1);
-
-    verifyDelegation(
-        c -> c.setExtraData(Bytes.EMPTY), GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
-    verifyDelegation(
-        c -> c.setExtraData(Bytes.EMPTY), MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
     verifyDelegation(
         MiningCoordinator::getCoinbase, GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);

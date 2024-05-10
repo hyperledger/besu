@@ -84,6 +84,9 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
   private final List<String> pluginVersions = new ArrayList<>();
 
+  /** Instantiates a new Besu plugin context. */
+  public BesuPluginContextImpl() {}
+
   /**
    * Add service.
    *

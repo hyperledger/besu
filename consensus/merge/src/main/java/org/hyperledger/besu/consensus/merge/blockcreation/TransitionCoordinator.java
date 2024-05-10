@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
 /** The Transition coordinator. */
@@ -105,12 +104,6 @@ public class TransitionCoordinator extends TransitionUtils<MiningCoordinator>
   @Override
   public Wei getMinPriorityFeePerGas() {
     return dispatchFunctionAccordingToMergeState(MiningCoordinator::getMinPriorityFeePerGas);
-  }
-
-  @Override
-  public void setExtraData(final Bytes extraData) {
-    miningCoordinator.setExtraData(extraData);
-    mergeCoordinator.setExtraData(extraData);
   }
 
   @Override

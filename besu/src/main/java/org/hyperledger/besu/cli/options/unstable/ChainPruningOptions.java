@@ -61,6 +61,9 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   private final PositiveNumber chainDataPruningBlocksFrequency =
       PositiveNumber.fromInt(DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY);
 
+  /** Default Constructor. */
+  ChainPruningOptions() {}
+
   /**
    * Create chain pruning options.
    *

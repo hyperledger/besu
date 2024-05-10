@@ -20,6 +20,9 @@ import java.util.concurrent.atomic.AtomicBoolean;
 public class MergeConfigOptions {
   private static final AtomicBoolean mergeEnabled = new AtomicBoolean(false);
 
+  /** Default constructor. */
+  private MergeConfigOptions() {}
+
   /**
    * Enables merge.
    *

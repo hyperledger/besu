@@ -18,6 +18,8 @@ import org.hyperledger.besu.services.BesuPluginContextImpl;
 
 /** The Noop plugin service factory. */
 public class NoopPluginServiceFactory implements PluginServiceFactory {
+  /** Default Constructor. */
+  public NoopPluginServiceFactory() {}
 
   @Override
   public void appendPluginServices(final BesuPluginContextImpl besuContext) {}

@@ -290,6 +290,9 @@ public class SegmentedInMemoryKeyValueStorage
     /** protected access to deletedValues set for the transaction. */
     protected Map<SegmentIdentifier, Set<Bytes>> removedKeys = new HashMap<>();
 
+    /** Default constructor */
+    public SegmentedInMemoryTransaction() {}
+
     @Override
     public void put(
         final SegmentIdentifier segmentIdentifier, final byte[] key, final byte[] value) {
