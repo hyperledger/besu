@@ -33,6 +33,22 @@ import org.apache.tuweni.bytes.Bytes32;
  * Transaction Values used by various EVM Opcodes. These are the values that either do not change or
  * the backing stores whose changes transcend message frames and are not part of state, such as
  * transient storage and address warming.
+ *
+ * @param blockHashLookup The block hash lookup function
+ * @param maxStackSize The maximum stack size
+ * @param warmedUpAddresses The warmed up addresses
+ * @param warmedUpStorage The warmed up storage
+ * @param originator The originator address
+ * @param gasPrice The gas price
+ * @param blobGasPrice The blob gas price
+ * @param blockValues The block values
+ * @param messageFrameStack The message frame stack
+ * @param miningBeneficiary The mining beneficiary address
+ * @param versionedHashes The optional list of versioned hashes
+ * @param transientStorage The transient storage
+ * @param creates The set of addresses that creates
+ * @param selfDestructs The set of addresses that self-destructs
+ * @param gasRefunds The gas refunds
  */
 public record TxValues(
     Function<Long, Hash> blockHashLookup,

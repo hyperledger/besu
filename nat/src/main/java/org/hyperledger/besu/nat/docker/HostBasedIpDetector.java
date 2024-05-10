@@ -25,6 +25,9 @@ public class HostBasedIpDetector implements IpDetector {
 
   private static final String HOSTNAME = "HOST_IP";
 
+  /** Default constructor */
+  public HostBasedIpDetector() {}
+
   @Override
   @SuppressWarnings("AddressSelection")
   public Optional<String> detectAdvertisedIp() {

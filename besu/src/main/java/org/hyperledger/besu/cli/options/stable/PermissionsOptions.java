@@ -83,6 +83,9 @@ public class PermissionsOptions {
           "Enable account level permissions via smart contract (default: ${DEFAULT-VALUE})")
   private final Boolean permissionsAccountsContractEnabled = false;
 
+  /** Default constructor. */
+  public PermissionsOptions() {}
+
   /**
    * Creates a PermissioningConfiguration based on the provided options.
    *

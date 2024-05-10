@@ -20,6 +20,10 @@ import picocli.CommandLine.Model.CommandSpec;
 
 /** Custom Execution Exception Handler used by PicoCLI framework. */
 public class BesuExecutionExceptionHandler implements IExecutionExceptionHandler {
+
+  /** Default constructor. */
+  public BesuExecutionExceptionHandler() {}
+
   @Override
   public int handleExecutionException(
       final Exception ex,

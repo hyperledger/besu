@@ -33,6 +33,9 @@ public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
   /** The constant MAX_FIRST_EXPONENT_BYTES. */
   public static final int MAX_FIRST_EXPONENT_BYTES = 32;
 
+  /** Default constructor. */
+  public ByzantiumGasCalculator() {}
+
   @Override
   public long modExpGasCost(final Bytes input) {
     final long baseLength = BigIntegerModularExponentiationPrecompiledContract.baseLength(input);

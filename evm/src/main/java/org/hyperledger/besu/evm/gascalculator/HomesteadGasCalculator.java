@@ -19,6 +19,9 @@ public class HomesteadGasCalculator extends FrontierGasCalculator {
 
   private static final long TX_CREATE_EXTRA = 32_000L;
 
+  /** Default constructor. */
+  public HomesteadGasCalculator() {}
+
   @Override
   protected long txCreateExtraGasCost() {
     return TX_CREATE_EXTRA;

@@ -136,7 +136,7 @@ public class JsonBlockImporter {
       // For simplicity only set these for PoW consensus algorithms.
       // Other consensus algorithms use these fields for special purposes or ignore them.
       miner.setCoinbase(blockData.getCoinbase().orElse(Address.ZERO));
-      miner.setExtraData(blockData.getExtraData().orElse(Bytes.EMPTY));
+      controller.getMiningParameters().setExtraData(blockData.getExtraData().orElse(Bytes.EMPTY));
     } else if (blockData.getCoinbase().isPresent() || blockData.getExtraData().isPresent()) {
       // Fail if these fields are set for non-ethash chains
       final Stream.Builder<String> fields = Stream.builder();

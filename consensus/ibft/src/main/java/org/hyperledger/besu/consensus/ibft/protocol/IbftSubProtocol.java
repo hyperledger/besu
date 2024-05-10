@@ -29,6 +29,9 @@ public class IbftSubProtocol implements SubProtocol {
 
   private static final IbftSubProtocol INSTANCE = new IbftSubProtocol();
 
+  /** Default constructor. */
+  public IbftSubProtocol() {}
+
   /**
    * Get ibft sub protocol.
    *
