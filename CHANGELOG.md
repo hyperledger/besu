@@ -9,6 +9,7 @@
 - Deprecated Goerli testnet has been removed.
 
 ### Upcoming Breaking Changes
+- Version 24.5.x will be the last series to support Java 17. Next release after versions 24.5.x will require Java 21 to build and run.
 - Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
 - PKI-backed QBFT will be removed in a future version of Besu. Other forms of QBFT will remain unchanged. 
 
