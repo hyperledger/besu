@@ -61,8 +61,6 @@ dependencies {
   implementation 'org.owasp.encoder:encoder'
   implementation 'org.xerial.snappy:snappy-java'
 
-
-
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"
   implementation('tech.pegasys.discovery:discovery') {

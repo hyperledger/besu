@@ -90,35 +90,28 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
    * Generates the next message in the handshake sequence.
    *
    * @param msg Incoming Message
-   * @param ctx context
    * @return Optional of the next Handshake message that needs to be returned to the peer
    */
-  protected abstract Optional<ByteBuf> nextHandshakeMessage(
-      ByteBuf msg, final ChannelHandlerContext ctx);
+  protected abstract Optional<ByteBuf> nextHandshakeMessage(ByteBuf msg);
 
   @Override
   protected final void channelRead0(final ChannelHandlerContext ctx, final ByteBuf msg) {
-    final Optional<ByteBuf> nextMsg = nextHandshakeMessage(msg, ctx);
+    final Optional<ByteBuf> nextMsg = nextHandshakeMessage(msg);
     if (nextMsg.isPresent()) {
-      LOG.atTrace()
-          .setMessage("Sending next handshake message to peer {}, msg {}")
-          .addArgument(ctx.channel().remoteAddress())
-          .addArgument(nextMsg.get())
-          .log();
       ctx.writeAndFlush(nextMsg.get());
     } else if (handshaker.getStatus() != Handshaker.HandshakeStatus.SUCCESS) {
-      LOG.debug("waiting for more bytes from peer {}", ctx.channel().remoteAddress());
+      LOG.debug("waiting for more bytes");
     } else {
 
+      final Bytes nodeId = handshaker.partyPubKey().getEncodedBytes();
       if (!localNode.isReady()) {
-        final Bytes nodeId = handshaker.partyPubKey().getEncodedBytes();
         // If we're handling a connection before the node is fully up, just disconnect
         LOG.debug("Rejecting connection because local node is not ready {}", nodeId);
         disconnect(ctx, DisconnectMessage.DisconnectReason.UNKNOWN);
         return;
       }
 
-      LOG.trace("Sending framed hello to peer {}", ctx.channel().remoteAddress());
+      LOG.trace("Sending framed hello");
 
       // Exchange keys done
       final Framer framer = this.framerProvider.buildFramer(handshaker.secrets());
@@ -140,20 +133,11 @@ abstract class AbstractHandshakeHandler extends SimpleChannelInboundHandler<Byte
           .replace(this, "DeFramer", deFramer)
           .addBefore("DeFramer", "validate", new ValidateFirstOutboundMessage(framer));
 
-      final HelloMessage helloMessage = HelloMessage.create(localNode.getPeerInfo());
-      ctx.writeAndFlush(new OutboundMessage(null, helloMessage))
+      ctx.writeAndFlush(new OutboundMessage(null, HelloMessage.create(localNode.getPeerInfo())))
           .addListener(
               ff -> {
                 if (ff.isSuccess()) {
-                  LOG.trace(
-                      "Successfully wrote hello message to peer {}, message {}",
-                      ctx.channel().remoteAddress(),
-                      helloMessage);
-                } else {
-                  LOG.trace(
-                      "Failed to write hello message to peer {}, message {}",
-                      ctx.channel().remoteAddress(),
-                      helloMessage);
+                  LOG.trace("Successfully wrote hello message");
                 }
               });
       msg.retain();

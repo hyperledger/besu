@@ -56,7 +56,7 @@ public class PeerTable {
   private int evictionCnt = 0;
   private final LHMWithMaxSize<String, Integer> ipAddressCheckMap =
       new LHMWithMaxSize<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
-  private final CircularFifoQueue<String> evictedIPs =
+  private final CircularFifoQueue<String> invalidIPs =
       new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
 
   /**
@@ -147,10 +147,6 @@ public class PeerTable {
     return res.map(AddResult::bucketFull).get();
   }
 
-  private static String getKey(final Endpoint endpoint) {
-    return endpoint.getHost() + endpoint.getFunctionalTcpPort();
-  }
-
   /**
    * Evicts a peer from the underlying table.
    *
@@ -218,16 +214,15 @@ public class PeerTable {
 
   boolean ipAddressIsInvalid(final Endpoint endpoint) {
     final String key = getKey(endpoint);
-    if (evictedIPs.contains(
-        key)) { // this goes through the entries in the evictedIPs queue, hash map might be better
+    if (invalidIPs.contains(key)) {
       return true;
     }
     if (ipAddressCheckMap.containsKey(key) && ipAddressCheckMap.get(key) != endpoint.getUdpPort()) {
-      // This peer runs multiple discovery services on the same IP address + TCP port.
-      evictedIPs.add(key);
+      // This peer has multiple discovery services on the same IP address + TCP port.
+      invalidIPs.add(key);
       for (final Bucket bucket : table) {
         bucket.getPeers().stream()
-            .filter(p -> endpointFilter(endpoint, p))
+            .filter(p -> p.getEndpoint().getHost().equals(endpoint.getHost()))
             .forEach(p -> evictAndStore(p, bucket, key));
       }
       return true;
@@ -236,14 +231,13 @@ public class PeerTable {
     }
   }
 
-  private static boolean endpointFilter(final Endpoint endpoint, final DiscoveryPeer p) {
-    return p.getEndpoint().getHost().equals(endpoint.getHost())
-        && p.getEndpoint().getUdpPort() != endpoint.getUdpPort();
-  }
-
   private void evictAndStore(final DiscoveryPeer peer, final Bucket bucket, final String key) {
     bucket.evict(peer);
-    evictedIPs.add(key);
+    invalidIPs.add(key);
+  }
+
+  private static String getKey(final Endpoint endpoint) {
+    return endpoint.getHost() + endpoint.getFunctionalTcpPort();
   }
 
   /**

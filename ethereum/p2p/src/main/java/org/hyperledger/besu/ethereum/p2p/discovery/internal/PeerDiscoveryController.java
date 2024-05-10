@@ -402,10 +402,10 @@ public class PeerDiscoveryController {
   }
 
   private boolean addToPeerTable(final DiscoveryPeer peer) {
-    // Reset the last seen timestamp.
     final PeerTable.AddResult result = peerTable.tryAdd(peer);
     if (result.getOutcome() != PeerTable.AddResult.AddOutcome.INVALID) {
 
+      // Reset the last seen timestamp.
       final long now = System.currentTimeMillis();
       if (peer.getFirstDiscovered() == 0) {
         peer.setFirstDiscovered(now);
