@@ -50,6 +50,9 @@ public class CliqueProtocolSchedule {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.valueOf(4);
 
+  /** Default constructor. */
+  CliqueProtocolSchedule() {}
+
   /**
    * Create protocol schedule.
    *

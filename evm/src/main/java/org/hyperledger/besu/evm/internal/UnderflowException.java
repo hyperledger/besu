@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,6 +20,8 @@ package org.hyperledger.besu.evm.internal;
  * failure but instead an expected edge case the EVM should handle.
  */
 public class UnderflowException extends RuntimeException {
+  /** Default constructor. */
+  public UnderflowException() {}
 
   /**
    * Overload the stack trace fill in so no stack is filled in. This is done for performance reasons

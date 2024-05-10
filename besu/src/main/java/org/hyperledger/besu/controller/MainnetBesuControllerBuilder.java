@@ -36,6 +36,9 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   private EpochCalculator epochCalculator = new EpochCalculator.DefaultEpochCalculator();
 
+  /** Default constructor. */
+  public MainnetBesuControllerBuilder() {}
+
   @Override
   protected MiningCoordinator createMiningCoordinator(
       final ProtocolSchedule protocolSchedule,
@@ -91,7 +94,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return MainnetProtocolSchedule.fromConfig(
-        configOptionsSupplier.get(),
+        genesisConfigOptions,
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
@@ -101,8 +104,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected void prepForBuild() {
-    configOptionsSupplier
-        .get()
+    genesisConfigOptions
         .getThanosBlockNumber()
         .ifPresent(
             activationBlock -> epochCalculator = new EpochCalculator.Ecip1099EpochCalculator());

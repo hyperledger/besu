@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
 import org.hyperledger.besu.datatypes.AccountValue;
@@ -121,6 +119,11 @@ public class BonsaiAccount extends DiffBasedAccount {
 
     return new BonsaiAccount(
         context, address, address.addressHash(), nonce, balance, storageRoot, codeHash, mutable);
+  }
+
+  @Override
+  public boolean isStorageEmpty() {
+    return Hash.EMPTY_TRIE_HASH.equals(storageRoot);
   }
 
   @Override

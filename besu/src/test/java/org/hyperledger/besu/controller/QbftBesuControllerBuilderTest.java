@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -45,7 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuilderTest {
 
   @Override
-  public void setupBftGenesisConfigOptions() throws JsonProcessingException {
+  public void setupBftGenesisConfigFile() throws JsonProcessingException {
 
     // qbft prepForBuild setup
     lenient()

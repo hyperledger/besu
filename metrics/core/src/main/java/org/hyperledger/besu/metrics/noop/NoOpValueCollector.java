@@ -24,6 +24,9 @@ import java.util.function.DoubleSupplier;
 public class NoOpValueCollector implements LabelledGauge {
   private final List<String> labelValuesCreated = new ArrayList<>();
 
+  /** Default constructor */
+  public NoOpValueCollector() {}
+
   @Override
   public synchronized void labels(final DoubleSupplier valueSupplier, final String... labelValues) {
     final String labelValuesString = String.join(",", labelValues);

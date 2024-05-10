@@ -29,6 +29,8 @@ import picocli.CommandLine.ParameterException;
 
 /** The Rpc authentication file validator. */
 public class RpcAuthFileValidator {
+  /** Default Constructor. */
+  RpcAuthFileValidator() {}
 
   /**
    * Validate auth file.

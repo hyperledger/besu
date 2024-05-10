@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,13 +21,13 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.ValidatorExitEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
+import org.hyperledger.besu.ethereum.core.encoding.WithdrawalRequestEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.SimpleMerklePatriciaTrie;
@@ -106,16 +106,20 @@ public final class BodyValidation {
   }
 
   /**
-   * Generates the exits root for a list of exits
+   * Generates the withdrawal request root for a list of withdrawal request
    *
-   * @param exits list of exits
-   * @return the exits root
+   * @param withdrawalRequests list of withdrawal request
+   * @return the withdrawal request root
    */
-  public static Hash exitsRoot(final List<ValidatorExit> exits) {
+  public static Hash withdrawalRequestsRoot(final List<WithdrawalRequest> withdrawalRequests) {
     final MerkleTrie<Bytes, Bytes> trie = trie();
 
-    IntStream.range(0, exits.size())
-        .forEach(i -> trie.put(indexKey(i), ValidatorExitEncoder.encodeOpaqueBytes(exits.get(i))));
+    IntStream.range(0, withdrawalRequests.size())
+        .forEach(
+            i ->
+                trie.put(
+                    indexKey(i),
+                    WithdrawalRequestEncoder.encodeOpaqueBytes(withdrawalRequests.get(i))));
 
     return Hash.wrap(trie.getRootHash());
   }

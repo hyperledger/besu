@@ -59,7 +59,7 @@ class GenesisConfigFileTest {
 
   @Test
   void shouldLoadDevelopmentConfigFile() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     // Sanity check some basic properties to confirm this is the dev file.
     assertThat(config.getConfigOptions().isEthHash()).isTrue();
     assertThat(config.getConfigOptions().getChainId()).hasValue(DEVELOPMENT_CHAIN_ID);
@@ -198,7 +198,7 @@ class GenesisConfigFileTest {
   @Test
   void assertSepoliaTerminalTotalDifficulty() {
     GenesisConfigOptions sepoliaOptions =
-        GenesisConfigFile.genesisFileFromResources("/sepolia.json").getConfigOptions();
+        GenesisConfigFile.fromResource("/sepolia.json").getConfigOptions();
 
     assertThat(sepoliaOptions.getTerminalTotalDifficulty()).isPresent();
     assertThat(sepoliaOptions.getTerminalTotalDifficulty())
@@ -206,19 +206,9 @@ class GenesisConfigFileTest {
   }
 
   @Test
-  void assertGoerliTerminalTotalDifficulty() {
-    GenesisConfigOptions goerliOptions =
-        GenesisConfigFile.genesisFileFromResources("/goerli.json").getConfigOptions();
-
-    assertThat(goerliOptions.getTerminalTotalDifficulty()).isPresent();
-    assertThat(goerliOptions.getTerminalTotalDifficulty())
-        .contains(UInt256.valueOf(new BigInteger("10790000")));
-  }
-
-  @Test
   void assertMainnetTerminalTotalDifficulty() {
     GenesisConfigOptions mainnetOptions =
-        GenesisConfigFile.genesisFileFromResources("/mainnet.json").getConfigOptions();
+        GenesisConfigFile.fromResource("/mainnet.json").getConfigOptions();
 
     assertThat(mainnetOptions.getTerminalTotalDifficulty()).isPresent();
     // tentative as of 2022-08-11:
@@ -229,7 +219,7 @@ class GenesisConfigFileTest {
   @Test
   void assertTerminalTotalDifficultyOverride() {
     GenesisConfigOptions sepoliaOverrideOptions =
-        GenesisConfigFile.genesisFileFromResources("/sepolia.json")
+        GenesisConfigFile.fromResource("/sepolia.json")
             .getConfigOptions(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)));
 
     assertThat(sepoliaOverrideOptions.getTerminalTotalDifficulty()).isPresent();
@@ -337,7 +327,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testOverridePresent() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     final int bigBlock = 999_999_999;
     final String bigBlockString = Integer.toString(bigBlock);
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -354,7 +344,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testOverrideNull() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("istanbulBlock", null);
     override.put("chainId", null);
@@ -368,7 +358,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testOverrideCaseInsensitivity() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     final int bigBlock = 999_999_999;
     final String bigBlockString = Integer.toString(bigBlock);
     final Map<String, String> override = new HashMap<>();
@@ -387,7 +377,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testOverrideEmptyString() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("istanbulBlock", "");
     override.put("chainId", "");
@@ -400,7 +390,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testNoOverride() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
 
     assertThat(config.getConfigOptions().getLondonBlockNumber()).hasValue(0);
     assertThat(config.getConfigOptions().getIstanbulBlockNumber()).isNotPresent();
@@ -413,7 +403,7 @@ class GenesisConfigFileTest {
   @Test
   void testConstantinopleFixShouldNotBeSupportedAlongPetersburg() {
     // petersburg node
-    final GenesisConfigFile config = GenesisConfigFile.genesisFileFromResources("/all_forks.json");
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/all_forks.json");
 
     assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(7);
 

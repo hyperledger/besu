@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.cli.subcommands.operator;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
@@ -84,6 +82,9 @@ public class RestoreState implements Runnable {
   private boolean compressed;
   private BesuController besuController;
   private ForestWorldStateKeyValueStorage.Updater updater;
+
+  /** Default Constructor. */
+  RestoreState() {}
 
   private Path accountFileName(final int fileNumber, final boolean compressed) {
     return StateBackupService.accountFileName(backupDir, targetBlock, fileNumber, compressed);

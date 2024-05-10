@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,7 +21,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.DepositsValidatorProvider.getDepositsValidator;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.ValidatorExitsValidatorProvider.getValidatorExitsValidator;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalRequestValidatorProvider.getWithdrawalRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 
@@ -37,8 +37,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ValidatorExitParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -52,8 +52,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -170,15 +170,18 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposits"));
     }
 
-    final Optional<List<ValidatorExit>> maybeExits =
-        Optional.ofNullable(blockParam.getExits())
+    final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests =
+        Optional.ofNullable(blockParam.getWithdrawalRequests())
             .map(
-                exits ->
-                    exits.stream().map(ValidatorExitParameter::toValidatorExit).collect(toList()));
-    if (!getValidatorExitsValidator(
+                withdrawalRequest ->
+                    withdrawalRequest.stream()
+                        .map(WithdrawalRequestParameter::toWithdrawalRequest)
+                        .collect(toList()));
+    if (!getWithdrawalRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-        .validateValidatorExitParameter(maybeExits)) {
-      return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid exits"));
+        .validateWithdrawalRequestParameter(maybeWithdrawalRequests)) {
+      return new JsonRpcErrorResponse(
+          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal requests"));
     }
 
     if (mergeContext.get().isSyncing()) {
@@ -249,7 +252,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
-            maybeExits.map(BodyValidation::exitsRoot).orElse(null),
+            maybeWithdrawalRequests.map(BodyValidation::withdrawalRequestsRoot).orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -317,7 +320,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 Collections.emptyList(),
                 maybeWithdrawals,
                 maybeDeposits,
-                maybeExits));
+                maybeWithdrawalRequests));
 
     if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,7 +22,14 @@ import java.util.Objects;
 /** A class to hold the blobs, commitments, proofs and versioned hashes for a set of blobs. */
 public class BlobsWithCommitments {
 
-  /** A record to hold the blob, commitment, proof and versioned hash for a blob. */
+  /**
+   * A record to hold the blob, commitment, proof and versioned hash for a blob.
+   *
+   * @param blob The blob
+   * @param kzgCommitment The commitment
+   * @param kzgProof The proof
+   * @param versionedHash The versioned hash
+   */
   public record BlobQuad(
       Blob blob, KZGCommitment kzgCommitment, KZGProof kzgProof, VersionedHash versionedHash) {}
 

@@ -31,6 +31,9 @@ public class QbftExtraDataCLIAdapter implements JSONToRLP {
   private static final ObjectMapper MAPPER = new ObjectMapper();
   private static final TypeReference<Collection<String>> TYPE_REF = new TypeReference<>() {};
 
+  /** Default Constructor. */
+  public QbftExtraDataCLIAdapter() {}
+
   @Override
   public Bytes encode(final String json) throws IOException {
     return fromJsonAddresses(json);

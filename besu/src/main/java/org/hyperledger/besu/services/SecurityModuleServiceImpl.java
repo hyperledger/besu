@@ -27,6 +27,9 @@ public class SecurityModuleServiceImpl implements SecurityModuleService {
   private final Map<String, Supplier<SecurityModule>> securityModuleSuppliers =
       new ConcurrentHashMap<>();
 
+  /** Default Constructor. */
+  public SecurityModuleServiceImpl() {}
+
   @Override
   public void register(final String name, final Supplier<SecurityModule> securityModuleSupplier) {
     securityModuleSuppliers.put(name, securityModuleSupplier);
