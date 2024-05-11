@@ -189,7 +189,7 @@ public class ReferenceTestEnv extends BlockHeader {
     }
   }
 
-  public BlockHeader updateFromParentValues(final ProtocolSpec protocolSpec) {
+  public BlockHeader parentBlockHeader(final ProtocolSpec protocolSpec) {
     var builder =
         BlockHeaderBuilder.fromHeader(this)
             .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions());
@@ -222,6 +222,8 @@ public class ReferenceTestEnv extends BlockHeader {
       builder.excessBlobGas(BlobGas.of(Long.decode(parentExcessBlobGas)));
       builder.blobGasUsed(Long.decode(parentBlobGasUsed));
     }
+    Hash grandParentHash = blockHashes.get(number - 2);
+    builder.parentHash(grandParentHash == null ? Hash.ZERO : grandParentHash);
 
     return builder.buildBlockHeader();
   }
@@ -230,8 +232,8 @@ public class ReferenceTestEnv extends BlockHeader {
     return withdrawals;
   }
 
-  public Optional<Hash> getBlockhashByNumber(final long number) {
-    return Optional.ofNullable(blockHashes.get(number));
+  public Map<Long, Hash> getBlockHashes() {
+    return blockHashes;
   }
 
   @Override

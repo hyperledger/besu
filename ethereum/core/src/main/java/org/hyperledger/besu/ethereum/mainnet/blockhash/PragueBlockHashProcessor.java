@@ -101,17 +101,14 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
     if (currentBlockHeader.getNumber() > 0) {
       storeParentHash(historyStorageAccount, currentBlockHeader);
 
-      // if blockchain parameter wasn't provided (such as in t8n testing) don't attempt to backfill
-      if (blockchain != null) {
-        BlockHeader ancestor =
-            blockchain.getBlockHeader(currentBlockHeader.getParentHash()).orElseThrow();
+      BlockHeader ancestor =
+          blockchain.getBlockHeader(currentBlockHeader.getParentHash()).orElseThrow();
 
-        // If fork block, add the parent's direct `HISTORY_SERVE_WINDOW - 1`
-        if (ancestor.getTimestamp() < forkTimestamp) {
-          for (int i = 0; i < (historySaveWindow - 1) && ancestor.getNumber() > 0; i++) {
-            ancestor = blockchain.getBlockHeader(ancestor.getParentHash()).orElseThrow();
-            storeBlockHeaderHash(historyStorageAccount, ancestor);
-          }
+      // If fork block, add the parent's direct `HISTORY_SERVE_WINDOW - 1`
+      if (ancestor.getTimestamp() < forkTimestamp) {
+        for (int i = 0; i < (historySaveWindow - 1) && ancestor.getNumber() > 0; i++) {
+          ancestor = blockchain.getBlockHeader(ancestor.getParentHash()).orElseThrow();
+          storeBlockHeaderHash(historyStorageAccount, ancestor);
         }
       }
     }

@@ -30,8 +30,8 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
@@ -53,6 +53,7 @@ import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
+import org.hyperledger.besu.evmtool.t8n.T8nBlockchain;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -245,17 +246,19 @@ public class T8nExecutor {
       throw new UnsupportedForkException(fork);
     }
 
-    ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
-    final BlockHeader blockHeader = referenceTestEnv.updateFromParentValues(protocolSpec);
+    ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(referenceTestEnv);
+    Blockchain blockchain = new T8nBlockchain(referenceTestEnv, protocolSpec);
+    final BlockHeader blockHeader = referenceTestEnv.parentBlockHeader(protocolSpec);
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
     final Wei blobGasPrice =
         protocolSpec
             .getFeeMarket()
             .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, blockHeader));
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
-    // because blockchain is null t8n tests cannot test at-transition backfill.
-    protocolSpec.getBlockHashProcessor().processBlockHashes(null, worldState, referenceTestEnv);
+
+    protocolSpec
+        .getBlockHashProcessor()
+        .processBlockHashes(blockchain, worldState, referenceTestEnv);
 
     final WorldUpdater worldStateUpdater = worldState.updater();
     List<TransactionReceipt> receipts = new ArrayList<>();
@@ -292,8 +295,7 @@ public class T8nExecutor {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                (blockheight, blockNumber) ->
-                    referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO),
+                protocolSpec.getBlockHashProcessor().getBlockHashLookup(blockHeader, blockchain),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
