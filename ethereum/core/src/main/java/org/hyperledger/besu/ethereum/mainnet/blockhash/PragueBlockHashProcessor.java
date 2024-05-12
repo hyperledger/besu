@@ -55,8 +55,8 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   }
 
   /**
-   * Constructs a BlockHashProcessor with a specified fork timestamp and history save
-   * window. This constructor is primarily used for testing.
+   * Constructs a BlockHashProcessor with a specified fork timestamp and history save window. This
+   * constructor is primarily used for testing.
    *
    * @param forkTimestamp The timestamp at which the fork becomes active.
    * @param historyStorageAddress the address of the contract storing the history
