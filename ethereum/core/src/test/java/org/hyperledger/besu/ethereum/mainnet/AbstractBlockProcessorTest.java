@@ -94,7 +94,6 @@ abstract class AbstractBlockProcessorTest {
         emptyList(),
         emptyList(),
         Optional.empty(),
-        Optional.empty(),
         null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
@@ -108,7 +107,6 @@ abstract class AbstractBlockProcessorTest {
         emptyBlockHeader,
         emptyList(),
         emptyList(),
-        Optional.empty(),
         Optional.empty(),
         null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
@@ -126,7 +124,6 @@ abstract class AbstractBlockProcessorTest {
         emptyList(),
         emptyList(),
         Optional.of(withdrawals),
-        Optional.empty(),
         null);
     verify(withdrawalsProcessor).processWithdrawals(eq(withdrawals), any());
   }
@@ -144,7 +141,6 @@ abstract class AbstractBlockProcessorTest {
         emptyList(),
         emptyList(),
         Optional.of(withdrawals),
-        Optional.empty(),
         null);
     verify(withdrawalsProcessor, never()).processWithdrawals(any(), any());
   }
