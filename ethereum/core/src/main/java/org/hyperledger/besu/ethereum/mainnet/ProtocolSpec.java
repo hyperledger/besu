@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
@@ -79,7 +80,7 @@ public class ProtocolSpec {
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
   private final RequestsValidatorCoordinator requestsValidatorCoordinator;
   private final Optional<RequestProcessorCoordinator> requestProcessorCoordinator;
-
+  private final BlockHashProcessor blockHashProcessor;
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
 
@@ -111,6 +112,7 @@ public class ProtocolSpec {
    * @param withdrawalsProcessor the Withdrawals processor to use
    * @param requestsValidatorCoordinator the request validator to use
    * @param requestProcessorCoordinator the request processor to use
+   * @param blockHashProcessor the blockHash processor to use
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
@@ -142,6 +144,7 @@ public class ProtocolSpec {
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
       final RequestsValidatorCoordinator requestsValidatorCoordinator,
       final Optional<RequestProcessorCoordinator> requestProcessorCoordinator,
+      final BlockHashProcessor blockHashProcessor,
       final boolean isPoS,
       final boolean isReplayProtectionSupported) {
     this.name = name;
@@ -170,6 +173,7 @@ public class ProtocolSpec {
     this.withdrawalsProcessor = withdrawalsProcessor;
     this.requestsValidatorCoordinator = requestsValidatorCoordinator;
     this.requestProcessorCoordinator = requestProcessorCoordinator;
+    this.blockHashProcessor = blockHashProcessor;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
   }
@@ -377,6 +381,10 @@ public class ProtocolSpec {
 
   public Optional<RequestProcessorCoordinator> getRequestProcessorCoordinator() {
     return requestProcessorCoordinator;
+  }
+
+  public BlockHashProcessor getBlockHashProcessor() {
+    return blockHashProcessor;
   }
 
   /**

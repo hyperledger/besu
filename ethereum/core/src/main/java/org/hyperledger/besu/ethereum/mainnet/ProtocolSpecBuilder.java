@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.PrivacyPluginPrecompiledContract;
@@ -79,7 +80,7 @@ public class ProtocolSpecBuilder {
   private RequestsValidatorCoordinator requestsValidatorCoordinator =
       new RequestsValidatorCoordinator.Builder().build();
   private RequestProcessorCoordinator requestProcessorCoordinator;
-
+  protected BlockHashProcessor blockHashProcessor;
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
@@ -276,6 +277,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder blockHashProcessor(final BlockHashProcessor blockHashProcessor) {
+    this.blockHashProcessor = blockHashProcessor;
+    return this;
+  }
+
   public ProtocolSpecBuilder isPoS(final boolean isPoS) {
     this.isPoS = isPoS;
     return this;
@@ -396,6 +402,7 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(withdrawalsProcessor),
         requestsValidatorCoordinator,
         Optional.ofNullable(requestProcessorCoordinator),
+        blockHashProcessor,
         isPoS,
         isReplayProtectionSupported);
   }

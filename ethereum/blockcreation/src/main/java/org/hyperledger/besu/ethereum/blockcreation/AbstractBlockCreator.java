@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.DifficultyCalculator;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
@@ -200,10 +199,10 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final List<BlockHeader> ommers = maybeOmmers.orElse(selectOmmers());
 
-      maybeParentBeaconBlockRoot.ifPresent(
-          bytes32 ->
-              ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-                  disposableWorldState.updater(), timestamp, bytes32));
+      newProtocolSpec
+          .getBlockHashProcessor()
+          .processBlockHashes(
+              protocolContext.getBlockchain(), disposableWorldState, processableBlockHeader);
 
       throwIfStopped();
 
@@ -367,6 +366,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
             protocolSpec.getFeeMarket(),
             protocolSpec.getGasCalculator(),
             protocolSpec.getGasLimitCalculator(),
+            protocolSpec.getBlockHashProcessor(),
             pluginTransactionSelector,
             ethScheduler);
 

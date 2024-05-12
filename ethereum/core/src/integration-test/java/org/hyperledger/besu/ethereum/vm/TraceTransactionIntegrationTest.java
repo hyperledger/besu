@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.vm;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -72,11 +74,13 @@ public class TraceTransactionIntegrationTest {
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
-    transactionProcessor =
-        protocolSchedule
-            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
-            .getTransactionProcessor();
-    blockHashLookup = new CachingBlockHashLookup(genesisBlock.getHeader(), blockchain);
+    ProtocolSpec protocolSpec =
+        protocolSchedule.getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
+    transactionProcessor = protocolSpec.getTransactionProcessor();
+    blockHashLookup =
+        protocolSpec
+            .getBlockHashProcessor()
+            .getBlockHashLookup(genesisBlock.getHeader(), blockchain);
   }
 
   @Test
@@ -178,7 +182,7 @@ public class TraceTransactionIntegrationTest {
         transaction,
         genesisBlockHeader.getCoinbase(),
         tracer,
-        new CachingBlockHashLookup(genesisBlockHeader, blockchain),
+        blockHashLookup,
         false,
         Wei.ZERO);
 
