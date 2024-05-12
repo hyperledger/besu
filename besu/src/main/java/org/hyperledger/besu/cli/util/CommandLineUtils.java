@@ -48,6 +48,8 @@ public class CommandLineUtils {
   public static final String DEPRECATED_AND_USELESS_WARNING_MSG =
       "{} has been deprecated and is now useless, remove it.";
 
+  private CommandLineUtils() {}
+
   /**
    * Check if options are passed that require an option to be true to have any effect and log a
    * warning with the list of affected options.

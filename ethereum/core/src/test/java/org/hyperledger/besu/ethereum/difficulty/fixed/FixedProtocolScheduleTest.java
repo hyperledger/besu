@@ -33,7 +33,7 @@ public class FixedProtocolScheduleTest {
 
     final ProtocolSchedule schedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(),
+            GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
             new BadBlockManager());

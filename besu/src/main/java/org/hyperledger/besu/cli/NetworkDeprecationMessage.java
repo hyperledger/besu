@@ -21,6 +21,7 @@ import java.util.List;
 
 /** The Network deprecation message. */
 public class NetworkDeprecationMessage {
+  private NetworkDeprecationMessage() {}
 
   /**
    * Generate deprecation message for specified testnet network.

@@ -33,6 +33,9 @@ import java.util.stream.Collectors;
 public class RpcEndpointServiceImpl implements RpcEndpointService {
   private final Map<String, Function<PluginRpcRequest, ?>> rpcMethods = new HashMap<>();
 
+  /** Default Constructor. */
+  public RpcEndpointServiceImpl() {}
+
   @Override
   public <T> void registerRPCEndpoint(
       final String namespace,

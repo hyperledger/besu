@@ -32,6 +32,9 @@ public class SimpleBlockValues implements BlockValues {
   long timestamp = 1;
   long gasLimit = Long.MAX_VALUE;
 
+  /** Default constructor. */
+  public SimpleBlockValues() {}
+
   @Override
   public Bytes getDifficultyBytes() {
     return difficultyBytes;
