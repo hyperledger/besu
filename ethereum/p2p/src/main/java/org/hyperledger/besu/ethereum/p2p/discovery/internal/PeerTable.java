@@ -54,8 +54,8 @@ public class PeerTable {
   private final Map<Bytes, Integer> distanceCache;
   private BloomFilter<Bytes> idBloom;
   private int evictionCnt = 0;
-  private final LHMWithMaxSize<String, Integer> ipAddressCheckMap =
-      new LHMWithMaxSize<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
+  private final LinkedHashMapWithMaximumSize<String, Integer> ipAddressCheckMap =
+      new LinkedHashMapWithMaximumSize<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
   private final CircularFifoQueue<String> invalidIPs =
       new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
 
@@ -313,10 +313,10 @@ public class PeerTable {
     }
   }
 
-  private static class LHMWithMaxSize<K, V> extends LinkedHashMap<K, V> {
+  private static class LinkedHashMapWithMaximumSize<K, V> extends LinkedHashMap<K, V> {
     private final int maxSize;
 
-    public LHMWithMaxSize(final int maxSize) {
+    public LinkedHashMapWithMaximumSize(final int maxSize) {
       super(maxSize, 0.75f, false);
       this.maxSize = maxSize;
     }
