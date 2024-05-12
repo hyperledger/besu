@@ -126,7 +126,7 @@ class BlockHashProcessorTest {
     // Total of historicalWindow hashes were stored
     verify(account, times((int) historicalWindow)).setStorageValue(any(), any());
 
-    // for activation at block 10000, block 1808-9999’s hashes will be presisted in the slot
+    // for activation at block 10000, block 1808-9999’s hashes will be persisted in the slot
     verifyAccount(1808, historicalWindow);
     verifyAccount(9999, historicalWindow);
     // BLOCKHASH for 1807 or less would resolve to 0 as only HISTORY_SERVE_WINDOW are persisted.
