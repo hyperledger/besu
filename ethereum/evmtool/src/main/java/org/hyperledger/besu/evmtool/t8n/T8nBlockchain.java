@@ -61,6 +61,13 @@ public class T8nBlockchain implements Blockchain {
   private final Map<Hash, BlockHeader> hashToHeader = new HashMap<>();
   private final BlockHeader chainHeader;
 
+  /**
+   * Create a new blockchain object for T8n testing.
+   *
+   * @param referenceTestEnv the referenfe test environment, containing most of the block header
+   *     stuff
+   * @param protocolSpec the protocol spec, which impacts what block header fields are implemente.
+   */
   public T8nBlockchain(final ReferenceTestEnv referenceTestEnv, final ProtocolSpec protocolSpec) {
 
     Map<Long, Hash> blockHashes = referenceTestEnv.getBlockHashes();
@@ -176,6 +183,7 @@ public class T8nBlockchain implements Blockchain {
     throw new NonDeterministicOperationException("Listening for chain reorg is not deterministic");
   }
 
+  /** An exception thrown for methods not supported by the T8nBlockchain. */
   public static class NonDeterministicOperationException extends RuntimeException {
     NonDeterministicOperationException(final String message) {
       super(message);
