@@ -44,7 +44,7 @@ public class CachingBlockHashLookup implements BlockHashLookup {
 
   public CachingBlockHashLookup(
       final ProcessableBlockHeader currentBlock, final Blockchain blockchain) {
-    this(currentBlock, blockchain, 255);
+    this(currentBlock, blockchain, BlockHashOperation.MAX_RELATIVE_BLOCK);
   }
 
   public CachingBlockHashLookup(

@@ -27,6 +27,9 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The Block hash operation. */
 public class BlockHashOperation extends AbstractFixedCostOperation {
 
+  /** Frontier maximum relative block delta */
+  public static final int MAX_RELATIVE_BLOCK = 255;
+
   /**
    * Function that gets the block hash, passed in as part of TxValues.
    *

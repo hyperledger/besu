@@ -232,6 +232,10 @@ public class ReferenceTestEnv extends BlockHeader {
     return withdrawals;
   }
 
+  public Optional<Hash> getBlockhashByNumber(final long number) {
+    return Optional.ofNullable(blockHashes.get(number));
+  }
+
   public Map<Long, Hash> getBlockHashes() {
     return blockHashes;
   }
