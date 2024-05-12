@@ -46,7 +46,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   private final Address historyStorageAddress;
 
   /**
-   * Constructs a HistoricalBlockHashProcessor with a specified fork timestamp.
+   * Constructs a BlockHashProcessor with a specified fork timestamp.
    *
    * @param forkTimestamp The timestamp at which the fork becomes active.
    */
