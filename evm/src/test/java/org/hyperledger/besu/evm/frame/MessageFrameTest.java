@@ -48,7 +48,7 @@ class MessageFrameTest {
             .blobGasPrice(Wei.ONE)
             .blockValues(new ToyBlockValues())
             .miningBeneficiary(Address.ZERO)
-            .blockHashLookup((l) -> Hash.ZERO)
+            .blockHashLookup((f, n) -> Hash.ZERO)
             .type(MessageFrame.Type.MESSAGE_CALL)
             .initialGas(1)
             .address(Address.ZERO)

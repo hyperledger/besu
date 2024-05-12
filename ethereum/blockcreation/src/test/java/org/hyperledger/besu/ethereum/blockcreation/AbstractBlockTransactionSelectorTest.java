@@ -1272,6 +1272,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
             getFeeMarket(),
             new LondonGasCalculator(),
             GasLimitCalculator.constant(),
+            protocolSchedule.getByBlockHeader(blockHeader).getBlockHashProcessor(),
             transactionSelectionService.createPluginTransactionSelector(),
             ethScheduler);
 
