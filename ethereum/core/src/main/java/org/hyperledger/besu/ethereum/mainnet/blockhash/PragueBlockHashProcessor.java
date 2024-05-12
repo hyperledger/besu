@@ -79,7 +79,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
     return (frame, blockNumber) -> {
       long currentBlockNumber = frame.getBlockValues().getNumber();
       if (currentBlockNumber <= blockNumber
-          || currentBlockNumber - blockNumber > historySaveWindow
+          || blockNumber + historySaveWindow < currentBlockNumber
           || blockNumber < 0) {
         return Hash.ZERO;
       }
