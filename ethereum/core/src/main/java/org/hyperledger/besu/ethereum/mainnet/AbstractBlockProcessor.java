@@ -98,7 +98,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Request>> maybeRequests,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -196,7 +195,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     // EIP-7685: process EL requests
     final Optional<RequestProcessorCoordinator> requestProcessor =
         protocolSpec.getRequestProcessorCoordinator();
-    requestProcessor.ifPresent(processor -> processor.process(worldState, receipts));
+    Optional<List<Request>> maybeRequests = Optional.empty();
+    if (requestProcessor.isPresent()) {
+      maybeRequests = requestProcessor.get().process(worldState, receipts);
+    }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
@@ -219,7 +221,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    return new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(worldState, receipts)));
+    return new BlockProcessingResult(
+        Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)));
   }
 
   protected boolean hasAvailableBlockBudget(

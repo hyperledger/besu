@@ -14,71 +14,99 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static java.util.Collections.emptyList;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithMoreThanMaximumWithdrawalRequests;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsAndWithdrawalRequestsRoot;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsMismatch;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsRootMismatch;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot;
-import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot;
+import static org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode.NONE;
+import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BLSPublicKey;
+import org.hyperledger.besu.datatypes.GWei;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.WithdrawalRequestTestParameter;
-import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Stream;
 
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.bytes.Bytes48;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
 
+@ExtendWith(MockitoExtension.class)
 class PragueRequestsValidatorTest {
 
-  @ParameterizedTest(name = "{index}: {0}")
-  @MethodSource("paramsForValidateWithdrawalRequestParameter")
-  public void validateWithdrawalRequestParameter(
-      final String description,
-      final Optional<List<Request>> maybeWithdrawalRequests,
-      final boolean expectedValidity) {
-    assertThat(new WithdrawalRequestValidator().validateParameter(maybeWithdrawalRequests))
-        .isEqualTo(expectedValidity);
+  private final BlockchainSetupUtil blockchainSetupUtil = BlockchainSetupUtil.forMainnet();
+  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
+  @Mock private WithdrawalsValidator withdrawalsValidator;
+
+  RequestsValidatorCoordinator requestValidator =
+      pragueRequestsValidator(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
+
+  @BeforeEach
+  public void setUp() {
+    lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+    lenient().when(protocolSpec.getWithdrawalsValidator()).thenReturn(withdrawalsValidator);
+    lenient().when(withdrawalsValidator.validateWithdrawals(any())).thenReturn(true);
+    lenient().when(withdrawalsValidator.validateWithdrawalsRoot(any())).thenReturn(true);
+    lenient().when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(requestValidator);
   }
 
-  private static Stream<Arguments> paramsForValidateWithdrawalRequestParameter() {
-    return Stream.of(
-        Arguments.of(
-            "Allowed WithdrawalRequests - validating empty WithdrawalRequests",
-            Optional.empty(),
-            false),
-        Arguments.of(
-            "Allowed WithdrawalRequests - validating present WithdrawalRequests",
-            Optional.of(List.of()),
-            true));
-  }
+  private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
-  @ParameterizedTest(name = "{index}: {0}")
-  @MethodSource("validateWithdrawalRequestsInBlockParamsForPrague")
-  public void validateWithdrawalRequestsInBlock_WhenPrague(
-      final WithdrawalRequestTestParameter param, final boolean expectedValidity) {
+  @Test
+  void testkjjh() {
+    WithdrawalRequest request =
+        new WithdrawalRequest(
+            Address.extract(Bytes32.fromHexStringLenient("1")),
+            BLSPublicKey.wrap(Bytes48.fromHexStringLenient("1")),
+            GWei.ONE);
+
+    WithdrawalRequest requestTwo =
+        new WithdrawalRequest(
+            Address.extract(Bytes32.fromHexStringLenient("1")),
+            BLSPublicKey.wrap(Bytes48.fromHexStringLenient("1")),
+            GWei.ZERO);
+
+    Optional<List<Request>> blockRequests = Optional.of(List.of(request));
+    Optional<List<Request>> expectedRequests = Optional.of(List.of(requestTwo));
+    Hash requestsRoot = BodyValidation.requestsRoot(blockRequests.get());
+
+    final BlockDataGenerator.BlockOptions blockOptions =
+        BlockDataGenerator.BlockOptions.create()
+            .setRequestsRoot(requestsRoot)
+            .setRequests(blockRequests)
+            .setGasUsed(0)
+            .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
+            .hasTransactions(false)
+            .hasOmmers(false)
+            .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
+            .setLogsBloom(LogsBloomFilter.empty())
+            .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash());
+
+    final Block block = blockDataGenerator.block(blockOptions);
+    assertThat(block).isNotNull();
     assertThat(
-            pragueRequestsValidator(null)
-                .validate(param.block, new ArrayList<>(param.expectedWithdrawalRequest), List.of()))
-        .isEqualTo(expectedValidity);
-  }
-
-  private static Stream<Arguments> validateWithdrawalRequestsInBlockParamsForPrague() {
-    return Stream.of(
-        Arguments.of(blockWithWithdrawalRequestsAndWithdrawalRequestsRoot(), true),
-        Arguments.of(blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot(), false),
-        Arguments.of(blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot(), false),
-        Arguments.of(blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot(), false),
-        Arguments.of(blockWithWithdrawalRequestsRootMismatch(), false),
-        Arguments.of(blockWithWithdrawalRequestsMismatch(), false),
-        Arguments.of(blockWithMoreThanMaximumWithdrawalRequests(), false));
+            new MainnetBlockBodyValidator(protocolSchedule)
+                .validateBodyLight(
+                    blockchainSetupUtil.getProtocolContext(),
+                    block,
+                    emptyList(),
+                    expectedRequests,
+                    NONE))
+        .isFalse();
   }
 }

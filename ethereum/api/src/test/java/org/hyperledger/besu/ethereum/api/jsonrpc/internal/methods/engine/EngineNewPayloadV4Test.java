@@ -98,7 +98,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            new BlockProcessingResult(
+                Optional.of(new BlockProcessingOutputs(null, List.of(), Optional.empty()))),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
@@ -132,14 +133,15 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Test
   public void shouldReturnValidIfDepositsIsNotNull_WhenDepositsAllowed() {
     final List<DepositParameter> depositsParam = List.of(DEPOSIT_PARAM_1);
-    final List<Deposit> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
+    final List<Request> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
 
     mockAllowedDepositsRequestValidator();
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            new BlockProcessingResult(
+                Optional.of(new BlockProcessingOutputs(null, List.of(), Optional.of(deposits)))),
             Optional.empty(),
-            Optional.of(deposits),
+            Optional.of(List.of(DEPOSIT_PARAM_1.toDeposit())),
             Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -179,7 +181,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            new BlockProcessingResult(
+                Optional.of(new BlockProcessingOutputs(null, List.of(), Optional.empty()))),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
@@ -214,15 +217,17 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnValidIfWithdrawalRequestsIsNotNull_WhenWithdrawalRequestsAreAllowed() {
     final List<WithdrawalRequestParameter> withdrawalRequestsParams =
         List.of(WITHDRAWAL_REQUEST_PARAMETER_1);
-    final List<WithdrawalRequest> withdrawalRequests =
+    final List<Request> withdrawalRequests =
         List.of(WITHDRAWAL_REQUEST_PARAMETER_1.toWithdrawalRequest());
     mockAllowedWithdrawalsRequestValidator();
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            new BlockProcessingResult(
+                Optional.of(
+                    new BlockProcessingOutputs(null, List.of(), Optional.of(withdrawalRequests)))),
             Optional.empty(),
             Optional.empty(),
-            Optional.of(withdrawalRequests));
+            Optional.of(List.of(WITHDRAWAL_REQUEST_PARAMETER_1.toWithdrawalRequest())));
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))

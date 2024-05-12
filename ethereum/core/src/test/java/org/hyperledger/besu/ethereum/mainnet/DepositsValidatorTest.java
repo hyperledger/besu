@@ -108,7 +108,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(requestsValidatorCoordinator.validate(block, request, List.of(receipt))).isTrue();
+    assertThat(requestsValidatorCoordinator.validate(block, Optional.of(request), List.of(receipt)))
+        .isTrue();
   }
 
   @Test
@@ -127,7 +128,9 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt2 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(requestsValidatorCoordinator.validate(block, requests, List.of(receipt1, receipt2)))
+    assertThat(
+            requestsValidatorCoordinator.validate(
+                block, Optional.of(requests), List.of(receipt1, receipt2)))
         .isTrue();
   }
 
@@ -140,7 +143,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+    assertThat(
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 
@@ -154,7 +158,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
-    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+    assertThat(
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 
@@ -167,7 +172,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+    assertThat(
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 
@@ -181,7 +187,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2, LOG_1), Optional.empty());
 
-    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+    assertThat(
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 
@@ -196,7 +203,8 @@ public class DepositsValidatorTest {
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(requestsValidatorCoordinator.validate(block, List.of(), List.of(receipt1)))
+    assertThat(
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 

@@ -27,6 +27,8 @@ import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Processes and stores historical block hashes in accordance with EIP-2935. This class is
@@ -34,6 +36,7 @@ import org.apache.tuweni.units.bigints.UInt256;
  * historical block hash access in smart contracts.
  */
 public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
+  private static final Logger LOG = LoggerFactory.getLogger(PragueBlockHashProcessor.class);
 
   public static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0x25a219378dad9b3503c8268c9ca836a52427a4fb");
@@ -76,7 +79,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
     return (frame, blockNumber) -> {
       long currentBlockNumber = frame.getBlockValues().getNumber();
       if (currentBlockNumber <= blockNumber
-          || currentBlockNumber - blockNumber >= historySaveWindow
+          || currentBlockNumber - blockNumber > historySaveWindow
           || blockNumber < 0) {
         return Hash.ZERO;
       }
@@ -143,8 +146,8 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
    * @param hash The hash to be stored.
    */
   private void storeHash(final MutableAccount account, final long number, final Hash hash) {
-    System.out.printf(
-        "Writing to %s %s=%s%n",
+    LOG.trace(
+        "Writing to {} {}={}",
         account.getAddress(),
         UInt256.valueOf(number % historySaveWindow).toDecimalString(),
         UInt256.fromBytes(hash).toHexString());

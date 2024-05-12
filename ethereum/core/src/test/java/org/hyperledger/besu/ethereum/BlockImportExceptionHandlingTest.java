@@ -148,6 +148,7 @@ class BlockImportExceptionHandlingTest {
             eq(goodBlock),
             any(),
             any(),
+            any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))
         .thenReturn(true);
     assertThat(badBlockManager.getBadBlocks()).isEmpty();
@@ -182,6 +183,7 @@ class BlockImportExceptionHandlingTest {
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(goodBlock),
+            any(),
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))
@@ -250,6 +252,7 @@ class BlockImportExceptionHandlingTest {
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(goodBlock),
+            any(),
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))

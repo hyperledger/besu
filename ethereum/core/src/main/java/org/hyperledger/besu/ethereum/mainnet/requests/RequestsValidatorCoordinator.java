@@ -57,21 +57,33 @@ public class RequestsValidatorCoordinator {
    * pass their respective type-specific validations.
    *
    * @param block The block containing the requests to be validated.
-   * @param requests The list of requests contained within the block.
+   * @param maybeRequests The list of requests contained within the block.
    * @param receipts The list of transaction receipts corresponding to the requests.
    * @return true if all validations pass; false otherwise.
    */
   public boolean validate(
-      final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
-    if (!isRequestOrderValid(requests)) {
+      final Block block,
+      final Optional<List<Request>> maybeRequests,
+      final List<TransactionReceipt> receipts) {
+
+    if (validators.isEmpty()) {
+      return isRequestsEmpty(block, maybeRequests);
+    }
+
+    if (!isRequestsRootValid(block, maybeRequests)) {
+      return false;
+    }
+
+    if (!isRequestOrderValid(maybeRequests.get())) {
       final Hash blockHash = block.getHash();
       LOG.warn("Block {} the ordering across requests must be ascending by type", blockHash);
       return false;
     }
-    if (!isRequestsRootValid(block, requests)) {
-      return false;
-    }
-    return validateRequests(block, requests, receipts);
+    return validateRequests(block, maybeRequests.get(), receipts);
+  }
+
+  public boolean validateRoot(final Block block, final Optional<List<Request>> requests) {
+    return isRequestsRootValid(block, requests);
   }
 
   /**
@@ -89,7 +101,7 @@ public class RequestsValidatorCoordinator {
         .allMatch(type -> validateRequestOfType(type, block, requests, receipts));
   }
 
-  private boolean isRequestsRootValid(final Block block, final List<Request> requests) {
+  private boolean isRequestsRootValid(final Block block, final Optional<List<Request>> requests) {
     final Hash blockHash = block.getHash();
     final Optional<Hash> maybeRequestsRoot = block.getHeader().getRequestsRoot();
 
@@ -99,15 +111,41 @@ public class RequestsValidatorCoordinator {
     }
 
     if (block.getBody().getRequests().isEmpty()) {
+      LOG.warn("Block body {} must contain requests (even if empty list)", blockHash);
+      return false;
+    }
+
+    if (requests.isEmpty()) {
       LOG.warn("Block {} must contain requests (even if empty list)", blockHash);
       return false;
     }
 
-    final Hash expectedRequestsRoot = BodyValidation.requestsRoot(requests);
+    final Hash expectedRequestsRoot = BodyValidation.requestsRoot(requests.get());
     if (!expectedRequestsRoot.equals(maybeRequestsRoot.get())) {
       LOG.warn(
           "Block {} requests root does not match expected hash root for requests in block",
           blockHash);
+      return false;
+    }
+    return true;
+  }
+
+  private boolean isRequestsEmpty(final Block block, final Optional<List<Request>> requests) {
+    final Hash blockHash = block.getHash();
+    final Optional<Hash> maybeRequestsRoot = block.getHeader().getRequestsRoot();
+
+    if (maybeRequestsRoot.isPresent()) {
+      LOG.warn("Block {} must not contain requests root", blockHash);
+      return false;
+    }
+
+    if (block.getBody().getRequests().isPresent()) {
+      LOG.warn("Block body {} must not contain requests", blockHash);
+      return false;
+    }
+
+    if (requests.isPresent()) {
+      LOG.warn("Block {} must not contain requests", blockHash);
       return false;
     }
     return true;
