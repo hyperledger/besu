@@ -27,7 +27,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +39,7 @@ import org.slf4j.LoggerFactory;
  */
 public class RequestsValidatorCoordinator {
   private static final Logger LOG = LoggerFactory.getLogger(RequestsValidatorCoordinator.class);
-  private final ImmutableMap<RequestType, RequestValidator> validators;
+  private final ImmutableSortedMap<RequestType, RequestValidator> validators;
 
   /**
    * Constructs a new RequestsDelegateValidator with a mapping of request types to their respective
@@ -48,7 +48,7 @@ public class RequestsValidatorCoordinator {
    * @param validators An immutable map of request types to their corresponding validators.
    */
   private RequestsValidatorCoordinator(
-      final ImmutableMap<RequestType, RequestValidator> validators) {
+      final ImmutableSortedMap<RequestType, RequestValidator> validators) {
     this.validators = validators;
   }
 
@@ -149,8 +149,8 @@ public class RequestsValidatorCoordinator {
   }
 
   public static class Builder {
-    private final ImmutableMap.Builder<RequestType, RequestValidator> validatorsBuilder =
-        ImmutableMap.builder();
+    private final ImmutableSortedMap.Builder<RequestType, RequestValidator> validatorsBuilder =
+        ImmutableSortedMap.naturalOrder();
 
     public Builder addValidator(final RequestType type, final RequestValidator validator) {
       this.validatorsBuilder.put(type, validator);

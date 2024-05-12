@@ -23,11 +23,11 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
-import com.google.common.collect.ImmutableMap;
+import com.google.common.collect.ImmutableSortedMap;
 
 /** Processes various types of requests based on their RequestType. */
 public class RequestProcessorCoordinator {
-  private final ImmutableMap<RequestType, RequestProcessor> processors;
+  private final ImmutableSortedMap<RequestType, RequestProcessor> processors;
 
   /**
    * Constructs a RequestsProcessor with a given map of processors.
@@ -35,7 +35,7 @@ public class RequestProcessorCoordinator {
    * @param processors A map associating RequestType with their corresponding RequestProcessor.
    */
   private RequestProcessorCoordinator(
-      final ImmutableMap<RequestType, RequestProcessor> processors) {
+      final ImmutableSortedMap<RequestType, RequestProcessor> processors) {
     this.processors = processors;
   }
 
@@ -55,8 +55,8 @@ public class RequestProcessorCoordinator {
   }
 
   public static class Builder {
-    private final ImmutableMap.Builder<RequestType, RequestProcessor> requestProcessorBuilder =
-        ImmutableMap.builder();
+    private final ImmutableSortedMap.Builder<RequestType, RequestProcessor>
+        requestProcessorBuilder = ImmutableSortedMap.naturalOrder();
 
     public RequestProcessorCoordinator.Builder addProcessor(
         final RequestType type, final RequestProcessor processor) {
