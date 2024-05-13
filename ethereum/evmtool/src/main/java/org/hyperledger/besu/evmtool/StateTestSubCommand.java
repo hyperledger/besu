@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseEipSpec;
 import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.evm.account.Account;
@@ -59,7 +60,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -248,14 +248,17 @@ public class StateTestSubCommand implements Runnable {
         final Stopwatch timer = Stopwatch.createStarted();
         // Todo: EIP-4844 use the excessBlobGas of the parent instead of BlobGas.ZERO
         final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(BlobGas.ZERO);
+
         final TransactionProcessingResult result =
             processor.processTransaction(
                 worldStateUpdater,
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                (blockheight, blockNumber) ->
-                    Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
+                protocolSpec
+                    .getBlockHashProcessor()
+                    .getBlockHashLookup(
+                        blockHeader, new ReferenceTestBlockchain(blockHeader.getNumber())),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
