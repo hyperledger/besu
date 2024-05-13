@@ -296,11 +296,14 @@ public class T8nExecutor {
         if (blockHashLookup instanceof CachingBlockHashLookup) {
           // caching lookup won't work, use our own secret sauce
           blockHashLookup =
-              (frame, number) ->
-                  (referenceTestEnv.getNumber() - frame.getBlockValues().getNumber()
-                          > BlockHashOperation.MAX_RELATIVE_BLOCK)
-                      ? Hash.ZERO
-                      : referenceTestEnv.getBlockhashByNumber(number).orElse(Hash.ZERO);
+              (frame, number) -> {
+                long lookback = frame.getBlockValues().getNumber() - number;
+                if (lookback < 0 || lookback > BlockHashOperation.MAX_RELATIVE_BLOCK) {
+                  return Hash.ZERO;
+                } else {
+                  return referenceTestEnv.getBlockhashByNumber(number).orElse(Hash.ZERO);
+                }
+              };
         }
         result =
             processor.processTransaction(

@@ -35,8 +35,10 @@ import org.hyperledger.besu.ethereum.referencetests.GeneralStateTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestBlockchain;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -60,6 +62,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
@@ -249,16 +252,30 @@ public class StateTestSubCommand implements Runnable {
         // Todo: EIP-4844 use the excessBlobGas of the parent instead of BlobGas.ZERO
         final Wei blobGasPrice = protocolSpec.getFeeMarket().blobGasPricePerGas(BlobGas.ZERO);
 
+        BlockHashOperation.BlockHashLookup blockHashLookup =
+            protocolSpec
+                .getBlockHashProcessor()
+                .getBlockHashLookup(
+                    blockHeader, new ReferenceTestBlockchain(blockHeader.getNumber()));
+        if (blockHashLookup instanceof CachingBlockHashLookup) {
+          blockHashLookup =
+              (messageFrame, number) -> {
+                long lookback = messageFrame.getBlockValues().getNumber() - number;
+                if (lookback < 0 || lookback > BlockHashOperation.MAX_RELATIVE_BLOCK) {
+                  return Hash.ZERO;
+                } else {
+                  return Hash.hash(Bytes.wrap(Long.toString(number).getBytes(UTF_8)));
+                }
+              };
+        }
+
         final TransactionProcessingResult result =
             processor.processTransaction(
                 worldStateUpdater,
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                protocolSpec
-                    .getBlockHashProcessor()
-                    .getBlockHashLookup(
-                        blockHeader, new ReferenceTestBlockchain(blockHeader.getNumber())),
+                blockHashLookup,
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
