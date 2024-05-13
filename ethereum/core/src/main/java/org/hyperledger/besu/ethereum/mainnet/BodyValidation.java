@@ -92,7 +92,7 @@ public final class BodyValidation {
    * Generates the request root for a list of requests
    *
    * @param requests list of request
-   * @return the request root
+   * @return the requests root
    */
   public static Hash requestsRoot(final List<Request> requests) {
     final MerkleTrie<Bytes, Bytes> trie = trie();
