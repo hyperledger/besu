@@ -68,7 +68,7 @@ class PragueRequestsValidatorTest {
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   @Test
-  void testkjjh() {
+  void shouldValidateRequestsTest() {
     WithdrawalRequest request =
         new WithdrawalRequest(
             Address.extract(Bytes32.fromHexStringLenient("1")),

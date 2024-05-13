@@ -139,8 +139,7 @@ public class ForwardSyncStepTest {
                   Optional.of(
                       new BlockProcessingOutputs(
                           ForestReferenceTestWorldState.create(Collections.emptyMap()),
-                          blockDataGenerator.receipts(block),
-                          maybeRequests)));
+                          blockDataGenerator.receipts(block))));
             });
   }
 
