@@ -83,6 +83,9 @@ public class ReferenceTestProtocolSchedules {
     builder.put("Cancun", createSchedule(genesisStub.clone().cancunTime(0)));
     // also load KZG file for mainnet
     KZGPointEvalPrecompiledContract.init();
+    builder.put(
+        "CancunToPragueAtTime15k",
+        createSchedule(genesisStub.clone().cancunTime(0).pragueTime(15000)));
     builder.put("Prague", createSchedule(genesisStub.clone().pragueTime(0)));
     builder.put("Future_EIPs", createSchedule(genesisStub.clone().futureEipsTime(0)));
     builder.put("Experimental_EIPs", createSchedule(genesisStub.clone().experimentalEipsTime(0)));
