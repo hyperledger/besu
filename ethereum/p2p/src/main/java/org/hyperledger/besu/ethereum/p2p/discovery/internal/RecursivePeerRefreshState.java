@@ -185,7 +185,8 @@ public class RecursivePeerRefreshState {
   private boolean satisfiesMapAdditionCriteria(final DiscoveryPeer discoPeer) {
     return !oneTrueMap.containsKey(discoPeer.getId())
         && (initialPeers.contains(discoPeer) || !peerTable.get(discoPeer).isPresent())
-        && !discoPeer.getId().equals(localPeer.getId());
+        && !discoPeer.getId().equals(localPeer.getId())
+        && !peerTable.ipAddressIsInvalid(discoPeer.getEndpoint());
   }
 
   void onNeighboursReceived(final DiscoveryPeer peer, final List<DiscoveryPeer> peers) {
