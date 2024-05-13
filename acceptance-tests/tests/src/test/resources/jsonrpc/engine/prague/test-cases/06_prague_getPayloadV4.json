@@ -26,7 +26,7 @@
         "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "transactions": [],
         "withdrawals": [],
-        "depositReceipts": [],
+        "depositRequests": [],
         "withdrawalRequests": [
           {
             "sourceAddress": "0xa4664c40aacebd82a2db79f0ea36c06bc6a19adb",

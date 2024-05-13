@@ -26,7 +26,7 @@
         "parentBeaconBlockRoot": "0x0000000000000000000000000000000000000000000000000000000000000000",
         "transactions": [],
         "withdrawals": [],
-        "depositReceipts": [],
+        "depositRequests": [],
         "withdrawalRequests": [],
         "blockNumber": "0x3",
         "blockHash": "0x7a619ef406633a6d6589602009b5d242e1273fd8259cebcac4ab006edfdf81f9",
