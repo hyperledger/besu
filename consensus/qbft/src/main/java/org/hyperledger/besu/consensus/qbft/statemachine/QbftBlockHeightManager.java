@@ -159,7 +159,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         LOG.info(
             "Block has transactions but this node is not a proposer so it will not send a proposal: " +  roundIdentifier);
       }
-    } else { // CHECK IF EmptyBlockExpired IS 0 AND SKIP // SHOULD WE FORCE EmptyBlockExpired > BlockExpired
+    } else {
       final long currentTimeInMillis = finalState.getClock().millis();
       boolean emptyBlockExpired = finalState.getBlockTimer().checkEmptyBlockExpired(parentHeader, currentTimeInMillis);
       if (emptyBlockExpired) {
