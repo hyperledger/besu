@@ -39,6 +39,8 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -63,6 +65,7 @@ import org.mockito.quality.Strictness;
 @MockitoSettings(strictness = Strictness.LENIENT)
 class EthGetProofTest {
   @Mock private Blockchain blockchain;
+  @Mock private ProtocolSchedule protocolSchedule;
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   private WorldStateArchive archive;
@@ -83,7 +86,10 @@ class EthGetProofTest {
 
   @BeforeEach
   public void setUp() {
-    blockchainQueries = spy(new BlockchainQueries(blockchain, archive));
+    blockchainQueries =
+        spy(
+            new BlockchainQueries(
+                protocolSchedule, blockchain, archive, MiningParameters.newDefault()));
     when(blockchainQueries.getBlockchain()).thenReturn(blockchain);
     when(blockchainQueries.headBlockNumber()).thenReturn(14L);
     when(blockchain.getChainHead()).thenReturn(chainHead);

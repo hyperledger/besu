@@ -1351,8 +1351,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         TraceService.class,
         new TraceServiceImpl(
             new BlockchainQueries(
+                besuController.getProtocolSchedule(),
                 besuController.getProtocolContext().getBlockchain(),
-                besuController.getProtocolContext().getWorldStateArchive()),
+                besuController.getProtocolContext().getWorldStateArchive(),
+                getMiningParameters()),
             besuController.getProtocolSchedule()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
@@ -1755,7 +1757,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.isEnabled(),
             unstableIpcOptions.getIpcPath(),
             unstableIpcOptions.getRpcIpcApis());
-    apiConfiguration = apiConfigurationOptions.apiConfiguration(getMiningParameters());
+    apiConfiguration = apiConfigurationOptions.apiConfiguration();
     dataStorageConfiguration = getDataStorageConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {

@@ -28,9 +28,11 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -46,6 +48,7 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class BlockchainQueriesTest {
   private BlockDataGenerator gen;
@@ -587,7 +590,13 @@ public class BlockchainQueriesTest {
       this.blockchain = blockchain;
       this.blockData = blockData;
       this.worldStateArchive = worldStateArchive;
-      this.blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, scheduler);
+      this.blockchainQueries =
+          new BlockchainQueries(
+              Mockito.mock(ProtocolSchedule.class),
+              blockchain,
+              worldStateArchive,
+              scheduler,
+              MiningParameters.newDefault());
     }
   }
 
