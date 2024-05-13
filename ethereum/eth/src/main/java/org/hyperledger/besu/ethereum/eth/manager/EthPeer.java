@@ -215,7 +215,7 @@ public class EthPeer implements Comparable<EthPeer> {
         .addArgument(this::getLoggableId)
         .log();
     LOG.trace("Timed out while waiting for response from peer {}", this);
-    reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
+    reputation.recordRequestTimeout(requestCode, this).ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
@@ -224,7 +224,7 @@ public class EthPeer implements Comparable<EthPeer> {
         .addArgument(requestType)
         .addArgument(this::getLoggableId)
         .log();
-    reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
+    reputation.recordUselessResponse(System.currentTimeMillis(), this).ifPresent(this::disconnect);
   }
 
   public void recordUsefulResponse() {

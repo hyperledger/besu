@@ -107,6 +107,9 @@ public class PkiBlockCreationOptions {
       description = "File with all CRLs for PKI Block Creation.")
   Path crlFile = null;
 
+  /** Default Constructor. */
+  PkiBlockCreationOptions() {}
+
   /**
    * As domain config optional.
    *

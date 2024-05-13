@@ -30,6 +30,9 @@ public class PrefixCodeRule implements ContractValidationRule {
 
   private static final byte FORMAT_RESERVED = (byte) 0xEF;
 
+  /** Default constructor. */
+  public PrefixCodeRule() {}
+
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-3541
   public Optional<ExceptionalHaltReason> validate(

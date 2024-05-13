@@ -27,6 +27,8 @@ import picocli.CommandLine;
  * @param <T> the type of configuration resource this finder will return
  */
 public abstract class AbstractConfigurationFinder<T> {
+  /** Default Constructor. */
+  public AbstractConfigurationFinder() {}
 
   /**
    * Returns the name of the configuration option.

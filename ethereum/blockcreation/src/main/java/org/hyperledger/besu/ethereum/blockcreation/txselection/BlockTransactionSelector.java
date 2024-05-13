@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
@@ -39,10 +40,9 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
@@ -114,6 +114,7 @@ public class BlockTransactionSelector {
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
+      final BlockHashProcessor blockHashProcessor,
       final PluginTransactionSelector pluginTransactionSelector,
       final EthScheduler ethScheduler) {
     this.transactionProcessor = transactionProcessor;
@@ -127,6 +128,7 @@ public class BlockTransactionSelector {
             miningParameters,
             gasCalculator,
             gasLimitCalculator,
+            blockHashProcessor,
             processableBlockHeader,
             feeMarket,
             blobGasPrice,
@@ -324,7 +326,9 @@ public class BlockTransactionSelector {
   private TransactionProcessingResult processTransaction(
       final PendingTransaction pendingTransaction, final WorldUpdater worldStateUpdater) {
     final BlockHashLookup blockHashLookup =
-        new CachingBlockHashLookup(blockSelectionContext.processableBlockHeader(), blockchain);
+        blockSelectionContext
+            .blockHashProcessor()
+            .getBlockHashLookup(blockSelectionContext.processableBlockHeader(), blockchain);
     return transactionProcessor.processTransaction(
         worldStateUpdater,
         blockSelectionContext.processableBlockHeader(),

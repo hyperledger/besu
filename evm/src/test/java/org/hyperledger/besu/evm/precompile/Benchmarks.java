@@ -65,7 +65,7 @@ public class Benchmarks {
           .code(CodeV0.EMPTY_CODE)
           .completer(__ -> {})
           .address(Address.ZERO)
-          .blockHashLookup(n -> null)
+          .blockHashLookup((f, n) -> null)
           .blockValues(new SimpleBlockValues())
           .gasPrice(Wei.ZERO)
           .miningBeneficiary(Address.ZERO)

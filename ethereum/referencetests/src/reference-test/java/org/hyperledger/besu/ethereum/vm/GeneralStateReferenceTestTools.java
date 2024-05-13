@@ -103,6 +103,12 @@ public class GeneralStateReferenceTestTools {
     // Don't do time-consuming tests
     params.ignore("CALLBlake2f_MaxRounds.*");
     params.ignore("loopMul-.*");
+
+    // EOF tests are written against an older version of the spec
+    params.ignore("/stEOF/");
+
+    // None of the Prague tests have withdrawls and deposits handling
+    params.ignore("-Prague$");
   }
 
   private GeneralStateReferenceTestTools() {
@@ -154,7 +160,7 @@ public class GeneralStateReferenceTestTools {
             blockHeader,
             transaction,
             blockHeader.getCoinbase(),
-            new CachingBlockHashLookup(blockHeader, blockchain),
+            protocolSpec.getBlockHashProcessor().getBlockHashLookup(blockHeader, blockchain),
             false,
             TransactionValidationParams.processingBlock(),
             blobGasPrice);

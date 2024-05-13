@@ -98,7 +98,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   private static boolean accountExists(final Account account) {
     // The account exists if it has sent a transaction
     // or already has its code initialized.
-    return account.getNonce() != 0 || !account.getCode().isEmpty();
+    return account.getNonce() != 0 || !account.getCode().isEmpty() || !account.isStorageEmpty();
   }
 
   @Override

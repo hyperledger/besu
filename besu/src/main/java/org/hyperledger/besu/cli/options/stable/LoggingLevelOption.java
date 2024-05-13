@@ -23,6 +23,8 @@ import picocli.CommandLine.Spec;
 
 /** The Logging level CLI option. */
 public class LoggingLevelOption {
+  /** Default Constructor. */
+  LoggingLevelOption() {}
 
   /**
    * Create logging level option.

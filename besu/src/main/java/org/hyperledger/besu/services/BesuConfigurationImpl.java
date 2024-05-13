@@ -29,6 +29,9 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   private DataStorageConfiguration dataStorageConfiguration;
   private MiningParameters miningParameters;
 
+  /** Default Constructor. */
+  public BesuConfigurationImpl() {}
+
   /**
    * Post creation initialization
    *

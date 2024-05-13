@@ -208,6 +208,9 @@ public class JsonRpcHttpOptions {
       description = "Enable JSON pretty print format (default: ${DEFAULT-VALUE})")
   private final Boolean prettyJsonEnabled = DEFAULT_PRETTY_JSON_ENABLED;
 
+  /** Default constructor */
+  public JsonRpcHttpOptions() {}
+
   /**
    * Validates the Rpc Http options.
    *

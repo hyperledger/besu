@@ -71,6 +71,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @CommandLine.ArgGroup(validate = false)
   private final DataStorageOptions.Unstable unstableOptions = new Unstable();
 
+  /** Default Constructor. */
+  DataStorageOptions() {}
+
   /** The unstable options for data storage. */
   public static class Unstable {
     private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED =
@@ -113,6 +116,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         description =
             "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
+
+    /** Default Constructor. */
+    Unstable() {}
   }
 
   /**

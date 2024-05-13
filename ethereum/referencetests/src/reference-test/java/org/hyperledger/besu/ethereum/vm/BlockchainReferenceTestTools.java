@@ -91,6 +91,9 @@ public class BlockchainReferenceTestTools {
 
     // EOF tests don't have Prague stuff like deopsits right now
     params.ignore("/stEOF/");
+
+    // None of the Prague tests have withdrawls and deposits handling
+    params.ignore("\\[Prague\\]");
   }
 
   private BlockchainReferenceTestTools() {

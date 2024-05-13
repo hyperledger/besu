@@ -27,6 +27,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Clique block hashing. */
 public class CliqueBlockHashing {
+  /** Default constructor. */
+  private CliqueBlockHashing() {}
+
   /**
    * Constructs a hash of the block header, suitable for use when creating the proposer seal. The
    * extra data is modified to have a null proposer seal and empty list of committed seals.

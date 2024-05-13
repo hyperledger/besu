@@ -80,12 +80,22 @@ def executionSpecTests = tasks.register("executionSpecTests") {
 
   inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
   outputs.files generatedTestsPath
+  // generate blockchain_tests:
   generateTestFiles(
     fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
-    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
+    file("src/reference-test/templates/ExecutionSpecTest.java.template"),
     "fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
-    "ExecutionSpecTest"
+    "ExecutionSpecBlockchainTest"
+    )
+
+  // generate state_tests:
+  generateTestFiles(
+    fileTree(referenceTestsPath + "/fixtures/state_tests"),
+    file("src/reference-test/templates/ExecutionSpecStateTest.java.template"),
+    "fixtures",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+    "ExecutionSpecStateTest"
     )
 }
 
@@ -185,7 +195,7 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:0.2.5:fixtures@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:2.1.1:fixtures@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.tmio:tuweni-bytes'
@@ -213,7 +223,7 @@ tasks.register('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = '1c23e3c27ac53b794de0844d2d5e19cd2495b9d8'
+    def expectedHash = 'faf33b471465d3c6cdc3d04fbd690895f78d33f2'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
       exec {

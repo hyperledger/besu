@@ -9,6 +9,7 @@
 - Deprecated Goerli testnet has been removed.
 
 ### Upcoming Breaking Changes
+- Version 24.5.x will be the last series to support Java 17. Next release after versions 24.5.x will require Java 21 to build and run.
 - Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
 - PKI-backed QBFT will be removed in a future version of Besu. Other forms of QBFT will remain unchanged. 
 
@@ -48,6 +49,8 @@
 - Update Gradle to 7.6.4 [#7030](https://github.com/hyperledger/besu/pull/7030)
 - Remove deprecated Goerli testnet [#7049](https://github.com/hyperledger/besu/pull/7049)
 - Default bonsai to use full-flat db and code-storage-by-code-hash [#6984](https://github.com/hyperledger/besu/pull/6894)
+- New RPC methods miner_setExtraData and miner_getExtraData [#7078](https://github.com/hyperledger/besu/pull/7078)
+- Disconnect peers that have multiple discovery ports since they give us bad neighbours [#7089](https://github.com/hyperledger/besu/pull/7089)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)

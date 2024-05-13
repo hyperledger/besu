@@ -24,6 +24,9 @@ import com.google.common.base.Suppliers;
 /** Base class for BFT based Besu Controller Builders. */
 public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
 
+  /** Default constructor to be used by subclasses. */
+  protected BftBesuControllerBuilder() {}
+
   /**
    * Bft extra data codec supplier.
    *

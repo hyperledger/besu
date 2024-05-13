@@ -95,6 +95,7 @@ class CreateOperationTest {
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
     when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
@@ -186,6 +187,7 @@ class CreateOperationTest {
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
     when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
@@ -262,7 +264,7 @@ class CreateOperationTest {
             .code(CodeFactory.createCode(SIMPLE_CREATE, 0))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
-            .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
+            .blockHashLookup((f, n) -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
             .miningBeneficiary(Address.ZERO)

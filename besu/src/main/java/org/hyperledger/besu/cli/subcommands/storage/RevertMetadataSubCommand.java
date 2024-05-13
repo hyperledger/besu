@@ -57,6 +57,9 @@ public class RevertMetadataSubCommand implements Runnable {
   @CommandLine.Spec
   private CommandLine.Model.CommandSpec spec;
 
+  /** Default Constructor. */
+  public RevertMetadataSubCommand() {}
+
   @Override
   public void run() {
     spec.commandLine().usage(System.out);

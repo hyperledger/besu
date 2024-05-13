@@ -33,7 +33,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -152,11 +151,6 @@ public class BftMiningCoordinator implements MiningCoordinator, BlockAddedObserv
   @Override
   public Wei getMinPriorityFeePerGas() {
     return blockCreatorFactory.getMinPriorityFeePerGas();
-  }
-
-  @Override
-  public void setExtraData(final Bytes extraData) {
-    blockCreatorFactory.setExtraData(extraData);
   }
 
   @Override

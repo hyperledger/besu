@@ -25,6 +25,8 @@ import java.util.concurrent.TimeoutException;
 
 /** The mock scheduled executor */
 public class MockScheduledExecutor extends MockExecutorService implements ScheduledExecutorService {
+  /** Default constructor */
+  public MockScheduledExecutor() {}
 
   @Override
   public ScheduledFuture<?> schedule(

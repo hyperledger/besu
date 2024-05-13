@@ -313,7 +313,7 @@ public record OpcodeInfo(
     OpcodeInfo.unallocatedOpcode(0xea),
     OpcodeInfo.unallocatedOpcode(0xeb),
     OpcodeInfo.validOpcode("EOFCREATE", 0xec, 4, 1, 2),
-    OpcodeInfo.validOpcode("TXCREATE", 0xed, 5, 1, 1),
+    OpcodeInfo.unallocatedOpcode(0xed),
     OpcodeInfo.terminalOpcode("RETURNCONTRACT", 0xee, 2, 1, 2),
     OpcodeInfo.unallocatedOpcode(0xef),
     OpcodeInfo.invalidOpcode("CREATE", 0xf0),
