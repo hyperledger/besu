@@ -147,7 +147,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
    */
   private void storeHash(final MutableAccount account, final long number, final Hash hash) {
     LOG.trace(
-        "Writing to {} {}={}",
+        "Writing to {} {}=%{}",
         account.getAddress(),
         UInt256.valueOf(number % historySaveWindow).toDecimalString(),
         UInt256.fromBytes(hash).toHexString());
