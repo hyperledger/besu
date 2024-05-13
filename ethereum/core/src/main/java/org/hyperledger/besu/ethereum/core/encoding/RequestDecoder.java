@@ -95,4 +95,10 @@ public class RequestDecoder {
       return Optional.empty();
     }
   }
+
+  public static Request decodeOpaqueBytes(final Bytes input) {
+
+    RequestType type = getRequestType(input).orElseThrow();
+    return decodeRequest(input.slice(1), type);
+  }
 }

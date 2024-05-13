@@ -82,10 +82,6 @@ public class RequestsValidatorCoordinator {
     return validateRequests(block, maybeRequests.get(), receipts);
   }
 
-  public boolean validateRoot(final Block block, final Optional<List<Request>> requests) {
-    return isRequestsRootValid(block, requests);
-  }
-
   /**
    * Validates the requests contained within a block against their respective type-specific
    * validators.

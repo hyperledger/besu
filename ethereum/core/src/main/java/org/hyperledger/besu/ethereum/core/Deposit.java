@@ -19,15 +19,9 @@ import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.PublicKey;
 import org.hyperledger.besu.datatypes.RequestType;
-import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
@@ -55,19 +49,6 @@ public class Deposit extends Request implements org.hyperledger.besu.plugin.data
   @Override
   public RequestType getType() {
     return RequestType.DEPOSIT;
-  }
-
-  public static Deposit readFrom(final Bytes rlpBytes) {
-    return readFrom(RLP.input(rlpBytes));
-  }
-
-  public static Deposit readFrom(final RLPInput rlpInput) {
-    return DepositDecoder.decode(rlpInput);
-  }
-
-  @Override
-  public void writeTo(final RLPOutput out) {
-    DepositEncoder.encode(this, out);
   }
 
   @Override

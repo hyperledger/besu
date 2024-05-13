@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import com.google.common.collect.ImmutableMap;
@@ -47,8 +48,9 @@ public class RequestEncoder {
    */
   public static void encode(final Request request, final RLPOutput rlpOutput) {
     final RequestEncoder.Encoder encoder = getEncoder(request.getType());
-    rlpOutput.writeByte(request.getType().getSerializedType());
-    encoder.encode(request, rlpOutput);
+    Bytes requestBytes = RLP.encode(out -> encoder.encode(request, out));
+    rlpOutput.writeBytes(
+        Bytes.concatenate(Bytes.of(request.getType().getSerializedType()), requestBytes));
   }
 
   /**

@@ -36,7 +36,7 @@ public class DepositEncoder {
     rlpOutput.endList();
   }
 
-  public static Bytes encodeOpaqueBytes(final Deposit deposit) {
+  public static Bytes encodeOpaqueBytes(final Request deposit) {
     return RLP.encode(rlpOutput -> encode(deposit, rlpOutput));
   }
 }

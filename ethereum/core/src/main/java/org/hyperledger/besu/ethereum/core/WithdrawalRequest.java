@@ -19,15 +19,8 @@ import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.PublicKey;
 import org.hyperledger.besu.datatypes.RequestType;
-import org.hyperledger.besu.ethereum.core.encoding.WithdrawalRequestDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.WithdrawalRequestEncoder;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class WithdrawalRequest extends Request
     implements org.hyperledger.besu.plugin.data.WithdrawalRequest {
@@ -46,19 +39,6 @@ public class WithdrawalRequest extends Request
   @Override
   public RequestType getType() {
     return RequestType.WITHDRAWAL;
-  }
-
-  public static WithdrawalRequest readFrom(final Bytes rlpBytes) {
-    return readFrom(RLP.input(rlpBytes));
-  }
-
-  public static WithdrawalRequest readFrom(final RLPInput rlpInput) {
-    return WithdrawalRequestDecoder.decode(rlpInput);
-  }
-
-  @Override
-  public void writeTo(final RLPOutput out) {
-    WithdrawalRequestEncoder.encode(this, out);
   }
 
   @Override

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.rlp.RLP;
@@ -31,10 +32,10 @@ public class WithdrawalRequestEncoder {
    * @throws IllegalArgumentException if the provided request is not a WithdrawalRequest.
    */
   public static void encode(final Request request, final RLPOutput rlpOutput) {
-    if (!(request instanceof WithdrawalRequest withdrawalRequest)) {
+    if (!request.getType().equals(RequestType.WITHDRAWAL)) {
       throw new IllegalArgumentException("The provided request is not of type WithdrawalRequest.");
     }
-    encodeWithdrawalRequest(withdrawalRequest, rlpOutput);
+    encodeWithdrawalRequest((WithdrawalRequest) request, rlpOutput);
   }
 
   /**
@@ -52,7 +53,7 @@ public class WithdrawalRequestEncoder {
     rlpOutput.endList();
   }
 
-  public static Bytes encodeOpaqueBytes(final WithdrawalRequest withdrawalRequest) {
+  public static Bytes encodeOpaqueBytes(final Request withdrawalRequest) {
     return RLP.encode(rlpOutput -> encode(withdrawalRequest, rlpOutput));
   }
 }
