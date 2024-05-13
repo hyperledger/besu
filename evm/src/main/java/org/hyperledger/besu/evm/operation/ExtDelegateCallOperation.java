@@ -18,13 +18,19 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
 /** The Delegate call operation. */
 public class ExtDelegateCallOperation extends AbstractCallOperation {
+
+  public static final int STACK_TO = 0;
+  public static final int STACK_INPUT_OFFSET = 1;
+  public static final int STACK_INPUT_LENGTH = 2;
 
   /**
    * Instantiates a new Delegate call operation.
@@ -42,7 +48,7 @@ public class ExtDelegateCallOperation extends AbstractCallOperation {
 
   @Override
   protected Address to(final MessageFrame frame) {
-    return Words.toAddress(frame.getStackItem(0));
+    return Words.toAddress(frame.getStackItem(STACK_TO));
   }
 
   @Override
@@ -57,12 +63,12 @@ public class ExtDelegateCallOperation extends AbstractCallOperation {
 
   @Override
   protected long inputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(1));
+    return clampedToLong(frame.getStackItem(STACK_INPUT_OFFSET));
   }
 
   @Override
   protected long inputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(2));
+    return clampedToLong(frame.getStackItem(STACK_INPUT_LENGTH));
   }
 
   @Override
@@ -91,11 +97,6 @@ public class ExtDelegateCallOperation extends AbstractCallOperation {
   }
 
   @Override
-  protected boolean isStatic(final MessageFrame frame) {
-    return frame.isStatic();
-  }
-
-  @Override
   protected boolean isDelegate() {
     return true;
   }
@@ -118,5 +119,15 @@ public class ExtDelegateCallOperation extends AbstractCallOperation {
             recipient,
             to(frame),
             accountIsWarm);
+  }
+
+  @Override
+  public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    var to = frame.getStackItem(STACK_TO);
+    if (to.trimLeadingZeros().size() > Address.SIZE) {
+      return new OperationResult(cost(frame, false), ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
+    }
+
+    return super.execute(frame, evm);
   }
 }

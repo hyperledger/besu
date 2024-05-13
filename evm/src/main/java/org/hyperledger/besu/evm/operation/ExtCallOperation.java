@@ -28,6 +28,11 @@ import org.hyperledger.besu.evm.internal.Words;
 /** The Call operation. */
 public class ExtCallOperation extends AbstractCallOperation {
 
+  public static final int STACK_TO = 0;
+  public static final int STACK_VALUE = 1;
+  public static final int STACK_INPUT_OFFSET = 2;
+  public static final int STACK_INPUT_LENGTH = 3;
+
   /**
    * Instantiates a new Call operation.
    *
@@ -44,12 +49,12 @@ public class ExtCallOperation extends AbstractCallOperation {
 
   @Override
   protected Address to(final MessageFrame frame) {
-    return Words.toAddress(frame.getStackItem(0));
+    return Words.toAddress(frame.getStackItem(STACK_TO));
   }
 
   @Override
   protected Wei value(final MessageFrame frame) {
-    return Wei.wrap(frame.getStackItem(1));
+    return Wei.wrap(frame.getStackItem(STACK_VALUE));
   }
 
   @Override
@@ -59,12 +64,12 @@ public class ExtCallOperation extends AbstractCallOperation {
 
   @Override
   protected long inputDataOffset(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(2));
+    return clampedToLong(frame.getStackItem(STACK_INPUT_OFFSET));
   }
 
   @Override
   protected long inputDataLength(final MessageFrame frame) {
-    return clampedToLong(frame.getStackItem(3));
+    return clampedToLong(frame.getStackItem(STACK_INPUT_LENGTH));
   }
 
   @Override
@@ -119,8 +124,13 @@ public class ExtCallOperation extends AbstractCallOperation {
       final boolean accountIsWarm = frame.warmUpAddress(to) || gasCalculator().isPrecompile(to);
       return new OperationResult(
           cost(frame, accountIsWarm), ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
-    } else {
-      return super.execute(frame, evm);
     }
+
+    var to = frame.getStackItem(STACK_TO);
+    if (to.trimLeadingZeros().size() > Address.SIZE) {
+      return new OperationResult(cost(frame, false), ExceptionalHaltReason.ADDRESS_OUT_OF_RANGE);
+    }
+
+    return super.execute(frame, evm);
   }
 }
