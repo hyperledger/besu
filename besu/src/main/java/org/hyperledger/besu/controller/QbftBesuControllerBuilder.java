@@ -417,11 +417,14 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     return block ->
         LOG.info(
             String.format(
-                "%s %s #%,d / %d tx / %d pending /",
+                "%s %s #%,d / %d tx / %d pending / %,d (%01.1f%%) gas / (%s)",
                 block.getHeader().getCoinbase().equals(localAddress) ? "Produced" : "Imported",
                 block.getBody().getTransactions().size() == 0 ? "empty block" : "block",
                 block.getHeader().getNumber(),
                 block.getBody().getTransactions().size(),
-                transactionPool.count()));
+                transactionPool.count(),
+                block.getHeader().getGasUsed(),
+                (block.getHeader().getGasUsed() * 100.0) / block.getHeader().getGasLimit(),
+                block.getHash().toHexString()));
   }
 }
