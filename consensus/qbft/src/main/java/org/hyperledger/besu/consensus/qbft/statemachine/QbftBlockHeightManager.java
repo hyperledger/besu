@@ -153,28 +153,29 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
     if (blockHasTransactions) {
       if (isProposer) {
-        LOG.debug("Block has transactions and this node is a proposer so it will send a proposal");
+        LOG.info("Block has transactions and this node is a proposer so it will send a proposal: " +  roundIdentifier);
         qbftRound.sendProposalMessage(block);
       } else {
-        LOG.debug(
-            "Block has transactions but this node is not a proposer so it will not send a proposal");
+        LOG.info(
+            "Block has transactions but this node is not a proposer so it will not send a proposal: " +  roundIdentifier);
       }
-    } else {
-      final long emptyBlockPeriodSeconds = finalState.getBlockTimer().getEmptyBlockPeriodSeconds();
-      final long emptyBlockPeriodExpiryTime = parentHeader.getTimestamp() + emptyBlockPeriodSeconds;
-      final long nowInSeconds = finalState.getClock().millis() / 1000;
-      if (nowInSeconds >= emptyBlockPeriodExpiryTime) {
+    } else { // CHECK IF EmptyBlockExpired IS 0 AND SKIP // SHOULD WE FORCE EmptyBlockExpired > BlockExpired
+      final long currentTimeInMillis = finalState.getClock().millis();
+      boolean emptyBlockExpired = finalState.getBlockTimer().checkEmptyBlockExpired(parentHeader, currentTimeInMillis);
+      if (emptyBlockExpired) {
         if (isProposer) {
-          LOG.debug(
-              "Block has no transactions and this node is a proposer so it will send a proposal");
+          LOG.info(
+              "Block has no transactions and this node is a proposer so it will send a proposal: " +  roundIdentifier);
           qbftRound.sendProposalMessage(block);
         } else {
-          LOG.debug(
-              "Block has no transactions but this node is not a proposer so it will not send a proposal");
+          LOG.info(
+              "Block has no transactions but this node is not a proposer so it will not send a proposal: " +  roundIdentifier);
         }
       } else {
+        LOG.info(
+              "Block has no transactions but emptyBlockPeriodSeconds did not expired yet: " +  roundIdentifier);
+        finalState.getBlockTimer().resetTimerForEmptyBlock(roundIdentifier, currentTimeInMillis);
         finalState.getRoundTimer().cancelTimer();
-        finalState.getBlockTimer().startEmptyBlockTimer(roundIdentifier, parentHeader);
         currentRound = Optional.empty();
       }
     }

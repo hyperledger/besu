@@ -131,6 +131,11 @@ public abstract class MiningParameters {
     return this;
   }
 
+  public MiningParameters setEmptyBlockPeriodSeconds(final int emptyBlockPeriodSeconds) {
+    getMutableRuntimeValues().emptyBlockPeriodSeconds = OptionalInt.of(emptyBlockPeriodSeconds);
+    return this;
+  }
+
   @Value.Default
   public boolean isStratumMiningEnabled() {
     return false;
@@ -231,6 +236,8 @@ public abstract class MiningParameters {
 
     OptionalInt getBlockPeriodSeconds();
 
+    OptionalInt getEmptyBlockPeriodSeconds();
+
     Optional<Address> getCoinbase();
 
     OptionalLong getTargetGasLimit();
@@ -248,6 +255,7 @@ public abstract class MiningParameters {
     private volatile OptionalLong targetGasLimit;
     private volatile Optional<Iterable<Long>> nonceGenerator;
     private volatile OptionalInt blockPeriodSeconds;
+    private volatile OptionalInt emptyBlockPeriodSeconds;
 
     private MutableRuntimeValues(final MutableInitValues initValues) {
       miningEnabled = initValues.isMiningEnabled();
@@ -259,6 +267,7 @@ public abstract class MiningParameters {
       targetGasLimit = initValues.getTargetGasLimit();
       nonceGenerator = initValues.nonceGenerator();
       blockPeriodSeconds = initValues.getBlockPeriodSeconds();
+      emptyBlockPeriodSeconds = initValues.getEmptyBlockPeriodSeconds();
     }
 
     @Override
@@ -274,7 +283,8 @@ public abstract class MiningParameters {
           && Objects.equals(minPriorityFeePerGas, that.minPriorityFeePerGas)
           && Objects.equals(targetGasLimit, that.targetGasLimit)
           && Objects.equals(nonceGenerator, that.nonceGenerator)
-          && Objects.equals(blockPeriodSeconds, that.blockPeriodSeconds);
+          && Objects.equals(blockPeriodSeconds, that.blockPeriodSeconds)
+          && Objects.equals(emptyBlockPeriodSeconds, that.emptyBlockPeriodSeconds);
     }
 
     @Override
