@@ -16,11 +16,10 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.ethereum.core.Request;
 
-import java.util.Arrays;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 public class RequestUtil {
 
@@ -41,17 +40,15 @@ public class RequestUtil {
     return requests.stream().filter(requestType::isInstance).map(requestType::cast).toList();
   }
 
-  @SafeVarargs
-  public static Optional<List<Request>> combine(final Optional<List<Request>>... maybeRequests) {
-    return Arrays.stream(maybeRequests)
-        .filter(Optional::isPresent) // Filter out non-present Optionals
-        .flatMap(opt -> opt.get().stream()) // Convert to Stream<Request>
-        .collect(
-            Collectors.collectingAndThen(
-                Collectors.toList(),
-                list ->
-                    list.isEmpty()
-                        ? Optional.empty()
-                        : Optional.of(list))); // Collect into a List and wrap in Optional
+  public static Optional<List<Request>> combine(
+      final Optional<List<Request>> maybeDeposits,
+      final Optional<List<Request>> maybeWithdrawalRequest) {
+    if (maybeDeposits.isEmpty() && maybeWithdrawalRequest.isEmpty()) {
+      return Optional.empty();
+    }
+    List<Request> requests = new ArrayList<>();
+    maybeDeposits.ifPresent(requests::addAll);
+    maybeWithdrawalRequest.ifPresent(requests::addAll);
+    return Optional.of(requests);
   }
 }
