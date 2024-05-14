@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -188,7 +188,7 @@ class EVMExecutorTest {
             .number(1)
             .timestamp(100L)
             .gasLimit(15_000_000L)
-            .blockHashLookup(number -> Hash.ZERO)
+            .blockHashLookup((height, number) -> Hash.ZERO)
             .versionedHashes(Optional.empty())
             .precompileContractRegistry(new PrecompileContractRegistry())
             .requireDeposit(false)

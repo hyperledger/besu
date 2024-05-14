@@ -110,7 +110,12 @@ public class PrivateStorageMigration {
         final List<BlockHeader> ommers = block.getBody().getOmmers();
 
         privateMigrationBlockProcessor.processBlock(
-            blockchain, publicWorldState, blockHeader, transactionsToProcess, ommers);
+            blockchain,
+            publicWorldState,
+            protocolSpec.getBlockHashProcessor().getBlockHashLookup(blockHeader, blockchain),
+            blockHeader,
+            transactionsToProcess,
+            ommers);
       }
     }
 

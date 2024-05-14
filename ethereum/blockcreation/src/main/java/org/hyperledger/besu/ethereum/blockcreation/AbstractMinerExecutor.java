@@ -34,7 +34,6 @@ import java.util.concurrent.RejectedExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -97,10 +96,6 @@ public abstract class AbstractMinerExecutor<M extends BlockMiner<? extends Abstr
       final Subscribers<MinedBlockObserver> subscribers,
       final Subscribers<PoWObserver> ethHashObservers,
       final BlockHeader parentHeader);
-
-  public void setExtraData(final Bytes extraData) {
-    miningParameters.setExtraData(extraData.copy());
-  }
 
   public void setMinTransactionGasPrice(final Wei minTransactionGasPrice) {
     miningParameters.setMinTransactionGasPrice(minTransactionGasPrice);

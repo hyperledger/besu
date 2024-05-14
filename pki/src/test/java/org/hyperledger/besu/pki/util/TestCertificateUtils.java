@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.pki.util;
 
 import org.hyperledger.besu.pki.cms.CmsCreator;

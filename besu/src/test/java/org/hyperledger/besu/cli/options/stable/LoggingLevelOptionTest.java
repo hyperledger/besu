@@ -33,7 +33,7 @@ public class LoggingLevelOptionTest {
 
   @BeforeEach
   public void setUp() {
-    levelOption = new LoggingLevelOption();
+    levelOption = LoggingLevelOption.create();
   }
 
   @Test

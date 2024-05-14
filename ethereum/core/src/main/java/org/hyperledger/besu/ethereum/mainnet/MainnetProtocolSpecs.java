@@ -31,6 +31,9 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -169,6 +172,7 @@ public abstract class MainnetProtocolSpecs {
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .evmConfiguration(evmConfiguration)
+        .blockHashProcessor(new FrontierBlockHashProcessor())
         .name("Frontier");
   }
 
@@ -719,6 +723,7 @@ public abstract class MainnetProtocolSpecs {
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
+        .blockHashProcessor(new CancunBlockHashProcessor())
         .name("Cancun");
   }
 
@@ -764,7 +769,9 @@ public abstract class MainnetProtocolSpecs {
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
-        .exitsValidator(new PragueValidatorExitsValidator())
+        .withdrawalRequestsValidator(new PragueWithdrawalRequestValidator())
+        .blockHashProcessor(
+            new PragueBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
         .name("Prague");
   }
 

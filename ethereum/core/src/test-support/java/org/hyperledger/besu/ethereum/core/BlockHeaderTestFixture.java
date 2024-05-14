@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -51,7 +51,7 @@ public class BlockHeaderTestFixture {
   private long nonce = 0;
   private Optional<Hash> withdrawalsRoot = Optional.empty();
   private Optional<Hash> depositsRoot = Optional.empty();
-  private Optional<Hash> exitsRoot = Optional.empty();
+  private Optional<Hash> withdrawalsRequestRoot = Optional.empty();
   private BlockHeaderFunctions blockHeaderFunctions = new MainnetBlockHeaderFunctions();
   private Optional<BlobGas> excessBlobGas = Optional.empty();
   private Optional<Long> blobGasUsed = Optional.empty();
@@ -80,7 +80,7 @@ public class BlockHeaderTestFixture {
     excessBlobGas.ifPresent(builder::excessBlobGas);
     blobGasUsed.ifPresent(builder::blobGasUsed);
     depositsRoot.ifPresent(builder::depositsRoot);
-    exitsRoot.ifPresent(builder::exitsRoot);
+    withdrawalsRequestRoot.ifPresent(builder::withdrawalRequestsRoot);
     parentBeaconBlockRoot.ifPresent(builder::parentBeaconBlockRoot);
     builder.blockHeaderFunctions(blockHeaderFunctions);
 
@@ -182,8 +182,8 @@ public class BlockHeaderTestFixture {
     return this;
   }
 
-  public BlockHeaderTestFixture exitsRoot(final Hash exitsRoot) {
-    this.exitsRoot = Optional.ofNullable(exitsRoot);
+  public BlockHeaderTestFixture withdrawalRequestsRoot(final Hash withdrawalRequestsRoot) {
+    this.withdrawalsRequestRoot = Optional.ofNullable(withdrawalRequestsRoot);
     return this;
   }
 

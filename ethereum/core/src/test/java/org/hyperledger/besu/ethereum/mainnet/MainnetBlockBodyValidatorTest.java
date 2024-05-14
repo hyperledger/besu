@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -52,7 +52,7 @@ class MainnetBlockBodyValidatorTest {
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsValidator withdrawalsValidator;
   @Mock private DepositsValidator depositsValidator;
-  @Mock private ValidatorExitsValidator exitsValidator;
+  @Mock private WithdrawalRequestValidator exitsValidator;
 
   @BeforeEach
   public void setUp() {
@@ -66,8 +66,8 @@ class MainnetBlockBodyValidatorTest {
     lenient().when(depositsValidator.validateDeposits(any(), any())).thenReturn(true);
     lenient().when(depositsValidator.validateDepositsRoot(any())).thenReturn(true);
 
-    lenient().when(protocolSpec.getExitsValidator()).thenReturn(exitsValidator);
-    lenient().when(exitsValidator.validateExitsInBlock(any(), any())).thenReturn(true);
+    lenient().when(protocolSpec.getWithdrawalRequestValidator()).thenReturn(exitsValidator);
+    lenient().when(exitsValidator.validateWithdrawalRequestsInBlock(any(), any())).thenReturn(true);
   }
 
   @Test
@@ -155,10 +155,10 @@ class MainnetBlockBodyValidatorTest {
                 .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                .setExits(Optional.of(List.of())));
+                .setWithdrawalRequests(Optional.of(List.of())));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
-    when(exitsValidator.validateExitsInBlock(any(), any())).thenReturn(false);
+    when(exitsValidator.validateWithdrawalRequestsInBlock(any(), any())).thenReturn(false);
 
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)

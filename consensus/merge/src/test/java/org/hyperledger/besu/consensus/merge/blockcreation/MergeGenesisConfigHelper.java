@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.consensus.merge.blockcreation;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import org.hyperledger.besu.config.GenesisAllocation;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.consensus.merge.MergeProtocolSchedule;
@@ -29,14 +27,12 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.stream.Stream;
 
-import com.google.common.io.Resources;
-
 public interface MergeGenesisConfigHelper {
 
   default GenesisConfigFile getPosGenesisConfigFile() {
     try {
       final URI uri = MergeGenesisConfigHelper.class.getResource("/posAtGenesis.json").toURI();
-      return GenesisConfigFile.fromConfig(Resources.toString(uri.toURL(), UTF_8));
+      return GenesisConfigFile.fromSource(uri.toURL());
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException(e);
     }
@@ -45,7 +41,7 @@ public interface MergeGenesisConfigHelper {
   default GenesisConfigFile getPowGenesisConfigFile() {
     try {
       final URI uri = MergeGenesisConfigHelper.class.getResource("/powAtGenesis.json").toURI();
-      return GenesisConfigFile.fromConfig(Resources.toString(uri.toURL(), UTF_8));
+      return GenesisConfigFile.fromSource(uri.toURL());
     } catch (final URISyntaxException | IOException e) {
       throw new IllegalStateException(e);
     }

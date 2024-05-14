@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -118,7 +118,7 @@ public class SnapWorldDownloadStateTest {
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(),
               new NoOpMetricsSystem(),
-              DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+              DataStorageConfiguration.DEFAULT_BONSAI_PARTIAL_DB_CONFIG);
     } else {
       worldStateKeyValueStorage =
           new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());

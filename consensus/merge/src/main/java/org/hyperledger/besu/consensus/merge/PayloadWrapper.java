@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,6 +17,11 @@ package org.hyperledger.besu.consensus.merge;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
-/** Wrapper for payload plus extra info. */
+/**
+ * Wrapper for payload plus extra info.
+ *
+ * @param payloadIdentifier Payload identifier
+ * @param blockWithReceipts Block With Receipts
+ */
 public record PayloadWrapper(
     PayloadIdentifier payloadIdentifier, BlockWithReceipts blockWithReceipts) {}

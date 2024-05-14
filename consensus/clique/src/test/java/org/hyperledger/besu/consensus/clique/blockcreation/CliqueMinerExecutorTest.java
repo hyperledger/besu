@@ -200,7 +200,7 @@ public class CliqueMinerExecutorTest {
             null,
             ethScheduler);
 
-    executor.setExtraData(modifiedVanityData);
+    miningParameters.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
 
     final CliqueExtraData cliqueExtraData =

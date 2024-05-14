@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evmtool;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -256,7 +254,8 @@ public class StateTestSubCommand implements Runnable {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                blockNumber -> Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
+                (blockheight, blockNumber) ->
+                    Hash.hash(Bytes.wrap(Long.toString(blockNumber).getBytes(UTF_8))),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,

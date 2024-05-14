@@ -26,6 +26,8 @@ import java.util.stream.Collectors;
 
 /** The Permissioning configuration validator. */
 public class PermissioningConfigurationValidator {
+  /** Default Constructor. */
+  PermissioningConfigurationValidator() {}
 
   /**
    * Check if all nodes are in allowlist.
