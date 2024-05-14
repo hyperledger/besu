@@ -239,6 +239,12 @@ public class TransactionPool implements BlockAddedObserver {
         validateTransaction(transaction, isLocal, hasPriority);
 
     if (validationResult.result.isValid()) {
+      Address sender = transaction.getSender();
+      LOG.atTrace()
+          .setMessage("The sender for transaction {} is calculated : {}")
+          .addArgument(transaction::getHash)
+          .addArgument(sender)
+          .log();
       final TransactionAddedResult status =
           pendingTransactions.addTransaction(
               PendingTransaction.newPendingTransaction(transaction, isLocal, hasPriority),
