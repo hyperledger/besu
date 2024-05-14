@@ -166,6 +166,7 @@ public class PrivateStateRehydration {
           privateStateStorage,
           privateStateRootResolver,
           block,
+          protocolSpec.getBlockHashProcessor().getBlockHashLookup(blockHeader, blockchain),
           pmtHashToPrivateTransactionMap,
           block.getBody().getOmmers());
 

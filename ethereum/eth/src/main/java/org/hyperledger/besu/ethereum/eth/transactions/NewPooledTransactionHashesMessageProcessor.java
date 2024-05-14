@@ -29,7 +29,6 @@ import java.time.Instant;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ScheduledFuture;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -86,7 +85,7 @@ public class NewPooledTransactionHashesMessageProcessor {
 
       LOG.atTrace()
           .setMessage(
-              "Received pooled transaction hashes message from {}... incoming hashes {}, incoming list {}")
+              "Received pooled transaction hashes message from {} incoming hashes {}, incoming list {}")
           .addArgument(() -> peer == null ? null : peer.getLoggableId())
           .addArgument(incomingTransactionHashes::size)
           .addArgument(incomingTransactionHashes)
@@ -121,7 +120,7 @@ public class NewPooledTransactionHashesMessageProcessor {
       bufferedTask.addHashes(
           incomingTransactionHashes.stream()
               .filter(hash -> transactionPool.getTransactionByHash(hash).isEmpty())
-              .collect(Collectors.toList()));
+              .toList());
     } catch (final RLPException ex) {
       if (peer != null) {
         LOG.debug(

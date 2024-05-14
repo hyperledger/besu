@@ -19,12 +19,14 @@ import static java.util.stream.Collectors.toList;
 
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
+import org.hyperledger.besu.ethereum.p2p.discovery.Endpoint;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable.AddResult.AddOutcome;
 import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.peers.PeerId;
 
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -33,6 +35,7 @@ import java.util.concurrent.ForkJoinPool;
 import java.util.stream.Stream;
 
 import com.google.common.hash.BloomFilter;
+import org.apache.commons.collections4.queue.CircularFifoQueue;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
@@ -51,6 +54,10 @@ public class PeerTable {
   private final Map<Bytes, Integer> distanceCache;
   private BloomFilter<Bytes> idBloom;
   private int evictionCnt = 0;
+  private final LinkedHashMapWithMaximumSize<String, Integer> ipAddressCheckMap =
+      new LinkedHashMapWithMaximumSize<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
+  private final CircularFifoQueue<String> invalidIPs =
+      new CircularFifoQueue<>(DEFAULT_BUCKET_SIZE * N_BUCKETS);
 
   /**
    * Builds a new peer table, where distance is calculated using the provided nodeId as a baseline.
@@ -97,6 +104,7 @@ public class PeerTable {
    *   <li>the operation failed because the k-bucket was full, in which case a candidate is proposed
    *       for eviction.
    *   <li>the operation failed because the peer already existed.
+   *   <li>the operation failed because the IP address is invalid.
    * </ul>
    *
    * @param peer The peer to add.
@@ -104,6 +112,9 @@ public class PeerTable {
    * @see AddOutcome
    */
   public AddResult tryAdd(final DiscoveryPeer peer) {
+    if (ipAddressIsInvalid(peer.getEndpoint())) {
+      return AddResult.invalid();
+    }
     final Bytes id = peer.getId();
     final int distance = distanceFrom(peer);
 
@@ -129,6 +140,7 @@ public class PeerTable {
     if (!res.isPresent()) {
       idBloom.put(id);
       distanceCache.put(id, distance);
+      ipAddressCheckMap.put(getKey(peer.getEndpoint()), peer.getEndpoint().getUdpPort());
       return AddResult.added();
     }
 
@@ -200,6 +212,34 @@ public class PeerTable {
     return Arrays.stream(table).flatMap(e -> e.getPeers().stream());
   }
 
+  boolean ipAddressIsInvalid(final Endpoint endpoint) {
+    final String key = getKey(endpoint);
+    if (invalidIPs.contains(key)) {
+      return true;
+    }
+    if (ipAddressCheckMap.containsKey(key) && ipAddressCheckMap.get(key) != endpoint.getUdpPort()) {
+      // This peer has multiple discovery services on the same IP address + TCP port.
+      invalidIPs.add(key);
+      for (final Bucket bucket : table) {
+        bucket.getPeers().stream()
+            .filter(p -> p.getEndpoint().getHost().equals(endpoint.getHost()))
+            .forEach(p -> evictAndStore(p, bucket, key));
+      }
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  private void evictAndStore(final DiscoveryPeer peer, final Bucket bucket, final String key) {
+    bucket.evict(peer);
+    invalidIPs.add(key);
+  }
+
+  private static String getKey(final Endpoint endpoint) {
+    return endpoint.getHost() + endpoint.getFunctionalTcpPort();
+  }
+
   /**
    * Calculates the XOR distance between the keccak-256 hashes of our node ID and the provided
    * {@link DiscoveryPeer}.
@@ -216,6 +256,7 @@ public class PeerTable {
 
   /** A class that encapsulates the result of a peer addition to the table. */
   public static class AddResult {
+
     /** The outcome of the operation. */
     public enum AddOutcome {
 
@@ -229,7 +270,10 @@ public class PeerTable {
       ALREADY_EXISTED,
 
       /** The caller requested to add ourselves. */
-      SELF
+      SELF,
+
+      /** The peer was not added because the IP address is invalid. */
+      INVALID
     }
 
     private final AddOutcome outcome;
@@ -256,12 +300,30 @@ public class PeerTable {
       return new AddResult(AddOutcome.SELF, null);
     }
 
+    public static AddResult invalid() {
+      return new AddResult((AddOutcome.INVALID), null);
+    }
+
     public AddOutcome getOutcome() {
       return outcome;
     }
 
     public Peer getEvictionCandidate() {
       return evictionCandidate;
+    }
+  }
+
+  private static class LinkedHashMapWithMaximumSize<K, V> extends LinkedHashMap<K, V> {
+    private final int maxSize;
+
+    public LinkedHashMapWithMaximumSize(final int maxSize) {
+      super(maxSize, 0.75f, false);
+      this.maxSize = maxSize;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(final Map.Entry<K, V> eldest) {
+      return size() > maxSize;
     }
   }
 
