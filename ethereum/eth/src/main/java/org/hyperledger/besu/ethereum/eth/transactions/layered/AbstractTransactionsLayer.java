@@ -49,6 +49,7 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -180,7 +181,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         tryFillGap(addStatus, pendingTransaction, getRemainingPromotionsPerType());
       }
 
-      notifyTransactionAdded(pendingTransaction);
+      CompletableFuture.runAsync(() -> notifyTransactionAdded(pendingTransaction));
     } else {
       final var rejectReason = addStatus.maybeInvalidReason().orElseThrow();
       metrics.incrementRejected(pendingTransaction, rejectReason, name());
