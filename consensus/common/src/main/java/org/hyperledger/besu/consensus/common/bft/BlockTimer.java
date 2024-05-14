@@ -99,7 +99,12 @@ public class BlockTimer {
 
   public synchronized boolean checkEmptyBlockExpired(final BlockHeader chainHeadHeader, final long currentTimeInMillis) {
     final long emptyBlockPeriodExpiryTime = (chainHeadHeader.getTimestamp() + emptyBlockPeriodSeconds) * 1000;
-    if (currentTimeInMillis >= emptyBlockPeriodExpiryTime) {
+
+    final long newExpiry = currentTimeInMillis + blockPeriodSeconds * 1000;
+    final long newEmptyExpiry = currentTimeInMillis + (emptyBlockPeriodSeconds - blockPeriodSeconds) * 1000;
+    final long nextBlockPeriodExpiryTime = Math.min(newExpiry, newEmptyExpiry);
+
+    if (nextBlockPeriodExpiryTime > emptyBlockPeriodExpiryTime) {
       LOG.info("Empty Block expired");
       return true;
     }
@@ -109,7 +114,8 @@ public class BlockTimer {
 
   public void resetTimerForEmptyBlock(final ConsensusRoundIdentifier roundIdentifier, final long currentTimeInMillis){
     final long newExpiry = currentTimeInMillis + blockPeriodSeconds * 1000;
-    startTimer(roundIdentifier, newExpiry);
+    final long newEmptyExpiry = currentTimeInMillis + (emptyBlockPeriodSeconds - blockPeriodSeconds) * 1000;
+    startTimer(roundIdentifier, Math.max(newExpiry, newEmptyExpiry));
   }
 
   private synchronized void startTimer(

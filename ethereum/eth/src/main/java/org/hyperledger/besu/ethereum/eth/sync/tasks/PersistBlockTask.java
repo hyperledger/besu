@@ -231,9 +231,6 @@ public class PersistBlockTask extends AbstractEthTask<Block> {
       case ALREADY_IMPORTED:
         LOG.info("Block {} is already imported", block.toLogString());
         break;
-      case NOT_IMPORTED:
-        LOG.info("Block {} was not imported", block.toLogString());
-        break;
       default:
         break;
     }
