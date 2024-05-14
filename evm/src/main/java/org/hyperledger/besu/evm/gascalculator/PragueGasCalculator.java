@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
+import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -37,7 +37,7 @@ public class PragueGasCalculator extends CancunGasCalculator {
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
-    this(KZG_POINT_EVAL.toArrayUnsafe()[19]);
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
   }
 
   /**

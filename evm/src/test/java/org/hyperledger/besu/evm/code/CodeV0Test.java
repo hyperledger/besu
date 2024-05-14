@@ -97,7 +97,7 @@ class CodeV0Test {
             .blockValues(mock(BlockValues.class))
             .completer(f -> {})
             .miningBeneficiary(Address.ZERO)
-            .blockHashLookup(l -> Hash.EMPTY)
+            .blockHashLookup((f, n) -> Hash.EMPTY)
             .build();
 
     frame.setPC(CURRENT_PC);

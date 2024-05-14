@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
@@ -721,12 +722,14 @@ public class TransactionSimulatorTest {
 
   private void mockProtocolSpecForProcessWithWorldUpdater() {
     final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
+    final BlockHashProcessor blockHashProcessor = mock(BlockHashProcessor.class);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0));
+    when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
   }
 
   private void mockProcessorStatusForTransaction(

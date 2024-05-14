@@ -184,4 +184,62 @@ public class PeerTableTest {
     final EvictResult evictResult = table.tryEvict(peer);
     assertThat(evictResult.getOutcome()).isEqualTo(EvictOutcome.SELF);
   }
+
+  @Test
+  public void ipAddressIsInvalidReturnsTrue() {
+    final Endpoint endpoint1 = new Endpoint("1.1.1.1", 2, Optional.of(Integer.valueOf(1)));
+    final Endpoint endpoint2 = new Endpoint("1.1.1.1", 3, Optional.of(Integer.valueOf(1)));
+    final DiscoveryPeer peer1 = DiscoveryPeer.fromIdAndEndpoint(Peer.randomId(), endpoint1);
+    final DiscoveryPeer peer2 = DiscoveryPeer.fromIdAndEndpoint(Peer.randomId(), endpoint2);
+    final PeerTable table = new PeerTable(Bytes.random(64));
+
+    final PeerTable.AddResult addResult1 = table.tryAdd(peer1);
+    assertThat(addResult1.getOutcome()).isEqualTo(PeerTable.AddResult.added().getOutcome());
+
+    assertThat(table.ipAddressIsInvalid(peer2.getEndpoint())).isEqualTo(true);
+  }
+
+  @Test
+  public void ipAddressIsInvalidReturnsFalse() {
+    final Endpoint endpoint1 = new Endpoint("1.1.1.1", 2, Optional.of(Integer.valueOf(1)));
+    final Endpoint endpoint2 = new Endpoint("1.1.1.1", 3, Optional.of(Integer.valueOf(2)));
+    final DiscoveryPeer peer1 = DiscoveryPeer.fromIdAndEndpoint(Peer.randomId(), endpoint1);
+    final DiscoveryPeer peer2 = DiscoveryPeer.fromIdAndEndpoint(Peer.randomId(), endpoint2);
+    final PeerTable table = new PeerTable(Bytes.random(64));
+
+    final PeerTable.AddResult addResult1 = table.tryAdd(peer1);
+    assertThat(addResult1.getOutcome()).isEqualTo(PeerTable.AddResult.added().getOutcome());
+
+    assertThat(table.ipAddressIsInvalid(peer2.getEndpoint())).isEqualTo(false);
+  }
+
+  @Test
+  public void invalidIPAddressNotAdded() {
+    final Endpoint endpoint1 = new Endpoint("1.1.1.1", 2, Optional.of(Integer.valueOf(1)));
+    final Endpoint endpoint2 = new Endpoint("1.1.1.1", 3, Optional.of(Integer.valueOf(1)));
+    final DiscoveryPeer peer1 = DiscoveryPeer.fromIdAndEndpoint(Peer.randomId(), endpoint1);
+    final DiscoveryPeer peer2 = DiscoveryPeer.fromIdAndEndpoint(Peer.randomId(), endpoint2);
+    final PeerTable table = new PeerTable(Bytes.random(64));
+
+    final PeerTable.AddResult addResult1 = table.tryAdd(peer1);
+    assertThat(addResult1.getOutcome()).isEqualTo(PeerTable.AddResult.added().getOutcome());
+
+    final PeerTable.AddResult addResult2 = table.tryAdd(peer2);
+    assertThat(addResult2.getOutcome()).isEqualTo(PeerTable.AddResult.invalid().getOutcome());
+  }
+
+  @Test
+  public void validIPAddressAdded() {
+    final Endpoint endpoint1 = new Endpoint("1.1.1.1", 2, Optional.of(Integer.valueOf(1)));
+    final Endpoint endpoint2 = new Endpoint("1.1.1.1", 3, Optional.of(Integer.valueOf(2)));
+    final DiscoveryPeer peer1 = DiscoveryPeer.fromIdAndEndpoint(Peer.randomId(), endpoint1);
+    final DiscoveryPeer peer2 = DiscoveryPeer.fromIdAndEndpoint(Peer.randomId(), endpoint2);
+    final PeerTable table = new PeerTable(Bytes.random(64));
+
+    final PeerTable.AddResult addResult1 = table.tryAdd(peer1);
+    assertThat(addResult1.getOutcome()).isEqualTo(PeerTable.AddResult.added().getOutcome());
+
+    final PeerTable.AddResult addResult2 = table.tryAdd(peer2);
+    assertThat(addResult2.getOutcome()).isEqualTo(PeerTable.AddResult.added().getOutcome());
+  }
 }

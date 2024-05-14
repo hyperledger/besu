@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.privacy;
 
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.Deque;
 import java.util.Map;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -82,7 +82,7 @@ public class PrivateTransactionProcessor {
       final PrivateTransaction transaction,
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
-      final Function<Long, Hash> blockHashLookup,
+      final BlockHashLookup blockHashLookup,
       final Bytes privacyGroupId) {
     try {
       LOG.trace("Starting private execution of {}", transaction);
