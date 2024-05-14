@@ -5,7 +5,6 @@
 ### Breaking Changes
 
 ### Additions and Improvements
-- Update Gradle to 7.6.4 [#7030](https://github.com/hyperledger/besu/pull/7030)
 - Remove deprecated Goerli testnet [#7049](https://github.com/hyperledger/besu/pull/7049)
 - Default bonsai to use full-flat db and code-storage-by-code-hash [#6984](https://github.com/hyperledger/besu/pull/6894)
 - New RPC methods miner_setExtraData and miner_getExtraData [#7078](https://github.com/hyperledger/besu/pull/7078)
