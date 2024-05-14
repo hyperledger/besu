@@ -1,6 +1,20 @@
 # Changelog
 
-## 24.5.0
+## Next Release
+
+### Breaking Changes
+
+### Additions and Improvements
+- Update Gradle to 7.6.4 [#7030](https://github.com/hyperledger/besu/pull/7030)
+- Remove deprecated Goerli testnet [#7049](https://github.com/hyperledger/besu/pull/7049)
+- Default bonsai to use full-flat db and code-storage-by-code-hash [#6984](https://github.com/hyperledger/besu/pull/6894)
+- New RPC methods miner_setExtraData and miner_getExtraData [#7078](https://github.com/hyperledger/besu/pull/7078)
+- Disconnect peers that have multiple discovery ports since they give us bad neighbours [#7089](https://github.com/hyperledger/besu/pull/7089)
+
+### Bug fixes
+
+
+## 24.5.1
 
 ### Breaking Changes
 - RocksDB database metadata format has changed to be more expressive, the migration of an existing metadata file to the new format is automatic at startup. Before performing a downgrade to a previous version it is mandatory to revert to the original format using the subcommand `besu --data-path=/path/to/besu/datadir storage revert-metadata v2-to-v1`.
@@ -48,11 +62,6 @@
 - Add `rlp decode` subcommand to decode IBFT/QBFT extraData to validator list [#6895](https://github.com/hyperledger/besu/pull/6895)
 - Allow users to specify which plugins are registered [#6700](https://github.com/hyperledger/besu/pull/6700)
 - Layered txpool tuning for blob transactions [#6940](https://github.com/hyperledger/besu/pull/6940)
-- Update Gradle to 7.6.4 [#7030](https://github.com/hyperledger/besu/pull/7030)
-- Remove deprecated Goerli testnet [#7049](https://github.com/hyperledger/besu/pull/7049)
-- Default bonsai to use full-flat db and code-storage-by-code-hash [#6984](https://github.com/hyperledger/besu/pull/6894)
-- New RPC methods miner_setExtraData and miner_getExtraData [#7078](https://github.com/hyperledger/besu/pull/7078)
-- Disconnect peers that have multiple discovery ports since they give us bad neighbours [#7089](https://github.com/hyperledger/besu/pull/7089)
 
 ### Bug fixes
 - Fix txpool dump/restore race condition [#6665](https://github.com/hyperledger/besu/pull/6665)
@@ -67,6 +76,9 @@
 - Fix chain halt due to peers only partially responding with headers. And worldstate halts caused by a halt in the chain sync [#7027](https://github.com/hyperledger/besu/pull/7027)
 
 ### Download Links
+https://github.com/hyperledger/besu/releases/tag/24.5.1
+https://github.com/hyperledger/besu/releases/download/24.5.1/besu-24.5.1.tar.gz / sha256 77e39b21dbd4186136193fc6e832ddc1225eb5078a5ac980fb754b33ad35d554
+https://github.com/hyperledger/besu/releases/download/24.5.1/besu-24.5.1.zip / sha256 13d75b6b22e1303f39fd3eaddf736b24ca150b2bafa7b98fce7c7782e54b213f
 
 ## 24.3.0
 
