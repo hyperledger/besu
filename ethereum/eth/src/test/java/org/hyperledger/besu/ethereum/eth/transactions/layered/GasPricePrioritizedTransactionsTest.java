@@ -48,6 +48,7 @@ public class GasPricePrioritizedTransactionsTest extends AbstractPrioritizedTran
 
     return new GasPricePrioritizedTransactions(
         poolConfig,
+        ethScheduler,
         nextLayer,
         txPoolMetrics,
         transactionReplacementTester,
