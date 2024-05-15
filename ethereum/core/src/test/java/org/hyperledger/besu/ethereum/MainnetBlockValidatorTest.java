@@ -96,14 +96,15 @@ public class MainnetBlockValidatorTest {
     when(worldStateArchive.getMutable()).thenReturn(worldState);
     when(blockHeaderValidator.validateHeader(any(), any(), any())).thenReturn(true);
     when(blockHeaderValidator.validateHeader(any(), any(), any(), any())).thenReturn(true);
-    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any())).thenReturn(true);
-    when(blockBodyValidator.validateBodyLight(any(), any(), any(), any())).thenReturn(true);
+    when(blockBodyValidator.validateBody(any(), any(), any(), any(), any(), any()))
+        .thenReturn(true);
+    when(blockBodyValidator.validateBodyLight(any(), any(), any(), any(), any())).thenReturn(true);
     when(blockProcessor.processBlock(any(), any(), any())).thenReturn(successfulProcessingResult);
     when(blockProcessor.processBlock(any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
     when(blockProcessor.processBlock(any(), any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
-    when(blockProcessor.processBlock(any(), any(), any(), any(), any(), any(), any(), any()))
+    when(blockProcessor.processBlock(any(), any(), any(), any(), any(), any(), any()))
         .thenReturn(successfulProcessingResult);
 
     assertNoBadBlocks();
@@ -162,7 +163,8 @@ public class MainnetBlockValidatorTest {
 
   @Test
   public void validateAndProcessBlock_whenBlockBodyInvalid() {
-    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any())).thenReturn(false);
+    when(blockBodyValidator.validateBody(any(), eq(block), any(), any(), any(), any()))
+        .thenReturn(false);
 
     BlockProcessingResult result =
         mainnetBlockValidator.validateAndProcessBlock(
@@ -347,6 +349,7 @@ public class MainnetBlockValidatorTest {
             protocolContext,
             block,
             Collections.emptyList(),
+            block.getBody().getRequests(),
             HeaderValidationMode.FULL,
             HeaderValidationMode.FULL);
 
@@ -363,7 +366,12 @@ public class MainnetBlockValidatorTest {
 
     final boolean isValid =
         mainnetBlockValidator.fastBlockValidation(
-            protocolContext, block, Collections.emptyList(), validationMode, validationMode);
+            protocolContext,
+            block,
+            Collections.emptyList(),
+            block.getBody().getRequests(),
+            validationMode,
+            validationMode);
 
     assertThat(isValid).isFalse();
     assertBadBlockIsTracked(block);
@@ -373,12 +381,17 @@ public class MainnetBlockValidatorTest {
   public void fastBlockValidation_onFailedBodyValidation() {
     final HeaderValidationMode validationMode = HeaderValidationMode.FULL;
     when(blockBodyValidator.validateBodyLight(
-            eq(protocolContext), eq(block), any(), eq(validationMode)))
+            eq(protocolContext), eq(block), any(), any(), eq(validationMode)))
         .thenReturn(false);
 
     final boolean isValid =
         mainnetBlockValidator.fastBlockValidation(
-            protocolContext, block, Collections.emptyList(), validationMode, validationMode);
+            protocolContext,
+            block,
+            Collections.emptyList(),
+            block.getBody().getRequests(),
+            validationMode,
+            validationMode);
 
     assertThat(isValid).isFalse();
     assertBadBlockIsTracked(block);

@@ -76,7 +76,6 @@ public class BftBlockCreator extends AbstractBlockCreator {
         protocolContext,
         protocolSchedule,
         parentHeader,
-        Optional.empty(),
         ethScheduler);
     this.bftExtraDataCodec = bftExtraDataCodec;
   }

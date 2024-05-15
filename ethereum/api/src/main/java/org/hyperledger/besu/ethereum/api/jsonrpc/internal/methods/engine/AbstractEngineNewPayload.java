@@ -20,8 +20,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.DepositsValidatorProvider.getDepositsValidator;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalRequestValidatorProvider.getWithdrawalRequestValidator;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getDepositRequestValidator;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getWithdrawalRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 
@@ -49,11 +49,10 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
@@ -63,6 +62,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -161,16 +161,17 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawals"));
     }
 
-    final Optional<List<Deposit>> maybeDeposits =
+    final Optional<List<Request>> maybeDeposits =
         Optional.ofNullable(blockParam.getDeposits())
             .map(ds -> ds.stream().map(DepositParameter::toDeposit).collect(toList()));
-    if (!getDepositsValidator(
+    if (!getDepositRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-        .validateDepositParameter(maybeDeposits)) {
-      return new JsonRpcErrorResponse(reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposits"));
+        .validateParameter(maybeDeposits)) {
+      return new JsonRpcErrorResponse(
+          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposit request"));
     }
 
-    final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests =
+    final Optional<List<Request>> maybeWithdrawalRequests =
         Optional.ofNullable(blockParam.getWithdrawalRequests())
             .map(
                 withdrawalRequest ->
@@ -179,10 +180,13 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                         .collect(toList()));
     if (!getWithdrawalRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-        .validateWithdrawalRequestParameter(maybeWithdrawalRequests)) {
+        .validateParameter(maybeWithdrawalRequests)) {
       return new JsonRpcErrorResponse(
-          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal requests"));
+          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal request"));
     }
+
+    Optional<List<Request>> maybeRequests =
+        RequestUtil.combine(maybeDeposits, maybeWithdrawalRequests);
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");
@@ -251,8 +255,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 ? null
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
-            maybeDeposits.map(BodyValidation::depositsRoot).orElse(null),
-            maybeWithdrawalRequests.map(BodyValidation::withdrawalRequestsRoot).orElse(null),
+            maybeRequests.map(BodyValidation::requestsRoot).orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -315,12 +318,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     final var block =
         new Block(
             newBlockHeader,
-            new BlockBody(
-                transactions,
-                Collections.emptyList(),
-                maybeWithdrawals,
-                maybeDeposits,
-                maybeWithdrawalRequests));
+            new BlockBody(transactions, Collections.emptyList(), maybeWithdrawals, maybeRequests));
 
     if (maybeParentHeader.isEmpty()) {
       LOG.atDebug()
@@ -539,9 +537,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       message.append(" / %d ws");
       messageArgs.add(block.getBody().getWithdrawals().get().size());
     }
-    if (block.getBody().getDeposits().isPresent()) {
-      message.append(" / %d ds");
-      messageArgs.add(block.getBody().getDeposits().get().size());
+    if (block.getBody().getRequests().isPresent()) {
+      message.append(" / %d rs");
+      messageArgs.add(block.getBody().getRequests().get().size());
     }
     message.append(" / %d blobs / base fee %s / %,d (%01.1f%%) gas / (%s) in %01.3fs. Peers: %d");
     messageArgs.addAll(
