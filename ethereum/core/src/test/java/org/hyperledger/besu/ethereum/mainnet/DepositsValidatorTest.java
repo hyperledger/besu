@@ -20,15 +20,18 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -45,6 +48,8 @@ public class DepositsValidatorTest {
   private static Log LOG_1;
   private static Log LOG_2;
   private static Address DEPOSIT_CONTRACT_ADDRESS;
+  private static RequestsValidatorCoordinator requestsValidatorCoordinator;
+  private static DepositsValidator depositsValidator;
 
   @BeforeAll
   public static void setup() {
@@ -88,59 +93,34 @@ public class DepositsValidatorTest {
                 LogTopic.fromHexString(
                     "0x649bbc62d0e31342afea4e5cd82d4049e7e1ee912fc0889aa790803be39038c5")));
     DEPOSIT_CONTRACT_ADDRESS = Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
-  }
-
-  @Test
-  public void validateProhibitedDeposits() {
-    final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setDeposits(Optional.empty());
-    final Block block = blockDataGenerator.block(blockOptions);
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDeposits(block, null)).isTrue();
-  }
-
-  @Test
-  public void validateProhibitedDepositsRoot() {
-    final Block block = blockDataGenerator.block();
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositsRoot(block)).isTrue();
-  }
-
-  @Test
-  public void invalidateProhibitedDeposits() {
-    final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1)));
-    final Block block = blockDataGenerator.block(blockOptions);
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDeposits(block, null)).isFalse();
-  }
-
-  @Test
-  public void invalidateProhibitedDepositsRoot() {
-    final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setDepositsRoot(Hash.EMPTY_LIST_HASH);
-    final Block block = blockDataGenerator.block(blockOptions);
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositsRoot(block)).isFalse();
+    requestsValidatorCoordinator = createAllowDepositValidator();
   }
 
   @Test
   public void validateAllowedDeposits() {
+    final List<Request> request = List.of(DEPOSIT_1, DEPOSIT_2);
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+            .setRequests(Optional.of(request))
+            .setRequestsRoot(BodyValidation.requestsRoot(request));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
-    assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDeposits(block, List.of(receipt)))
+    assertThat(requestsValidatorCoordinator.validate(block, Optional.of(request), List.of(receipt)))
         .isTrue();
   }
 
   @Test
   public void validateAllowedDepositsSeparateReceipts() {
+
+    final List<Request> requests = List.of(DEPOSIT_1, DEPOSIT_2);
+
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+            .setRequests(Optional.of(requests))
+            .setRequestsRoot(BodyValidation.requestsRoot(requests));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
@@ -149,36 +129,22 @@ public class DepositsValidatorTest {
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
     assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDeposits(block, List.of(receipt1, receipt2)))
-        .isTrue();
-  }
-
-  @Test
-  public void validateAllowedDepositsRoot() {
-    final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create()
-            .setDeposits(Optional.of(Collections.emptyList()))
-            .setDepositsRoot(Hash.EMPTY_TRIE_HASH);
-    final Block block = blockDataGenerator.block(blockOptions);
-    assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDepositsRoot(block))
+            requestsValidatorCoordinator.validate(
+                block, Optional.of(requests), List.of(receipt1, receipt2)))
         .isTrue();
   }
 
   @Test
   public void invalidateAllowedDeposits() {
     final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1)));
+        BlockDataGenerator.BlockOptions.create().setRequests(Optional.of(List.of(DEPOSIT_1)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
     assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDeposits(block, List.of(receipt1)))
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 
@@ -186,30 +152,28 @@ public class DepositsValidatorTest {
   public void invalidateAllowedDepositsMissingLogInReceipt() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+            .setRequests(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2), Optional.empty());
 
     assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDeposits(block, List.of(receipt1)))
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 
   @Test
   public void invalidateAllowedDepositsExtraLogInReceipt() {
     final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setDeposits(Optional.of(List.of(DEPOSIT_1)));
+        BlockDataGenerator.BlockOptions.create().setRequests(Optional.of(List.of(DEPOSIT_1)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
     assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDeposits(block, List.of(receipt1)))
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 
@@ -217,15 +181,14 @@ public class DepositsValidatorTest {
   public void invalidateAllowedDepositsWrongOrder() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+            .setRequests(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_2, LOG_1), Optional.empty());
 
     assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDeposits(block, List.of(receipt1)))
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 
@@ -234,66 +197,37 @@ public class DepositsValidatorTest {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setDeposits(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+            .setRequests(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
         new TransactionReceipt(null, 0L, List.of(LOG_1, LOG_2), Optional.empty());
 
     assertThat(
-            new DepositsValidator.AllowedDeposits(Address.ZERO)
-                .validateDeposits(block, List.of(receipt1)))
-        .isFalse();
-  }
-
-  @Test
-  public void invalidateAllowedDepositsRoot() {
-    final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create()
-            .setDeposits(Optional.of(Collections.emptyList()))
-            .setDepositsRoot(Hash.ZERO); // this is invalid it should be empty trie hash
-    final Block block = blockDataGenerator.block(blockOptions);
-    assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDepositsRoot(block))
-        .isFalse();
-  }
-
-  @Test
-  public void validateProhibitedDepositParams() {
-    final Optional<List<Deposit>> deposits = Optional.empty();
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositParameter(deposits))
-        .isTrue();
-  }
-
-  @Test
-  public void invalidateProhibitedDepositParams() {
-    final Optional<List<Deposit>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
-    assertThat(new DepositsValidator.ProhibitedDeposits().validateDepositParameter(deposits))
+            requestsValidatorCoordinator.validate(block, Optional.of(List.of()), List.of(receipt1)))
         .isFalse();
   }
 
   @Test
   public void validateAllowedDepositParams() {
-    final Optional<List<Deposit>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
-    assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDepositParameter(deposits))
-        .isTrue();
+    final Optional<List<Request>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
+    assertThat(depositsValidator.validateParameter(deposits)).isTrue();
 
-    final Optional<List<Deposit>> emptyDeposits = Optional.of(List.of());
-    assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDepositParameter(emptyDeposits))
-        .isTrue();
+    final Optional<List<Request>> emptyDeposits = Optional.of(List.of());
+    assertThat(depositsValidator.validateParameter(emptyDeposits)).isTrue();
   }
 
   @Test
   public void invalidateAllowedDepositParams() {
-    final Optional<List<Deposit>> deposits = Optional.empty();
-    assertThat(
-            new DepositsValidator.AllowedDeposits(DEPOSIT_CONTRACT_ADDRESS)
-                .validateDepositParameter(deposits))
-        .isFalse();
+    final Optional<List<Request>> deposits = Optional.empty();
+    assertThat(depositsValidator.validateParameter(deposits)).isFalse();
+  }
+
+  static RequestsValidatorCoordinator createAllowDepositValidator() {
+    depositsValidator = new DepositsValidator(DEPOSIT_CONTRACT_ADDRESS);
+    return new RequestsValidatorCoordinator.Builder()
+        .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
+        .addValidator(RequestType.DEPOSIT, depositsValidator)
+        .build();
   }
 }

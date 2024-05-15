@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import java.util.List;
@@ -36,104 +37,111 @@ public class WithdrawalRequestValidatorTestFixtures {
   private static final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
 
   static WithdrawalRequestTestParameter blockWithWithdrawalRequestsAndWithdrawalRequestsRoot() {
-    final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests =
-        Optional.of(List.of(createWithdrawalRequest()));
+    final WithdrawalRequest withdrawalRequest = createWithdrawalRequest();
+    final Optional<List<Request>> maybeWithdrawalRequests =
+        Optional.of(java.util.List.of(withdrawalRequest));
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(
-                BodyValidation.withdrawalRequestsRoot(maybeWithdrawalRequests.get()))
-            .setWithdrawalRequests(maybeWithdrawalRequests);
+            .setRequestsRoot(BodyValidation.requestsRoot(maybeWithdrawalRequests.get()))
+            .setRequests(maybeWithdrawalRequests);
     final Block block = blockDataGenerator.block(blockOptions);
 
     return new WithdrawalRequestTestParameter(
         "Block with withdrawal requests and withdrawal_requests_root",
         block,
-        maybeWithdrawalRequests);
+        Optional.of(java.util.List.of(withdrawalRequest)));
   }
 
   static WithdrawalRequestTestParameter blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot() {
-    final Optional<List<WithdrawalRequest>> maybeExits = Optional.empty();
-
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(Hash.EMPTY)
-            .setWithdrawalRequests(maybeExits);
+            .setRequestsRoot(Hash.EMPTY)
+            .setRequests(Optional.empty());
     final Block block = blockDataGenerator.block(blockOptions);
 
     return new WithdrawalRequestTestParameter(
-        "Block with withdrawal_requests_root but without withdrawal requests", block, maybeExits);
+        "Block with withdrawal_requests_root but without withdrawal requests",
+        block,
+        Optional.empty());
   }
 
   static WithdrawalRequestTestParameter blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot() {
-    final Optional<List<WithdrawalRequest>> maybeExits =
-        Optional.of(List.of(createWithdrawalRequest()));
+    final WithdrawalRequest withdrawalRequest = createWithdrawalRequest();
+    final Optional<List<Request>> requests = Optional.of(java.util.List.of(withdrawalRequest));
 
     final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setWithdrawalRequests(maybeExits);
+        BlockDataGenerator.BlockOptions.create().setRequests(requests);
     final Block block = blockDataGenerator.block(blockOptions);
 
     return new WithdrawalRequestTestParameter(
-        "Block with withdrawal requests but without withdrawal_requests_root", block, maybeExits);
+        "Block with withdrawal requests but without withdrawal_requests_root",
+        block,
+        Optional.of(java.util.List.of(withdrawalRequest)));
   }
 
   static WithdrawalRequestTestParameter blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot() {
-    final Optional<List<WithdrawalRequest>> maybeExits = Optional.empty();
 
     final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setWithdrawalRequests(maybeExits);
+        BlockDataGenerator.BlockOptions.create().setRequests(Optional.empty());
     final Block block = blockDataGenerator.block(blockOptions);
 
     return new WithdrawalRequestTestParameter(
-        "Block without withdrawal requests and withdrawal_requests_root", block, maybeExits);
+        "Block without withdrawal requests and withdrawal_requests_root", block, Optional.empty());
   }
 
   static WithdrawalRequestTestParameter blockWithWithdrawalRequestsRootMismatch() {
-    final Optional<List<WithdrawalRequest>> maybeExits =
-        Optional.of(List.of(createWithdrawalRequest()));
+    final WithdrawalRequest withdrawalRequest = createWithdrawalRequest();
+
+    final Optional<List<Request>> requests = Optional.of(java.util.List.of(withdrawalRequest));
 
     final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(Hash.EMPTY)
-            .setWithdrawalRequests(maybeExits);
+        BlockDataGenerator.BlockOptions.create().setRequestsRoot(Hash.EMPTY).setRequests(requests);
     final Block block = blockDataGenerator.block(blockOptions);
 
     return new WithdrawalRequestTestParameter(
-        "Block with withdrawal_requests_root mismatch", block, maybeExits);
+        "Block with withdrawal_requests_root mismatch",
+        block,
+        Optional.of(java.util.List.of(withdrawalRequest)));
   }
 
   static WithdrawalRequestTestParameter blockWithWithdrawalRequestsMismatch() {
-    final Optional<List<WithdrawalRequest>> maybeExits =
-        Optional.of(List.of(createWithdrawalRequest(), createWithdrawalRequest()));
+    final WithdrawalRequest withdrawalRequest = createWithdrawalRequest();
+
+    final Optional<List<Request>> requests =
+        Optional.of(java.util.List.of(withdrawalRequest, withdrawalRequest));
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(BodyValidation.withdrawalRequestsRoot(maybeExits.get()))
-            .setWithdrawalRequests(maybeExits);
+            .setRequestsRoot(BodyValidation.requestsRoot(requests.get()))
+            .setRequests(requests);
     final Block block = blockDataGenerator.block(blockOptions);
 
     return new WithdrawalRequestTestParameter(
         "Block with withdrawal requests mismatch",
         block,
-        maybeExits,
+        Optional.of(java.util.List.of(withdrawalRequest, withdrawalRequest)),
         List.of(createWithdrawalRequest()));
   }
 
   static WithdrawalRequestTestParameter blockWithMoreThanMaximumWithdrawalRequests() {
-    final List<WithdrawalRequest> validatorExits =
+    final List<WithdrawalRequest> withdrawalRequest =
         IntStream.range(0, MAX_WITHDRAWAL_REQUESTS_PER_BLOCK + 1)
             .mapToObj(__ -> createWithdrawalRequest())
             .toList();
-    final Optional<List<WithdrawalRequest>> maybeExits = Optional.of(validatorExits);
+
+    final Optional<List<WithdrawalRequest>> maybeWithdrawalRequest = Optional.of(withdrawalRequest);
+    final Optional<List<Request>> maybeRequests =
+        Optional.of(withdrawalRequest.stream().map(r -> (Request) r).toList());
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setWithdrawalRequestsRoot(BodyValidation.withdrawalRequestsRoot(maybeExits.get()))
-            .setWithdrawalRequests(maybeExits);
+            .setRequestsRoot(BodyValidation.requestsRoot(maybeRequests.get()))
+            .setRequests(maybeRequests);
     final Block block = blockDataGenerator.block(blockOptions);
 
     return new WithdrawalRequestTestParameter(
-        "Block with more than maximum withdrawal requests", block, maybeExits);
+        "Block with more than maximum withdrawal requests", block, maybeWithdrawalRequest);
   }
 
   static WithdrawalRequest createWithdrawalRequest() {
@@ -152,7 +160,11 @@ public class WithdrawalRequestValidatorTestFixtures {
         final String description,
         final Block block,
         final Optional<List<WithdrawalRequest>> maybeWithdrawalRequest) {
-      this(description, block, maybeWithdrawalRequest, maybeWithdrawalRequest.orElseGet(List::of));
+      this(
+          description,
+          block,
+          maybeWithdrawalRequest,
+          maybeWithdrawalRequest.orElseGet(java.util.List::of));
     }
 
     public WithdrawalRequestTestParameter(
