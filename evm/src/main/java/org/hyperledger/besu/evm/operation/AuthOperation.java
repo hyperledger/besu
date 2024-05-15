@@ -23,6 +23,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -67,9 +68,13 @@ public class AuthOperation extends AbstractOperation {
     Bytes32 s = Bytes32.wrap(frame.readMemory(offset + 33, 32));
     Bytes32 commit = Bytes32.wrap(frame.readMemory(offset + 65, 32));
     Bytes32 invoker = Bytes32.leftPad(frame.getContractAddress());
+    // TODO add test for getting sender nonce when account does not exist
     Bytes32 senderNonce =
         Bytes32.leftPad(
-            Bytes.ofUnsignedLong(frame.getWorldUpdater().getAccount(authority).getNonce()));
+            Bytes.ofUnsignedLong(
+                Optional.ofNullable(frame.getWorldUpdater().getAccount(authority))
+                    .map(Account::getNonce)
+                    .orElse(0L)));
     if (evm.getChainId().isEmpty()) {
       frame.pushStackItem(UInt256.ZERO);
       LOG.error("ChainId is not set");
