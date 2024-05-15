@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -62,7 +63,6 @@ import java.util.zip.GZIPInputStream;
 import com.google.common.base.Splitter;
 import kotlin.ranges.LongRange;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -208,15 +208,26 @@ public class ReplayTest {
         (tx1, tx2) -> transactionReplacementTester(poolConfig, tx1, tx2);
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
-            poolConfig, ethScheduler, evictCollector, txPoolMetrics, txReplacementTester, new BlobCache());
+            poolConfig,
+            ethScheduler,
+            evictCollector,
+            txPoolMetrics,
+            txReplacementTester,
+            new BlobCache());
 
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
-            poolConfig, ethScheduler, sparseTransactions, txPoolMetrics, txReplacementTester, new BlobCache());
+            poolConfig,
+            ethScheduler,
+            sparseTransactions,
+            txPoolMetrics,
+            txReplacementTester,
+            new BlobCache());
     return new BaseFeePrioritizedTransactions(
         poolConfig,
         () -> currBlockHeader,
-            ethScheduler, readyTransactions,
+        ethScheduler,
+        readyTransactions,
         txPoolMetrics,
         txReplacementTester,
         baseFeeMarket,

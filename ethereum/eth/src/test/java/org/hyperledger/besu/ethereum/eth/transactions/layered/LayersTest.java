@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -57,7 +58,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Stream;
 
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -171,7 +171,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
             poolConfig,
-                ethScheduler,
+            ethScheduler,
             evictCollector,
             txPoolMetrics,
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
@@ -180,7 +180,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
             poolConfig,
-                ethScheduler,
+            ethScheduler,
             sparseTransactions,
             txPoolMetrics,
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
@@ -190,7 +190,8 @@ public class LayersTest extends BaseTransactionPoolTest {
         new BaseFeePrioritizedTransactions(
             poolConfig,
             LayersTest::mockBlockHeader,
-                ethScheduler, readyTransactions,
+            ethScheduler,
+            readyTransactions,
             txPoolMetrics,
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
             FeeMarket.london(0L),

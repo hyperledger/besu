@@ -49,7 +49,12 @@ public abstract class AbstractLayeredTransactionPoolTest extends AbstractTransac
             new BlobCache());
     final TransactionsLayer readyLayer =
         new ReadyTransactions(
-            poolConfig, ethScheduler, sparseLayer, txPoolMetrics, transactionReplacementTester, new BlobCache());
+            poolConfig,
+            ethScheduler,
+            sparseLayer,
+            txPoolMetrics,
+            transactionReplacementTester,
+            new BlobCache());
     return new LayeredPendingTransactions(
         poolConfig,
         createPrioritizedTransactions(

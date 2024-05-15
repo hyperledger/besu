@@ -233,14 +233,14 @@ public class TransactionPoolFactory {
   }
 
   private static PendingTransactions createPendingTransactions(
-          final ProtocolSchedule protocolSchedule,
-          final ProtocolContext protocolContext,
-          final EthScheduler ethScheduler,
-          final Clock clock,
-          final TransactionPoolMetrics metrics,
-          final TransactionPoolConfiguration transactionPoolConfiguration,
-          final BlobCache blobCache,
-          final MiningParameters miningParameters) {
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthScheduler ethScheduler,
+      final Clock clock,
+      final TransactionPoolMetrics metrics,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final BlobCache blobCache,
+      final MiningParameters miningParameters) {
 
     boolean isFeeMarketImplementBaseFee =
         protocolSchedule.anyMatch(
@@ -267,11 +267,11 @@ public class TransactionPoolFactory {
   }
 
   private static AbstractPendingTransactionsSorter createPendingTransactionSorter(
-          final ProtocolContext protocolContext,
-          final Clock clock,
-          final MetricsSystem metricsSystem,
-          final TransactionPoolConfiguration transactionPoolConfiguration,
-          final boolean isFeeMarketImplementBaseFee) {
+      final ProtocolContext protocolContext,
+      final Clock clock,
+      final MetricsSystem metricsSystem,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final boolean isFeeMarketImplementBaseFee) {
     if (isFeeMarketImplementBaseFee) {
       return new BaseFeePendingTransactionsSorter(
           transactionPoolConfiguration,
@@ -288,14 +288,14 @@ public class TransactionPoolFactory {
   }
 
   private static PendingTransactions createLayeredPendingTransactions(
-          final ProtocolSchedule protocolSchedule,
-          final ProtocolContext protocolContext,
-          final EthScheduler ethScheduler,
-          final TransactionPoolMetrics metrics,
-          final TransactionPoolConfiguration transactionPoolConfiguration,
-          final boolean isFeeMarketImplementBaseFee,
-          final BlobCache blobCache,
-          final MiningParameters miningParameters) {
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final EthScheduler ethScheduler,
+      final TransactionPoolMetrics metrics,
+      final TransactionPoolConfiguration transactionPoolConfiguration,
+      final boolean isFeeMarketImplementBaseFee,
+      final BlobCache blobCache,
+      final MiningParameters miningParameters) {
 
     final TransactionPoolReplacementHandler transactionReplacementHandler =
         new TransactionPoolReplacementHandler(
@@ -338,7 +338,7 @@ public class TransactionPoolFactory {
           new BaseFeePrioritizedTransactions(
               transactionPoolConfiguration,
               protocolContext.getBlockchain()::getChainHeadHeader,
-                  ethScheduler,
+              ethScheduler,
               readyTransactions,
               metrics,
               transactionReplacementTester,
@@ -349,7 +349,7 @@ public class TransactionPoolFactory {
       pendingTransactionsSorter =
           new GasPricePrioritizedTransactions(
               transactionPoolConfiguration,
-                  ethScheduler,
+              ethScheduler,
               readyTransactions,
               metrics,
               transactionReplacementTester,

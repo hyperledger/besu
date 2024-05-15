@@ -49,7 +49,13 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
           transactionReplacementTester,
       final BlobCache blobCache,
       final MiningParameters miningParameters) {
-    super(poolConfig, ethScheduler, prioritizedTransactions, transactionReplacementTester, metrics, blobCache);
+    super(
+        poolConfig,
+        ethScheduler,
+        prioritizedTransactions,
+        transactionReplacementTester,
+        metrics,
+        blobCache);
     this.orderByFee = new TreeSet<>(this::compareByFee);
     this.miningParameters = miningParameters;
   }

@@ -45,7 +45,13 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
       final BlobCache blobCache,
       final MiningParameters miningParameters) {
     super(
-        poolConfig, ethScheduler, nextLayer, metrics, transactionReplacementTester, blobCache, miningParameters);
+        poolConfig,
+        ethScheduler,
+        nextLayer,
+        metrics,
+        transactionReplacementTester,
+        blobCache,
+        miningParameters);
   }
 
   @Override

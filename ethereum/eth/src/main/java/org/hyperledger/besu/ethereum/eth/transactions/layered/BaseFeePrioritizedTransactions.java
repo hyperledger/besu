@@ -42,18 +42,24 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   private Optional<Wei> nextBlockBaseFee;
 
   public BaseFeePrioritizedTransactions(
-          final TransactionPoolConfiguration poolConfig,
-          final Supplier<BlockHeader> chainHeadHeaderSupplier,
-          final EthScheduler ethScheduler,
-          final TransactionsLayer nextLayer,
-          final TransactionPoolMetrics metrics,
-          final BiFunction<PendingTransaction, PendingTransaction, Boolean>
-                  transactionReplacementTester,
-          final FeeMarket feeMarket,
-          final BlobCache blobCache,
-          final MiningParameters miningParameters) {
+      final TransactionPoolConfiguration poolConfig,
+      final Supplier<BlockHeader> chainHeadHeaderSupplier,
+      final EthScheduler ethScheduler,
+      final TransactionsLayer nextLayer,
+      final TransactionPoolMetrics metrics,
+      final BiFunction<PendingTransaction, PendingTransaction, Boolean>
+          transactionReplacementTester,
+      final FeeMarket feeMarket,
+      final BlobCache blobCache,
+      final MiningParameters miningParameters) {
     super(
-        poolConfig, ethScheduler, nextLayer, metrics, transactionReplacementTester, blobCache, miningParameters);
+        poolConfig,
+        ethScheduler,
+        nextLayer,
+        metrics,
+        transactionReplacementTester,
+        blobCache,
+        miningParameters);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(feeMarket, chainHeadHeaderSupplier.get()));
   }

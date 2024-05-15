@@ -50,7 +50,6 @@ import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
-import java.util.concurrent.CompletableFuture;
 import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
@@ -88,7 +87,6 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected final int[] txCountByType = new int[TransactionType.values().length];
   private final BlobCache blobCache;
   private final EthScheduler ethScheduler;
-
 
   protected AbstractTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,
