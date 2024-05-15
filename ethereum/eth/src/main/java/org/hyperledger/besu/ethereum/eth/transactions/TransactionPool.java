@@ -149,6 +149,16 @@ public class TransactionPool implements BlockAddedObserver {
                     .map(Address::toHexString)
                     .collect(Collectors.joining(",")))
         .log();
+    // log the max prioritized txs by type
+    LOG_FOR_REPLAY
+        .atTrace()
+        .setMessage("{}")
+        .addArgument(
+            () ->
+                configuration.getMaxPrioritizedTransactionsByType().entrySet().stream()
+                    .map(e -> e.getKey().name() + "=" + e.getValue())
+                    .collect(Collectors.joining(",")))
+        .log();
   }
 
   @VisibleForTesting

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,6 +29,9 @@ import picocli.CommandLine;
  */
 public class ConfigFileFinder extends AbstractConfigurationFinder<File> {
   private static final String CONFIG_FILE_ENV_NAME = "BESU_CONFIG_FILE";
+
+  /** Default constructor. */
+  public ConfigFileFinder() {}
 
   /**
    * Returns the name of the configuration option.

@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
@@ -24,6 +23,9 @@ import com.google.common.base.Suppliers;
 
 /** Base class for BFT based Besu Controller Builders. */
 public abstract class BftBesuControllerBuilder extends BesuControllerBuilder {
+
+  /** Default constructor to be used by subclasses. */
+  protected BftBesuControllerBuilder() {}
 
   /**
    * Bft extra data codec supplier.

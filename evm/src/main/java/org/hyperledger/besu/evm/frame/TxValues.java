@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,18 +14,18 @@
  */
 package org.hyperledger.besu.evm.frame;
 
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
+
 import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -33,9 +33,25 @@ import org.apache.tuweni.bytes.Bytes32;
  * Transaction Values used by various EVM Opcodes. These are the values that either do not change or
  * the backing stores whose changes transcend message frames and are not part of state, such as
  * transient storage and address warming.
+ *
+ * @param blockHashLookup The block hash lookup function
+ * @param maxStackSize The maximum stack size
+ * @param warmedUpAddresses The warmed-up addresses
+ * @param warmedUpStorage The warmed-up storage
+ * @param originator The originator address
+ * @param gasPrice The gas price
+ * @param blobGasPrice The blob gas price
+ * @param blockValues The block values
+ * @param messageFrameStack The message frame stack
+ * @param miningBeneficiary The mining beneficiary address
+ * @param versionedHashes The optional list of versioned hashes
+ * @param transientStorage The transient storage
+ * @param creates The set of addresses that creates
+ * @param selfDestructs The set of addresses that self-destructs
+ * @param gasRefunds The gas refunds
  */
 public record TxValues(
-    Function<Long, Hash> blockHashLookup,
+    BlockHashLookup blockHashLookup,
     int maxStackSize,
     UndoSet<Address> warmedUpAddresses,
     UndoTable<Address, Bytes32, Boolean> warmedUpStorage,

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -147,7 +147,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
               snapsyncMetricsManager,
-              clock);
+              clock,
+              ethContext);
 
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
       snapsyncMetricsManager.initRange(ranges);
@@ -183,16 +184,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       } else {
         // start from scratch
         worldStateStorageCoordinator.clear();
-        // we have to upgrade to full flat db mode if we are in bonsai mode
-        if (snapSyncConfiguration.isFlatDbHealingEnabled()) {
-          worldStateStorageCoordinator.applyOnMatchingStrategy(
-              DataStorageFormat.BONSAI,
-              strategy -> {
-                BonsaiWorldStateKeyValueStorage onBonsai =
-                    (BonsaiWorldStateKeyValueStorage) strategy;
-                onBonsai.upgradeToFullFlatDbMode();
-              });
-        }
         ranges.forEach(
             (key, value) ->
                 newDownloadState.enqueueRequest(

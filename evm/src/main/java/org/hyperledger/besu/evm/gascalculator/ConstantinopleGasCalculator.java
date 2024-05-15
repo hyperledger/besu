@@ -37,6 +37,9 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
   private static final long EXTCODE_HASH_COST = 400L;
 
+  /** Default constructor. */
+  public ConstantinopleGasCalculator() {}
+
   /**
    * Returns the amount of gas the CREATE2 operation will consume.
    *

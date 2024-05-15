@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.plugin.data;
 
 import org.hyperledger.besu.datatypes.Transaction;
@@ -59,10 +57,10 @@ public interface BlockBody {
   Optional<? extends List<? extends Deposit>> getDeposits();
 
   /**
-   * Returns the list of exits of the block.
+   * Returns the list of withdrawal requests of the block.
    *
-   * @return The list of exits of the block.
+   * @return The list of withdrawal requests of the block.
    */
   @Unstable
-  Optional<? extends List<? extends ValidatorExit>> getExits();
+  Optional<? extends List<? extends WithdrawalRequest>> getWithdrawalRequests();
 }

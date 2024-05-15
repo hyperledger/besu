@@ -77,7 +77,7 @@ public class SynchronizerConfiguration {
   private final long downloaderChangeTargetThresholdByHeight;
   private final UInt256 downloaderChangeTargetThresholdByTd;
   private final int downloaderHeaderRequestSize;
-  private final int downloaderCheckpointTimeoutsPermitted;
+  private final int downloaderCheckpointRetries;
   private final int downloaderChainSegmentSize;
   private final int downloaderParallelism;
   private final int transactionsParallelism;
@@ -101,7 +101,7 @@ public class SynchronizerConfiguration {
       final long downloaderChangeTargetThresholdByHeight,
       final UInt256 downloaderChangeTargetThresholdByTd,
       final int downloaderHeaderRequestSize,
-      final int downloaderCheckpointTimeoutsPermitted,
+      final int downloaderCheckpointRetries,
       final int downloaderChainSegmentSize,
       final int downloaderParallelism,
       final int transactionsParallelism,
@@ -123,7 +123,7 @@ public class SynchronizerConfiguration {
     this.downloaderChangeTargetThresholdByHeight = downloaderChangeTargetThresholdByHeight;
     this.downloaderChangeTargetThresholdByTd = downloaderChangeTargetThresholdByTd;
     this.downloaderHeaderRequestSize = downloaderHeaderRequestSize;
-    this.downloaderCheckpointTimeoutsPermitted = downloaderCheckpointTimeoutsPermitted;
+    this.downloaderCheckpointRetries = downloaderCheckpointRetries;
     this.downloaderChainSegmentSize = downloaderChainSegmentSize;
     this.downloaderParallelism = downloaderParallelism;
     this.transactionsParallelism = transactionsParallelism;
@@ -191,8 +191,8 @@ public class SynchronizerConfiguration {
     return downloaderHeaderRequestSize;
   }
 
-  public int getDownloaderCheckpointTimeoutsPermitted() {
-    return downloaderCheckpointTimeoutsPermitted;
+  public int getDownloaderCheckpointRetries() {
+    return downloaderCheckpointRetries;
   }
 
   public int getDownloaderChainSegmentSize() {
@@ -264,8 +264,7 @@ public class SynchronizerConfiguration {
     private UInt256 downloaderChangeTargetThresholdByTd =
         DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD;
     private int downloaderHeaderRequestSize = DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE;
-    private int downloaderCheckpointTimeoutsPermitted =
-        DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED;
+    private int downloaderCheckpointRetries = DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED;
     private SnapSyncConfiguration snapSyncConfiguration = SnapSyncConfiguration.getDefault();
     private int downloaderChainSegmentSize = DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE;
     private int downloaderParallelism = DEFAULT_DOWNLOADER_PARALLELISM;
@@ -327,9 +326,8 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder downloaderCheckpointTimeoutsPermitted(
-        final int downloaderCheckpointTimeoutsPermitted) {
-      this.downloaderCheckpointTimeoutsPermitted = downloaderCheckpointTimeoutsPermitted;
+    public Builder downloaderCheckpointRetries(final int downloaderCheckpointRetries) {
+      this.downloaderCheckpointRetries = downloaderCheckpointRetries;
       return this;
     }
 
@@ -422,7 +420,7 @@ public class SynchronizerConfiguration {
           downloaderChangeTargetThresholdByHeight,
           downloaderChangeTargetThresholdByTd,
           downloaderHeaderRequestSize,
-          downloaderCheckpointTimeoutsPermitted,
+          downloaderCheckpointRetries,
           downloaderChainSegmentSize,
           downloaderParallelism,
           transactionsParallelism,

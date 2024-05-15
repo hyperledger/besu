@@ -12,10 +12,14 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.evm.internal;
 
-/** The Evm configuration. */
+/**
+ * The type Evm configuration.
+ *
+ * @param jumpDestCacheWeightKB the jump destination cache weight in kb
+ * @param worldUpdaterMode the world updater mode
+ */
 public record EvmConfiguration(long jumpDestCacheWeightKB, WorldUpdaterMode worldUpdaterMode) {
 
   /** How should the world state update be handled within transactions? */

@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evm.precompile;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -67,7 +65,7 @@ public class Benchmarks {
           .code(CodeV0.EMPTY_CODE)
           .completer(__ -> {})
           .address(Address.ZERO)
-          .blockHashLookup(n -> null)
+          .blockHashLookup((f, n) -> null)
           .blockValues(new SimpleBlockValues())
           .gasPrice(Wei.ZERO)
           .miningBeneficiary(Address.ZERO)

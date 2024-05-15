@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -289,6 +289,9 @@ public class SegmentedInMemoryKeyValueStorage
 
     /** protected access to deletedValues set for the transaction. */
     protected Map<SegmentIdentifier, Set<Bytes>> removedKeys = new HashMap<>();
+
+    /** Default constructor */
+    public SegmentedInMemoryTransaction() {}
 
     @Override
     public void put(

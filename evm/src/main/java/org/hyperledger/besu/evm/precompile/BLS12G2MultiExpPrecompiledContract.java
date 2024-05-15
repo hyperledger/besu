@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.precompile;
 
@@ -35,6 +34,6 @@ public class BLS12G2MultiExpPrecompiledContract extends AbstractBLS12Precompiled
   @Override
   public long gasRequirement(final Bytes input) {
     final int k = input.size() / PARAMETER_LENGTH;
-    return 55L * k * getDiscount(k);
+    return 45L * k * getDiscount(k);
   }
 }

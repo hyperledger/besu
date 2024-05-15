@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -82,7 +82,7 @@ public class ConfigDefaultValueProviderStrategyTest {
         .thenReturn(mockConfigOptionSpec);
     lenient().when(mockParseResult.hasMatchedOption(CONFIG_FILE_OPTION_NAME)).thenReturn(true);
     lenient().when(mockConfigOptionSpec.getter()).thenReturn(mockConfigOptionGetter);
-    levelOption = new LoggingLevelOption();
+    levelOption = LoggingLevelOption.create();
     levelOption.setLogLevel("INFO");
     configParsingHandler = new ConfigDefaultValueProviderStrategy(resultHandler, environment);
   }

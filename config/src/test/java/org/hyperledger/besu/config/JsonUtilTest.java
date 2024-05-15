@@ -17,6 +17,9 @@ package org.hyperledger.besu.config;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -31,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 public class JsonUtilTest {
   private final ObjectMapper mapper = new ObjectMapper();
@@ -652,6 +656,24 @@ public class JsonUtilTest {
     final ObjectNode result = JsonUtil.objectNodeFromString(jsonStr, true);
     assertThat(result.get("a").asInt()).isEqualTo(1);
     assertThat(result.get("b").asInt()).isEqualTo(2);
+  }
+
+  @Test
+  public void objectNodeFromURL(@TempDir final Path folder) throws IOException {
+    final String jsonStr =
+        """
+      {
+        "a":1,
+        "b":2,
+        "c":3
+      }
+      """;
+    final var genesisFile = Files.writeString(folder.resolve("genesis.json"), jsonStr);
+
+    final ObjectNode result = JsonUtil.objectNodeFromURL(genesisFile.toUri().toURL(), false);
+    assertThat(result.get("a").asInt()).isEqualTo(1);
+    assertThat(result.get("b").asInt()).isEqualTo(2);
+    assertThat(result.get("c").asInt()).isEqualTo(3);
   }
 
   @Test

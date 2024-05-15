@@ -26,6 +26,9 @@ public class CliqueNoEmptyBlockValidationRule implements DetachedBlockHeaderVali
 
   private static final Logger LOG = LoggerFactory.getLogger(CliqueNoEmptyBlockValidationRule.class);
 
+  /** Default constructor. */
+  public CliqueNoEmptyBlockValidationRule() {}
+
   /**
    * Responsible for ensuring there are no empty transactions. This is used when createEmptyBlocks
    * is false, to ensure that no empty blocks are created.
