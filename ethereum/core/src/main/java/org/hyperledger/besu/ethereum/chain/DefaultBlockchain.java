@@ -84,8 +84,8 @@ public class DefaultBlockchain implements MutableBlockchain {
   private final Optional<Cache<Hash, List<TransactionReceipt>>> transactionReceiptsCache;
   private final Optional<Cache<Hash, Difficulty>> totalDifficultyCache;
 
-  private Counter gasUsedCounter;
-  private Counter numberOfTransactionsCounter;
+  private final Counter gasUsedCounter;
+  private final Counter numberOfTransactionsCounter;
 
 
   private DefaultBlockchain(
