@@ -87,7 +87,6 @@ public class DefaultBlockchain implements MutableBlockchain {
   private final Counter gasUsedCounter;
   private final Counter numberOfTransactionsCounter;
 
-
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
       final BlockchainStorage blockchainStorage,
@@ -141,10 +140,9 @@ public class DefaultBlockchain implements MutableBlockchain {
         "Gas used by the current chain head block",
         () -> getChainHeadHeader().getGasUsed());
 
-    gasUsedCounter = metricsSystem.createCounter(
-            BesuMetricCategory.BLOCKCHAIN,
-            "chain_head_gas_used_counter",
-            "Counter for Gas used");
+    gasUsedCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN, "chain_head_gas_used_counter", "Counter for Gas used");
 
     metricsSystem.createLongGauge(
         BesuMetricCategory.BLOCKCHAIN,
@@ -158,11 +156,11 @@ public class DefaultBlockchain implements MutableBlockchain {
         "Number of transactions in the current chain head block",
         () -> chainHeadTransactionCount);
 
-    numberOfTransactionsCounter = metricsSystem.createCounter(
+    numberOfTransactionsCounter =
+        metricsSystem.createCounter(
             BesuMetricCategory.BLOCKCHAIN,
             "chain_head_transaction_count_counter",
             "Counter for the number of transactions");
-
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.BLOCKCHAIN,
@@ -541,7 +539,8 @@ public class DefaultBlockchain implements MutableBlockchain {
     indexTransactionForBlock(
         updater, newBlockHash, blockWithReceipts.getBlock().getBody().getTransactions());
     gasUsedCounter.inc(blockWithReceipts.getHeader().getGasUsed());
-    numberOfTransactionsCounter.inc(blockWithReceipts.getBlock().getBody().getTransactions().size());
+    numberOfTransactionsCounter.inc(
+        blockWithReceipts.getBlock().getBody().getTransactions().size());
 
     return BlockAddedEvent.createForHeadAdvancement(
         blockWithReceipts.getBlock(),
