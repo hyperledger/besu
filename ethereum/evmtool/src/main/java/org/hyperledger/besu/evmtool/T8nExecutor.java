@@ -298,7 +298,7 @@ public class T8nExecutor {
           blockHashLookup =
               (frame, number) -> {
                 long lookback = frame.getBlockValues().getNumber() - number;
-                if (lookback < 0 || lookback > BlockHashOperation.MAX_RELATIVE_BLOCK) {
+                if (lookback <= 0 || lookback > BlockHashOperation.MAX_RELATIVE_BLOCK) {
                   return Hash.ZERO;
                 } else {
                   return referenceTestEnv.getBlockhashByNumber(number).orElse(Hash.ZERO);
