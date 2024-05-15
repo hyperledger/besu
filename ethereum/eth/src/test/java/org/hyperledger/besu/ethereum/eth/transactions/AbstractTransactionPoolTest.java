@@ -132,6 +132,8 @@ public abstract class AbstractTransactionPoolTest {
   protected static final Wei BASE_FEE_FLOOR = Wei.of(7L);
   protected static final Wei DEFAULT_MIN_GAS_PRICE = Wei.of(50L);
 
+  protected final EthScheduler ethScheduler = new EthScheduler(1, 4, 1, 1, new NoOpMetricsSystem());
+
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   protected TransactionValidatorFactory transactionValidatorFactory;
 

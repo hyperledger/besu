@@ -29,6 +29,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
@@ -86,15 +87,19 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected long spaceUsed = 0;
   protected final int[] txCountByType = new int[TransactionType.values().length];
   private final BlobCache blobCache;
+  private final EthScheduler ethScheduler;
+
 
   protected AbstractTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,
+      final EthScheduler ethScheduler,
       final TransactionsLayer nextLayer,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final TransactionPoolMetrics metrics,
       final BlobCache blobCache) {
     this.poolConfig = poolConfig;
+    this.ethScheduler = ethScheduler;
     this.nextLayer = nextLayer;
     this.transactionReplacementTester = transactionReplacementTester;
     this.metrics = metrics;
@@ -181,7 +186,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         tryFillGap(addStatus, pendingTransaction, getRemainingPromotionsPerType());
       }
 
-      CompletableFuture.runAsync(() -> notifyTransactionAdded(pendingTransaction));
+      ethScheduler.scheduleTxWorkerTask(() -> notifyTransactionAdded(pendingTransaction));
     } else {
       final var rejectReason = addStatus.maybeInvalidReason().orElseThrow();
       metrics.incrementRejected(pendingTransaction, rejectReason, name());

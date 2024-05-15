@@ -27,6 +27,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -61,6 +62,7 @@ import java.util.zip.GZIPInputStream;
 import com.google.common.base.Splitter;
 import kotlin.ranges.LongRange;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
@@ -70,6 +72,7 @@ public class ReplayTest {
   private static final Logger LOG = LoggerFactory.getLogger(ReplayTest.class);
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
+  private final EthScheduler ethScheduler = new EthScheduler(1, 4, 1, 1, new NoOpMetricsSystem());
 
   private final Address senderToLog =
       Address.fromHexString("0xf7445f4b8a07921bf882175470dc8f7221c53996");
@@ -205,16 +208,15 @@ public class ReplayTest {
         (tx1, tx2) -> transactionReplacementTester(poolConfig, tx1, tx2);
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
-            poolConfig, evictCollector, txPoolMetrics, txReplacementTester, new BlobCache());
+            poolConfig, ethScheduler, evictCollector, txPoolMetrics, txReplacementTester, new BlobCache());
 
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
-            poolConfig, sparseTransactions, txPoolMetrics, txReplacementTester, new BlobCache());
-
+            poolConfig, ethScheduler, sparseTransactions, txPoolMetrics, txReplacementTester, new BlobCache());
     return new BaseFeePrioritizedTransactions(
         poolConfig,
         () -> currBlockHeader,
-        readyTransactions,
+            ethScheduler, readyTransactions,
         txPoolMetrics,
         txReplacementTester,
         baseFeeMarket,

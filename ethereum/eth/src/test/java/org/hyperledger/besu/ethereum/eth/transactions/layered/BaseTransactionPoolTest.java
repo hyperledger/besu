@@ -31,6 +31,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
@@ -45,6 +46,7 @@ import com.google.common.base.Supplier;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes48;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 public class BaseTransactionPoolTest {
 
@@ -63,6 +65,7 @@ public class BaseTransactionPoolTest {
   protected final Transaction transaction2 = createTransaction(2);
   protected final Transaction blobTransaction0 = createEIP4844Transaction(0, KEYS1, 1, 1);
 
+  protected final EthScheduler ethScheduler = new EthScheduler(1, 4, 1, 1, new NoOpMetricsSystem());
   protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
 
   protected Transaction createTransaction(final long nonce) {

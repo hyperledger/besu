@@ -36,6 +36,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -56,6 +57,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Stream;
 
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -165,9 +167,11 @@ public class LayersTest extends BaseTransactionPoolTest {
     final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
 
     final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
+    final EthScheduler ethScheduler = new EthScheduler(1, 4, 1, 1, new NoOpMetricsSystem());
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
             poolConfig,
+                ethScheduler,
             evictCollector,
             txPoolMetrics,
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
@@ -176,6 +180,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
             poolConfig,
+                ethScheduler,
             sparseTransactions,
             txPoolMetrics,
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
@@ -185,7 +190,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         new BaseFeePrioritizedTransactions(
             poolConfig,
             LayersTest::mockBlockHeader,
-            readyTransactions,
+                ethScheduler, readyTransactions,
             txPoolMetrics,
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
             FeeMarket.london(0L),

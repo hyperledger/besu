@@ -132,6 +132,7 @@ public abstract class AbstractIsolationTests {
           poolConfiguration,
           new GasPricePrioritizedTransactions(
               poolConfiguration,
+              ethScheduler,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
               transactionReplacementTester,
