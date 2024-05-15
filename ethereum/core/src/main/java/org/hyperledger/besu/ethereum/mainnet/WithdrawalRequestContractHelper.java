@@ -69,6 +69,9 @@ public class WithdrawalRequestContractHelper {
 
   private static final int TARGET_WITHDRAWAL_REQUESTS_PER_BLOCK = 2;
 
+  private static final UInt256 INITIAL_EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT =
+      UInt256.valueOf(1181);
+
   // TODO-lucas Add MIN_WITHDRAWAL_REQUEST_FEE and WITHDRAWAL_REQUEST_FEE_UPDATE_FRACTION
 
   /*
@@ -166,8 +169,13 @@ public class WithdrawalRequestContractHelper {
   }
 
   private static void updateExcessWithdrawalRequests(final MutableAccount account) {
-    final UInt256 previousExcessRequests =
+    UInt256 previousExcessRequests =
         account.getStorageValue(EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT);
+
+    if (previousExcessRequests.equals(INITIAL_EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT)) {
+      previousExcessRequests = UInt256.ZERO;
+    }
+
     final UInt256 requestsCount = account.getStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT);
 
     UInt256 newExcessRequests = UInt256.valueOf(0L);
