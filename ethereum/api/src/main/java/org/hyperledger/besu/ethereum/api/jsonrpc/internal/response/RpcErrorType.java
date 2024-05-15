@@ -33,7 +33,9 @@ public enum RpcErrorType implements RpcMethodError {
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
 
   // Resource unavailable error
-  TX_POOL_DISABLED(-32002, "Transaction pool not enabled. Node may not be in sync or it is explicitly disabled."),
+  TX_POOL_DISABLED(
+      -32002,
+      "Transaction pool not enabled. Node may not be in sync or it is explicitly disabled."),
 
   // eth_getBlockByNumber specific error message
   UNKNOWN_BLOCK(-39001, "Unknown block"),
