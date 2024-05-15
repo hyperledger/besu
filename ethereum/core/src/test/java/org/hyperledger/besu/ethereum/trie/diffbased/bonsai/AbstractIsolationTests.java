@@ -257,7 +257,6 @@ public abstract class AbstractIsolationTests {
           protocolContext,
           protocolSchedule,
           parentHeader,
-          Optional.empty(),
           ethScheduler);
     }
 
