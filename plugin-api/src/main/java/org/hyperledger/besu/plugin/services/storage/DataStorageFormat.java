@@ -20,5 +20,8 @@ public enum DataStorageFormat {
   FOREST,
   /** New format. Store one trie, and trie logs to roll forward and backward */
   BONSAI,
-  VERKLE;
+  /** verkle trie format */
+  VERKLE,
+  /** composed format comprising BONSAI and VERKLE */
+  VERKLE_TRANSITION;
 }

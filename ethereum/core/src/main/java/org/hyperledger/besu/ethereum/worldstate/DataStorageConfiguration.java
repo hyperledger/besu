@@ -16,7 +16,10 @@
 
 package org.hyperledger.besu.ethereum.worldstate;
 
+import org.hyperledger.besu.ethereum.trie.diffbased.transition.VerkleTransitionContext;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
+
+import java.util.Optional;
 
 import org.immutables.value.Value;
 
@@ -50,6 +53,8 @@ public interface DataStorageConfiguration {
   DataStorageFormat getDataStorageFormat();
 
   Long getBonsaiMaxLayersToLoad();
+
+  Optional<VerkleTransitionContext> getVerkleTransitionContext();
 
   @Value.Default
   default boolean getReceiptCompactionEnabled() {
