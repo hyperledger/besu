@@ -37,8 +37,8 @@ public interface ParentBeaconBlockRootHelper {
      see EIP-4788: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4788.md
     */
     // If code is not deployed don't do anything
-    final MutableAccount account = worldUpdater.getOrCreate(BEACON_ROOTS_ADDRESS);
-    if (Hash.EMPTY.equals(account.getCodeHash())) {
+    final MutableAccount account = worldUpdater.getAccount(BEACON_ROOTS_ADDRESS);
+    if (account == null || Hash.EMPTY.equals(account.getCodeHash())) {
       return;
     }
 

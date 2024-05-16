@@ -40,7 +40,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
@@ -110,8 +111,9 @@ class BlockImportExceptionHandlingTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new ProhibitedWithdrawalRequests());
+    when(protocolSpec.getRequestsValidatorCoordinator())
+        .thenReturn(new RequestsValidatorCoordinator.Builder().build());
+    when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
     mainnetBlockValidator =
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
@@ -144,6 +146,7 @@ class BlockImportExceptionHandlingTest {
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(goodBlock),
+            any(),
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))
@@ -180,6 +183,7 @@ class BlockImportExceptionHandlingTest {
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(goodBlock),
+            any(),
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))
@@ -248,6 +252,7 @@ class BlockImportExceptionHandlingTest {
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(goodBlock),
+            any(),
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))

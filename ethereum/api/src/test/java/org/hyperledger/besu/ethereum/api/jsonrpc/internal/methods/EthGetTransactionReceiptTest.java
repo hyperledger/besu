@@ -47,6 +47,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -146,7 +147,8 @@ public class EthGetTransactionReceiptTest {
           null,
           Optional.empty(),
           null,
-          null,
+          Optional.empty(),
+          new FrontierBlockHashProcessor(),
           true,
           true);
   private final ProtocolSpec statusTransactionTypeSpec =
@@ -176,7 +178,8 @@ public class EthGetTransactionReceiptTest {
           null,
           Optional.empty(),
           null,
-          null,
+          Optional.empty(),
+          new FrontierBlockHashProcessor(),
           true,
           true);
 

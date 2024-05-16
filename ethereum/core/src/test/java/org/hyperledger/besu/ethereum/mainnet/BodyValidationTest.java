@@ -23,7 +23,6 @@ import java.util.Arrays;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 /** Tests for {@link BodyValidation}. */
@@ -56,17 +55,6 @@ public final class BodyValidationTest {
       final BlockBody body = ValidationTestUtils.readBody(block);
       final Bytes32 withdrawalsRoot = BodyValidation.withdrawalsRoot(body.getWithdrawals().get());
       Assertions.assertThat(header.getWithdrawalsRoot()).hasValue(Hash.wrap(withdrawalsRoot));
-    }
-  }
-
-  @Disabled // TODO: RLP encoding has changed, so testdata needs to be updated
-  @Test
-  public void calculateDepositsRoot() throws IOException {
-    for (final int block : Arrays.asList(123, 124)) {
-      final BlockHeader header = ValidationTestUtils.readHeader(block);
-      final BlockBody body = ValidationTestUtils.readBody(block);
-      final Bytes32 depositsRoot = BodyValidation.depositsRoot(body.getDeposits().get());
-      Assertions.assertThat(header.getDepositsRoot()).hasValue(Hash.wrap(depositsRoot));
     }
   }
 }

@@ -37,28 +37,24 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
 
   private final List<BlockHeader> ommers;
   private final Optional<List<Withdrawal>> withdrawals;
-  private final Optional<List<Deposit>> deposits;
-  private final Optional<List<WithdrawalRequest>> withdrawalRequests;
+  private final Optional<List<Request>> requests;
 
   public BlockBody(final List<Transaction> transactions, final List<BlockHeader> ommers) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = Optional.empty();
-    this.deposits = Optional.empty();
-    this.withdrawalRequests = Optional.empty();
+    this.requests = Optional.empty();
   }
 
   public BlockBody(
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Deposit>> deposits,
-      final Optional<List<WithdrawalRequest>> withdrawalRequests) {
+      final Optional<List<Request>> requests) {
     this.transactions = transactions;
     this.ommers = ommers;
     this.withdrawals = withdrawals;
-    this.deposits = deposits;
-    this.withdrawalRequests = withdrawalRequests;
+    this.requests = requests;
   }
 
   public static BlockBody empty() {
@@ -97,18 +93,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
    * @return The optional list of withdrawal requests included in the block.
    */
   @Override
-  public Optional<List<WithdrawalRequest>> getWithdrawalRequests() {
-    return withdrawalRequests;
-  }
-
-  /**
-   * Returns the deposits of the block.
-   *
-   * @return The optional list of deposits included in the block.
-   */
-  @Override
-  public Optional<List<Deposit>> getDeposits() {
-    return deposits;
+  public Optional<List<Request>> getRequests() {
+    return requests;
   }
 
   /**
@@ -126,9 +112,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     output.writeList(getTransactions(), Transaction::writeTo);
     output.writeList(getOmmers(), BlockHeader::writeTo);
     withdrawals.ifPresent(withdrawals -> output.writeList(withdrawals, Withdrawal::writeTo));
-    deposits.ifPresent(deposits -> output.writeList(deposits, Deposit::writeTo));
-    withdrawalRequests.ifPresent(
-        withdrawalRequests -> output.writeList(withdrawalRequests, WithdrawalRequest::writeTo));
+    requests.ifPresent(requests -> output.writeList(requests, Request::writeTo));
   }
 
   public static BlockBody readWrappedBodyFrom(
@@ -180,10 +164,7 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
             : Optional.of(input.readList(Withdrawal::readFrom)),
         input.isEndOfCurrentList()
             ? Optional.empty()
-            : Optional.of(input.readList(Deposit::readFrom)),
-        input.isEndOfCurrentList()
-            ? Optional.empty()
-            : Optional.of(input.readList(WithdrawalRequest::readFrom)));
+            : Optional.of(input.readList(Request::readFrom)));
   }
 
   @Override
@@ -194,21 +175,19 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
     return Objects.equals(transactions, blockBody.transactions)
         && Objects.equals(ommers, blockBody.ommers)
         && Objects.equals(withdrawals, blockBody.withdrawals)
-        && Objects.equals(deposits, blockBody.deposits)
-        && Objects.equals(withdrawalRequests, blockBody.withdrawalRequests);
+        && Objects.equals(requests, blockBody.requests);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(transactions, ommers, withdrawals, deposits, withdrawalRequests);
+    return Objects.hash(transactions, ommers, withdrawals, requests);
   }
 
   public boolean isEmpty() {
     return transactions.isEmpty()
         && ommers.isEmpty()
         && withdrawals.isEmpty()
-        && deposits.isEmpty()
-        && withdrawalRequests.isEmpty();
+        && requests.isEmpty();
   }
 
   @Override
@@ -220,11 +199,8 @@ public class BlockBody implements org.hyperledger.besu.plugin.data.BlockBody {
         + ommers
         + ", withdrawals="
         + withdrawals
-        + ", deposits="
-        + deposits
         + ", withdrawal_requests="
-        + ", withdrawal_requests="
-        + withdrawalRequests
+        + requests
         + '}';
   }
 }

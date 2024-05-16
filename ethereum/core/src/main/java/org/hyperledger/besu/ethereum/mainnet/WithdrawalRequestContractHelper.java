@@ -42,7 +42,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class WithdrawalRequestContractHelper {
 
   public static final Address WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS =
-      Address.fromHexString("0xEd8EA01d70Cb49726175BCf2778B9C982912e017");
+      Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
 
   @VisibleForTesting
   // Storage slot to store the difference between number of withdrawal requests since last block and
@@ -65,9 +65,12 @@ public class WithdrawalRequestContractHelper {
   // How many slots each withdrawal request occupies in the account state
   private static final int WITHDRAWAL_REQUEST_STORAGE_SLOT_SIZE = 3;
 
-  @VisibleForTesting static final int MAX_WITHDRAWAL_REQUESTS_PER_BLOCK = 16;
+  public static final int MAX_WITHDRAWAL_REQUESTS_PER_BLOCK = 16;
 
   private static final int TARGET_WITHDRAWAL_REQUESTS_PER_BLOCK = 2;
+
+  private static final UInt256 INITIAL_EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT =
+      UInt256.valueOf(1181);
 
   // TODO-lucas Add MIN_WITHDRAWAL_REQUEST_FEE and WITHDRAWAL_REQUEST_FEE_UPDATE_FRACTION
 
@@ -166,8 +169,13 @@ public class WithdrawalRequestContractHelper {
   }
 
   private static void updateExcessWithdrawalRequests(final MutableAccount account) {
-    final UInt256 previousExcessRequests =
+    UInt256 previousExcessRequests =
         account.getStorageValue(EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT);
+
+    if (previousExcessRequests.equals(INITIAL_EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT)) {
+      previousExcessRequests = UInt256.ZERO;
+    }
+
     final UInt256 requestsCount = account.getStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT);
 
     UInt256 newExcessRequests = UInt256.valueOf(0L);

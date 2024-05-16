@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsProcessors;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
@@ -23,7 +27,6 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -31,6 +34,9 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -97,9 +103,6 @@ public abstract class MainnetProtocolSpecs {
   private static final Wei BYZANTIUM_BLOCK_REWARD = Wei.fromEth(3);
 
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
-
-  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   private MainnetProtocolSpecs() {}
 
@@ -171,6 +174,7 @@ public abstract class MainnetProtocolSpecs {
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .evmConfiguration(evmConfiguration)
+        .blockHashProcessor(new FrontierBlockHashProcessor())
         .name("Frontier");
   }
 
@@ -780,6 +784,7 @@ public abstract class MainnetProtocolSpecs {
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
+        .blockHashProcessor(new CancunBlockHashProcessor())
         .name("Cancun");
   }
 
@@ -826,8 +831,10 @@ public abstract class MainnetProtocolSpecs {
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
-        .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
-        .withdrawalRequestsValidator(new PragueWithdrawalRequestValidator())
+        .requestsValidator(pragueRequestsValidator(depositContractAddress))
+        .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
+        .blockHashProcessor(
+            new PragueBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
         .name("Prague");
   }
 
@@ -973,7 +980,6 @@ public abstract class MainnetProtocolSpecs {
         final List<Transaction> transactions,
         final List<BlockHeader> ommers,
         final Optional<List<Withdrawal>> withdrawals,
-        final Optional<List<Deposit>> deposits,
         final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
@@ -983,7 +989,6 @@ public abstract class MainnetProtocolSpecs {
           transactions,
           ommers,
           withdrawals,
-          deposits,
           privateMetadataUpdater);
     }
 

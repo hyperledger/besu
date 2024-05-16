@@ -132,6 +132,7 @@ public abstract class AbstractIsolationTests {
           poolConfiguration,
           new GasPricePrioritizedTransactions(
               poolConfiguration,
+              ethScheduler,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
               transactionReplacementTester,
@@ -256,7 +257,6 @@ public abstract class AbstractIsolationTests {
           protocolContext,
           protocolSchedule,
           parentHeader,
-          Optional.empty(),
           ethScheduler);
     }
 
