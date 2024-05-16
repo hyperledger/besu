@@ -27,6 +27,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -52,6 +53,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -72,6 +74,7 @@ public class MainnetTransactionProcessor {
   private final boolean clearEmptyAccounts;
 
   protected final boolean warmCoinbase;
+  protected final boolean warmBlockhash;
 
   protected final FeeMarket feeMarket;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
@@ -83,6 +86,7 @@ public class MainnetTransactionProcessor {
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final boolean warmCoinbase,
+      final boolean warmBlockhash,
       final int maxStackSize,
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
@@ -92,6 +96,7 @@ public class MainnetTransactionProcessor {
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.warmCoinbase = warmCoinbase;
+    this.warmBlockhash = warmBlockhash;
     this.maxStackSize = maxStackSize;
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
@@ -321,6 +326,15 @@ public class MainnetTransactionProcessor {
       }
       if (warmCoinbase) {
         addressList.add(miningBeneficiary);
+      }
+      if (warmBlockhash) {
+        addressList.add(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS);
+        storageList.putAll(
+            PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS,
+            List.of(
+                UInt256.valueOf(
+                    (blockHeader.getNumber() - 1)
+                        % PragueBlockHashProcessor.HISTORY_SERVE_WINDOW)));
       }
 
       final long intrinsicGas =

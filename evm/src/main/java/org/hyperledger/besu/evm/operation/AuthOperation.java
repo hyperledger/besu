@@ -65,7 +65,7 @@ public class AuthOperation extends AbstractOperation {
     long length = clampedToLong(frame.getStackItem(2));
 
     final long gasCost =
-            super.gasCalculator().authOperationGasCost(frame, offset, length, authority);
+        super.gasCalculator().authOperationGasCost(frame, offset, length, authority);
     if (frame.getRemainingGas() < gasCost) {
       return new OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }

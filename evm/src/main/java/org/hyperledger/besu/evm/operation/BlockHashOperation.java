@@ -51,7 +51,7 @@ public class BlockHashOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(MessageFrame frame, EVM evm) {
-  final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
+    final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
 
     // Short-circuit if value exceeds long
     if (blockArg.size() > MAX_BLOCK_ARG_SIZE) {
@@ -64,7 +64,7 @@ public class BlockHashOperation extends AbstractOperation {
     final Hash blockHash = blockHashLookup.apply(frame, soughtBlock);
     frame.pushStackItem(blockHash);
     return new OperationResult(
-            gasCalculator().getBlockHashOperationGasCost(
-            Hash.ZERO.equals(blockHash) ? null : frame), null);
+        gasCalculator().getBlockHashOperationGasCost(Hash.ZERO.equals(blockHash) ? null : frame),
+        null);
   }
 }

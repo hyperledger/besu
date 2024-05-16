@@ -115,7 +115,9 @@ public class PragueGasCalculator extends CancunGasCalculator {
     } else {
       UInt256 slot = UInt256.valueOf(frame.getBlockValues().getNumber() % HISTORY_SERVE_WINDOW);
       return BLOCKHASH_OPERATION_GAS_COST
-          + (frame.warmUpStorage(HISTORY_STORAGE_ADDRESS, slot) ? 0 : getColdSloadCost());
+          + (frame.warmUpStorage(HISTORY_STORAGE_ADDRESS, slot)
+              ? getWarmStorageReadCost()
+              : getColdSloadCost());
     }
   }
 }

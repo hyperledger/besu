@@ -183,6 +183,7 @@ public class ClassicProtocolSpecs {
                     messageCallProcessor,
                     true,
                     false,
+                    false,
                     stackSizeLimit,
                     feeMarket,
                     CoinbaseFeePriceCalculator.frontier()))
@@ -372,6 +373,7 @@ public class ClassicProtocolSpecs {
                     messageCallProcessor,
                     true,
                     true,
+                    false,
                     stackSizeLimit,
                     feeMarket,
                     CoinbaseFeePriceCalculator.frontier()))
