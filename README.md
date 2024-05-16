@@ -6,7 +6,7 @@
  [![Discord](https://img.shields.io/discord/905194001349627914?logo=Hyperledger&style=plastic)](https://discord.gg/hyperledger)
  [![Twitter Follow](https://img.shields.io/twitter/follow/HyperledgerBesu)](https://twitter.com/HyperledgerBesu)
 
-[Download](https://hyperledger.jfrog.io/artifactory/besu-binaries/besu/)
+[Download](https://github.com/hyperledger/besu/releases)
 
 Besu is an Apache 2.0 licensed, MainNet compatible, Ethereum client written in Java.
 
