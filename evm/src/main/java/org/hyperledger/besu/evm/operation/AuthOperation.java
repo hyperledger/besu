@@ -24,6 +24,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -63,6 +64,12 @@ public class AuthOperation extends AbstractOperation {
     long offset = clampedToLong(frame.getStackItem(1));
     long length = clampedToLong(frame.getStackItem(2));
 
+    final long gasCost =
+            super.gasCalculator().authOperationGasCost(frame, offset, length, authority);
+    if (frame.getRemainingGas() < gasCost) {
+      return new OperationResult(gasCost, ExceptionalHaltReason.INSUFFICIENT_GAS);
+    }
+
     byte yParity = frame.readMemory(offset, 1).get(0);
     Bytes32 r = Bytes32.wrap(frame.readMemory(offset + 1, 32));
     Bytes32 s = Bytes32.wrap(frame.readMemory(offset + 33, 32));
@@ -84,9 +91,6 @@ public class AuthOperation extends AbstractOperation {
         Bytes.concatenate(
             Bytes.ofUnsignedShort(MAGIC), evm.getChainId().get(), senderNonce, invoker, commit);
     Bytes32 messageHash = Hash.keccak256(authPreImage);
-
-    final long gasCost =
-        super.gasCalculator().authOperationGasCost(frame, offset, length, authority);
     Optional<SECPPublicKey> publicKey;
     try {
       SECPSignature signature =
