@@ -128,9 +128,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
         .skipZeroBlockRewards(true)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
         .blockReward(Wei.of(configOptions.getBlockRewardWei()))
-        .withdrawalsValidator(
-                new WithdrawalsValidator
-                        .NotApplicableWithdrawals())
+        .withdrawalsValidator(new WithdrawalsValidator.NotApplicableWithdrawals())
         .miningBeneficiaryCalculator(
             header -> configOptions.getMiningBeneficiary().orElseGet(header::getCoinbase));
   }

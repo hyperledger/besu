@@ -99,8 +99,6 @@ public interface WithdrawalsValidator {
 
   class NotApplicableWithdrawals implements WithdrawalsValidator {
 
-    private static final Logger LOG = LoggerFactory.getLogger(AllowedWithdrawals.class);
-
     @Override
     public boolean validateWithdrawals(final Optional<List<Withdrawal>> withdrawals) {
       return true;
