@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
@@ -28,13 +27,12 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ParsedExtraData;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -166,8 +164,7 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("mixHash") final String mixHash,
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
-        @JsonProperty("depositsRoot") final String depositsRoot,
-        @JsonProperty("exitsRoot") final String exitsRoot,
+        @JsonProperty("requestsRoot") final String requestsRoot,
         @JsonProperty("dataGasUsed")
             final String dataGasUsed, // TODO: remove once reference tests have been updated
         @JsonProperty("excessDataGas")
@@ -205,8 +202,7 @@ public class BlockchainReferenceTestCaseSpec {
               ? BlobGas.fromHexString(excessDataGas)
               : excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
-          depositsRoot != null ? Hash.fromHexString(depositsRoot) : null,
-          exitsRoot != null ? Hash.fromHexString(exitsRoot) : null,
+          requestsRoot != null ? Hash.fromHexString(requestsRoot) : null,
           new BlockHeaderFunctions() {
             @Override
             public Hash hash(final BlockHeader header) {
@@ -251,7 +247,9 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("blockHeader") final Object blockHeader,
         @JsonProperty("transactions") final Object transactions,
         @JsonProperty("uncleHeaders") final Object uncleHeaders,
-        @JsonProperty("withdrawals") final Object withdrawals) {
+        @JsonProperty("withdrawals") final Object withdrawals,
+        @JsonProperty("depositRequests") final Object depositRequests,
+        @JsonProperty("withdrawalRequests") final Object withdrawalRequests) {
       boolean blockVaid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;
@@ -294,10 +292,7 @@ public class BlockchainReferenceTestCaseSpec {
                   : Optional.of(input.readList(Withdrawal::readFrom)),
               input.isEndOfCurrentList()
                   ? Optional.empty()
-                  : Optional.of(input.readList(Deposit::readFrom)),
-              input.isEndOfCurrentList()
-                  ? Optional.empty()
-                  : Optional.of(input.readList(ValidatorExit::readFrom)));
+                  : Optional.of(input.readList(Request::readFrom)));
       return new Block(header, body);
     }
   }

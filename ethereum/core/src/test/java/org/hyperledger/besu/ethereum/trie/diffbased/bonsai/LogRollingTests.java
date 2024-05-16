@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -100,7 +98,6 @@ class LogRollingTests {
           null,
           null,
           null,
-          null,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
@@ -122,7 +119,6 @@ class LogRollingTests {
           0,
           null,
           null, // blobGasUsed
-          null,
           null,
           null,
           null,

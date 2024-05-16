@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -62,7 +62,7 @@ public abstract class BenchmarkExecutor {
           .code(CodeV0.EMPTY_CODE)
           .completer(__ -> {})
           .address(Address.ZERO)
-          .blockHashLookup(n -> null)
+          .blockHashLookup((f, n) -> null)
           .blockValues(new SimpleBlockValues())
           .gasPrice(Wei.ZERO)
           .miningBeneficiary(Address.ZERO)
@@ -146,7 +146,7 @@ public abstract class BenchmarkExecutor {
   /**
    * Run the benchmarks
    *
-   * @param output stream to print results to (typicall System.out)
+   * @param output stream to print results to (typically System.out)
    * @param attemptNative Should the benchmark attempt to us native libraries? (null use the
    *     default, false disabled, true enabled)
    * @param fork the fork name to run the benchmark against.

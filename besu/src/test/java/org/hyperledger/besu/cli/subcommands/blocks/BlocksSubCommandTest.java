@@ -497,6 +497,6 @@ public class BlocksSubCommandTest extends CommandTestAbstract {
     parseCommand(
         BLOCK_SUBCOMMAND_NAME, BLOCK_IMPORT_SUBCOMMAND_NAME, "--from", fileToImport.getPath());
 
-    verify(mockControllerBuilderFactory).fromEthNetworkConfig(any(), any(), isNotNull());
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(any(), isNotNull());
   }
 }

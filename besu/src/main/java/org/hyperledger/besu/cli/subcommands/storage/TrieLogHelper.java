@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -59,6 +58,9 @@ public class TrieLogHelper {
   private static final long BATCH_SIZE = 20_000;
   private static final int ROCKSDB_MAX_INSERTS_PER_TRANSACTION = 1000;
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogHelper.class);
+
+  /** Default Constructor. */
+  public TrieLogHelper() {}
 
   boolean prune(
       final DataStorageConfiguration config,

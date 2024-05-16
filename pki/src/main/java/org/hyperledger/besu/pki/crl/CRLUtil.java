@@ -27,6 +27,8 @@ import java.util.stream.Collectors;
 
 /** The CRL util. */
 public class CRLUtil {
+  /** Default constructor */
+  private CRLUtil() {}
 
   /**
    * Load CRLs cert store.

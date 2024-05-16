@@ -4,8 +4,8 @@
     "method": "engine_forkchoiceUpdatedV3",
     "params": [
       {
-        "headBlockHash": "0x4202d36ad886b24b9bb8c2451217884925577755ae053c8202ef4737134f3ae9",
-        "safeBlockHash": "0x4202d36ad886b24b9bb8c2451217884925577755ae053c8202ef4737134f3ae9",
+        "headBlockHash": "0x3ca89f1d6b71aeb56389ac8270e9ae369d0bb8edeea747f2d868a5eb31892b04",
+        "safeBlockHash": "0x3ca89f1d6b71aeb56389ac8270e9ae369d0bb8edeea747f2d868a5eb31892b04",
         "finalizedBlockHash": "0x0000000000000000000000000000000000000000000000000000000000000000"
       },
       {
@@ -24,10 +24,10 @@
     "result": {
       "payloadStatus": {
         "status": "VALID",
-        "latestValidHash": "0x4202d36ad886b24b9bb8c2451217884925577755ae053c8202ef4737134f3ae9",
+        "latestValidHash": "0x3ca89f1d6b71aeb56389ac8270e9ae369d0bb8edeea747f2d868a5eb31892b04",
         "validationError": null
       },
-      "payloadId": "0x2826439412796511"
+      "payloadId": "0x282643d318bdab11"
     }
   },
   "statusCode": 200

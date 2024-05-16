@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.cli.subcommands.operator;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -60,6 +58,9 @@ public class GenerateLogBloomCache implements Runnable {
   private final Long endBlock = Long.MAX_VALUE;
 
   @ParentCommand private OperatorSubCommand parentCommand;
+
+  /** Default constructor. */
+  public GenerateLogBloomCache() {}
 
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @Override

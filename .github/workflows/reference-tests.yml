@@ -41,7 +41,7 @@ jobs:
         with:
           cache-disabled: true
       - name: execute generate reference tests
-        run: ./gradlew ethereum:referencetests:blockchainReferenceTests ethereum:referencetests:generalstateReferenceTests ethereum:referencetests:generalstateRegressionReferenceTests -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew ethereum:referencetests:referenceTestClasses -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: list test files generated
         run: find ethereum/referencetests/build/generated/sources/reference-test -name "*.java" | sort >> filenames.txt
       - name: Split tests

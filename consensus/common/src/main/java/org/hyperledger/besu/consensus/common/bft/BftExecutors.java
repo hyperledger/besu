@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.consensus.common.bft;
 
 import org.hyperledger.besu.ethereum.eth.manager.MonitoredExecutors;

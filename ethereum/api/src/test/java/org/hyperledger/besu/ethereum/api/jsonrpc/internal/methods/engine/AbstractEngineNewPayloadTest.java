@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -41,8 +41,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ValidatorExitParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -55,16 +55,18 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -113,9 +115,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     lenient()
         .when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
-    lenient()
-        .when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.ProhibitedDeposits());
+    mockProhibitedRequestsValidator();
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     lenient().when(ethPeers.peerCount()).thenReturn(1);
   }
@@ -411,7 +411,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals,
       final List<DepositParameter> deposits,
-      final List<ValidatorExitParameter> exits) {
+      final List<WithdrawalRequestParameter> withdrawalRequests) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -431,16 +431,17 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         header.getBlobGasUsed().map(UnsignedLongParameter::new).orElse(null),
         header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null),
         deposits,
-        exits);
+        withdrawalRequests);
   }
 
   protected BlockHeader setupValidPayload(
       final BlockProcessingResult value,
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<List<Deposit>> maybeDeposits,
-      final Optional<List<ValidatorExit>> maybeExits) {
+      final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
 
-    BlockHeader mockHeader = createBlockHeader(maybeWithdrawals, maybeDeposits, maybeExits);
+    BlockHeader mockHeader =
+        createBlockHeader(maybeWithdrawals, maybeDeposits, maybeWithdrawalRequests);
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     // when(blockchain.getBlockHeader(mockHeader.getParentHash()))
     //  .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -474,14 +475,31 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
   protected BlockHeader createBlockHeader(
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<List<Deposit>> maybeDeposits,
-      final Optional<List<ValidatorExit>> maybeExits) {
-    return createBlockHeaderFixture(maybeWithdrawals, maybeDeposits, maybeExits).buildHeader();
+      final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
+    return createBlockHeaderFixture(maybeWithdrawals, maybeDeposits, maybeWithdrawalRequests)
+        .buildHeader();
   }
 
   protected BlockHeaderTestFixture createBlockHeaderFixture(
       final Optional<List<Withdrawal>> maybeWithdrawals,
       final Optional<List<Deposit>> maybeDeposits,
-      final Optional<List<ValidatorExit>> maybeExits) {
+      final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
+
+    Optional<List<Request>> maybeRequests;
+    if (maybeDeposits.isPresent() || maybeWithdrawalRequests.isPresent()) {
+      List<Request> requests = new ArrayList<>();
+      maybeDeposits.ifPresent(requests::addAll);
+      maybeWithdrawalRequests.ifPresent(requests::addAll);
+      maybeRequests = Optional.of(requests);
+    } else {
+      maybeRequests = Optional.empty();
+    }
+    return createBlockHeaderFixture(maybeWithdrawals, maybeRequests);
+  }
+
+  protected BlockHeaderTestFixture createBlockHeaderFixture(
+      final Optional<List<Withdrawal>> maybeWithdrawals,
+      final Optional<List<Request>> maybeRequests) {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE).buildHeader();
     return new BlockHeaderTestFixture()
@@ -490,8 +508,8 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         .number(parentBlockHeader.getNumber() + 1)
         .timestamp(parentBlockHeader.getTimestamp() + 1)
         .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
-        .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-        .parentBeaconBlockRoot(maybeParentBeaconBlockRoot);
+        .parentBeaconBlockRoot(maybeParentBeaconBlockRoot)
+        .requestsRoot(maybeRequests.map(BodyValidation::requestsRoot).orElse(null));
   }
 
   protected void assertValidResponse(final BlockHeader mockHeader, final JsonRpcResponse resp) {
@@ -500,5 +518,10 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
     assertThat(res.getStatusAsString()).isEqualTo(VALID.name());
     assertThat(res.getError()).isNull();
     verify(engineCallListener, times(1)).executionEngineCalled();
+  }
+
+  private void mockProhibitedRequestsValidator() {
+    var validator = new RequestsValidatorCoordinator.Builder().build();
+    when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
   }
 }

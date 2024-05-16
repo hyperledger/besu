@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.api.query;
 
 import static org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher.BLOCKS_PER_BLOOM_CACHE;
@@ -114,7 +112,6 @@ public class BlockchainQueriesLogCacheTest {
             null,
             Hash.EMPTY,
             0,
-            null,
             null,
             null,
             null,

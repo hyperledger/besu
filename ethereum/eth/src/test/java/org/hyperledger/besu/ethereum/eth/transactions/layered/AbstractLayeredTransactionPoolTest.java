@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -42,13 +42,19 @@ public abstract class AbstractLayeredTransactionPoolTest extends AbstractTransac
     final TransactionsLayer sparseLayer =
         new SparseTransactions(
             poolConfig,
+            ethScheduler,
             new EndLayer(txPoolMetrics),
             txPoolMetrics,
             transactionReplacementTester,
             new BlobCache());
     final TransactionsLayer readyLayer =
         new ReadyTransactions(
-            poolConfig, sparseLayer, txPoolMetrics, transactionReplacementTester, new BlobCache());
+            poolConfig,
+            ethScheduler,
+            sparseLayer,
+            txPoolMetrics,
+            transactionReplacementTester,
+            new BlobCache());
     return new LayeredPendingTransactions(
         poolConfig,
         createPrioritizedTransactions(

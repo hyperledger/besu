@@ -247,7 +247,7 @@ public final class RunnerBuilderTest {
     final JsonRpcConfiguration engine = JsonRpcConfiguration.createEngineDefault();
     engine.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
-    when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
+    when(mockMainnet.networkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
 
@@ -288,7 +288,7 @@ public final class RunnerBuilderTest {
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
-    when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
+    when(mockMainnet.networkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
     final JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
@@ -330,7 +330,7 @@ public final class RunnerBuilderTest {
     final WebSocketConfiguration wsRpc = WebSocketConfiguration.createDefault();
     wsRpc.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
-    when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
+    when(mockMainnet.networkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
     when(besuController.getMiningCoordinator()).thenReturn(mock(MergeMiningCoordinator.class));
     final JsonRpcConfiguration engineConf = JsonRpcConfiguration.createEngineDefault();
@@ -377,7 +377,7 @@ public final class RunnerBuilderTest {
     final WebSocketConfiguration defaultWebSockConfig = WebSocketConfiguration.createDefault();
     defaultWebSockConfig.setEnabled(true);
     final EthNetworkConfig mockMainnet = mock(EthNetworkConfig.class);
-    when(mockMainnet.getNetworkId()).thenReturn(BigInteger.ONE);
+    when(mockMainnet.networkId()).thenReturn(BigInteger.ONE);
     MergeConfigOptions.setMergeEnabled(true);
 
     final Runner runner =

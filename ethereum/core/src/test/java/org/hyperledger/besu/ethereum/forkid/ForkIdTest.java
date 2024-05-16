@@ -297,39 +297,6 @@ public class ForkIdTest {
             ForkIdTestUtil.wantForkId("0xf7f9bc08", 0L),
             Optional.of(ForkIds.SEPOLIA),
             empty()),
-        // goerli
-        Arguments.of(
-            "Goerli  // Unsynced, last Frontier, Homestead, Tangerine, Spurious, Byzantium, Constantinople and first Petersburg block",
-            Network.GOERLI,
-            0L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xa3f5ab08", 1561651L),
-            Optional.of(ForkIds.GOERLI),
-            empty()),
-        Arguments.of(
-            "Goerli // Last Petersburg block",
-            Network.GOERLI,
-            1561650L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xa3f5ab08", 1561651L),
-            Optional.of(ForkIds.GOERLI),
-            empty()),
-        Arguments.of(
-            "Goerli // First Istanbul block",
-            Network.GOERLI,
-            1561651L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xc25efa5c", 0L),
-            Optional.of(ForkIds.GOERLI),
-            empty()),
-        Arguments.of(
-            "Goerli // Future Istanbul block",
-            Network.GOERLI,
-            2000000L,
-            0L,
-            ForkIdTestUtil.wantForkId("0xc25efa5c", 0L),
-            Optional.of(ForkIds.GOERLI),
-            empty()),
         // private
         Arguments.of(
             "Private // Unsynced",
