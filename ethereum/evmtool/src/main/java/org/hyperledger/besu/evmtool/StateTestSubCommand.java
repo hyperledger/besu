@@ -261,7 +261,7 @@ public class StateTestSubCommand implements Runnable {
           blockHashLookup =
               (messageFrame, number) -> {
                 long lookback = messageFrame.getBlockValues().getNumber() - number;
-                if (lookback < 0 || lookback > BlockHashOperation.MAX_RELATIVE_BLOCK) {
+                if (lookback <= 0 || lookback > BlockHashOperation.MAX_RELATIVE_BLOCK) {
                   return Hash.ZERO;
                 } else {
                   return Hash.hash(Bytes.wrap(Long.toString(number).getBytes(UTF_8)));

@@ -1,0 +1,82 @@
+{
+  "cli": [
+    "state-test",
+    "stdin",
+    "--trace",
+    "--trace.memory",
+    "--trace.stack",
+    "--trace.returndata",
+    "--notime"
+  ],
+  "stdin": {
+    "shanghai-blockhash": {
+      "env": {
+        "currentCoinbase": "b94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "currentDifficulty": "0x20000",
+        "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000020000",
+        "currentGasLimit": "0x26e1f476fe1e22",
+        "currentNumber": "0x2",
+        "currentTimestamp": "0x3e8",
+        "previousHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "currentBaseFee": "0x10"
+      },
+      "pre": {
+        "0x1000000000000000000000000000000000000000": {
+          "nonce": "0x00",
+          "balance": "0x0ba1a9ce0ba1a9ce",
+          "code": "0x600040600055600140600155434060025500",
+          "storage": {}
+        },
+        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+          "balance": "0x1319ad251a00",
+          "storage": {}
+        }
+      },
+      "transaction": {
+        "gasPrice": "0x10",
+        "nonce": "0x0",
+        "to": "0x1000000000000000000000000000000000000000",
+        "data": [
+          "0x"
+        ],
+        "gasLimit": [
+          "0x7a1200"
+        ],
+        "value": [
+          "0x0"
+        ],
+        "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+      },
+      "out": "0x",
+      "post": {
+        "Shanghai": [
+          {
+            "hash": "0xb3967c897314312cf275055d754c6742d351a2a4bcf0121ed2f896971bf56563",
+            "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+            "indexes": {
+              "data": 0,
+              "gas": 0,
+              "value": 0
+            }
+          }
+        ]
+      }
+    }
+  },
+  "stdout": [
+    {"pc":0,"op":96,"gas":"0x79bff8","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":2,"op":64,"gas":"0x79bff5","gasCost":"0x14","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"BLOCKHASH"},
+    {"pc":3,"op":96,"gas":"0x79bfe1","gasCost":"0x3","memSize":0,"stack":["0x44852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":5,"op":85,"gas":"0x79bfde","gasCost":"0x5654","memSize":0,"stack":["0x44852b2a670ade5407e78fb2863c51de9fcb96542a07186fe3aeda6bb8a116d","0x0"],"depth":1,"refund":0,"opName":"SSTORE"},
+    {"pc":6,"op":96,"gas":"0x79698a","gasCost":"0x3","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":8,"op":64,"gas":"0x796987","gasCost":"0x14","memSize":0,"stack":["0x1"],"depth":1,"refund":0,"opName":"BLOCKHASH"},
+    {"pc":9,"op":96,"gas":"0x796973","gasCost":"0x3","memSize":0,"stack":["0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":11,"op":85,"gas":"0x796970","gasCost":"0x5654","memSize":0,"stack":["0xc89efdaa54c0f20c7adf612882df0950f5a951637e0307cdcb4c672f298b8bc6","0x1"],"depth":1,"refund":0,"opName":"SSTORE"},
+    {"pc":12,"op":67,"gas":"0x79131c","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"NUMBER"},
+    {"pc":13,"op":64,"gas":"0x79131a","gasCost":"0x14","memSize":0,"stack":["0x2"],"depth":1,"refund":0,"opName":"BLOCKHASH"},
+    {"pc":14,"op":96,"gas":"0x791306","gasCost":"0x3","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH1"},
+    {"pc":16,"op":85,"gas":"0x791303","gasCost":"0x898","memSize":0,"stack":["0x0","0x2"],"depth":1,"refund":0,"opName":"SSTORE"},
+    {"pc":17,"op":0,"gas":"0x790a6b","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"STOP"},
+    {"output":"","gasUsed":"0x10795","test":"shanghai-blockhash","fork":"Shanghai","d":0,"g":0,"v":0,"postHash":"0xb3967c897314312cf275055d754c6742d351a2a4bcf0121ed2f896971bf56563","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true}
+  ]
+}

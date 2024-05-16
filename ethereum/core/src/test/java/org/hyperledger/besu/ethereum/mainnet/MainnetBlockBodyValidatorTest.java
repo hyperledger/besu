@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Collections;
@@ -52,7 +54,7 @@ class MainnetBlockBodyValidatorTest {
   @Mock private ProtocolSpec protocolSpec;
   @Mock private WithdrawalsValidator withdrawalsValidator;
   @Mock private DepositsValidator depositsValidator;
-  @Mock private WithdrawalRequestValidator exitsValidator;
+  @Mock private RequestsValidatorCoordinator requestValidator;
 
   @BeforeEach
   public void setUp() {
@@ -62,12 +64,10 @@ class MainnetBlockBodyValidatorTest {
     lenient().when(withdrawalsValidator.validateWithdrawals(any())).thenReturn(true);
     lenient().when(withdrawalsValidator.validateWithdrawalsRoot(any())).thenReturn(true);
 
-    lenient().when(protocolSpec.getDepositsValidator()).thenReturn(depositsValidator);
-    lenient().when(depositsValidator.validateDeposits(any(), any())).thenReturn(true);
-    lenient().when(depositsValidator.validateDepositsRoot(any())).thenReturn(true);
+    lenient().when(depositsValidator.validateDeposits(any(), any(), any())).thenReturn(true);
 
-    lenient().when(protocolSpec.getWithdrawalRequestValidator()).thenReturn(exitsValidator);
-    lenient().when(exitsValidator.validateWithdrawalRequestsInBlock(any(), any())).thenReturn(true);
+    lenient().when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(requestValidator);
+    lenient().when(requestValidator.validate(any(), any(), any())).thenReturn(true);
   }
 
   @Test
@@ -91,7 +91,7 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
         .isTrue();
   }
 
@@ -115,7 +115,7 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
         .isFalse();
   }
 
@@ -139,12 +139,12 @@ class MainnetBlockBodyValidatorTest {
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
         .isFalse();
   }
 
   @Test
-  public void validationFailsIfExitsValidationFails() {
+  public void validationFailsIfWithdrawalRequestsValidationFails() {
     final Block block =
         blockDataGenerator.block(
             new BlockOptions()
@@ -155,15 +155,15 @@ class MainnetBlockBodyValidatorTest {
                 .setReceiptsRoot(BodyValidation.receiptsRoot(emptyList()))
                 .setLogsBloom(LogsBloomFilter.empty())
                 .setParentHash(blockchainSetupUtil.getBlockchain().getChainHeadHash())
-                .setWithdrawalRequests(Optional.of(List.of())));
+                .setRequests(Optional.of(List.of())));
     blockchainSetupUtil.getBlockchain().appendBlock(block, Collections.emptyList());
 
-    when(exitsValidator.validateWithdrawalRequestsInBlock(any(), any())).thenReturn(false);
+    when(requestValidator.validate(any(), any(), any())).thenReturn(false);
 
     assertThat(
             new MainnetBlockBodyValidator(protocolSchedule)
                 .validateBodyLight(
-                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), NONE))
+                    blockchainSetupUtil.getProtocolContext(), block, emptyList(), any(), NONE))
         .isFalse();
   }
 }

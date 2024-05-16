@@ -155,7 +155,8 @@ public class BackwardSyncContextTest {
                           // use forest-based worldstate since it does not require
                           // blockheader stateroot to match actual worldstate root
                           ForestReferenceTestWorldState.create(Collections.emptyMap()),
-                          blockDataGenerator.receipts(block))));
+                          blockDataGenerator.receipts(block),
+                          Optional.empty())));
             });
 
     backwardChain = inMemoryBackwardChain();

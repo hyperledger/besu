@@ -98,7 +98,6 @@ class LogRollingTests {
           null,
           null,
           null,
-          null,
           new MainnetBlockHeaderFunctions());
   private static final BlockHeader headerTwo =
       new BlockHeader(
@@ -120,7 +119,6 @@ class LogRollingTests {
           0,
           null,
           null, // blobGasUsed
-          null,
           null,
           null,
           null,

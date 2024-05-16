@@ -147,7 +147,7 @@ public class EthGetTransactionReceiptTest {
           null,
           Optional.empty(),
           null,
-          null,
+          Optional.empty(),
           new FrontierBlockHashProcessor(),
           true,
           true);
@@ -178,7 +178,7 @@ public class EthGetTransactionReceiptTest {
           null,
           Optional.empty(),
           null,
-          null,
+          Optional.empty(),
           new FrontierBlockHashProcessor(),
           true,
           true);

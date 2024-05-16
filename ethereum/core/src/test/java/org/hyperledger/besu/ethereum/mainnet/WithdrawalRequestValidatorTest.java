@@ -20,15 +20,15 @@ import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTe
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot;
 import static org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot;
 
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidatorTestFixtures.WithdrawalRequestTestParameter;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProhibitedRequestsValidator;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -39,25 +39,33 @@ class WithdrawalRequestValidatorTest {
   @MethodSource("paramsForValidateWithdrawalRequestParameter")
   public void validateWithdrawalRequestParameter(
       final String description,
-      final Optional<List<WithdrawalRequest>> maybeExits,
+      final Optional<List<Request>> maybeWithdrawalRequests,
       final boolean expectedValidity) {
-    assertThat(new ProhibitedWithdrawalRequests().validateWithdrawalRequestParameter(maybeExits))
+    assertThat(new ProhibitedRequestsValidator().validateParameter(maybeWithdrawalRequests))
         .isEqualTo(expectedValidity);
   }
 
   private static Stream<Arguments> paramsForValidateWithdrawalRequestParameter() {
     return Stream.of(
-        Arguments.of("Prohibited exits - validating empty exits", Optional.empty(), true),
-        Arguments.of("Prohibited exits - validating present exits", Optional.of(List.of()), false));
+        Arguments.of(
+            "Prohibited WithdrawalRequests - validating empty WithdrawalRequests",
+            Optional.empty(),
+            true),
+        Arguments.of(
+            "Prohibited WithdrawalRequests - validating present WithdrawalRequests",
+            Optional.of(List.of()),
+            false));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("validateWithdrawalRequestsInBlockParamsForProhibited")
   public void validateWithdrawalRequestsInBlock_WhenProhibited(
       final WithdrawalRequestTestParameter param, final boolean expectedValidity) {
-    assertThat(
-            new ProhibitedWithdrawalRequests()
-                .validateWithdrawalRequestsInBlock(param.block, param.expectedWithdrawalRequest))
+
+    var list = param.expectedWithdrawalRequest;
+    var requests = new ArrayList<Request>(list).stream().toList();
+
+    assertThat(new ProhibitedRequestsValidator().validate(param.block, requests, List.of()))
         .isEqualTo(expectedValidity);
   }
 
@@ -67,10 +75,5 @@ class WithdrawalRequestValidatorTest {
         Arguments.of(blockWithWithdrawalRequestsWithoutWithdrawalRequestsRoot(), false),
         Arguments.of(blockWithoutWithdrawalRequestsWithWithdrawalRequestsRoot(), false),
         Arguments.of(blockWithoutWithdrawalRequestsAndWithdrawalRequestsRoot(), true));
-  }
-
-  @Test
-  public void allowExitsShouldReturnFalse() {
-    assertThat(new ProhibitedWithdrawalRequests().allowWithdrawalRequests()).isFalse();
   }
 }

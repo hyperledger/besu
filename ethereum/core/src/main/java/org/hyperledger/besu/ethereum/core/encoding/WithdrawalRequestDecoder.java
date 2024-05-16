@@ -18,7 +18,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
+import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
+
+import org.apache.tuweni.bytes.Bytes;
 
 public class WithdrawalRequestDecoder {
 
@@ -30,5 +33,9 @@ public class WithdrawalRequestDecoder {
     rlpInput.leaveList();
 
     return new WithdrawalRequest(sourceAddress, validatorPublicKey, amount);
+  }
+
+  public static WithdrawalRequest decodeOpaqueBytes(final Bytes input) {
+    return decode(RLP.input(input));
   }
 }

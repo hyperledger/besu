@@ -43,9 +43,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
 
   protected final Hash withdrawalsRoot;
 
-  protected final Hash depositsRoot;
-
-  protected final Hash withdrawalRequestsRoot;
+  protected final Hash requestsRoot;
 
   protected final Long blobGasUsed;
 
@@ -71,8 +69,7 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
-      final Hash depositsRoot,
-      final Hash withdrawalRequestsRoot) {
+      final Hash requestsRoot) {
     super(
         parentHash,
         coinbase,
@@ -87,9 +84,8 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
     this.stateRoot = stateRoot;
     this.transactionsRoot = transactionsRoot;
     this.withdrawalsRoot = withdrawalsRoot;
-    this.depositsRoot = depositsRoot;
     this.receiptsRoot = receiptsRoot;
-    this.withdrawalRequestsRoot = withdrawalRequestsRoot;
+    this.requestsRoot = requestsRoot;
     this.logsBloom = logsBloom;
     this.gasUsed = gasUsed;
     this.extraData = extraData;
@@ -170,16 +166,12 @@ public class SealableBlockHeader extends ProcessableBlockHeader {
   }
 
   /**
-   * Returns the block deposits root hash.
+   * Returns the block requests root hash.
    *
-   * @return the block deposits root hash
+   * @return the block requests root hash
    */
-  public Optional<Hash> getDepositsRoot() {
-    return Optional.ofNullable(depositsRoot);
-  }
-
-  public Optional<Hash> getWithdrawalRequestsRoot() {
-    return Optional.ofNullable(withdrawalRequestsRoot);
+  public Optional<Hash> getRequestsRoot() {
+    return Optional.ofNullable(requestsRoot);
   }
 
   /**
