@@ -25,7 +25,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Block hash operation. */
-public class BlockHashOperation extends AbstractFixedCostOperation {
+public class BlockHashOperation extends AbstractOperation {
 
   /** Frontier maximum relative block delta */
   public static final int MAX_RELATIVE_BLOCK = 256;
@@ -46,24 +46,25 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public BlockHashOperation(final GasCalculator gasCalculator) {
-    super(0x40, "BLOCKHASH", 1, 1, gasCalculator, gasCalculator.getBlockHashOperationGasCost());
+    super(0x40, "BLOCKHASH", 1, 1, gasCalculator);
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
+  public OperationResult execute(MessageFrame frame, EVM evm) {
+  final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
 
     // Short-circuit if value exceeds long
     if (blockArg.size() > MAX_BLOCK_ARG_SIZE) {
       frame.pushStackItem(UInt256.ZERO);
-      return successResponse;
+      return new OperationResult(gasCalculator().getBlockHashOperationGasCost(null), null);
     }
 
     final long soughtBlock = blockArg.toLong();
     final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
     final Hash blockHash = blockHashLookup.apply(frame, soughtBlock);
     frame.pushStackItem(blockHash);
-
-    return successResponse;
+    return new OperationResult(
+            gasCalculator().getBlockHashOperationGasCost(
+            Hash.ZERO.equals(blockHash) ? null : frame), null);
   }
 }

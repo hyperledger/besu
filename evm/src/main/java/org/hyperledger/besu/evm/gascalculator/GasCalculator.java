@@ -347,7 +347,7 @@ public interface GasCalculator {
    *
    * @return the cost for executing the block hash operation
    */
-  long getBlockHashOperationGasCost();
+  long getBlockHashOperationGasCost(MessageFrame frame);
 
   /**
    * Returns the cost for executing a {@link ExpOperation}.

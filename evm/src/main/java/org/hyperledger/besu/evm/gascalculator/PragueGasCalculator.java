@@ -21,6 +21,8 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
+import org.apache.tuweni.units.bigints.UInt256;
+
 /**
  * Gas Calculator for Prague
  *
@@ -32,8 +34,8 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
  * </UL>
  */
 public class PragueGasCalculator extends CancunGasCalculator {
-  private final int AUTH_OP_FIXED_FEE = 3100;
-  private final long AUTH_CALL_VALUE_TRANSFER_GAS_COST = 6700;
+  private static final int AUTH_OP_FIXED_FEE = 3100;
+  private static final long AUTH_CALL_VALUE_TRANSFER_GAS_COST = 6700;
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
@@ -98,5 +100,22 @@ public class PragueGasCalculator extends CancunGasCalculator {
     long cost = staticGasCost + memoryExpansionCost + dynamicGasCost;
 
     return cost;
+  }
+
+  public static final Address HISTORY_STORAGE_ADDRESS =
+      Address.fromHexString("0x25a219378dad9b3503c8268c9ca836a52427a4fb");
+
+  /** The HISTORY_SERVE_WINDOW */
+  public static final long HISTORY_SERVE_WINDOW = 8192;
+
+  @Override
+  public long getBlockHashOperationGasCost(final MessageFrame frame) {
+    if (frame == null) {
+      return super.getBlockHashOperationGasCost(null);
+    } else {
+      UInt256 slot = UInt256.valueOf(frame.getBlockValues().getNumber() % HISTORY_SERVE_WINDOW);
+      return BLOCKHASH_OPERATION_GAS_COST
+          + (frame.warmUpStorage(HISTORY_STORAGE_ADDRESS, slot) ? 0 : getColdSloadCost());
+    }
   }
 }
