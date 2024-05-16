@@ -96,4 +96,19 @@ public interface WithdrawalsValidator {
       return true;
     }
   }
+
+  class NotApplicableWithdrawals implements WithdrawalsValidator {
+
+    private static final Logger LOG = LoggerFactory.getLogger(AllowedWithdrawals.class);
+
+    @Override
+    public boolean validateWithdrawals(final Optional<List<Withdrawal>> withdrawals) {
+      return true;
+    }
+
+    @Override
+    public boolean validateWithdrawalsRoot(final Block block) {
+      return true;
+    }
+  }
 }
