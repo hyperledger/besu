@@ -526,22 +526,8 @@ public class EthPeers {
             });
   }
 
-  private boolean remoteConnectionLimitReached() {
-    return shouldLimitRemoteConnections()
-        && countUntrustedRemotelyInitiatedConnections() >= maxRemotelyInitiatedConnections;
-  }
-
   private boolean shouldLimitRemoteConnections() {
     return maxRemotelyInitiatedConnections < peerUpperBound;
-  }
-
-  private long countUntrustedRemotelyInitiatedConnections() {
-    return completeConnections.values().stream()
-        .map(ep -> ep.getConnection())
-        .filter(c -> c.inboundInitiated())
-        .filter(c -> !c.isDisconnected())
-        .filter(conn -> !canExceedPeerLimits(conn.getPeer().getId()))
-        .count();
   }
 
   private void onCacheRemoval(
@@ -567,10 +553,7 @@ public class EthPeers {
     if (randomPeerPriority || canExceedPeerLimits(id)) {
       // either the incoming peer is a static peer, or
       // randomPeerPriority! Add the peer and if there are too many connections fix it
-      completeConnections.putIfAbsent(id, peer);
-      enforceRemoteConnectionLimits();
-      enforceConnectionLimits();
-      return completeConnections.containsKey(id);
+      return addPeerAndEnforceConnectionLimits(peer, id, connection);
     }
     // otherwise, we need to compare the incoming peer to existing peers
 
@@ -580,17 +563,23 @@ public class EthPeers {
       // favourably
       disconnectWorstUselessPeerIfAtCapacityIncludingConnectingPeer(peer);
     }
-    // Disconnect if too many remotely-initiated connections
-    if (connection.inboundInitiated() && remoteConnectionLimitReached()) {
-      LOG.trace(
-          "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
-          connection,
-          maxRemotelyInitiatedConnections);
-      disconnectWorstIncomingUselessPeer();
-      connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
-      return false;
-    }
-    final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
+    return addPeerAndEnforceConnectionLimits(peer, id, connection);
+  }
+
+  /**
+   * Returns true if this specific peer was added, after connection limits were checked
+   *
+   * @param peer the peer to add
+   * @param id the peer's id
+   * @param connection the peer's connection
+   * @return whether the peer remains added after connection limits are enforced
+   */
+  private boolean addPeerAndEnforceConnectionLimits(
+      final EthPeer peer, final Bytes id, final PeerConnection connection) {
+    completeConnections.putIfAbsent(id, peer);
+    enforceRemoteConnectionLimits();
+    enforceConnectionLimits();
+    final boolean added = completeConnections.containsKey(id);
     if (added) {
       LOG.trace("Added peer {} with connection {} to completeConnections", id, connection);
     } else {
