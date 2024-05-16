@@ -52,10 +52,7 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     super(
         provider.getStorageBySegmentIdentifiers(
             List.of(
-                ACCOUNT_INFO_STATE,
-                CODE_STORAGE,
-                ACCOUNT_STORAGE_STORAGE,
-                VERKLE_TRIE_STORAGE)),
+                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, VERKLE_TRIE_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.VERKLE_TRIE_LOG_STORAGE));
     this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
   }

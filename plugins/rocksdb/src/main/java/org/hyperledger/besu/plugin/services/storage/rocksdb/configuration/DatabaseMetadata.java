@@ -250,7 +250,7 @@ public class DatabaseMetadata {
                         "Unsupported database with format BONSAI and version "
                             + versionedStorageFormat.getVersion());
               };
-          case VERKLE ->
+          case VERKLE, VERKLE_TRANSITION ->
               throw new RuntimeException("invalid storage format for privacy configuration");
         });
   }

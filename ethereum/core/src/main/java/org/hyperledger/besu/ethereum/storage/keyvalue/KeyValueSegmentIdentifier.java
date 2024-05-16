@@ -32,11 +32,15 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
   PRUNING_STATE(new byte[] {5}, EnumSet.of(FOREST)),
-  ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), false, true, false),
+  ACCOUNT_INFO_STATE(
+      new byte[] {6}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), false, true, false),
   CODE_STORAGE(new byte[] {7}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION)),
-  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), false, true, false),
-  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), false, true, false),
-  TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), true, false, true),
+  ACCOUNT_STORAGE_STORAGE(
+      new byte[] {8}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), false, true, false),
+  TRIE_BRANCH_STORAGE(
+      new byte[] {9}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), false, true, false),
+  TRIE_LOG_STORAGE(
+      new byte[] {10}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), true, false, true),
   VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
   // previously supported GoQuorum private states
