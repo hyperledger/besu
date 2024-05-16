@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
@@ -57,12 +58,13 @@ public class SparseTransactions extends AbstractTransactionsLayer {
 
   public SparseTransactions(
       final TransactionPoolConfiguration poolConfig,
+      final EthScheduler ethScheduler,
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BlobCache blobCache) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache);
+    super(poolConfig, ethScheduler, nextLayer, transactionReplacementTester, metrics, blobCache);
     orderByGap = new ArrayList<>(poolConfig.getMaxFutureBySender());
     IntStream.range(0, poolConfig.getMaxFutureBySender())
         .forEach(i -> orderByGap.add(new SendersByPriority()));

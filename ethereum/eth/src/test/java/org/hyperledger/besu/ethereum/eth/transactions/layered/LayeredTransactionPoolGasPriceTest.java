@@ -41,6 +41,7 @@ public class LayeredTransactionPoolGasPriceTest extends AbstractLayeredTransacti
           transactionReplacementTester) {
     return new GasPricePrioritizedTransactions(
         poolConfig,
+        ethScheduler,
         nextLayer,
         txPoolMetrics,
         transactionReplacementTester,
