@@ -327,6 +327,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(this::readGenesisConfigFile);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
+  private final Supplier<MiningParameters> miningParametersSupplier =
+      Suppliers.memoize(this::getMiningParameters);
 
   private RocksDBPlugin rocksDBPlugin;
 
@@ -898,7 +900,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfigurationImpl pluginCommonConfiguration;
-  private MiningParameters miningParameters;
 
   private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
@@ -1354,7 +1355,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 besuController.getProtocolSchedule(),
                 besuController.getProtocolContext().getBlockchain(),
                 besuController.getProtocolContext().getWorldStateArchive(),
-                getMiningParameters()),
+                miningParametersSupplier.get()),
             besuController.getProtocolSchedule()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
@@ -1376,7 +1377,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
       }
 
-      if (Wei.ZERO.compareTo(getMiningParameters().getMinTransactionGasPrice()) < 0
+      if (Wei.ZERO.compareTo(miningParametersSupplier.get().getMinTransactionGasPrice()) < 0
           && (privacyOptionGroup.privateMarkerTransactionSigningKeyPath == null
               && (privacyPluginService == null
                   || privacyPluginService.getPrivateMarkerTransactionFactory() == null))) {
@@ -1846,7 +1847,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         dataDir(),
         dataDir().resolve(DATABASE_PATH),
         getDataStorageConfiguration(),
-        getMiningParameters());
+        miningParametersSupplier.get());
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(network), getDefaultSyncModeIfNotSet())
@@ -1855,7 +1856,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
         .dataDirectory(dataDir())
         .dataStorageConfiguration(getDataStorageConfiguration())
-        .miningParameters(getMiningParameters())
+        .miningParameters(miningParametersSupplier.get())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
@@ -1866,7 +1867,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .isRevertReasonEnabled(isRevertReasonEnabled)
         .storageProvider(storageProvider)
         .gasLimitCalculator(
-            getMiningParameters().getTargetGasLimit().isPresent()
+            miningParametersSupplier.get().getTargetGasLimit().isPresent()
                 ? new FrontierTargetingGasLimitCalculator()
                 : GasLimitCalculator.constant())
         .requiredBlocks(requiredBlocks)
@@ -2159,14 +2160,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       txPoolConfBuilder.priceBump(Percentage.ZERO);
     }
 
-    if (getMiningParameters().getMinTransactionGasPrice().equals(Wei.ZERO)
+    if (miningParametersSupplier.get().getMinTransactionGasPrice().equals(Wei.ZERO)
         && !transactionPoolOptions.isPriceBumpSet(commandLine)) {
       logger.info(
           "Forcing price bump for transaction replacement to 0, since min-gas-price is set to 0");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
     }
 
-    if (getMiningParameters().getMinTransactionGasPrice().lessThan(txPoolConf.getMinGasPrice())) {
+    if (miningParametersSupplier
+        .get()
+        .getMinTransactionGasPrice()
+        .lessThan(txPoolConf.getMinGasPrice())) {
       if (transactionPoolOptions.isMinGasPriceSet(commandLine)) {
         throw new ParameterException(
             commandLine, "tx-pool-min-gas-price cannot be greater than the value of min-gas-price");
@@ -2177,9 +2181,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         // the user of the change
         logger.warn(
             "Forcing tx-pool-min-gas-price="
-                + getMiningParameters().getMinTransactionGasPrice().toDecimalString()
+                + miningParametersSupplier.get().getMinTransactionGasPrice().toDecimalString()
                 + ", since it cannot be greater than the value of min-gas-price");
-        txPoolConfBuilder.minGasPrice(getMiningParameters().getMinTransactionGasPrice());
+        txPoolConfBuilder.minGasPrice(miningParametersSupplier.get().getMinTransactionGasPrice());
       }
     }
 
@@ -2187,13 +2191,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private MiningParameters getMiningParameters() {
-    if (miningParameters == null) {
-      miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
-      miningParameters = miningOptions.toDomainObject();
-      getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
-          .ifPresent(miningParameters::setBlockPeriodSeconds);
-      initMiningParametersMetrics(miningParameters);
-    }
+    miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
+    final var miningParameters = miningOptions.toDomainObject();
+    getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
+        .ifPresent(miningParameters::setBlockPeriodSeconds);
+    initMiningParametersMetrics(miningParameters);
     return miningParameters;
   }
 
@@ -2569,8 +2571,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
         effectivePorts,
-        getMiningParameters().getStratumPort(),
-        getMiningParameters().isStratumMiningEnabled());
+        miningParametersSupplier.get().getStratumPort(),
+        miningParametersSupplier.get().isStratumMiningEnabled());
     return effectivePorts;
   }
 
