@@ -183,8 +183,8 @@ public class TrieLogSubCommand implements Runnable {
             dbPath,
             (rocksdb, cfHandle) -> {
               try {
-                if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId()) ||
-                    Arrays.equals(cfHandle.getName(), VERKLE_TRIE_LOG_STORAGE.getId()) ) {
+                if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())
+                    || Arrays.equals(cfHandle.getName(), VERKLE_TRIE_LOG_STORAGE.getId())) {
 
                   final long sstSize =
                       Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size"));

@@ -88,8 +88,11 @@ public class KeyValueStorageProvider implements StorageProvider {
       return new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration);
     } else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.VERKLE)) {
       return new VerkleWorldStateKeyValueStorage(this, metricsSystem);
-    } else if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.VERKLE_TRANSITION)) {
-      return new VerkleTransitionWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration);
+    } else if (dataStorageConfiguration
+        .getDataStorageFormat()
+        .equals(DataStorageFormat.VERKLE_TRANSITION)) {
+      return new VerkleTransitionWorldStateKeyValueStorage(
+          this, metricsSystem, dataStorageConfiguration);
     } else {
       return new ForestWorldStateKeyValueStorage(
           getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.WORLD_STATE));

@@ -25,6 +25,7 @@ dependencies {
   implementation project(':services:kvstore')
   implementation project(':testutil')
   implementation project(':util')
+  implementation project(':ethereum:trie')
 
   implementation 'com.google.guava:guava'
   implementation 'com.google.dagger:dagger'

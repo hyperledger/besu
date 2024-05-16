@@ -178,7 +178,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                   metricsSystem,
                   rocksDBMetricsFactory);
         }
-        case VERKLE -> {
+        case VERKLE, VERKLE_TRANSITION -> {
           LOG.debug("VERKLE mode detected, Using OptimisticTransactionDB.");
           segmentedStorage =
               new OptimisticRocksDBColumnarKeyValueStorage(

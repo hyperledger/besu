@@ -255,6 +255,7 @@ public class EngineExchangeTransitionConfigurationTest {
         null,
         null,
         null,
+        null,
         new BlockHeaderFunctions() {
           @Override
           public Hash hash(final BlockHeader header) {

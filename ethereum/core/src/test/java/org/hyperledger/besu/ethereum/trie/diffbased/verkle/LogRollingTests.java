@@ -208,7 +208,8 @@ class LogRollingTests {
     secondTrieBranchStorage =
         secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
     secondTrieLogStorage =
-        secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.VERKLE_TRIE_LOG_STORAGE);
+        secondProvider.getStorageBySegmentIdentifier(
+            KeyValueSegmentIdentifier.VERKLE_TRIE_LOG_STORAGE);
   }
 
   @Test

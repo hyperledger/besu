@@ -1,7 +1,5 @@
 package org.hyperledger.besu.ethereum.trie.diffbased.transition;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.units.bigints.UInt256;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -15,8 +13,11 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
 
-public class VerkleTransitionWorldStateProvider implements WorldStateArchive,
-    VerkleTransitionContext.VerkleTransitionSubscriber {
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt256;
+
+public class VerkleTransitionWorldStateProvider
+    implements WorldStateArchive, VerkleTransitionContext.VerkleTransitionSubscriber {
   @Override
   public Optional<WorldState> get(final Hash rootHash, final Hash blockHash) {
     return Optional.empty();
@@ -28,8 +29,8 @@ public class VerkleTransitionWorldStateProvider implements WorldStateArchive,
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(final BlockHeader blockHeader,
-      final boolean isPersistingState) {
+  public Optional<MutableWorldState> getMutable(
+      final BlockHeader blockHeader, final boolean isPersistingState) {
     return Optional.empty();
   }
 
@@ -44,9 +45,7 @@ public class VerkleTransitionWorldStateProvider implements WorldStateArchive,
   }
 
   @Override
-  public void resetArchiveStateTo(final BlockHeader blockHeader) {
-
-  }
+  public void resetArchiveStateTo(final BlockHeader blockHeader) {}
 
   @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
@@ -54,16 +53,16 @@ public class VerkleTransitionWorldStateProvider implements WorldStateArchive,
   }
 
   @Override
-  public <U> Optional<U> getAccountProof(final BlockHeader blockHeader,
-      final Address accountAddress, final List<UInt256> accountStorageKeys,
+  public <U> Optional<U> getAccountProof(
+      final BlockHeader blockHeader,
+      final Address accountAddress,
+      final List<UInt256> accountStorageKeys,
       final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper) {
     return Optional.empty();
   }
 
   @Override
-  public void close() throws IOException {
-
-  }
+  public void close() throws IOException {}
 
   @Override
   public void onTransitionStarted() {
@@ -79,5 +78,4 @@ public class VerkleTransitionWorldStateProvider implements WorldStateArchive,
   public void onTransitionFinalized() {
     // TODO: write me
   }
-
 }

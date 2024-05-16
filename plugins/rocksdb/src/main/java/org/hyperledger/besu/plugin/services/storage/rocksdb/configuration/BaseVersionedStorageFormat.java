@@ -84,7 +84,7 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
           configuration.getReceiptCompactionEnabled()
               ? BONSAI_WITH_RECEIPT_COMPACTION
               : BONSAI_WITH_VARIABLES;
-      case VERKLE ->
+      case VERKLE, VERKLE_TRANSITION ->
           configuration.getReceiptCompactionEnabled()
               ? VERKLE_WITH_RECEIPT_COMPACTION
               : VERKLE_WITH_VARIABLES;

@@ -9,14 +9,18 @@ import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.atomic.AtomicReference;
 
-public class VerkleTransitionWorldStateKeyValueStorage implements WorldStateKeyValueStorage,
-    VerkleTransitionContext.VerkleTransitionSubscriber, AutoCloseable {
-  final static Logger LOG = LoggerFactory.getLogger(VerkleTransitionWorldStateKeyValueStorage.class);
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+public class VerkleTransitionWorldStateKeyValueStorage
+    implements WorldStateKeyValueStorage,
+        VerkleTransitionContext.VerkleTransitionSubscriber,
+        AutoCloseable {
+  private static final Logger LOG =
+      LoggerFactory.getLogger(VerkleTransitionWorldStateKeyValueStorage.class);
 
   final BonsaiWorldStateKeyValueStorage bonsaiKeyValueStorage;
   final VerkleWorldStateKeyValueStorage verkleKeyValueStorage;
@@ -27,15 +31,16 @@ public class VerkleTransitionWorldStateKeyValueStorage implements WorldStateKeyV
   public VerkleTransitionWorldStateKeyValueStorage(
       final StorageProvider provider,
       final MetricsSystem metricsSystem,
-      final DataStorageConfiguration dataStorageConfiguration,
-      final VerkleTransitionContext transitionContext) {
-    this.bonsaiKeyValueStorage = new BonsaiWorldStateKeyValueStorage(provider, metricsSystem, dataStorageConfiguration);
+      final DataStorageConfiguration dataStorageConfiguration) {
+    this.bonsaiKeyValueStorage =
+        new BonsaiWorldStateKeyValueStorage(provider, metricsSystem, dataStorageConfiguration);
     this.verkleKeyValueStorage = new VerkleWorldStateKeyValueStorage(provider, metricsSystem);
-    this.transitionContext = transitionContext;
+    this.transitionContext = dataStorageConfiguration.getVerkleTransitionContext().orElseThrow();
     // initialize with bonsai, rely on subscriber to update this:
     this.activeWorldStateStorage = new AtomicReference<>(bonsaiKeyValueStorage);
     this.subscriberId = transitionContext.subscribe(this);
   }
+
   @Override
   public void close() throws Exception {
     // TODO: it might be safer to close the storage directly
@@ -51,8 +56,13 @@ public class VerkleTransitionWorldStateKeyValueStorage implements WorldStateKeyV
 
   @Override
   public Updater updater() {
-    //TODO: create/return a transition-aware composed Updater
-    return null;
+    if (transitionContext.isBeforeTransition()) {
+      // pre-transition send bonsai
+      return bonsaiKeyValueStorage.updater();
+    } else {
+      // post transition send verkle
+      return verkleKeyValueStorage.updater();
+    }
   }
 
   @Override
@@ -61,33 +71,27 @@ public class VerkleTransitionWorldStateKeyValueStorage implements WorldStateKeyV
     verkleKeyValueStorage.clear();
   }
 
-  /**
-   * On transition started, switch active storage to verkle.
-   */
+  /** On transition started, switch active storage to verkle. */
   @Override
   public void onTransitionStarted() {
     activeWorldStateStorage.set(verkleKeyValueStorage);
   }
 
-  /**
-   *  On transition reverted, revert to bonsai active storage, and truncate verkle storage.
-   */
+  /** On transition reverted, revert to bonsai active storage, and truncate verkle storage. */
   @Override
   public void onTransitionReverted() {
     activeWorldStateStorage.set(bonsaiKeyValueStorage);
     // truncate verkle trie if we are transitioning back (due to a reorg perhaps)
     verkleKeyValueStorage.clear();
+    verkleKeyValueStorage.clearTrieLog();
     LOG.info("Truncated verkle trie on transition revert");
   }
 
-
-  /**
-   * Truncate bonsai trie on transition finalized.
-   */
+  /** Truncate bonsai trie on transition finalized. */
   @Override
   public void onTransitionFinalized() {
     bonsaiKeyValueStorage.clear();
+    bonsaiKeyValueStorage.clearTrieLog();
     LOG.info("Truncated bonsai trie on transition complete");
   }
-
 }

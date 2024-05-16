@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.dsl;
 import static org.hyperledger.besu.datatypes.Hash.fromHexString;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
@@ -53,12 +54,13 @@ public class BlockUtils {
         null,
         mixHash,
         new BigInteger(block.getNonceRaw().substring(2), 16).longValue(),
-        null,
-        null,
-        null,
-        null,
-        null,
-        null,
+        Hash.fromHexString(block.getWithdrawalsRoot()),
+        block.getBlobGasUsed().longValue(),
+        BlobGas.of(block.getExcessBlobGas()),
+        Hash.fromHexString(block.getParentBeaconBlockRoot()),
+        null, // block.getDepositsRoot(),
+        null, // block.getExitsRoot(),
+        null, // block.getExecutionWitness()
         blockHeaderFunctions);
   }
 }
