@@ -149,7 +149,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               protocolContext,
               protocolSchedule,
               parentHeader,
-              depositContractAddress,
               ethScheduler);
         };
 
