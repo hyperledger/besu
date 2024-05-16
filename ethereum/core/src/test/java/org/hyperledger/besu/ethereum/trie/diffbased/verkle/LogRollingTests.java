@@ -198,7 +198,7 @@ class LogRollingTests {
     trieBranchStorage =
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
     trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.VERKLE_TRIE_LOG_STORAGE);
 
     secondProvider = new InMemoryKeyValueStorageProvider();
     secondArchive =
@@ -213,7 +213,7 @@ class LogRollingTests {
     secondTrieBranchStorage =
         secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE);
     secondTrieLogStorage =
-        secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
+        secondProvider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.VERKLE_TRIE_LOG_STORAGE);
   }
 
   @Test

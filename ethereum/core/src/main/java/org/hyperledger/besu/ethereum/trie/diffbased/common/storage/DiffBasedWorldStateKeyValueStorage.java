@@ -66,15 +66,6 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   protected final SegmentedKeyValueStorage composedWorldStateStorage;
   protected final KeyValueStorage trieLogStorage;
 
-  public DiffBasedWorldStateKeyValueStorage(final StorageProvider provider) {
-    this.composedWorldStateStorage =
-        provider.getStorageBySegmentIdentifiers(
-            List.of(
-                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE));
-    this.trieLogStorage =
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE);
-  }
-
   public DiffBasedWorldStateKeyValueStorage(
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
