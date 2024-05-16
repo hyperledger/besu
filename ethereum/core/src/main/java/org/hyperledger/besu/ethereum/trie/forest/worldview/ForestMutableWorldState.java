@@ -419,7 +419,7 @@ public class ForestMutableWorldState implements MutableWorldState {
       }
 
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
-        LOG.info(": getUpdatedAccounts");
+        LOG.info("{} : getUpdatedAccounts {}", Thread.currentThread(), getUpdatedAccounts().size());
 
         final WorldStateAccount origin = updated.getWrappedAccount();
 
@@ -483,14 +483,14 @@ public class ForestMutableWorldState implements MutableWorldState {
                   new BytesValueRLPInput(
                       wrapped.accountStateTrie.get(updated.getAddressHash()).get(), false, true));
           LOG.info(
-              "Update : previous account code : {}, balance : {}, nonce : {} , {}",
-              previousAccount.getCodeHash(),
+              "Update : previous account code : {}, balance : {}, nonce : {} , address: {}",
+              previousAccount.getStorageRoot(),
               previousAccount.getBalance(),
               previousAccount.getNonce(),
-              updated.getAddress());
+              updated.getAddressHash());
         }
         LOG.info(
-            "Update : updated account code : {}, balance : {}, nonce : {} ,{}",
+            "Update : updated account code : {}, balance : {}, nonce : {} , address: {}",
             codeHash,
             updated.getBalance(),
             updated.getNonce(),
@@ -501,36 +501,88 @@ public class ForestMutableWorldState implements MutableWorldState {
 
     @Override
     public void commitPrivateNonce() {
+      LOG.info("{} : commitPrivateNonce", this.getClass().getName());
+
       final ForestMutableWorldState wrapped = wrappedWorldView();
-      // get updated  accounts
+
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
-        //        final WorldStateAccount origin = updated.getWrappedAccount();
+        LOG.info("{} : getUpdatedAccounts {}", Thread.currentThread(), getUpdatedAccounts().size());
 
-        Optional<Bytes> existingState = wrapped.accountStateTrie.get(updated.getAddressHash());
+        final WorldStateAccount origin = updated.getWrappedAccount();
 
-        // update account in accountStateTrie
-        if (existingState.isPresent()) {
-          wrapped.accountStateTrie.remove(updated.getAddressHash());
+        // Save the code in key-value storage ...
+        Hash codeHash = origin == null ? Hash.EMPTY : origin.getCodeHash();
+        if (updated.codeWasUpdated()) {
+          LOG.info(": codeWasUpdated {} ", updated.getAddress());
 
-          StateTrieAccountValue previousAccount =
-              StateTrieAccountValue.readFrom(
-                  new BytesValueRLPInput(existingState.get(), false, true));
-
-          final Bytes account =
-              serializeAccount(
-                  updated.getNonce(),
-                  previousAccount.getBalance(),
-                  previousAccount.getStorageRoot(),
-                  previousAccount.getCodeHash());
-
-          wrapped.accountStateTrie.put(updated.getAddressHash(), account);
-
-          return;
+          codeHash = Hash.hash(updated.getCode());
+          wrapped.updatedAccountCode.put(updated.getAddress(), updated.getCode());
         }
-        // store new nonce
-      }
+        // ...and storage in the account trie first.
+        final boolean freshState = origin == null || updated.getStorageWasCleared();
+        Hash storageRoot = freshState ? Hash.EMPTY_TRIE_HASH : origin.getStorageRoot();
+        if (freshState) {
+          LOG.info(": freshState {}", updated.getAddress());
 
-      //
+          wrapped.updatedStorageTries.remove(updated.getAddress());
+        }
+        final Map<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
+        if (!updatedStorage.isEmpty()) {
+          LOG.info(": isEmpty {}", updated.getAddress());
+
+          // Apply any storage updates
+          final MerkleTrie<Bytes32, Bytes> storageTrie =
+              freshState
+                  ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
+                  : origin.storageTrie();
+          wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
+          final TreeSet<Map.Entry<UInt256, UInt256>> entries =
+              new TreeSet<>(Map.Entry.comparingByKey());
+          entries.addAll(updatedStorage.entrySet());
+
+          for (final Map.Entry<UInt256, UInt256> entry : entries) {
+            final UInt256 value = entry.getValue();
+            final Hash keyHash = Hash.hash(entry.getKey());
+            if (value.isZero()) {
+              LOG.info(": isZero {}", updated.getAddress());
+
+              storageTrie.remove(keyHash);
+            } else {
+              LOG.info(": else {}", updated.getAddress());
+
+              wrapped.newStorageKeyPreimages.put(keyHash, entry.getKey());
+              storageTrie.put(
+                  keyHash, RLP.encode(out -> out.writeBytes(entry.getValue().toMinimalBytes())));
+            }
+          }
+          storageRoot = Hash.wrap(storageTrie.getRootHash());
+        }
+
+        // Save address preimage
+        wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
+        // Lastly, save the new account.
+        StateTrieAccountValue previousAccount =
+            StateTrieAccountValue.readFrom(
+                new BytesValueRLPInput(
+                    wrapped.accountStateTrie.get(updated.getAddressHash()).get(), false, true));
+        final Bytes account =
+            serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
+
+        LOG.info(
+            "Update : previous account code : {}, balance : {}, nonce : {} , address: {}",
+            previousAccount.getStorageRoot(),
+            previousAccount.getBalance(),
+            previousAccount.getNonce(),
+            updated.getAddressHash());
+
+        LOG.info(
+            "Update : updated account code : {}, balance : {}, nonce : {} , address: {}",
+            codeHash,
+            updated.getBalance(),
+            updated.getNonce(),
+            updated.getAddress());
+        wrapped.accountStateTrie.put(updated.getAddressHash(), account);
+      }
     }
 
     private static Bytes serializeAccount(
