@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.cli.subcommands.storage.RocksDbHelper.formatOutputSize;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_LOG_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VERKLE_TRIE_LOG_STORAGE;
 
 import org.hyperledger.besu.cli.util.VersionProvider;
 import org.hyperledger.besu.controller.BesuController;
@@ -182,7 +183,8 @@ public class TrieLogSubCommand implements Runnable {
             dbPath,
             (rocksdb, cfHandle) -> {
               try {
-                if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId())) {
+                if (Arrays.equals(cfHandle.getName(), TRIE_LOG_STORAGE.getId()) ||
+                    Arrays.equals(cfHandle.getName(), VERKLE_TRIE_LOG_STORAGE.getId()) ) {
 
                   final long sstSize =
                       Long.parseLong(rocksdb.getProperty(cfHandle, "rocksdb.total-sst-files-size"));

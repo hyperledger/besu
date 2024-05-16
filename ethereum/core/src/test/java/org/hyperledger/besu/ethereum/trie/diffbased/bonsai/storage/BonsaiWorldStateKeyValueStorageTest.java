@@ -508,7 +508,7 @@ public class BonsaiWorldStateKeyValueStorageTest {
       final KeyValueStorage mockTrieLogStorage) {
     final StorageProvider mockStorageProvider = spy(new InMemoryKeyValueStorageProvider());
     when(mockStorageProvider.getStorageBySegmentIdentifier(
-            KeyValueSegmentIdentifier.TRIE_LOG_STORAGE))
+            KeyValueSegmentIdentifier.VERKLE_TRIE_LOG_STORAGE))
         .thenReturn(mockTrieLogStorage);
 
     return new BonsaiWorldStateKeyValueStorage(

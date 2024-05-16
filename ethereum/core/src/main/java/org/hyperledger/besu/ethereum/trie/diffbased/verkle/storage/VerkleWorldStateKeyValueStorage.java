@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VERKLE_TRIE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
@@ -52,8 +52,11 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     super(
         provider.getStorageBySegmentIdentifiers(
             List.of(
-                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
-        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
+                ACCOUNT_INFO_STATE,
+                CODE_STORAGE,
+                ACCOUNT_STORAGE_STORAGE,
+                VERKLE_TRIE_STORAGE)),
+        provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.VERKLE_TRIE_LOG_STORAGE));
     this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
   }
 
@@ -165,22 +168,22 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     @Override
     public Updater saveWorldState(final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
+          VERKLE_TRIE_STORAGE, Bytes.EMPTY.toArrayUnsafe(), node.toArrayUnsafe());
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
+          VERKLE_TRIE_STORAGE, WORLD_ROOT_HASH_KEY, nodeHash.toArrayUnsafe());
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
+          VERKLE_TRIE_STORAGE, WORLD_BLOCK_HASH_KEY, blockHash.toArrayUnsafe());
       return this;
     }
 
     public Updater putStateTrieNode(final Bytes location, final Bytes node) {
       composedWorldStateTransaction.put(
-          TRIE_BRANCH_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
+          VERKLE_TRIE_STORAGE, location.toArrayUnsafe(), node.toArrayUnsafe());
       return this;
     }
 
     public Updater removeStateTrieNode(final Bytes location) {
-      composedWorldStateTransaction.remove(TRIE_BRANCH_STORAGE, location.toArrayUnsafe());
+      composedWorldStateTransaction.remove(VERKLE_TRIE_STORAGE, location.toArrayUnsafe());
       return this;
     }
 

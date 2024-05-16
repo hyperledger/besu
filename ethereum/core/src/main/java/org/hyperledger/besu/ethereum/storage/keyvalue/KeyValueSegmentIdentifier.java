@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.storage.keyvalue;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.FOREST;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.VERKLE;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.VERKLE_TRANSITION;
 
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -31,11 +32,11 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
   PRUNING_STATE(new byte[] {5}, EnumSet.of(FOREST)),
-  ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI, VERKLE), false, true, false),
-  CODE_STORAGE(new byte[] {7}, EnumSet.of(BONSAI, VERKLE)),
-  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI, VERKLE), false, true, false),
-  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI, VERKLE), false, true, false),
-  TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI, VERKLE), true, false, true),
+  ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), false, true, false),
+  CODE_STORAGE(new byte[] {7}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION)),
+  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), false, true, false),
+  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), false, true, false),
+  TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI, VERKLE, VERKLE_TRANSITION), true, false, true),
   VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
   // previously supported GoQuorum private states
@@ -47,7 +48,9 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   BACKWARD_SYNC_CHAIN(new byte[] {15}),
   SNAPSYNC_MISSING_ACCOUNT_RANGE(new byte[] {16}),
   SNAPSYNC_ACCOUNT_TO_FIX(new byte[] {17}),
-  CHAIN_PRUNER_STATE(new byte[] {18});
+  CHAIN_PRUNER_STATE(new byte[] {18}),
+  VERKLE_TRIE_STORAGE(new byte[] {19}, EnumSet.of(VERKLE, VERKLE_TRANSITION)),
+  VERKLE_TRIE_LOG_STORAGE(new byte[] {20}, EnumSet.of(VERKLE, VERKLE_TRANSITION));
 
   private final byte[] id;
   private final EnumSet<DataStorageFormat> formats;
