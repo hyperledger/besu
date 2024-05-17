@@ -28,6 +28,7 @@ public class TimestampValidationRuleTest {
 
   @Test
   public void headerTimestampSufficientlyFarIntoFutureVadidatesSuccessfully() {
+    System.out.println("Running headerTimestampSufficientlyFarIntoFutureVadidatesSuccessfully");
     final TimestampBoundedByFutureParameter uut00 = new TimestampBoundedByFutureParameter(0);
     final TimestampMoreRecentThanParent uut01 = new TimestampMoreRecentThanParent(10);
 
@@ -46,12 +47,14 @@ public class TimestampValidationRuleTest {
 
   @Test
   public void headerTimestampDifferenceMustBePositive() {
+    System.out.println("Running headerTimestampDifferenceMustBePositive");
     Assertions.assertThatThrownBy(() -> new TimestampMoreRecentThanParent(-1))
         .hasMessage("minimumSecondsSinceParent must be positive");
   }
 
   @Test
   public void headerTimestampTooCloseToParentFailsValidation() {
+    System.out.println("Running headerTimestampTooCloseToParentFailsValidation");
     final TimestampBoundedByFutureParameter uut00 = new TimestampBoundedByFutureParameter(0);
     final TimestampMoreRecentThanParent uut01 = new TimestampMoreRecentThanParent(10);
 
@@ -70,6 +73,7 @@ public class TimestampValidationRuleTest {
 
   @Test
   public void headerTimestampIsBehindParentFailsValidation() {
+    System.out.println("Running headerTimestampIsBehindParentFailsValidation");
     final TimestampBoundedByFutureParameter uut00 = new TimestampBoundedByFutureParameter(0);
     final TimestampMoreRecentThanParent uut01 = new TimestampMoreRecentThanParent(10);
 
@@ -88,6 +92,7 @@ public class TimestampValidationRuleTest {
 
   @Test
   public void headerNewerThanCurrentSystemFailsValidation() {
+    System.out.println("Running headerNewerThanCurrentSystemFailsValidation");
     final long acceptableClockDrift = 5;
 
     final TimestampBoundedByFutureParameter uut00 =
