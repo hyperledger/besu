@@ -60,7 +60,8 @@ public class CachingBlockHashLookup implements BlockHashLookup {
   @Override
   public Hash apply(final MessageFrame frame, final Long blockNumber) {
     long currentBlockNumber = frame.getBlockValues().getNumber();
-    if (currentBlockNumber <= blockNumber || currentBlockNumber - blockNumber > maxLookback) {
+    long lookback = currentBlockNumber - blockNumber;
+    if (currentBlockNumber <= blockNumber || lookback > maxLookback) {
       return Hash.ZERO;
     }
     final Hash cachedHash = hashByNumber.get(blockNumber);
