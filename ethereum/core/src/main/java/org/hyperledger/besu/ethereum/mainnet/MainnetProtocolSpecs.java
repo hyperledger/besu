@@ -770,8 +770,7 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .requestsValidator(pragueRequestsValidator(depositContractAddress))
         .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
-        .blockHashProcessor(
-            new PragueBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
+        .blockHashProcessor(new PragueBlockHashProcessor())
         .name("Prague");
   }
 

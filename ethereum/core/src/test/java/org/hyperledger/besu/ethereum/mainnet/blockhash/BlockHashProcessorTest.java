@@ -42,7 +42,7 @@ class BlockHashProcessorTest {
   private MutableAccount account;
   private BlockHashProcessor processor;
 
-  private long historicalWindow = 8192;
+  private final long historicalWindow = 255;
 
   @BeforeEach
   void setUp() {
@@ -57,9 +57,8 @@ class BlockHashProcessorTest {
 
   @Test
   void shouldStoreParentBlockHash() {
-    long forkTimestamp = 0;
     long currentBlock = 3;
-    processor = new PragueBlockHashProcessor(forkTimestamp);
+    processor = new PragueBlockHashProcessor();
     BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
     mockAncestorHeaders(currentBlockHeader, 3);
     processor.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
@@ -72,9 +71,8 @@ class BlockHashProcessorTest {
   void shouldNotStoreBlockHashForGenesisBlock() {
     //  For the fork to be activated at genesis, no history is written to the genesis state, and at
     // the start of block 1, genesis hash will be written as a normal operation to slot 0.
-    long forkTimestamp = 0;
     long currentBlock = 0;
-    processor = new PragueBlockHashProcessor(forkTimestamp);
+    processor = new PragueBlockHashProcessor();
     BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
     mockAncestorHeaders(currentBlockHeader, 0);
 
@@ -86,9 +84,8 @@ class BlockHashProcessorTest {
   void shouldStoreAncestorBlockHashesAtForkCorrectlyParentIsGenesis() {
     // for activation at block 1, only genesis hash will be written at slot 0 as there is no
     // additional history that needs to be persisted.
-    long forkTimestamp = 1;
     long currentBlock = 1;
-    processor = new PragueBlockHashProcessor(forkTimestamp);
+    processor = new PragueBlockHashProcessor();
     BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
     mockAncestorHeaders(currentBlockHeader, 10);
 
@@ -98,45 +95,8 @@ class BlockHashProcessorTest {
   }
 
   @Test
-  void shouldStoreAncestorBlockHashesAtForkCorrectly() {
-    // for activation at block 32, block 31’s hash will be written to slot 31 and additional history
-    // for 0..30’s hashes will be persisted, so all in all 0..31’s hashes.
-    long forkTimestamp = 32;
-    long currentBlock = 32;
-    processor = new PragueBlockHashProcessor(forkTimestamp);
-    BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
-    mockAncestorHeaders(currentBlockHeader, 32);
-
-    processor.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
-    verifyAncestor(currentBlock, 32, historicalWindow);
-  }
-
-  @Test
-  void shouldStoreAncestorBlockHashesAtForkCorrectlyMaxWindows() {
-    long forkTimestamp = 10000;
-    long currentBlock = 10000;
-    historicalWindow = 8192;
-    processor =
-        new PragueBlockHashProcessor(
-            forkTimestamp, PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS, historicalWindow);
-    BlockHeader currentBlockHeader = mockBlockHeader(currentBlock);
-    mockAncestorHeaders(currentBlockHeader, 10000);
-    processor.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
-
-    // Total of historicalWindow hashes were stored
-    verify(account, times((int) historicalWindow)).setStorageValue(any(), any());
-
-    // for activation at block 10000, block 1808-9999’s hashes will be presisted in the slot
-    verifyAccount(1808, historicalWindow);
-    verifyAccount(9999, historicalWindow);
-    // BLOCKHASH for 1807 or less would resolve to 0 as only HISTORY_SERVE_WINDOW are persisted.
-    verifyAccountNoIteraction(1807, historicalWindow);
-    verifyAccountNoIteraction(10000, historicalWindow);
-  }
-
-  @Test
   void shouldWriteGenesisHashAtSlot0() {
-    processor = new PragueBlockHashProcessor(0);
+    processor = new PragueBlockHashProcessor();
     BlockHeader header = mockBlockHeader(1);
     mockAncestorHeaders(header, 1);
     processor.processBlockHashes(blockchain, mutableWorldState, header);
@@ -144,23 +104,8 @@ class BlockHashProcessorTest {
         .setStorageValue(UInt256.valueOf(0), UInt256.fromHexString(Hash.ZERO.toHexString()));
   }
 
-  private void verifyAncestor(
-      final long blockNumber, final int count, final long historicalWindow) {
-    int totalTouchedSlots = (int) (blockNumber - count <= 0 ? blockNumber : count);
-    long firstAncestor = Math.max(blockNumber - count - 1, 0);
-    verify(account, times(totalTouchedSlots)).setStorageValue(any(), any());
-    for (long i = firstAncestor; i < blockNumber; i++) {
-      verifyAccount(i, historicalWindow);
-    }
-  }
-
   private void verifyAccount(final long number, final long historicalWindow) {
     verify(account)
-        .setStorageValue(UInt256.valueOf(number % historicalWindow), UInt256.valueOf(number));
-  }
-
-  private void verifyAccountNoIteraction(final long number, final long historicalWindow) {
-    verify(account, times(0))
         .setStorageValue(UInt256.valueOf(number % historicalWindow), UInt256.valueOf(number));
   }
 
