@@ -101,13 +101,13 @@ public class TimestampValidationRuleTest {
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
-    // Create Parent Header @ 'now'
-    headerBuilder.timestamp(
-        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
+    // Create Parent Header with a fixed reference time
+    long fixedReferenceTime = 100000; // This represents a fixed point in time for the test
+    headerBuilder.timestamp(fixedReferenceTime);
     final BlockHeader parent = headerBuilder.buildHeader();
 
     // Create header for validation with a timestamp in the future (1 second too far away)
-    headerBuilder.timestamp(parent.getTimestamp() + acceptableClockDrift + 1);
+    headerBuilder.timestamp(fixedReferenceTime + acceptableClockDrift + 1);
     final BlockHeader header = headerBuilder.buildHeader();
 
     assertThat(uut00.validate(header, parent)).isFalse();
