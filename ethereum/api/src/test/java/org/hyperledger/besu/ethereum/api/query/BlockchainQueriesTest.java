@@ -507,6 +507,9 @@ public class BlockchainQueriesTest {
     assertThat(retrievedOmmerBlockHeader).isEqualTo(ommerBlockHeader);
   }
 
+  @Test
+  public void getGasPriceLowerBound() {}
+
   private void assertBlockMatchesResult(
       final Block targetBlock, final BlockWithMetadata<TransactionWithMetadata, Hash> result) {
     assertThat(result.getHeader()).isEqualTo(targetBlock.getHeader());
@@ -600,13 +603,5 @@ public class BlockchainQueriesTest {
     }
   }
 
-  private static class BlockData {
-    final Block block;
-    final List<TransactionReceipt> receipts;
-
-    private BlockData(final Block block, final List<TransactionReceipt> receipts) {
-      this.block = block;
-      this.receipts = receipts;
-    }
-  }
+  private record BlockData(Block block, List<TransactionReceipt> receipts) {}
 }

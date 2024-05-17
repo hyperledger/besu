@@ -982,7 +982,8 @@ public class BlockchainQueries {
         protocolSchedule.getForNextBlockHeader(chainHeadHeader, System.currentTimeMillis());
     final var nextBlockFeeMarket = nextBlockProtocolSpec.getFeeMarket();
     final Wei[] gasCollection =
-        LongStream.range(Math.max(0, blockHeight - apiConfig.getGasPriceBlocks()), blockHeight)
+        LongStream.rangeClosed(
+                Math.max(0, blockHeight - apiConfig.getGasPriceBlocks() + 1), blockHeight)
             .mapToObj(
                 l ->
                     blockchain
@@ -1011,7 +1012,7 @@ public class BlockchainQueries {
   /**
    * Return the min gas required for a tx to be mineable. On networks with gas price fee market it
    * is just the minGasPrice, while on networks with base fee market it is the max between the
-   * minGasPrice and the baseFee for the next block + minPriorityFeePerGas.
+   * minGasPrice and the baseFee for the next block.
    *
    * @return the min gas required for a tx to be mineable.
    */
@@ -1029,9 +1030,7 @@ public class BlockchainQueries {
 
     if (nextBlockFeeMarket.implementsBaseFee()) {
       return UInt256s.max(
-          getNextBlockBaseFee(chainHeadHeader, (BaseFeeMarket) nextBlockFeeMarket)
-              .add(miningParameters.getMinPriorityFeePerGas()),
-          minGasPrice);
+          getNextBlockBaseFee(chainHeadHeader, (BaseFeeMarket) nextBlockFeeMarket), minGasPrice);
     }
 
     return minGasPrice;
