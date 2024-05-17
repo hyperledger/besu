@@ -21,8 +21,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
-import org.apache.tuweni.units.bigints.UInt256;
-
 /**
  * Gas Calculator for Prague
  *
@@ -108,17 +106,4 @@ public class PragueGasCalculator extends CancunGasCalculator {
 
   /** The HISTORY_SERVE_WINDOW */
   public static final long HISTORY_SERVE_WINDOW = 8192;
-
-  @Override
-  public long getBlockHashOperationGasCost(final MessageFrame frame) {
-    if (frame == null) {
-      return super.getBlockHashOperationGasCost(null);
-    } else {
-      UInt256 slot = UInt256.valueOf(frame.getBlockValues().getNumber() % HISTORY_SERVE_WINDOW);
-      return BLOCKHASH_OPERATION_GAS_COST
-          + (frame.warmUpStorage(HISTORY_STORAGE_ADDRESS, slot)
-              ? getWarmStorageReadCost()
-              : getColdSloadCost());
-    }
-  }
 }

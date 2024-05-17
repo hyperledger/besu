@@ -84,7 +84,6 @@ class MainnetTransactionProcessorTest {
         messageCallProcessor,
         false,
         warmCoinbase,
-        false,
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
         CoinbaseFeePriceCalculator.frontier());
