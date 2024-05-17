@@ -23,6 +23,7 @@ import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -44,14 +45,22 @@ import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.io.IOException;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
 import java.util.Deque;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.common.collect.HashMultimap;
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Multimap;
+import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
@@ -469,10 +478,6 @@ public class MainnetTransactionProcessor {
           .addArgument(sender.getBalance().toShortHexString())
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
-      LOG.info(
-          "Gas used by transaction({}): {}",
-          transaction.getHash().toShortHexString(),
-          gasUsedByTransaction);
       operationTracer.traceEndTransaction(
           worldUpdater,
           transaction,
@@ -481,6 +486,8 @@ public class MainnetTransactionProcessor {
           initialFrame.getLogs(),
           gasUsedByTransaction,
           0L);
+
+      // checkTransactionGas(transaction.getHash(), gasUsedByTransaction);
 
       // update the coinbase
       final var coinbase = worldState.getOrCreate(miningBeneficiary);
@@ -549,6 +556,43 @@ public class MainnetTransactionProcessor {
           ValidationResult.invalid(
               TransactionInvalidReason.INTERNAL_ERROR,
               "Internal Error in Besu - " + re + "\n" + printableStackTraceFromThrowable(re)));
+    }
+  }
+
+  public static void checkTransactionGas(final Hash transactionHash, final long expectedGas) {
+    String url =
+        "https://rpc.verkle-gen-devnet-6.ethpandaops.io/x/eth_getTransactionReceipt/"
+            + transactionHash.toHexString();
+    HttpClient client = HttpClient.newHttpClient();
+    HttpRequest request = HttpRequest.newBuilder().uri(URI.create(url)).GET().build();
+
+    try {
+      HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+      Pattern pattern = Pattern.compile("<pre class=\"json\">(.*?)</pre>", Pattern.DOTALL);
+      Matcher matcher = pattern.matcher(response.body());
+      if (matcher.find()) {
+        matcher.find();
+        String jsonResponseText = matcher.group(1).replaceAll("&#34;", "\"");
+        JsonObject jsonResponse = new JsonObject(jsonResponseText);
+        JsonObject result = jsonResponse.getJsonObject("result");
+        long gasUsed =
+            Long.parseLong(result.getString("gasUsed").substring(2), 16); // Convert hex to decimal
+
+        System.out.println(" expectedGas " + expectedGas);
+        if (gasUsed != expectedGas) {
+          System.out.println(
+              "Gas used ("
+                  + gasUsed
+                  + ") does not match expected gas ("
+                  + expectedGas
+                  + "). Transaction hash: "
+                  + transactionHash);
+        }
+      } else {
+        throw new InterruptedException("invalid regex exception ");
+      }
+    } catch (IOException | InterruptedException e) {
+      // e.printStackTrace();
     }
   }
 

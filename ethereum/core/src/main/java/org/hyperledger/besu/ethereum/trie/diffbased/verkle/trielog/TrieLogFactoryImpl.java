@@ -76,8 +76,6 @@ public class TrieLogFactoryImpl implements TrieLogFactory {
           // by default do not persist empty reads to the trie log
           continue;
         }
-
-        System.out.println(val.getPrior() + " " + val.getUpdated());
         layer.addStorageChange(address, slotUpdate.getKey(), val.getPrior(), val.getUpdated());
       }
     }
