@@ -102,6 +102,9 @@ public class PragueGasCalculator extends CancunGasCalculator {
     return cost;
   }
 
+  /**
+   * Address of the contract historic block hashes are stored in.
+   */
   public static final Address HISTORY_STORAGE_ADDRESS =
       Address.fromHexString("0x25a219378dad9b3503c8268c9ca836a52427a4fb");
 
