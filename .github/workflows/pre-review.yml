@@ -76,7 +76,7 @@ jobs:
     env:
         GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
     runs-on: ubuntu-22.04
-    needs: [ compile ]
+    needs: [spotless, gradle-wrapper, repolint]
     permissions:
       checks: write
       statuses: write
@@ -141,7 +141,7 @@ jobs:
   unittests-passed:
     name: "unittests-passed"
     runs-on: ubuntu-22.04
-    needs: [unitTests]
+    needs: [compile, unitTests]
     permissions:
       checks: write
       statuses: write
