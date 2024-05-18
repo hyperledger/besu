@@ -35,7 +35,7 @@ public class WithdrawalRequestParameter {
   @JsonCreator
   public WithdrawalRequestParameter(
       @JsonProperty("sourceAddress") final String sourceAddress,
-      @JsonProperty("pubkey") final String validatorPubKey,
+      @JsonProperty("validatorPublicKey") final String validatorPubKey,
       @JsonProperty("amount") final String amount) {
     this.sourceAddress = sourceAddress;
     this.validatorPubKey = validatorPubKey;
