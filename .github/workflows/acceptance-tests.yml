@@ -53,6 +53,8 @@ jobs:
         run: ./gradlew :acceptance-tests:tests:testClasses
       - name: List acceptance tests
         run: ./gradlew :acceptance-tests:tests:listAcceptanceTestNotPrivacy -Dorg.gradle.caching=true | fgrep org.hyperledger.besu.tests.acceptance > tmp/currentTests.list
+      - name: List acceptancePrivacy tests
+          run: ./gradlew :acceptance-tests:tests:listAcceptanceTestPrivacy -Dorg.gradle.caching=true | fgrep org.hyperledger.besu.tests.acceptance > tmp/currentTests.list
       - name: Split tests
         run: .github/workflows/splitTestsByTime.sh tmp/junit-xml-reports-downloaded ${{env.total-runners}} ${{ matrix.runner_index }} > testList.txt
       - name: Upload Timing
