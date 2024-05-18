@@ -210,9 +210,9 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
   @Test
   public void privGetTransactionCountSuccessShouldReturnExpectedTransactionCount2()
-          throws JsonProcessingException {
+      throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
-            getValidSignedPrivateTransaction(senderAddress);
+        getValidSignedPrivateTransaction(senderAddress);
     final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
 
@@ -222,13 +222,13 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
     node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
     final Hash transactionReceipt =
-            node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
-//
+        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
+    //
     node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
     node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 1));
-//////////////////
+    //////////////////
     final PrivateTransaction validSignedPrivateTransaction2 =
-            getValidSignedPrivateTransaction2(senderAddress);
+        getValidSignedPrivateTransaction2(senderAddress);
     final String accountAddress2 = validSignedPrivateTransaction2.getSender().toHexString();
     final BytesValueRLPOutput rlpOutput2 = getRLPOutput(validSignedPrivateTransaction2);
 
@@ -238,10 +238,9 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
     node.verify(priv.getTransactionCount(accountAddress2, PRIVACY_GROUP_ID, 1));
     final Hash transactionReceipt2 =
-            node.execute(privacyTransactions.sendRawTransaction(rlpOutput2.encoded().toHexString()));
+        node.execute(privacyTransactions.sendRawTransaction(rlpOutput2.encoded().toHexString()));
     node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt2));
     System.out.println(priv.getSuccessfulTransactionReceipt(transactionReceipt2));
-
   }
 
   @Test
