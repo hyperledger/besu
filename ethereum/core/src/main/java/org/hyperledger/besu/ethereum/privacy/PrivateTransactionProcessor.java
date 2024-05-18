@@ -176,7 +176,7 @@ public class PrivateTransactionProcessor {
         LOG.info("Private nonce success {} committed", sender.getNonce());
         mutablePrivateWorldStateUpdater.commit();
       } else {
-         mutablePrivateWorldStateUpdater.commitPrivateNonce();
+        mutablePrivateWorldStateUpdater.commitPrivateNonce();
         LOG.info("Private nonce  non-success {} committed", sender.getNonce());
       }
 
