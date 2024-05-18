@@ -275,7 +275,7 @@ jobs:
       - attach_workspace:
           at: ~/project
       - run:
-          name: AcceptanceTests (Non-Mainnet)
+          name: AcceptanceTests (Privacy)
           no_output_timeout: 20m
           command: |
             ./gradlew --no-daemon --max-workers=1 acceptanceTestPermissioning
@@ -426,6 +426,9 @@ workflows:
             - assemble
             - acceptanceTests
       - acceptanceTestsPermissioning:
+          requires:
+            - assemble
+      - acceptanceTestsPrivacy:
           requires:
             - assemble
       - buildDocker:

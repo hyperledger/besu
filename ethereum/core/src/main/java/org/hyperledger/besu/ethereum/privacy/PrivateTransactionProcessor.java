@@ -171,12 +171,12 @@ public class PrivateTransactionProcessor {
       while (!messageFrameStack.isEmpty()) {
         process(messageFrameStack.peekFirst(), operationTracer);
       }
-
+      System.out.println(incrementPrivateNonce);
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         LOG.info("Private nonce success {} committed", sender.getNonce());
         mutablePrivateWorldStateUpdater.commit();
-      } else if (incrementPrivateNonce) {
-        // mutablePrivateWorldStateUpdater.commitPrivateNonce();
+      } else {
+         mutablePrivateWorldStateUpdater.commitPrivateNonce();
         LOG.info("Private nonce  non-success {} committed", sender.getNonce());
       }
 
