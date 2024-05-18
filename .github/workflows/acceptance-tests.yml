@@ -71,7 +71,7 @@ jobs:
         # insert --tests option between each.
         run:  cat testList.txt | sed -e 's/^\| / --tests /g' | tee gradleArgs.txt
       - name: run acceptance tests
-        run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew acceptanceTest `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: cleanup tempfiles
         run: rm testList.txt gradleArgs.txt
       - name: Upload Acceptance Test Results
