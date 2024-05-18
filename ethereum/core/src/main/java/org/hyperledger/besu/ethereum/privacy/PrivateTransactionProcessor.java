@@ -101,6 +101,7 @@ public class PrivateTransactionProcessor {
       final ValidationResult<TransactionInvalidReason> validationResult =
           privateTransactionValidator.validate(transaction, sender.getNonce(), false);
       if (!validationResult.isValid()) {
+        LOG.info("TransactionProcessingResult.invalid(validationResult)");
         return TransactionProcessingResult.invalid(validationResult);
       }
 
@@ -171,19 +172,20 @@ public class PrivateTransactionProcessor {
       while (!messageFrameStack.isEmpty()) {
         process(messageFrameStack.peekFirst(), operationTracer);
       }
-      System.out.println(incrementPrivateNonce);
+      System.out.println(incrementPrivateNonce +" "+initialFrame.getState());
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         LOG.info("Private nonce success {} committed", sender.getNonce());
         mutablePrivateWorldStateUpdater.commit();
-      } else {
-        mutablePrivateWorldStateUpdater.commitPrivateNonce();
+      } else if (incrementPrivateNonce) {
         LOG.info("Private nonce  non-success {} committed", sender.getNonce());
+        mutablePrivateWorldStateUpdater.commitPrivateNonce();
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         return TransactionProcessingResult.successful(
             initialFrame.getLogs(), 0, 0, initialFrame.getOutputData(), ValidationResult.valid());
       } else {
+        LOG.info("Fail to process transaction");
         return TransactionProcessingResult.failed(
             0,
             0,

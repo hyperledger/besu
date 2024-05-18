@@ -287,7 +287,8 @@ public class BesuNodeFactory {
       final String enclaveUrl,
       final String authFile,
       final String privTransactionSigningKey,
-      final boolean enableFlexiblePrivacy)
+      final boolean enableFlexiblePrivacy,
+      final boolean enableIncrementingPrivateNonce)
       throws IOException, URISyntaxException {
     final PrivacyParameters.Builder privacyParametersBuilder = new PrivacyParameters.Builder();
     final PrivacyParameters privacyParameters =
@@ -298,6 +299,7 @@ public class BesuNodeFactory {
             .setStorageProvider(new InMemoryPrivacyStorageProvider())
             .setEnclaveFactory(new EnclaveFactory(Vertx.vertx()))
             .setEnclaveUrl(URI.create(enclaveUrl))
+            .setPrivateNonceIncrementationEnabled(enableIncrementingPrivateNonce)
             .setPrivateKeyPath(
                 Paths.get(ClassLoader.getSystemResource(privTransactionSigningKey).toURI()))
             .build();

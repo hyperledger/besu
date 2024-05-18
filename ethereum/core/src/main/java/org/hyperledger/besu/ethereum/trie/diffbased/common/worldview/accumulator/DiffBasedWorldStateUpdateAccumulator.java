@@ -765,6 +765,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
 
   @Override
   public void reset() {
+    LOG.info("reset accounts");
     storageToClear.clear();
     storageToUpdate.clear();
     codeToUpdate.clear();

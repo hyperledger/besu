@@ -104,6 +104,7 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
             "http://127.0.0.1:" + wireMockRule.port(),
             "authentication/auth_priv.toml",
             "authentication/auth_priv_key",
+            false,
             false);
     multiTenancyCluster.start(node);
     final String token =
@@ -206,41 +207,6 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
 
     node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
     node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 1));
-  }
-
-  @Test
-  public void privGetTransactionCountSuccessShouldReturnExpectedTransactionCount2()
-      throws JsonProcessingException {
-    final PrivateTransaction validSignedPrivateTransaction =
-        getValidSignedPrivateTransaction(senderAddress);
-    final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
-    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
-
-    retrievePrivacyGroupEnclaveStub();
-    sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
-    receiveEnclaveStub(validSignedPrivateTransaction);
-
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
-    final Hash transactionReceipt =
-        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
-    //
-    node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 1));
-    //////////////////
-    final PrivateTransaction validSignedPrivateTransaction2 =
-        getValidSignedPrivateTransaction2(senderAddress);
-    final String accountAddress2 = validSignedPrivateTransaction2.getSender().toHexString();
-    final BytesValueRLPOutput rlpOutput2 = getRLPOutput(validSignedPrivateTransaction2);
-
-    retrievePrivacyGroupEnclaveStub();
-    sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
-    receiveEnclaveStub(validSignedPrivateTransaction2);
-
-    node.verify(priv.getTransactionCount(accountAddress2, PRIVACY_GROUP_ID, 1));
-    final Hash transactionReceipt2 =
-        node.execute(privacyTransactions.sendRawTransaction(rlpOutput2.encoded().toHexString()));
-    node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt2));
-    System.out.println(priv.getSuccessfulTransactionReceipt(transactionReceipt2));
   }
 
   @Test
@@ -410,22 +376,6 @@ public class MultiTenancyAcceptanceTest extends AcceptanceTestBase {
   private static PrivateTransaction getValidSignedPrivateTransaction(final Address senderAddress) {
     return PrivateTransaction.builder()
         .nonce(0)
-        .gasPrice(Wei.ZERO)
-        .gasLimit(3000000)
-        .to(null)
-        .value(Wei.ZERO)
-        .payload(Bytes.wrap(new byte[] {}))
-        .sender(senderAddress)
-        .chainId(BigInteger.valueOf(1337))
-        .privateFrom(Bytes.fromBase64String(PARTICIPANT_ENCLAVE_KEY0))
-        .restriction(Restriction.RESTRICTED)
-        .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))
-        .signAndBuild(TEST_KEY);
-  }
-
-  private static PrivateTransaction getValidSignedPrivateTransaction2(final Address senderAddress) {
-    return PrivateTransaction.builder()
-        .nonce(1)
         .gasPrice(Wei.ZERO)
         .gasLimit(3000000)
         .to(null)

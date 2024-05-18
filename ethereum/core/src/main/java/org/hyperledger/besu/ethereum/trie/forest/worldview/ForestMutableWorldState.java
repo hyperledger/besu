@@ -418,6 +418,7 @@ public class ForestMutableWorldState implements MutableWorldState {
         wrapped.updatedAccountCode.remove(address);
       }
 
+      LOG.info("FMWS : getUpdatedAccounts {}", getUpdatedAccounts().size());
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
         LOG.info("{} : getUpdatedAccounts {}", Thread.currentThread(), getUpdatedAccounts().size());
 
@@ -504,6 +505,9 @@ public class ForestMutableWorldState implements MutableWorldState {
       LOG.info("{} : commitPrivateNonce", this.getClass().getName());
 
       final ForestMutableWorldState wrapped = wrappedWorldView();
+
+      LOG.info("{} : commitPrivateNonce", getUpdatedAccounts().size());
+
 
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
         LOG.info("{} : getUpdatedAccounts {}", Thread.currentThread(), getUpdatedAccounts().size());
