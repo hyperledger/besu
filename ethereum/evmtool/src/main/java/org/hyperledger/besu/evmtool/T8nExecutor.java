@@ -32,7 +32,6 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -257,7 +256,7 @@ public class T8nExecutor {
 
     ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(referenceTestEnv);
     Blockchain blockchain = new T8nBlockchain(referenceTestEnv, protocolSpec);
-    BlockHeader blockHeader = referenceTestEnv.parentBlockHeader(protocolSpec);
+    final BlockHeader blockHeader = referenceTestEnv.parentBlockHeader(protocolSpec);
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
     final Wei blobGasPrice =
         protocolSpec
@@ -430,6 +429,8 @@ public class T8nExecutor {
       }
     }
 
+    worldState.persist(blockHeader);
+
     resultObject.put("stateRoot", worldState.rootHash().toHexString());
     resultObject.put("txRoot", BodyValidation.transactionsRoot(validTransactions).toHexString());
     resultObject.put("receiptsRoot", BodyValidation.receiptsRoot(receipts).toHexString());
@@ -469,7 +470,7 @@ public class T8nExecutor {
               .toQuantityHexString());
       resultObject.put(
           "blobGasUsed",
-          Bytes.ofUnsignedLong(maybeExcessBlobGas.get().toLong()).toQuantityHexString());
+          Bytes.ofUnsignedLong(blobGasUsed).toQuantityHexString());
     }
 
     var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
@@ -477,11 +478,11 @@ public class T8nExecutor {
       var rpc = requestProcessorCoordinator.get();
       Optional<List<Request>> maybeRequests = rpc.process(worldState, receipts);
       Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
-      blockHeader =
-          BlockHeaderBuilder.fromHeader(blockHeader)
-              .requestsRoot(requestRoot)
-              .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
-              .buildBlockHeader();
+//      blockHeader =
+//          BlockHeaderBuilder.fromHeader(blockHeader)
+//              .requestsRoot(requestRoot)
+//              .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
+//              .buildBlockHeader();
 
       resultObject.put("requestsRoot", requestRoot.toHexString());
       var deposits = resultObject.putArray("depositRequests");
@@ -506,8 +507,6 @@ public class T8nExecutor {
                 obj.put("amount", wr.getAmount().toHexString());
               });
     }
-
-    worldState.persist(blockHeader);
 
     ObjectNode allocObject = objectMapper.createObjectNode();
     worldState
