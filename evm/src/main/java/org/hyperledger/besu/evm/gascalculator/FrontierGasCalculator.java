@@ -392,7 +392,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getBlockHashOperationGasCost(final MessageFrame frame) {
+  public long getBlockHashOperationGasCost() {
     return BLOCKHASH_OPERATION_GAS_COST;
   }
 

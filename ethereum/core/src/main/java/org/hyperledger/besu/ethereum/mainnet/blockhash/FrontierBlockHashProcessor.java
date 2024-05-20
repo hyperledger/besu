@@ -14,11 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
-
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 public class FrontierBlockHashProcessor implements BlockHashProcessor {
@@ -28,11 +25,5 @@ public class FrontierBlockHashProcessor implements BlockHashProcessor {
       final MutableWorldState mutableWorldState,
       final ProcessableBlockHeader currentBlockHeader) {
     // do nothing
-  }
-
-  @Override
-  public BlockHashLookup getBlockHashLookup(
-      final ProcessableBlockHeader currentHeader, final Blockchain blockchain) {
-    return new CachingBlockHashLookup(currentHeader, blockchain);
   }
 }
