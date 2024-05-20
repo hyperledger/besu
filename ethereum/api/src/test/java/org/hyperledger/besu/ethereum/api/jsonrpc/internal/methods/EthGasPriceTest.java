@@ -42,6 +42,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.LegacyFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
@@ -49,11 +51,15 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -198,12 +204,58 @@ public class EthGasPriceTest {
     verifyGasPriceLimit(lowerBoundCoefficient, upperBoundCoefficient, gasPrice);
   }
 
-  //  @Test
-  //  public void shouldReturnConfiguredGasPriceLowerBoundAtGenesis() {
-  //    mockBaseFeeMarket();
-  //    mockBlockchain(0, 0);
-  //
-  //  }
+  private static Stream<Arguments> ethGasPriceAtGenesis() {
+    return Stream.of(
+        // base fee > min gas price
+        Arguments.of(
+            DEFAULT_MIN_GAS_PRICE.divide(2),
+            Optional.of(DEFAULT_MIN_GAS_PRICE),
+            DEFAULT_MIN_GAS_PRICE.subtract(
+                DEFAULT_MIN_GAS_PRICE
+                    .multiply(125)
+                    .divide(1000)) // expect base fee for the 1st block
+            ),
+        // base fee < min gas price
+        Arguments.of(
+            DEFAULT_BASE_FEE.multiply(2),
+            Optional.of(DEFAULT_BASE_FEE),
+            DEFAULT_BASE_FEE.multiply(2)) // expect min gas price value
+        ,
+
+        // no base fee market
+        Arguments.of(
+            DEFAULT_MIN_GAS_PRICE,
+            Optional.empty(),
+            DEFAULT_MIN_GAS_PRICE // expect min gas price value
+            ));
+  }
+
+  @ParameterizedTest
+  @MethodSource("ethGasPriceAtGenesis")
+  public void ethGasPriceAtGenesis(
+      final Wei minGasPrice, final Optional<Wei> maybeGenesisBaseFee, final Wei expectedGasPrice) {
+    miningParameters.setMinTransactionGasPrice(minGasPrice);
+
+    if (maybeGenesisBaseFee.isPresent()) {
+      mockBaseFeeMarket();
+      mockBlockchain(maybeGenesisBaseFee.get(), 0, 0);
+    } else {
+      mockGasPriceMarket();
+      mockBlockchain(null, 0, 0);
+    }
+
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(), expectedGasPrice.toShortHexString());
+
+    final JsonRpcResponse actualResponse = method.response(request);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+
+    verify(blockchain).getChainHeadBlockNumber();
+    verify(blockchain, VerificationModeFactory.times(1)).getBlockByNumber(anyLong());
+    verifyNoMoreInteractions(blockchain);
+  }
 
   /**
    * Helper method to verify the gas price limit.
@@ -233,17 +285,21 @@ public class EthGasPriceTest {
     final var chainHeadBlockNumber = 10L;
     mockBlockchain(chainHeadBlockNumber, 1);
 
-    // baseFee for next block = 0x7c61 (31_841)
-    // BlockchainQueries returns gasPrice = 0x5b8d80 (60_000)
-
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
   private void mockBaseFeeMarket() {
-    final var baseFeeMarket = new LondonFeeMarket(0);
+    mockFeeMarket(new LondonFeeMarket(0));
+  }
+
+  private void mockGasPriceMarket() {
+    mockFeeMarket(new LegacyFeeMarket());
+  }
+
+  private void mockFeeMarket(final FeeMarket feeMarket) {
     final var protocolSpec = mock(ProtocolSpec.class);
-    when(protocolSpec.getFeeMarket()).thenReturn(baseFeeMarket);
+    when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
   }
 
