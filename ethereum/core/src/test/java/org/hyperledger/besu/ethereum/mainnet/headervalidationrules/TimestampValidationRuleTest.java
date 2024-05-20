@@ -27,7 +27,7 @@ import org.junit.jupiter.api.Test;
 public class TimestampValidationRuleTest {
 
   @Test
-  public void headerTimestampSufficientlyFarIntoFutureValidatesSuccessfully() {
+  public void headerTimestampSufficientlyFarIntoFutureVadidatesSuccessfully() {
     final TimestampBoundedByFutureParameter uut00 = new TimestampBoundedByFutureParameter(0);
     final TimestampMoreRecentThanParent uut01 = new TimestampMoreRecentThanParent(10);
 
@@ -96,13 +96,14 @@ public class TimestampValidationRuleTest {
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 
-    // Create Parent Header with a fixed reference time
-    long parentTimestamp = TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS);
-    headerBuilder.timestamp(parentTimestamp);
+    // Create Parent Header @ 'now'
+    headerBuilder.timestamp(
+        TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     final BlockHeader parent = headerBuilder.buildHeader();
 
     // Create header for validation with a timestamp in the future (1 second too far away)
-    headerBuilder.timestamp(parentTimestamp + acceptableClockDrift + 1);
+    // (+1 to avoid spurious failures)
+    headerBuilder.timestamp(parent.getTimestamp() + acceptableClockDrift + 2);
     final BlockHeader header = headerBuilder.buildHeader();
 
     assertThat(uut00.validate(header, parent)).isFalse();
@@ -124,7 +125,7 @@ public class TimestampValidationRuleTest {
         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     final BlockHeader parent = headerBuilder.buildHeader();
 
-    // Create header for validation with a timestamp in the future (1 second too far away)
+    // Create header for validation with a timestamp an acceptable amount in the future
     // (-1) to prevent spurious failures
     headerBuilder.timestamp(parent.getTimestamp() + acceptableClockDrift - 1);
     final BlockHeader header = headerBuilder.buildHeader();
