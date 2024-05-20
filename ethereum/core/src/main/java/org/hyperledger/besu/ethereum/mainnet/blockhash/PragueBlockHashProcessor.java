@@ -44,14 +44,14 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   private final long historySaveWindow;
   private final Address historyStorageAddress;
 
-  /** Constructs a BlockHashProcessor with a specified fork timestamp. */
+  /** Constructs a BlockHashProcessor. */
   public PragueBlockHashProcessor() {
     this(HISTORY_STORAGE_ADDRESS, HISTORY_SERVE_WINDOW);
   }
 
   /**
-   * Constructs a BlockHashProcessor with a specified fork timestamp and history save window. This
-   * constructor is primarily used for testing.
+   * Constructs a BlockHashProcessor with a specified history save window. This constructor is
+   * primarily used for testing.
    *
    * @param historyStorageAddress the address of the contract storing the history
    * @param historySaveWindow The number of blocks for which history should be saved.
@@ -97,11 +97,10 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
    * @param hash The hash to be stored.
    */
   private void storeHash(final MutableAccount account, final long number, final Hash hash) {
+    UInt256 slot = UInt256.valueOf(number % historySaveWindow);
+    UInt256 value = UInt256.fromBytes(hash);
     LOG.trace(
-        "Writing to {} {}=%{}",
-        account.getAddress(),
-        UInt256.valueOf(number % historySaveWindow).toDecimalString(),
-        UInt256.fromBytes(hash).toHexString());
-    account.setStorageValue(UInt256.valueOf(number % historySaveWindow), UInt256.fromBytes(hash));
+        "Writing to {} {}=%{}", account.getAddress(), slot.toDecimalString(), value.toHexString());
+    account.setStorageValue(slot, value);
   }
 }

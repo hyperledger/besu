@@ -30,14 +30,14 @@
         "withdrawalRequests": [
           {
             "sourceAddress": "0xa4664c40aacebd82a2db79f0ea36c06bc6a19adb",
-            "amount": "0x0",
-            "validatorPubKey": "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"
+            "validatorPublicKey": "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e",
+            "amount": "0x0"
           }
         ],
         "blockNumber": "0x2",
+        "blockHash": "0xa7a92cc82e1d876476ad6433538599b0d592f88ba0823c23e80af93fb1748f14",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
-        "blobGasUsed": "0x0",
-        "blockHash": "0xa7a92cc82e1d876476ad6433538599b0d592f88ba0823c23e80af93fb1748f14"
+        "blobGasUsed": "0x0"
       },
       "blockValue": "0x0",
       "blobsBundle": {
