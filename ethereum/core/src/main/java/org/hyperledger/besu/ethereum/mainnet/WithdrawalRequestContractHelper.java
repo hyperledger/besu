@@ -47,7 +47,6 @@ public class WithdrawalRequestContractHelper {
   /** private constructor to prevent instantiations */
   private WithdrawalRequestContractHelper() {}
 
-
   @VisibleForTesting
   // Storage slot to store the difference between number of withdrawal requests since last block and
   // target withdrawal requests

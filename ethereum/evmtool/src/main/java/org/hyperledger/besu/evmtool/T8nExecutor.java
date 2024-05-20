@@ -452,9 +452,7 @@ public class T8nExecutor {
           calculateExcessBlobGasForParent(protocolSpec, blockHeader)
               .toBytes()
               .toQuantityHexString());
-      resultObject.put(
-          "blobGasUsed",
-          Bytes.ofUnsignedLong(blobGasUsed).toQuantityHexString());
+      resultObject.put("blobGasUsed", Bytes.ofUnsignedLong(blobGasUsed).toQuantityHexString());
     }
 
     var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
@@ -462,11 +460,6 @@ public class T8nExecutor {
       var rpc = requestProcessorCoordinator.get();
       Optional<List<Request>> maybeRequests = rpc.process(worldState, receipts);
       Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
-//      blockHeader =
-//          BlockHeaderBuilder.fromHeader(blockHeader)
-//              .requestsRoot(requestRoot)
-//              .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions())
-//              .buildBlockHeader();
 
       resultObject.put("requestsRoot", requestRoot.toHexString());
       var deposits = resultObject.putArray("depositRequests");
