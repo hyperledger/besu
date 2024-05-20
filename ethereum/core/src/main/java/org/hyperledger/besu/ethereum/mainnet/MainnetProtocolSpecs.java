@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsProcessors;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
@@ -23,7 +27,6 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -101,9 +104,6 @@ public abstract class MainnetProtocolSpecs {
   private static final Wei BYZANTIUM_BLOCK_REWARD = Wei.fromEth(3);
 
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
-
-  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   private MainnetProtocolSpecs() {}
 
@@ -747,6 +747,7 @@ public abstract class MainnetProtocolSpecs {
       final MiningParameters miningParameters) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     final Address depositContractAddress =
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
@@ -775,12 +776,29 @@ public abstract class MainnetProtocolSpecs {
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        // warm blockahsh contract
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    true,
+                    stackSizeLimit,
+                    feeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
+
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
-        .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
-        .withdrawalRequestsValidator(new PragueWithdrawalRequestValidator())
-        .blockHashProcessor(
-            new PragueBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
+        .requestsValidator(pragueRequestsValidator(depositContractAddress))
+        .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
+        .blockHashProcessor(new PragueBlockHashProcessor())
         .name("Prague");
   }
 
@@ -915,7 +933,6 @@ public abstract class MainnetProtocolSpecs {
         final List<Transaction> transactions,
         final List<BlockHeader> ommers,
         final Optional<List<Withdrawal>> withdrawals,
-        final Optional<List<Deposit>> deposits,
         final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
@@ -925,7 +942,6 @@ public abstract class MainnetProtocolSpecs {
           transactions,
           ommers,
           withdrawals,
-          deposits,
           privateMetadataUpdater);
     }
 

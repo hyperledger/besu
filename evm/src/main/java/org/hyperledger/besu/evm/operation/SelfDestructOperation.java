@@ -68,7 +68,7 @@ public class SelfDestructOperation extends AbstractOperation {
         gasCalculator().selfDestructOperationGasCost(beneficiaryNullable, originatorBalance)
             + (beneficiaryIsWarm ? 0L : gasCalculator().getColdAccountAccessCost());
 
-    // With the cost we can test for two early exits: static or not enough gas.
+    // With the cost we can test for two early WithdrawalRequests: static or not enough gas.
     if (frame.isStatic()) {
       return new OperationResult(cost, ExceptionalHaltReason.ILLEGAL_STATE_CHANGE);
     } else if (frame.getRemainingGas() < cost) {

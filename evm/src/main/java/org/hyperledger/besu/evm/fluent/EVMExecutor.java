@@ -72,7 +72,7 @@ public class EVMExecutor {
   private Wei ethValue = Wei.ZERO;
   private Code code = CodeV0.EMPTY_CODE;
   private BlockValues blockValues = new SimpleBlockValues();
-  private BlockHashLookup blockHashLookup = (h, n) -> null;
+  private BlockHashLookup blockHashLookup = n -> null;
   private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
   private OperationTracer tracer = OperationTracer.NO_TRACING;
   private boolean requireDeposit = true;

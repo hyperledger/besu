@@ -130,8 +130,7 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                     List.of(blobTx),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
-                    Optional.of(Collections.emptyList()),
-                    Optional.empty())),
+                    Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
 
     when(mergeContext.retrieveBlockById(postCancunPid)).thenReturn(Optional.of(postCancunBlock));

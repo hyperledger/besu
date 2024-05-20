@@ -53,7 +53,7 @@ public class BlockchainReferenceTestTools {
     final String networks =
         System.getProperty(
             "test.ethereum.blockchain.eips",
-            "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,"
+            "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,CancunToPragueAtTime15k"
                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
                 + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Amsterdam,Bogota,Polis,Bangkok");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
@@ -87,7 +87,8 @@ public class BlockchainReferenceTestTools {
     // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
     // chain head.
     // Perfectly valid test pre-merge.
-    params.ignore("UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
+    params.ignore(
+        "UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
 
     // EOF tests don't have Prague stuff like deopsits right now
     params.ignore("/stEOF/");

@@ -47,11 +47,9 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
@@ -291,24 +289,13 @@ public class T8nExecutor {
         tracer = tracerManager.getManagedTracer(i, transaction.getHash());
         tracer.tracePrepareTransaction(worldStateUpdater, transaction);
         tracer.traceStartTransaction(worldStateUpdater, transaction);
-        BlockHashOperation.BlockHashLookup blockHashLookup =
-            protocolSpec.getBlockHashProcessor().getBlockHashLookup(blockHeader, blockchain);
-        if (blockHashLookup instanceof CachingBlockHashLookup) {
-          // caching lookup won't work, use our own secret sauce
-          blockHashLookup =
-              (frame, number) ->
-                  (referenceTestEnv.getNumber() - frame.getBlockValues().getNumber()
-                          > BlockHashOperation.MAX_RELATIVE_BLOCK)
-                      ? Hash.ZERO
-                      : referenceTestEnv.getBlockhashByNumber(number).orElse(Hash.ZERO);
-        }
         result =
             processor.processTransaction(
                 worldStateUpdater,
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                blockHashLookup,
+                number -> referenceTestEnv.getBlockhashByNumber(number).orElse(Hash.ZERO),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,

@@ -14,23 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
-
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
-import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 /** Processes the beacon block storage if it is present in the block header. */
 public class CancunBlockHashProcessor implements BlockHashProcessor {
-
-  @Override
-  public BlockHashLookup getBlockHashLookup(
-      final ProcessableBlockHeader currentHeader, final Blockchain blockchain) {
-    return new CachingBlockHashLookup(currentHeader, blockchain);
-  }
 
   @Override
   public void processBlockHashes(

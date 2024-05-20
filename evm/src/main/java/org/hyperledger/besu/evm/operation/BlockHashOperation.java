@@ -16,27 +16,29 @@ package org.hyperledger.besu.evm.operation;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
-import java.util.function.BiFunction;
+import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Block hash operation. */
 public class BlockHashOperation extends AbstractFixedCostOperation {
 
-  /** Frontier maximum relative block delta */
-  public static final int MAX_RELATIVE_BLOCK = 256;
-
   /**
    * Function that gets the block hash, passed in as part of TxValues.
    *
-   * <p>First arg is the current block number, second is the block argument from the stack. The
-   * Result is the Hash, which may be zero based on lookup rules.
+   * <p>Arg is the current block number. The Result is the Hash, which may be zero based on lookup
+   * rules.
    */
-  public interface BlockHashLookup extends BiFunction<MessageFrame, Long, Hash> {}
+  public interface BlockHashLookup extends Function<Long, Hash> {}
+
+  /** Frontier maximum relative block delta */
+  public static final int MAX_RELATIVE_BLOCK = 256;
 
   private static final int MAX_BLOCK_ARG_SIZE = 8;
 
@@ -50,19 +52,31 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
   }
 
   @Override
-  public OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
+  public Operation.OperationResult executeFixedCostOperation(
+      final MessageFrame frame, final EVM evm) {
     final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
 
-    // Short-circuit if value exceeds long
+    // Short-circuit if value is unreasonably large
     if (blockArg.size() > MAX_BLOCK_ARG_SIZE) {
       frame.pushStackItem(UInt256.ZERO);
       return successResponse;
     }
 
     final long soughtBlock = blockArg.toLong();
-    final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
-    final Hash blockHash = blockHashLookup.apply(frame, soughtBlock);
-    frame.pushStackItem(blockHash);
+    final BlockValues blockValues = frame.getBlockValues();
+    final long currentBlockNumber = blockValues.getNumber();
+
+    // If the current block is the genesis block or the sought block is
+    // not within the last 256 completed blocks, zero is returned.
+    if (currentBlockNumber == 0
+        || soughtBlock >= currentBlockNumber
+        || soughtBlock < (currentBlockNumber - MAX_RELATIVE_BLOCK)) {
+      frame.pushStackItem(Bytes32.ZERO);
+    } else {
+      final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
+      final Hash blockHash = blockHashLookup.apply(soughtBlock);
+      frame.pushStackItem(blockHash);
+    }
 
     return successResponse;
   }
