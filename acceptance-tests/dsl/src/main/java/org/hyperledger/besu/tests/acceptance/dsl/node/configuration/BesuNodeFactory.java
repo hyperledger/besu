@@ -461,26 +461,30 @@ public class BesuNodeFactory {
             .build());
   }
 
-  public BesuNode createIbft2Node(final String name) throws IOException {
+  public BesuNode createIbft2Node(final String name, final boolean fixedPort) throws IOException {
     JsonRpcConfiguration rpcConfig = node.createJsonRpcWithIbft2EnabledConfig(false);
-    rpcConfig.setPort(
-        Math.abs(name.hashCode() % 60000)
-            + 1024); // Generate a consistent port for p2p based on node name
     rpcConfig.addRpcApi("ADMIN,TXPOOL");
-    return create(
+    if (fixedPort) {
+      rpcConfig.setPort(
+          Math.abs(name.hashCode() % 60000)
+              + 1024); // Generate a consistent port for p2p based on node name
+    }
+    BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcConfiguration(rpcConfig)
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .genesisConfigProvider(GenesisConfigurationFactory::createIbft2GenesisConfig)
-            .p2pPort(
-                Math.abs(name.hashCode() % 60000)
-                    + 1024
-                    + 500) // Generate a consistent port for p2p based on node name (+ 500 to avoid
-            // clashing with RPC port or other nodes with a similar name)
-            .build());
+            .genesisConfigProvider(GenesisConfigurationFactory::createIbft2GenesisConfig);
+    if (fixedPort) {
+      builder.p2pPort(
+          Math.abs(name.hashCode() % 60000)
+              + 1024
+              + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
+      // clashing with RPC port or other nodes with a similar name)
+    }
+    return create(builder.build());
   }
 
   public BesuNode createQbftNodeWithTLS(final String name, final String type) throws IOException {
@@ -508,26 +512,31 @@ public class BesuNodeFactory {
     return createQbftNodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS11);
   }
 
-  public BesuNode createQbftNode(final String name) throws IOException {
+  public BesuNode createQbftNode(final String name, final boolean fixedPort) throws IOException {
     JsonRpcConfiguration rpcConfig = node.createJsonRpcWithQbftEnabledConfig(false);
-    rpcConfig.setPort(
-        Math.abs(name.hashCode() % 60000)
-            + 1024); // Generate a consistent port for p2p based on node name
     rpcConfig.addRpcApi("ADMIN,TXPOOL");
-    return create(
+    if (fixedPort) {
+      rpcConfig.setPort(
+          Math.abs(name.hashCode() % 60000)
+              + 1024); // Generate a consistent port for p2p based on node name
+    }
+
+    BesuNodeConfigurationBuilder builder =
         new BesuNodeConfigurationBuilder()
             .name(name)
             .miningEnabled()
             .jsonRpcConfiguration(rpcConfig)
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .devMode(false)
-            .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig)
-            .p2pPort(
-                Math.abs(name.hashCode() % 60000)
-                    + 1024
-                    + 500) // Generate a consistent port for p2p based on node name (+ 500 to avoid
-            // clashing with RPC port or other nodes with a similar name)
-            .build());
+            .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
+    if (fixedPort) {
+      builder.p2pPort(
+          Math.abs(name.hashCode() % 60000)
+              + 1024
+              + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
+      // clashing with RPC port or other nodes with a similar name)
+    }
+    return create(builder.build());
   }
 
   public BesuNode createCustomGenesisNode(
