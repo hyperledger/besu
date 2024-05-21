@@ -15,12 +15,12 @@
 package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
@@ -31,20 +31,49 @@ import org.junit.jupiter.api.Test;
 
 class BlockHashOperationTest {
 
+  private static final int MAXIMUM_COMPLETE_BLOCKS_BEHIND = 256;
   private final BlockHashOperation blockHashOperation =
       new BlockHashOperation(new FrontierGasCalculator());
 
   @Test
   void shouldReturnZeroWhenArgIsBiggerThanALong() {
     assertBlockHash(
-        Bytes32.fromHexString("F".repeat(64)), Bytes32.ZERO, 100, (h, n) -> Hash.EMPTY_LIST_HASH);
+        Bytes32.fromHexString("F".repeat(64)), Bytes32.ZERO, 100, n -> Hash.EMPTY_LIST_HASH);
+  }
+
+  @Test
+  void shouldReturnZeroWhenCurrentBlockIsGenesis() {
+    assertBlockHash(Bytes32.ZERO, Bytes32.ZERO, 0, block -> Hash.EMPTY_LIST_HASH);
+  }
+
+  @Test
+  void shouldReturnZeroWhenRequestedBlockAheadOfCurrent() {
+    assertBlockHash(250, Bytes32.ZERO, 100, block -> Hash.EMPTY_LIST_HASH);
+  }
+
+  @Test
+  void shouldReturnZeroWhenRequestedBlockTooFarBehindCurrent() {
+    final int requestedBlock = 10;
+    // Our block is the one after the chain head (it's a new block), hence the + 1.
+    final int importingBlockNumber = MAXIMUM_COMPLETE_BLOCKS_BEHIND + requestedBlock + 1;
+    assertBlockHash(
+        requestedBlock, Bytes32.ZERO, importingBlockNumber, block -> Hash.EMPTY_LIST_HASH);
+  }
+
+  @Test
+  void shouldReturnZeroWhenRequestedBlockGreaterThanImportingBlock() {
+    assertBlockHash(101, Bytes32.ZERO, 100, block -> Hash.EMPTY_LIST_HASH);
+  }
+
+  @Test
+  void shouldReturnZeroWhenRequestedBlockEqualToImportingBlock() {
+    assertBlockHash(100, Bytes32.ZERO, 100, block -> Hash.EMPTY_LIST_HASH);
   }
 
   @Test
   void shouldReturnBlockHashUsingLookupFromFrameWhenItIsWithinTheAllowedRange() {
     final Hash blockHash = Hash.hash(Bytes.fromHexString("0x1293487297"));
-    assertBlockHash(
-        100, blockHash, 200, (h, block) -> block == 100 ? blockHash : Hash.EMPTY_LIST_HASH);
+    assertBlockHash(100, blockHash, 200, block -> block == 100 ? blockHash : Hash.EMPTY_LIST_HASH);
   }
 
   private void assertBlockHash(

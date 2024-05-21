@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -68,10 +69,7 @@ public class BlockTracer {
               transaction,
               header.getCoinbase(),
               tracer,
-              blockReplay
-                  .getProtocolSpec(header)
-                  .getBlockHashProcessor()
-                  .getBlockHashLookup(header, blockchain),
+              new CachingBlockHashLookup(header, blockchain),
               false,
               blobGasPrice);
       final List<TraceFrame> traceFrames = tracer.copyTraceFrames();

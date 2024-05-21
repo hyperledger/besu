@@ -82,7 +82,7 @@ public class SelfDestructOperationTest {
             .code(CodeFactory.createCode(SELFDESTRUCT_CODE, 0, true))
             .completer(__ -> {})
             .address(originatorAddress)
-            .blockHashLookup((f, n) -> Hash.hash(Words.longBytes(n)))
+            .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
             .blockValues(mock(BlockValues.class))
             .gasPrice(Wei.ZERO)
             .miningBeneficiary(Address.ZERO)
