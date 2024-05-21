@@ -27,6 +27,7 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
+import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
@@ -40,14 +41,16 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
-import org.hyperledger.besu.ethereum.mainnet.DepositsValidator;
-import org.hyperledger.besu.ethereum.mainnet.PragueWithdrawalRequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestValidator.ProhibitedWithdrawalRequests;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -91,12 +94,12 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Test
   public void shouldReturnValidIfDepositsIsNull_WhenDepositsProhibited() {
     final List<DepositParameter> deposits = null;
-    when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.ProhibitedDeposits());
+    mockProhibitedRequestsValidator();
 
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            new BlockProcessingResult(
+                Optional.of(new BlockProcessingOutputs(null, List.of(), Optional.empty()))),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
@@ -113,10 +116,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Test
   public void shouldReturnInvalidIfDepositsIsNull_WhenDepositsAllowed() {
     final List<DepositParameter> deposits = null;
-    lenient()
-        .when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.AllowedDeposits(depositContractAddress));
-
+    mockAllowedDepositsRequestValidator();
     var resp =
         resp(
             mockEnginePayload(
@@ -133,14 +133,15 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   @Test
   public void shouldReturnValidIfDepositsIsNotNull_WhenDepositsAllowed() {
     final List<DepositParameter> depositsParam = List.of(DEPOSIT_PARAM_1);
-    final List<Deposit> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
-    when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.AllowedDeposits(depositContractAddress));
+    final List<Request> deposits = List.of(DEPOSIT_PARAM_1.toDeposit());
+
+    mockAllowedDepositsRequestValidator();
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            new BlockProcessingResult(
+                Optional.of(new BlockProcessingOutputs(null, List.of(), Optional.of(deposits)))),
             Optional.empty(),
-            Optional.of(deposits),
+            Optional.of(List.of(DEPOSIT_PARAM_1.toDeposit())),
             Optional.empty());
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -156,8 +157,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnInvalidIfDepositsIsNotNull_WhenDepositsProhibited() {
     final List<DepositParameter> deposits = List.of();
     lenient()
-        .when(protocolSpec.getDepositsValidator())
-        .thenReturn(new DepositsValidator.ProhibitedDeposits());
+        .when(protocolSpec.getRequestsValidatorCoordinator())
+        .thenReturn(new RequestsValidatorCoordinator.Builder().build());
 
     var resp =
         resp(
@@ -176,12 +177,12 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnValidIfWithdrawalRequestsIsNull_WhenWithdrawalRequestsAreProhibited() {
-    when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new ProhibitedWithdrawalRequests());
+    mockProhibitedRequestsValidator();
 
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            new BlockProcessingResult(
+                Optional.of(new BlockProcessingOutputs(null, List.of(), Optional.empty()))),
             Optional.empty(),
             Optional.empty(),
             Optional.empty());
@@ -197,8 +198,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
 
   @Test
   public void shouldReturnInvalidIfWithdrawalRequestsIsNull_WhenWithdrawalRequestsAreAllowed() {
-    when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new PragueWithdrawalRequestValidator());
+    mockAllowedWithdrawalsRequestValidator();
 
     var resp =
         resp(
@@ -217,17 +217,17 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void shouldReturnValidIfWithdrawalRequestsIsNotNull_WhenWithdrawalRequestsAreAllowed() {
     final List<WithdrawalRequestParameter> withdrawalRequestsParams =
         List.of(WITHDRAWAL_REQUEST_PARAMETER_1);
-    final List<WithdrawalRequest> withdrawalRequests =
+    final List<Request> withdrawalRequests =
         List.of(WITHDRAWAL_REQUEST_PARAMETER_1.toWithdrawalRequest());
-    when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new PragueWithdrawalRequestValidator());
-
+    mockAllowedWithdrawalsRequestValidator();
     BlockHeader mockHeader =
         setupValidPayload(
-            new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(null, List.of()))),
+            new BlockProcessingResult(
+                Optional.of(
+                    new BlockProcessingOutputs(null, List.of(), Optional.of(withdrawalRequests)))),
             Optional.empty(),
             Optional.empty(),
-            Optional.of(withdrawalRequests));
+            Optional.of(List.of(WITHDRAWAL_REQUEST_PARAMETER_1.toWithdrawalRequest())));
     when(blockchain.getBlockHeader(mockHeader.getParentHash()))
         .thenReturn(Optional.of(mock(BlockHeader.class)));
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))
@@ -244,8 +244,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   public void
       shouldReturnInvalidIfWithdrawalRequestsIsNotNull_WhenWithdrawalRequestsAreProhibited() {
     final List<WithdrawalRequestParameter> withdrawalRequests = List.of();
-    when(protocolSpec.getWithdrawalRequestValidator())
-        .thenReturn(new ProhibitedWithdrawalRequests());
+    mockProhibitedRequestsValidator();
 
     var resp =
         resp(
@@ -275,6 +274,16 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .blobGasUsed(0L)
             .buildHeader();
 
+    Optional<List<Request>> maybeRequests;
+    if (maybeDeposits.isPresent() || maybeWithdrawalRequests.isPresent()) {
+      List<Request> requests = new ArrayList<>();
+      maybeDeposits.ifPresent(requests::addAll);
+      maybeWithdrawalRequests.ifPresent(requests::addAll);
+      maybeRequests = Optional.of(requests);
+    } else {
+      maybeRequests = Optional.empty();
+    }
+
     BlockHeader mockHeader =
         new BlockHeaderTestFixture()
             .baseFeePerGas(Wei.ONE)
@@ -284,9 +293,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .withdrawalsRoot(maybeWithdrawals.map(BodyValidation::withdrawalsRoot).orElse(null))
             .excessBlobGas(BlobGas.ZERO)
             .blobGasUsed(0L)
-            .depositsRoot(maybeDeposits.map(BodyValidation::depositsRoot).orElse(null))
-            .withdrawalRequestsRoot(
-                maybeWithdrawalRequests.map(BodyValidation::withdrawalRequestsRoot).orElse(null))
+            .requestsRoot(maybeRequests.map(BodyValidation::requestsRoot).orElse(null))
             .parentBeaconBlockRoot(
                 maybeParentBeaconBlockRoot.isPresent() ? maybeParentBeaconBlockRoot : null)
             .buildHeader();
@@ -301,5 +308,26 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             .orElseGet(() -> new Object[] {payload});
     return method.response(
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", this.method.getName(), params)));
+  }
+
+  private void mockProhibitedRequestsValidator() {
+    var validator = new RequestsValidatorCoordinator.Builder().build();
+    when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
+  }
+
+  private void mockAllowedDepositsRequestValidator() {
+    var validator =
+        new RequestsValidatorCoordinator.Builder()
+            .addValidator(RequestType.DEPOSIT, new DepositsValidator(depositContractAddress))
+            .build();
+    when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
+  }
+
+  private void mockAllowedWithdrawalsRequestValidator() {
+    var validator =
+        new RequestsValidatorCoordinator.Builder()
+            .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
+            .build();
+    when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
   }
 }

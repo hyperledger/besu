@@ -52,19 +52,20 @@ class WithdrawalRequestContractHelperTest {
   }
 
   @Test
-  public void popExitsFromQueue_ReadWithdrawalRequestsCorrectly() {
-    final List<WithdrawalRequest> validatorExits =
+  public void popWithdrawalRequestsFromQueue_ReadWithdrawalRequestsCorrectly() {
+    final List<WithdrawalRequest> validatorWithdrawalRequests =
         List.of(createExit(), createExit(), createExit());
-    loadContractStorage(worldState, validatorExits);
+    loadContractStorage(worldState, validatorWithdrawalRequests);
 
-    final List<WithdrawalRequest> poppedExits =
+    final List<WithdrawalRequest> poppedWithdrawalRequests =
         WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
 
-    assertThat(poppedExits).isEqualTo(validatorExits);
+    assertThat(poppedWithdrawalRequests).isEqualTo(validatorWithdrawalRequests);
   }
 
   @Test
-  public void popExitsFromQueue_whenContractCodeIsEmpty_ReturnsEmptyListOfWithdrawalRequests() {
+  public void
+      popWithdrawalRequestsFromQueue_whenContractCodeIsEmpty_ReturnsEmptyListOfWithdrawalRequests() {
     // Create account with empty code
     final WorldUpdater updater = worldState.updater();
     updater.createAccount(WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS);
@@ -75,69 +76,72 @@ class WithdrawalRequestContractHelperTest {
   }
 
   @Test
-  public void popExitsFromQueue_WhenMoreWithdrawalRequests_UpdatesQueuePointers() {
-    // Loading contract with more than 16 exits
-    final List<WithdrawalRequest> validatorExits =
+  public void popWithdrawalRequestsFromQueue_WhenMoreWithdrawalRequests_UpdatesQueuePointers() {
+    // Loading contract with more than 16 WithdrawalRequests
+    final List<WithdrawalRequest> validatorWithdrawalRequests =
         IntStream.range(0, 30).mapToObj(__ -> createExit()).collect(Collectors.toList());
-    loadContractStorage(worldState, validatorExits);
-    // After loading the contract, the exit count since last block should match the size of the list
-    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, validatorExits.size());
+    loadContractStorage(worldState, validatorWithdrawalRequests);
+    // After loading the contract, the WithdrawalRequests count since last block should match the
+    // size of the list
+    assertContractStorageValue(
+        WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, validatorWithdrawalRequests.size());
 
-    final List<WithdrawalRequest> poppedExits =
+    final List<WithdrawalRequest> poppedWithdrawalRequests =
         WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
-    assertThat(poppedExits).hasSize(16);
+    assertThat(poppedWithdrawalRequests).hasSize(16);
 
     // Check that queue pointers were updated successfully (head advanced to index 16)
     assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT, 16);
     assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_TAIL_STORAGE_SLOT, 30);
 
-    // We had 30 exits in the queue, and target per block is 2, so we have 28 excess
+    // We had 30 WithdrawalRequests in the queue, and target per block is 2, so we have 28 excess
     assertContractStorageValue(EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT, 28);
 
-    // We always reset the exit count after processing the queue
+    // We always reset the WithdrawalRequests count after processing the queue
     assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, 0);
   }
 
   @Test
-  public void popExitsFromQueue_WhenNoMoreWithdrawalRequests_ZeroQueuePointers() {
-    final List<WithdrawalRequest> validatorExits =
+  public void popWithdrawalRequestsFromQueue_WhenNoMoreWithdrawalRequests_ZeroQueuePointers() {
+    final List<WithdrawalRequest> withdrawalRequests =
         List.of(createExit(), createExit(), createExit());
-    loadContractStorage(worldState, validatorExits);
+    loadContractStorage(worldState, withdrawalRequests);
     // After loading the contract, the exit count since last block should match the size of the list
-    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, validatorExits.size());
+    assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, withdrawalRequests.size());
 
-    final List<WithdrawalRequest> poppedExits =
+    final List<WithdrawalRequest> poppedWithdrawalRequests =
         WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
-    assertThat(poppedExits).hasSize(3);
+    assertThat(poppedWithdrawalRequests).hasSize(3);
 
     // Check that queue pointers were updated successfully (head and tail zero because queue is
     // empty)
     assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT, 0);
     assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_TAIL_STORAGE_SLOT, 0);
 
-    // We had 3 exits in the queue, target per block is 2, so we have 1 excess
+    // We had 3 WithdrawalRequests in the queue, target per block is 2, so we have 1 excess
     assertContractStorageValue(EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT, 1);
 
-    // We always reset the exit count after processing the queue
+    // We always reset the WithdrawalRequests count after processing the queue
     assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, 0);
   }
 
   @Test
-  public void popExitsFromQueue_WhenNoWithdrawalRequests_DoesNothing() {
-    // Loading contract with 0 exits
+  public void popWithdrawalRequestsFromQueue_WhenNoWithdrawalRequests_DoesNothing() {
+    // Loading contract with 0 WithdrawalRequests
     loadContractStorage(worldState, List.of());
-    // After loading storage, we have the exit count as zero because no exits were aded
+    // After loading storage, we have the WithdrawalRequests count as zero because no
+    // WithdrawalRequests were added
     assertContractStorageValue(WITHDRAWAL_REQUEST_COUNT_STORAGE_SLOT, 0);
 
-    final List<WithdrawalRequest> poppedExits =
+    final List<WithdrawalRequest> poppedWithdrawalRequests =
         WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
-    assertThat(poppedExits).hasSize(0);
+    assertThat(poppedWithdrawalRequests).hasSize(0);
 
     // Check that queue pointers are correct (head and tail are zero)
     assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT, 0);
     assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_TAIL_STORAGE_SLOT, 0);
 
-    // We had 0 exits in the queue, and target per block is 2, so we have 0 excess
+    // We had 0 WithdrawalRequests in the queue, and target per block is 2, so we have 0 excess
     assertContractStorageValue(EXCESS_WITHDRAWAL_REQUESTS_STORAGE_SLOT, 0);
 
     // We always reset the exit count after processing the queue

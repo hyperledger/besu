@@ -106,9 +106,6 @@ public class GeneralStateReferenceTestTools {
 
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
-
-    // None of the Prague tests have withdrawls and deposits handling
-    params.ignore("-Prague$");
   }
 
   private GeneralStateReferenceTestTools() {
@@ -160,7 +157,7 @@ public class GeneralStateReferenceTestTools {
             blockHeader,
             transaction,
             blockHeader.getCoinbase(),
-            new CachingBlockHashLookup(blockHeader, blockchain),
+                new CachingBlockHashLookup(blockHeader, blockchain),
             false,
             TransactionValidationParams.processingBlock(),
             blobGasPrice);

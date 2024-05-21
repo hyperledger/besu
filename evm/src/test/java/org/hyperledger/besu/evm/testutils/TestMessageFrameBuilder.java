@@ -24,13 +24,13 @@ import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -54,7 +54,7 @@ public class TestMessageFrameBuilder {
   private int pc = 0;
   private int section = 0;
   private final List<Bytes> stackItems = new ArrayList<>();
-  private Optional<Function<Long, Hash>> blockHashLookup = Optional.empty();
+  private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
   private Bytes memory = Bytes.EMPTY;
 
   public TestMessageFrameBuilder worldUpdater(final WorldUpdater worldUpdater) {
@@ -132,7 +132,7 @@ public class TestMessageFrameBuilder {
     return this;
   }
 
-  public TestMessageFrameBuilder blockHashLookup(final Function<Long, Hash> blockHashLookup) {
+  public TestMessageFrameBuilder blockHashLookup(final BlockHashLookup blockHashLookup) {
     this.blockHashLookup = Optional.of(blockHashLookup);
     return this;
   }

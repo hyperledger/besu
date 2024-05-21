@@ -48,6 +48,7 @@ public class MinPriorityFeePerGasTransactionSelectorTest {
             miningParameters,
             null,
             null,
+            null,
             mock(ProcessableBlockHeader.class),
             null,
             null,
