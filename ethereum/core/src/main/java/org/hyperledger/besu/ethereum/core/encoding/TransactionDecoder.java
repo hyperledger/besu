@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
-import java.util.Map;
 import java.util.Optional;
 
 import com.google.common.collect.ImmutableMap;

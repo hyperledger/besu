@@ -272,7 +272,6 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
       paths << pathFile.substring(pathFile.indexOf(pathstrip))
     }
   }
-  println paths.collate(5)
 
   paths.collate(5).eachWithIndex { tests, idx ->
     def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
