@@ -118,13 +118,13 @@ jobs:
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: matrix.runner_index == 0
         with:
-          name: acceptance-tests-timing
+          name: unit-tests-timing
           path: 'tmp/timing.tsv'
       - name: Upload Lists
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: matrix.runner_index == 0
         with:
-          name: acceptance-tests-lists
+          name: unit-tests-lists
           path: 'tmp/*.list'
       - name: Upload gradle test tasks
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
