@@ -16,14 +16,11 @@ package org.hyperledger.besu.evm.operations.linea;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.operation.linea.BlockHashNumberOperation;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
-
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -37,17 +34,17 @@ public class BlockHashNumberOperationTest {
 
   @Test
   public void shouldReturnCurrentBlockNumberWhenArgIsBiggerThanALong() {
-    assertBlockHash(Bytes32.fromHexString("F".repeat(64)), 100, n -> Hash.EMPTY_LIST_HASH);
+    assertBlockHash(Bytes32.fromHexString("F".repeat(64)), 100);
   }
 
   @Test
   public void shouldReturnCurrentBlockNumberWhenCurrentBlockIsGenesis() {
-    assertBlockHash(Bytes32.ZERO, 0, block -> Hash.EMPTY_LIST_HASH);
+    assertBlockHash(Bytes32.ZERO, 0);
   }
 
   @Test
   public void shouldReturnCurrentBlockNumberWhenRequestedBlockAheadOfCurrent() {
-    assertBlockHash(250, 100, block -> Hash.EMPTY_LIST_HASH);
+    assertBlockHash(250, 100);
   }
 
   @Test
@@ -55,38 +52,31 @@ public class BlockHashNumberOperationTest {
     final int requestedBlock = 10;
     // Our block is the one after the chain head (it's a new block), hence the + 1.
     final int importingBlockNumber = MAXIMUM_COMPLETE_BLOCKS_BEHIND + requestedBlock + 1;
-    assertBlockHash(requestedBlock, importingBlockNumber, block -> Hash.EMPTY_LIST_HASH);
+    assertBlockHash(requestedBlock, importingBlockNumber);
   }
 
   @Test
   public void shouldReturnCurrentBlockNumberWhenRequestedBlockGreaterThanImportingBlock() {
-    assertBlockHash(101, 100, block -> Hash.EMPTY_LIST_HASH);
+    assertBlockHash(101, 100);
   }
 
   @Test
   public void shouldReturnCurrentBlockNumberWhenRequestedBlockEqualToImportingBlock() {
-    assertBlockHash(100, 100, block -> Hash.EMPTY_LIST_HASH);
+    assertBlockHash(100, 100);
   }
 
   @Test
   public void shouldReturnCurrentBlockNumberUsingLookupFromFrameWhenItIsWithinTheAllowedRange() {
-    assertBlockHash(100, 200, block -> Hash.EMPTY_LIST_HASH);
+    assertBlockHash(100, 200);
   }
 
-  private void assertBlockHash(
-      final long requestedBlock,
-      final long currentBlockNumber,
-      final Function<Long, Hash> blockHashLookup) {
-    assertBlockHash(UInt256.valueOf(requestedBlock), currentBlockNumber, blockHashLookup);
+  private void assertBlockHash(final long requestedBlock, final long currentBlockNumber) {
+    assertBlockHash(UInt256.valueOf(requestedBlock), currentBlockNumber);
   }
 
-  private void assertBlockHash(
-      final Bytes32 input,
-      final long currentBlockNumber,
-      final Function<Long, Hash> blockHashLookup) {
+  private void assertBlockHash(final Bytes32 input, final long currentBlockNumber) {
     final MessageFrame frame =
         new TestMessageFrameBuilder()
-            .blockHashLookup(blockHashLookup)
             .blockValues(new FakeBlockValues(currentBlockNumber))
             .pushStackItem(UInt256.fromBytes(input))
             .build();
