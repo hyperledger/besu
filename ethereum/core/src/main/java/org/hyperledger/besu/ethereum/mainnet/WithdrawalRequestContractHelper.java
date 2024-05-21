@@ -44,9 +44,6 @@ public class WithdrawalRequestContractHelper {
   public static final Address WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS =
       Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
 
-  /** private constructor to prevent instantiations */
-  private WithdrawalRequestContractHelper() {}
-
   @VisibleForTesting
   // Storage slot to store the difference between number of withdrawal requests since last block and
   // target withdrawal requests

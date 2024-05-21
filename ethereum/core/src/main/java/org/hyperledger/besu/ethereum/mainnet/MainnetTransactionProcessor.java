@@ -64,12 +64,18 @@ public class MainnetTransactionProcessor {
   protected final GasCalculator gasCalculator;
 
   protected final TransactionValidatorFactory transactionValidatorFactory;
-  protected final boolean warmCoinbase;
-  protected final FeeMarket feeMarket;
+
   private final AbstractMessageProcessor contractCreationProcessor;
+
   private final AbstractMessageProcessor messageCallProcessor;
+
   private final int maxStackSize;
+
   private final boolean clearEmptyAccounts;
+
+  protected final boolean warmCoinbase;
+
+  protected final FeeMarket feeMarket;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
   public MainnetTransactionProcessor(

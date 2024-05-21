@@ -148,7 +148,7 @@ class EofCreateOperationTest {
         .code(code)
         .completer(__ -> {})
         .address(Address.fromHexString(SENDER))
-        .blockHashLookup((f, n) -> Hash.hash(Words.longBytes(n)))
+        .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
         .blockValues(mock(BlockValues.class))
         .gasPrice(Wei.ZERO)
         .miningBeneficiary(Address.ZERO)

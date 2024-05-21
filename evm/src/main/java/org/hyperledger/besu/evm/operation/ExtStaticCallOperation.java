@@ -28,9 +28,9 @@ import org.hyperledger.besu.evm.internal.Words;
 /** The Static call operation. */
 public class ExtStaticCallOperation extends AbstractCallOperation {
 
-  public static final int STACK_TO = 0;
-  public static final int STACK_INPUT_OFFSET = 1;
-  public static final int STACK_INPUT_LENGTH = 2;
+  static final int STACK_TO = 0;
+  static final int STACK_INPUT_OFFSET = 1;
+  static final int STACK_INPUT_LENGTH = 2;
 
   /**
    * Instantiates a new Static call operation.

@@ -86,11 +86,6 @@ public abstract class PendingTransaction
     return new Remote(transaction, addedAt);
   }
 
-  public static List<Transaction> toTransactionList(
-      final Collection<PendingTransaction> transactionsInfo) {
-    return transactionsInfo.stream().map(PendingTransaction::getTransaction).toList();
-  }
-
   @Override
   public Transaction getTransaction() {
     return transaction;
@@ -213,6 +208,11 @@ public abstract class PendingTransaction
               return totalSize;
             })
         .orElse(0);
+  }
+
+  public static List<Transaction> toTransactionList(
+      final Collection<PendingTransaction> transactionsInfo) {
+    return transactionsInfo.stream().map(PendingTransaction::getTransaction).toList();
   }
 
   @Override

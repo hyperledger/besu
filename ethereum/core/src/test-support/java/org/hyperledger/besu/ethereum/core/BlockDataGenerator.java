@@ -373,24 +373,11 @@ public class BlockDataGenerator {
       final TransactionType transactionType, final Bytes payload, final Address to) {
     return switch (transactionType) {
       case FRONTIER -> frontierTransaction(payload, to);
-      case ACCESS_LIST -> accessListTransaction(payload, to);
       case EIP1559 -> eip1559Transaction(payload, to);
+      case ACCESS_LIST -> accessListTransaction(payload, to);
       case BLOB -> blobTransaction(payload, to);
         // no default, all types accounted for.
     };
-  }
-
-  private Transaction frontierTransaction(final Bytes payload, final Address to) {
-    return Transaction.builder()
-        .type(TransactionType.FRONTIER)
-        .nonce(random.nextLong())
-        .gasPrice(Wei.wrap(bytesValue(4)))
-        .gasLimit(positiveLong())
-        .to(to)
-        .value(Wei.wrap(bytes32()))
-        .payload(payload)
-        .chainId(BigInteger.ONE)
-        .signAndBuild(generateKeyPair());
   }
 
   private Transaction accessListTransaction(final Bytes payload, final Address to) {
@@ -446,6 +433,19 @@ public class BlockDataGenerator {
         .chainId(BigInteger.ONE)
         .maxFeePerBlobGas(Wei.of(1))
         .versionedHashes(List.of(VersionedHash.DEFAULT_VERSIONED_HASH))
+        .signAndBuild(generateKeyPair());
+  }
+
+  private Transaction frontierTransaction(final Bytes payload, final Address to) {
+    return Transaction.builder()
+        .type(TransactionType.FRONTIER)
+        .nonce(random.nextLong())
+        .gasPrice(Wei.wrap(bytesValue(4)))
+        .gasLimit(positiveLong())
+        .to(to)
+        .value(Wei.wrap(bytes32()))
+        .payload(payload)
+        .chainId(BigInteger.ONE)
         .signAndBuild(generateKeyPair());
   }
 

@@ -28,9 +28,9 @@ import org.hyperledger.besu.evm.internal.Words;
 /** The Delegate call operation. */
 public class ExtDelegateCallOperation extends AbstractCallOperation {
 
-  public static final int STACK_TO = 0;
-  public static final int STACK_INPUT_OFFSET = 1;
-  public static final int STACK_INPUT_LENGTH = 2;
+  static final int STACK_TO = 0;
+  static final int STACK_INPUT_OFFSET = 1;
+  static final int STACK_INPUT_LENGTH = 2;
 
   /**
    * Instantiates a new Delegate call operation.

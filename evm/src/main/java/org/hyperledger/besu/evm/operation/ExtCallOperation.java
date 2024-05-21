@@ -28,10 +28,10 @@ import org.hyperledger.besu.evm.internal.Words;
 /** The Call operation. */
 public class ExtCallOperation extends AbstractCallOperation {
 
-  public static final int STACK_TO = 0;
-  public static final int STACK_VALUE = 1;
-  public static final int STACK_INPUT_OFFSET = 2;
-  public static final int STACK_INPUT_LENGTH = 3;
+  static final int STACK_TO = 0;
+  static final int STACK_VALUE = 1;
+  static final int STACK_INPUT_OFFSET = 2;
+  static final int STACK_INPUT_LENGTH = 3;
 
   /**
    * Instantiates a new Call operation.

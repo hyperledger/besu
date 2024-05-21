@@ -113,6 +113,7 @@ public interface ExceptionalHaltReason {
         "EOF Code is attempting to create EOF code of an earlier version"),
     /** Container referenced by EOFCREATE operation does not exist */
     NONEXISTENT_CONTAINER("Referenced subcontainer index does not exist (too large?)"),
+    /** A given address cannot be used by EOF */
     ADDRESS_OUT_OF_RANGE("Address has more than 20 bytes and is out of range");
 
     /** The Description. */

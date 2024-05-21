@@ -22,8 +22,6 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
-import java.util.Map;
-
 import com.google.common.collect.ImmutableMap;
 import org.apache.tuweni.bytes.Bytes;
 
@@ -35,12 +33,16 @@ public class TransactionEncoder {
   }
 
   private static final ImmutableMap<TransactionType, Encoder> TYPED_TRANSACTION_ENCODERS =
-      ImmutableMap.ofEntries(
-          Map.entry(TransactionType.ACCESS_LIST, AccessListTransactionEncoder::encode),
-          Map.entry(TransactionType.EIP1559, EIP1559TransactionEncoder::encode),
-          Map.entry(TransactionType.BLOB, BlobTransactionEncoder::encode));
+      ImmutableMap.of(
+          TransactionType.ACCESS_LIST,
+          AccessListTransactionEncoder::encode,
+          TransactionType.EIP1559,
+          EIP1559TransactionEncoder::encode,
+          TransactionType.BLOB,
+          BlobTransactionEncoder::encode);
+
   private static final ImmutableMap<TransactionType, Encoder> POOLED_TRANSACTION_ENCODERS =
-      ImmutableMap.ofEntries(Map.entry(TransactionType.BLOB, BlobPooledTransactionEncoder::encode));
+      ImmutableMap.of(TransactionType.BLOB, BlobPooledTransactionEncoder::encode);
 
   /**
    * Encodes a transaction into RLP format.

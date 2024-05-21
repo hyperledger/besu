@@ -68,7 +68,7 @@ import org.mockito.quality.Strictness;
 
 @ExtendWith(MockitoExtension.class)
 @MockitoSettings(strictness = Strictness.LENIENT)
-class MainnetTransactionValidatorTest {
+public class MainnetTransactionValidatorTest {
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
@@ -76,6 +76,7 @@ class MainnetTransactionValidatorTest {
 
   private static final TransactionValidationParams transactionValidationParams =
       processingBlockParams;
+
   @Mock protected GasCalculator gasCalculator;
 
   private final Transaction basicTransaction =
@@ -84,7 +85,7 @@ class MainnetTransactionValidatorTest {
           .chainId(Optional.of(BigInteger.ONE))
           .createTransaction(senderKeys);
 
-  protected MainnetTransactionValidator createTransactionValidator(
+  protected TransactionValidator createTransactionValidator(
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
       final FeeMarket feeMarket,
@@ -118,7 +119,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionIfIntrinsicGasExceedsGasLimit() {
+  public void shouldRejectTransactionIfIntrinsicGasExceedsGasLimit() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
@@ -137,7 +138,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionWhenTransactionHasChainIdAndValidatorDoesNot() {
+  public void shouldRejectTransactionWhenTransactionHasChainIdAndValidatorDoesNot() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
@@ -150,7 +151,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionWhenTransactionHasIncorrectChainId() {
+  public void shouldRejectTransactionWhenTransactionHasIncorrectChainId() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
@@ -164,7 +165,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionWhenSenderAccountDoesNotExist() {
+  public void shouldRejectTransactionWhenSenderAccountDoesNotExist() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
@@ -173,7 +174,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionWhenTransactionNonceBelowAccountNonce() {
+  public void shouldRejectTransactionWhenTransactionNonceBelowAccountNonce() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
@@ -184,7 +185,8 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsNotAllowed() {
+  public void
+      shouldRejectTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsNotAllowed() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
@@ -195,7 +197,8 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldAcceptTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsAllowed() {
+  public void
+      shouldAcceptTransactionWhenTransactionNonceAboveAccountNonceAndFutureNonceIsAllowed() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
@@ -206,7 +209,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionWhenNonceExceedsMaximumAllowedNonce() {
+  public void shouldRejectTransactionWhenNonceExceedsMaximumAllowedNonce() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
@@ -220,7 +223,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void transactionWithNullSenderCanBeValidIfGasPriceAndValueIsZero() {
+  public void transactionWithNullSenderCanBeValidIfGasPriceAndValueIsZero() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.of(BigInteger.ONE));
@@ -237,7 +240,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionIfAccountIsNotEOA() {
+  public void shouldRejectTransactionIfAccountIsNotEOA() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
@@ -253,7 +256,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionWithMaxFeeTimesGasLimitGreaterThanBalance() {
+  public void shouldRejectTransactionWithMaxFeeTimesGasLimitGreaterThanBalance() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator, GasLimitCalculator.constant(), false, Optional.empty());
@@ -277,7 +280,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionWithMaxPriorityFeeGreaterThanMaxFee() {
+  public void shouldRejectTransactionWithMaxPriorityFeeGreaterThanMaxFee() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
@@ -314,7 +317,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionWithMaxBlobPriorityFeeSmallerThanBlobBaseFee() {
+  public void shouldRejectTransactionWithMaxBlobPriorityFeeSmallerThanBlobBaseFee() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
@@ -360,7 +363,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldAcceptOnlyTransactionsInAcceptedTransactionTypes() {
+  public void shouldAcceptOnlyTransactionsInAcceptedTransactionTypes() {
     final TransactionValidator frontierValidator =
         createTransactionValidator(
             gasCalculator,
@@ -404,7 +407,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTransactionIfEIP1559TransactionGasPriceLessBaseFee() {
+  public void shouldRejectTransactionIfEIP1559TransactionGasPriceLessBaseFee() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
@@ -428,7 +431,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldAcceptZeroGasPriceTransactionIfBaseFeeIsZero() {
+  public void shouldAcceptZeroGasPriceTransactionIfBaseFeeIsZero() {
     final Optional<Wei> zeroBaseFee = Optional.of(Wei.ZERO);
     final TransactionValidator validator =
         createTransactionValidator(
@@ -454,7 +457,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldAcceptValidEIP1559() {
+  public void shouldAcceptValidEIP1559() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
@@ -480,7 +483,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldValidate1559TransactionWithPriceLowerThanBaseFeeForTransactionPool() {
+  public void shouldValidate1559TransactionWithPriceLowerThanBaseFeeForTransactionPool() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
@@ -509,7 +512,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectTooLargeInitcode() {
+  public void shouldRejectTooLargeInitcode() {
     final TransactionValidator validator =
         createTransactionValidator(
             gasCalculator,
@@ -537,7 +540,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldRejectContractCreateWithBlob() {
+  public void shouldRejectContractCreateWithBlob() {
     /*
     https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4844.md#blob-transaction
     "The field to deviates slightly from the semantics with the exception that it
@@ -585,7 +588,7 @@ class MainnetTransactionValidatorTest {
   }
 
   @Test
-  void shouldAcceptTransactionWithAtLeastOneBlob() {
+  public void shouldAcceptTransactionWithAtLeastOneBlob() {
     when(gasCalculator.blobGasCost(anyInt())).thenReturn(2L);
     final TransactionValidator validator =
         createTransactionValidator(
