@@ -36,8 +36,10 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
@@ -66,6 +68,7 @@ public class EthGetBlockByNumberTest {
   private EthGetBlockByNumber method;
   @Mock private Synchronizer synchronizer;
   @Mock private WorldStateArchive worldStateArchive;
+  @Mock private ProtocolSchedule protocolSchedule;
 
   @BeforeEach
   public void setUp() {
@@ -87,7 +90,10 @@ public class EthGetBlockByNumberTest {
             latestHeader.getStateRoot(), latestHeader.getHash()))
         .thenReturn(Boolean.TRUE);
 
-    blockchainQueries = spy(new BlockchainQueries(blockchain, worldStateArchive));
+    blockchainQueries =
+        spy(
+            new BlockchainQueries(
+                protocolSchedule, blockchain, worldStateArchive, MiningParameters.newDefault()));
 
     method = new EthGetBlockByNumber(blockchainQueries, blockResult, synchronizer);
   }
