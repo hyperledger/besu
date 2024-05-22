@@ -737,6 +737,7 @@ public abstract class MainnetProtocolSpecs {
       final MiningParameters miningParameters) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     final Address depositContractAddress =
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
@@ -766,12 +767,29 @@ public abstract class MainnetProtocolSpecs {
                         MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
+        // warm blockahsh contract
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidator,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidator,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    true,
+                    true,
+                    stackSizeLimit,
+                    feeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
+
         // use prague precompiled contracts
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .requestsValidator(pragueRequestsValidator(depositContractAddress))
         .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
-        .blockHashProcessor(
-            new PragueBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
+        .blockHashProcessor(new PragueBlockHashProcessor())
         .name("Prague");
   }
 

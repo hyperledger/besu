@@ -12,7 +12,8 @@
 - Peering - refactor disconnect logic to improve peer acquisition and retention [#6968](https://github.com/hyperledger/besu/pull/6968)
 
 ### Bug fixes
-
+- Fix parsing `gasLimit` parameter when its value is > `Long.MAX_VALUE` [#7116](https://github.com/hyperledger/besu/pull/7116)
+- Skip validation of withdrawals when importing BFT blocks since withdrawals don't apply to BFT chains [#7115](https://github.com/hyperledger/besu/pull/7115)
 
 ## 24.5.1
 
