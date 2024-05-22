@@ -175,7 +175,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),
-        new EthGasPrice(blockchainQueries, miningCoordinator, apiConfiguration),
+        new EthGasPrice(blockchainQueries, apiConfiguration),
         new EthGetWork(miningCoordinator),
         new EthSubmitWork(miningCoordinator),
         new EthHashrate(miningCoordinator),

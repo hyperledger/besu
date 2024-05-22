@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -30,38 +32,57 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.LegacyFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.LondonFeeMarket;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
+import java.util.HashMap;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.IntStream;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
 import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class EthGasPriceTest {
+  private static final String JSON_RPC_VERSION = "2.0";
+  private static final String ETH_METHOD = "eth_gasPrice";
+  private static final long DEFAULT_BLOCK_GAS_LIMIT = 100_000;
+  private static final long DEFAULT_BLOCK_GAS_USED = 21_000;
+  private static final Wei DEFAULT_MIN_GAS_PRICE = Wei.of(1_000);
+  private static final Wei DEFAULT_BASE_FEE = Wei.of(100_000);
 
-  @Mock private PoWMiningCoordinator miningCoordinator;
+  @Mock private ProtocolSchedule protocolSchedule;
   @Mock private Blockchain blockchain;
   private EthGasPrice method;
-  private final String JSON_RPC_VERSION = "2.0";
-  private final String ETH_METHOD = "eth_gasPrice";
+  private MiningParameters miningParameters;
 
   @BeforeEach
   public void setUp() {
     ApiConfiguration apiConfig = createDefaultApiConfiguration();
+    miningParameters =
+        MiningParameters.newDefault().setMinTransactionGasPrice(DEFAULT_MIN_GAS_PRICE);
     method = createEthGasPriceMethod(apiConfig);
   }
 
@@ -73,20 +94,17 @@ public class EthGasPriceTest {
   @Test
   public void shouldReturnMinValueWhenNoTransactionsExist() {
     final JsonRpcRequestContext request = requestWithParams();
-    final String expectedWei = "0x4d2";
+    final String expectedWei = "0x4d2"; // minGasPrice > nextBlockBaseFee
+    miningParameters.setMinTransactionGasPrice(Wei.fromHexString(expectedWei));
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
-    when(miningCoordinator.getMinTransactionGasPrice()).thenReturn(Wei.of(1234));
 
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(1000L);
-    when(blockchain.getBlockByNumber(anyLong()))
-        .thenAnswer(invocation -> createEmptyBlock(invocation.getArgument(0, Long.class)));
+    mockBaseFeeMarket();
+
+    mockBlockchain(1000, 0);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
-
-    verify(miningCoordinator).getMinTransactionGasPrice();
-    verifyNoMoreInteractions(miningCoordinator);
 
     verify(blockchain).getChainHeadBlockNumber();
     verify(blockchain, VerificationModeFactory.times(100)).getBlockByNumber(anyLong());
@@ -94,20 +112,39 @@ public class EthGasPriceTest {
   }
 
   @Test
-  public void shouldReturnMedianWhenTransactionsExist() {
+  public void shouldReturnBaseFeeAsMinValueOnGenesis() {
     final JsonRpcRequestContext request = requestWithParams();
-    final String expectedWei = "0x389fd980"; // 950Wei, gas prices are 900-999 wei.
+    final String expectedWei =
+        DEFAULT_BASE_FEE.toShortHexString(); // nextBlockBaseFee > minGasPrice
+    miningParameters.setMinTransactionGasPrice(Wei.fromHexString(expectedWei));
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
 
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(1000L);
-    when(blockchain.getBlockByNumber(anyLong()))
-        .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
+    mockBaseFeeMarket();
+
+    mockBlockchain(0, 0);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
-    verifyNoMoreInteractions(miningCoordinator);
+    verify(blockchain).getChainHeadBlockNumber();
+    verify(blockchain, VerificationModeFactory.times(1)).getBlockByNumber(anyLong());
+    verifyNoMoreInteractions(blockchain);
+  }
+
+  @Test
+  public void shouldReturnMedianWhenTransactionsExist() {
+    final JsonRpcRequestContext request = requestWithParams();
+    final String expectedWei = "0x911c70"; // 9.51 mwei, gas prices are 9.01-10 mwei.
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
+
+    mockBaseFeeMarket();
+
+    mockBlockchain(1000L, 1);
+
+    final JsonRpcResponse actualResponse = method.response(request);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
     verify(blockchain).getChainHeadBlockNumber();
     verify(blockchain, VerificationModeFactory.times(100)).getBlockByNumber(anyLong());
@@ -117,21 +154,19 @@ public class EthGasPriceTest {
   @Test
   public void shortChainQueriesAllBlocks() {
     final JsonRpcRequestContext request = requestWithParams();
-    final String expectedWei = "0x2625a00";
+    final String expectedWei = "0x64190"; // 410 kwei
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(request.getRequest().getId(), expectedWei);
 
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(80L);
-    when(blockchain.getBlockByNumber(anyLong()))
-        .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
+    mockBaseFeeMarket();
+
+    mockBlockchain(80L, 1);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
-    verifyNoMoreInteractions(miningCoordinator);
-
     verify(blockchain).getChainHeadBlockNumber();
-    verify(blockchain, VerificationModeFactory.times(80)).getBlockByNumber(anyLong());
+    verify(blockchain, VerificationModeFactory.times(81)).getBlockByNumber(anyLong());
     verifyNoMoreInteractions(blockchain);
   }
 
@@ -141,9 +176,9 @@ public class EthGasPriceTest {
    */
   @Test
   public void shouldReturnLimitedPriceWhenLowerBoundIsPresent() {
-    long gasPrice = 5000000;
-    long lowerBoundGasPrice = gasPrice + 1;
-    verifyGasPriceLimit(lowerBoundGasPrice, null, lowerBoundGasPrice);
+    long expectedGasPrice = 31_841 * 2;
+    long lowerBoundCoefficient = 200;
+    verifyGasPriceLimit(lowerBoundCoefficient, null, expectedGasPrice);
   }
 
   /**
@@ -152,9 +187,9 @@ public class EthGasPriceTest {
    */
   @Test
   public void shouldReturnLimitedPriceWhenUpperBoundIsPresent() {
-    long gasPrice = 5000000;
-    long upperBoundGasPrice = gasPrice - 1;
-    verifyGasPriceLimit(null, upperBoundGasPrice, upperBoundGasPrice);
+    long expectedGasPrice = (long) (31_841 * 1.5);
+    long upperBoundCoefficient = 150;
+    verifyGasPriceLimit(null, upperBoundCoefficient, expectedGasPrice);
   }
 
   /**
@@ -163,25 +198,83 @@ public class EthGasPriceTest {
    */
   @Test
   public void shouldReturnActualGasPriceWhenWithinBoundRange() {
-    long gasPrice = 5000000;
-    long lowerBoundGasPrice = gasPrice - 1;
-    long upperBoundGasPrice = gasPrice + 1;
-    verifyGasPriceLimit(lowerBoundGasPrice, upperBoundGasPrice, gasPrice);
+    long gasPrice = 60_000;
+    long lowerBoundCoefficient = 120;
+    long upperBoundCoefficient = 200;
+    verifyGasPriceLimit(lowerBoundCoefficient, upperBoundCoefficient, gasPrice);
+  }
+
+  private static Stream<Arguments> ethGasPriceAtGenesis() {
+    return Stream.of(
+        // base fee > min gas price
+        Arguments.of(
+            DEFAULT_MIN_GAS_PRICE.divide(2),
+            Optional.of(DEFAULT_MIN_GAS_PRICE),
+            DEFAULT_MIN_GAS_PRICE.subtract(
+                DEFAULT_MIN_GAS_PRICE
+                    .multiply(125)
+                    .divide(1000)) // expect base fee for the 1st block
+            ),
+        // base fee < min gas price
+        Arguments.of(
+            DEFAULT_BASE_FEE.multiply(2),
+            Optional.of(DEFAULT_BASE_FEE),
+            DEFAULT_BASE_FEE.multiply(2)) // expect min gas price value
+        ,
+
+        // no base fee market
+        Arguments.of(
+            DEFAULT_MIN_GAS_PRICE,
+            Optional.empty(),
+            DEFAULT_MIN_GAS_PRICE // expect min gas price value
+            ));
+  }
+
+  @ParameterizedTest
+  @MethodSource("ethGasPriceAtGenesis")
+  public void ethGasPriceAtGenesis(
+      final Wei minGasPrice, final Optional<Wei> maybeGenesisBaseFee, final Wei expectedGasPrice) {
+    miningParameters.setMinTransactionGasPrice(minGasPrice);
+
+    if (maybeGenesisBaseFee.isPresent()) {
+      mockBaseFeeMarket();
+      mockBlockchain(maybeGenesisBaseFee.get(), 0, 0);
+    } else {
+      mockGasPriceMarket();
+      mockBlockchain(null, 0, 0);
+    }
+
+    final JsonRpcRequestContext request = requestWithParams();
+    final JsonRpcResponse expectedResponse =
+        new JsonRpcSuccessResponse(
+            request.getRequest().getId(), expectedGasPrice.toShortHexString());
+
+    final JsonRpcResponse actualResponse = method.response(request);
+    assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
+
+    verify(blockchain).getChainHeadBlockNumber();
+    verify(blockchain, VerificationModeFactory.times(1)).getBlockByNumber(anyLong());
+    verifyNoMoreInteractions(blockchain);
   }
 
   /**
    * Helper method to verify the gas price limit.
    *
-   * @param lowerBound The lower bound of the gas price.
-   * @param upperBound The upper bound of the gas price.
+   * @param lowerBoundCoefficient The lower bound of the gas price.
+   * @param upperBoundCoefficient The upper bound of the gas price.
    * @param expectedGasPrice The expected gas price.
    */
   private void verifyGasPriceLimit(
-      final Long lowerBound, final Long upperBound, final long expectedGasPrice) {
-    when(miningCoordinator.getMinTransactionGasPrice()).thenReturn(Wei.of(100));
+      final Long lowerBoundCoefficient,
+      final Long upperBoundCoefficient,
+      final long expectedGasPrice) {
+    miningParameters.setMinTransactionGasPrice(Wei.of(100));
+
+    mockBaseFeeMarket();
 
     var apiConfig =
-        createApiConfiguration(Optional.ofNullable(lowerBound), Optional.ofNullable(upperBound));
+        createApiConfiguration(
+            Optional.ofNullable(lowerBoundCoefficient), Optional.ofNullable(upperBoundCoefficient));
     method = createEthGasPriceMethod(apiConfig);
 
     final JsonRpcRequestContext request = requestWithParams();
@@ -189,78 +282,108 @@ public class EthGasPriceTest {
         new JsonRpcSuccessResponse(
             request.getRequest().getId(), Wei.of(expectedGasPrice).toShortHexString());
 
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(10L);
-    when(blockchain.getBlockByNumber(anyLong()))
-        .thenAnswer(invocation -> createFakeBlock(invocation.getArgument(0, Long.class)));
+    final var chainHeadBlockNumber = 10L;
+    mockBlockchain(chainHeadBlockNumber, 1);
 
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
   }
 
-  private Object createFakeBlock(final Long height) {
-    return Optional.of(
-        new Block(
-            new BlockHeader(
-                Hash.EMPTY,
-                Hash.EMPTY_TRIE_HASH,
-                Address.ZERO,
-                Hash.EMPTY_TRIE_HASH,
-                Hash.EMPTY_TRIE_HASH,
-                Hash.EMPTY_TRIE_HASH,
-                LogsBloomFilter.builder().build(),
-                Difficulty.ONE,
-                height,
-                0,
-                0,
-                0,
-                Bytes.EMPTY,
-                Wei.ZERO,
-                Hash.EMPTY,
-                0,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null),
-            new BlockBody(
-                List.of(
-                    new Transaction.Builder()
-                        .nonce(0)
-                        .gasPrice(Wei.of(height * 1000000L))
-                        .gasLimit(0)
-                        .value(Wei.ZERO)
-                        .build()),
-                List.of())));
+  private void mockBaseFeeMarket() {
+    mockFeeMarket(new LondonFeeMarket(0));
   }
 
-  private Object createEmptyBlock(final Long height) {
-    return Optional.of(
-        new Block(
-            new BlockHeader(
-                Hash.EMPTY,
-                Hash.EMPTY_TRIE_HASH,
-                Address.ZERO,
-                Hash.EMPTY_TRIE_HASH,
-                Hash.EMPTY_TRIE_HASH,
-                Hash.EMPTY_TRIE_HASH,
-                LogsBloomFilter.builder().build(),
-                Difficulty.ONE,
-                height,
-                0,
-                0,
-                0,
-                Bytes.EMPTY,
-                Wei.ZERO,
-                Hash.EMPTY,
-                0,
-                null,
-                null,
-                null,
-                null,
-                null,
-                null),
-            new BlockBody(List.of(), List.of())));
+  private void mockGasPriceMarket() {
+    mockFeeMarket(new LegacyFeeMarket());
+  }
+
+  private void mockFeeMarket(final FeeMarket feeMarket) {
+    final var protocolSpec = mock(ProtocolSpec.class);
+    when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
+    when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
+  }
+
+  private void mockBlockchain(final long chainHeadBlockNumber, final int txsNum) {
+    mockBlockchain(DEFAULT_BASE_FEE, chainHeadBlockNumber, txsNum);
+  }
+
+  private void mockBlockchain(
+      final Wei genesisBaseFee, final long chainHeadBlockNumber, final int txsNum) {
+    final var blocksByNumber = new HashMap<Long, Block>();
+
+    final var genesisBlock = createFakeBlock(0, 0, genesisBaseFee);
+    blocksByNumber.put(0L, genesisBlock);
+
+    final var baseFeeMarket = new CancunFeeMarket(0, Optional.empty());
+
+    var baseFee = genesisBaseFee;
+    for (long i = 1; i <= chainHeadBlockNumber; i++) {
+      final var parentHeader = blocksByNumber.get(i - 1).getHeader();
+      baseFee =
+          baseFeeMarket.computeBaseFee(
+              i,
+              parentHeader.getBaseFee().get(),
+              parentHeader.getGasUsed(),
+              parentHeader.getGasLimit());
+      blocksByNumber.put(i, createFakeBlock(i, txsNum, baseFee));
+    }
+
+    when(blockchain.getChainHeadBlockNumber()).thenReturn(chainHeadBlockNumber);
+    when(blockchain.getBlockByNumber(anyLong()))
+        .thenAnswer(
+            invocation -> Optional.of(blocksByNumber.get(invocation.getArgument(0, Long.class))));
+
+    when(blockchain.getChainHeadHeader())
+        .thenReturn(blocksByNumber.get(chainHeadBlockNumber).getHeader());
+  }
+
+  private Block createFakeBlock(final long height, final int txsNum, final Wei baseFee) {
+    return createFakeBlock(
+        height, txsNum, baseFee, DEFAULT_BLOCK_GAS_LIMIT, DEFAULT_BLOCK_GAS_USED * txsNum);
+  }
+
+  private Block createFakeBlock(
+      final long height,
+      final int txsNum,
+      final Wei baseFee,
+      final long gasLimit,
+      final long gasUsed) {
+    return new Block(
+        new BlockHeader(
+            Hash.EMPTY,
+            Hash.EMPTY_TRIE_HASH,
+            Address.ZERO,
+            Hash.EMPTY_TRIE_HASH,
+            Hash.EMPTY_TRIE_HASH,
+            Hash.EMPTY_TRIE_HASH,
+            LogsBloomFilter.builder().build(),
+            Difficulty.ONE,
+            height,
+            gasLimit,
+            gasUsed,
+            0,
+            Bytes.EMPTY,
+            baseFee,
+            Hash.EMPTY,
+            0,
+            null,
+            null,
+            null,
+            null,
+            null,
+            null),
+        new BlockBody(
+            IntStream.range(0, txsNum)
+                .mapToObj(
+                    i ->
+                        new Transaction.Builder()
+                            .nonce(i)
+                            .gasPrice(Wei.of(height * 10_000L))
+                            .gasLimit(gasUsed)
+                            .value(Wei.ZERO)
+                            .build())
+                .toList(),
+            List.of()));
   }
 
   private JsonRpcRequestContext requestWithParams(final Object... params) {
@@ -272,16 +395,15 @@ public class EthGasPriceTest {
   }
 
   private ApiConfiguration createApiConfiguration(
-      final Optional<Long> lowerBound, final Optional<Long> upperBound) {
-    ImmutableApiConfiguration.Builder builder =
-        ImmutableApiConfiguration.builder().gasPriceMinSupplier(() -> 100);
+      final Optional<Long> lowerBoundCoefficient, final Optional<Long> upperBoundCoefficient) {
+    ImmutableApiConfiguration.Builder builder = ImmutableApiConfiguration.builder();
 
-    lowerBound.ifPresent(
+    lowerBoundCoefficient.ifPresent(
         value ->
             builder
                 .isGasAndPriorityFeeLimitingEnabled(true)
                 .lowerBoundGasAndPriorityFeeCoefficient(value));
-    upperBound.ifPresent(
+    upperBoundCoefficient.ifPresent(
         value ->
             builder
                 .isGasAndPriorityFeeLimitingEnabled(true)
@@ -292,8 +414,14 @@ public class EthGasPriceTest {
 
   private EthGasPrice createEthGasPriceMethod(final ApiConfiguration apiConfig) {
     return new EthGasPrice(
-        new BlockchainQueries(blockchain, null, Optional.empty(), Optional.empty(), apiConfig),
-        miningCoordinator,
+        new BlockchainQueries(
+            protocolSchedule,
+            blockchain,
+            null,
+            Optional.empty(),
+            Optional.empty(),
+            apiConfig,
+            miningParameters),
         apiConfig);
   }
 }
