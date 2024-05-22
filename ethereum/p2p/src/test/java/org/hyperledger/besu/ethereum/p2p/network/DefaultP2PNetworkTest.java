@@ -26,6 +26,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import io.vertx.core.impl.ContextInternal;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
@@ -337,7 +338,7 @@ public final class DefaultP2PNetworkTest {
 
     Vertx vertx = mock(Vertx.class);
     when(vertx.createDnsClient(any())).thenReturn(mock(DnsClient.class));
-    when(vertx.getOrCreateContext()).thenReturn(mock(Context.class));
+    when(vertx.getOrCreateContext()).thenReturn(mock(ContextInternal.class));
 
     // spy on DefaultP2PNetwork
     final DefaultP2PNetwork testClass =
@@ -360,7 +361,7 @@ public final class DefaultP2PNetworkTest {
 
     Vertx vertx = mock(Vertx.class);
     when(vertx.createDnsClient(any())).thenReturn(mock(DnsClient.class));
-    when(vertx.getOrCreateContext()).thenReturn(mock(Context.class));
+    when(vertx.getOrCreateContext()).thenReturn(mock(ContextInternal.class));
 
     final DefaultP2PNetwork testClass =
         (DefaultP2PNetwork) builder().config(dnsConfig).vertx(vertx).build();
