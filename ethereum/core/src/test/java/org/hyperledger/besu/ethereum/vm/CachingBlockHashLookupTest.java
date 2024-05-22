@@ -14,9 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.vm;
 
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -27,8 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.evm.frame.BlockValues;
-import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import java.util.Optional;
 
@@ -37,17 +35,13 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class CachingBlockHashLookupTest {
 
-  @Mock private Blockchain blockchain;
-  @Mock private MessageFrame messageFrame;
-  @Mock private BlockValues blockValues;
-
-  private static final int CURRENT_BLOCK_NUMBER = 300;
+  private static final int CURRENT_BLOCK_NUMBER = 256;
+  private final Blockchain blockchain = mock(Blockchain.class);
   private final BlockHeader[] headers = new BlockHeader[CURRENT_BLOCK_NUMBER];
   private BlockHashLookup lookup;
 
@@ -56,13 +50,10 @@ class CachingBlockHashLookupTest {
     BlockHeader parentHeader = null;
     for (int i = 0; i < headers.length; i++) {
       final BlockHeader header = createHeader(i, parentHeader);
-      lenient().when(blockchain.getBlockHeader(header.getHash())).thenReturn(Optional.of(header));
+      when(blockchain.getBlockHeader(header.getHash())).thenReturn(Optional.of(header));
       headers[i] = header;
       parentHeader = headers[i];
     }
-    when(messageFrame.getBlockValues()).thenReturn(blockValues);
-    when(blockValues.getNumber()).thenReturn((long) CURRENT_BLOCK_NUMBER);
-
     lookup =
         new CachingBlockHashLookup(
             createHeader(CURRENT_BLOCK_NUMBER, headers[headers.length - 1]), blockchain);
@@ -81,32 +72,19 @@ class CachingBlockHashLookupTest {
   }
 
   @Test
+  void shouldGetHashOfGenesisBlock() {
+    assertHashForBlockNumber(0);
+  }
+
+  @Test
   void shouldGetHashForRecentBlockAfterOlderBlock() {
-    assertHashForBlockNumber(100);
+    assertHashForBlockNumber(10);
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 1);
   }
 
   @Test
-  void shouldReturnEmptyHashWhenRequestedGenesis() {
-    Assertions.assertThat(lookup.apply(messageFrame, 0L)).isEqualTo(Hash.ZERO);
-  }
-
-  @Test
-  void shouldReturnEmptyHashWhenRequestedTooFarBack() {
-    Assertions.assertThat(lookup.apply(messageFrame, CURRENT_BLOCK_NUMBER - 260L))
-        .isEqualTo(Hash.ZERO);
-  }
-
-  @Test
-  void shouldReturnEmptyHashWhenRequestedCurrentBlock() {
-    Assertions.assertThat(lookup.apply(messageFrame, (long) CURRENT_BLOCK_NUMBER))
-        .isEqualTo(Hash.ZERO);
-  }
-
-  @Test
   void shouldReturnEmptyHashWhenRequestedBlockNotOnchain() {
-    Assertions.assertThat(lookup.apply(messageFrame, CURRENT_BLOCK_NUMBER + 20L))
-        .isEqualTo(Hash.ZERO);
+    Assertions.assertThat(lookup.apply(CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
   }
 
   @Test
@@ -115,8 +93,7 @@ class CachingBlockHashLookupTest {
         new CachingBlockHashLookup(
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER + 20).buildHeader(),
             blockchain);
-    Assertions.assertThat(
-            lookupWithUnavailableParent.apply(messageFrame, (long) CURRENT_BLOCK_NUMBER))
+    Assertions.assertThat(lookupWithUnavailableParent.apply((long) CURRENT_BLOCK_NUMBER))
         .isEqualTo(Hash.ZERO);
   }
 
@@ -137,7 +114,7 @@ class CachingBlockHashLookupTest {
   }
 
   private void assertHashForBlockNumber(final int blockNumber) {
-    Assertions.assertThat(lookup.apply(messageFrame, (long) blockNumber))
+    Assertions.assertThat(lookup.apply((long) blockNumber))
         .isEqualTo(headers[blockNumber].getHash());
   }
 
