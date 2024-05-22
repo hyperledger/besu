@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.verkletrie;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.NodeUpdater;
 import org.hyperledger.besu.ethereum.trie.verkle.StoredBatchedVerkleTrie;
-import org.hyperledger.besu.ethereum.trie.verkle.VerkleTreeBatchHasher;
+import org.hyperledger.besu.ethereum.trie.verkle.VerkleTrieBatchHasher;
 import org.hyperledger.besu.ethereum.trie.verkle.factory.StoredNodeFactory;
 
 import java.util.Optional;
@@ -34,7 +34,7 @@ public class VerkleTrie {
 
   public VerkleTrie(final NodeLoader nodeLoader, final Bytes32 rootHash) {
     nodeFactory = new StoredNodeFactory<>(nodeLoader, value -> value);
-    verkleTrie = new StoredBatchedVerkleTrie<>(new VerkleTreeBatchHasher(), nodeFactory);
+    verkleTrie = new StoredBatchedVerkleTrie<>(new VerkleTrieBatchHasher(), nodeFactory);
   }
 
   public Optional<Bytes> get(final Bytes key) {

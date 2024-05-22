@@ -78,15 +78,13 @@ public class ProtocolSpecBuilder {
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
 
-  protected HistoricalBlockHashProcessor historicalBlockHashProcessor;
-
   private RequestsValidatorCoordinator requestsValidatorCoordinator =
       new RequestsValidatorCoordinator.Builder().build();
   private RequestProcessorCoordinator requestProcessorCoordinator;
   protected BlockHashProcessor blockHashProcessor;
 
   private ExecutionWitnessValidator executionWitnessValidator =
-          new ExecutionWitnessValidator.ProhibitedExecutionWitness();
+      new ExecutionWitnessValidator.ProhibitedExecutionWitness();
 
   private FeeMarket feeMarket = FeeMarket.legacy();
   private BadBlockManager badBlockManager;
@@ -295,12 +293,6 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder historicalBlockHashProcessor(
-      final HistoricalBlockHashProcessor historicalBlockHashProcessor) {
-    this.historicalBlockHashProcessor = historicalBlockHashProcessor;
-    return this;
-  }
-
   public ProtocolSpecBuilder isPoS(final boolean isPoS) {
     this.isPoS = isPoS;
     return this;
@@ -423,7 +415,8 @@ public class ProtocolSpecBuilder {
         Optional.ofNullable(requestProcessorCoordinator),
         blockHashProcessor,
         isPoS,
-        isReplayProtectionSupported,        executionWitnessValidator);
+        isReplayProtectionSupported,
+        executionWitnessValidator);
   }
 
   private PrivateTransactionProcessor createPrivateTransactionProcessor(

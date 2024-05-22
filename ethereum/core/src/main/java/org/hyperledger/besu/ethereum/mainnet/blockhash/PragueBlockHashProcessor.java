@@ -34,9 +34,10 @@ import org.slf4j.LoggerFactory;
  */
 public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(PragueBlockHashProcessor.class);
-
   public static final Address HISTORY_STORAGE_ADDRESS =
-      Address.fromHexString("0x25a219378dad9b3503c8268c9ca836a52427a4fb");
+      Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe"); // should be
+
+  // 0x25a219378dad9b3503c8268c9ca836a52427a4fb
 
   /** The HISTORY_SERVE_WINDOW */
   public static final long HISTORY_SERVE_WINDOW = 8192;

@@ -126,7 +126,7 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-            .requestsRoot(header.getRequestsRoot().orElse(null))
+        .requestsRoot(header.getRequestsRoot().orElse(null))
         .executionWitness(header.getExecutionWitness().orElse(null));
   }
 
@@ -151,8 +151,7 @@ public class BlockHeaderBuilder {
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
-
-                .requestsRoot(fromBuilder.requestsRoot)
+            .requestsRoot(fromBuilder.requestsRoot)
             .executionWitness(fromBuilder.executionWitness)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
@@ -183,8 +182,7 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-
-            requestsRoot,
+        requestsRoot,
         executionWitness,
         blockHeaderFunctions);
   }
@@ -227,7 +225,7 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-            requestsRoot,
+        requestsRoot,
         executionWitness);
   }
 

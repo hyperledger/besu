@@ -131,7 +131,7 @@ public class ConstantinopleGasCalculator extends ByzantiumGasCalculator {
 
   @Override
   public long extCodeHashOperationGasCost(
-      final MessageFrame frame, final Optional<Address> address) {
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> address) {
     return EXTCODE_HASH_COST;
   }
 }

@@ -39,10 +39,7 @@ public class SLoadOperation extends AbstractOperation {
   }
 
   protected long cost(final MessageFrame frame, final Bytes32 key, final boolean slotIsWarm) {
-    return gasCalculator().getSloadOperationGasCost(frame, UInt256.fromBytes(key))
-        + (slotIsWarm
-            ? gasCalculator().getWarmStorageReadCost()
-            : gasCalculator().getColdSloadCost());
+    return gasCalculator().getSloadOperationGasCost(frame, UInt256.fromBytes(key), slotIsWarm);
   }
 
   @Override

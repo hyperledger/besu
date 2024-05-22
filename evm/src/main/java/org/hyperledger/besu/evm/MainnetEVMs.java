@@ -1107,7 +1107,7 @@ public class MainnetEVMs {
         eip4762Operations(gasCalculator, chainId),
         gasCalculator,
         evmConfiguration,
-        EvmSpecVersion.FUTURE_EIPS);
+        EvmSpecVersion.PRAGUE);
   }
 
   /**

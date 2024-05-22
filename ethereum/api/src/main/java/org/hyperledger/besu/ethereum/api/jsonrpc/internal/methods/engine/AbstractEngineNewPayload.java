@@ -188,7 +188,6 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal request"));
     }
 
-
     final Optional<ExecutionWitness> maybeExecutionWitness =
         Optional.ofNullable(blockParam.getExecutionWitness())
             .map(ExecutionWitnessParameter::toExecutionWitness);
@@ -270,8 +269,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsRoot).orElse(null),
-                maybeExecutionWitness.orElse(null),
-                headerFunctions);
+            maybeExecutionWitness.orElse(null),
+            headerFunctions);
 
     // ensure the block hash matches the blockParam hash
     // this must be done before any other check

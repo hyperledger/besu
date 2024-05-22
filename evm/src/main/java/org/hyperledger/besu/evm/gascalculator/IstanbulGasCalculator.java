@@ -127,21 +127,22 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
-  public long getSloadOperationGasCost(final MessageFrame frame, final UInt256 key) {
+  public long getSloadOperationGasCost(
+      final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
     return SLOAD_GAS;
   }
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
   public long getBalanceOperationGasCost(
-      final MessageFrame frame, final Optional<Address> maybeAddress) {
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
   public long extCodeHashOperationGasCost(
-      final MessageFrame frame, final Optional<Address> address) {
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> address) {
     return EXTCODE_HASH_COST;
   }
 

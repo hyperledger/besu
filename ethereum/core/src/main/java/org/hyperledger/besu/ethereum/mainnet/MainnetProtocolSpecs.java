@@ -785,7 +785,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    new ClearEmptyAccount(),
                     true,
                     stackSizeLimit,
                     feeMarket,
@@ -812,7 +812,7 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
         new ClearEmptyAccountStrategy.ClearEmptyAccountWithException(
-            List.of(HistoricalBlockHashProcessor.HISTORICAL_BLOCKHASH_ADDRESS));
+            List.of(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS));
     return shanghaiDefinition(
             chainId,
             configContractSizeLimit,
@@ -843,8 +843,7 @@ public abstract class MainnetProtocolSpecs {
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
-        .historicalBlockHashProcessor(
-            new HistoricalBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
+        .blockHashProcessor(new PragueBlockHashProcessor())
         .name("eip4762");
   }
 

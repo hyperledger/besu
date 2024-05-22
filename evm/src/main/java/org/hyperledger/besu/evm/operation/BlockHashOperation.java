@@ -53,7 +53,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
-          final MessageFrame frame, final EVM evm) {
+      final MessageFrame frame, final EVM evm) {
     final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
 
     // Short-circuit if value is unreasonably large
@@ -69,8 +69,8 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     // If the current block is the genesis block or the sought block is
     // not within the last 256 completed blocks, zero is returned.
     if (currentBlockNumber == 0
-            || soughtBlock >= currentBlockNumber
-            || soughtBlock < (currentBlockNumber - MAX_RELATIVE_BLOCK)) {
+        || soughtBlock >= currentBlockNumber
+        || soughtBlock < (currentBlockNumber - MAX_RELATIVE_BLOCK)) {
       frame.pushStackItem(Bytes32.ZERO);
     } else {
       final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
