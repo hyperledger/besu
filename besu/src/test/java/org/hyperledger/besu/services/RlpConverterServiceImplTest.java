@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -38,7 +38,7 @@ public class RlpConverterServiceImplTest {
         new BlockHeaderTestFixture()
             .timestamp(1710338135 + 1)
             .baseFeePerGas(Wei.of(1000))
-            .depositsRoot(Hash.ZERO)
+            .requestsRoot(Hash.ZERO)
             .withdrawalsRoot(Hash.ZERO)
             .blobGasUsed(500L)
             .excessBlobGas(BlobGas.of(500L))
