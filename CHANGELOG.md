@@ -9,7 +9,7 @@
 - Default bonsai to use full-flat db and code-storage-by-code-hash [#6984](https://github.com/hyperledger/besu/pull/6894)
 - New RPC methods miner_setExtraData and miner_getExtraData [#7078](https://github.com/hyperledger/besu/pull/7078)
 - Disconnect peers that have multiple discovery ports since they give us bad neighbours [#7089](https://github.com/hyperledger/besu/pull/7089)
-- Use ConsenSys besu-dns-discovery module which is a fork of Tuweni DNS discovery with performance related enhancements.
+- Use ConsenSys [besu-dns-discovery](https://github.com/Consensys/besu-dns-discovery) module which is a fork of Tuweni DNS discovery with performance related enhancements.[#7129](https://github.com/hyperledger/besu/pull/7129)
 
 ### Bug fixes
 - Fix parsing `gasLimit` parameter when its value is > `Long.MAX_VALUE` [#7116](https://github.com/hyperledger/besu/pull/7116)
