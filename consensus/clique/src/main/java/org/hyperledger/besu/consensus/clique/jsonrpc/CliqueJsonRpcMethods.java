@@ -31,6 +31,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.Map;
@@ -38,14 +40,23 @@ import java.util.Map;
 /** The Clique json rpc methods. */
 public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolContext context;
+  private final ProtocolSchedule protocolSchedule;
+  private final MiningParameters miningParameters;
 
   /**
    * Instantiates a new Clique json rpc methods.
    *
-   * @param context the context
+   * @param context the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param miningParameters the mining parameters
    */
-  public CliqueJsonRpcMethods(final ProtocolContext context) {
+  public CliqueJsonRpcMethods(
+      final ProtocolContext context,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
     this.context = context;
+    this.protocolSchedule = protocolSchedule;
+    this.miningParameters = miningParameters;
   }
 
   @Override
@@ -58,7 +69,7 @@ public class CliqueJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final MutableBlockchain blockchain = context.getBlockchain();
     final WorldStateArchive worldStateArchive = context.getWorldStateArchive();
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(blockchain, worldStateArchive);
+        new BlockchainQueries(protocolSchedule, blockchain, worldStateArchive, miningParameters);
     final ValidatorProvider validatorProvider =
         context.getConsensusContext(CliqueContext.class).getValidatorProvider();
 
