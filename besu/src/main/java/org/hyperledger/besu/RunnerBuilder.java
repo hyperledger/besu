@@ -106,7 +106,6 @@ import org.hyperledger.besu.ethereum.privacy.PrivateTransactionObserver;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.stratum.StratumServer;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethstats.EthStatsService;
 import org.hyperledger.besu.ethstats.util.EthStatsConnectOptions;
 import org.hyperledger.besu.metrics.MetricsService;
@@ -193,6 +192,9 @@ public class RunnerBuilder {
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
+
+  /** Instantiates a new Runner builder. */
+  public RunnerBuilder() {}
 
   /**
    * Add Vertx.
@@ -603,15 +605,15 @@ public class RunnerBuilder {
             .setAdvertisedHost(p2pAdvertisedHost);
     if (discovery) {
       final List<EnodeURL> bootstrap;
-      if (ethNetworkConfig.getBootNodes() == null) {
-        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).getBootNodes();
+      if (ethNetworkConfig.bootNodes() == null) {
+        bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).bootNodes();
       } else {
-        bootstrap = ethNetworkConfig.getBootNodes();
+        bootstrap = ethNetworkConfig.bootNodes();
       }
       discoveryConfiguration.setBootnodes(bootstrap);
       LOG.info("Resolved {} bootnodes.", bootstrap.size());
       LOG.debug("Bootnodes = {}", bootstrap);
-      discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.getDnsDiscoveryUrl());
+      discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl());
       discoveryConfiguration.setDiscoveryV5Enabled(
           networkingConfiguration.getDiscovery().isDiscoveryV5Enabled());
       discoveryConfiguration.setFilterOnEnrForkId(
@@ -722,14 +724,17 @@ public class RunnerBuilder {
 
     final TransactionPool transactionPool = besuController.getTransactionPool();
     final MiningCoordinator miningCoordinator = besuController.getMiningCoordinator();
+    final MiningParameters miningParameters = besuController.getMiningParameters();
 
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
+            protocolSchedule,
             context.getBlockchain(),
             context.getWorldStateArchive(),
             Optional.of(dataDir.resolve(CACHE_PATH)),
             Optional.of(besuController.getProtocolManager().ethContext().getScheduler()),
-            apiConfiguration);
+            apiConfiguration,
+            miningParameters);
 
     final PrivacyParameters privacyParameters = besuController.getPrivacyParameters();
 
@@ -746,7 +751,6 @@ public class RunnerBuilder {
 
     final P2PNetwork peerNetwork = networkRunner.getNetwork();
 
-    final MiningParameters miningParameters = besuController.getMiningParameters();
     Optional<StratumServer> stratumServer = Optional.empty();
 
     if (miningParameters.isStratumMiningEnabled()) {
@@ -954,10 +958,7 @@ public class RunnerBuilder {
               rpcEndpointServiceImpl);
 
       createLogsSubscriptionService(
-          context.getBlockchain(),
-          context.getWorldStateArchive(),
-          subscriptionManager,
-          privacyParameters);
+          context.getBlockchain(), subscriptionManager, privacyParameters, blockchainQueries);
 
       createNewBlockHeadersSubscriptionService(
           context.getBlockchain(), blockchainQueries, subscriptionManager);
@@ -1209,7 +1210,7 @@ public class RunnerBuilder {
         new JsonRpcMethodsFactory()
             .methods(
                 BesuInfo.nodeName(identityString),
-                ethNetworkConfig.getNetworkId(),
+                ethNetworkConfig.networkId(),
                 besuController.getGenesisConfigOptions(),
                 network,
                 blockchainQueries,
@@ -1270,15 +1271,12 @@ public class RunnerBuilder {
 
   private void createLogsSubscriptionService(
       final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
       final SubscriptionManager subscriptionManager,
-      final PrivacyParameters privacyParameters) {
+      final PrivacyParameters privacyParameters,
+      final BlockchainQueries blockchainQueries) {
 
     Optional<PrivacyQueries> privacyQueries = Optional.empty();
     if (privacyParameters.isEnabled()) {
-      final BlockchainQueries blockchainQueries =
-          new BlockchainQueries(
-              blockchain, worldStateArchive, Optional.empty(), Optional.empty(), apiConfiguration);
       privacyQueries =
           Optional.of(
               new PrivacyQueries(

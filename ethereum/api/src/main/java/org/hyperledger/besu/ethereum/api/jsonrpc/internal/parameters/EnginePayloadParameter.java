@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -44,7 +44,7 @@ public class EnginePayloadParameter {
   private final Long blobGasUsed;
   private final String excessBlobGas;
   private final List<DepositParameter> deposits;
-  private final List<ValidatorExitParameter> exits;
+  private final List<WithdrawalRequestParameter> withdrawalRequests;
 
   private final ExecutionWitnessParameter executionWitness;
 
@@ -69,7 +69,7 @@ public class EnginePayloadParameter {
    * @param blobGasUsed QUANTITY, 64 Bits
    * @param excessBlobGas QUANTITY, 64 Bits
    * @param deposits List of deposit parameters.
-   * @param exits List of exits parameters.
+   * @param withdrawalRequestParameters List of withdrawal requests parameters.
    * @param executionWitness OBJECT executionWitness.
    */
   @JsonCreator
@@ -92,7 +92,7 @@ public class EnginePayloadParameter {
       @JsonProperty("blobGasUsed") final UnsignedLongParameter blobGasUsed,
       @JsonProperty("excessBlobGas") final String excessBlobGas,
       @JsonProperty("depositReceipts") final List<DepositParameter> deposits,
-      @JsonProperty("exits") final List<ValidatorExitParameter> exits,
+      @JsonProperty("withdrawalRequests") final List<WithdrawalRequestParameter> withdrawalRequestParameters,
       @JsonProperty("executionWitness") final ExecutionWitnessParameter executionWitness) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
@@ -112,7 +112,7 @@ public class EnginePayloadParameter {
     this.blobGasUsed = blobGasUsed == null ? null : blobGasUsed.getValue();
     this.excessBlobGas = excessBlobGas;
     this.deposits = deposits;
-    this.exits = exits;
+    this.withdrawalRequests = withdrawalRequestParameters;
     this.executionWitness = executionWitness;
   }
 
@@ -188,8 +188,8 @@ public class EnginePayloadParameter {
     return deposits;
   }
 
-  public List<ValidatorExitParameter> getExits() {
-    return exits;
+  public List<WithdrawalRequestParameter> getWithdrawalRequests() {
+    return withdrawalRequests;
   }
 
   public ExecutionWitnessParameter getExecutionWitness() {

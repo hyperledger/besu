@@ -37,6 +37,9 @@ public class PetersburgGasCalculator extends ConstantinopleGasCalculator {
   /** Same as {#link {@link FrontierGasCalculator#STORAGE_RESET_REFUND_AMOUNT} */
   private static final long STORAGE_RESET_REFUND_AMOUNT = 15_000L;
 
+  /** Default constructor. */
+  public PetersburgGasCalculator() {}
+
   /**
    * Same as {#link {@link GasCalculator#calculateStorageCost(MessageFrame, UInt256, UInt256,
    * Supplier, Supplier)}

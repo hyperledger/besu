@@ -16,9 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.BASEFEE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.COINBASE;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.DEPOSITS_ROOT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.DIFFICULTY;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.EXITS_ROOT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.EXTRA_DATA;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.GAS_LIMIT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.GAS_USED;
@@ -29,6 +27,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.NUMBE
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.OMMERS_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.PARENT_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.RECEIPTS_ROOT;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.REQUESTS_ROOT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.SIZE;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.STATE_ROOT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcResponseKey.TIMESTAMP;
@@ -105,9 +104,8 @@ public class JsonRpcResponseUtils {
     final int size = unsignedInt(values.get(SIZE));
     final Hash withdrawalsRoot =
         values.containsKey(WITHDRAWALS_ROOT) ? hash(values.get(WITHDRAWALS_ROOT)) : null;
-    final Hash depositsRoot =
-        values.containsKey(DEPOSITS_ROOT) ? hash(values.get(DEPOSITS_ROOT)) : null;
-    final Hash exitsRoot = values.containsKey(EXITS_ROOT) ? hash(values.get(EXITS_ROOT)) : null;
+    final Hash requestsRoot =
+        values.containsKey(REQUESTS_ROOT) ? hash(values.get(REQUESTS_ROOT)) : null;
     final List<JsonNode> ommers = new ArrayList<>();
 
     final BlockHeader header =
@@ -132,8 +130,7 @@ public class JsonRpcResponseUtils {
             null, // ToDo 4844: set with the value of blob_gas_used field
             null, // ToDo 4844: set with the value of excess_blob_gas field
             null, // TODO 4788: set with the value of the parent beacon block root field
-            depositsRoot,
-            exitsRoot,
+            requestsRoot,
             blockHeaderFunctions);
 
     return new JsonRpcSuccessResponse(

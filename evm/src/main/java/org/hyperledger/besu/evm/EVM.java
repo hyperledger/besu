@@ -136,7 +136,7 @@ public class EVM {
   /**
    * Returns the non-fork related configuration parameters of the EVM.
    *
-   * @return the EVM coniguration.
+   * @return the EVM configuration.
    */
   public EvmConfiguration getEvmConfiguration() {
     return evmConfiguration;

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -33,7 +33,9 @@ public enum RpcErrorType implements RpcMethodError {
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
 
   // Resource unavailable error
-  TX_POOL_DISABLED(-32002, "Transaction pool not enabled"),
+  TX_POOL_DISABLED(
+      -32002,
+      "Transaction pool not enabled. (Either txpool explicitly disabled, or node not yet in sync)."),
 
   // eth_getBlockByNumber specific error message
   UNKNOWN_BLOCK(-39001, "Unknown block"),

@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.nat.docker;
 
 import org.hyperledger.besu.nat.core.IpDetector;
@@ -25,6 +24,9 @@ import java.util.Optional;
 public class HostBasedIpDetector implements IpDetector {
 
   private static final String HOSTNAME = "HOST_IP";
+
+  /** Default constructor */
+  public HostBasedIpDetector() {}
 
   @Override
   @SuppressWarnings("AddressSelection")

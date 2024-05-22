@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
@@ -42,6 +43,9 @@ import java.util.function.Function;
 public abstract class BaseBftProtocolScheduleBuilder {
 
   private static final BigInteger DEFAULT_CHAIN_ID = BigInteger.ONE;
+
+  /** Default constructor. */
+  protected BaseBftProtocolScheduleBuilder() {}
 
   /**
    * Create protocol schedule.
@@ -124,6 +128,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
         .skipZeroBlockRewards(true)
         .blockHeaderFunctions(BftBlockHeaderFunctions.forOnchainBlock(bftExtraDataCodec))
         .blockReward(Wei.of(configOptions.getBlockRewardWei()))
+        .withdrawalsValidator(new WithdrawalsValidator.NotApplicableWithdrawals())
         .miningBeneficiaryCalculator(
             header -> configOptions.getMiningBeneficiary().orElseGet(header::getCoinbase));
   }

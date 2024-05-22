@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -122,7 +122,8 @@ public class EndLayer implements TransactionsLayer {
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] remainingPromotionsPerType) {
     return List.of();
   }
 
@@ -152,7 +153,8 @@ public class EndLayer implements TransactionsLayer {
   }
 
   @Override
-  public PendingTransaction promoteFor(final Address sender, final long nonce) {
+  public PendingTransaction promoteFor(
+      final Address sender, final long nonce, final int[] remainingPromotionsPerType) {
     return null;
   }
 

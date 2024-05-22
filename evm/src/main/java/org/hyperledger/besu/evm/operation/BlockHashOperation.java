@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.BlockValues;
@@ -30,12 +29,18 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The Block hash operation. */
 public class BlockHashOperation extends AbstractFixedCostOperation {
 
-  private static final int MAX_RELATIVE_BLOCK = 256;
+  /**
+   * Function that gets the block hash, passed in as part of TxValues.
+   *
+   * <p>Arg is the current block number. The Result is the Hash, which may be zero based on lookup
+   * rules.
+   */
+  public interface BlockHashLookup extends Function<Long, Hash> {}
 
-  public static final Address HISTORICAL_BLOCKHASH_ADDRESS =
-      Address.fromHexString("0xfffffffffffffffffffffffffffffffffffffffe");
+  /** Frontier maximum relative block delta */
+  public static final int MAX_RELATIVE_BLOCK = 256;
 
-  private final boolean readFromState;
+  private static final int MAX_BLOCK_ARG_SIZE = 8;
 
   /**
    * Instantiates a new Block hash operation.
@@ -43,46 +48,16 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
    * @param gasCalculator the gas calculator
    */
   public BlockHashOperation(final GasCalculator gasCalculator) {
-    this(
-        0x40,
-        "BLOCKHASH",
-        1,
-        1,
-        gasCalculator,
-        gasCalculator.getBlockHashOperationGasCost(),
-        false);
-  }
-
-  public BlockHashOperation(final GasCalculator gasCalculator, final boolean readFromState) {
-    this(
-        0x40,
-        "BLOCKHASH",
-        1,
-        1,
-        gasCalculator,
-        gasCalculator.getBlockHashOperationGasCost(),
-        readFromState);
-  }
-
-  public BlockHashOperation(
-      final int opcode,
-      final String name,
-      final int stackItemsConsumed,
-      final int stackItemsProduced,
-      final GasCalculator gasCalculator,
-      final long fixedCost,
-      final boolean readFromState) {
-    super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator, fixedCost);
-    this.readFromState = readFromState;
+    super(0x40, "BLOCKHASH", 1, 1, gasCalculator, gasCalculator.getBlockHashOperationGasCost());
   }
 
   @Override
   public Operation.OperationResult executeFixedCostOperation(
-      final MessageFrame frame, final EVM evm) {
+          final MessageFrame frame, final EVM evm) {
     final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
 
     // Short-circuit if value is unreasonably large
-    if (blockArg.size() > 8) {
+    if (blockArg.size() > MAX_BLOCK_ARG_SIZE) {
       frame.pushStackItem(UInt256.ZERO);
       return successResponse;
     }
@@ -93,22 +68,13 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
 
     // If the current block is the genesis block or the sought block is
     // not within the last 256 completed blocks, zero is returned.
-    if (soughtBlock < Math.max(currentBlockNumber - MAX_RELATIVE_BLOCK, 0)
-        || soughtBlock >= currentBlockNumber) {
+    if (currentBlockNumber == 0
+            || soughtBlock >= currentBlockNumber
+            || soughtBlock < (currentBlockNumber - MAX_RELATIVE_BLOCK)) {
       frame.pushStackItem(Bytes32.ZERO);
     } else {
-      final Hash blockHash;
-      if (readFromState) {
-        blockHash =
-            Hash.wrap(
-                frame
-                    .getWorldUpdater()
-                    .get(HISTORICAL_BLOCKHASH_ADDRESS)
-                    .getStorageValue(UInt256.valueOf(soughtBlock % MAX_RELATIVE_BLOCK)));
-      } else {
-        final Function<Long, Hash> blockHashLookup = frame.getBlockHashLookup();
-        blockHash = blockHashLookup.apply(soughtBlock);
-      }
+      final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
+      final Hash blockHash = blockHashLookup.apply(soughtBlock);
       frame.pushStackItem(blockHash);
     }
 

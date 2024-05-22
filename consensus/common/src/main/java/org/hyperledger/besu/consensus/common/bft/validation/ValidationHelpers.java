@@ -22,6 +22,8 @@ import java.util.Collection;
 
 /** The type Validation helpers. */
 public class ValidationHelpers {
+  /** Default constructor. */
+  private ValidationHelpers() {}
 
   /**
    * Has duplicate authors.

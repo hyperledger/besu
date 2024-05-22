@@ -43,6 +43,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult.Status;
@@ -565,8 +566,9 @@ public class TransactionSimulatorTest {
   }
 
   @Test
-  public void shouldKeepOriginalGasLimitWhenCapIsHigherThanOriginalValue() {
-    // generate a transaction with a gas limit that is lower than the gas cap
+  public void shouldUseRpcGasCapWhenCapIsHigherThanGasLimit() {
+    // generate a transaction with a gas limit that is lower than the gas cap,
+    // expect the gas cap to override parameter gas limit
     final CallParameter callParameter =
         eip1559TransactionCallParameter(Wei.ZERO, Wei.ZERO, GASCAP - 1);
 
@@ -589,6 +591,7 @@ public class TransactionSimulatorTest {
             .value(callParameter.getValue())
             .payload(callParameter.getPayload())
             .signature(FAKE_SIGNATURE)
+            .gasLimit(GASCAP)
             .build();
 
     // call process with original transaction
@@ -719,12 +722,14 @@ public class TransactionSimulatorTest {
 
   private void mockProtocolSpecForProcessWithWorldUpdater() {
     final BlockHeaderFunctions blockHeaderFunctions = mock(BlockHeaderFunctions.class);
+    final BlockHashProcessor blockHashProcessor = mock(BlockHashProcessor.class);
     when(protocolSchedule.getChainId()).thenReturn(Optional.of(BigInteger.ONE));
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getTransactionProcessor()).thenReturn(transactionProcessor);
     when(protocolSpec.getMiningBeneficiaryCalculator()).thenReturn(BlockHeader::getCoinbase);
     when(protocolSpec.getBlockHeaderFunctions()).thenReturn(blockHeaderFunctions);
     when(protocolSpec.getFeeMarket()).thenReturn(FeeMarket.london(0));
+    when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
   }
 
   private void mockProcessorStatusForTransaction(
@@ -744,7 +749,6 @@ public class TransactionSimulatorTest {
     when(transactionProcessor.processTransaction(
             any(),
             any(),
-            any(),
             eq(transaction),
             any(),
             any(),
@@ -758,7 +762,6 @@ public class TransactionSimulatorTest {
   private void verifyTransactionWasProcessed(final Transaction expectedTransaction) {
     verify(transactionProcessor)
         .processTransaction(
-            any(),
             any(),
             any(),
             eq(expectedTransaction),

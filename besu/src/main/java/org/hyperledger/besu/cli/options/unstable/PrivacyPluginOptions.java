@@ -18,6 +18,8 @@ import static picocli.CommandLine.Option;
 
 /** The Privacy plugin Cli options. */
 public class PrivacyPluginOptions {
+  /** Default Constructor. */
+  PrivacyPluginOptions() {}
 
   /**
    * Create privacy plugin options.

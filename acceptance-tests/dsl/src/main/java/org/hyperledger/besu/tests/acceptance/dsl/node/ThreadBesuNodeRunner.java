@@ -21,7 +21,6 @@ import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.KeyPairUtil;
@@ -31,6 +30,7 @@ import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -74,7 +74,6 @@ import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -141,7 +140,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
 
-    besuPluginContext.registerPlugins(pluginsPath);
+    besuPluginContext.registerPlugins(new PluginConfiguration(pluginsPath));
+
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
     // register built-in plugins
@@ -212,14 +212,16 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final EthNetworkConfig.Builder networkConfigBuilder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network))
             .setBootNodes(bootnodes);
-    node.getConfiguration().getGenesisConfig().ifPresent(networkConfigBuilder::setGenesisConfig);
+    node.getConfiguration()
+        .getGenesisConfig()
+        .map(GenesisConfigFile::fromConfig)
+        .ifPresent(networkConfigBuilder::setGenesisConfigFile);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
     final SynchronizerConfiguration synchronizerConfiguration =
         new SynchronizerConfiguration.Builder().build();
     final BesuControllerBuilder builder =
         new BesuController.Builder()
-            .fromEthNetworkConfig(
-                ethNetworkConfig, Collections.emptyMap(), synchronizerConfiguration.getSyncMode());
+            .fromEthNetworkConfig(ethNetworkConfig, synchronizerConfiguration.getSyncMode());
 
     final KeyValueStorageProvider storageProvider =
         new KeyValueStorageProviderBuilder()
@@ -251,9 +253,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .isRevertReasonEnabled(node.isRevertReasonEnabled())
         .storageProvider(storageProvider)
         .gasLimitCalculator(GasLimitCalculator.constant())
-        .pkiBlockCreationConfiguration(
-            node.getPkiKeyStoreConfiguration()
-                .map(pkiConfig -> new PkiBlockCreationConfigurationProvider().load(pkiConfig)))
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .maxPeers(maxPeers)
         .maxRemotelyInitiatedPeers(15)

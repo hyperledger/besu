@@ -17,6 +17,7 @@ package org.hyperledger.besu;
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
+import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
@@ -85,6 +86,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -242,7 +244,7 @@ public final class RunnerTest {
       final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              EthNetworkConfig.jsonConfig(DEV),
+              GenesisConfigFile.fromResource(DEV.getGenesisFile()),
               DEV.getNetworkId(),
               Collections.singletonList(aheadEnode),
               null);
@@ -367,8 +369,11 @@ public final class RunnerTest {
         .build();
   }
 
-  private GenesisConfigFile getFastSyncGenesis() {
-    final ObjectNode jsonNode = GenesisConfigFile.mainnetJsonNode();
+  private GenesisConfigFile getFastSyncGenesis() throws IOException {
+    final ObjectNode jsonNode =
+        (ObjectNode)
+            new ObjectMapper()
+                .readTree(GenesisConfigFile.class.getResource(MAINNET.getGenesisFile()));
     final Optional<ObjectNode> configNode = JsonUtil.getObjectNode(jsonNode, "config");
     configNode.ifPresent(
         (node) -> {

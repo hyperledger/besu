@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -46,8 +46,7 @@ public class BlockHeaderBuilder {
   private Hash transactionsRoot;
 
   private Hash withdrawalsRoot = null;
-  private Hash depositsRoot = null;
-  private Hash exitsRoot = null;
+  private Hash requestsRoot = null;
 
   private Hash receiptsRoot;
 
@@ -127,8 +126,7 @@ public class BlockHeaderBuilder {
         .blobGasUsed(header.getBlobGasUsed().orElse(null))
         .excessBlobGas(header.getExcessBlobGas().orElse(null))
         .parentBeaconBlockRoot(header.getParentBeaconBlockRoot().orElse(null))
-        .depositsRoot(header.getDepositsRoot().orElse(null))
-        .exitsRoot(header.getExitsRoot().orElse(null))
+            .requestsRoot(header.getRequestsRoot().orElse(null))
         .executionWitness(header.getExecutionWitness().orElse(null));
   }
 
@@ -153,8 +151,8 @@ public class BlockHeaderBuilder {
             .withdrawalsRoot(fromBuilder.withdrawalsRoot)
             .excessBlobGas(fromBuilder.excessBlobGas)
             .parentBeaconBlockRoot(fromBuilder.parentBeaconBlockRoot)
-            .depositsRoot(fromBuilder.depositsRoot)
-            .exitsRoot(fromBuilder.exitsRoot)
+
+                .requestsRoot(fromBuilder.requestsRoot)
             .executionWitness(fromBuilder.executionWitness)
             .blockHeaderFunctions(fromBuilder.blockHeaderFunctions);
     toBuilder.nonce = fromBuilder.nonce;
@@ -185,8 +183,8 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot,
-        exitsRoot,
+
+            requestsRoot,
         executionWitness,
         blockHeaderFunctions);
   }
@@ -229,8 +227,7 @@ public class BlockHeaderBuilder {
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot,
-        exitsRoot,
+            requestsRoot,
         executionWitness);
   }
 
@@ -295,8 +292,7 @@ public class BlockHeaderBuilder {
     sealableBlockHeader.getBlobGasUsed().ifPresent(this::blobGasUsed);
     sealableBlockHeader.getExcessBlobGas().ifPresent(this::excessBlobGas);
     sealableBlockHeader.getParentBeaconBlockRoot().ifPresent(this::parentBeaconBlockRoot);
-    depositsRoot(sealableBlockHeader.getDepositsRoot().orElse(null));
-    exitsRoot(sealableBlockHeader.getExitsRoot().orElse(null));
+    requestsRoot(sealableBlockHeader.getRequestsRoot().orElse(null));
     executionWitness(sealableBlockHeader.getExecutionWitness().orElse(null));
     return this;
   }
@@ -412,13 +408,8 @@ public class BlockHeaderBuilder {
     return this;
   }
 
-  public BlockHeaderBuilder depositsRoot(final Hash hash) {
-    this.depositsRoot = hash;
-    return this;
-  }
-
-  public BlockHeaderBuilder exitsRoot(final Hash hash) {
-    this.exitsRoot = hash;
+  public BlockHeaderBuilder requestsRoot(final Hash hash) {
+    this.requestsRoot = hash;
     return this;
   }
 

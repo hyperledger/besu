@@ -32,8 +32,6 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
-import org.apache.tuweni.bytes.Bytes;
-
 public abstract class AbstractMiningCoordinator<
         M extends BlockMiner<? extends AbstractBlockCreator>>
     implements BlockAddedObserver, MiningCoordinator {
@@ -210,11 +208,6 @@ public abstract class AbstractMiningCoordinator<
   @Override
   public Wei getMinPriorityFeePerGas() {
     return executor.getMinPriorityFeePerGas();
-  }
-
-  @Override
-  public void setExtraData(final Bytes extraData) {
-    executor.setExtraData(extraData);
   }
 
   @Override

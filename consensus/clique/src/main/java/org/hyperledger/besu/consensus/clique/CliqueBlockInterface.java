@@ -44,6 +44,9 @@ public class CliqueBlockInterface implements BlockInterface {
           VoteType.ADD, ADD_NONCE,
           VoteType.DROP, DROP_NONCE);
 
+  /** Default constructor. */
+  public CliqueBlockInterface() {}
+
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {
     return CliqueHelpers.getProposerOfBlock(header);

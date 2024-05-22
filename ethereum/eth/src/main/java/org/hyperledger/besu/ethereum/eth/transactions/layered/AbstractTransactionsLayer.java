@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,6 +29,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
@@ -61,6 +62,13 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractTransactionsLayer.class);
   private static final NavigableMap<Long, PendingTransaction> EMPTY_SENDER_TXS = new TreeMap<>();
+  private static final int[] UNLIMITED_PROMOTIONS_PER_TYPE =
+      new int[TransactionType.values().length];
+
+  static {
+    Arrays.fill(UNLIMITED_PROMOTIONS_PER_TYPE, Integer.MAX_VALUE);
+  }
+
   protected final TransactionPoolConfiguration poolConfig;
   protected final TransactionsLayer nextLayer;
   protected final BiFunction<PendingTransaction, PendingTransaction, Boolean>
@@ -78,15 +86,18 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   protected long spaceUsed = 0;
   protected final int[] txCountByType = new int[TransactionType.values().length];
   private final BlobCache blobCache;
+  private final EthScheduler ethScheduler;
 
   protected AbstractTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,
+      final EthScheduler ethScheduler,
       final TransactionsLayer nextLayer,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final TransactionPoolMetrics metrics,
       final BlobCache blobCache) {
     this.poolConfig = poolConfig;
+    this.ethScheduler = ethScheduler;
     this.nextLayer = nextLayer;
     this.transactionReplacementTester = transactionReplacementTester;
     this.metrics = metrics;
@@ -170,10 +181,10 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
       if (!maybeFull()) {
         // if there is space try to see if the added tx filled some gaps
-        tryFillGap(addStatus, pendingTransaction);
+        tryFillGap(addStatus, pendingTransaction, getRemainingPromotionsPerType());
       }
 
-      notifyTransactionAdded(pendingTransaction);
+      ethScheduler.scheduleTxWorkerTask(() -> notifyTransactionAdded(pendingTransaction));
     } else {
       final var rejectReason = addStatus.maybeInvalidReason().orElseThrow();
       metrics.incrementRejected(pendingTransaction, rejectReason, name());
@@ -207,16 +218,21 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   private void tryFillGap(
-      final TransactionAddedResult addStatus, final PendingTransaction pendingTransaction) {
+      final TransactionAddedResult addStatus,
+      final PendingTransaction pendingTransaction,
+      final int[] remainingPromotionsPerType) {
     // it makes sense to fill gaps only if the add is not a replacement and this layer does not
     // allow gaps
     if (!addStatus.isReplacement() && !gapsAllowed()) {
       final PendingTransaction promotedTx =
-          nextLayer.promoteFor(pendingTransaction.getSender(), pendingTransaction.getNonce());
+          nextLayer.promoteFor(
+              pendingTransaction.getSender(),
+              pendingTransaction.getNonce(),
+              remainingPromotionsPerType);
       if (promotedTx != null) {
         processAdded(promotedTx);
         if (!maybeFull()) {
-          tryFillGap(ADDED, promotedTx);
+          tryFillGap(ADDED, promotedTx, remainingPromotionsPerType);
         }
       }
     }
@@ -251,22 +267,30 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final PendingTransaction pendingTransaction);
 
   @Override
-  public PendingTransaction promoteFor(final Address sender, final long nonce) {
+  public PendingTransaction promoteFor(
+      final Address sender, final long nonce, final int[] remainingPromotionsPerType) {
     final var senderTxs = txsBySender.get(sender);
     if (senderTxs != null) {
       long expectedNonce = nonce + 1;
       if (senderTxs.firstKey() == expectedNonce) {
-        final PendingTransaction promotedTx = senderTxs.pollFirstEntry().getValue();
-        processRemove(senderTxs, promotedTx.getTransaction(), PROMOTED);
-        metrics.incrementRemoved(promotedTx, "promoted", name());
+        final var candidateTx = senderTxs.firstEntry().getValue();
+        final var txType = candidateTx.getTransaction().getType();
 
-        if (senderTxs.isEmpty()) {
-          txsBySender.remove(sender);
+        if (remainingPromotionsPerType[txType.ordinal()] > 0) {
+          senderTxs.pollFirstEntry();
+          processRemove(senderTxs, candidateTx.getTransaction(), PROMOTED);
+          metrics.incrementRemoved(candidateTx, "promoted", name());
+
+          if (senderTxs.isEmpty()) {
+            txsBySender.remove(sender);
+          }
+          --remainingPromotionsPerType[txType.ordinal()];
+          return candidateTx;
         }
-        return promotedTx;
+        return null;
       }
     }
-    return nextLayer.promoteFor(sender, nonce);
+    return nextLayer.promoteFor(sender, nonce, remainingPromotionsPerType);
   }
 
   private TransactionAddedResult addToNextLayer(
@@ -425,9 +449,22 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
     if (freeSlots > 0 && freeSpace > 0) {
       nextLayer
-          .promote(this::promotionFilter, cacheFreeSpace(), freeSlots)
+          .promote(
+              this::promotionFilter, cacheFreeSpace(), freeSlots, getRemainingPromotionsPerType())
           .forEach(this::processAdded);
     }
+  }
+
+  /**
+   * How many txs of a specified type can be promoted? This make sense when a max number of txs of a
+   * type can be included in a single block (ex. blob txs), to avoid filling the layer with more txs
+   * than the useful ones. By default, there are no limits, but each layer can define its own
+   * policy.
+   *
+   * @return an array containing the max amount of txs that can be promoted for each type
+   */
+  protected int[] getRemainingPromotionsPerType() {
+    return Arrays.copyOf(UNLIMITED_PROMOTIONS_PER_TYPE, UNLIMITED_PROMOTIONS_PER_TYPE.length);
   }
 
   private void confirmed(final Address sender, final long maxConfirmedNonce) {

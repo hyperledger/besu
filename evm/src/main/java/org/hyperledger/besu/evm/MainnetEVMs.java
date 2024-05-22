@@ -33,6 +33,8 @@ import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AddressOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
+import org.hyperledger.besu.evm.operation.AuthCallOperation;
+import org.hyperledger.besu.evm.operation.AuthOperation;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
 import org.hyperledger.besu.evm.operation.BaseFeeOperation;
 import org.hyperledger.besu.evm.operation.BlobBaseFeeOperation;
@@ -948,7 +950,9 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerCancunOperations(registry, gasCalculator, chainID);
-    registry.put(new BlockHashOperation(gasCalculator, true));
+    // EIP-3074 AUTH and AUTHCALL
+    registry.put(new AuthOperation(gasCalculator));
+    registry.put(new AuthCallOperation(gasCalculator));
   }
 
   /**
@@ -1133,7 +1137,6 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     // basing off of shanghai for devnet-6
     registerShanghaiOperations(registry, gasCalculator, chainID);
-    registry.put(new BlockHashOperation(gasCalculator, true));
     // mimic a weird behavior by geth that ignores eip-1706
     registry.put(new SStoreOperation(gasCalculator, 272L));
   }

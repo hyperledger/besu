@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -62,7 +62,6 @@ public class ChainForTestCreator {
         null,
         null,
         null,
-        null,
         new MainnetBlockHeaderFunctions());
   }
 
@@ -90,8 +89,7 @@ public class ChainForTestCreator {
         blockHeader.getBlobGasUsed().orElse(null),
         blockHeader.getExcessBlobGas().orElse(null),
         blockHeader.getParentBeaconBlockRoot().orElse(null),
-        blockHeader.getDepositsRoot().orElse(null),
-        blockHeader.getExitsRoot().orElse(null),
+            blockHeader.getRequestsRoot().orElse(null),
         blockHeader.getExecutionWitness().orElse(null),
         new MainnetBlockHeaderFunctions());
   }
@@ -138,7 +136,6 @@ public class ChainForTestCreator {
         Wei.ZERO,
         Hash.EMPTY,
         0,
-        null,
         null,
         null,
         null,

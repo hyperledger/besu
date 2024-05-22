@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.toy;
 
@@ -162,6 +161,17 @@ public class ToyAccount implements MutableAccount {
   @Override
   public Map<UInt256, UInt256> getUpdatedStorage() {
     return storage;
+  }
+
+  /**
+   * Does this account have any storage slots that are set to non-zero values?
+   *
+   * @return true if the account has no storage values set to non-zero values. False if any storage
+   *     is set.
+   */
+  @Override
+  public boolean isStorageEmpty() {
+    return storage.isEmpty();
   }
 
   @Override

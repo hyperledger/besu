@@ -24,6 +24,9 @@ public class PreSynchronizationTaskRunner {
 
   private final List<PreSynchronizationTask> tasks = new ArrayList<>();
 
+  /** Default Constructor. */
+  public PreSynchronizationTaskRunner() {}
+
   /**
    * Add task.
    *

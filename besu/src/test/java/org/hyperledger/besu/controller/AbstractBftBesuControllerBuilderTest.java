@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -138,7 +138,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
         .when(synchronizerConfiguration.getBlockPropagationRange())
         .thenReturn(Range.closed(1L, 2L));
 
-    setupBftGenesisConfigOptions();
+    setupBftGenesisConfigFile();
 
     bftBesuControllerBuilder =
         createBftControllerBuilder()
@@ -160,7 +160,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             .networkConfiguration(NetworkingConfiguration.create());
   }
 
-  protected abstract void setupBftGenesisConfigOptions() throws JsonProcessingException;
+  protected abstract void setupBftGenesisConfigFile() throws JsonProcessingException;
 
   protected abstract BesuControllerBuilder createBftControllerBuilder();
 

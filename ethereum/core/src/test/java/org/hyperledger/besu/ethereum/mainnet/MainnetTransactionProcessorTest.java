@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -22,7 +23,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.NotClearE
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -70,7 +69,6 @@ class MainnetTransactionProcessorTest {
   @Mock private AbstractMessageProcessor contractCreationProcessor;
   @Mock private AbstractMessageProcessor messageCallProcessor;
 
-  @Mock private Blockchain blockchain;
   @Mock private WorldUpdater worldState;
   @Mock private ProcessableBlockHeader blockHeader;
   @Mock private Transaction transaction;
@@ -125,7 +123,6 @@ class MainnetTransactionProcessorTest {
 
     var transactionProcessor = createTransactionProcessor(true);
     transactionProcessor.processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -139,7 +136,6 @@ class MainnetTransactionProcessorTest {
 
     transactionProcessor = createTransactionProcessor(false);
     transactionProcessor.processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -188,7 +184,6 @@ class MainnetTransactionProcessorTest {
     var transactionProcessor = createTransactionProcessor(true);
     try {
       transactionProcessor.processTransaction(
-          blockchain,
           worldState,
           blockHeader,
           transaction,
@@ -238,7 +233,6 @@ class MainnetTransactionProcessorTest {
     var transactionProcessor = createTransactionProcessor(false);
 
     transactionProcessor.processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
