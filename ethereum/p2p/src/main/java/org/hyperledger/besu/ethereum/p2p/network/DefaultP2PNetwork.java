@@ -75,11 +75,11 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.consensys.protocols.util.discovery.DNSDaemon;
+import io.consensys.protocols.util.discovery.DNSDaemonListener;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;
-import org.apache.tuweni.discovery.DNSDaemon;
-import org.apache.tuweni.discovery.DNSDaemonListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

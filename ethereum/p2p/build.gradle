@@ -50,7 +50,7 @@ dependencies {
   implementation('io.tmio:tuweni-devp2p') {
     exclude group:'ch.qos.logback', module:'logback-classic'
   }
-  implementation('io.tmio:tuweni-dns-discovery'){
+  implementation('io.consensys.protocols:besu-dns-discovery'){
     exclude group:'ch.qos.logback', module:'logback-classic'
   }
   implementation 'io.tmio:tuweni-io'
