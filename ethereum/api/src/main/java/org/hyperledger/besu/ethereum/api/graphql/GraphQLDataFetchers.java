@@ -31,7 +31,6 @@ import org.hyperledger.besu.ethereum.api.query.BlockWithMetadata;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.LogsQuery;
 import org.hyperledger.besu.ethereum.api.query.TransactionWithMetadata;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -117,17 +116,12 @@ public class GraphQLDataFetchers {
     };
   }
 
-  DataFetcher<Optional<Wei>> getGasPriceDataFetcher() {
+  DataFetcher<Wei> getGasPriceDataFetcher() {
     return dataFetchingEnvironment -> {
       final GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
       final BlockchainQueries blockchainQueries =
           graphQLContext.get(GraphQLContextType.BLOCKCHAIN_QUERIES);
-      final MiningCoordinator miningCoordinator =
-          graphQLContext.get(GraphQLContextType.MINING_COORDINATOR);
-      return blockchainQueries
-          .gasPrice()
-          .map(Wei::of)
-          .or(() -> Optional.of(miningCoordinator.getMinTransactionGasPrice()));
+      return blockchainQueries.gasPrice();
     };
   }
 

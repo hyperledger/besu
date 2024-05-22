@@ -89,7 +89,9 @@ public class JsonRpcTestMethodsFactory {
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       blockImporter.importBlock(context, block, HeaderValidationMode.FULL);
     }
-    this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+    this.blockchainQueries =
+        new BlockchainQueries(
+            protocolSchedule, blockchain, stateArchive, MiningParameters.newDefault());
   }
 
   public JsonRpcTestMethodsFactory(
@@ -101,7 +103,12 @@ public class JsonRpcTestMethodsFactory {
     this.blockchain = blockchain;
     this.stateArchive = stateArchive;
     this.context = context;
-    this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+    this.blockchainQueries =
+        new BlockchainQueries(
+            importer.getProtocolSchedule(),
+            blockchain,
+            stateArchive,
+            MiningParameters.newDefault());
     this.synchronizer = mock(Synchronizer.class);
   }
 
@@ -116,7 +123,12 @@ public class JsonRpcTestMethodsFactory {
     this.stateArchive = stateArchive;
     this.context = context;
     this.synchronizer = synchronizer;
-    this.blockchainQueries = new BlockchainQueries(blockchain, stateArchive);
+    this.blockchainQueries =
+        new BlockchainQueries(
+            importer.getProtocolSchedule(),
+            blockchain,
+            stateArchive,
+            MiningParameters.newDefault());
   }
 
   public BlockchainQueries getBlockchainQueries() {

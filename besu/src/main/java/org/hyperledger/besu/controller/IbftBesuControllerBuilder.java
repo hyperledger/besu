@@ -111,8 +111,10 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
-    return new IbftJsonRpcMethods(protocolContext);
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
+    return new IbftJsonRpcMethods(protocolContext, protocolSchedule, miningParameters);
   }
 
   @Override
