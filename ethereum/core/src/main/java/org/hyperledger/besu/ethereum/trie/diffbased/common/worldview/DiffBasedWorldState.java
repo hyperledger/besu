@@ -60,12 +60,13 @@ public abstract class DiffBasedWorldState
 
   protected Hash worldStateRootHash;
   protected Hash worldStateBlockHash;
-  protected boolean isFrozen;
+  protected DiffBasedWorldStateConfig worldStateConfig;
 
   protected DiffBasedWorldState(
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final DiffBasedCachedWorldStorageManager cachedWorldStorageManager,
-      final TrieLogManager trieLogManager) {
+      final TrieLogManager trieLogManager,
+      final DiffBasedWorldStateConfig diffBasedWorldStateConfig) {
     this.worldStateKeyValueStorage = worldStateKeyValueStorage;
     this.worldStateRootHash =
         Hash.wrap(
@@ -76,11 +77,12 @@ public abstract class DiffBasedWorldState
             Bytes32.wrap(worldStateKeyValueStorage.getWorldStateBlockHash().orElse(Hash.ZERO)));
     this.cachedWorldStorageManager = cachedWorldStorageManager;
     this.trieLogManager = trieLogManager;
+    this.worldStateConfig = diffBasedWorldStateConfig;
   }
 
   /**
    * Having a protected method to override the accumulator solves the chicken-egg problem of needing
-   * a worldstate reference (this) when construction the Accumulator.
+   * a worldstate reference (this) when constructing the Accumulator.
    *
    * @param accumulator accumulator to use.
    */
@@ -134,6 +136,15 @@ public abstract class DiffBasedWorldState
     return accumulator;
   }
 
+  protected Hash unsafeRootHashUpdate(
+      final BlockHeader blockHeader,
+      final DiffBasedWorldStateKeyValueStorage.Updater stateUpdater) {
+    // calling calculateRootHash in order to update the state
+    calculateRootHash(
+        worldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+    return blockHeader.getStateRoot();
+  }
+
   @Override
   public void persist(final BlockHeader blockHeader) {
     final Optional<BlockHeader> maybeBlockHeader = Optional.ofNullable(blockHeader);
@@ -151,19 +162,32 @@ public abstract class DiffBasedWorldState
     Runnable saveTrieLog = () -> {};
 
     try {
-      final Hash newWorldStateRootHash =
-          calculateRootHash(isFrozen ? Optional.empty() : Optional.of(stateUpdater), accumulator);
+      final Hash calculatedRootHash;
+
+      if (blockHeader == null || !worldStateConfig.isTrieDisabled()) {
+        calculatedRootHash =
+            calculateRootHash(
+                worldStateConfig.isFrozen() ? Optional.empty() : Optional.of(stateUpdater),
+                accumulator);
+      } else {
+        // if the trie is disabled, we cannot calculate the state root, so we directly use the root
+        // of the block. It's important to understand that in all networks,
+        // the state root must be validated independently and the block should not be trusted
+        // implicitly. This mode
+        // can be used in cases where Besu would just be a follower of another trusted client.
+        calculatedRootHash = unsafeRootHashUpdate(blockHeader, stateUpdater);
+      }
       // if we are persisted with a block header, and the prior state is the parent
       // then persist the TrieLog for that transition.
       // If specified but not a direct descendant simply store the new block hash.
       if (blockHeader != null) {
-        verifyWorldStateRoot(newWorldStateRootHash, blockHeader);
+        verifyWorldStateRoot(calculatedRootHash, blockHeader);
         saveTrieLog =
             () -> {
-              trieLogManager.saveTrieLog(localCopy, newWorldStateRootHash, blockHeader, this);
+              trieLogManager.saveTrieLog(localCopy, calculatedRootHash, blockHeader, this);
               // not save a frozen state in the cache
-              if (!isFrozen) {
-                cachedWorldStorageManager.addCachedLayer(blockHeader, newWorldStateRootHash, this);
+              if (!worldStateConfig.isFrozen()) {
+                cachedWorldStorageManager.addCachedLayer(blockHeader, calculatedRootHash, this);
               }
             };
 
@@ -178,8 +202,8 @@ public abstract class DiffBasedWorldState
 
       stateUpdater
           .getWorldStateTransaction()
-          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, newWorldStateRootHash.toArrayUnsafe());
-      worldStateRootHash = newWorldStateRootHash;
+          .put(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY, calculatedRootHash.toArrayUnsafe());
+      worldStateRootHash = calculatedRootHash;
       success = true;
     } finally {
       if (success) {
@@ -194,7 +218,7 @@ public abstract class DiffBasedWorldState
   }
 
   protected void verifyWorldStateRoot(final Hash calculatedStateRoot, final BlockHeader header) {
-    if (!calculatedStateRoot.equals(header.getStateRoot())) {
+    if (!worldStateConfig.isTrieDisabled() && !calculatedStateRoot.equals(header.getStateRoot())) {
       throw new RuntimeException(
           "World State Root does not match expected value, header "
               + header.getStateRoot().toHexString()
@@ -210,7 +234,7 @@ public abstract class DiffBasedWorldState
 
   @Override
   public Hash rootHash() {
-    if (isFrozen && accumulator.isAccumulatorStateChanged()) {
+    if (worldStateConfig.isFrozen() && accumulator.isAccumulatorStateChanged()) {
       worldStateRootHash = calculateRootHash(Optional.empty(), accumulator.copy());
       accumulator.resetAccumulatorStateChanged();
     }
@@ -285,7 +309,7 @@ public abstract class DiffBasedWorldState
     try {
       if (!isPersisted()) {
         this.worldStateKeyValueStorage.close();
-        if (isFrozen) {
+        if (worldStateConfig.isFrozen()) {
           closeFrozenStorage();
         }
       }

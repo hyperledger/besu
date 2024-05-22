@@ -12,16 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.common;
+package org.hyperledger.besu.plugin.services.transactionpool;
 
-public interface StorageSubscriber {
-  default void onClearStorage() {}
+import org.hyperledger.besu.plugin.services.BesuService;
 
-  default void onClearFlatDatabaseStorage() {}
+/** Service to enable and disable the transaction pool. */
+public interface TransactionPoolService extends BesuService {
+  /** Enables the transaction pool. */
+  void disableTransactionPool();
 
-  default void onClearTrieLog() {}
-
-  default void onClearTrie() {}
-
-  default void onCloseStorage() {}
+  /** Disables the transaction pool. */
+  void enableTransactionPool();
 }
