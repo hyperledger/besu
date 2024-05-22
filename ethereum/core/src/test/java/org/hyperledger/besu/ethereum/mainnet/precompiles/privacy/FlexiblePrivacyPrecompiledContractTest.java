@@ -383,7 +383,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
             enclave,
             worldStateArchive,
             privateStateRootResolver,
-            privateStateGenesisAllocator);
+            privateStateGenesisAllocator, false);
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
@@ -427,6 +427,6 @@ public class FlexiblePrivacyPrecompiledContractTest {
         enclave,
         worldStateArchive,
         privateStateRootResolver,
-        privateStateGenesisAllocator);
+        privateStateGenesisAllocator, false);
   }
 }

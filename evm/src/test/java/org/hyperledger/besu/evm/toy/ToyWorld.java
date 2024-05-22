@@ -119,13 +119,17 @@ public class ToyWorld implements WorldUpdater {
 
   @Override
   public void commit() {
+    System.out.println("toyworld");
     if (parent != null) {
       parent.accounts.putAll(accounts);
     }
   }
 
   @Override
-  public void commitPrivateNonce() {}
+  public void commitPrivateNonce() {
+
+    System.out.println("toyworld priv");
+  }
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {

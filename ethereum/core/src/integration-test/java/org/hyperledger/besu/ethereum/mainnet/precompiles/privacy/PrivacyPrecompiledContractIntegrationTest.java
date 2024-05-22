@@ -204,8 +204,7 @@ public class PrivacyPrecompiledContractIntegrationTest {
             worldStateArchive,
             new PrivateStateRootResolver(privateStateStorage),
             new PrivateStateGenesisAllocator(
-                false, (privacyGroupId, blockNumber) -> Collections::emptyList),
-            "IntegrationTest");
+                false, (privacyGroupId, blockNumber) -> Collections::emptyList), false, "IntegrationTest");
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 

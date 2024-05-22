@@ -66,18 +66,20 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
       Subscribers.create();
 
   public FlexiblePrivacyPrecompiledContract(
-      final GasCalculator gasCalculator,
-      final Enclave enclave,
-      final WorldStateArchive worldStateArchive,
-      final PrivateStateRootResolver privateStateRootResolver,
-      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
+          final GasCalculator gasCalculator,
+          final Enclave enclave,
+          final WorldStateArchive worldStateArchive,
+          final PrivateStateRootResolver privateStateRootResolver,
+          final PrivateStateGenesisAllocator privateStateGenesisAllocator,
+          final boolean incrementPrivateNonce) {
     super(
         gasCalculator,
         enclave,
         worldStateArchive,
         privateStateRootResolver,
         privateStateGenesisAllocator,
-        "FlexiblePrivacy");
+            incrementPrivateNonce,
+            "FlexiblePrivacy");
   }
 
   public FlexiblePrivacyPrecompiledContract(
@@ -87,7 +89,8 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
         privacyParameters.getEnclave(),
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
-        privacyParameters.getPrivateStateGenesisAllocator());
+        privacyParameters.getPrivateStateGenesisAllocator(),
+            privacyParameters.isPrivateNonceIncrementationEnabled());
   }
 
   public long addPrivateTransactionObserver(final PrivateTransactionObserver observer) {
@@ -176,6 +179,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
       return NO_RESULT;
     }
 
+    System.out.println("flexibleprecompiled");
     final TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);

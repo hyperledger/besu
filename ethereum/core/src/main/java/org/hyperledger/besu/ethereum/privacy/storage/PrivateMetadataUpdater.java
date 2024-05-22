@@ -58,6 +58,7 @@ public class PrivateMetadataUpdater {
       final Bytes32 privacyGroupId, final PrivateTransactionMetadata metadata) {
     PrivateBlockMetadata privateBlockMetadata = privateBlockMetadataMap.get(privacyGroupId);
     if (privateBlockMetadata == null) {
+      System.out.println("empty metadata "+privateBlockMetadata);
       privateBlockMetadata = PrivateBlockMetadata.empty();
     }
     privateBlockMetadata.addPrivateTransactionMetadata(metadata);

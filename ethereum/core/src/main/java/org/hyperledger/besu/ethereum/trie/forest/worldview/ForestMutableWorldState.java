@@ -179,6 +179,7 @@ public class ForestMutableWorldState implements MutableWorldState {
 
   @Override
   public void persist(final BlockHeader blockHeader) {
+    LOG.info("FMWS persist");
     final ForestWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     // Store updated code
@@ -205,6 +206,40 @@ public class ForestMutableWorldState implements MutableWorldState {
     newStorageKeyPreimages.clear();
 
     // Push changes to underlying storage
+    preimageUpdater.commit();
+    stateUpdater.commit();
+  }
+
+  @Override
+  public void persistPrivate(final BlockHeader blockHeader) {
+    LOG.info("FMWS persist");
+    final ForestWorldStateKeyValueStorage.Updater stateUpdater =
+            worldStateKeyValueStorage.updater();
+    // Store updated code
+    for (final Bytes code : updatedAccountCode.values()) {
+      stateUpdater.putCode(code);
+    }
+    // Commit account storage tries
+    for (final MerkleTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
+      updatedStorage.commit(
+              (location, hash, value) -> stateUpdater.putAccountStorageTrieNode(hash, value));
+    }
+    // Commit account updates
+    accountStateTrie.commit(
+            (location, hash, value) -> stateUpdater.putAccountStateTrieNode(hash, value));
+
+    // Persist preimages
+    final WorldStatePreimageStorage.Updater preimageUpdater = preimageStorage.updater();
+    newStorageKeyPreimages.forEach(preimageUpdater::putStorageTrieKeyPreimage);
+    newAccountKeyPreimages.forEach(preimageUpdater::putAccountTrieKeyPreimage);
+
+    // Clear pending changes that we just flushed
+    updatedStorageTries.clear();
+    updatedAccountCode.clear();
+    newStorageKeyPreimages.clear();
+
+    // Push changes to underlying storage
+
     preimageUpdater.commit();
     stateUpdater.commit();
   }
@@ -474,10 +509,10 @@ public class ForestMutableWorldState implements MutableWorldState {
 
         // Save address preimage
         wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
-        // Lastly, save the new account.
-        final Bytes account =
-            serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
 
+
+        LOG.info(
+                "BytesValueRLPInput : {}",wrapped.accountStateTrie);
         if (wrapped.accountStateTrie.get(updated.getAddressHash()).isPresent()) {
           StateTrieAccountValue previousAccount =
               StateTrieAccountValue.readFrom(
@@ -496,6 +531,9 @@ public class ForestMutableWorldState implements MutableWorldState {
             updated.getBalance(),
             updated.getNonce(),
             updated.getAddress());
+        // Lastly, save the new account.
+        final Bytes account =
+                serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
     }
@@ -506,7 +544,7 @@ public class ForestMutableWorldState implements MutableWorldState {
 
       final ForestMutableWorldState wrapped = wrappedWorldView();
 
-      LOG.info("{} : commitPrivateNonce", getUpdatedAccounts().size());
+      LOG.info("{} : commitPrivateNonce getUpdatedAccounts", getUpdatedAccounts().size());
 
 
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
@@ -565,12 +603,14 @@ public class ForestMutableWorldState implements MutableWorldState {
         // Save address preimage
         wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
         // Lastly, save the new account.
+        LOG.info(
+                "BytesValueRLPInput : {}",wrapped.accountStateTrie);
         StateTrieAccountValue previousAccount =
             StateTrieAccountValue.readFrom(
                 new BytesValueRLPInput(
                     wrapped.accountStateTrie.get(updated.getAddressHash()).get(), false, true));
         final Bytes account =
-            serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
+            serializeAccount(updated.getNonce(), previousAccount.getBalance(), storageRoot, codeHash);
 
         LOG.info(
             "Update : previous account code : {}, balance : {}, nonce : {} , address: {}",

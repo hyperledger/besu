@@ -170,6 +170,7 @@ public class PrivateTransactionProcessor {
 
       final Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
       while (!messageFrameStack.isEmpty()) {
+        LOG.info("!messageFrameStack.isEmpty()");
         process(messageFrameStack.peekFirst(), operationTracer);
       }
       System.out.println(incrementPrivateNonce +" "+initialFrame.getState());
@@ -177,8 +178,14 @@ public class PrivateTransactionProcessor {
         LOG.info("Private nonce success {} committed", sender.getNonce());
         mutablePrivateWorldStateUpdater.commit();
       } else if (incrementPrivateNonce) {
-        LOG.info("Private nonce  non-success {} committed", sender.getNonce());
+        final MutableAccount finalSender =
+                maybePrivateSender != null
+                        ? maybePrivateSender
+                        : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO);
+        privateWorldState.createAccount(maybePrivateSender.getAddress(), maybePrivateSender.getNonce(), maybePrivateSender.getBalance());
+        LOG.info("Private nonce  non-success {} committed", finalSender.getNonce());
         mutablePrivateWorldStateUpdater.commitPrivateNonce();
+        LOG.info("Exit Private nonce  non-success {} committed", finalSender.getNonce());
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
