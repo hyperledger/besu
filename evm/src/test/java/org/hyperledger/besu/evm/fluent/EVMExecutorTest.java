@@ -188,7 +188,7 @@ class EVMExecutorTest {
             .number(1)
             .timestamp(100L)
             .gasLimit(15_000_000L)
-            .blockHashLookup((height, number) -> Hash.ZERO)
+            .blockHashLookup(number -> Hash.ZERO)
             .versionedHashes(Optional.empty())
             .precompileContractRegistry(new PrecompileContractRegistry())
             .requireDeposit(false)

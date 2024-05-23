@@ -143,7 +143,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     false,
                     false,
-                    false,
                     stackSizeLimit,
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
@@ -297,7 +296,6 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     true,
-                    false,
                     false,
                     stackSizeLimit,
                     feeMarket,
@@ -492,7 +490,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     false,
-                    false,
                     stackSizeLimit,
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
@@ -630,7 +627,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     true,
-                    false,
                     stackSizeLimit,
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
@@ -707,7 +703,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     true,
-                    false,
                     stackSizeLimit,
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
@@ -786,7 +781,6 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     true,
-                    true,
                     stackSizeLimit,
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
@@ -795,8 +789,7 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
         .requestsValidator(pragueRequestsValidator(depositContractAddress))
         .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
-        .blockHashProcessor(
-            new PragueBlockHashProcessor(genesisConfigOptions.getPragueTime().orElse(0)))
+        .blockHashProcessor(new PragueBlockHashProcessor())
         .name("Prague");
   }
 

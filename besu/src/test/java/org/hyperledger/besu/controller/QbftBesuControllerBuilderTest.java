@@ -32,6 +32,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 
@@ -99,10 +101,13 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
   @Test
   public void missingTransactionValidatorProviderThrowsError() {
     final ProtocolContext protocolContext = mock(ProtocolContext.class);
+    final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
     when(protocolContext.getBlockchain()).thenReturn(mock(MutableBlockchain.class));
 
     assertThatThrownBy(
-            () -> bftBesuControllerBuilder.createAdditionalJsonRpcMethodFactory(protocolContext))
+            () ->
+                bftBesuControllerBuilder.createAdditionalJsonRpcMethodFactory(
+                    protocolContext, protocolSchedule, MiningParameters.newDefault()))
         .isInstanceOf(NullPointerException.class)
         .hasMessage("transactionValidatorProvider should have been initialised");
   }

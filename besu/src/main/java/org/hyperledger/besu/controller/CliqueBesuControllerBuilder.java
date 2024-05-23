@@ -72,8 +72,10 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
-    return new CliqueJsonRpcMethods(protocolContext);
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
+    return new CliqueJsonRpcMethods(protocolContext, protocolSchedule, miningParameters);
   }
 
   @Override

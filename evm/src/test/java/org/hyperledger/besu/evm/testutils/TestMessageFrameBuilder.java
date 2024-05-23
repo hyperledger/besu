@@ -15,7 +15,6 @@
 package org.hyperledger.besu.evm.testutils;
 
 import static org.hyperledger.besu.evm.frame.MessageFrame.DEFAULT_MAX_STACK_SIZE;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -161,7 +161,7 @@ public class TestMessageFrameBuilder {
             .blockValues(blockValues.orElseGet(() -> new FakeBlockValues(1337)))
             .completer(c -> {})
             .miningBeneficiary(Address.ZERO)
-            .blockHashLookup(blockHashLookup.orElse((f, n) -> Hash.hash(Words.longBytes(n))))
+            .blockHashLookup(blockHashLookup.orElse(number -> Hash.hash(Words.longBytes(number))))
             .maxStackSize(maxStackSize)
             .build();
     frame.setPC(pc);

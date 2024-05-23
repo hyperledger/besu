@@ -172,21 +172,29 @@ import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.p2p.P2PService;
+import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
+import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
+import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.P2PServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
+import org.hyperledger.besu.services.RlpConverterServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.SynchronizationServiceImpl;
 import org.hyperledger.besu.services.TraceServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
@@ -327,6 +335,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       Suppliers.memoize(this::readGenesisConfigFile);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
       Suppliers.memoize(this::readGenesisConfigOptions);
+  private final Supplier<MiningParameters> miningParametersSupplier =
+      Suppliers.memoize(this::getMiningParameters);
 
   private RocksDBPlugin rocksDBPlugin;
 
@@ -904,7 +914,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfigurationImpl pluginCommonConfiguration;
-  private MiningParameters miningParameters;
 
   private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
@@ -1166,12 +1175,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final var runner = buildRunner();
       runner.startExternalServices();
 
-      startPlugins();
+      startPlugins(runner);
       validatePluginOptions();
       setReleaseMetrics();
       preSynchronization();
 
       runner.startEthereumMainLoop();
+
+      besuPluginContext.afterExternalServicesMainLoop();
+
       runner.awaitStop();
 
     } catch (final Exception e) {
@@ -1332,7 +1344,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         pidPath);
   }
 
-  private void startPlugins() {
+  private void startPlugins(final Runner runner) {
     blockchainServiceImpl.init(
         besuController.getProtocolContext(), besuController.getProtocolSchedule());
     transactionSimulationServiceImpl.init(
@@ -1353,12 +1365,34 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolContext().getBadBlockManager()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
+    besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
+
+    besuPluginContext.addService(
+        SynchronizationService.class,
+        new SynchronizationServiceImpl(
+            besuController.getProtocolContext(),
+            besuController.getProtocolSchedule(),
+            besuController.getSyncState(),
+            besuController.getProtocolContext().getWorldStateArchive()));
+
+    besuPluginContext.addService(P2PService.class, new P2PServiceImpl(runner.getP2PNetwork()));
+
+    besuPluginContext.addService(
+        TransactionPoolService.class,
+        new TransactionPoolServiceImpl(besuController.getTransactionPool()));
+
+    besuPluginContext.addService(
+        RlpConverterService.class,
+        new RlpConverterServiceImpl(besuController.getProtocolSchedule()));
+
     besuPluginContext.addService(
         TraceService.class,
         new TraceServiceImpl(
             new BlockchainQueries(
+                besuController.getProtocolSchedule(),
                 besuController.getProtocolContext().getBlockchain(),
-                besuController.getProtocolContext().getWorldStateArchive()),
+                besuController.getProtocolContext().getWorldStateArchive(),
+                miningParametersSupplier.get()),
             besuController.getProtocolSchedule()));
 
     besuController.getAdditionalPluginServices().appendPluginServices(besuPluginContext);
@@ -1380,7 +1414,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "--privacy-marker-transaction-signing-key-file can not be used in conjunction with a plugin that specifies a PrivateMarkerTransactionFactory");
       }
 
-      if (Wei.ZERO.compareTo(getMiningParameters().getMinTransactionGasPrice()) < 0
+      if (Wei.ZERO.compareTo(miningParametersSupplier.get().getMinTransactionGasPrice()) < 0
           && (privacyOptionGroup.privateMarkerTransactionSigningKeyPath == null
               && (privacyPluginService == null
                   || privacyPluginService.getPrivateMarkerTransactionFactory() == null))) {
@@ -1656,11 +1690,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void validateChainDataPruningParams() {
     if (unstableChainPruningOptions.getChainDataPruningEnabled()
         && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
-            < ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED) {
+            < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
       throw new ParameterException(
           this.commandLine,
           "--Xchain-pruning-blocks-retained must be >= "
-              + ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED);
+              + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
     }
   }
 
@@ -1761,7 +1795,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.isEnabled(),
             unstableIpcOptions.getIpcPath(),
             unstableIpcOptions.getRpcIpcApis());
-    apiConfiguration = apiConfigurationOptions.apiConfiguration(getMiningParameters());
+    apiConfiguration = apiConfigurationOptions.apiConfiguration();
     dataStorageConfiguration = getDataStorageConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
     if (!hostsWhitelist.isEmpty()) {
@@ -1846,11 +1880,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return instance of BesuControllerBuilder
    */
   public BesuControllerBuilder getControllerBuilder() {
-    pluginCommonConfiguration.init(
-        dataDir(),
-        dataDir().resolve(DATABASE_PATH),
-        getDataStorageConfiguration(),
-        getMiningParameters());
+    pluginCommonConfiguration
+        .init(dataDir(), dataDir().resolve(DATABASE_PATH), getDataStorageConfiguration())
+        .withMiningParameters(getMiningParameters())
+        .withJsonRpcHttpOptions(jsonRpcHttpOptions);
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(network), getDefaultSyncModeIfNotSet())
@@ -1859,7 +1892,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
         .dataDirectory(dataDir())
         .dataStorageConfiguration(getDataStorageConfiguration())
-        .miningParameters(getMiningParameters())
+        .miningParameters(miningParametersSupplier.get())
         .transactionPoolConfiguration(buildTransactionPoolConfiguration())
         .nodeKey(new NodeKey(securityModule()))
         .metricsSystem(metricsSystem.get())
@@ -1870,7 +1903,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .isRevertReasonEnabled(isRevertReasonEnabled)
         .storageProvider(storageProvider)
         .gasLimitCalculator(
-            getMiningParameters().getTargetGasLimit().isPresent()
+            miningParametersSupplier.get().getTargetGasLimit().isPresent()
                 ? new FrontierTargetingGasLimitCalculator()
                 : GasLimitCalculator.constant())
         .requiredBlocks(requiredBlocks)
@@ -2165,14 +2198,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       txPoolConfBuilder.priceBump(Percentage.ZERO);
     }
 
-    if (getMiningParameters().getMinTransactionGasPrice().equals(Wei.ZERO)
+    if (miningParametersSupplier.get().getMinTransactionGasPrice().equals(Wei.ZERO)
         && !transactionPoolOptions.isPriceBumpSet(commandLine)) {
       logger.info(
           "Forcing price bump for transaction replacement to 0, since min-gas-price is set to 0");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
     }
 
-    if (getMiningParameters().getMinTransactionGasPrice().lessThan(txPoolConf.getMinGasPrice())) {
+    if (miningParametersSupplier
+        .get()
+        .getMinTransactionGasPrice()
+        .lessThan(txPoolConf.getMinGasPrice())) {
       if (transactionPoolOptions.isMinGasPriceSet(commandLine)) {
         throw new ParameterException(
             commandLine, "tx-pool-min-gas-price cannot be greater than the value of min-gas-price");
@@ -2183,9 +2219,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         // the user of the change
         logger.warn(
             "Forcing tx-pool-min-gas-price="
-                + getMiningParameters().getMinTransactionGasPrice().toDecimalString()
+                + miningParametersSupplier.get().getMinTransactionGasPrice().toDecimalString()
                 + ", since it cannot be greater than the value of min-gas-price");
-        txPoolConfBuilder.minGasPrice(getMiningParameters().getMinTransactionGasPrice());
+        txPoolConfBuilder.minGasPrice(miningParametersSupplier.get().getMinTransactionGasPrice());
       }
     }
 
@@ -2193,13 +2229,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private MiningParameters getMiningParameters() {
-    if (miningParameters == null) {
-      miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
-      miningParameters = miningOptions.toDomainObject();
-      getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
-          .ifPresent(miningParameters::setBlockPeriodSeconds);
-      initMiningParametersMetrics(miningParameters);
-    }
+    miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
+    final var miningParameters = miningOptions.toDomainObject();
+    getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
+        .ifPresent(miningParameters::setBlockPeriodSeconds);
+    initMiningParametersMetrics(miningParameters);
     return miningParameters;
   }
 
@@ -2575,8 +2609,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         effectivePorts, metricsOptionGroup.metricsPort, metricsOptionGroup.isMetricsEnabled);
     addPortIfEnabled(
         effectivePorts,
-        getMiningParameters().getStratumPort(),
-        getMiningParameters().isStratumMiningEnabled());
+        miningParametersSupplier.get().getStratumPort(),
+        miningParametersSupplier.get().isStratumMiningEnabled());
     return effectivePorts;
   }
 

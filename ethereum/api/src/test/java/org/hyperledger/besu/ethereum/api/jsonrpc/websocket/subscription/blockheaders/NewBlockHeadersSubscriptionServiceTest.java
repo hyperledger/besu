@@ -32,8 +32,10 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStoragePrefixedKeyBlockchainStorage;
 import org.hyperledger.besu.ethereum.storage.keyvalue.VariablesKeyValueStorage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -47,6 +49,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
+import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -73,9 +76,16 @@ public class NewBlockHeadersSubscriptionServiceTest {
   private final SubscriptionManager subscriptionManagerSpy =
       new SubscriptionManager(new NoOpMetricsSystem());
 
+  @Mock ProtocolSchedule protocolSchedule;
+
   @Spy
   private final BlockchainQueries blockchainQueriesSpy =
-      Mockito.spy(new BlockchainQueries(blockchain, createInMemoryWorldStateArchive()));
+      Mockito.spy(
+          new BlockchainQueries(
+              protocolSchedule,
+              blockchain,
+              createInMemoryWorldStateArchive(),
+              MiningParameters.newDefault()));
 
   @BeforeEach
   public void before() {

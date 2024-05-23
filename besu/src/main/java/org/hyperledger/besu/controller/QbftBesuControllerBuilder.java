@@ -130,10 +130,15 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
 
     return new QbftJsonRpcMethods(
-        protocolContext, createReadOnlyValidatorProvider(protocolContext.getBlockchain()));
+        protocolContext,
+        protocolSchedule,
+        miningParameters,
+        createReadOnlyValidatorProvider(protocolContext.getBlockchain()));
   }
 
   private ValidatorProvider createReadOnlyValidatorProvider(final Blockchain blockchain) {
