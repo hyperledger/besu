@@ -179,7 +179,6 @@ public class ForestMutableWorldState implements MutableWorldState {
 
   @Override
   public void persist(final BlockHeader blockHeader) {
-    LOG.info("FMWS persist");
     final ForestWorldStateKeyValueStorage.Updater stateUpdater =
         worldStateKeyValueStorage.updater();
     // Store updated code
@@ -466,8 +465,6 @@ public class ForestMutableWorldState implements MutableWorldState {
       LOG.info("{} : commitPrivateNonce getUpdatedAccounts", getUpdatedAccounts().size());
 
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
-        LOG.info("{} : getUpdatedAccounts {}", Thread.currentThread(), getUpdatedAccounts().size());
-
         final WorldStateAccount origin = updated.getWrappedAccount();
 
         // Save the code in key-value storage ...
