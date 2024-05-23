@@ -109,7 +109,6 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
 
   @Override
   public void commit() {
-    System.out.println("J updated");
     if (!(parentWorld instanceof JournaledUpdater<?>)) {
       accounts.values().forEach(JournaledAccount::commit);
       deleted.forEach(parentWorld::deleteAccount);
@@ -117,7 +116,9 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   }
 
   @Override
-  public void commitPrivateNonce() {}
+  public void commitPrivateNonce() {
+    // TODO
+  }
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {

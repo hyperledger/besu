@@ -61,7 +61,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   final WorldStateArchive privateWorldStateArchive;
   final PrivateStateRootResolver privateStateRootResolver;
   private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
-  private final boolean incrementPrivateNonce;
+  final boolean incrementPrivateNonce;
   PrivateTransactionProcessor privateTransactionProcessor;
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPrecompiledContract.class);
@@ -85,19 +85,19 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   }
 
   protected PrivacyPrecompiledContract(
-          final GasCalculator gasCalculator,
-          final Enclave enclave,
-          final WorldStateArchive worldStateArchive,
-          final PrivateStateRootResolver privateStateRootResolver,
-          final PrivateStateGenesisAllocator privateStateGenesisAllocator,
-          final boolean incrementPrivateNonce,
-          final String name) {
+      final GasCalculator gasCalculator,
+      final Enclave enclave,
+      final WorldStateArchive worldStateArchive,
+      final PrivateStateRootResolver privateStateRootResolver,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator,
+      final boolean incrementPrivateNonce,
+      final String name) {
     super(name, gasCalculator);
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
     this.privateStateGenesisAllocator = privateStateGenesisAllocator;
-    this.incrementPrivateNonce=incrementPrivateNonce;
+    this.incrementPrivateNonce = incrementPrivateNonce;
   }
 
   public void setPrivateTransactionProcessor(
@@ -181,22 +181,16 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privacyGroupId,
         messageFrame.getBlockValues().getNumber());
 
-    System.out.println("privacyprecompiled");
     final TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
-    if(!result.isSuccessful()){
-      System.out.println("commit insucssesfull");
+    if (!result.isSuccessful() && incrementPrivateNonce) {
       privateWorldStateUpdater.commitPrivateNonce();
-      disposablePrivateState.persistPrivate(null);
-      System.out.println("persist private");
+      disposablePrivateState.persist(null);
 
-      privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
-      privateMetadataUpdater.updatePrivacyGroupHeadBlockMap(privacyGroupId);
-
-//      storePrivateMetadata2(
-//              pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater);
+      storePrivateMetadata(
+          pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
 
     if (result.isInvalid() || !result.isSuccessful()) {
@@ -205,15 +199,15 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           pmtHash,
           result.getValidationResult().getErrorMessage());
       if (!incrementPrivateNonce) {
-        privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
+        privateMetadataUpdater.putTransactionReceipt(
+            pmtHash, new PrivateTransactionReceipt(result));
       }
       return NO_RESULT;
     }
-    System.out.println("persist precompiled");
+
     if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist(null);
-      System.out.println("persist private out");
 
       storePrivateMetadata(
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
@@ -248,37 +242,12 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
     final PrivateTransactionReceipt privateTransactionReceipt =
         new PrivateTransactionReceipt(
             txStatus, result.getLogs(), result.getOutput(), result.getRevertReason());
-    System.out.println(privateTransactionReceipt);
 
     privateMetadataUpdater.putTransactionReceipt(commitmentHash, privateTransactionReceipt);
     privateMetadataUpdater.updatePrivacyGroupHeadBlockMap(privacyGroupId);
-    System.out.println(" soring "+commitmentHash+" "+disposablePrivateState.rootHash());
     privateMetadataUpdater.addPrivateTransactionMetadata(
         privacyGroupId,
         new PrivateTransactionMetadata(commitmentHash, disposablePrivateState.rootHash()));
-  }
-
-  void storePrivateMetadata2(
-          final Hash commitmentHash,
-          final Bytes32 privacyGroupId,
-          final MutableWorldState disposablePrivateState,
-          final PrivateMetadataUpdater privateMetadataUpdater) {
-
-//    final int txStatus =
-//            result.getStatus() == TransactionProcessingResult.Status.SUCCESSFUL ? 1 : 0;
-//
-//    final PrivateTransactionReceipt privateTransactionReceipt =
-//            new PrivateTransactionReceipt(
-//                    txStatus, result.getLogs(), result.getOutput(), result.getRevertReason());
-//    System.out.println(privateTransactionReceipt);
-
-//    privateMetadataUpdater.putTransactionReceipt(commitmentHash, privateTransactionReceipt);
-    privateMetadataUpdater.updatePrivacyGroupHeadBlockMap(privacyGroupId);
-
-    System.out.println(" soring "+commitmentHash+" "+disposablePrivateState.rootHash());
-    privateMetadataUpdater.addPrivateTransactionMetadata(
-            privacyGroupId,
-            new PrivateTransactionMetadata(commitmentHash, disposablePrivateState.rootHash()));
   }
 
   TransactionProcessingResult processPrivateTransaction(
@@ -286,7 +255,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final PrivateTransaction privateTransaction,
       final Bytes32 privacyGroupId,
       final WorldUpdater privateWorldStateUpdater) {
-    System.out.println("procîessPrivateTransaction precompiled");
+
     return privateTransactionProcessor.processTransaction(
         messageFrame.getWorldUpdater(),
         privateWorldStateUpdater,
@@ -296,7 +265,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         messageFrame.getMiningBeneficiary(),
         OperationTracer.NO_TRACING,
         messageFrame.getBlockHashLookup(),
-        privacyGroupId);
+        privacyGroupId,
+        incrementPrivateNonce);
   }
 
   ReceiveResponse getReceiveResponse(final String key) {

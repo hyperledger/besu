@@ -48,6 +48,7 @@ public class PrivateStateRehydration {
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateRootResolver privateStateRootResolver;
   private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
+  private final boolean isIncrementPrivateNonceEnabled;
 
   public PrivateStateRehydration(
       final PrivateStateStorage privateStateStorage,
@@ -56,7 +57,8 @@ public class PrivateStateRehydration {
       final WorldStateArchive publicWorldStateArchive,
       final WorldStateArchive privateWorldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
-      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator,
+      final boolean isIncrementPrivateNonceEnabled) {
     this.privateStateStorage = privateStateStorage;
     this.blockchain = blockchain;
     this.protocolSchedule = protocolSchedule;
@@ -64,6 +66,7 @@ public class PrivateStateRehydration {
     this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
     this.privateStateGenesisAllocator = privateStateGenesisAllocator;
+    this.isIncrementPrivateNonceEnabled = isIncrementPrivateNonceEnabled;
   }
 
   public void rehydrate(
@@ -168,7 +171,8 @@ public class PrivateStateRehydration {
           block,
           protocolSpec.getBlockHashProcessor().getBlockHashLookup(blockHeader, blockchain),
           pmtHashToPrivateTransactionMap,
-          block.getBody().getOmmers());
+          block.getBody().getOmmers(),
+          isIncrementPrivateNonceEnabled);
 
       // check the resulting private state against the state in the meta data
       final Optional<Hash> latestStateRoot =

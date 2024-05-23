@@ -31,7 +31,6 @@ public class MainnetProtocolSpecFactory {
   private final boolean isRevertReasonEnabled;
   private final OptionalLong ecip1017EraRounds;
   private final EvmConfiguration evmConfiguration;
-  private final boolean incrementPrivateTransaction;
   private final MiningParameters miningParameters;
 
   public MainnetProtocolSpecFactory(
@@ -41,7 +40,6 @@ public class MainnetProtocolSpecFactory {
       final boolean isRevertReasonEnabled,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction,
       final MiningParameters miningParameters) {
     this.chainId = chainId;
     this.contractSizeLimit = contractSizeLimit;
@@ -49,98 +47,67 @@ public class MainnetProtocolSpecFactory {
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.ecip1017EraRounds = ecip1017EraRounds;
     this.evmConfiguration = evmConfiguration;
-    this.incrementPrivateTransaction = incrementPrivateTransaction;
     this.miningParameters = miningParameters;
   }
 
   public ProtocolSpecBuilder frontierDefinition() {
     return MainnetProtocolSpecs.frontierDefinition(
-        contractSizeLimit, evmStackSize, evmConfiguration, incrementPrivateTransaction);
+        contractSizeLimit, evmStackSize, evmConfiguration);
   }
 
   public ProtocolSpecBuilder homesteadDefinition() {
     return MainnetProtocolSpecs.homesteadDefinition(
-        contractSizeLimit, evmStackSize, evmConfiguration, incrementPrivateTransaction);
+        contractSizeLimit, evmStackSize, evmConfiguration);
   }
 
   public ProtocolSpecBuilder daoRecoveryInitDefinition() {
     return MainnetProtocolSpecs.daoRecoveryInitDefinition(
-        contractSizeLimit, evmStackSize, evmConfiguration, incrementPrivateTransaction);
+        contractSizeLimit, evmStackSize, evmConfiguration);
   }
 
   public ProtocolSpecBuilder daoRecoveryTransitionDefinition() {
     return MainnetProtocolSpecs.daoRecoveryTransitionDefinition(
-        contractSizeLimit, evmStackSize, evmConfiguration, incrementPrivateTransaction);
+        contractSizeLimit, evmStackSize, evmConfiguration);
   }
 
   public ProtocolSpecBuilder tangerineWhistleDefinition() {
     return MainnetProtocolSpecs.tangerineWhistleDefinition(
-        contractSizeLimit, evmStackSize, evmConfiguration, incrementPrivateTransaction);
+        contractSizeLimit, evmStackSize, evmConfiguration);
   }
 
   public ProtocolSpecBuilder spuriousDragonDefinition() {
     return MainnetProtocolSpecs.spuriousDragonDefinition(
-        chainId, contractSizeLimit, evmStackSize, evmConfiguration, incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, evmConfiguration);
   }
 
   public ProtocolSpecBuilder byzantiumDefinition() {
     return MainnetProtocolSpecs.byzantiumDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder constantinopleDefinition() {
     return MainnetProtocolSpecs.constantinopleDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder petersburgDefinition() {
     return MainnetProtocolSpecs.petersburgDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder istanbulDefinition() {
     return MainnetProtocolSpecs.istanbulDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder muirGlacierDefinition() {
     return MainnetProtocolSpecs.muirGlacierDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder berlinDefinition() {
     return MainnetProtocolSpecs.berlinDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, isRevertReasonEnabled, evmConfiguration);
   }
 
   public ProtocolSpecBuilder londonDefinition(final GenesisConfigOptions genesisConfigOptions) {
@@ -151,7 +118,6 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction,
         miningParameters);
   }
 
@@ -164,7 +130,6 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction,
         miningParameters);
   }
 
@@ -177,7 +142,6 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction,
         miningParameters);
   }
 
@@ -189,7 +153,6 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction,
         miningParameters);
   }
 
@@ -201,7 +164,6 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction,
         miningParameters);
   }
 
@@ -213,7 +175,6 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction,
         miningParameters);
   }
 
@@ -225,7 +186,6 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction,
         miningParameters);
   }
 
@@ -248,7 +208,6 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction,
         miningParameters);
   }
 
@@ -271,7 +230,6 @@ public class MainnetProtocolSpecFactory {
         isRevertReasonEnabled,
         genesisConfigOptions,
         evmConfiguration,
-        incrementPrivateTransaction,
         miningParameters);
   }
 
@@ -280,27 +238,17 @@ public class MainnetProtocolSpecFactory {
   // Classic Protocol Specs
   public ProtocolSpecBuilder dieHardDefinition() {
     return ClassicProtocolSpecs.dieHardDefinition(
-        chainId, contractSizeLimit, evmStackSize, evmConfiguration, incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, evmConfiguration);
   }
 
   public ProtocolSpecBuilder gothamDefinition() {
     return ClassicProtocolSpecs.gothamDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        ecip1017EraRounds,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, ecip1017EraRounds, evmConfiguration);
   }
 
   public ProtocolSpecBuilder defuseDifficultyBombDefinition() {
     return ClassicProtocolSpecs.defuseDifficultyBombDefinition(
-        chainId,
-        contractSizeLimit,
-        evmStackSize,
-        ecip1017EraRounds,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        chainId, contractSizeLimit, evmStackSize, ecip1017EraRounds, evmConfiguration);
   }
 
   public ProtocolSpecBuilder atlantisDefinition() {
@@ -310,8 +258,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        evmConfiguration);
   }
 
   public ProtocolSpecBuilder aghartaDefinition() {
@@ -321,8 +268,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        evmConfiguration);
   }
 
   public ProtocolSpecBuilder phoenixDefinition() {
@@ -332,8 +278,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        evmConfiguration);
   }
 
   public ProtocolSpecBuilder thanosDefinition() {
@@ -343,8 +288,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        evmConfiguration);
   }
 
   public ProtocolSpecBuilder magnetoDefinition() {
@@ -354,8 +298,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        evmConfiguration);
   }
 
   public ProtocolSpecBuilder mystiqueDefinition() {
@@ -365,8 +308,7 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        evmConfiguration);
   }
 
   public ProtocolSpecBuilder spiralDefinition() {
@@ -376,7 +318,6 @@ public class MainnetProtocolSpecFactory {
         evmStackSize,
         isRevertReasonEnabled,
         ecip1017EraRounds,
-        evmConfiguration,
-        incrementPrivateTransaction);
+        evmConfiguration);
   }
 }

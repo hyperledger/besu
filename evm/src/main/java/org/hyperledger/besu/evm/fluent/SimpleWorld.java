@@ -120,7 +120,6 @@ public class SimpleWorld implements WorldUpdater {
 
   @Override
   public void commit() {
-    System.out.println("Simple World");
     accounts.forEach(
         (address, account) -> {
           if (!account.updateParent()) {
@@ -131,8 +130,7 @@ public class SimpleWorld implements WorldUpdater {
 
   @Override
   public void commitPrivateNonce() {
-
-    System.out.println("Simple World priv");
+    // TODO
   }
 
   @Override

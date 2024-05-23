@@ -210,40 +210,6 @@ public class ForestMutableWorldState implements MutableWorldState {
     stateUpdater.commit();
   }
 
-  @Override
-  public void persistPrivate(final BlockHeader blockHeader) {
-    LOG.info("FMWS persist");
-    final ForestWorldStateKeyValueStorage.Updater stateUpdater =
-            worldStateKeyValueStorage.updater();
-    // Store updated code
-    for (final Bytes code : updatedAccountCode.values()) {
-      stateUpdater.putCode(code);
-    }
-    // Commit account storage tries
-    for (final MerkleTrie<Bytes32, Bytes> updatedStorage : updatedStorageTries.values()) {
-      updatedStorage.commit(
-              (location, hash, value) -> stateUpdater.putAccountStorageTrieNode(hash, value));
-    }
-    // Commit account updates
-    accountStateTrie.commit(
-            (location, hash, value) -> stateUpdater.putAccountStateTrieNode(hash, value));
-
-    // Persist preimages
-    final WorldStatePreimageStorage.Updater preimageUpdater = preimageStorage.updater();
-    newStorageKeyPreimages.forEach(preimageUpdater::putStorageTrieKeyPreimage);
-    newAccountKeyPreimages.forEach(preimageUpdater::putAccountTrieKeyPreimage);
-
-    // Clear pending changes that we just flushed
-    updatedStorageTries.clear();
-    updatedAccountCode.clear();
-    newStorageKeyPreimages.clear();
-
-    // Push changes to underlying storage
-
-    preimageUpdater.commit();
-    stateUpdater.commit();
-  }
-
   private static UInt256 convertToUInt256(final Bytes value) {
     // TODO: we could probably have an optimized method to decode a single scalar since it's used
     // pretty often.
@@ -431,39 +397,21 @@ public class ForestMutableWorldState implements MutableWorldState {
 
     @Override
     public void commit() {
-      LOG.info("{} : commit", this.getClass().getName());
-
       final ForestMutableWorldState wrapped = wrappedWorldView();
 
       for (final Address address : getDeletedAccounts()) {
-        LOG.info("{} : getDeletedAccounts", address);
-
         final Hash addressHash = address.addressHash();
-
-        if (wrapped.accountStateTrie.get(addressHash).isPresent()) {
-          LOG.info(
-              "Delete : account state {}",
-              StateTrieAccountValue.readFrom(
-                      new BytesValueRLPInput(
-                          wrapped.accountStateTrie.get(addressHash).get(), false, true))
-                  .getBalance());
-        }
         wrapped.accountStateTrie.remove(addressHash);
         wrapped.updatedStorageTries.remove(address);
         wrapped.updatedAccountCode.remove(address);
       }
 
-      LOG.info("FMWS : getUpdatedAccounts {}", getUpdatedAccounts().size());
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
-        LOG.info("{} : getUpdatedAccounts {}", Thread.currentThread(), getUpdatedAccounts().size());
-
         final WorldStateAccount origin = updated.getWrappedAccount();
 
         // Save the code in key-value storage ...
         Hash codeHash = origin == null ? Hash.EMPTY : origin.getCodeHash();
         if (updated.codeWasUpdated()) {
-          LOG.info(": codeWasUpdated {} ", updated.getAddress());
-
           codeHash = Hash.hash(updated.getCode());
           wrapped.updatedAccountCode.put(updated.getAddress(), updated.getCode());
         }
@@ -471,14 +419,10 @@ public class ForestMutableWorldState implements MutableWorldState {
         final boolean freshState = origin == null || updated.getStorageWasCleared();
         Hash storageRoot = freshState ? Hash.EMPTY_TRIE_HASH : origin.getStorageRoot();
         if (freshState) {
-          LOG.info(": freshState {}", updated.getAddress());
-
           wrapped.updatedStorageTries.remove(updated.getAddress());
         }
         final Map<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
         if (!updatedStorage.isEmpty()) {
-          LOG.info(": isEmpty {}", updated.getAddress());
-
           // Apply any storage updates
           final MerkleTrie<Bytes32, Bytes> storageTrie =
               freshState
@@ -493,12 +437,8 @@ public class ForestMutableWorldState implements MutableWorldState {
             final UInt256 value = entry.getValue();
             final Hash keyHash = Hash.hash(entry.getKey());
             if (value.isZero()) {
-              LOG.info(": isZero {}", updated.getAddress());
-
               storageTrie.remove(keyHash);
             } else {
-              LOG.info(": else {}", updated.getAddress());
-
               wrapped.newStorageKeyPreimages.put(keyHash, entry.getKey());
               storageTrie.put(
                   keyHash, RLP.encode(out -> out.writeBytes(entry.getValue().toMinimalBytes())));
@@ -509,31 +449,10 @@ public class ForestMutableWorldState implements MutableWorldState {
 
         // Save address preimage
         wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
-
-
-        LOG.info(
-                "BytesValueRLPInput : {}",wrapped.accountStateTrie);
-        if (wrapped.accountStateTrie.get(updated.getAddressHash()).isPresent()) {
-          StateTrieAccountValue previousAccount =
-              StateTrieAccountValue.readFrom(
-                  new BytesValueRLPInput(
-                      wrapped.accountStateTrie.get(updated.getAddressHash()).get(), false, true));
-          LOG.info(
-              "Update : previous account code : {}, balance : {}, nonce : {} , address: {}",
-              previousAccount.getStorageRoot(),
-              previousAccount.getBalance(),
-              previousAccount.getNonce(),
-              updated.getAddressHash());
-        }
-        LOG.info(
-            "Update : updated account code : {}, balance : {}, nonce : {} , address: {}",
-            codeHash,
-            updated.getBalance(),
-            updated.getNonce(),
-            updated.getAddress());
         // Lastly, save the new account.
         final Bytes account =
-                serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
+            serializeAccount(updated.getNonce(), updated.getBalance(), storageRoot, codeHash);
+
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
     }
@@ -546,7 +465,6 @@ public class ForestMutableWorldState implements MutableWorldState {
 
       LOG.info("{} : commitPrivateNonce getUpdatedAccounts", getUpdatedAccounts().size());
 
-
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
         LOG.info("{} : getUpdatedAccounts {}", Thread.currentThread(), getUpdatedAccounts().size());
 
@@ -604,27 +522,24 @@ public class ForestMutableWorldState implements MutableWorldState {
         wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
         // Lastly, save the new account.
         LOG.info(
-                "BytesValueRLPInput : {}",wrapped.accountStateTrie);
-        StateTrieAccountValue previousAccount =
-            StateTrieAccountValue.readFrom(
-                new BytesValueRLPInput(
-                    wrapped.accountStateTrie.get(updated.getAddressHash()).get(), false, true));
+            "BytesValueRLPInput : {} {}",
+            wrapped.accountStateTrie.get(updated.getAddressHash()),
+            updated.getBalance());
+        Optional<StateTrieAccountValue> previousAccount =
+            wrapped
+                .accountStateTrie
+                .get(updated.getAddressHash())
+                .map(
+                    previousState ->
+                        StateTrieAccountValue.readFrom(
+                            new BytesValueRLPInput(previousState, false, true)));
         final Bytes account =
-            serializeAccount(updated.getNonce(), previousAccount.getBalance(), storageRoot, codeHash);
+            serializeAccount(
+                updated.getNonce(),
+                previousAccount.map(StateTrieAccountValue::getBalance).orElse(updated.getBalance()),
+                storageRoot,
+                codeHash);
 
-        LOG.info(
-            "Update : previous account code : {}, balance : {}, nonce : {} , address: {}",
-            previousAccount.getStorageRoot(),
-            previousAccount.getBalance(),
-            previousAccount.getNonce(),
-            updated.getAddressHash());
-
-        LOG.info(
-            "Update : updated account code : {}, balance : {}, nonce : {} , address: {}",
-            codeHash,
-            updated.getBalance(),
-            updated.getNonce(),
-            updated.getAddress());
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
     }

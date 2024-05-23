@@ -99,7 +99,8 @@ public class FlexiblePrivacyGroupContract {
       final MutableWorldState disposablePrivateState,
       final WorldUpdater privateWorldStateUpdater,
       final WorldStateArchive privateWorldStateArchive,
-      final PrivateTransactionProcessor privateTransactionProcessor) {
+      final PrivateTransactionProcessor privateTransactionProcessor,
+      final boolean incrementPrivateNonce) {
     transactionSimulator =
         (base64privacyGroupId, callData, blockHash, blockNumber) -> {
           assert !blockHash.isPresent();
@@ -122,7 +123,8 @@ public class FlexiblePrivacyGroupContract {
                   messageFrame.getMiningBeneficiary(),
                   OperationTracer.NO_TRACING,
                   messageFrame.getBlockHashLookup(),
-                  privacyGroupId));
+                  privacyGroupId,
+                  incrementPrivateNonce));
         };
   }
 

@@ -140,7 +140,8 @@ public class PrivateTransactionSimulator {
             protocolSpec.getMiningBeneficiaryCalculator().calculateBeneficiary(header),
             OperationTracer.NO_TRACING,
             protocolSpec.getBlockHashProcessor().getBlockHashLookup(header, blockchain),
-            privacyGroupId);
+            privacyGroupId,
+            privacyParameters.isPrivateNonceIncrementationEnabled());
 
     return Optional.of(result);
   }

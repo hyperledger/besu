@@ -123,7 +123,6 @@ public class ProtocolScheduleBuilder {
             isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
             evmConfiguration,
-            privacyParameters.isPrivateNonceIncrementationEnabled(),
             miningParameters);
 
     validateForkOrdering();
@@ -209,10 +208,7 @@ public class ProtocolScheduleBuilder {
                   BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      config.getContractSizeLimit(),
-                      config.getEvmStackSize(),
-                      evmConfiguration,
-                      privacyParameters.isPrivateNonceIncrementationEnabled()),
+                      config.getContractSizeLimit(), config.getEvmStackSize(), evmConfiguration),
                   Function.identity());
               protocolSchedule.putBlockNumberMilestone(
                   classicBlockNumber + 1, originalProtocolSpec);

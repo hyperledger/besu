@@ -112,7 +112,8 @@ public class PrivacyPrecompiledContractIntegrationTest {
             nullable(Address.class),
             nullable(OperationTracer.class),
             nullable(BlockHashLookup.class),
-            nullable(Bytes.class)))
+            nullable(Bytes.class),
+            nullable(Boolean.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
@@ -204,7 +205,9 @@ public class PrivacyPrecompiledContractIntegrationTest {
             worldStateArchive,
             new PrivateStateRootResolver(privateStateStorage),
             new PrivateStateGenesisAllocator(
-                false, (privacyGroupId, blockNumber) -> Collections::emptyList), false, "IntegrationTest");
+                false, (privacyGroupId, blockNumber) -> Collections::emptyList),
+            false,
+            "IntegrationTest");
 
     privacyPrecompiledContract.setPrivateTransactionProcessor(mockPrivateTxProcessor());
 

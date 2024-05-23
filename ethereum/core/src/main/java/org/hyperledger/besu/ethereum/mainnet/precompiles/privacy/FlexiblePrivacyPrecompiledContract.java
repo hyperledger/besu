@@ -66,20 +66,20 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
       Subscribers.create();
 
   public FlexiblePrivacyPrecompiledContract(
-          final GasCalculator gasCalculator,
-          final Enclave enclave,
-          final WorldStateArchive worldStateArchive,
-          final PrivateStateRootResolver privateStateRootResolver,
-          final PrivateStateGenesisAllocator privateStateGenesisAllocator,
-          final boolean incrementPrivateNonce) {
+      final GasCalculator gasCalculator,
+      final Enclave enclave,
+      final WorldStateArchive worldStateArchive,
+      final PrivateStateRootResolver privateStateRootResolver,
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator,
+      final boolean incrementPrivateNonce) {
     super(
         gasCalculator,
         enclave,
         worldStateArchive,
         privateStateRootResolver,
         privateStateGenesisAllocator,
-            incrementPrivateNonce,
-            "FlexiblePrivacy");
+        incrementPrivateNonce,
+        "FlexiblePrivacy");
   }
 
   public FlexiblePrivacyPrecompiledContract(
@@ -90,7 +90,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
         privacyParameters.getPrivateStateGenesisAllocator(),
-            privacyParameters.isPrivateNonceIncrementationEnabled());
+        privacyParameters.isPrivateNonceIncrementationEnabled());
   }
 
   public long addPrivateTransactionObserver(final PrivateTransactionObserver observer) {
@@ -179,7 +179,6 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
       return NO_RESULT;
     }
 
-    System.out.println("flexibleprecompiled");
     final TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
@@ -240,7 +239,8 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
             disposablePrivateState,
             privateWorldStateUpdater,
             privateWorldStateArchive,
-            privateTransactionProcessor);
+            privateTransactionProcessor,
+            incrementPrivateNonce);
 
     final boolean isAddingParticipant = isAddingParticipant(privateTransaction);
     final boolean isContractLocked = isContractLocked(flexiblePrivacyGroupContract, privacyGroupId);

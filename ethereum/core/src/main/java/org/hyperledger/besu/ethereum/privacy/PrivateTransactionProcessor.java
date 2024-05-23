@@ -56,8 +56,6 @@ public class PrivateTransactionProcessor {
 
   private final int maxStackSize;
 
-  private final boolean incrementPrivateNonce;
-
   @SuppressWarnings("unused")
   private final boolean clearEmptyAccounts;
 
@@ -67,15 +65,13 @@ public class PrivateTransactionProcessor {
       final AbstractMessageProcessor messageCallProcessor,
       final boolean clearEmptyAccounts,
       final int maxStackSize,
-      final PrivateTransactionValidator privateTransactionValidator,
-      final boolean incrementPrivateNonce) {
+      final PrivateTransactionValidator privateTransactionValidator) {
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
     this.messageCallProcessor = messageCallProcessor;
     this.clearEmptyAccounts = clearEmptyAccounts;
     this.maxStackSize = maxStackSize;
     this.privateTransactionValidator = privateTransactionValidator;
-    this.incrementPrivateNonce = incrementPrivateNonce;
   }
 
   public TransactionProcessingResult processTransaction(
@@ -87,7 +83,8 @@ public class PrivateTransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Bytes privacyGroupId) {
+      final Bytes privacyGroupId,
+      final boolean incrementPrivateNonce) {
     try {
       LOG.info("Starting private execution of {}", transaction);
 
@@ -101,12 +98,11 @@ public class PrivateTransactionProcessor {
       final ValidationResult<TransactionInvalidReason> validationResult =
           privateTransactionValidator.validate(transaction, sender.getNonce(), false);
       if (!validationResult.isValid()) {
-        LOG.info("TransactionProcessingResult.invalid(validationResult)");
         return TransactionProcessingResult.invalid(validationResult);
       }
 
       final long previousNonce = sender.incrementNonce();
-      LOG.info(
+      LOG.trace(
           "Incremented private sender {} nonce ({} -> {})",
           senderAddress,
           previousNonce,
@@ -135,7 +131,7 @@ public class PrivateTransactionProcessor {
         final Address privateContractAddress =
             Address.privateContractAddress(senderAddress, previousNonce, privacyGroupId);
 
-        LOG.info(
+        LOG.debug(
             "Calculated contract address {} from sender {} with nonce {} and privacy group {}",
             privateContractAddress,
             senderAddress,
@@ -170,29 +166,24 @@ public class PrivateTransactionProcessor {
 
       final Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
       while (!messageFrameStack.isEmpty()) {
-        LOG.info("!messageFrameStack.isEmpty()");
         process(messageFrameStack.peekFirst(), operationTracer);
       }
-      System.out.println(incrementPrivateNonce +" "+initialFrame.getState());
+
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         LOG.info("Private nonce success {} committed", sender.getNonce());
         mutablePrivateWorldStateUpdater.commit();
       } else if (incrementPrivateNonce) {
-        final MutableAccount finalSender =
-                maybePrivateSender != null
-                        ? maybePrivateSender
-                        : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO);
-        privateWorldState.createAccount(maybePrivateSender.getAddress(), maybePrivateSender.getNonce(), maybePrivateSender.getBalance());
-        LOG.info("Private nonce  non-success {} committed", finalSender.getNonce());
+        privateWorldState.createAccount(
+            sender.getAddress(), sender.getNonce(), sender.getBalance());
+        LOG.info("Private nonce  non-success {} committed", sender.getNonce());
         mutablePrivateWorldStateUpdater.commitPrivateNonce();
-        LOG.info("Exit Private nonce  non-success {} committed", finalSender.getNonce());
+        LOG.info("Exit Private nonce  non-success {} committed", sender.getNonce());
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         return TransactionProcessingResult.successful(
             initialFrame.getLogs(), 0, 0, initialFrame.getOutputData(), ValidationResult.valid());
       } else {
-        LOG.info("Fail to process transaction");
         return TransactionProcessingResult.failed(
             0,
             0,

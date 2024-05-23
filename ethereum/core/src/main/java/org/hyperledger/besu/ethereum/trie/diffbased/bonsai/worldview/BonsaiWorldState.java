@@ -20,7 +20,6 @@ import static org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.Diff
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
@@ -346,11 +345,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
             new BonsaiWorldStateKeyValueStorage.Updater(
                 noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
         accumulator.copy());
-  }
-
-  @Override
-  public void persistPrivate(final BlockHeader blockHeader) {
-
   }
 
   @Override

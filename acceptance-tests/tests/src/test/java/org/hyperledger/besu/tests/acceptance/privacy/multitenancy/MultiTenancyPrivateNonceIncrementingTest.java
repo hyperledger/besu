@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.tests.acceptance.privacy.multitenancy;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.github.tomakehurst.wiremock.junit.WireMockRule;
-import com.google.common.base.Supplier;
-import com.google.common.base.Suppliers;
-import org.apache.tuweni.bytes.Bytes;
+import static com.github.tomakehurst.wiremock.client.WireMock.ok;
+import static com.github.tomakehurst.wiremock.client.WireMock.post;
+import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
+import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
+import static java.nio.charset.StandardCharsets.UTF_8;
+
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
@@ -37,19 +37,20 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.Cluster;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.cluster.ClusterConfigurationBuilder;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Rule;
-import org.junit.Test;
 
 import java.math.BigInteger;
 import java.util.List;
 
-import static com.github.tomakehurst.wiremock.client.WireMock.ok;
-import static com.github.tomakehurst.wiremock.client.WireMock.post;
-import static com.github.tomakehurst.wiremock.client.WireMock.stubFor;
-import static com.github.tomakehurst.wiremock.core.WireMockConfiguration.options;
-import static java.nio.charset.StandardCharsets.UTF_8;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.github.tomakehurst.wiremock.junit.WireMockRule;
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Rule;
+import org.junit.Test;
 
 public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase {
   private BesuNode node;
@@ -101,57 +102,69 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
     multiTenancyCluster.close();
   }
 
-
   @Test
-  public void privGetTransactionCountSuccessShouldReturnExpectedTransactionCount2()
+  public void validateUnsuccessfulPrivateTransactionsNonceIncrementation()
       throws JsonProcessingException {
+
+    final PrivateTransaction invalidSignedPrivateTransaction =
+        getInvalidSignedPrivateTransaction(senderAddress, 0);
+    final String accountAddress = invalidSignedPrivateTransaction.getSender().toHexString();
+    final BytesValueRLPOutput rlpOutputNonce0 = getRLPOutput(invalidSignedPrivateTransaction);
+
+    retrievePrivacyGroupEnclaveStub();
+    sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
+    receiveEnclaveStub(invalidSignedPrivateTransaction);
+
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
+    final Hash invalidTransactionReceipt =
+        node.execute(
+            privacyTransactions.sendRawTransaction(rlpOutputNonce0.encoded().toHexString()));
+
+    node.verify(priv.getFailedTransactionReceipt(invalidTransactionReceipt));
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 1));
+
     final PrivateTransaction validSignedPrivateTransaction =
-        getValidSignedPrivateTransaction2(senderAddress);
-    final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
+        getValidSignedPrivateTransaction(senderAddress, 1);
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
 
     retrievePrivacyGroupEnclaveStub();
     sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
     receiveEnclaveStub(validSignedPrivateTransaction);
 
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
     final Hash transactionReceipt =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
     //
     node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 1));
-    //////////////////
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 2));
+
     final PrivateTransaction validSignedPrivateTransaction2 =
-        getValidSignedPrivateTransaction(senderAddress);
-    final String accountAddress2 = validSignedPrivateTransaction2.getSender().toHexString();
+        getInvalidSignedPrivateTransaction(senderAddress, 2);
     final BytesValueRLPOutput rlpOutput2 = getRLPOutput(validSignedPrivateTransaction2);
 
     retrievePrivacyGroupEnclaveStub();
     sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
     receiveEnclaveStub(validSignedPrivateTransaction2);
 
-    node.verify(priv.getTransactionCount(accountAddress2, PRIVACY_GROUP_ID, 1));
-//    final Hash transactionReceipt2 =
+    final Hash transactionReceipt2 =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput2.encoded().toHexString()));
-//    node.verify(priv.getFailedTransactionReceipt(transactionReceipt2));
-//    System.out.println("test test"+priv.getFailedTransactionReceipt(transactionReceipt2));
+    node.verify(priv.getFailedTransactionReceipt(transactionReceipt2));
+
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 3));
+
     final PrivateTransaction validSignedPrivateTransaction3 =
-            getValidSignedPrivateTransaction3(senderAddress);
-    final String accountAddress3 = validSignedPrivateTransaction3.getSender().toHexString();
+        getValidSignedPrivateTransaction(senderAddress, 3);
     final BytesValueRLPOutput rlpOutput3 = getRLPOutput(validSignedPrivateTransaction3);
 
     retrievePrivacyGroupEnclaveStub();
     sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
     receiveEnclaveStub(validSignedPrivateTransaction3);
 
-//    node.verify(priv.getTransactionCount(accountAddress3, PRIVACY_GROUP_ID, 1));
     final Hash transactionReceipt3 =
-            node.execute(privacyTransactions.sendRawTransaction(rlpOutput3.encoded().toHexString()));
+        node.execute(privacyTransactions.sendRawTransaction(rlpOutput3.encoded().toHexString()));
     //
     node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt3));
-    node.verify(priv.getTransactionCount(accountAddress3, PRIVACY_GROUP_ID, 2));
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 4));
   }
-
 
   private void retrievePrivacyGroupEnclaveStub() throws JsonProcessingException {
     final String retrieveGroupResponse =
@@ -161,7 +174,6 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
                 PrivacyGroup.Type.PANTHEON));
     stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
   }
-
 
   private void sendEnclaveStub(final String testKey) throws JsonProcessingException {
     final String sendResponse = mapper.writeValueAsString(new SendResponse(testKey));
@@ -196,10 +208,10 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
     return new PrivacyGroup(PRIVACY_GROUP_ID, groupType, "test", "testGroup", groupMembers);
   }
 
-
-  private static PrivateTransaction getValidSignedPrivateTransaction(final Address senderAddress) {
+  private static PrivateTransaction getInvalidSignedPrivateTransaction(
+      final Address senderAddress, final int nonce) {
     return PrivateTransaction.builder()
-        .nonce(1)
+        .nonce(nonce)
         .gasPrice(Wei.ZERO)
         .gasLimit(3000000)
         .to(null)
@@ -213,9 +225,10 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
         .signAndBuild(TEST_KEY);
   }
 
-  private static PrivateTransaction getValidSignedPrivateTransaction2(final Address senderAddress) {
+  private static PrivateTransaction getValidSignedPrivateTransaction(
+      final Address senderAddress, final int nonce) {
     return PrivateTransaction.builder()
-        .nonce(0)
+        .nonce(nonce)
         .gasPrice(Wei.ZERO)
         .gasLimit(3000000)
         .to(null)
@@ -228,20 +241,4 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
         .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))
         .signAndBuild(TEST_KEY);
   }
-  private static PrivateTransaction getValidSignedPrivateTransaction3(final Address senderAddress) {
-    return PrivateTransaction.builder()
-            .nonce(2)
-            .gasPrice(Wei.ZERO)
-            .gasLimit(3000000)
-            .to(null)
-            .value(Wei.ZERO)
-            .payload(Bytes.wrap(new byte[] {}))
-            .sender(senderAddress)
-            .chainId(BigInteger.valueOf(1337))
-            .privateFrom(Bytes.fromBase64String(PARTICIPANT_ENCLAVE_KEY0))
-            .restriction(Restriction.RESTRICTED)
-            .privacyGroupId(Bytes.fromBase64String(PRIVACY_GROUP_ID))
-            .signAndBuild(TEST_KEY);
-  }
-
 }

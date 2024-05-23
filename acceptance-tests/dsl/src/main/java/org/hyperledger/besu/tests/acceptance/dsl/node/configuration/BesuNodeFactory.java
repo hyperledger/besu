@@ -322,7 +322,7 @@ public class BesuNodeFactory {
             .enablePrivateTransactions()
             .privacyParameters(privacyParameters)
             .miningConfiguration(miningParameters)
-                .jsonRpcDebug()
+            .jsonRpcDebug()
             .build());
   }
 

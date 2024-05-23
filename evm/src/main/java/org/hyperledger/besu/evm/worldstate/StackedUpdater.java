@@ -77,7 +77,6 @@ public class StackedUpdater<W extends WorldView, A extends Account>
 
   @Override
   public void commit() {
-    System.out.println("Stack up");
     final AbstractWorldUpdater<W, A> wrapped = wrappedWorldView();
     // Our own updates should apply on top of the updates we're stacked on top, so our deletions
     // may kill some of "their" updates, and our updates may review some of the account "they"
@@ -114,8 +113,7 @@ public class StackedUpdater<W extends WorldView, A extends Account>
 
   @Override
   public void commitPrivateNonce() {
-
-    System.out.println("Stack up Priv");
+    // TODO
   }
 
   /** Mark transaction boundary. */

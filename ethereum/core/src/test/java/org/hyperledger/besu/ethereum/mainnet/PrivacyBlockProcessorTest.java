@@ -85,7 +85,8 @@ class PrivacyBlockProcessorTest {
             privateWorldStateArchive,
             new PrivateStateRootResolver(privateStateStorage),
             new PrivateStateGenesisAllocator(
-                true, (privacyGroupId, blockNumber) -> Collections::emptyList));
+                true, (privacyGroupId, blockNumber) -> Collections::emptyList),
+            false);
     publicWorldStateArchive = mock(WorldStateArchive.class);
     privacyBlockProcessor.setPublicWorldStateArchive(publicWorldStateArchive);
   }
@@ -208,7 +209,7 @@ class PrivacyBlockProcessorTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), any(), any(), any()))
+            any(), any(), any(), any(), any(), any(), any(), any(), any(), anyBoolean()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));

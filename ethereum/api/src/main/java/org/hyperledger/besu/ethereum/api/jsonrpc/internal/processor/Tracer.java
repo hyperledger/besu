@@ -68,11 +68,6 @@ public class Tracer {
     }
 
     @Override
-    public void persistPrivate(final BlockHeader blockHeader) {
-      mutableWorldState.persistPrivate(blockHeader);
-    }
-
-    @Override
     public WorldUpdater updater() {
       return mutableWorldState.updater();
     }

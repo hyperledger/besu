@@ -96,7 +96,8 @@ public class FlexiblePrivacyPrecompiledContractTest {
             nullable(Address.class),
             nullable(OperationTracer.class),
             nullable(BlockHashLookup.class),
-            nullable(Bytes.class)))
+            nullable(Bytes.class),
+            nullable(Boolean.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
@@ -383,7 +384,8 @@ public class FlexiblePrivacyPrecompiledContractTest {
             enclave,
             worldStateArchive,
             privateStateRootResolver,
-            privateStateGenesisAllocator, false);
+            privateStateGenesisAllocator,
+            false);
 
     contract.setPrivateTransactionProcessor(
         mockPrivateTxProcessor(
@@ -427,6 +429,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
         enclave,
         worldStateArchive,
         privateStateRootResolver,
-        privateStateGenesisAllocator, false);
+        privateStateGenesisAllocator,
+        false);
   }
 }

@@ -58,10 +58,9 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder classicRecoveryInitDefinition(
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            contractSizeLimit, configStackSizeLimit, evmConfiguration, incrementPrivateTransaction)
+            contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .blockHeaderValidatorBuilder(
             feeMarket -> MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
@@ -71,10 +70,9 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            contractSizeLimit, configStackSizeLimit, evmConfiguration, incrementPrivateTransaction)
+            contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorFactoryBuilder(
@@ -87,14 +85,9 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalInt ignoredConfigContractSizeLimit,
       final OptionalInt configStackSizeLimit,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     return tangerineWhistleDefinition(
-            chainId,
-            OptionalInt.empty(),
-            configStackSizeLimit,
-            evmConfiguration,
-            incrementPrivateTransaction)
+            chainId, OptionalInt.empty(), configStackSizeLimit, evmConfiguration)
         .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
         .name("DieHard");
@@ -105,14 +98,8 @@ public class ClassicProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
-    return dieHardDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            evmConfiguration,
-            incrementPrivateTransaction)
+      final EvmConfiguration evmConfiguration) {
+    return dieHardDefinition(chainId, contractSizeLimit, configStackSizeLimit, evmConfiguration)
         .blockReward(MAX_BLOCK_REWARD)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
         .blockProcessorBuilder(
@@ -138,15 +125,9 @@ public class ClassicProtocolSpecs {
       final OptionalInt contractSizeLimit,
       final OptionalInt configStackSizeLimit,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     return gothamDefinition(
-            chainId,
-            contractSizeLimit,
-            configStackSizeLimit,
-            ecip1017EraRounds,
-            evmConfiguration,
-            incrementPrivateTransaction)
+            chainId, contractSizeLimit, configStackSizeLimit, ecip1017EraRounds, evmConfiguration)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorFactoryBuilder(
             (gasCalculator, gasLimitCalculator, feeMarket) ->
@@ -160,8 +141,7 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(MainnetProtocolSpecs.SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
@@ -170,8 +150,7 @@ public class ClassicProtocolSpecs {
             configContractSizeLimit,
             configStackSizeLimit,
             ecip1017EraRounds,
-            evmConfiguration,
-            incrementPrivateTransaction)
+            evmConfiguration)
         .evmBuilder(MainnetEVMs::byzantium)
         .evmConfiguration(evmConfiguration)
         .gasCalculator(SpuriousDragonGasCalculator::new)
@@ -217,16 +196,14 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     return atlantisDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             ecip1017EraRounds,
-            evmConfiguration,
-            incrementPrivateTransaction)
+            evmConfiguration)
         .evmBuilder(MainnetEVMs::constantinople)
         .gasCalculator(PetersburgGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
@@ -240,16 +217,14 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     return aghartaDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             ecip1017EraRounds,
-            evmConfiguration,
-            incrementPrivateTransaction)
+            evmConfiguration)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             (gasCalculator, evmConfig) ->
@@ -265,16 +240,14 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     return phoenixDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             ecip1017EraRounds,
-            evmConfiguration,
-            incrementPrivateTransaction)
+            evmConfiguration)
         .blockHeaderValidatorBuilder(
             feeMarket ->
                 MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
@@ -312,16 +285,14 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     return thanosDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             ecip1017EraRounds,
-            evmConfiguration,
-            incrementPrivateTransaction)
+            evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorFactoryBuilder(
             (gasCalculator, gasLimitCalculator, feeMarket) ->
@@ -344,8 +315,7 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(MainnetProtocolSpecs.SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return magnetoDefinition(
@@ -354,8 +324,7 @@ public class ClassicProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             ecip1017EraRounds,
-            evmConfiguration,
-            incrementPrivateTransaction)
+            evmConfiguration)
         .gasCalculator(LondonGasCalculator::new)
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
@@ -374,8 +343,7 @@ public class ClassicProtocolSpecs {
       final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration,
-      final boolean incrementPrivateTransaction) {
+      final EvmConfiguration evmConfiguration) {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return mystiqueDefinition(
             chainId,
@@ -383,8 +351,7 @@ public class ClassicProtocolSpecs {
             configStackSizeLimit,
             enableRevertReason,
             ecip1017EraRounds,
-            evmConfiguration,
-            incrementPrivateTransaction)
+            evmConfiguration)
         // EIP-3860
         .gasCalculator(ShanghaiGasCalculator::new)
         // EIP-3855

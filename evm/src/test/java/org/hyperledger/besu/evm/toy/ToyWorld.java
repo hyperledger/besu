@@ -119,7 +119,6 @@ public class ToyWorld implements WorldUpdater {
 
   @Override
   public void commit() {
-    System.out.println("toyworld");
     if (parent != null) {
       parent.accounts.putAll(accounts);
     }
@@ -127,8 +126,7 @@ public class ToyWorld implements WorldUpdater {
 
   @Override
   public void commitPrivateNonce() {
-
-    System.out.println("toyworld priv");
+    // TODO
   }
 
   @Override
