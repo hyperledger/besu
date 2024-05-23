@@ -106,36 +106,46 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
   public void validateUnsuccessfulPrivateTransactionsNonceIncrementation()
       throws JsonProcessingException {
 
-    executePrivateFailingTransaction(0,0,1);
+    executePrivateFailingTransaction(0, 0, 1);
 
-    executePrivateValidTransaction(1,1,2);
+    executePrivateValidTransaction(1, 1, 2);
 
-    executePrivateFailingTransaction(2,2,3);
+    executePrivateFailingTransaction(2, 2, 3);
 
-    executePrivateValidTransaction(3,3,4);
-
+    executePrivateValidTransaction(3, 3, 4);
   }
 
-  private void executePrivateValidTransaction(final int nonce, final int expectedTransactionCountBeforeExecution, final int expectedTransactionCountAfterExecution) throws JsonProcessingException {
+  private void executePrivateValidTransaction(
+      final int nonce,
+      final int expectedTransactionCountBeforeExecution,
+      final int expectedTransactionCountAfterExecution)
+      throws JsonProcessingException {
     final PrivateTransaction validSignedPrivateTransaction =
         getValidSignedPrivateTransaction(senderAddress, nonce);
-
 
     final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
     final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
 
     processEnclaveStub(validSignedPrivateTransaction);
 
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountBeforeExecution));
+    node.verify(
+        priv.getTransactionCount(
+            accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountBeforeExecution));
 
     final Hash transactionReceipt =
         node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
 
     node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountAfterExecution));
+    node.verify(
+        priv.getTransactionCount(
+            accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountAfterExecution));
   }
 
-  private void executePrivateFailingTransaction(final int nonce, final int expectedTransactionCountBeforeExecution, final int expectedTransactionCountAfterExecution) throws JsonProcessingException {
+  private void executePrivateFailingTransaction(
+      final int nonce,
+      final int expectedTransactionCountBeforeExecution,
+      final int expectedTransactionCountAfterExecution)
+      throws JsonProcessingException {
     final PrivateTransaction invalidSignedPrivateTransaction =
         getInvalidSignedPrivateTransaction(senderAddress, nonce);
     final String accountAddress = invalidSignedPrivateTransaction.getSender().toHexString();
@@ -143,17 +153,21 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
 
     processEnclaveStub(invalidSignedPrivateTransaction);
 
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountBeforeExecution));
+    node.verify(
+        priv.getTransactionCount(
+            accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountBeforeExecution));
     final Hash invalidTransactionReceipt =
         node.execute(
             privacyTransactions.sendRawTransaction(rlpOutputNonce0.encoded().toHexString()));
 
     node.verify(priv.getFailedTransactionReceipt(invalidTransactionReceipt));
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountAfterExecution));
+    node.verify(
+        priv.getTransactionCount(
+            accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountAfterExecution));
   }
 
-
-  private void processEnclaveStub(final PrivateTransaction validSignedPrivateTransaction) throws JsonProcessingException {
+  private void processEnclaveStub(final PrivateTransaction validSignedPrivateTransaction)
+      throws JsonProcessingException {
     retrievePrivacyGroupEnclaveStub();
     sendEnclaveStub();
     receiveEnclaveStub(validSignedPrivateTransaction);
@@ -169,7 +183,8 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
   }
 
   private void sendEnclaveStub() throws JsonProcessingException {
-    final String sendResponse = mapper.writeValueAsString(new SendResponse(PARTICIPANT_ENCLAVE_KEY1));
+    final String sendResponse =
+        mapper.writeValueAsString(new SendResponse(PARTICIPANT_ENCLAVE_KEY1));
     stubFor(post("/send").willReturn(ok(sendResponse)));
   }
 
