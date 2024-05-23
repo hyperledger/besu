@@ -125,9 +125,7 @@ public class ToyWorld implements WorldUpdater {
   }
 
   @Override
-  public void commitPrivateNonce() {
-    // TODO
-  }
+  public void commitPrivateNonce() {}
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {

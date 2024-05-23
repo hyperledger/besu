@@ -86,7 +86,7 @@ public class PrivateTransactionProcessor {
       final Bytes privacyGroupId,
       final boolean incrementPrivateNonce) {
     try {
-      LOG.info("Starting private execution of {}", transaction);
+      LOG.trace("Starting private execution of {}", transaction);
 
       final Address senderAddress = transaction.getSender();
       final MutableAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
@@ -170,14 +170,11 @@ public class PrivateTransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        LOG.info("Private nonce success {} committed", sender.getNonce());
         mutablePrivateWorldStateUpdater.commit();
       } else if (incrementPrivateNonce) {
         privateWorldState.createAccount(
             sender.getAddress(), sender.getNonce(), sender.getBalance());
-        LOG.info("Private nonce  non-success {} committed", sender.getNonce());
         mutablePrivateWorldStateUpdater.commitPrivateNonce();
-        LOG.info("Exit Private nonce  non-success {} committed", sender.getNonce());
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {

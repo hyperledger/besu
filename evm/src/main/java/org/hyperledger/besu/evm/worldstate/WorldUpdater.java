@@ -141,7 +141,7 @@ public interface WorldUpdater extends MutableWorldView {
 
   /**
    * Commits the changes made to this updater to the underlying {@link WorldView} this is an updater
-   * of.
+   * even if transaction failed.
    */
   void commitPrivateNonce();
 

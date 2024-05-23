@@ -51,11 +51,8 @@ import java.util.stream.Stream;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 public class ForestMutableWorldState implements MutableWorldState {
-  private static final Logger LOG = LoggerFactory.getLogger(ForestMutableWorldState.class);
 
   private final EvmConfiguration evmConfiguration;
   private final ForestWorldStateKeyValueStorage worldStateKeyValueStorage;
@@ -458,19 +455,15 @@ public class ForestMutableWorldState implements MutableWorldState {
 
     @Override
     public void commitPrivateNonce() {
-      LOG.info("{} : commitPrivateNonce", this.getClass().getName());
-
       final ForestMutableWorldState wrapped = wrappedWorldView();
 
-      LOG.info("{} : commitPrivateNonce getUpdatedAccounts", getUpdatedAccounts().size());
-
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
+
         final WorldStateAccount origin = updated.getWrappedAccount();
 
         // Save the code in key-value storage ...
         Hash codeHash = origin == null ? Hash.EMPTY : origin.getCodeHash();
         if (updated.codeWasUpdated()) {
-          LOG.info(": codeWasUpdated {} ", updated.getAddress());
 
           codeHash = Hash.hash(updated.getCode());
           wrapped.updatedAccountCode.put(updated.getAddress(), updated.getCode());
@@ -479,13 +472,11 @@ public class ForestMutableWorldState implements MutableWorldState {
         final boolean freshState = origin == null || updated.getStorageWasCleared();
         Hash storageRoot = freshState ? Hash.EMPTY_TRIE_HASH : origin.getStorageRoot();
         if (freshState) {
-          LOG.info(": freshState {}", updated.getAddress());
 
           wrapped.updatedStorageTries.remove(updated.getAddress());
         }
         final Map<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
         if (!updatedStorage.isEmpty()) {
-          LOG.info(": isEmpty {}", updated.getAddress());
 
           // Apply any storage updates
           final MerkleTrie<Bytes32, Bytes> storageTrie =
@@ -493,6 +484,7 @@ public class ForestMutableWorldState implements MutableWorldState {
                   ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
                   : origin.storageTrie();
           wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
+
           final TreeSet<Map.Entry<UInt256, UInt256>> entries =
               new TreeSet<>(Map.Entry.comparingByKey());
           entries.addAll(updatedStorage.entrySet());
@@ -501,12 +493,8 @@ public class ForestMutableWorldState implements MutableWorldState {
             final UInt256 value = entry.getValue();
             final Hash keyHash = Hash.hash(entry.getKey());
             if (value.isZero()) {
-              LOG.info(": isZero {}", updated.getAddress());
-
               storageTrie.remove(keyHash);
             } else {
-              LOG.info(": else {}", updated.getAddress());
-
               wrapped.newStorageKeyPreimages.put(keyHash, entry.getKey());
               storageTrie.put(
                   keyHash, RLP.encode(out -> out.writeBytes(entry.getValue().toMinimalBytes())));
@@ -518,10 +506,6 @@ public class ForestMutableWorldState implements MutableWorldState {
         // Save address preimage
         wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
         // Lastly, save the new account.
-        LOG.info(
-            "BytesValueRLPInput : {} {}",
-            wrapped.accountStateTrie.get(updated.getAddressHash()),
-            updated.getBalance());
         Optional<StateTrieAccountValue> previousAccount =
             wrapped
                 .accountStateTrie
@@ -530,6 +514,7 @@ public class ForestMutableWorldState implements MutableWorldState {
                     previousState ->
                         StateTrieAccountValue.readFrom(
                             new BytesValueRLPInput(previousState, false, true)));
+
         final Bytes account =
             serializeAccount(
                 updated.getNonce(),

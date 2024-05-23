@@ -106,64 +106,57 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
   public void validateUnsuccessfulPrivateTransactionsNonceIncrementation()
       throws JsonProcessingException {
 
+    executePrivateFailingTransaction(0,0,1);
+
+    executePrivateValidTransaction(1,1,2);
+
+    executePrivateFailingTransaction(2,2,3);
+
+    executePrivateValidTransaction(3,3,4);
+
+  }
+
+  private void executePrivateValidTransaction(final int nonce, final int expectedTransactionCountBeforeExecution, final int expectedTransactionCountAfterExecution) throws JsonProcessingException {
+    final PrivateTransaction validSignedPrivateTransaction =
+        getValidSignedPrivateTransaction(senderAddress, nonce);
+
+
+    final String accountAddress = validSignedPrivateTransaction.getSender().toHexString();
+    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
+
+    processEnclaveStub(validSignedPrivateTransaction);
+
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountBeforeExecution));
+
+    final Hash transactionReceipt =
+        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
+
+    node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountAfterExecution));
+  }
+
+  private void executePrivateFailingTransaction(final int nonce, final int expectedTransactionCountBeforeExecution, final int expectedTransactionCountAfterExecution) throws JsonProcessingException {
     final PrivateTransaction invalidSignedPrivateTransaction =
-        getInvalidSignedPrivateTransaction(senderAddress, 0);
+        getInvalidSignedPrivateTransaction(senderAddress, nonce);
     final String accountAddress = invalidSignedPrivateTransaction.getSender().toHexString();
     final BytesValueRLPOutput rlpOutputNonce0 = getRLPOutput(invalidSignedPrivateTransaction);
 
-    retrievePrivacyGroupEnclaveStub();
-    sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
-    receiveEnclaveStub(invalidSignedPrivateTransaction);
+    processEnclaveStub(invalidSignedPrivateTransaction);
 
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 0));
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountBeforeExecution));
     final Hash invalidTransactionReceipt =
         node.execute(
             privacyTransactions.sendRawTransaction(rlpOutputNonce0.encoded().toHexString()));
 
     node.verify(priv.getFailedTransactionReceipt(invalidTransactionReceipt));
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 1));
+    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountAfterExecution));
+  }
 
-    final PrivateTransaction validSignedPrivateTransaction =
-        getValidSignedPrivateTransaction(senderAddress, 1);
-    final BytesValueRLPOutput rlpOutput = getRLPOutput(validSignedPrivateTransaction);
 
+  private void processEnclaveStub(final PrivateTransaction validSignedPrivateTransaction) throws JsonProcessingException {
     retrievePrivacyGroupEnclaveStub();
-    sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
+    sendEnclaveStub();
     receiveEnclaveStub(validSignedPrivateTransaction);
-
-    final Hash transactionReceipt =
-        node.execute(privacyTransactions.sendRawTransaction(rlpOutput.encoded().toHexString()));
-    //
-    node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt));
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 2));
-
-    final PrivateTransaction validSignedPrivateTransaction2 =
-        getInvalidSignedPrivateTransaction(senderAddress, 2);
-    final BytesValueRLPOutput rlpOutput2 = getRLPOutput(validSignedPrivateTransaction2);
-
-    retrievePrivacyGroupEnclaveStub();
-    sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
-    receiveEnclaveStub(validSignedPrivateTransaction2);
-
-    final Hash transactionReceipt2 =
-        node.execute(privacyTransactions.sendRawTransaction(rlpOutput2.encoded().toHexString()));
-    node.verify(priv.getFailedTransactionReceipt(transactionReceipt2));
-
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 3));
-
-    final PrivateTransaction validSignedPrivateTransaction3 =
-        getValidSignedPrivateTransaction(senderAddress, 3);
-    final BytesValueRLPOutput rlpOutput3 = getRLPOutput(validSignedPrivateTransaction3);
-
-    retrievePrivacyGroupEnclaveStub();
-    sendEnclaveStub(PARTICIPANT_ENCLAVE_KEY1);
-    receiveEnclaveStub(validSignedPrivateTransaction3);
-
-    final Hash transactionReceipt3 =
-        node.execute(privacyTransactions.sendRawTransaction(rlpOutput3.encoded().toHexString()));
-    //
-    node.verify(priv.getSuccessfulTransactionReceipt(transactionReceipt3));
-    node.verify(priv.getTransactionCount(accountAddress, PRIVACY_GROUP_ID, 4));
   }
 
   private void retrievePrivacyGroupEnclaveStub() throws JsonProcessingException {
@@ -175,8 +168,8 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
     stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
   }
 
-  private void sendEnclaveStub(final String testKey) throws JsonProcessingException {
-    final String sendResponse = mapper.writeValueAsString(new SendResponse(testKey));
+  private void sendEnclaveStub() throws JsonProcessingException {
+    final String sendResponse = mapper.writeValueAsString(new SendResponse(PARTICIPANT_ENCLAVE_KEY1));
     stubFor(post("/send").willReturn(ok(sendResponse)));
   }
 

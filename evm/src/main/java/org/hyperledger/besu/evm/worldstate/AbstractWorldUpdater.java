@@ -28,9 +28,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
  * WorldView}* provided in the constructor in memory.
@@ -42,8 +39,6 @@ import org.slf4j.LoggerFactory;
  */
 public abstract class AbstractWorldUpdater<W extends WorldView, A extends Account>
     implements WorldUpdater {
-
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractWorldUpdater.class);
 
   private final W world;
   private final EvmConfiguration evmConfiguration;
@@ -83,14 +78,12 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   protected UpdateTrackingAccount<A> track(final UpdateTrackingAccount<A> account) {
     final Address address = account.getAddress();
     updatedAccounts.put(address, account);
-    LOG.info("updatedAccounts after track {}", updatedAccounts.size());
     deletedAccounts.remove(address);
     return account;
   }
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    LOG.info("createAccount {} {}", address, nonce);
     final UpdateTrackingAccount<A> account = new UpdateTrackingAccount<>(address);
     account.setNonce(nonce);
     account.setBalance(balance);
@@ -132,8 +125,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public void deleteAccount(final Address address) {
-
-    LOG.info("deleteAccount {}", address);
     deletedAccounts.add(address);
     updatedAccounts.remove(address);
   }
@@ -180,8 +171,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
    * @return The accounts modified in this updater.
    */
   protected Collection<UpdateTrackingAccount<A>> getUpdatedAccounts() {
-    LOG.info("getUpdatedAccounts {}", updatedAccounts.size());
-
     return updatedAccounts.values();
   }
 
@@ -196,8 +185,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   /** Reset. */
   protected void reset() {
-    LOG.info("reset {}", updatedAccounts.size());
-
     updatedAccounts.clear();
     deletedAccounts.clear();
   }

@@ -232,7 +232,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
 
   @Override
   public void commit() {
-    LOG.info("Private nonce success Bonsai");
     this.isAccumulatorStateChanged = true;
     for (final Address deletedAddress : getDeletedAccounts()) {
       final DiffBasedValue<ACCOUNT> accountValue =
@@ -327,7 +326,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 updatedAccount = tracked.getWrappedAccount();
                 updatedAccount.setBalance(tracked.getBalance());
                 updatedAccount.setNonce(tracked.getNonce());
-                LOG.info("Private nonce success Bonsai " + tracked.getNonce());
 
                 if (tracked.codeWasUpdated()) {
                   updatedAccount.setCode(tracked.getCode());
@@ -765,7 +763,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
 
   @Override
   public void reset() {
-    LOG.info("reset accounts");
     storageToClear.clear();
     storageToUpdate.clear();
     codeToUpdate.clear();
