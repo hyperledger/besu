@@ -15,7 +15,9 @@
 package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
 import org.hyperledger.besu.crypto.Hash;
-import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSEntry.*;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSEntry.ENRNode;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSEntry.ENRTreeLink;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSEntry.ENRTreeRoot;
 
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
@@ -51,7 +53,7 @@ public class DNSResolver {
    *     with visit.
    * @param vertx Vertx instance.
    */
-  public DNSResolver(final String dnsServer, long seq, final Vertx vertx) {
+  public DNSResolver(final String dnsServer, final long seq, final Vertx vertx) {
     this.seq = seq;
     final DnsClientOptions dnsClientOptions = new DnsClientOptions();
     if (dnsServer != null) {
@@ -122,7 +124,7 @@ public class DNSResolver {
     final DNSEntry entry = optionalDNSEntry.get();
     if (entry instanceof ENRNode node) {
       return visitor.visit(node.nodeRecord());
-    } else if (entry instanceof ENRTree tree) {
+    } else if (entry instanceof DNSEntry.ENRTree tree) {
       for (String e : tree.entries()) {
         boolean keepGoing = internalVisit(e, domainName, visitor);
         if (!keepGoing) {

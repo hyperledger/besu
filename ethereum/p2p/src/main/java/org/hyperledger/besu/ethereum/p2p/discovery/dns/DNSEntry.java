@@ -42,21 +42,29 @@ public interface DNSEntry {
    * @throws IllegalArgumentException if the record cannot be read
    */
   static DNSEntry readDNSEntry(final String serialized) {
-    // trim starting and ending quotes " if it exists in serialized
-    final String record = serialized.replaceAll("^\"|\"$", "");
-    if (record.startsWith("enrtree-root:")) {
-      return new ENRTreeRoot(readKV(record));
-    } else if (record.startsWith("enrtree-branch:")) {
-      // remove the enrtree-branch: prefix
-      return new ENRTree(record.substring("enrtree-branch:".length()));
-    } else if (record.startsWith("enr:")) {
-      return new ENRNode(readKV(record));
-    } else if (record.startsWith("enrtree:")) {
-      return new ENRTreeLink(record);
-    } else {
-      throw new IllegalArgumentException(
-          serialized + " should contain enrtree-branch, enr, enrtree-root or enrtree");
+    final String record = trimQuotes(serialized);
+    final String prefix = getPrefix(record);
+    return switch (prefix) {
+      case "enrtree-root" -> new ENRTreeRoot(readKV(record));
+      case "enrtree-branch" -> new ENRTree(record.substring(prefix.length() + 1));
+      case "enr" -> new ENRNode(readKV(record));
+      case "enrtree" -> new ENRTreeLink(record);
+      default ->
+          throw new IllegalArgumentException(
+              serialized + " should contain enrtree-branch, enr, enrtree-root or enrtree");
+    };
+  }
+
+  private static String trimQuotes(final String str) {
+    if (str.startsWith("\"") && str.endsWith("\"")) {
+      return str.substring(1, str.length() - 1);
     }
+    return str;
+  }
+
+  private static String getPrefix(final String input) {
+    final String[] parts = input.split(":", 2);
+    return parts.length > 0 ? parts[0] : "";
   }
 
   /** Represents a node in the ENR record. */
