@@ -27,6 +27,8 @@ import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryAgent;
 import org.hyperledger.besu.ethereum.p2p.discovery.PeerDiscoveryStatus;
 import org.hyperledger.besu.ethereum.p2p.discovery.VertxPeerDiscoveryAgent;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemon;
+import org.hyperledger.besu.ethereum.p2p.discovery.dns.DNSDaemonListener;
 import org.hyperledger.besu.ethereum.p2p.discovery.internal.PeerTable;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeerPrivileges;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -75,8 +77,6 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.consensys.protocols.util.discovery.DNSDaemon;
-import io.consensys.protocols.util.discovery.DNSDaemonListener;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;

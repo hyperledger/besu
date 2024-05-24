@@ -115,10 +115,6 @@ dependencyManagement {
       entry 'tuweni-units'
     }
 
-    dependencySet(group: 'io.consensys.protocols', version: '1.0.0') {
-      entry 'besu-dns-discovery'
-    }
-
     dependencySet(group: 'io.vertx', version: '4.5.4') {
       entry 'vertx-auth-jwt'
       entry 'vertx-codegen'
