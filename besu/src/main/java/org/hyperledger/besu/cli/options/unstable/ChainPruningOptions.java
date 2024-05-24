@@ -28,10 +28,17 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
   private static final String CHAIN_PRUNING_ENABLED_FLAG = "--Xchain-pruning-enabled";
   private static final String CHAIN_PRUNING_BLOCKS_RETAINED_FLAG =
       "--Xchain-pruning-blocks-retained";
+  private static final String CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG =
+      "--Xchain-pruning-blocks-retained-limit";
   private static final String CHAIN_PRUNING_FREQUENCY_FLAG = "--Xchain-pruning-frequency";
 
-  /** The constant DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED. */
-  public static final long DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED = 7200;
+  /**
+   * The "CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT" field sets the minimum limit for the
+   * "CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED" value. For most networks, the default value of this
+   * limit is the safest. Reducing this value requires careful consideration and understanding of
+   * the potential implications. Lowering this limit may have unintended side effects.
+   */
+  public static final long CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT = 7200;
 
   /** The constant DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY. */
   public static final int DEFAULT_CHAIN_DATA_PRUNING_FREQUENCY = 256;
@@ -47,11 +54,21 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
       hidden = true,
       names = {CHAIN_PRUNING_BLOCKS_RETAINED_FLAG},
       description =
-          "The number of recent blocks for which to keep the chain data. Must be >= "
-              + DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED
+          "The number of recent blocks for which to keep the chain data. Should be >= "
+              + CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT
               + " (default: ${DEFAULT-VALUE})")
-  private final Long chainDataPruningBlocksRetained =
-      DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED;
+  private final Long chainDataPruningBlocksRetained = CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
+
+  @CommandLine.Option(
+      hidden = true,
+      names = {CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG},
+      description =
+          "Allows setting the limit below which no more blocks can be pruned. This prevents setting a value lower than this for "
+              + CHAIN_PRUNING_BLOCKS_RETAINED_FLAG
+              + ". This flag should be used with caution as reducing the limit may have unintended side effects."
+              + " (default: ${DEFAULT-VALUE})")
+  private final Long chainDataPruningBlocksRetainedLimit =
+      CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED_LIMIT;
 
   @CommandLine.Option(
       hidden = true,
@@ -91,11 +108,21 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
     return chainDataPruningBlocksRetained;
   }
 
+  /**
+   * Get the configured number of retained blocks for chain pruning.
+   *
+   * @return the number of retained blocks
+   */
+  public Long getChainDataPruningBlocksRetainedLimit() {
+    return chainDataPruningBlocksRetainedLimit;
+  }
+
   @Override
   public ChainPrunerConfiguration toDomainObject() {
     return new ChainPrunerConfiguration(
         chainDataPruningEnabled,
         chainDataPruningBlocksRetained,
+        chainDataPruningBlocksRetainedLimit,
         chainDataPruningBlocksFrequency.getValue());
   }
 
@@ -106,6 +133,8 @@ public class ChainPruningOptions implements CLIOptions<ChainPrunerConfiguration>
         chainDataPruningEnabled.toString(),
         CHAIN_PRUNING_BLOCKS_RETAINED_FLAG,
         chainDataPruningBlocksRetained.toString(),
+        CHAIN_PRUNING_BLOCKS_RETAINED_LIMIT_FLAG,
+        chainDataPruningBlocksRetainedLimit.toString(),
         CHAIN_PRUNING_FREQUENCY_FLAG,
         chainDataPruningBlocksFrequency.toString());
   }

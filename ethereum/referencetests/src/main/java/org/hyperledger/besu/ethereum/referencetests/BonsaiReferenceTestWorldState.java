@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCached
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -66,7 +67,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         bonsaiCachedMerkleTrieLoader,
         cachedWorldStorageManager,
         trieLogManager,
-        evmConfiguration);
+        evmConfiguration,
+        new DiffBasedWorldStateConfig());
     this.refTestStorage = worldStateKeyValueStorage;
     this.preImageProxy = preImageProxy;
     this.evmConfiguration = evmConfiguration;
@@ -194,7 +196,8 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
             bonsaiCachedMerkleTrieLoader,
             cachedWorldStorageManager,
             trieLogManager,
-            evmConfiguration);
+            evmConfiguration,
+            new DiffBasedWorldStateConfig());
     if (isFrozen) {
       bonsaiWorldState.freeze(); // freeze state
     }

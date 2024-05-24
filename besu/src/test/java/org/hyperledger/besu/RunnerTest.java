@@ -391,7 +391,9 @@ public final class RunnerTest {
       final DataStorageConfiguration dataStorageConfiguration,
       final MiningParameters miningParameters) {
     final var besuConfiguration = new BesuConfigurationImpl();
-    besuConfiguration.init(dataDir, dbDir, dataStorageConfiguration, miningParameters);
+    besuConfiguration
+        .init(dataDir, dbDir, dataStorageConfiguration)
+        .withMiningParameters(miningParameters);
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
