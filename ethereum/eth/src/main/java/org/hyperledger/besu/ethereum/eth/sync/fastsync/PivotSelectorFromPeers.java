@@ -36,7 +36,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromPeers.class);
 
   private final EthContext ethContext;
-  private final SynchronizerConfiguration syncConfig;
+  protected final SynchronizerConfiguration syncConfig;
   private final SyncState syncState;
   private final MetricsSystem metricsSystem;
 
@@ -74,7 +74,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
     return syncState.bestChainHeight();
   }
 
-  private Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
+  protected Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
     final long pivotBlockNumber =
         peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
     if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
@@ -86,7 +86,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
     return Optional.of(new FastSyncState(pivotBlockNumber));
   }
 
-  private Optional<EthPeer> selectBestPeer() {
+  protected Optional<EthPeer> selectBestPeer() {
     return ethContext
         .getEthPeers()
         .bestPeerMatchingCriteria(this::canPeerDeterminePivotBlock)
