@@ -18,6 +18,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Handler;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;
@@ -27,13 +28,12 @@ import org.slf4j.LoggerFactory;
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 // TODO: Deploy DNSDaemon as a worker verticle ??
 /** Resolves DNS records over time, refreshing records. */
-public class DNSDaemon {
+public class DNSDaemon extends AbstractVerticle {
   private static final Logger LOG = LoggerFactory.getLogger(DNSDaemon.class);
   private final String enrLink;
   private final long seq;
   private final long period;
   private final String dnsServer;
-  private final Vertx vertx;
   private long periodicTaskId;
   private final Optional<DNSDaemonListener> listener;
 
@@ -47,21 +47,18 @@ public class DNSDaemon {
    * @param period the period at which to poll DNS records
    * @param dnsServer the DNS server to use for DNS query. If null, the default DNS server will be
    *     used.
-   * @param vertx Instance of Vertx
    */
   public DNSDaemon(
       final String enrLink,
       final DNSDaemonListener listener,
       final long seq,
       final long period,
-      final String dnsServer,
-      final Vertx vertx) {
+      final String dnsServer) {
     this.enrLink = enrLink;
     this.listener = Optional.ofNullable(listener);
     this.seq = seq;
     this.period = period;
     this.dnsServer = dnsServer;
-    this.vertx = vertx;
   }
 
   private void updateRecords(final List<EthereumNodeRecord> records) {
@@ -69,16 +66,24 @@ public class DNSDaemon {
   }
 
   /** Starts the DNSDaemon. */
+  @Override
   public void start() {
-    LOG.trace("Starting DNSDaemon for {}", enrLink);
+    LOG.info("Starting DNSDaemon for {}", enrLink);
     DNSTimerTask task = new DNSTimerTask(vertx, seq, enrLink, this::updateRecords, dnsServer);
     // Use Vertx to run periodic task (TODO: Can we use a worker verticle instead?)
-    this.periodicTaskId = vertx.setPeriodic(period, task);
+    if (period > 0) {
+      this.periodicTaskId = vertx.setPeriodic(period, task);
+    } else {
+      task.handle(0L);
+    }
   }
 
   /** Stops the DNSDaemon. */
-  public void close() {
-    vertx.cancelTimer(this.periodicTaskId);
+  @Override
+  public void stop() {
+    if (period > 0) {
+      vertx.cancelTimer(this.periodicTaskId);
+    } // otherwise we didn't start the timer
   }
 }
 
@@ -119,7 +124,7 @@ class DNSTimerTask implements Handler<Long> {
     final long startTime = System.nanoTime();
     final List<EthereumNodeRecord> ethereumNodeRecords = resolver.collectAll(enrLink);
     final long endTime = System.nanoTime();
-    LOG.trace("Time taken to DNSResolver.collectAll: {} ms", (endTime - startTime) / 1_000_000);
+    LOG.info("Time taken to DNSResolver.collectAll: {} ms", (endTime - startTime) / 1_000_000);
     records.accept(ethereumNodeRecords);
   }
 }

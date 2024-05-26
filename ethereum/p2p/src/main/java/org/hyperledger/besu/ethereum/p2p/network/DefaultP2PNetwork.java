@@ -77,6 +77,8 @@ import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
+import io.vertx.core.DeploymentOptions;
+import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;
@@ -233,9 +235,13 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       createDaemonListener(),
                       0L,
                       600000L,
-                      config.getDnsDiscoveryServerOverride().orElse(null),
-                      vertx);
-              dnsDaemon.start();
+                      config.getDnsDiscoveryServerOverride().orElse(null));
+              // dnsDaemon.start();
+              final DeploymentOptions options =
+                  new DeploymentOptions()
+                      .setThreadingModel(ThreadingModel.WORKER)
+                      .setWorkerPoolSize(1);
+              vertx.deployVerticle(dnsDaemon, options);
             });
 
     final int listeningPort = rlpxAgent.start().join();
@@ -282,7 +288,8 @@ public class DefaultP2PNetwork implements P2PNetwork {
       return;
     }
 
-    getDnsDaemon().ifPresent(DNSDaemon::close);
+    // this will close the timer, but won't undeploy the vertical. vertx.stop should do that.
+    getDnsDaemon().ifPresent(DNSDaemon::stop);
 
     peerConnectionScheduler.shutdownNow();
     peerDiscoveryAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());

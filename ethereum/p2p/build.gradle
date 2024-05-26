@@ -81,9 +81,11 @@ dependencies {
   }
   testImplementation 'io.vertx:vertx-codegen'
   testImplementation 'io.vertx:vertx-unit'
+  testImplementation 'io.vertx:vertx-junit5'
   testImplementation 'org.assertj:assertj-core'
   testImplementation 'org.awaitility:awaitility'
   testImplementation 'org.junit.jupiter:junit-jupiter'
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.mockito:mockito-junit-jupiter'
+
 }

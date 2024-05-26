@@ -24,7 +24,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.ExecutionException;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicReference;
 
 import io.vertx.core.Vertx;
 import io.vertx.core.dns.DnsClient;
@@ -40,7 +43,7 @@ import org.slf4j.LoggerFactory;
 /** Resolves a set of ENR nodes from a host name. */
 public class DNSResolver {
   private static final Logger LOG = LoggerFactory.getLogger(DNSResolver.class);
-
+  private final ExecutorService rawTxtRecordsExecutor = Executors.newSingleThreadExecutor();
   private long seq;
   private final DnsClient dnsClient;
 
@@ -156,17 +159,40 @@ public class DNSResolver {
    * @return the first TXT entry of the DNS record. Empty if no record is found.
    */
   Optional<String> resolveRawRecord(final String domainName) {
+    // vertx-dns is async, kotlin coroutines allows us to await, similarly Java 21 new thread
+    // model would also allow us to await. For now, we will use CountDownLatch to block the
+    // current thread until the DNS resolution is complete.
+    LOG.info("Resolving TXT records on domain: {}", domainName);
+    final CountDownLatch latch = new CountDownLatch(1);
+    final AtomicReference<Optional<String>> record = new AtomicReference<>(Optional.empty());
+    rawTxtRecordsExecutor.submit(
+        () -> {
+          dnsClient
+              .resolveTXT(domainName)
+              .onComplete(
+                  ar -> {
+                    if (ar.succeeded()) {
+                      LOG.info(
+                          "TXT record resolved on domain {}. Result: {}", domainName, ar.result());
+                      record.set(ar.result().stream().findFirst());
+                    } else {
+                      LOG.warn(
+                          "TXT record not resolved on domain {}, because: {}",
+                          domainName,
+                          ar.cause().getMessage());
+                    }
+                    latch.countDown();
+                  });
+        });
+
     try {
-      // TODO: is there a better way to do this?
-      List<String> records =
-          dnsClient.resolveTXT(domainName).toCompletionStage().toCompletableFuture().get();
-      return records.stream().findFirst();
-    } catch (InterruptedException | ExecutionException e) {
-      LOG.debug("Unexpected exception while resolving DNS record for domain {}", domainName, e);
-    } catch (Exception e) {
-      LOG.warn("Unexpected exception while resolving DNS record for domain {}", domainName, e);
+      // causes the worker thread to wait. Once we move to Java 21, this can be simplified.
+      latch.await();
+    } catch (InterruptedException e) {
+      LOG.debug("Interrupted while waiting for DNS resolution");
     }
-    return Optional.empty();
+
+    return record.get();
   }
 
   private boolean checkSignature(
