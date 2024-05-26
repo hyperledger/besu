@@ -41,7 +41,7 @@ import org.slf4j.LoggerFactory;
 
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 /** Resolves a set of ENR nodes from a host name. */
-public class DNSResolver {
+public class DNSResolver implements AutoCloseable {
   private static final Logger LOG = LoggerFactory.getLogger(DNSResolver.class);
   private final ExecutorService rawTxtRecordsExecutor = Executors.newSingleThreadExecutor();
   private final String enrLink;
@@ -55,17 +55,15 @@ public class DNSResolver {
    * @param enrLink the ENR link to start with, of the form enrtree://PUBKEY@domain
    * @param seq the sequence number of the root record. If the root record seq is higher, proceed
    *     with visit.
-   * @param dnsServer the DNS server to use for DNS query. If null, the default DNS server will be
+   * @param dnsServer the DNS server to use for DNS query. If empty, the default DNS server will be
    *     used.
    */
   public DNSResolver(
-      final Vertx vertx, final String enrLink, final long seq, final String dnsServer) {
+      final Vertx vertx, final String enrLink, final long seq, final Optional<String> dnsServer) {
     this.enrLink = enrLink;
     this.seq = seq;
     final DnsClientOptions dnsClientOptions = new DnsClientOptions();
-    if (dnsServer != null) {
-      dnsClientOptions.setHost(dnsServer);
-    }
+    dnsServer.ifPresent(dnsClientOptions::setHost);
     dnsClient = vertx.createDnsClient(dnsClientOptions);
   }
 
@@ -203,5 +201,10 @@ public class DNSResolver {
     Bytes32 hash =
         Hash.keccak256(Bytes.wrap(root.signedContent().getBytes(StandardCharsets.UTF_8)));
     return SECP256K1.verifyHashed(hash, sig, pubKey);
+  }
+
+  @Override
+  public void close() {
+    rawTxtRecordsExecutor.shutdown();
   }
 }

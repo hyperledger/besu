@@ -32,10 +32,10 @@ public class DNSDaemon extends AbstractVerticle {
   private final String enrLink;
   private final long seq;
   private final long period;
-  private final String dnsServer;
-  private long periodicTaskId;
   private final Optional<DNSDaemonListener> listener;
-  private final DNSResolver dnsResolver;
+  private final Optional<String> dnsServer;
+  private Optional<Long> periodicTaskId = Optional.empty();
+  private DNSResolver dnsResolver;
 
   /**
    * Creates a new DNSDaemon.
@@ -58,27 +58,18 @@ public class DNSDaemon extends AbstractVerticle {
     this.listener = Optional.ofNullable(listener);
     this.seq = seq;
     this.period = period;
-    this.dnsServer = dnsServer;
-    dnsResolver = new DNSResolver(vertx, enrLink, seq, dnsServer);
-  }
-
-  /**
-   * Callback method to update the listeners with resolved enr records.
-   *
-   * @param records List of resolved Ethereum Node Records.
-   */
-  private void updateRecords(final List<EthereumNodeRecord> records) {
-    listener.ifPresent(it -> it.newRecords(seq, records));
+    this.dnsServer = Optional.ofNullable(dnsServer);
   }
 
   /** Starts the DNSDaemon. */
   @Override
   public void start() {
     LOG.info("Starting DNSDaemon for {}", enrLink);
-    // Use Vertx to run periodic task if period is set
+    this.dnsResolver = new DNSResolver(vertx, enrLink, seq, dnsServer);
     if (period > 0) {
-      this.periodicTaskId = vertx.setPeriodic(period, this::refreshENRRecords);
+      periodicTaskId = Optional.of(vertx.setPeriodic(period, this::refreshENRRecords));
     } else {
+      // do one-shot resolution
       refreshENRRecords(0L);
     }
   }
@@ -86,10 +77,9 @@ public class DNSDaemon extends AbstractVerticle {
   /** Stops the DNSDaemon. */
   @Override
   public void stop() {
-    if (period > 0) {
-      vertx.cancelTimer(this.periodicTaskId);
-    } // otherwise we didn't start the timer
-    // TODO: Call dnsResolver stop
+    LOG.info("Stopping DNSDaemon for {}", enrLink);
+    periodicTaskId.ifPresent(vertx::cancelTimer);
+    dnsResolver.close();
   }
 
   /**
@@ -103,6 +93,6 @@ public class DNSDaemon extends AbstractVerticle {
     final List<EthereumNodeRecord> ethereumNodeRecords = dnsResolver.collectAll();
     final long endTime = System.nanoTime();
     LOG.debug("Time taken to DNSResolver.collectAll: {} ms", (endTime - startTime) / 1_000_000);
-    updateRecords(ethereumNodeRecords);
+    listener.ifPresent(it -> it.newRecords(seq, ethereumNodeRecords));
   }
 }
