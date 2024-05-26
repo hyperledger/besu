@@ -44,19 +44,23 @@ import org.slf4j.LoggerFactory;
 public class DNSResolver {
   private static final Logger LOG = LoggerFactory.getLogger(DNSResolver.class);
   private final ExecutorService rawTxtRecordsExecutor = Executors.newSingleThreadExecutor();
+  private final String enrLink;
   private long seq;
   private final DnsClient dnsClient;
 
   /**
    * Creates a new DNSResolver.
    *
-   * @param dnsServer the DNS server to use for DNS query. If null, the default DNS server will be
-   *     used.
+   * @param vertx Vertx instance which is used to create DNS Client
+   * @param enrLink the ENR link to start with, of the form enrtree://PUBKEY@domain
    * @param seq the sequence number of the root record. If the root record seq is higher, proceed
    *     with visit.
-   * @param vertx Vertx instance.
+   * @param dnsServer the DNS server to use for DNS query. If null, the default DNS server will be
+   *     used.
    */
-  public DNSResolver(final String dnsServer, final long seq, final Vertx vertx) {
+  public DNSResolver(
+      final Vertx vertx, final String enrLink, final long seq, final String dnsServer) {
+    this.enrLink = enrLink;
     this.seq = seq;
     final DnsClientOptions dnsClientOptions = new DnsClientOptions();
     if (dnsServer != null) {
@@ -68,10 +72,9 @@ public class DNSResolver {
   /**
    * Convenience method to read all ENRs, from a top-level record.
    *
-   * @param enrLink the ENR link to start with, of the form enrtree://PUBKEY@domain
    * @return all ENRs collected
    */
-  public List<EthereumNodeRecord> collectAll(final String enrLink) {
+  public List<EthereumNodeRecord> collectAll() {
     final List<EthereumNodeRecord> nodes = new ArrayList<>(); // TODO: do we need synchronized list?
     final DNSVisitor visitor = nodes::add;
     visitTree(new ENRTreeLink(enrLink), visitor);

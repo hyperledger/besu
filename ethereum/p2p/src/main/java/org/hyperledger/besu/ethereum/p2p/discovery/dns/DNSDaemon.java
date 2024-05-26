@@ -16,18 +16,17 @@ package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.function.Consumer;
 
 import io.vertx.core.AbstractVerticle;
-import io.vertx.core.Handler;
-import io.vertx.core.Vertx;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
-// TODO: Deploy DNSDaemon as a worker verticle ??
-/** Resolves DNS records over time, refreshing records. */
+/**
+ * Resolves DNS records over time, refreshing records. This is written as a Vertx Verticle which
+ * allows to run outside the Vertx event loop
+ */
 public class DNSDaemon extends AbstractVerticle {
   private static final Logger LOG = LoggerFactory.getLogger(DNSDaemon.class);
   private final String enrLink;
@@ -36,6 +35,7 @@ public class DNSDaemon extends AbstractVerticle {
   private final String dnsServer;
   private long periodicTaskId;
   private final Optional<DNSDaemonListener> listener;
+  private final DNSResolver dnsResolver;
 
   /**
    * Creates a new DNSDaemon.
@@ -44,7 +44,7 @@ public class DNSDaemon extends AbstractVerticle {
    * @param listener Listener notified when records are read and whenever they are updated.
    * @param seq the sequence number of the root record. If the root record seq is higher, proceed
    *     with visit.
-   * @param period the period at which to poll DNS records
+   * @param period the period at which to poll DNS records. If negative or zero, it runs only once.
    * @param dnsServer the DNS server to use for DNS query. If null, the default DNS server will be
    *     used.
    */
@@ -59,8 +59,14 @@ public class DNSDaemon extends AbstractVerticle {
     this.seq = seq;
     this.period = period;
     this.dnsServer = dnsServer;
+    dnsResolver = new DNSResolver(vertx, enrLink, seq, dnsServer);
   }
 
+  /**
+   * Callback method to update the listeners with resolved enr records.
+   *
+   * @param records List of resolved Ethereum Node Records.
+   */
   private void updateRecords(final List<EthereumNodeRecord> records) {
     listener.ifPresent(it -> it.newRecords(seq, records));
   }
@@ -69,12 +75,11 @@ public class DNSDaemon extends AbstractVerticle {
   @Override
   public void start() {
     LOG.info("Starting DNSDaemon for {}", enrLink);
-    DNSTimerTask task = new DNSTimerTask(vertx, seq, enrLink, this::updateRecords, dnsServer);
-    // Use Vertx to run periodic task (TODO: Can we use a worker verticle instead?)
+    // Use Vertx to run periodic task if period is set
     if (period > 0) {
-      this.periodicTaskId = vertx.setPeriodic(period, task);
+      this.periodicTaskId = vertx.setPeriodic(period, this::refreshENRRecords);
     } else {
-      task.handle(0L);
+      refreshENRRecords(0L);
     }
   }
 
@@ -84,47 +89,20 @@ public class DNSDaemon extends AbstractVerticle {
     if (period > 0) {
       vertx.cancelTimer(this.periodicTaskId);
     } // otherwise we didn't start the timer
+    // TODO: Call dnsResolver stop
   }
-}
-
-/** Task that periodically reads DNS records. */
-class DNSTimerTask implements Handler<Long> {
-  private static final Logger LOG = LoggerFactory.getLogger(DNSTimerTask.class);
-  private final String enrLink;
-  private final Consumer<List<EthereumNodeRecord>> records;
-  private final DNSResolver resolver;
 
   /**
-   * Creates a new DNSTimerTask.
+   * Refresh enr records by calling dnsResolver and updating the listeners.
    *
-   * @param vertx Instance of Vertx
-   * @param seq the sequence number of the root record. If the root record seq is higher, proceed
-   *     with visit.
-   * @param enrLink the ENR link to start with, of the form enrtree://PUBKEY@domain
-   * @param records Consumer that accepts the records read
-   * @param dnsServer the DNS server to use for DNS query. If null, the default DNS server will be
-   *     used.
+   * @param taskId the task id of the periodic task
    */
-  public DNSTimerTask(
-      final Vertx vertx,
-      final long seq,
-      final String enrLink,
-      final Consumer<List<EthereumNodeRecord>> records,
-      final String dnsServer) {
-    this.enrLink = enrLink;
-    this.records = records;
-    resolver = new DNSResolver(dnsServer, seq, vertx);
-  }
-
-  @Override
-  public void handle(final Long taskId) {
-    LOG.debug("Refreshing DNS records for {}", enrLink);
-    // TODO: Does following need to wrap in executeBlock??
-    // measure time taken to call resolver.collectAll
+  void refreshENRRecords(final Long taskId) {
+    LOG.debug("Refreshing DNS records");
     final long startTime = System.nanoTime();
-    final List<EthereumNodeRecord> ethereumNodeRecords = resolver.collectAll(enrLink);
+    final List<EthereumNodeRecord> ethereumNodeRecords = dnsResolver.collectAll();
     final long endTime = System.nanoTime();
-    LOG.info("Time taken to DNSResolver.collectAll: {} ms", (endTime - startTime) / 1_000_000);
-    records.accept(ethereumNodeRecords);
+    LOG.debug("Time taken to DNSResolver.collectAll: {} ms", (endTime - startTime) / 1_000_000);
+    updateRecords(ethereumNodeRecords);
   }
 }

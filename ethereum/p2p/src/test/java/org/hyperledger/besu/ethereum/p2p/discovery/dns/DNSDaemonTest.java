@@ -57,7 +57,7 @@ class DNSDaemonTest {
                 System.out.println(record);
               }
               if (!records.isEmpty()) {
-                  testContext.completeNow();
+                testContext.completeNow();
               }
             },
             0,
