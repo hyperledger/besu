@@ -68,7 +68,7 @@ public class DNSResolver implements AutoCloseable {
     dnsClient = vertx.createDnsClient(dnsClientOptions);
   }
 
-  private static DnsClientOptions buildDnsClientOptions(String server) {
+  private static DnsClientOptions buildDnsClientOptions(final String server) {
     final List<String> hostPort = Splitter.on(":").splitToList(server);
     final DnsClientOptions dnsClientOptions = new DnsClientOptions();
     dnsClientOptions.setHost(hostPort.get(0));
