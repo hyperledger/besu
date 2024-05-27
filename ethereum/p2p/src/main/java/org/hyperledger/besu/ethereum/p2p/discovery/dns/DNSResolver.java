@@ -29,6 +29,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicReference;
 
+import com.google.common.base.Splitter;
 import io.vertx.core.Vertx;
 import io.vertx.core.dns.DnsClient;
 import io.vertx.core.dns.DnsClientOptions;
@@ -62,9 +63,24 @@ public class DNSResolver implements AutoCloseable {
       final Vertx vertx, final String enrLink, final long seq, final Optional<String> dnsServer) {
     this.enrLink = enrLink;
     this.seq = seq;
-    final DnsClientOptions dnsClientOptions = new DnsClientOptions();
-    dnsServer.ifPresent(dnsClientOptions::setHost);
+    final DnsClientOptions dnsClientOptions =
+        dnsServer.map(DNSResolver::buildDnsClientOptions).orElseGet(DnsClientOptions::new);
     dnsClient = vertx.createDnsClient(dnsClientOptions);
+  }
+
+  private static DnsClientOptions buildDnsClientOptions(String server) {
+    final List<String> hostPort = Splitter.on(":").splitToList(server);
+    final DnsClientOptions dnsClientOptions = new DnsClientOptions();
+    dnsClientOptions.setHost(hostPort.get(0));
+    if (hostPort.size() > 1) {
+      try {
+        int port = Integer.parseInt(hostPort.get(1));
+        dnsClientOptions.setPort(port);
+      } catch (NumberFormatException e) {
+        LOG.trace("Invalid port number {}, ignoring", hostPort.get(1));
+      }
+    }
+    return dnsClientOptions;
   }
 
   /**
@@ -73,15 +89,24 @@ public class DNSResolver implements AutoCloseable {
    * @return all ENRs collected
    */
   public List<EthereumNodeRecord> collectAll() {
-    final List<EthereumNodeRecord> nodes = new ArrayList<>(); // TODO: do we need synchronized list?
+    final List<EthereumNodeRecord> nodes = new ArrayList<>();
     final DNSVisitor visitor = nodes::add;
     visitTree(new ENRTreeLink(enrLink), visitor);
     if (!nodes.isEmpty()) {
-      LOG.info("Resolved {} nodes from DNS for enr link {}", nodes.size(), enrLink);
+      LOG.debug("Resolved {} nodes from DNS for enr link {}", nodes.size(), enrLink);
     } else {
       LOG.debug("No nodes resolved from DNS");
     }
     return Collections.unmodifiableList(nodes);
+  }
+
+  /**
+   * Sequence number of the root record.
+   *
+   * @return the current sequence number of the root record
+   */
+  public long sequence() {
+    return seq;
   }
 
   /**
@@ -127,9 +152,11 @@ public class DNSResolver implements AutoCloseable {
 
     final DNSEntry entry = optionalDNSEntry.get();
     if (entry instanceof ENRNode node) {
+      // TODO: this always return true because the visitor is reference to list.add
       return visitor.visit(node.nodeRecord());
     } else if (entry instanceof DNSEntry.ENRTree tree) {
       for (String e : tree.entries()) {
+        // TODO: When would this ever return false?
         boolean keepGoing = internalVisit(e, domainName, visitor);
         if (!keepGoing) {
           return false;
@@ -163,7 +190,7 @@ public class DNSResolver implements AutoCloseable {
     // vertx-dns is async, kotlin coroutines allows us to await, similarly Java 21 new thread
     // model would also allow us to await. For now, we will use CountDownLatch to block the
     // current thread until the DNS resolution is complete.
-    LOG.info("Resolving TXT records on domain: {}", domainName);
+    LOG.debug("Resolving TXT records on domain: {}", domainName);
     final CountDownLatch latch = new CountDownLatch(1);
     final AtomicReference<Optional<String>> record = new AtomicReference<>(Optional.empty());
     rawTxtRecordsExecutor.submit(
@@ -173,11 +200,11 @@ public class DNSResolver implements AutoCloseable {
               .onComplete(
                   ar -> {
                     if (ar.succeeded()) {
-                      LOG.info(
+                      LOG.trace(
                           "TXT record resolved on domain {}. Result: {}", domainName, ar.result());
                       record.set(ar.result().stream().findFirst());
                     } else {
-                      LOG.warn(
+                      LOG.trace(
                           "TXT record not resolved on domain {}, because: {}",
                           domainName,
                           ar.cause().getMessage());

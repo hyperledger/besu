@@ -31,7 +31,8 @@ public class DNSDaemon extends AbstractVerticle {
   private static final Logger LOG = LoggerFactory.getLogger(DNSDaemon.class);
   private final String enrLink;
   private final long seq;
-  private final long period;
+  private final long initialDelay;
+  private final long delay;
   private final Optional<DNSDaemonListener> listener;
   private final Optional<String> dnsServer;
   private Optional<Long> periodicTaskId = Optional.empty();
@@ -44,7 +45,9 @@ public class DNSDaemon extends AbstractVerticle {
    * @param listener Listener notified when records are read and whenever they are updated.
    * @param seq the sequence number of the root record. If the root record seq is higher, proceed
    *     with visit.
-   * @param period the period at which to poll DNS records. If negative or zero, it runs only once.
+   * @param initialDelay the delay in milliseconds before the first poll of DNS records.
+   * @param delay the delay in milliseconds at which to poll DNS records. If negative or zero, it
+   *     runs only once.
    * @param dnsServer the DNS server to use for DNS query. If null, the default DNS server will be
    *     used.
    */
@@ -52,22 +55,24 @@ public class DNSDaemon extends AbstractVerticle {
       final String enrLink,
       final DNSDaemonListener listener,
       final long seq,
-      final long period,
+      final long initialDelay,
+      final long delay,
       final String dnsServer) {
     this.enrLink = enrLink;
     this.listener = Optional.ofNullable(listener);
     this.seq = seq;
-    this.period = period;
+    this.initialDelay = initialDelay;
+    this.delay = delay;
     this.dnsServer = Optional.ofNullable(dnsServer);
   }
 
   /** Starts the DNSDaemon. */
   @Override
   public void start() {
-    LOG.info("Starting DNSDaemon for {}", enrLink);
+    LOG.info("Starting DNSDaemon for {}, using {} DNS host", enrLink, dnsServer.orElse("default"));
     this.dnsResolver = new DNSResolver(vertx, enrLink, seq, dnsServer);
-    if (period > 0) {
-      periodicTaskId = Optional.of(vertx.setPeriodic(period, this::refreshENRRecords));
+    if (delay > 0) {
+      periodicTaskId = Optional.of(vertx.setPeriodic(initialDelay, delay, this::refreshENRRecords));
     } else {
       // do one-shot resolution
       refreshENRRecords(0L);
@@ -93,6 +98,6 @@ public class DNSDaemon extends AbstractVerticle {
     final List<EthereumNodeRecord> ethereumNodeRecords = dnsResolver.collectAll();
     final long endTime = System.nanoTime();
     LOG.debug("Time taken to DNSResolver.collectAll: {} ms", (endTime - startTime) / 1_000_000);
-    listener.ifPresent(it -> it.newRecords(seq, ethereumNodeRecords));
+    listener.ifPresent(it -> it.newRecords(dnsResolver.sequence(), ethereumNodeRecords));
   }
 }

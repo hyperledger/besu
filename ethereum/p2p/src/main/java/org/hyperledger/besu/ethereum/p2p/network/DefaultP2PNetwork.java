@@ -238,6 +238,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       disco,
                       createDaemonListener(),
                       0L,
+                      1000L, // start after 1 second
                       600000L,
                       config.getDnsDiscoveryServerOverride().orElse(null));
 
