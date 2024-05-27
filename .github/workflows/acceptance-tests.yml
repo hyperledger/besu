@@ -45,14 +45,24 @@ jobs:
         run: ./gradlew acceptanceTestNotPrivacy --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
         run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTestNotPrivacy'" | tee tmp/currentTests.list
-      - name: get acceptance test reports
+      - name: Get acceptance test reports (Support transition) # can be removed after PR is merged
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
+        continue-on-error: true
         with:
           branch: main
           name_is_regexp: true
-          name: 'acceptance-node-\d*\d-test-results'
+          name: 'acceptance-node-\d+-test-results'
           path: tmp/junit-xml-reports-downloaded
           if_no_artifact_found: true
+      - name: Get acceptance test reports
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
+        continue-on-error: true
+        with:
+          branch: main
+          workflow: update-test-reports.yml
+          name: acceptance-test-results
+          path: tmp/junit-xml-reports-downloaded
+          if_no_artifact_found: ignore
       - name: Split tests
         run: .github/workflows/splitTestsByTime.sh tmp/junit-xml-reports-downloaded "tmp/junit-xml-reports-downloaded/acceptance-node-.*-test-results" "TEST-" ${{env.total-runners}} ${{ matrix.runner_index }} > testList.txt
       - name: format gradle args
