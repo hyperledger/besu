@@ -14,12 +14,15 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
+import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class RequestUtil {
 
@@ -28,18 +31,35 @@ public class RequestUtil {
    *
    * @param <T> The type of the request to filter by, extending Request.
    * @param requests The list of requests to filter.
-   * @param requestType The class of the request type to filter for.
+   * @param type The class of the request type to filter for.
    * @return A List containing only requests of the specified type, or an empty list if the input
    *     list is null or contains no requests of the specified type.
    */
   public static <T extends Request> List<T> filterRequestsOfType(
-      final List<Request> requests, final Class<T> requestType) {
+      final List<Request> requests, final Class<T> type) {
     if (requests == null) {
       return Collections.emptyList();
     }
-    return requests.stream().filter(requestType::isInstance).map(requestType::cast).toList();
+    return requests.stream().filter(type::isInstance).map(type::cast).collect(Collectors.toList());
   }
 
+  public static Optional<List<Deposit>> getDepositRequests(final Optional<List<Request>> requests) {
+    return requests.map(r -> filterRequestsOfType(r, Deposit.class));
+  }
+
+  public static Optional<List<WithdrawalRequest>> getWithdrawalRequests(
+      final Optional<List<Request>> requests) {
+    return requests.map(r -> filterRequestsOfType(r, WithdrawalRequest.class));
+  }
+
+  /**
+   * Combines two optional lists of requests into a single optional list.
+   *
+   * @param maybeDeposits Optional list of deposit requests.
+   * @param maybeWithdrawalRequest Optional list of withdrawal requests.
+   * @return An Optional containing the combined list of requests, or an empty Optional if both
+   *     inputs are empty.
+   */
   public static Optional<List<Request>> combine(
       final Optional<List<Request>> maybeDeposits,
       final Optional<List<Request>> maybeWithdrawalRequest) {

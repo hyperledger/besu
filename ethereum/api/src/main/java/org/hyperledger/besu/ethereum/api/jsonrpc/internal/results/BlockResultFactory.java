@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getDepositRequests;
+import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getWithdrawalRequests;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1.PayloadBody;
@@ -24,12 +27,8 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.Deposit;
-import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
-import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -176,21 +175,10 @@ public class BlockResultFactory {
         blockWithReceipts.getHeader(),
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
-        getDepositRequest(blockWithReceipts.getBlock().getBody().getRequests()),
-        getWithdrawalRequest(blockWithReceipts.getBlock().getBody().getRequests()),
+        getDepositRequests(blockWithReceipts.getBlock().getBody().getRequests()),
+        getWithdrawalRequests(blockWithReceipts.getBlock().getBody().getRequests()),
         Quantity.create(blockValue),
         blobsBundleV1);
-  }
-
-  private Optional<List<Deposit>> getDepositRequest(final Optional<List<Request>> requests) {
-    return requests.map(
-        requestList -> RequestUtil.filterRequestsOfType(requestList, Deposit.class));
-  }
-
-  private Optional<List<WithdrawalRequest>> getWithdrawalRequest(
-      final Optional<List<Request>> requests) {
-    return requests.map(
-        requestList -> RequestUtil.filterRequestsOfType(requestList, WithdrawalRequest.class));
   }
 
   public BlockResult transactionHash(final BlockWithMetadata<Hash, Hash> blockWithMetadata) {
