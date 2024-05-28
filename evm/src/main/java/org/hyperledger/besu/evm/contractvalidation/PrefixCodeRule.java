@@ -30,16 +30,12 @@ public class PrefixCodeRule implements ContractValidationRule {
 
   private static final byte FORMAT_RESERVED = (byte) 0xEF;
 
-  /** Default constructor. */
-  public PrefixCodeRule() {}
-
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-3541
   public Optional<ExceptionalHaltReason> validate(
       final Bytes contractCode, final MessageFrame frame) {
     if (!contractCode.isEmpty() && contractCode.get(0) == FORMAT_RESERVED) {
       LOG.trace("Contract creation error: code cannot start with {}", FORMAT_RESERVED);
-      System.out.printf("Contract creation error: code cannot start with %s%n", FORMAT_RESERVED);
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     } else {
       return Optional.empty();

@@ -217,7 +217,6 @@ public class MessageFrame {
   private Bytes returnData = Bytes.EMPTY;
   private Code createdCode = null;
   private final boolean isStatic;
-  private final boolean isInitCode;
 
   // Transaction state fields.
   private final List<Log> logs = new ArrayList<>();
@@ -271,7 +270,6 @@ public class MessageFrame {
       final Wei apparentValue,
       final Code code,
       final boolean isStatic,
-      final boolean isInitCode,
       final Consumer<MessageFrame> completer,
       final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
@@ -292,7 +290,6 @@ public class MessageFrame {
     this.apparentValue = apparentValue;
     this.code = code;
     this.isStatic = isStatic;
-    this.isInitCode = isInitCode;
     this.completer = completer;
     this.contextVariables = contextVariables;
     this.revertReason = revertReason;
@@ -536,15 +533,6 @@ public class MessageFrame {
    */
   public boolean isStatic() {
     return isStatic;
-  }
-
-  /**
-   * Returns whether the message frame is contract creation / initCode or not.
-   *
-   * @return {@code} true if the frame is for initCode; otherwise {@code false}
-   */
-  public boolean isInitCode() {
-    return isInitCode;
   }
 
   /**
@@ -990,18 +978,6 @@ public class MessageFrame {
   }
 
   /**
-   * Returns whether an address' slot is warmed up. Is deliberately publicly exposed for access from
-   * trace
-   *
-   * @param address the address context
-   * @param slot the slot to query
-   * @return whether the address/slot couple is warmed up
-   */
-  public boolean isStorageWarm(final Address address, final Bytes32 slot) {
-    return this.txValues.warmedUpStorage().contains(address, slot);
-  }
-
-  /**
    * Return the world state.
    *
    * @return the world state
@@ -1385,7 +1361,6 @@ public class MessageFrame {
     private BlockValues blockValues;
     private int maxStackSize = DEFAULT_MAX_STACK_SIZE;
     private boolean isStatic = false;
-    private boolean isInitCode = false;
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
     private BlockHashLookup blockHashLookup;
@@ -1574,17 +1549,6 @@ public class MessageFrame {
     }
 
     /**
-     * Sets Is Init Code.
-     *
-     * @param isInitCode the is Init Code
-     * @return the builder
-     */
-    public Builder isInitCode(final boolean isInitCode) {
-      this.isInitCode = isInitCode;
-      return this;
-    }
-
-    /**
      * Sets Max stack size.
      *
      * @param maxStackSize the max stack size
@@ -1755,7 +1719,6 @@ public class MessageFrame {
               apparentValue,
               code,
               newStatic,
-              isInitCode,
               completer,
               contextVariables == null ? Map.of() : contextVariables,
               reason,
