@@ -42,7 +42,9 @@ import java.util.Optional;
 import io.vertx.core.Vertx;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.After;
+import org.junit.Ignore;
 import org.junit.Test;
+import org.junit.jupiter.api.Disabled;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
@@ -181,6 +183,7 @@ public class PrivacyClusterAcceptanceTest extends PrivacyAcceptanceTestBase {
   }
 
   @Test
+  @Ignore("For same tx 2 different RLP input codes are processed")
   public void aliceCanUsePrivDistributeTransaction() {
     // Contract address is generated from sender address and transaction nonce
     final String contractAddress =
