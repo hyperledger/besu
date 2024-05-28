@@ -2,7 +2,7 @@ name: release besu
 on:
   release:
     types: [released]
-  workflow-dispatch:
+  workflow_dispatch:
   push:
     branches: ['test']
 env:
