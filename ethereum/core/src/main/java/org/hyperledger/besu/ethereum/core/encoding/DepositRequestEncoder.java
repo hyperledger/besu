@@ -14,25 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.core.encoding;
 
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class DepositEncoder {
+public class DepositRequestEncoder {
 
   public static void encode(final Request request, final RLPOutput rlpOutput) {
-    if (!(request instanceof Deposit deposit)) {
+    if (!(request instanceof DepositRequest depositRequest)) {
       throw new IllegalArgumentException("The provided request is not of type deposit.");
     }
     rlpOutput.startList();
-    rlpOutput.writeBytes(deposit.getPubkey());
-    rlpOutput.writeBytes(deposit.getWithdrawalCredentials());
-    rlpOutput.writeUInt64Scalar(deposit.getAmount());
-    rlpOutput.writeBytes(deposit.getSignature());
-    rlpOutput.writeUInt64Scalar(deposit.getIndex());
+    rlpOutput.writeBytes(depositRequest.getPubkey());
+    rlpOutput.writeBytes(depositRequest.getWithdrawalCredentials());
+    rlpOutput.writeUInt64Scalar(depositRequest.getAmount());
+    rlpOutput.writeBytes(depositRequest.getSignature());
+    rlpOutput.writeUInt64Scalar(depositRequest.getIndex());
     rlpOutput.endList();
   }
 
