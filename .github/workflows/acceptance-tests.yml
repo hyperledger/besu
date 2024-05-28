@@ -87,6 +87,8 @@ jobs:
           path: '*.txt'
       - name: run acceptance tests
         run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: Remove downloaded test results
+        run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:
