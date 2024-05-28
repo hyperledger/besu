@@ -483,7 +483,7 @@ public class T8nExecutor {
               wr -> {
                 var obj = withdrawlRequests.addObject();
                 obj.put("sourceAddress", wr.getSourceAddress().toHexString());
-                obj.put("validatorPublicKey", wr.getValidatorPubKey().toHexString());
+                obj.put("validatorPublicKey", wr.getValidatorPublicKey().toHexString());
                 obj.put("amount", wr.getAmount().toHexString());
               });
     }
