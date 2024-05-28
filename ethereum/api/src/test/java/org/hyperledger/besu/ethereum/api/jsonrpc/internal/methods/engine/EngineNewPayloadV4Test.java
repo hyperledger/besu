@@ -158,7 +158,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     final List<DepositParameter> deposits = List.of();
     lenient()
         .when(protocolSpec.getRequestsValidatorCoordinator())
-        .thenReturn(new RequestsValidatorCoordinator.Builder().build());
+        .thenReturn(RequestsValidatorCoordinator.empty());
 
     var resp =
         resp(
@@ -311,7 +311,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
   }
 
   private void mockProhibitedRequestsValidator() {
-    var validator = new RequestsValidatorCoordinator.Builder().build();
+    var validator = RequestsValidatorCoordinator.empty();
     when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
   }
 

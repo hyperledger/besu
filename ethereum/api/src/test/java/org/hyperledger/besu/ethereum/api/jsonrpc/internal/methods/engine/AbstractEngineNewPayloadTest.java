@@ -521,7 +521,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
   }
 
   private void mockProhibitedRequestsValidator() {
-    var validator = new RequestsValidatorCoordinator.Builder().build();
+    var validator = RequestsValidatorCoordinator.empty();
     when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
   }
 }
