@@ -134,7 +134,7 @@ abstract class AbstractBlockCreatorTest {
             UInt64.valueOf(539967));
     final List<Deposit> expectedDeposits = List.of(expectedDeposit);
 
-    final Optional<List<Request>> depositsFromReceipts =
+    var depositsFromReceipts =
         new DepositRequestProcessor(DEFAULT_DEPOSIT_CONTRACT_ADDRESS).process(null, receipts);
     assertThat(depositsFromReceipts.get()).isEqualTo(expectedDeposits);
   }

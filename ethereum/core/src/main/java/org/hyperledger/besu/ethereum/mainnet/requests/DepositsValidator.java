@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
+import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getDepositRequests;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Deposit;
@@ -23,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
 import org.hyperledger.besu.evm.log.Log;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -75,7 +78,7 @@ public class DepositsValidator implements RequestValidator {
   @Override
   public boolean validate(
       final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
-    var deposits = RequestUtil.filterRequestsOfType(requests, Deposit.class);
+    var deposits = getDepositRequests(Optional.of(requests)).orElse(Collections.emptyList());
     return validateDeposits(block, deposits, receipts);
   }
 }

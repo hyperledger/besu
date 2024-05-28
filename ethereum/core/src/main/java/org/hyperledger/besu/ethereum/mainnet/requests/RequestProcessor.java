@@ -22,7 +22,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface RequestProcessor {
-  Optional<List<Request>> process(
+  Optional<List<? extends Request>> process(
       final MutableWorldState mutableWorldState,
       final List<TransactionReceipt> transactionReceipts);
 }
