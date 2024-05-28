@@ -25,7 +25,7 @@ import java.util.Optional;
 
 public class WithdrawalRequestProcessor implements RequestProcessor {
   @Override
-  public Optional<List<Request>> process(
+  public Optional<List<? extends Request>> process(
       final MutableWorldState mutableWorldState,
       final List<TransactionReceipt> transactionReceipts) {
 
@@ -33,6 +33,6 @@ public class WithdrawalRequestProcessor implements RequestProcessor {
         WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(mutableWorldState).stream()
             .toList();
 
-    return Optional.of(withdrawalRequests.stream().map(r -> (Request) r).toList());
+    return Optional.of(withdrawalRequests);
   }
 }
