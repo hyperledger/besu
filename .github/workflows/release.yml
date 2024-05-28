@@ -3,6 +3,8 @@ on:
   release:
     types: [released]
   workflow-dispatch:
+  push:
+    branches: ['test']
 env:
   registry: docker.io
 jobs:
