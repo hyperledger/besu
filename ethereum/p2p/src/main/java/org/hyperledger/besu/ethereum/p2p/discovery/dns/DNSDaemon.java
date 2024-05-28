@@ -69,7 +69,11 @@ public class DNSDaemon extends AbstractVerticle {
   /** Starts the DNSDaemon. */
   @Override
   public void start() {
-    LOG.info("Starting DNSDaemon for {}, using {} DNS host", enrLink, dnsServer.orElse("default"));
+    if (vertx == null) {
+      throw new IllegalStateException("DNSDaemon must be deployed as a vertx verticle.");
+    }
+
+    LOG.info("Starting DNSDaemon for {}, using {} DNS host.", enrLink, dnsServer.orElse("default"));
     this.dnsResolver = new DNSResolver(vertx, enrLink, seq, dnsServer);
     if (delay > 0) {
       periodicTaskId = Optional.of(vertx.setPeriodic(initialDelay, delay, this::refreshENRRecords));
