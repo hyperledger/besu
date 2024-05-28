@@ -28,6 +28,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.methods.ApiGroupJsonRpcMethods;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Map;
 
@@ -36,17 +38,26 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
 
   private final ProtocolContext context;
   private final ValidatorProvider readOnlyValidatorProvider;
+  private final ProtocolSchedule protocolSchedule;
+  private final MiningParameters miningParameters;
 
   /**
    * Instantiates a new Qbft json rpc methods.
    *
-   * @param context the context
+   * @param context the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param miningParameters the mining parameters
    * @param readOnlyValidatorProvider the read only validator provider
    */
   public QbftJsonRpcMethods(
-      final ProtocolContext context, final ValidatorProvider readOnlyValidatorProvider) {
+      final ProtocolContext context,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters,
+      final ValidatorProvider readOnlyValidatorProvider) {
     this.context = context;
     this.readOnlyValidatorProvider = readOnlyValidatorProvider;
+    this.protocolSchedule = protocolSchedule;
+    this.miningParameters = miningParameters;
   }
 
   @Override
@@ -57,7 +68,11 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(context.getBlockchain(), context.getWorldStateArchive());
+        new BlockchainQueries(
+            protocolSchedule,
+            context.getBlockchain(),
+            context.getWorldStateArchive(),
+            miningParameters);
     final BftContext bftContext = context.getConsensusContext(BftContext.class);
     final BlockInterface blockInterface = bftContext.getBlockInterface();
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();

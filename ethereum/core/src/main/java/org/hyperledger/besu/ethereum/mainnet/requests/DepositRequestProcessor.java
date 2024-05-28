@@ -39,13 +39,13 @@ public class DepositRequestProcessor implements RequestProcessor {
   }
 
   @Override
-  public Optional<List<Request>> process(
+  public Optional<List<? extends Request>> process(
       final MutableWorldState ignored, final List<TransactionReceipt> transactionReceipts) {
     if (depositContractAddress.isEmpty()) {
       return Optional.empty();
     }
     List<Deposit> deposits = findDepositsFromReceipts(transactionReceipts);
-    return Optional.of(deposits.stream().map(r -> (Request) r).toList());
+    return Optional.of(deposits);
   }
 
   @VisibleForTesting
