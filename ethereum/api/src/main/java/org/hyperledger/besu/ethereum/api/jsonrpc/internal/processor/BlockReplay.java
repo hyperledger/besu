@@ -30,8 +30,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import java.util.List;
 import java.util.Optional;
@@ -107,7 +107,6 @@ public class BlockReplay {
                       transaction, header, blockchain, transactionProcessor, blobGasPrice));
             } else {
               transactionProcessor.processTransaction(
-                  blockchain,
                   mutableWorldState.updater(),
                   header,
                   transaction,
@@ -134,7 +133,6 @@ public class BlockReplay {
         (transaction, blockHeader, blockchain, transactionProcessor, blobGasPrice) -> {
           final ProtocolSpec spec = protocolSchedule.getByBlockHeader(blockHeader);
           transactionProcessor.processTransaction(
-              blockchain,
               mutableWorldState.updater(),
               blockHeader,
               transaction,

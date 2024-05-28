@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -130,8 +130,7 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                     List.of(blobTx),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
-                    Optional.of(Collections.emptyList()),
-                    Optional.empty())),
+                    Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
 
     when(mergeContext.retrieveBlockById(postCancunPid)).thenReturn(Optional.of(postCancunBlock));

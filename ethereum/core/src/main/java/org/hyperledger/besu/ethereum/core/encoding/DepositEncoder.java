@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -22,7 +23,10 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class DepositEncoder {
 
-  public static void encode(final Deposit deposit, final RLPOutput rlpOutput) {
+  public static void encode(final Request request, final RLPOutput rlpOutput) {
+    if (!(request instanceof Deposit deposit)) {
+      throw new IllegalArgumentException("The provided request is not of type deposit.");
+    }
     rlpOutput.startList();
     rlpOutput.writeBytes(deposit.getPubkey());
     rlpOutput.writeBytes(deposit.getWithdrawalCredentials());
@@ -32,7 +36,7 @@ public class DepositEncoder {
     rlpOutput.endList();
   }
 
-  public static Bytes encodeOpaqueBytes(final Deposit deposit) {
+  public static Bytes encodeOpaqueBytes(final Request deposit) {
     return RLP.encode(rlpOutput -> encode(deposit, rlpOutput));
   }
 }

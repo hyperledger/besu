@@ -235,11 +235,8 @@ public class TransactionSimulator {
             ? callParams.getGasLimit()
             : blockHeaderToProcess.getGasLimit();
     if (rpcGasCap > 0) {
-      final long gasCap = rpcGasCap;
-      if (gasCap < gasLimit) {
-        gasLimit = gasCap;
-        LOG.info("Capping gasLimit to " + gasCap);
-      }
+      gasLimit = rpcGasCap;
+      LOG.info("Capping gasLimit to " + rpcGasCap);
     }
     final Wei value = callParams.getValue() != null ? callParams.getValue() : Wei.ZERO;
     final Bytes payload = callParams.getPayload() != null ? callParams.getPayload() : Bytes.EMPTY;
@@ -277,7 +274,6 @@ public class TransactionSimulator {
     final Transaction transaction = maybeTransaction.get();
     final TransactionProcessingResult result =
         transactionProcessor.processTransaction(
-            blockchain,
             updater,
             blockHeaderToProcess,
             transaction,

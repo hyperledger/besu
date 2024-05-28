@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.referencetests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -144,8 +142,7 @@ public class ReferenceTestEnv extends BlockHeader {
         currentBlobGasUsed == null ? null : Long.decode(currentBlobGasUsed),
         currentExcessBlobGas == null ? null : BlobGas.of(Long.decode(currentExcessBlobGas)),
         beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
-        null, // depositsRoot
-        null, // exitsRoot
+        null, // requestsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;
@@ -191,7 +188,7 @@ public class ReferenceTestEnv extends BlockHeader {
     }
   }
 
-  public BlockHeader updateFromParentValues(final ProtocolSpec protocolSpec) {
+  public BlockHeader parentBlockHeader(final ProtocolSpec protocolSpec) {
     var builder =
         BlockHeaderBuilder.fromHeader(this)
             .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions());
@@ -224,6 +221,8 @@ public class ReferenceTestEnv extends BlockHeader {
       builder.excessBlobGas(BlobGas.of(Long.decode(parentExcessBlobGas)));
       builder.blobGasUsed(Long.decode(parentBlobGasUsed));
     }
+    Hash grandParentHash = blockHashes.get(number - 2);
+    builder.parentHash(grandParentHash == null ? Hash.ZERO : grandParentHash);
 
     return builder.buildBlockHeader();
   }
@@ -234,6 +233,10 @@ public class ReferenceTestEnv extends BlockHeader {
 
   public Optional<Hash> getBlockhashByNumber(final long number) {
     return Optional.ofNullable(blockHashes.get(number));
+  }
+
+  public Map<Long, Hash> getBlockHashes() {
+    return blockHashes;
   }
 
   @Override

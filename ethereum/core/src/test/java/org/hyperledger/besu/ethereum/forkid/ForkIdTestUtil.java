@@ -64,8 +64,6 @@ public class ForkIdTestUtil {
         "0xd4e56740f876aef8c010b86a40d5f56745a118d0906a34e69aec8c0db1cb8fa3";
     public static final String SEPOLIA =
         "0x25a5cc106eea7138acab33231d7160d69cb777ee0c2c553fcddf5138993e6dd9";
-    public static final String GOERLI =
-        "0xbf7e331f7f7c1dd2e05159666b3bf8bc7a8a3a9eb1d518969eab529dd9b88c1a";
     public static final String PRIVATE =
         "0x0000000000000000000000000000000000000000000000000000000000000000";
   }
@@ -80,7 +78,6 @@ public class ForkIdTestUtil {
 
     public static final List<Long> SEPOLIA_TIMESTAMPS = Arrays.asList(1677557088L);
 
-    public static final List<Long> GOERLI = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 1561651L);
     public static final List<Long> PRIVATE = Arrays.asList(0L, 0L, 0L, 0L, 0L, 0L, 0L, 0L);
 
     public static final List<Long> MAINNET_WITH_SHANGHAI_BLOCKS =
@@ -111,10 +108,6 @@ public class ForkIdTestUtil {
             new ForkId(Bytes.fromHexString("0xfe3366e7"), 1735371L),
             new ForkId(Bytes.fromHexString("0xb96cbd13"), 1677557088L),
             new ForkId(Bytes.fromHexString("0xf7f9bc08"), 0L)); // First Shanghai block (timestamp)
-    public static final List<ForkId> GOERLI =
-        Arrays.asList(
-            new ForkId(Bytes.fromHexString("0xa3f5ab08"), 1561651L),
-            new ForkId(Bytes.fromHexString("0xc25efa5c"), 0L));
 
     public static final List<ForkId> WITHDRAWALS =
         Arrays.asList(
@@ -141,7 +134,6 @@ public class ForkIdTestUtil {
     public static final Network MAINNET = network(GenesisHash.MAINNET, Forks.MAINNET, emptyList());
     public static final Network SEPOLIA =
         network(GenesisHash.SEPOLIA, Forks.SEPOLIA_BLOCKNUMBERS, Forks.SEPOLIA_TIMESTAMPS);
-    public static final Network GOERLI = network(GenesisHash.GOERLI, Forks.GOERLI, emptyList());
     public static final Network PRIVATE = network(GenesisHash.PRIVATE, Forks.PRIVATE, emptyList());
 
     public static final Network MAINNET_WITH_SHANGHAI =

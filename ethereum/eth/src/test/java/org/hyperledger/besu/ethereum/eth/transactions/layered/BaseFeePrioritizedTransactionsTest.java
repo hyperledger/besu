@@ -1,5 +1,5 @@
 /*
- * Copyright Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfigurati
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
+import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
@@ -64,6 +65,7 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
     return new BaseFeePrioritizedTransactions(
         poolConfig,
         this::mockBlockHeader,
+        ethScheduler,
         nextLayer,
         txPoolMetrics,
         transactionReplacementTester,
@@ -111,6 +113,9 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
         originalTransaction.getType(),
         originalTransaction.getNonce(),
         originalTransaction.getMaxGasPrice().multiply(2),
+        originalTransaction.getMaxGasPrice().multiply(2).divide(10),
+        originalTransaction.getPayload().size(),
+        originalTransaction.getBlobCount(),
         keys);
   }
 
@@ -217,5 +222,73 @@ public class BaseFeePrioritizedTransactionsTest extends AbstractPrioritizedTrans
 
     shouldPrioritizeValueThenTimeAddedToPool(
         lowValueTxs.iterator(), highGasPriceTransaction, lowValueTxs.get(0));
+  }
+
+  @Test
+  public void maxNumberOfTxsForTypeIsEnforced() {
+    final var limitedType = MAX_TRANSACTIONS_BY_TYPE.entrySet().iterator().next();
+    final var maxNumber = limitedType.getValue();
+    final var addedTxs = new ArrayList<Transaction>(maxNumber);
+    for (int i = 0; i < maxNumber; i++) {
+      final var tx =
+          createTransaction(
+              limitedType.getKey(),
+              0,
+              DEFAULT_MIN_GAS_PRICE,
+              DEFAULT_MIN_GAS_PRICE.divide(10),
+              0,
+              1,
+              SIGNATURE_ALGORITHM.get().generateKeyPair());
+      addedTxs.add(tx);
+      assertThat(prioritizeTransaction(tx)).isEqualTo(ADDED);
+    }
+
+    final var overflowTx =
+        createTransaction(
+            limitedType.getKey(),
+            0,
+            DEFAULT_MIN_GAS_PRICE,
+            DEFAULT_MIN_GAS_PRICE.divide(10),
+            0,
+            1,
+            SIGNATURE_ALGORITHM.get().generateKeyPair());
+    assertThat(prioritizeTransaction(overflowTx)).isEqualTo(DROPPED);
+
+    addedTxs.forEach(this::assertTransactionPrioritized);
+    assertTransactionNotPrioritized(overflowTx);
+  }
+
+  @Test
+  public void maxNumberOfTxsForTypeWithReplacement() {
+    final var limitedType = MAX_TRANSACTIONS_BY_TYPE.entrySet().iterator().next();
+    final var maxNumber = limitedType.getValue();
+    final var addedTxs = new ArrayList<Transaction>(maxNumber);
+    for (int i = 0; i < maxNumber; i++) {
+      final var tx =
+          createTransaction(
+              limitedType.getKey(),
+              i,
+              DEFAULT_MIN_GAS_PRICE,
+              DEFAULT_MIN_GAS_PRICE.divide(10),
+              0,
+              1,
+              KEYS1);
+      addedTxs.add(tx);
+      assertThat(prioritizeTransaction(tx)).isEqualTo(ADDED);
+    }
+
+    final var replacedTx = addedTxs.get(0);
+    final var replacementTx = createTransactionReplacement(replacedTx, KEYS1);
+    final var txAddResult = prioritizeTransaction(replacementTx);
+
+    assertThat(txAddResult.isReplacement()).isTrue();
+    assertThat(txAddResult.maybeReplacedTransaction())
+        .map(PendingTransaction::getTransaction)
+        .contains(replacedTx);
+
+    addedTxs.remove(replacedTx);
+    addedTxs.forEach(this::assertTransactionPrioritized);
+    assertTransactionNotPrioritized(replacedTx);
+    assertTransactionPrioritized(replacementTx);
   }
 }

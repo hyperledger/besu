@@ -25,6 +25,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV62;
 import org.hyperledger.besu.ethereum.eth.messages.TransactionsMessage;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
@@ -37,6 +38,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class TransactionsMessageSenderTest {
+  private final EthPeers ethPeers = mock(EthPeers.class);
 
   private final EthPeer peer1 = mock(EthPeer.class);
   private final EthPeer peer2 = mock(EthPeer.class);
@@ -46,7 +48,7 @@ public class TransactionsMessageSenderTest {
   private final Transaction transaction2 = generator.transaction();
   private final Transaction transaction3 = generator.transaction();
 
-  private final PeerTransactionTracker transactionTracker = new PeerTransactionTracker();
+  private final PeerTransactionTracker transactionTracker = new PeerTransactionTracker(ethPeers);
   private final TransactionsMessageSender messageSender =
       new TransactionsMessageSender(transactionTracker);
 

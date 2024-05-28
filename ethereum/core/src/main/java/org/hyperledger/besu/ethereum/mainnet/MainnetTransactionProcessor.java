@@ -18,12 +18,12 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_IS_PER
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVATE_METADATA_UPDATER;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION;
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
@@ -32,7 +32,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -101,7 +100,6 @@ public class MainnetTransactionProcessor {
   /**
    * Applies a transaction to the current system state.
    *
-   * @param blockchain The current blockchain
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
@@ -115,7 +113,6 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidationParams
    */
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -125,7 +122,6 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
     return processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -141,7 +137,6 @@ public class MainnetTransactionProcessor {
   /**
    * Applies a transaction to the current system state.
    *
-   * @param blockchain The current blockchain
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
@@ -156,7 +151,6 @@ public class MainnetTransactionProcessor {
    * @see TransactionValidationParams
    */
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -167,7 +161,6 @@ public class MainnetTransactionProcessor {
       final OperationTracer operationTracer,
       final Wei blobGasPrice) {
     return processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -183,18 +176,16 @@ public class MainnetTransactionProcessor {
   /**
    * Applies a transaction to the current system state.
    *
-   * @param blockchain The current blockchain
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
-   * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param operationTracer The tracer to record results of each EVM operation
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @return the transaction result
    */
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -204,7 +195,6 @@ public class MainnetTransactionProcessor {
       final Boolean isPersistingPrivateState,
       final Wei blobGasPrice) {
     return processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -220,19 +210,17 @@ public class MainnetTransactionProcessor {
   /**
    * Applies a transaction to the current system state.
    *
-   * @param blockchain The current blockchain
    * @param worldState The current world state
    * @param blockHeader The current block header
    * @param transaction The transaction to process
-   * @param operationTracer The tracer to record results of each EVM operation
    * @param miningBeneficiary The address which is to receive the transaction fee
+   * @param operationTracer The tracer to record results of each EVM operation
    * @param blockHashLookup The {@link BlockHashLookup} to use for BLOCKHASH operations
    * @param isPersistingPrivateState Whether the resulting private state will be persisted
    * @param transactionValidationParams The transaction validation parameters to use
    * @return the transaction result
    */
   public TransactionProcessingResult processTransaction(
-      final Blockchain blockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,
@@ -243,7 +231,6 @@ public class MainnetTransactionProcessor {
       final TransactionValidationParams transactionValidationParams,
       final Wei blobGasPrice) {
     return processTransaction(
-        blockchain,
         worldState,
         blockHeader,
         transaction,
@@ -257,7 +244,6 @@ public class MainnetTransactionProcessor {
   }
 
   public TransactionProcessingResult processTransaction(
-      final Blockchain ignoredBlockchain,
       final WorldUpdater worldState,
       final ProcessableBlockHeader blockHeader,
       final Transaction transaction,

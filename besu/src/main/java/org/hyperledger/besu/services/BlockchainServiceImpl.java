@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,23 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
-import org.hyperledger.besu.ethereum.core.BlockBody;
+import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.Unstable;
+import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockContext;
 import org.hyperledger.besu.plugin.data.BlockHeader;
+import org.hyperledger.besu.plugin.data.TransactionReceipt;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 /** The Blockchain service implementation. */
 @Unstable
@@ -36,9 +40,7 @@ public class BlockchainServiceImpl implements BlockchainService {
 
   private ProtocolContext protocolContext;
   private ProtocolSchedule protocolSchedule;
-
-  /** Create a new instance */
-  public BlockchainServiceImpl() {}
+  private MutableBlockchain blockchain;
 
   /**
    * Instantiates a new Blockchain service.
@@ -49,6 +51,7 @@ public class BlockchainServiceImpl implements BlockchainService {
   public void init(final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
+    this.blockchain = protocolContext.getBlockchain();
   }
 
   /**
@@ -90,6 +93,43 @@ public class BlockchainServiceImpl implements BlockchainService {
                     chainHeadHeader.getBaseFee().orElse(Wei.ZERO),
                     chainHeadHeader.getGasUsed(),
                     feeMarket.targetGasUsed(chainHeadHeader)));
+  }
+
+  @Override
+  public Optional<List<TransactionReceipt>> getReceiptsByBlockHash(final Hash blockHash) {
+    return blockchain
+        .getTxReceipts(blockHash)
+        .map(
+            list -> list.stream().map(TransactionReceipt.class::cast).collect(Collectors.toList()));
+  }
+
+  @Override
+  public void storeBlock(
+      final BlockHeader blockHeader,
+      final BlockBody blockBody,
+      final List<TransactionReceipt> receipts) {
+    final org.hyperledger.besu.ethereum.core.BlockHeader coreHeader =
+        (org.hyperledger.besu.ethereum.core.BlockHeader) blockHeader;
+    final org.hyperledger.besu.ethereum.core.BlockBody coreBody =
+        (org.hyperledger.besu.ethereum.core.BlockBody) blockBody;
+    final List<org.hyperledger.besu.ethereum.core.TransactionReceipt> coreReceipts =
+        receipts.stream()
+            .map(org.hyperledger.besu.ethereum.core.TransactionReceipt.class::cast)
+            .toList();
+    blockchain.unsafeImportBlock(
+        new Block(coreHeader, coreBody),
+        coreReceipts,
+        Optional.ofNullable(blockchain.calculateTotalDifficulty(coreHeader)));
+  }
+
+  @Override
+  public Optional<Hash> getSafeBlock() {
+    return blockchain.getSafeBlock();
+  }
+
+  @Override
+  public Optional<Hash> getFinalizedBlock() {
+    return blockchain.getFinalized();
   }
 
   private static BlockContext blockContext(

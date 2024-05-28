@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,10 +22,12 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -40,6 +42,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -48,11 +51,13 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Arrays;
+import java.util.EnumMap;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.BiFunction;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 import com.google.common.base.Splitter;
@@ -67,6 +72,7 @@ public class ReplayTest {
   private static final Logger LOG = LoggerFactory.getLogger(ReplayTest.class);
   private final StubMetricsSystem metricsSystem = new StubMetricsSystem();
   private final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
+  protected final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   private final Address senderToLog =
       Address.fromHexString("0xf7445f4b8a07921bf882175470dc8f7221c53996");
@@ -117,6 +123,7 @@ public class ReplayTest {
       final TransactionPoolConfiguration poolConfig =
           ImmutableTransactionPoolConfiguration.builder()
               .prioritySenders(readPrioritySenders(br.readLine()))
+              .maxPrioritizedTransactionsByType(readMaxPrioritizedByType(br.readLine()))
               .build();
 
       final AbstractPrioritizedTransactions prioritizedTransactions =
@@ -161,6 +168,17 @@ public class ReplayTest {
     }
   }
 
+  private Map<TransactionType, Integer> readMaxPrioritizedByType(final String line) {
+    return Arrays.stream(line.split(","))
+        .map(e -> e.split("="))
+        .collect(
+            Collectors.toMap(
+                a -> TransactionType.valueOf(a[0]),
+                a -> Integer.parseInt(a[1]),
+                (a, b) -> a,
+                () -> new EnumMap<>(TransactionType.class)));
+  }
+
   private List<Address> readPrioritySenders(final String line) {
     return Arrays.stream(line.split(",")).map(Address::fromHexString).toList();
   }
@@ -190,15 +208,25 @@ public class ReplayTest {
         (tx1, tx2) -> transactionReplacementTester(poolConfig, tx1, tx2);
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
-            poolConfig, evictCollector, txPoolMetrics, txReplacementTester, new BlobCache());
+            poolConfig,
+            ethScheduler,
+            evictCollector,
+            txPoolMetrics,
+            txReplacementTester,
+            new BlobCache());
 
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
-            poolConfig, sparseTransactions, txPoolMetrics, txReplacementTester, new BlobCache());
-
+            poolConfig,
+            ethScheduler,
+            sparseTransactions,
+            txPoolMetrics,
+            txReplacementTester,
+            new BlobCache());
     return new BaseFeePrioritizedTransactions(
         poolConfig,
         () -> currBlockHeader,
+        ethScheduler,
         readyTransactions,
         txPoolMetrics,
         txReplacementTester,

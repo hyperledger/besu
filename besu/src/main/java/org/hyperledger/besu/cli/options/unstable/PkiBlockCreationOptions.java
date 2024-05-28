@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.cli.options.unstable;
 
 import static java.util.Arrays.asList;
@@ -107,6 +106,9 @@ public class PkiBlockCreationOptions {
       paramLabel = MANDATORY_FILE_FORMAT_HELP,
       description = "File with all CRLs for PKI Block Creation.")
   Path crlFile = null;
+
+  /** Default Constructor. */
+  PkiBlockCreationOptions() {}
 
   /**
    * As domain config optional.

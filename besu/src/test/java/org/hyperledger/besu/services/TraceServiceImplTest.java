@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -74,7 +75,12 @@ class TraceServiceImplTest {
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     worldStateArchive = blockchainSetupUtil.getWorldArchive();
-    blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive);
+    blockchainQueries =
+        new BlockchainQueries(
+            blockchainSetupUtil.getProtocolSchedule(),
+            blockchain,
+            worldStateArchive,
+            MiningParameters.newDefault());
     traceService =
         new TraceServiceImpl(blockchainQueries, blockchainSetupUtil.getProtocolSchedule());
   }

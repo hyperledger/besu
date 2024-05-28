@@ -34,6 +34,7 @@ dependencies {
   api 'io.tmio:tuweni-units'
   implementation 'com.google.guava:guava'
   implementation project(':evm')
+  compileOnly 'io.vertx:vertx-core'
 }
 
 configurations { testArtifacts }
@@ -69,7 +70,7 @@ Calculated : ${currentHash}
 tasks.register('checkAPIChanges', FileStateChecker) {
   description = "Checks that the API for the Plugin-API project does not change without deliberate thought"
   files = sourceSets.main.allJava.files
-  knownHash = '0mJiCGsToqx5aAJEvwnT3V0R8o4PXBYWiB0wT6CMpuo='
+  knownHash = 'zgPAgf+ZxefbnCE9aYEQ5QoeBVsHySi3u+BlhHNHqn8='
 }
 check.dependsOn('checkAPIChanges')
 
