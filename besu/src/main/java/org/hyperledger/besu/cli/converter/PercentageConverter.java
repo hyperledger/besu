@@ -21,6 +21,8 @@ import picocli.CommandLine;
 
 /** The Percentage Cli type converter. */
 public class PercentageConverter implements CommandLine.ITypeConverter<Percentage> {
+  /** Default Constructor. */
+  public PercentageConverter() {}
 
   @Override
   public Percentage convert(final String value) throws PercentageConversionException {

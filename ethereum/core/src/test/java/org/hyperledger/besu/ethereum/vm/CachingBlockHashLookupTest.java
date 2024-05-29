@@ -26,6 +26,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import java.util.Optional;
 
@@ -37,7 +38,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
-public class CachingBlockHashLookupTest {
+class CachingBlockHashLookupTest {
 
   private static final int CURRENT_BLOCK_NUMBER = 256;
   private final Blockchain blockchain = mock(Blockchain.class);
@@ -45,7 +46,7 @@ public class CachingBlockHashLookupTest {
   private BlockHashLookup lookup;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     BlockHeader parentHeader = null;
     for (int i = 0; i < headers.length; i++) {
       final BlockHeader header = createHeader(i, parentHeader);
@@ -59,35 +60,35 @@ public class CachingBlockHashLookupTest {
   }
 
   @AfterEach
-  public void verifyBlocksNeverLookedUpByNumber() {
+  void verifyBlocksNeverLookedUpByNumber() {
     // Looking up the block by number is incorrect because it always uses the canonical chain even
     // if the block being imported is on a fork.
     verify(blockchain, never()).getBlockHeader(anyLong());
   }
 
   @Test
-  public void shouldGetHashOfImmediateParent() {
+  void shouldGetHashOfImmediateParent() {
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 1);
   }
 
   @Test
-  public void shouldGetHashOfGenesisBlock() {
+  void shouldGetHashOfGenesisBlock() {
     assertHashForBlockNumber(0);
   }
 
   @Test
-  public void shouldGetHashForRecentBlockAfterOlderBlock() {
+  void shouldGetHashForRecentBlockAfterOlderBlock() {
     assertHashForBlockNumber(10);
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 1);
   }
 
   @Test
-  public void shouldReturnEmptyHashWhenRequestedBlockNotOnchain() {
+  void shouldReturnEmptyHashWhenRequestedBlockNotOnchain() {
     Assertions.assertThat(lookup.apply(CURRENT_BLOCK_NUMBER + 20L)).isEqualTo(Hash.ZERO);
   }
 
   @Test
-  public void shouldReturnEmptyHashWhenParentBlockNotOnchain() {
+  void shouldReturnEmptyHashWhenParentBlockNotOnchain() {
     final BlockHashLookup lookupWithUnavailableParent =
         new CachingBlockHashLookup(
             new BlockHeaderTestFixture().number(CURRENT_BLOCK_NUMBER + 20).buildHeader(),
@@ -97,13 +98,13 @@ public class CachingBlockHashLookupTest {
   }
 
   @Test
-  public void shouldGetParentHashFromCurrentBlock() {
+  void shouldGetParentHashFromCurrentBlock() {
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 1);
     verifyNoInteractions(blockchain);
   }
 
   @Test
-  public void shouldCacheBlockHashesWhileIteratingBackToPreviousHeader() {
+  void shouldCacheBlockHashesWhileIteratingBackToPreviousHeader() {
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 4);
     assertHashForBlockNumber(CURRENT_BLOCK_NUMBER - 1);
     verify(blockchain).getBlockHeader(headers[CURRENT_BLOCK_NUMBER - 1].getHash());

@@ -60,7 +60,7 @@ public class SynchronizerOptionsTest
             SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHANGE_TARGET_THRESHOLD_BY_TD.add(2L))
         .downloaderHeadersRequestSize(
             SynchronizerConfiguration.DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE + 2)
-        .downloaderCheckpointTimeoutsPermitted(
+        .downloaderCheckpointRetries(
             SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED + 2)
         .downloaderChainSegmentSize(
             SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHAIN_SEGMENT_SIZE + 2)
@@ -78,6 +78,7 @@ public class SynchronizerOptionsTest
                 .storageCountPerRequest(SnapSyncConfiguration.DEFAULT_STORAGE_COUNT_PER_REQUEST + 2)
                 .bytecodeCountPerRequest(
                     SnapSyncConfiguration.DEFAULT_BYTECODE_COUNT_PER_REQUEST + 2)
+                .isSnapServerEnabled(Boolean.TRUE)
                 .build());
   }
 

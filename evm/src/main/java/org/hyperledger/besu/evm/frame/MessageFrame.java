@@ -22,7 +22,6 @@ import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -33,6 +32,7 @@ import org.hyperledger.besu.evm.internal.ReturnStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -246,6 +245,9 @@ public class MessageFrame {
 
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;
+
+  /** mutated by AUTH operation */
+  private Address authorizedBy = null;
 
   /**
    * Builder builder.
@@ -1240,7 +1242,7 @@ public class MessageFrame {
    *
    * @return the block hash lookup
    */
-  public Function<Long, Hash> getBlockHashLookup() {
+  public BlockHashLookup getBlockHashLookup() {
     return txValues.blockHashLookup();
   }
 
@@ -1371,6 +1373,24 @@ public class MessageFrame {
     return txValues.versionedHashes();
   }
 
+  /**
+   * Accessor for address that authorized future AUTHCALLs.
+   *
+   * @return the revert reason
+   */
+  public Address getAuthorizedBy() {
+    return authorizedBy;
+  }
+
+  /**
+   * Mutator for address that authorizes future AUTHCALLs, set by AUTH opcode
+   *
+   * @param authorizedBy the address that authorizes future AUTHCALLs
+   */
+  public void setAuthorizedBy(final Address authorizedBy) {
+    this.authorizedBy = authorizedBy;
+  }
+
   /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
@@ -1399,7 +1419,7 @@ public class MessageFrame {
     private boolean isStatic = false;
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
-    private Function<Long, Hash> blockHashLookup;
+    private BlockHashLookup blockHashLookup;
     private Map<String, Object> contextVariables;
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> accessListWarmAddresses = emptySet();
@@ -1623,7 +1643,7 @@ public class MessageFrame {
      * @param blockHashLookup the block hash lookup
      * @return the builder
      */
-    public Builder blockHashLookup(final Function<Long, Hash> blockHashLookup) {
+    public Builder blockHashLookup(final BlockHashLookup blockHashLookup) {
       this.blockHashLookup = blockHashLookup;
       return this;
     }

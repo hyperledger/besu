@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,24 +27,35 @@ import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
 class DepositEncoderTest {
+  private final String expectedDepositEncodedBytes =
+      "f8bbb0b10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416ea00017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483850773594000b860a889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb501";
+
+  final Deposit deposit =
+      new Deposit(
+          BLSPublicKey.fromHexString(
+              "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
+          Bytes32.fromHexString(
+              "0x0017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483"),
+          GWei.of(32000000000L),
+          BLSSignature.fromHexString(
+              "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
+          UInt64.ONE);
+
   @Test
   void shouldEncodeDeposit() {
-    final Deposit deposit =
-        new Deposit(
-            BLSPublicKey.fromHexString(
-                "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
-            Bytes32.fromHexString(
-                "0x0017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483"),
-            GWei.of(32000000000L),
-            BLSSignature.fromHexString(
-                "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
-            UInt64.ONE);
-
     final Bytes encoded = DepositEncoder.encodeOpaqueBytes(deposit);
+    assertThat(encoded).isEqualTo(Bytes.fromHexString(expectedDepositEncodedBytes));
+  }
 
+  @Test
+  void shouldEncodeDepositRequest() {
+    final Bytes encoded = RequestEncoder.encodeOpaqueBytes(deposit);
+    // Request encoding is Request = RequestType ++ RequestData
     assertThat(encoded)
         .isEqualTo(
             Bytes.fromHexString(
-                "0xf8bbb0b10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416ea00017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483850773594000b860a889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb501"));
+                String.format(
+                    "0x%02X%s",
+                    deposit.getType().getSerializedType(), expectedDepositEncodedBytes)));
   }
 }

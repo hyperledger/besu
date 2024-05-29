@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -215,7 +215,7 @@ public class EngineGetPayloadResultV4 {
       return withdrawals;
     }
 
-    @JsonGetter(value = "depositReceipts")
+    @JsonGetter(value = "depositRequests")
     public List<DepositParameter> getDeposits() {
       return deposits;
     }

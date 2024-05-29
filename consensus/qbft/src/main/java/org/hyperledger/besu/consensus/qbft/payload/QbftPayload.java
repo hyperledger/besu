@@ -23,6 +23,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 /** The Qbft payload. */
 public abstract class QbftPayload implements Payload {
+  /** Default constructor */
+  protected QbftPayload() {}
 
   /**
    * Write consensus round.

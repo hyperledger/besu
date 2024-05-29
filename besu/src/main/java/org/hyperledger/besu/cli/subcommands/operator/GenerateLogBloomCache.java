@@ -59,6 +59,9 @@ public class GenerateLogBloomCache implements Runnable {
 
   @ParentCommand private OperatorSubCommand parentCommand;
 
+  /** Default constructor. */
+  public GenerateLogBloomCache() {}
+
   @SuppressWarnings("ResultOfMethodCallIgnored")
   @Override
   public void run() {

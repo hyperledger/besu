@@ -40,6 +40,9 @@ public class InMemoryStoragePlugin implements BesuPlugin {
   private InMemoryKeyValueStorageFactory factory;
   private InMemoryKeyValueStorageFactory privacyFactory;
 
+  /** Default constructor */
+  public InMemoryStoragePlugin() {}
+
   @Override
   public void register(final BesuContext context) {
     LOG.debug("Registering plugin");

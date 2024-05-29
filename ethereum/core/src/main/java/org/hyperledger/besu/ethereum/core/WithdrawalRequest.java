@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,39 +18,27 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.PublicKey;
-import org.hyperledger.besu.ethereum.core.encoding.WithdrawalRequestDecoder;
-import org.hyperledger.besu.ethereum.core.encoding.WithdrawalRequestEncoder;
-import org.hyperledger.besu.ethereum.rlp.RLP;
-import org.hyperledger.besu.ethereum.rlp.RLPInput;
-import org.hyperledger.besu.ethereum.rlp.RLPOutput;
+import org.hyperledger.besu.datatypes.RequestType;
 
 import java.util.Objects;
 
-import org.apache.tuweni.bytes.Bytes;
-
-public class WithdrawalRequest implements org.hyperledger.besu.plugin.data.WithdrawalRequest {
+public class WithdrawalRequest extends Request
+    implements org.hyperledger.besu.plugin.data.WithdrawalRequest {
 
   private final Address sourceAddress;
-  private final BLSPublicKey validatorPubKey;
+  private final BLSPublicKey validatorPublicKey;
   private final GWei amount;
 
   public WithdrawalRequest(
-      final Address sourceAddress, final BLSPublicKey validatorPubKey, final GWei amount) {
+      final Address sourceAddress, final BLSPublicKey validatorPublicKey, final GWei amount) {
     this.sourceAddress = sourceAddress;
-    this.validatorPubKey = validatorPubKey;
+    this.validatorPublicKey = validatorPublicKey;
     this.amount = amount;
   }
 
-  public static WithdrawalRequest readFrom(final Bytes rlpBytes) {
-    return readFrom(RLP.input(rlpBytes));
-  }
-
-  public static WithdrawalRequest readFrom(final RLPInput rlpInput) {
-    return WithdrawalRequestDecoder.decode(rlpInput);
-  }
-
-  public void writeTo(final RLPOutput out) {
-    WithdrawalRequestEncoder.encode(this, out);
+  @Override
+  public RequestType getType() {
+    return RequestType.WITHDRAWAL;
   }
 
   @Override
@@ -59,8 +47,8 @@ public class WithdrawalRequest implements org.hyperledger.besu.plugin.data.Withd
   }
 
   @Override
-  public PublicKey getValidatorPubKey() {
-    return validatorPubKey;
+  public PublicKey getValidatorPublicKey() {
+    return validatorPublicKey;
   }
 
   @Override
@@ -73,8 +61,8 @@ public class WithdrawalRequest implements org.hyperledger.besu.plugin.data.Withd
     return "WithdrawalRequest{"
         + "sourceAddress="
         + sourceAddress
-        + " validatorPubKey="
-        + validatorPubKey
+        + " validatorPublicKey="
+        + validatorPublicKey
         + " amount="
         + amount
         + '}';
@@ -90,12 +78,12 @@ public class WithdrawalRequest implements org.hyperledger.besu.plugin.data.Withd
     }
     final WithdrawalRequest that = (WithdrawalRequest) o;
     return Objects.equals(sourceAddress, that.sourceAddress)
-        && Objects.equals(validatorPubKey, that.validatorPubKey)
+        && Objects.equals(validatorPublicKey, that.validatorPublicKey)
         && Objects.equals(amount, that.amount);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceAddress, validatorPubKey, amount);
+    return Objects.hash(sourceAddress, validatorPublicKey, amount);
   }
 }

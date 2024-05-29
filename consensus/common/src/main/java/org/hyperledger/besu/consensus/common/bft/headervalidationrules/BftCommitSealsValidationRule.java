@@ -40,6 +40,9 @@ public class BftCommitSealsValidationRule implements AttachedBlockHeaderValidati
 
   private static final Logger LOGGER = LoggerFactory.getLogger(BftCommitSealsValidationRule.class);
 
+  /** Default constructor. */
+  public BftCommitSealsValidationRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {

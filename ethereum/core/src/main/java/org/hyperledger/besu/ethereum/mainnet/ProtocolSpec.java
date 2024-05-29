@@ -19,7 +19,10 @@ import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -75,9 +78,9 @@ public class ProtocolSpec {
 
   private final WithdrawalsValidator withdrawalsValidator;
   private final Optional<WithdrawalsProcessor> withdrawalsProcessor;
-  private final DepositsValidator depositsValidator;
-  private final WithdrawalRequestValidator withdrawalRequestValidator;
-
+  private final RequestsValidatorCoordinator requestsValidatorCoordinator;
+  private final Optional<RequestProcessorCoordinator> requestProcessorCoordinator;
+  private final BlockHashProcessor blockHashProcessor;
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
 
@@ -106,9 +109,10 @@ public class ProtocolSpec {
    * @param gasLimitCalculator the gas limit calculator to use.
    * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
    * @param powHasher the proof-of-work hasher
-   * @param withdrawalsValidator the withdrawals validator to use
    * @param withdrawalsProcessor the Withdrawals processor to use
-   * @param depositsValidator the withdrawals validator to use
+   * @param requestsValidatorCoordinator the request validator to use
+   * @param requestProcessorCoordinator the request processor to use
+   * @param blockHashProcessor the blockHash processor to use
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
@@ -138,8 +142,9 @@ public class ProtocolSpec {
       final Optional<PoWHasher> powHasher,
       final WithdrawalsValidator withdrawalsValidator,
       final Optional<WithdrawalsProcessor> withdrawalsProcessor,
-      final DepositsValidator depositsValidator,
-      final WithdrawalRequestValidator withdrawalRequestValidator,
+      final RequestsValidatorCoordinator requestsValidatorCoordinator,
+      final Optional<RequestProcessorCoordinator> requestProcessorCoordinator,
+      final BlockHashProcessor blockHashProcessor,
       final boolean isPoS,
       final boolean isReplayProtectionSupported) {
     this.name = name;
@@ -166,8 +171,9 @@ public class ProtocolSpec {
     this.powHasher = powHasher;
     this.withdrawalsValidator = withdrawalsValidator;
     this.withdrawalsProcessor = withdrawalsProcessor;
-    this.depositsValidator = depositsValidator;
-    this.withdrawalRequestValidator = withdrawalRequestValidator;
+    this.requestsValidatorCoordinator = requestsValidatorCoordinator;
+    this.requestProcessorCoordinator = requestProcessorCoordinator;
+    this.blockHashProcessor = blockHashProcessor;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
   }
@@ -369,12 +375,16 @@ public class ProtocolSpec {
     return withdrawalsProcessor;
   }
 
-  public DepositsValidator getDepositsValidator() {
-    return depositsValidator;
+  public RequestsValidatorCoordinator getRequestsValidatorCoordinator() {
+    return requestsValidatorCoordinator;
   }
 
-  public WithdrawalRequestValidator getWithdrawalRequestValidator() {
-    return withdrawalRequestValidator;
+  public Optional<RequestProcessorCoordinator> getRequestProcessorCoordinator() {
+    return requestProcessorCoordinator;
+  }
+
+  public BlockHashProcessor getBlockHashProcessor() {
+    return blockHashProcessor;
   }
 
   /**

@@ -30,6 +30,9 @@ import org.testcontainers.containers.Network;
 public class TesseraTestHarnessFactory {
   private static final String storage = "memory";
 
+  /** Default constructor */
+  private TesseraTestHarnessFactory() {}
+
   /**
    * Create tessera test harness.
    *

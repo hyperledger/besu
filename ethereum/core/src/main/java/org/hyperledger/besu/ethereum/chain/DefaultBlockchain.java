@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -469,7 +469,8 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.commit();
   }
 
-  private Difficulty calculateTotalDifficulty(final BlockHeader blockHeader) {
+  @Override
+  public Difficulty calculateTotalDifficulty(final BlockHeader blockHeader) {
     if (blockHeader.getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
       return blockHeader.getDifficulty();
     }

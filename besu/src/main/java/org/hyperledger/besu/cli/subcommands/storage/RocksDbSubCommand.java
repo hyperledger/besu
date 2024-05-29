@@ -44,6 +44,9 @@ public class RocksDbSubCommand implements Runnable {
   @CommandLine.Spec
   private CommandLine.Model.CommandSpec spec;
 
+  /** Default Constructor. */
+  public RocksDbSubCommand() {}
+
   @Override
   public void run() {
     spec.commandLine().usage(System.out);

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -104,7 +104,6 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
               Collections.emptyList(),
               Collections.emptyList(),
               Optional.of(Collections.emptyList()),
-              Optional.empty(),
               Optional.empty()));
   private static final Block mockBlockWithDeposits =
       new Block(
@@ -113,7 +112,6 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
               Collections.emptyList(),
               Collections.emptyList(),
               Optional.empty(),
-              Optional.of(Collections.emptyList()),
               Optional.of(Collections.emptyList())));
   protected static final BlockWithReceipts mockBlockWithReceiptsAndWithdrawals =
       new BlockWithReceipts(mockBlockWithWithdrawals, Collections.emptyList());

@@ -29,7 +29,18 @@ import org.apache.tuweni.units.bigints.UInt256;
 /** The Block hash operation. */
 public class BlockHashOperation extends AbstractFixedCostOperation {
 
-  private static final int MAX_RELATIVE_BLOCK = 255;
+  /**
+   * Function that gets the block hash, passed in as part of TxValues.
+   *
+   * <p>Arg is the current block number. The Result is the Hash, which may be zero based on lookup
+   * rules.
+   */
+  public interface BlockHashLookup extends Function<Long, Hash> {}
+
+  /** Frontier maximum relative block delta */
+  public static final int MAX_RELATIVE_BLOCK = 256;
+
+  private static final int MAX_BLOCK_ARG_SIZE = 8;
 
   /**
    * Instantiates a new Block hash operation.
@@ -46,7 +57,7 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     final Bytes blockArg = frame.popStackItem().trimLeadingZeros();
 
     // Short-circuit if value is unreasonably large
-    if (blockArg.size() > 8) {
+    if (blockArg.size() > MAX_BLOCK_ARG_SIZE) {
       frame.pushStackItem(UInt256.ZERO);
       return successResponse;
     }
@@ -54,16 +65,15 @@ public class BlockHashOperation extends AbstractFixedCostOperation {
     final long soughtBlock = blockArg.toLong();
     final BlockValues blockValues = frame.getBlockValues();
     final long currentBlockNumber = blockValues.getNumber();
-    final long mostRecentBlockNumber = currentBlockNumber - 1;
 
     // If the current block is the genesis block or the sought block is
     // not within the last 256 completed blocks, zero is returned.
     if (currentBlockNumber == 0
-        || soughtBlock < (mostRecentBlockNumber - MAX_RELATIVE_BLOCK)
-        || soughtBlock > mostRecentBlockNumber) {
+        || soughtBlock >= currentBlockNumber
+        || soughtBlock < (currentBlockNumber - MAX_RELATIVE_BLOCK)) {
       frame.pushStackItem(Bytes32.ZERO);
     } else {
-      final Function<Long, Hash> blockHashLookup = frame.getBlockHashLookup();
+      final BlockHashLookup blockHashLookup = frame.getBlockHashLookup();
       final Hash blockHash = blockHashLookup.apply(soughtBlock);
       frame.pushStackItem(blockHash);
     }

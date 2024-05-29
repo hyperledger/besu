@@ -12,51 +12,44 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.ethereum.mainnet.requests;
 
-package org.hyperledger.besu.ethereum.mainnet;
+import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getWithdrawalRequests;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
+import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper;
 
+import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class PragueWithdrawalRequestValidator implements WithdrawalRequestValidator {
+public class WithdrawalRequestValidator implements RequestValidator {
 
-  private static final Logger LOG = LoggerFactory.getLogger(PragueWithdrawalRequestValidator.class);
+  private static final Logger LOG = LoggerFactory.getLogger(WithdrawalRequestValidator.class);
 
-  @Override
-  public boolean allowWithdrawalRequests() {
-    return true;
-  }
-
-  @Override
-  public boolean validateWithdrawalRequestParameter(
+  private boolean validateWithdrawalRequestParameter(
       final Optional<List<WithdrawalRequest>> withdrawalRequests) {
     return withdrawalRequests.isPresent();
   }
 
-  @Override
-  public boolean validateWithdrawalRequestsInBlock(
+  private boolean validateWithdrawalRequestsInBlock(
       final Block block, final List<WithdrawalRequest> withdrawalRequests) {
     final Hash blockHash = block.getHash();
 
-    if (block.getHeader().getWithdrawalRequestsRoot().isEmpty()) {
-      LOG.warn("Block {} must contain withdrawal_requests_root", blockHash);
-      return false;
-    }
-
-    if (block.getBody().getWithdrawalRequests().isEmpty()) {
-      LOG.warn("Block {} must contain withdrawal requests (even if empty list)", blockHash);
-      return false;
-    }
-
     final List<WithdrawalRequest> withdrawalRequestsInBlock =
-        block.getBody().getWithdrawalRequests().get();
+        block
+            .getBody()
+            .getRequests()
+            .flatMap(requests -> getWithdrawalRequests(Optional.of(requests)))
+            .orElse(Collections.emptyList());
+
     // TODO Do we need to allow for customization? (e.g. if the value changes in the next fork)
     if (withdrawalRequestsInBlock.size()
         > WithdrawalRequestContractHelper.MAX_WITHDRAWAL_REQUESTS_PER_BLOCK) {
@@ -65,18 +58,7 @@ public class PragueWithdrawalRequestValidator implements WithdrawalRequestValida
       return false;
     }
 
-    // Validate exits_root
-    final Hash expectedWithdrawalsRequestRoot =
-        BodyValidation.withdrawalRequestsRoot(withdrawalRequestsInBlock);
-    if (!expectedWithdrawalsRequestRoot.equals(
-        block.getHeader().getWithdrawalRequestsRoot().get())) {
-      LOG.warn(
-          "Block {} withdrawal_requests_root does not match expected hash root for withdrawal requests in block",
-          blockHash);
-      return false;
-    }
-
-    // Validate exits
+    // Validate WithdrawalRequests
     final boolean expectedWithdrawalRequestMatch =
         withdrawalRequests.equals(withdrawalRequestsInBlock);
     if (!expectedWithdrawalRequestMatch) {
@@ -88,7 +70,24 @@ public class PragueWithdrawalRequestValidator implements WithdrawalRequestValida
           withdrawalRequests);
       return false;
     }
-
     return true;
+  }
+
+  @Override
+  public boolean validate(
+      final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
+    var withdrawalRequests =
+        getWithdrawalRequests(Optional.of(requests)).orElse(Collections.emptyList());
+    return validateWithdrawalRequestsInBlock(block, withdrawalRequests);
+  }
+
+  @Override
+  public boolean validateParameter(final Optional<List<Request>> request) {
+    if (request.isEmpty()) {
+      return false;
+    }
+    var withdrawalRequests =
+        RequestUtil.filterRequestsOfType(request.get(), WithdrawalRequest.class);
+    return validateWithdrawalRequestParameter(Optional.of(withdrawalRequests));
   }
 }

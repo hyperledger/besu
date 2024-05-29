@@ -138,7 +138,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
         .when(synchronizerConfiguration.getBlockPropagationRange())
         .thenReturn(Range.closed(1L, 2L));
 
-    setupBftGenesisConfigOptions();
+    setupBftGenesisConfigFile();
 
     bftBesuControllerBuilder =
         createBftControllerBuilder()
@@ -160,7 +160,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             .networkConfiguration(NetworkingConfiguration.create());
   }
 
-  protected abstract void setupBftGenesisConfigOptions() throws JsonProcessingException;
+  protected abstract void setupBftGenesisConfigFile() throws JsonProcessingException;
 
   protected abstract BesuControllerBuilder createBftControllerBuilder();
 
@@ -187,7 +187,6 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             Wei.ZERO,
             Hash.EMPTY,
             0,
-            null,
             null,
             null,
             null,

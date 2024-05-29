@@ -55,7 +55,6 @@ public class PoWBlockCreator extends AbstractBlockCreator {
         protocolContext,
         protocolSchedule,
         parentHeader,
-        Optional.empty(),
         ethScheduler);
 
     this.nonceSolver = nonceSolver;
