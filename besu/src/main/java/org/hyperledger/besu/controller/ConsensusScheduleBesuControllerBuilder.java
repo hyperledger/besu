@@ -204,10 +204,12 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
     return besuControllerBuilderSchedule
         .get(0L)
-        .createAdditionalJsonRpcMethodFactory(protocolContext);
+        .createAdditionalJsonRpcMethodFactory(protocolContext, protocolSchedule, miningParameters);
   }
 
   @Override

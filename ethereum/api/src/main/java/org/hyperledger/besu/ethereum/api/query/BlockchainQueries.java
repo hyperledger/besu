@@ -30,12 +30,15 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -60,49 +63,77 @@ import java.util.stream.LongStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
+import org.apache.tuweni.units.bigints.UInt256s;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class BlockchainQueries {
   private static final Logger LOG = LoggerFactory.getLogger(BlockchainQueries.class);
 
+  private final ProtocolSchedule protocolSchedule;
   private final WorldStateArchive worldStateArchive;
   private final Blockchain blockchain;
   private final Optional<Path> cachePath;
   private final Optional<TransactionLogBloomCacher> transactionLogBloomCacher;
   private final Optional<EthScheduler> ethScheduler;
   private final ApiConfiguration apiConfig;
-
-  public BlockchainQueries(final Blockchain blockchain, final WorldStateArchive worldStateArchive) {
-    this(blockchain, worldStateArchive, Optional.empty(), Optional.empty());
-  }
+  private final MiningParameters miningParameters;
 
   public BlockchainQueries(
+      final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
-      final EthScheduler scheduler) {
-    this(blockchain, worldStateArchive, Optional.empty(), Optional.ofNullable(scheduler));
-  }
-
-  public BlockchainQueries(
-      final Blockchain blockchain,
-      final WorldStateArchive worldStateArchive,
-      final Optional<Path> cachePath,
-      final Optional<EthScheduler> scheduler) {
+      final MiningParameters miningParameters) {
     this(
+        protocolSchedule,
         blockchain,
         worldStateArchive,
-        cachePath,
-        scheduler,
-        ImmutableApiConfiguration.builder().build());
+        Optional.empty(),
+        Optional.empty(),
+        miningParameters);
   }
 
   public BlockchainQueries(
+      final ProtocolSchedule protocolSchedule,
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final EthScheduler scheduler,
+      final MiningParameters miningParameters) {
+    this(
+        protocolSchedule,
+        blockchain,
+        worldStateArchive,
+        Optional.empty(),
+        Optional.ofNullable(scheduler),
+        miningParameters);
+  }
+
+  public BlockchainQueries(
+      final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final WorldStateArchive worldStateArchive,
       final Optional<Path> cachePath,
       final Optional<EthScheduler> scheduler,
-      final ApiConfiguration apiConfig) {
+      final MiningParameters miningParameters) {
+    this(
+        protocolSchedule,
+        blockchain,
+        worldStateArchive,
+        cachePath,
+        scheduler,
+        ImmutableApiConfiguration.builder().build(),
+        miningParameters);
+  }
+
+  public BlockchainQueries(
+      final ProtocolSchedule protocolSchedule,
+      final Blockchain blockchain,
+      final WorldStateArchive worldStateArchive,
+      final Optional<Path> cachePath,
+      final Optional<EthScheduler> scheduler,
+      final ApiConfiguration apiConfig,
+      final MiningParameters miningParameters) {
+    this.protocolSchedule = protocolSchedule;
     this.blockchain = blockchain;
     this.worldStateArchive = worldStateArchive;
     this.cachePath = cachePath;
@@ -113,6 +144,7 @@ public class BlockchainQueries {
                 new TransactionLogBloomCacher(blockchain, cachePath.get(), scheduler.get()))
             : Optional.empty();
     this.apiConfig = apiConfig;
+    this.miningParameters = miningParameters;
   }
 
   public Blockchain getBlockchain() {
@@ -943,10 +975,15 @@ public class BlockchainQueries {
     return getAndMapWorldState(blockHash, mapper);
   }
 
-  public Optional<Long> gasPrice() {
+  public Wei gasPrice() {
     final long blockHeight = headBlockNumber();
-    final long[] gasCollection =
-        LongStream.range(Math.max(0, blockHeight - apiConfig.getGasPriceBlocks()), blockHeight)
+    final var chainHeadHeader = blockchain.getChainHeadHeader();
+    final var nextBlockProtocolSpec =
+        protocolSchedule.getForNextBlockHeader(chainHeadHeader, System.currentTimeMillis());
+    final var nextBlockFeeMarket = nextBlockProtocolSpec.getFeeMarket();
+    final Wei[] gasCollection =
+        LongStream.rangeClosed(
+                Math.max(0, blockHeight - apiConfig.getGasPriceBlocks() + 1), blockHeight)
             .mapToObj(
                 l ->
                     blockchain
@@ -957,20 +994,46 @@ public class BlockchainQueries {
                             () -> new IllegalStateException("Could not retrieve block #" + l)))
             .flatMap(Collection::stream)
             .filter(t -> t.getGasPrice().isPresent())
-            .mapToLong(t -> t.getGasPrice().get().toLong())
+            .map(t -> t.getGasPrice().get())
             .sorted()
-            .toArray();
+            .toArray(Wei[]::new);
     return (gasCollection == null || gasCollection.length == 0)
-        ? Optional.empty()
-        : Optional.of(
-            Math.max(
-                apiConfig.getGasPriceMinSupplier().getAsLong(),
-                Math.min(
-                    apiConfig.getGasPriceMax(),
-                    gasCollection[
-                        Math.min(
-                            gasCollection.length - 1,
-                            (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))])));
+        ? gasPriceLowerBound(chainHeadHeader, nextBlockFeeMarket)
+        : UInt256s.max(
+            gasPriceLowerBound(chainHeadHeader, nextBlockFeeMarket),
+            UInt256s.min(
+                apiConfig.getGasPriceMax(),
+                gasCollection[
+                    Math.min(
+                        gasCollection.length - 1,
+                        (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]));
+  }
+
+  /**
+   * Return the min gas required for a tx to be mineable. On networks with gas price fee market it
+   * is just the minGasPrice, while on networks with base fee market it is the max between the
+   * minGasPrice and the baseFee for the next block.
+   *
+   * @return the min gas required for a tx to be mineable.
+   */
+  public Wei gasPriceLowerBound() {
+    final var chainHeadHeader = blockchain.getChainHeadHeader();
+    final var nextBlockProtocolSpec =
+        protocolSchedule.getForNextBlockHeader(chainHeadHeader, System.currentTimeMillis());
+    final var nextBlockFeeMarket = nextBlockProtocolSpec.getFeeMarket();
+    return gasPriceLowerBound(chainHeadHeader, nextBlockFeeMarket);
+  }
+
+  private Wei gasPriceLowerBound(
+      final BlockHeader chainHeadHeader, final FeeMarket nextBlockFeeMarket) {
+    final var minGasPrice = miningParameters.getMinTransactionGasPrice();
+
+    if (nextBlockFeeMarket.implementsBaseFee()) {
+      return UInt256s.max(
+          getNextBlockBaseFee(chainHeadHeader, (BaseFeeMarket) nextBlockFeeMarket), minGasPrice);
+    }
+
+    return minGasPrice;
   }
 
   public Optional<Wei> gasPriorityFee() {
@@ -998,6 +1061,31 @@ public class BlockchainQueries {
                     Math.min(
                         gasCollection.length - 1,
                         (int) ((gasCollection.length) * apiConfig.getGasPriceFraction()))]));
+  }
+
+  /**
+   * Calculate and return the value of the base fee for the next block, if the network has a base
+   * fee market, otherwise return empty.
+   *
+   * @return the optional base fee
+   */
+  public Optional<Wei> getNextBlockBaseFee() {
+    final var chainHeadHeader = blockchain.getChainHeadHeader();
+    final var nextBlockProtocolSpec =
+        protocolSchedule.getForNextBlockHeader(chainHeadHeader, System.currentTimeMillis());
+    final var nextBlockFeeMarket = nextBlockProtocolSpec.getFeeMarket();
+    return nextBlockFeeMarket.implementsBaseFee()
+        ? Optional.of(getNextBlockBaseFee(chainHeadHeader, (BaseFeeMarket) nextBlockFeeMarket))
+        : Optional.empty();
+  }
+
+  private Wei getNextBlockBaseFee(
+      final BlockHeader chainHeadHeader, final BaseFeeMarket nextBlockFeeMarket) {
+    return nextBlockFeeMarket.computeBaseFee(
+        chainHeadHeader.getNumber() + 1,
+        chainHeadHeader.getBaseFee().orElse(Wei.ZERO),
+        chainHeadHeader.getGasUsed(),
+        nextBlockFeeMarket.targetGasUsed(chainHeadHeader));
   }
 
   private <T> Optional<T> fromAccount(

@@ -127,6 +127,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Captor;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -214,7 +215,7 @@ public abstract class CommandTestAbstract {
   @Mock protected TransactionSelectionServiceImpl txSelectionService;
   @Mock protected SecurityModuleServiceImpl securityModuleService;
   @Mock protected SecurityModule securityModule;
-  @Mock protected BesuConfigurationImpl commonPluginConfiguration;
+  @Spy protected BesuConfigurationImpl commonPluginConfiguration = new BesuConfigurationImpl();
   @Mock protected KeyValueStorageFactory rocksDBStorageFactory;
   @Mock protected PrivacyKeyValueStorageFactory rocksDBSPrivacyStorageFactory;
   @Mock protected PicoCLIOptions cliOptions;

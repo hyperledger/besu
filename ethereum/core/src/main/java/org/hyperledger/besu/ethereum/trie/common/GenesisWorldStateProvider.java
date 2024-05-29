@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoOpBonsaiCache
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -72,7 +73,8 @@ public class GenesisWorldStateProvider {
         bonsaiCachedMerkleTrieLoader,
         new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
         new NoOpTrieLogManager(),
-        EvmConfiguration.DEFAULT);
+        EvmConfiguration.DEFAULT,
+        new DiffBasedWorldStateConfig());
   }
 
   /**

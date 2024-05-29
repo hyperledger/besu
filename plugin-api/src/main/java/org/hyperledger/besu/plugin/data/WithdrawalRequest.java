@@ -38,7 +38,7 @@ public interface WithdrawalRequest {
    *
    * @return public key of validator
    */
-  PublicKey getValidatorPubKey();
+  PublicKey getValidatorPublicKey();
 
   /**
    * The amount for withdrawal

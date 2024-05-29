@@ -145,7 +145,10 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     final BlockchainQueries blockchainQueries =
         new BlockchainQueries(
-            blockchainSetupUtil.getBlockchain(), blockchainSetupUtil.getWorldArchive());
+            blockchainSetupUtil.getProtocolSchedule(),
+            blockchainSetupUtil.getBlockchain(),
+            blockchainSetupUtil.getWorldArchive(),
+            miningParameters);
     final FilterIdGenerator filterIdGenerator = mock(FilterIdGenerator.class);
     final FilterRepository filterRepository = new FilterRepository();
     when(filterIdGenerator.nextId()).thenReturn("0x1");
