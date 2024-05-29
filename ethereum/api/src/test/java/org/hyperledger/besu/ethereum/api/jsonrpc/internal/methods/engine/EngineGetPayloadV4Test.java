@@ -71,7 +71,7 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
     super.before();
     lenient()
         .when(mergeContext.retrieveBlockById(mockPid))
-        .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
+        .thenReturn(Optional.of(mockBlockWithReceiptsAndDepositRequests));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
         new EngineGetPayloadV4(
@@ -146,7 +146,7 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
               assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV4.class);
               final EngineGetPayloadResultV4 res = (EngineGetPayloadResultV4) r.getResult();
               assertThat(res.getExecutionPayload().getWithdrawals()).isNotNull();
-              assertThat(res.getExecutionPayload().getDeposits()).isNotNull();
+              assertThat(res.getExecutionPayload().getDepositRequests()).isNotNull();
               assertThat(res.getExecutionPayload().getWithdrawalRequests()).isNotNull();
               assertThat(res.getExecutionPayload().getHash())
                   .isEqualTo(header.getHash().toString());

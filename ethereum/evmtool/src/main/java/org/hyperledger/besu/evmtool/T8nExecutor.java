@@ -32,7 +32,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -466,7 +466,7 @@ public class T8nExecutor {
 
       resultObject.put("requestsRoot", requestRoot.toHexString());
       var deposits = resultObject.putArray("depositRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), Deposit.class)
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
           .forEach(
               deposit -> {
                 var obj = deposits.addObject();

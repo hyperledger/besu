@@ -20,7 +20,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
 
@@ -31,11 +31,11 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-class DepositDecoderTest {
+class DepositRequestRequestDecoderTest {
   @Test
   void shouldDecodeDeposit() {
-    final Deposit expectedDeposit =
-        new Deposit(
+    final DepositRequest expectedDepositRequest =
+        new DepositRequest(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
             Bytes32.fromHexString(
@@ -45,12 +45,12 @@ class DepositDecoderTest {
                 "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
             UInt64.ONE);
 
-    final Deposit deposit =
-        DepositDecoder.decodeOpaqueBytes(
+    final DepositRequest depositRequest =
+        DepositRequestDecoder.decodeOpaqueBytes(
             Bytes.fromHexString(
                 "0xf8bbb0b10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416ea00017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483850773594000b860a889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb501"));
 
-    assertThat(deposit).isEqualTo(expectedDeposit);
+    assertThat(depositRequest).isEqualTo(expectedDepositRequest);
   }
 
   @Test
@@ -65,10 +65,10 @@ class DepositDecoderTest {
             "0x00000000000000000000000000000000000000000000000000000000000000a000000000000000000000000000000000000000000000000000000000000001000000000000000000000000000000000000000000000000000000000000000140000000000000000000000000000000000000000000000000000000000000018000000000000000000000000000000000000000000000000000000000000002000000000000000000000000000000000000000000000000000000000000000030b10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000200017a7fcf06faf493d30bbe2632ea7c2383cd86825e12797165de7aa35589483000000000000000000000000000000000000000000000000000000000000000800405973070000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000060a889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb500000000000000000000000000000000000000000000000000000000000000083f3d080000000000000000000000000000000000000000000000000000000000");
 
     final Log log = new Log(address, data, topics);
-    final Deposit deposit = DepositDecoder.decodeFromLog(log);
+    final DepositRequest depositRequest = DepositRequestDecoder.decodeFromLog(log);
 
-    final Deposit expectedDeposit =
-        new Deposit(
+    final DepositRequest expectedDepositRequest =
+        new DepositRequest(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
             Bytes32.fromHexString(
@@ -78,6 +78,6 @@ class DepositDecoderTest {
                 "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
             UInt64.valueOf(539967));
 
-    assertThat(deposit).isEqualTo(expectedDeposit);
+    assertThat(depositRequest).isEqualTo(expectedDepositRequest);
   }
 }
