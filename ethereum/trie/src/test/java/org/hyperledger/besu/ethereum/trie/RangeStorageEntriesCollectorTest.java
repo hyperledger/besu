@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,10 +28,11 @@ public class RangeStorageEntriesCollectorTest {
 
   @Test
   public void shouldRetrieveAllLeavesInRangeWhenStartFromZero() {
-    InMemoryKeyValueStorage worldStateStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage worldStateKeyValueStorage = new InMemoryKeyValueStorage();
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> worldStateStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
+            (location, hash) ->
+                worldStateKeyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
             b -> b,
             b -> b);
     final List<Bytes32> lists =
@@ -47,10 +48,11 @@ public class RangeStorageEntriesCollectorTest {
 
   @Test
   public void shouldRetrieveAllLeavesInRangeWhenStartFromSpecificRange() {
-    InMemoryKeyValueStorage worldStateStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage worldStateKeyValueStorage = new InMemoryKeyValueStorage();
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> worldStateStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
+            (location, hash) ->
+                worldStateKeyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
             b -> b,
             b -> b);
     final List<Bytes32> lists =
@@ -66,10 +68,11 @@ public class RangeStorageEntriesCollectorTest {
 
   @Test
   public void shouldExcludeLeavesNotInRange() {
-    InMemoryKeyValueStorage worldStateStorage = new InMemoryKeyValueStorage();
+    InMemoryKeyValueStorage worldStateKeyValueStorage = new InMemoryKeyValueStorage();
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
         new StoredMerklePatriciaTrie<>(
-            (location, hash) -> worldStateStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
+            (location, hash) ->
+                worldStateKeyValueStorage.get(hash.toArrayUnsafe()).map(Bytes::wrap),
             b -> b,
             b -> b);
     final List<Bytes32> lists =

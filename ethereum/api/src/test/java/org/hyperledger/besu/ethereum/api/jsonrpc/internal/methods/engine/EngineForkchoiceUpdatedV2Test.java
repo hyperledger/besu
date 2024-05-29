@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -41,5 +42,10 @@ public class EngineForkchoiceUpdatedV2Test extends AbstractEngineForkchoiceUpdat
   @Override
   protected String getMethodName() {
     return RpcMethod.ENGINE_FORKCHOICE_UPDATED_V2.getMethodName();
+  }
+
+  @Override
+  protected RpcErrorType expectedInvalidPayloadError() {
+    return RpcErrorType.INVALID_PARAMS;
   }
 }

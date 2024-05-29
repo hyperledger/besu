@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -168,29 +168,6 @@ public interface MergeContext extends ConsensusContext {
    * @return the optional block with receipts
    */
   Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId);
-
-  /**
-   * Sets is chain pruning enabled.
-   *
-   * @param isChainPruningEnabled whether chain pruning is enabled
-   */
-  default void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {}
-
-  /**
-   * Is chain pruning enabled.
-   *
-   * @return the boolean
-   */
-  default boolean isChainPruningEnabled() {
-    return false;
-  }
-
-  /**
-   * Is checkpoint post merge sync.
-   *
-   * @return the boolean
-   */
-  boolean isCheckpointPostMergeSync();
 
   /**
    * Is configured for a post-merge from genesis.

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -25,6 +25,7 @@ public class JumpFOperation extends AbstractOperation {
 
   /** The constant OPCODE. */
   public static final int OPCODE = 0xe5;
+
   /** The Jump F success operation result. */
   static final OperationResult jumpfSuccess = new OperationResult(3, null);
 

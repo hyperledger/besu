@@ -151,7 +151,11 @@ public abstract class PeerDiscoveryAgent {
     if (config.isActive()) {
       final String host = config.getBindHost();
       final int port = config.getBindPort();
-      LOG.info("Starting peer discovery agent on host={}, port={}", host, port);
+      LOG.info(
+          "Starting peer discovery agent on host={}, port={}. IPv6 {}.",
+          host,
+          port,
+          NetworkUtility.isIPv6Available() ? "available" : "not available");
 
       // override advertised host if we detect an external IP address via NAT manager
       this.advertisedAddress = natService.queryExternalIPAddress(config.getAdvertisedHost());

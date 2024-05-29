@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.consensus.common.bft;
 
 import static com.google.common.base.Preconditions.checkArgument;
@@ -39,12 +38,13 @@ public class BftProtocolSchedule extends DefaultProtocolSchedule {
   }
 
   /**
-   * Look up ProtocolSpec by block number
+   * Look up ProtocolSpec by block number or timestamp
    *
    * @param number block number
-   * @return the protocol spec for that block number
+   * @param timestamp block timestamp
+   * @return the protocol spec for that block number or timestamp
    */
-  public ProtocolSpec getByBlockNumber(final long number) {
+  public ProtocolSpec getByBlockNumberOrTimestamp(final long number, final long timestamp) {
     checkArgument(number >= 0, "number must be non-negative");
     checkArgument(
         !protocolSpecs.isEmpty(), "At least 1 milestone must be provided to the protocol schedule");
@@ -53,12 +53,19 @@ public class BftProtocolSchedule extends DefaultProtocolSchedule {
         "There must be a milestone starting from block 0");
     // protocolSpecs is sorted in descending block order, so the first one we find that's lower than
     // the requested level will be the most appropriate spec
+    ProtocolSpec theSpec = null;
     for (final ScheduledProtocolSpec s : protocolSpecs) {
-      if (number >= s.fork().milestone()) {
-        return s.spec();
+      if ((s instanceof ScheduledProtocolSpec.BlockNumberProtocolSpec)
+          && (number >= s.fork().milestone())) {
+        theSpec = s.spec();
+        break;
+      } else if ((s instanceof ScheduledProtocolSpec.TimestampProtocolSpec)
+          && (timestamp >= s.fork().milestone())) {
+        theSpec = s.spec();
+        break;
       }
     }
-    return null;
+    return theSpec;
   }
 
   /**

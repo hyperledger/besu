@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 /** The Post merge context. */
 public class PostMergeContext implements MergeContext {
   private static final Logger LOG = LoggerFactory.getLogger(PostMergeContext.class);
+
   /** The Max blocks in progress. */
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
@@ -70,12 +71,7 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
   private final BlockValueCalculator blockValueCalculator = new BlockValueCalculator();
-  private boolean isCheckpointPostMergeSync;
   private boolean isPostMergeAtGenesis;
-
-  // TODO: cleanup - isChainPruningEnabled will not be required after
-  // https://github.com/hyperledger/besu/pull/4703 is merged.
-  private boolean isChainPruningEnabled = false;
 
   /** Instantiates a new Post merge context. */
   @VisibleForTesting
@@ -92,7 +88,6 @@ public class PostMergeContext implements MergeContext {
   PostMergeContext(final Difficulty difficulty) {
     this.terminalTotalDifficulty = new AtomicReference<>(difficulty);
     this.syncState = new AtomicReference<>();
-    this.isCheckpointPostMergeSync = false;
   }
 
   /**
@@ -302,32 +297,6 @@ public class PostMergeContext implements MergeContext {
         + block.getHeader().getGasUsed()
         + " transactions "
         + block.getBody().getTransactions().size();
-  }
-
-  @Override
-  public void setIsChainPruningEnabled(final boolean isChainPruningEnabled) {
-    this.isChainPruningEnabled = isChainPruningEnabled;
-  }
-
-  @Override
-  public boolean isChainPruningEnabled() {
-    return isChainPruningEnabled;
-  }
-
-  /**
-   * Sets checkpoint post merge sync.
-   *
-   * @param isCheckpointPostMergeSync the is checkpoint post merge sync
-   * @return the checkpoint post merge sync
-   */
-  public PostMergeContext setCheckpointPostMergeSync(final boolean isCheckpointPostMergeSync) {
-    this.isCheckpointPostMergeSync = isCheckpointPostMergeSync;
-    return this;
-  }
-
-  @Override
-  public boolean isCheckpointPostMergeSync() {
-    return this.isCheckpointPostMergeSync;
   }
 
   @Override

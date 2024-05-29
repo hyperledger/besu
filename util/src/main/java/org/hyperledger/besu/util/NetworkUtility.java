@@ -35,14 +35,19 @@ import org.slf4j.LoggerFactory;
 public class NetworkUtility {
   /** The constant INADDR_ANY. */
   public static final String INADDR_ANY = "0.0.0.0";
+
   /** The constant INADDR_NONE. */
   public static final String INADDR_NONE = "255.255.255.255";
+
   /** The constant INADDR6_ANY. */
   public static final String INADDR6_ANY = "0:0:0:0:0:0:0:0";
+
   /** The constant INADDR6_NONE. */
   public static final String INADDR6_NONE = "::";
+
   /** The constant INADDR_LOCALHOST. */
   public static final String INADDR_LOCALHOST = "127.0.0.1";
+
   /** The constant INADDR6_LOCALHOST. */
   public static final String INADDR6_LOCALHOST = "::1";
 
@@ -160,41 +165,39 @@ public class NetworkUtility {
   }
 
   /**
-   * Is port available for tcp.
+   * Is port unavailable for tcp.
    *
    * @param port the port
-   * @return the boolean
+   * @return true if the port is unavailable for TCP
    */
-  public static boolean isPortAvailableForTcp(final int port) {
+  public static boolean isPortUnavailableForTcp(final int port) {
     try (final ServerSocket serverSocket = new ServerSocket()) {
       serverSocket.setReuseAddress(true);
       serverSocket.bind(new InetSocketAddress(port));
-      return true;
+      serverSocket.close();
+      return false;
     } catch (IOException ex) {
       LOG.trace(String.format("Failed to open port %d for TCP", port), ex);
     }
-    return false;
-  }
-
-  private static boolean isPortAvailableForUdp(final int port) {
-    try (final DatagramSocket datagramSocket = new DatagramSocket(null)) {
-      datagramSocket.setReuseAddress(true);
-      datagramSocket.bind(new InetSocketAddress(port));
-      return true;
-    } catch (IOException ex) {
-      LOG.trace(String.format("failed to open port %d for UDP", port), ex);
-    }
-    return false;
+    return true;
   }
 
   /**
-   * Is port available.
+   * Is port unavailable for udp.
    *
    * @param port the port
-   * @return the boolean
+   * @return true if the port is unavailable for UDP
    */
-  public static boolean isPortAvailable(final int port) {
-    return isPortAvailableForTcp(port) && isPortAvailableForUdp(port);
+  public static boolean isPortUnavailableForUdp(final int port) {
+    try (final DatagramSocket datagramSocket = new DatagramSocket(null)) {
+      datagramSocket.setReuseAddress(true);
+      datagramSocket.bind(new InetSocketAddress(port));
+      datagramSocket.close();
+      return false;
+    } catch (IOException ex) {
+      LOG.trace(String.format("failed to open port %d for UDP", port), ex);
+    }
+    return true;
   }
 
   /**

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,9 +16,9 @@ package org.hyperledger.besu.datatypes;
 
 import java.util.Objects;
 import java.util.Optional;
+import javax.annotation.Nonnull;
 
 import org.apache.tuweni.units.bigints.UInt256;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * StorageSlotKey represents a key used for storage slots in Ethereum. It contains the hash of the
@@ -105,7 +105,7 @@ public class StorageSlotKey implements Comparable<StorageSlotKey> {
   }
 
   @Override
-  public int compareTo(@NotNull final StorageSlotKey other) {
+  public int compareTo(@Nonnull final StorageSlotKey other) {
     return this.slotHash.compareTo(other.slotHash);
   }
 }

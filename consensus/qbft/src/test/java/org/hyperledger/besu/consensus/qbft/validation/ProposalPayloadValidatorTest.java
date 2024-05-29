@@ -1,5 +1,5 @@
 /*
- * Copyright 2022 Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -40,6 +40,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
@@ -87,7 +88,7 @@ public class ProposalPayloadValidatorTest {
             blockChain,
             worldStateArchive,
             setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), bftExtraDataCodec),
-            Optional.empty());
+            new BadBlockManager());
   }
 
   @Test
@@ -240,7 +241,7 @@ public class ProposalPayloadValidatorTest {
         setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), pkiQbftExtraDataCodec);
     final Bytes cms = Bytes.fromHexStringLenient("0x1");
     final ProtocolContext protocolContext =
-        new ProtocolContext(blockChain, worldStateArchive, qbftContext, Optional.empty());
+        new ProtocolContext(blockChain, worldStateArchive, qbftContext, new BadBlockManager());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(
@@ -275,7 +276,7 @@ public class ProposalPayloadValidatorTest {
         setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), pkiQbftExtraDataCodec);
     final Bytes cms = Bytes.fromHexStringLenient("0x1");
     final ProtocolContext protocolContext =
-        new ProtocolContext(blockChain, worldStateArchive, qbftContext, Optional.empty());
+        new ProtocolContext(blockChain, worldStateArchive, qbftContext, new BadBlockManager());
 
     final ProposalPayloadValidator payloadValidator =
         new ProposalPayloadValidator(

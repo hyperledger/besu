@@ -432,10 +432,9 @@ public abstract class JsonBlockImporterTest {
     return createController(genesisConfigFile);
   }
 
-  protected BesuController createController(final GenesisConfigFile genesisConfigFile)
-      throws IOException {
+  protected BesuController createController(final GenesisConfigFile genesisConfigFile) {
     return new BesuController.Builder()
-        .fromGenesisConfig(genesisConfigFile, SyncMode.FAST)
+        .fromGenesisFile(genesisConfigFile, SyncMode.FAST)
         .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .storageProvider(new InMemoryKeyValueStorageProvider())

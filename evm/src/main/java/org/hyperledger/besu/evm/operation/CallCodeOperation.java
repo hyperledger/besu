@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,7 +18,6 @@ import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
@@ -83,32 +82,5 @@ public class CallCodeOperation extends AbstractCallOperation {
   @Override
   public long gasAvailableForChildCall(final MessageFrame frame) {
     return gasCalculator().gasAvailableForChildCall(frame, gas(frame), !value(frame).isZero());
-  }
-
-  @Override
-  protected boolean isStatic(final MessageFrame frame) {
-    return frame.isStatic();
-  }
-
-  @Override
-  public long cost(final MessageFrame frame) {
-    final long stipend = gas(frame);
-    final long inputDataOffset = inputDataOffset(frame);
-    final long inputDataLength = inputDataLength(frame);
-    final long outputDataOffset = outputDataOffset(frame);
-    final long outputDataLength = outputDataLength(frame);
-    final Account recipient = frame.getWorldUpdater().get(address(frame));
-
-    return gasCalculator()
-        .callOperationGasCost(
-            frame,
-            stipend,
-            inputDataOffset,
-            inputDataLength,
-            outputDataOffset,
-            outputDataLength,
-            value(frame),
-            recipient,
-            to(frame));
   }
 }

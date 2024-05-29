@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -25,8 +25,10 @@ public class ReturnStack extends FlexStack<ReturnStack.ReturnStackItem> {
 
     /** The Code section index. */
     final int codeSectionIndex;
+
     /** The Pc. */
     final int pc;
+
     /** The Stack height. */
     final int stackHeight;
 

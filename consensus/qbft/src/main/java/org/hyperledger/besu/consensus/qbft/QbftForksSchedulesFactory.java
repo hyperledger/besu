@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,13 +20,15 @@ import org.hyperledger.besu.config.QbftFork;
 import org.hyperledger.besu.config.QbftFork.VALIDATOR_SELECTION_MODE;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
-import org.hyperledger.besu.consensus.common.bft.BftForksScheduleFactory;
+import org.hyperledger.besu.consensus.common.ForksScheduleFactory;
 
 import java.util.List;
 import java.util.Optional;
 
 /** The Qbft forks schedules factory. */
 public class QbftForksSchedulesFactory {
+  /** Default constructor */
+  private QbftForksSchedulesFactory() {}
 
   /**
    * Create forks schedule.
@@ -35,7 +37,7 @@ public class QbftForksSchedulesFactory {
    * @return the forks schedule
    */
   public static ForksSchedule<QbftConfigOptions> create(final GenesisConfigOptions genesisConfig) {
-    return BftForksScheduleFactory.create(
+    return ForksScheduleFactory.create(
         genesisConfig.getQbftConfigOptions(),
         genesisConfig.getTransitions().getQbftForks(),
         QbftForksSchedulesFactory::createQbftConfigOptions);

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -23,18 +24,19 @@ import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
+import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -97,18 +99,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
+    long currentBlobGasUsed = 0;
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
-    if (blockHeader.getParentBeaconBlockRoot().isPresent()) {
-      final WorldUpdater updater = worldState.updater();
-      ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-          updater, blockHeader.getTimestamp(), blockHeader.getParentBeaconBlockRoot().get());
-    }
+    protocolSpec.getBlockHashProcessor().processBlockHashes(blockchain, worldState, blockHeader);
 
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
@@ -127,7 +125,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       Wei blobGasPrice =
           maybeParentHeader
               .map(
-                  (parentHeader) ->
+                  parentHeader ->
                       protocolSpec
                           .getFeeMarket()
                           .blobGasPricePerGas(
@@ -136,7 +134,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
-              blockchain,
               worldStateUpdater,
               blockHeader,
               transaction,
@@ -163,12 +160,25 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       worldStateUpdater.commit();
 
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
+      if (transaction.getVersionedHashes().isPresent()) {
+        currentBlobGasUsed +=
+            (transaction.getVersionedHashes().get().size() * CancunGasCalculator.BLOB_GAS_PER_BLOB);
+      }
+
       final TransactionReceipt transactionReceipt =
           transactionReceiptFactory.create(
               transaction.getType(), result, worldState, currentGasUsed);
       receipts.add(transactionReceipt);
     }
-
+    if (blockHeader.getBlobGasUsed().isPresent()
+        && currentBlobGasUsed != blockHeader.getBlobGasUsed().get()) {
+      String errorMessage =
+          String.format(
+              "block did not consume expected blob gas: header %d, transactions %d",
+              blockHeader.getBlobGasUsed().get(), currentBlobGasUsed);
+      LOG.error(errorMessage);
+      return new BlockProcessingResult(Optional.empty(), errorMessage);
+    }
     final Optional<WithdrawalsProcessor> maybeWithdrawalsProcessor =
         protocolSpec.getWithdrawalsProcessor();
     if (maybeWithdrawalsProcessor.isPresent() && maybeWithdrawals.isPresent()) {
@@ -180,6 +190,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         LOG.error("failed processing withdrawals", e);
         return new BlockProcessingResult(Optional.empty(), e);
       }
+    }
+
+    // EIP-7685: process EL requests
+    final Optional<RequestProcessorCoordinator> requestProcessor =
+        protocolSpec.getRequestProcessorCoordinator();
+    Optional<List<Request>> maybeRequests = Optional.empty();
+    if (requestProcessor.isPresent()) {
+      maybeRequests = requestProcessor.get().process(worldState, receipts);
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
@@ -203,7 +221,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       return new BlockProcessingResult(Optional.empty(), e);
     }
 
-    return new BlockProcessingResult(Optional.of(new BlockProcessingOutputs(worldState, receipts)));
+    return new BlockProcessingResult(
+        Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)));
   }
 
   protected boolean hasAvailableBlockBudget(

@@ -1,6 +1,5 @@
 /*
- *
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.eth.sync.backwardsync;
 
@@ -22,11 +20,13 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedException;
 import org.hyperledger.besu.ethereum.eth.manager.task.WaitForPeersTask;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionException;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -61,16 +61,7 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
   public CompletableFuture<Void> pickNextStep() {
     final Optional<Hash> firstHash = context.getBackwardChain().getFirstHashToAppend();
     if (firstHash.isPresent()) {
-      return executeSyncStep(firstHash.get())
-          .thenAccept(
-              result -> {
-                LOG.atDebug()
-                    .setMessage("Backward sync target block is {}")
-                    .addArgument(result::toLogString)
-                    .log();
-                context.getBackwardChain().removeFromHashToAppend(firstHash.get());
-                context.getStatus().updateTargetHeight(result.getHeader().getNumber());
-              });
+      return handleSyncStep(firstHash.get());
     }
     if (!context.isReady()) {
       return waitForReady();
@@ -109,6 +100,59 @@ public class BackwardSyncAlgorithm implements BesuEvents.InitialSyncCompletionLi
     }
 
     return executeBackwardAsync(firstAncestorHeader);
+  }
+
+  private CompletableFuture<Void> handleSyncStep(final Hash firstHash) {
+    final CompletableFuture<Void> syncStep = new CompletableFuture<>();
+    executeSyncStep(firstHash)
+        .whenComplete(
+            (result, error) -> {
+              if (error != null) {
+                handleSyncStepError(error, firstHash, syncStep);
+              } else {
+                handleSyncStepSuccess(result, firstHash, syncStep);
+              }
+            });
+    return syncStep;
+  }
+
+  private void handleSyncStepSuccess(
+      final Block result, final Hash firstHash, final CompletableFuture<Void> syncStep) {
+    if (result == null) {
+      LOG.atWarn().setMessage("Unexpected null result in for hash {}").addArgument(firstHash).log();
+      syncStep.completeExceptionally(new BackwardSyncException("Unexpected null result", true));
+    } else {
+      LOG.atDebug()
+          .setMessage("Backward sync target block is {}")
+          .addArgument(result::toLogString)
+          .log();
+      context.getBackwardChain().removeFromHashToAppend(firstHash);
+      context.getStatus().updateTargetHeight(result.getHeader().getNumber());
+      syncStep.complete(null);
+    }
+  }
+
+  private void handleSyncStepError(
+      final Throwable error, final Hash firstHash, final CompletableFuture<Void> syncStep) {
+    if (error instanceof CompletionException
+        && error.getCause() instanceof MaxRetriesReachedException) {
+      handleEthPeerMaxRetriesException(firstHash);
+      syncStep.complete(null);
+    } else {
+      syncStep.completeExceptionally(error);
+    }
+  }
+
+  private void handleEthPeerMaxRetriesException(final Hash firstHash) {
+    context.getBackwardChain().removeFromHashToAppend(firstHash);
+    LOG.atWarn()
+        .setMessage(
+            "Unable to retrieve block {} from any peer, with {} peers available. Could be a reorged block. Waiting for the next block from the consensus client to try again.")
+        .addArgument(firstHash)
+        .addArgument(context.getEthContext().getEthPeers().peerCount())
+        .addArgument(context.getBackwardChain().getFirstHashToAppend())
+        .log();
+    LOG.atDebug().setMessage("Removing hash {} from hashesToAppend").addArgument(firstHash).log();
   }
 
   @VisibleForTesting

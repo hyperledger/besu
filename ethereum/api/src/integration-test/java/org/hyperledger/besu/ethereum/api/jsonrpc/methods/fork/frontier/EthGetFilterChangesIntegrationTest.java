@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -120,11 +121,14 @@ public class EthGetFilterChangesIntegrationTest {
             batchAddedListener,
             ethContext,
             new TransactionPoolMetrics(metricsSystem),
-            TransactionPoolConfiguration.DEFAULT,
-            null);
+            TransactionPoolConfiguration.DEFAULT);
     transactionPool.setEnabled();
     final BlockchainQueries blockchainQueries =
-        new BlockchainQueries(blockchain, protocolContext.getWorldStateArchive());
+        new BlockchainQueries(
+            executionContext.getProtocolSchedule(),
+            blockchain,
+            protocolContext.getWorldStateArchive(),
+            MiningParameters.newDefault());
     filterManager =
         new FilterManagerBuilder()
             .blockchainQueries(blockchainQueries)

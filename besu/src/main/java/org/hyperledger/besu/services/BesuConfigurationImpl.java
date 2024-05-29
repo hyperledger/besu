@@ -14,25 +14,79 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.nio.file.Path;
+import java.util.Optional;
 
 /** A concrete implementation of BesuConfiguration which is used in Besu plugin framework. */
 public class BesuConfigurationImpl implements BesuConfiguration {
+  private Path storagePath;
+  private Path dataPath;
+  private DataStorageConfiguration dataStorageConfiguration;
 
-  private final Path storagePath;
-  private final Path dataPath;
+  // defaults
+  private MiningParameters miningParameters = MiningParameters.newDefault();
+  private Optional<String> rpcHttpHost = Optional.of("http://localhost");
+  private Optional<Integer> rpcHttpPort = Optional.of(8545);
+
+  /** Default Constructor. */
+  public BesuConfigurationImpl() {}
 
   /**
-   * BesuConfigurationImpl Constructor.
+   * Post creation initialization
    *
    * @param dataPath The Path representing data folder
    * @param storagePath The path representing storage folder
+   * @param dataStorageConfiguration The data storage configuration
+   * @return BesuConfigurationImpl instance
    */
-  public BesuConfigurationImpl(final Path dataPath, final Path storagePath) {
+  public BesuConfigurationImpl init(
+      final Path dataPath,
+      final Path storagePath,
+      final DataStorageConfiguration dataStorageConfiguration) {
     this.dataPath = dataPath;
     this.storagePath = storagePath;
+    this.dataStorageConfiguration = dataStorageConfiguration;
+    return this;
+  }
+
+  /**
+   * Set the mining parameters
+   *
+   * @param miningParameters configured mining parameters
+   * @return BesuConfigurationImpl instance
+   */
+  public BesuConfigurationImpl withMiningParameters(final MiningParameters miningParameters) {
+    this.miningParameters = miningParameters;
+    return this;
+  }
+
+  /**
+   * Set the RPC http options
+   *
+   * @param rpcHttpOptions configured rpc http options
+   * @return BesuConfigurationImpl instance
+   */
+  public BesuConfigurationImpl withJsonRpcHttpOptions(final JsonRpcHttpOptions rpcHttpOptions) {
+    this.rpcHttpHost = Optional.ofNullable(rpcHttpOptions.getRpcHttpHost());
+    this.rpcHttpPort = Optional.ofNullable(rpcHttpOptions.getRpcHttpPort());
+    return this;
+  }
+
+  @Override
+  public Optional<String> getRpcHttpHost() {
+    return rpcHttpHost;
+  }
+
+  @Override
+  public Optional<Integer> getRpcHttpPort() {
+    return rpcHttpPort;
   }
 
   @Override
@@ -43,5 +97,49 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   @Override
   public Path getDataPath() {
     return dataPath;
+  }
+
+  @Override
+  public DataStorageFormat getDatabaseFormat() {
+    return dataStorageConfiguration.getDataStorageFormat();
+  }
+
+  @Override
+  public Wei getMinGasPrice() {
+    return miningParameters.getMinTransactionGasPrice();
+  }
+
+  @Override
+  public org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration
+      getDataStorageConfiguration() {
+    return new DataStoreConfigurationImpl(dataStorageConfiguration);
+  }
+
+  /**
+   * A concrete implementation of DataStorageConfiguration which is used in Besu plugin framework.
+   */
+  public static class DataStoreConfigurationImpl
+      implements org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration {
+
+    private final DataStorageConfiguration dataStorageConfiguration;
+
+    /**
+     * Instantiate the concrete implementation of the plugin DataStorageConfiguration.
+     *
+     * @param dataStorageConfiguration The Ethereum core module data storage configuration
+     */
+    public DataStoreConfigurationImpl(final DataStorageConfiguration dataStorageConfiguration) {
+      this.dataStorageConfiguration = dataStorageConfiguration;
+    }
+
+    @Override
+    public DataStorageFormat getDatabaseFormat() {
+      return dataStorageConfiguration.getDataStorageFormat();
+    }
+
+    @Override
+    public boolean getReceiptCompactionEnabled() {
+      return dataStorageConfiguration.getReceiptCompactionEnabled();
+    }
   }
 }

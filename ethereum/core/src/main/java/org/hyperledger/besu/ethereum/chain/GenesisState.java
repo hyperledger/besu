@@ -27,13 +27,13 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -77,16 +77,18 @@ public final class GenesisState {
   /**
    * Construct a {@link GenesisState} from a JSON string.
    *
-   * @param dataStorageFormat A {@link DataStorageFormat} describing the storage format to use
+   * @param dataStorageConfiguration A {@link DataStorageConfiguration} describing the storage
+   *     configuration
    * @param json A JSON string describing the genesis block
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromJson(
-      final DataStorageFormat dataStorageFormat,
+      final DataStorageConfiguration dataStorageConfiguration,
       final String json,
       final ProtocolSchedule protocolSchedule) {
-    return fromConfig(dataStorageFormat, GenesisConfigFile.fromConfig(json), protocolSchedule);
+    return fromConfig(
+        dataStorageConfiguration, GenesisConfigFile.fromConfig(json), protocolSchedule);
   }
 
   /**
@@ -98,19 +100,20 @@ public final class GenesisState {
    */
   public static GenesisState fromConfig(
       final GenesisConfigFile config, final ProtocolSchedule protocolSchedule) {
-    return fromConfig(DataStorageFormat.FOREST, config, protocolSchedule);
+    return fromConfig(DataStorageConfiguration.DEFAULT_CONFIG, config, protocolSchedule);
   }
 
   /**
    * Construct a {@link GenesisState} from a JSON object.
    *
-   * @param dataStorageFormat A {@link DataStorageFormat} describing the storage format to use
+   * @param dataStorageConfiguration A {@link DataStorageConfiguration} describing the storage
+   *     configuration
    * @param config A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromConfig(
-      final DataStorageFormat dataStorageFormat,
+      final DataStorageConfiguration dataStorageConfiguration,
       final GenesisConfigFile config,
       final ProtocolSchedule protocolSchedule) {
     final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
@@ -118,19 +121,37 @@ public final class GenesisState {
         new Block(
             buildHeader(
                 config,
-                calculateGenesisStateHash(dataStorageFormat, genesisAccounts),
+                calculateGenesisStateHash(dataStorageConfiguration, genesisAccounts),
                 protocolSchedule),
             buildBody(config));
+    return new GenesisState(block, genesisAccounts);
+  }
+
+  /**
+   * Construct a {@link GenesisState} from a JSON object.
+   *
+   * @param genesisStateHash The hash of the genesis state.
+   * @param config A {@link GenesisConfigFile} describing the genesis block.
+   * @param protocolSchedule A protocol Schedule associated with
+   * @return A new {@link GenesisState}.
+   */
+  public static GenesisState fromConfig(
+      final Hash genesisStateHash,
+      final GenesisConfigFile config,
+      final ProtocolSchedule protocolSchedule) {
+    final List<GenesisAccount> genesisAccounts = parseAllocations(config).toList();
+    final Block block =
+        new Block(buildHeader(config, genesisStateHash, protocolSchedule), buildBody(config));
     return new GenesisState(block, genesisAccounts);
   }
 
   private static BlockBody buildBody(final GenesisConfigFile config) {
     final Optional<List<Withdrawal>> withdrawals =
         isShanghaiAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
-    final Optional<List<Deposit>> deposits =
-        isExperimentalEipsTimeAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
+    final Optional<List<Request>> requests =
+        isPragueAtGenesis(config) ? Optional.of(emptyList()) : Optional.empty();
 
-    return new BlockBody(emptyList(), emptyList(), withdrawals, deposits);
+    return new BlockBody(emptyList(), emptyList(), withdrawals, requests);
   }
 
   public Block getBlock() {
@@ -164,8 +185,9 @@ public final class GenesisState {
   }
 
   private static Hash calculateGenesisStateHash(
-      final DataStorageFormat dataStorageFormat, final List<GenesisAccount> genesisAccounts) {
-    try (var worldState = createGenesisWorldState(dataStorageFormat)) {
+      final DataStorageConfiguration dataStorageConfiguration,
+      final List<GenesisAccount> genesisAccounts) {
+    try (var worldState = createGenesisWorldState(dataStorageConfiguration)) {
       writeAccountsTo(worldState, genesisAccounts, null);
       return worldState.rootHash();
     } catch (Exception e) {
@@ -201,7 +223,7 @@ public final class GenesisState {
         .excessBlobGas(isCancunAtGenesis(genesis) ? parseExcessBlobGas(genesis) : null)
         .parentBeaconBlockRoot(
             (isCancunAtGenesis(genesis) ? parseParentBeaconBlockRoot(genesis) : null))
-        .depositsRoot(isExperimentalEipsTimeAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
+        .requestsRoot(isPragueAtGenesis(genesis) ? Hash.EMPTY_TRIE_HASH : null)
         .buildBlockHeader();
   }
 

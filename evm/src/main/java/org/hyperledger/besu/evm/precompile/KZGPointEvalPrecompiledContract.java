@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,12 +22,12 @@ import org.hyperledger.besu.evm.internal.Words;
 import java.nio.file.Path;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import ethereum.ckzg4844.CKZG4844JNI;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -79,8 +79,6 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
           "Loading network trusted setup from classpath resource {}", trustedSetupResourceName);
       CKZG4844JNI.loadTrustedSetupFromResource(
           trustedSetupResourceName, KZGPointEvalPrecompiledContract.class);
-    } else {
-      throw new IllegalStateException("KZG trusted setup was already loaded");
     }
   }
 
@@ -90,6 +88,9 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     CKZG4844JNI.freeTrustedSetup();
     loaded.set(false);
   }
+
+  /** Default constructor. */
+  public KZGPointEvalPrecompiledContract() {}
 
   @Override
   public String getName() {
@@ -102,10 +103,10 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     return 50000;
   }
 
-  @NotNull
+  @Nonnull
   @Override
   public PrecompileContractResult computePrecompile(
-      final Bytes input, @NotNull final MessageFrame messageFrame) {
+      final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
     if (input.size() != 192) {
       return PrecompileContractResult.halt(

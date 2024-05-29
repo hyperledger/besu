@@ -17,6 +17,7 @@ package org.hyperledger.besu;
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
+import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
@@ -57,6 +58,7 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -84,6 +86,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -163,12 +166,13 @@ public final class RunnerTest {
     final Path dataDirAhead = Files.createTempDirectory(temp, "db-ahead");
     final Path dbAhead = dataDirAhead.resolve("database");
     final int blockCount = 500;
-    final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dbAhead));
+    final NodeKey aheadDbNodeKey = NodeKeyUtils.createFrom(KeyPairUtil.loadKeyPair(dataDirAhead));
     final NodeKey behindDbNodeKey = NodeKeyUtils.generate();
     final SynchronizerConfiguration syncConfigAhead =
         SynchronizerConfiguration.builder().syncMode(SyncMode.FULL).build();
     final ObservableMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
-
+    final var miningParameters = MiningParameters.newDefault();
+    final var dataStorageConfiguration = DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
     // Setup Runner with blocks
     final BesuController controllerAhead =
         getController(
@@ -176,8 +180,10 @@ public final class RunnerTest {
             syncConfigAhead,
             dataDirAhead,
             aheadDbNodeKey,
-            createKeyValueStorageProvider(dataDirAhead, dbAhead),
-            noOpMetricsSystem);
+            createKeyValueStorageProvider(
+                dataDirAhead, dbAhead, dataStorageConfiguration, miningParameters),
+            noOpMetricsSystem,
+            miningParameters);
     setupState(
         blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
 
@@ -232,12 +238,13 @@ public final class RunnerTest {
               dataDirBehind,
               behindDbNodeKey,
               new InMemoryKeyValueStorageProvider(),
-              noOpMetricsSystem);
+              noOpMetricsSystem,
+              miningParameters);
 
       final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              EthNetworkConfig.jsonConfig(DEV),
+              GenesisConfigFile.fromResource(DEV.getGenesisFile()),
               DEV.getNetworkId(),
               Collections.singletonList(aheadEnode),
               null);
@@ -362,8 +369,11 @@ public final class RunnerTest {
         .build();
   }
 
-  private GenesisConfigFile getFastSyncGenesis() {
-    final ObjectNode jsonNode = GenesisConfigFile.mainnetJsonNode();
+  private GenesisConfigFile getFastSyncGenesis() throws IOException {
+    final ObjectNode jsonNode =
+        (ObjectNode)
+            new ObjectMapper()
+                .readTree(GenesisConfigFile.class.getResource(MAINNET.getGenesisFile()));
     final Optional<ObjectNode> configNode = JsonUtil.getObjectNode(jsonNode, "config");
     configNode.ifPresent(
         (node) -> {
@@ -375,7 +385,15 @@ public final class RunnerTest {
     return GenesisConfigFile.fromConfig(jsonNode);
   }
 
-  private StorageProvider createKeyValueStorageProvider(final Path dataDir, final Path dbDir) {
+  private StorageProvider createKeyValueStorageProvider(
+      final Path dataDir,
+      final Path dbDir,
+      final DataStorageConfiguration dataStorageConfiguration,
+      final MiningParameters miningParameters) {
+    final var besuConfiguration = new BesuConfigurationImpl();
+    besuConfiguration
+        .init(dataDir, dbDir, dataStorageConfiguration)
+        .withMiningParameters(miningParameters);
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -387,7 +405,7 @@ public final class RunnerTest {
                         DEFAULT_IS_HIGH_SPEC),
                 Arrays.asList(KeyValueSegmentIdentifier.values()),
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
-        .withCommonConfiguration(new BesuConfigurationImpl(dataDir, dbDir))
+        .withCommonConfiguration(besuConfiguration)
         .withMetricsSystem(new NoOpMetricsSystem())
         .build();
   }
@@ -443,26 +461,27 @@ public final class RunnerTest {
       final Path dataDir,
       final NodeKey nodeKey,
       final StorageProvider storageProvider,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final MiningParameters miningParameters) {
     return new MainnetBesuControllerBuilder()
         .genesisConfigFile(genesisConfig)
         .synchronizerConfiguration(syncConfig)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .dataDirectory(dataDir)
         .networkId(NETWORK_ID)
-        .miningParameters(MiningParameters.newDefault())
+        .miningParameters(miningParameters)
         .nodeKey(nodeKey)
         .storageProvider(storageProvider)
         .metricsSystem(metricsSystem)
         .privacyParameters(PrivacyParameters.DEFAULT)
         .clock(TestClock.fixed())
         .transactionPoolConfiguration(TransactionPoolConfiguration.DEFAULT)
+        .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
         .randomPeerPriority(Boolean.FALSE)
         .maxPeers(25)
-        .lowerBoundPeers(25)
         .maxRemotelyInitiatedPeers(15)
         .build();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,6 +28,7 @@ import java.util.Optional;
 public class TransitionContext implements MergeContext {
   /** The Pre merge context. */
   final ConsensusContext preMergeContext;
+
   /** The Post merge context. */
   final MergeContext postMergeContext;
 
@@ -147,11 +148,6 @@ public class TransitionContext implements MergeContext {
   @Override
   public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
     return postMergeContext.retrieveBlockById(payloadId);
-  }
-
-  @Override
-  public boolean isCheckpointPostMergeSync() {
-    return false;
   }
 
   @Override

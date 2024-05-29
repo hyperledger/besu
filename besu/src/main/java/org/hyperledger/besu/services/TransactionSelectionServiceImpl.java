@@ -15,6 +15,7 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
+import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
 import java.util.Optional;
@@ -24,14 +25,19 @@ public class TransactionSelectionServiceImpl implements TransactionSelectionServ
 
   private Optional<PluginTransactionSelectorFactory> factory = Optional.empty();
 
+  /** Default Constructor. */
+  public TransactionSelectionServiceImpl() {}
+
   @Override
-  public Optional<PluginTransactionSelectorFactory> get() {
-    return factory;
+  public PluginTransactionSelector createPluginTransactionSelector() {
+    return factory
+        .map(PluginTransactionSelectorFactory::create)
+        .orElse(PluginTransactionSelector.ACCEPT_ALL);
   }
 
   @Override
-  public void registerTransactionSelectorFactory(
-      final PluginTransactionSelectorFactory transactionSelectorFactory) {
-    factory = Optional.ofNullable(transactionSelectorFactory);
+  public void registerPluginTransactionSelectorFactory(
+      final PluginTransactionSelectorFactory pluginTransactionSelectorFactory) {
+    factory = Optional.ofNullable(pluginTransactionSelectorFactory);
   }
 }

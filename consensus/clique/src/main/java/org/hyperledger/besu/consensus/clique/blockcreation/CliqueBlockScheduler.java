@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
+import org.hyperledger.besu.config.CliqueConfigOptions;
+import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
@@ -40,14 +42,22 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
    * @param clock the clock
    * @param validatorProvider the validator provider
    * @param localNodeAddress the local node address
-   * @param secondsBetweenBlocks the seconds between blocks
+   * @param forksSchedule the transitions
    */
   public CliqueBlockScheduler(
       final Clock clock,
       final ValidatorProvider validatorProvider,
       final Address localNodeAddress,
-      final long secondsBetweenBlocks) {
-    super(secondsBetweenBlocks, 0L, clock);
+      final ForksSchedule<CliqueConfigOptions> forksSchedule) {
+    super(
+        parentHeader ->
+            (long)
+                forksSchedule
+                    .getFork(parentHeader.getNumber() + 1)
+                    .getValue()
+                    .getBlockPeriodSeconds(),
+        0L,
+        clock);
     this.validatorProvider = validatorProvider;
     this.localNodeAddress = localNodeAddress;
   }
@@ -58,10 +68,10 @@ public class CliqueBlockScheduler extends DefaultBlockScheduler {
     final BlockCreationTimeResult result = super.getNextTimestamp(parentHeader);
 
     final long milliSecondsUntilNextBlock =
-        result.getMillisecondsUntilValid() + calculateTurnBasedDelay(parentHeader);
+        result.millisecondsUntilValid() + calculateTurnBasedDelay(parentHeader);
 
     return new BlockCreationTimeResult(
-        result.getTimestampForHeader(), Math.max(0, milliSecondsUntilNextBlock));
+        result.timestampForHeader(), Math.max(0, milliSecondsUntilNextBlock));
   }
 
   private int calculateTurnBasedDelay(final BlockHeader parentHeader) {

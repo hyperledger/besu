@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,12 +18,15 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.TreeMap;
 
@@ -41,14 +44,16 @@ public class StackTrieTest {
 
     final int nbAccounts = 15;
 
-    final WorldStateStorage worldStateStorage =
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    final WorldStateStorage recreatedWorldStateStorage =
+    final ForestWorldStateKeyValueStorage recreatedWorldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, nbAccounts);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, nbAccounts);
 
     final StackTrie stackTrie =
         new StackTrie(Hash.wrap(accountStateTrie.getRootHash()), 0, 256, lastAccount);
@@ -66,7 +71,7 @@ public class StackTrieTest {
                         collector, visitor, root, lastAccount));
 
     final WorldStateProofProvider worldStateProofProvider =
-        new WorldStateProofProvider(worldStateStorage);
+        new WorldStateProofProvider(worldStateStorageCoordinator);
 
     // generate the proof
     final List<Bytes> proofs =
@@ -78,13 +83,12 @@ public class StackTrieTest {
 
     stackTrie.addElement(Bytes32.random(), proofs, accounts);
 
-    final WorldStateStorage.Updater updater = recreatedWorldStateStorage.updater();
-    stackTrie.commit(updater::putAccountStateTrieNode);
+    final ForestWorldStateKeyValueStorage.Updater updater = recreatedWorldStateStorage.updater();
+    stackTrie.commit(((location, hash, value) -> updater.putAccountStateTrieNode(hash, value)));
     updater.commit();
 
     Assertions.assertThat(
-            recreatedWorldStateStorage.getAccountStateTrieNode(
-                Bytes.EMPTY, accountStateTrie.getRootHash()))
+            recreatedWorldStateStorage.getAccountStateTrieNode(accountStateTrie.getRootHash()))
         .isEmpty();
   }
 
@@ -93,14 +97,16 @@ public class StackTrieTest {
 
     final int nbAccounts = 15;
 
-    final WorldStateStorage worldStateStorage =
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateKeyValueStorage);
 
-    final WorldStateStorage recreatedWorldStateStorage =
+    final ForestWorldStateKeyValueStorage recreatedWorldStateStorage =
         new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
 
     final MerkleTrie<Bytes, Bytes> accountStateTrie =
-        TrieGenerator.generateTrie(worldStateStorage, nbAccounts);
+        TrieGenerator.generateTrie(worldStateStorageCoordinator, nbAccounts);
 
     final StackTrie stackTrie =
         new StackTrie(Hash.wrap(accountStateTrie.getRootHash()), 0, 256, lastAccount);
@@ -119,7 +125,7 @@ public class StackTrieTest {
                           collector, visitor, root, lastAccount));
 
       final WorldStateProofProvider worldStateProofProvider =
-          new WorldStateProofProvider(worldStateStorage);
+          new WorldStateProofProvider(worldStateStorageCoordinator);
 
       // generate the proof
       final List<Bytes> proofs =
@@ -131,13 +137,136 @@ public class StackTrieTest {
 
       stackTrie.addElement(Bytes32.random(), proofs, accounts);
 
-      final WorldStateStorage.Updater updater = recreatedWorldStateStorage.updater();
-      stackTrie.commit(updater::putAccountStateTrieNode);
+      final ForestWorldStateKeyValueStorage.Updater updater = recreatedWorldStateStorage.updater();
+      stackTrie.commit((location, hash, value) -> updater.putAccountStateTrieNode(hash, value));
       updater.commit();
     }
 
     Assertions.assertThat(
-            worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, accountStateTrie.getRootHash()))
+            worldStateKeyValueStorage.getAccountStateTrieNode(accountStateTrie.getRootHash()))
+        .isPresent();
+  }
+
+  @Test
+  public void shouldNotSaveNodeWithChildNotInTheRange() {
+    final ForestWorldStateKeyValueStorage worldStateStorage =
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final WorldStateStorageCoordinator worldStateStorageCoordinator =
+        new WorldStateStorageCoordinator(worldStateStorage);
+
+    final MerkleTrie<Bytes, Bytes> trie =
+        new StoredMerklePatriciaTrie<>(
+            (location, hash) -> worldStateStorage.getAccountStateTrieNode(hash).map(Bytes::wrap),
+            b -> b,
+            b -> b);
+
+    trie.put(Bytes32.rightPad(Bytes.of(0x10)), Bytes.of(0x01));
+    trie.put(Bytes32.rightPad(Bytes.of(0x11)), Bytes.of(0x01));
+    trie.put(Bytes32.rightPad(Bytes.of(0x20)), Bytes.of(0x01));
+    trie.put(Bytes32.rightPad(Bytes.of(0x21)), Bytes.of(0x01));
+    trie.put(Bytes32.rightPad(Bytes.of(0x01)), Bytes.of(0x02));
+    trie.put(Bytes32.rightPad(Bytes.of(0x02)), Bytes.of(0x03));
+    trie.put(Bytes32.rightPad(Bytes.of(0x03)), Bytes.of(0x04));
+
+    final ForestWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
+    trie.commit((location, hash, value) -> updater.putAccountStateTrieNode(hash, value));
+    updater.commit();
+
+    final Bytes32 startRange = Bytes32.rightPad(Bytes.of(0x02));
+
+    final RangeStorageEntriesCollector collector =
+        RangeStorageEntriesCollector.createCollector(
+            startRange, RangeManager.MAX_RANGE, 15, Integer.MAX_VALUE);
+    final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
+    final TreeMap<Bytes32, Bytes> entries =
+        (TreeMap<Bytes32, Bytes>)
+            trie.entriesFrom(
+                root ->
+                    RangeStorageEntriesCollector.collectEntries(
+                        collector, visitor, root, startRange));
+
+    final WorldStateProofProvider worldStateProofProvider =
+        new WorldStateProofProvider(worldStateStorageCoordinator);
+
+    // generate the proof
+    final List<Bytes> proofs =
+        worldStateProofProvider.getAccountProofRelatedNodes(
+            Hash.wrap(trie.getRootHash()), startRange);
+    proofs.addAll(
+        worldStateProofProvider.getAccountProofRelatedNodes(
+            Hash.wrap(trie.getRootHash()), entries.lastKey()));
+
+    // try to commit with stack trie
+    final ForestWorldStateKeyValueStorage recreatedWorldStateStorage =
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final StackTrie stackTrie = new StackTrie(Hash.wrap(trie.getRootHash()), 0, 256, startRange);
+    stackTrie.addSegment();
+    stackTrie.addElement(Bytes32.random(), proofs, entries);
+    final ForestWorldStateKeyValueStorage.Updater updaterStackTrie =
+        recreatedWorldStateStorage.updater();
+    stackTrie.commit(
+        (location, hash, value) -> updaterStackTrie.putAccountStateTrieNode(hash, value));
+    updaterStackTrie.commit();
+
+    // verify the state of the db
+    Assertions.assertThat(worldStateStorage.getAccountStateTrieNode(trie.getRootHash()))
+        .isPresent();
+    Assertions.assertThat(recreatedWorldStateStorage.getAccountStateTrieNode(trie.getRootHash()))
+        .isNotPresent();
+  }
+
+  @Test
+  public void shouldSaveNodeWithAllChildsInTheRange() {
+    final ForestWorldStateKeyValueStorage worldStateStorage =
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+
+    final MerkleTrie<Bytes, Bytes> trie =
+        new StoredMerklePatriciaTrie<>(
+            (location, hash) -> worldStateStorage.getAccountStateTrieNode(hash).map(Bytes::wrap),
+            b -> b,
+            b -> b);
+
+    trie.put(Bytes32.rightPad(Bytes.of(0x10)), Bytes.of(0x01));
+    trie.put(Bytes32.rightPad(Bytes.of(0x11)), Bytes.of(0x01));
+    trie.put(Bytes32.rightPad(Bytes.of(0x20)), Bytes.of(0x01));
+    trie.put(Bytes32.rightPad(Bytes.of(0x21)), Bytes.of(0x01));
+    trie.put(Bytes32.rightPad(Bytes.of(0x01)), Bytes.of(0x02));
+    trie.put(Bytes32.rightPad(Bytes.of(0x02)), Bytes.of(0x03));
+    trie.put(Bytes32.rightPad(Bytes.of(0x03)), Bytes.of(0x04));
+
+    final ForestWorldStateKeyValueStorage.Updater updater = worldStateStorage.updater();
+    trie.commit((location, hash, value) -> updater.putAccountStateTrieNode(hash, value));
+    updater.commit();
+
+    final Bytes32 startRange = Bytes32.rightPad(Bytes.of(0x00));
+
+    final RangeStorageEntriesCollector collector =
+        RangeStorageEntriesCollector.createCollector(
+            startRange, RangeManager.MAX_RANGE, 15, Integer.MAX_VALUE);
+    final TrieIterator<Bytes> visitor = RangeStorageEntriesCollector.createVisitor(collector);
+    final TreeMap<Bytes32, Bytes> entries =
+        (TreeMap<Bytes32, Bytes>)
+            trie.entriesFrom(
+                root ->
+                    RangeStorageEntriesCollector.collectEntries(
+                        collector, visitor, root, startRange));
+
+    // try to commit with stack trie
+    final ForestWorldStateKeyValueStorage recreatedWorldStateStorage =
+        new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+    final StackTrie stackTrie = new StackTrie(Hash.wrap(trie.getRootHash()), 0, 256, startRange);
+    stackTrie.addSegment();
+    stackTrie.addElement(Bytes32.random(), new ArrayList<>(), entries);
+    final ForestWorldStateKeyValueStorage.Updater updaterStackTrie =
+        recreatedWorldStateStorage.updater();
+    stackTrie.commit(
+        (location, hash, value) -> updaterStackTrie.putAccountStateTrieNode(hash, value));
+    updaterStackTrie.commit();
+
+    // verify the state of the db
+    Assertions.assertThat(worldStateStorage.getAccountStateTrieNode(trie.getRootHash()))
+        .isPresent();
+    Assertions.assertThat(recreatedWorldStateStorage.getAccountStateTrieNode(trie.getRootHash()))
         .isPresent();
   }
 }

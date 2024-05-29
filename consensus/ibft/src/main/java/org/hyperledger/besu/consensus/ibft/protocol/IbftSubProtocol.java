@@ -23,10 +23,14 @@ public class IbftSubProtocol implements SubProtocol {
 
   /** The constant NAME. */
   public static String NAME = "IBF";
+
   /** The constant IBFV1. */
   public static final Capability IBFV1 = Capability.create(NAME, 1);
 
   private static final IbftSubProtocol INSTANCE = new IbftSubProtocol();
+
+  /** Default constructor. */
+  public IbftSubProtocol() {}
 
   /**
    * Get ibft sub protocol.

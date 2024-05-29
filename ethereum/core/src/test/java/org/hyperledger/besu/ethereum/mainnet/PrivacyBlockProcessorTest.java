@@ -116,7 +116,6 @@ class PrivacyBlockProcessorTest {
             eq(firstBlock.getBody().getTransactions()),
             eq(firstBlock.getBody().getOmmers()),
             eq(Optional.empty()),
-            eq(Optional.empty()),
             any());
     verify(blockProcessor)
         .processBlock(
@@ -125,7 +124,6 @@ class PrivacyBlockProcessorTest {
             eq(secondBlock.getHeader()),
             eq(secondBlock.getBody().getTransactions()),
             eq(secondBlock.getBody().getOmmers()),
-            eq(Optional.empty()),
             eq(Optional.empty()),
             any());
   }
@@ -183,7 +181,6 @@ class PrivacyBlockProcessorTest {
             eq(secondBlock.getBody().getTransactions()),
             eq(secondBlock.getBody().getOmmers()),
             eq(Optional.empty()),
-            eq(Optional.empty()),
             any());
   }
 
@@ -202,7 +199,7 @@ class PrivacyBlockProcessorTest {
     final MainnetTransactionProcessor mockPublicTransactionProcessor =
         mock(MainnetTransactionProcessor.class);
     when(mockPublicTransactionProcessor.processTransaction(
-            any(), any(), any(), any(), any(), any(), anyBoolean(), any(), any()))
+            any(), any(), any(), any(), any(), anyBoolean(), any(), any()))
         .thenReturn(
             TransactionProcessingResult.successful(
                 Collections.emptyList(), 0, 0, Bytes.EMPTY, ValidationResult.valid()));

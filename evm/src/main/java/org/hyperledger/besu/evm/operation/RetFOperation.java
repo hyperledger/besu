@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -23,6 +23,7 @@ public class RetFOperation extends AbstractOperation {
 
   /** The Opcode. */
   public static final int OPCODE = 0xe4;
+
   /** The Ret F success. */
   static final OperationResult retfSuccess = new OperationResult(3, null);
 

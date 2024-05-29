@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
@@ -188,6 +187,7 @@ public class ReferenceTestBlockchain implements Blockchain {
   }
 
   @Override
+  @SuppressWarnings("unused")
   public Comparator<BlockHeader> getBlockChoiceRule() {
     return (a, b) -> {
       throw new NonDeterministicOperationException(

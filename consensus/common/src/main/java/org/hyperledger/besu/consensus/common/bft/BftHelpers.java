@@ -30,6 +30,9 @@ public class BftHelpers {
   public static final Hash EXPECTED_MIX_HASH =
       Hash.fromHexString("0x63746963616c2062797a616e74696e65206661756c7420746f6c6572616e6365");
 
+  /** Default constructor. */
+  private BftHelpers() {}
+
   /**
    * Calculate required validator quorum int.
    *

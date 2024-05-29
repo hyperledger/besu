@@ -18,6 +18,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Consensus helpers. */
 public class ConsensusHelpers {
+  /** Default constructor. */
+  private ConsensusHelpers() {}
 
   /**
    * Zero left pad bytes.

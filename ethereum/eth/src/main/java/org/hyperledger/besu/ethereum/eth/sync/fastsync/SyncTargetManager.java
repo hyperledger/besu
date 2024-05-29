@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,7 +28,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.RetryingGetHeaderFromPeerByNumberTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 public class SyncTargetManager extends AbstractSyncTargetManager {
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
 
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
   private final EthContext ethContext;
@@ -55,14 +55,14 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
 
   public SyncTargetManager(
       final SynchronizerConfiguration config,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolSchedule protocolSchedule,
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final MetricsSystem metricsSystem,
       final FastSyncState fastSyncState) {
     super(config, protocolSchedule, protocolContext, ethContext, metricsSystem);
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -133,7 +133,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                       pivotBlockHeader.getHash(),
                       result.size() == 1 ? result.get(0).getHash() : "invalid response",
                       bestPeer);
-                  bestPeer.disconnect(DisconnectReason.USELESS_PEER);
+                  bestPeer.disconnect(DisconnectReason.USELESS_PEER_MISMATCHED_PIVOT_BLOCK);
                   return CompletableFuture.completedFuture(Optional.<EthPeer>empty());
                 }
                 LOG.debug(
@@ -147,7 +147,11 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
             })
         .exceptionally(
             error -> {
-              LOG.debug("Could not confirm best peer had pivot block", error);
+              LOG.debug(
+                  "Could not confirm best peer {} had pivot block {}",
+                  bestPeer.getLoggableId(),
+                  pivotBlockHeader.getNumber(),
+                  error);
               return Optional.empty();
             });
   }
@@ -176,7 +180,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
         return true;
       }
     }
-    return !worldStateStorage.isWorldStateAvailable(
+    return !worldStateStorageCoordinator.isWorldStateAvailable(
         pivotBlockHeader.getStateRoot(), pivotBlockHeader.getBlockHash());
   }
 }

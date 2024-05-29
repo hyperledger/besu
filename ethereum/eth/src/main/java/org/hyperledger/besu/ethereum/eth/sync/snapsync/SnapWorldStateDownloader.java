@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,18 +27,19 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePers
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -63,7 +64,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final int maxOutstandingRequests;
   private final int maxNodeRequestsWithoutProgress;
   private final ProtocolContext protocolContext;
-  private final WorldStateStorage worldStateStorage;
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   private final AtomicReference<SnapWorldDownloadState> downloadState = new AtomicReference<>();
 
@@ -71,7 +72,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final EthContext ethContext,
       final SnapSyncStatePersistenceManager snapContext,
       final ProtocolContext protocolContext,
-      final WorldStateStorage worldStateStorage,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection,
       final SnapSyncConfiguration snapSyncConfiguration,
       final int maxOutstandingRequests,
@@ -81,7 +82,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.protocolContext = protocolContext;
-    this.worldStateStorage = worldStateStorage;
+    this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.snapContext = snapContext;
     this.snapTaskCollection = snapTaskCollection;
     this.snapSyncConfiguration = snapSyncConfiguration;
@@ -138,7 +139,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
 
       final SnapWorldDownloadState newDownloadState =
           new SnapWorldDownloadState(
-              worldStateStorage,
+              worldStateStorageCoordinator,
               snapContext,
               protocolContext.getBlockchain(),
               snapSyncState,
@@ -146,14 +147,15 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
               snapsyncMetricsManager,
-              clock);
+              clock,
+              ethContext);
 
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
       snapsyncMetricsManager.initRange(ranges);
 
       final List<AccountRangeDataRequest> currentAccountRange =
           snapContext.getCurrentAccountRange();
-      final HashSet<Bytes> inconsistentAccounts = snapContext.getAccountsHealingList();
+      final Set<Bytes> inconsistentAccounts = snapContext.getAccountsHealingList();
 
       if (!currentAccountRange.isEmpty()) { // continue to download worldstate ranges
         newDownloadState.setAccountsHealingList(inconsistentAccounts);
@@ -167,20 +169,21 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
                 });
       } else if (!snapContext.getAccountsHealingList().isEmpty()) { // restart only the heal step
         snapSyncState.setHealTrieStatus(true);
-        worldStateStorage.clearFlatDatabase();
-        worldStateStorage.clearTrieLog();
+        worldStateStorageCoordinator.applyOnMatchingStrategy(
+            DataStorageFormat.BONSAI,
+            strategy -> {
+              BonsaiWorldStateKeyValueStorage onBonsai = (BonsaiWorldStateKeyValueStorage) strategy;
+              onBonsai.clearFlatDatabase();
+              onBonsai.clearTrieLog();
+            });
+
         newDownloadState.setAccountsHealingList(inconsistentAccounts);
         newDownloadState.enqueueRequest(
             SnapDataRequest.createAccountTrieNodeDataRequest(
                 stateRoot, Bytes.EMPTY, snapContext.getAccountsHealingList()));
       } else {
         // start from scratch
-        worldStateStorage.clear();
-        // we have to upgrade to full flat db mode if we are in bonsai mode
-        if (worldStateStorage.getDataStorageFormat().equals(DataStorageFormat.BONSAI)
-            && snapSyncConfiguration.isFlatDbHealingEnabled()) {
-          ((BonsaiWorldStateKeyValueStorage) worldStateStorage).upgradeToFullFlatDbMode();
-        }
+        worldStateStorageCoordinator.clear();
         ranges.forEach(
             (key, value) ->
                 newDownloadState.enqueueRequest(
@@ -205,7 +208,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .dynamicPivotBlockSelector(dynamicPivotBlockManager)
               .loadLocalDataStep(
                   new LoadLocalDataStep(
-                      worldStateStorage,
+                      worldStateStorageCoordinator,
                       newDownloadState,
                       snapSyncConfiguration,
                       metricsSystem,
@@ -213,14 +216,17 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               .requestDataStep(
                   new RequestDataStep(
                       ethContext,
-                      worldStateStorage,
+                      worldStateStorageCoordinator,
                       snapSyncState,
                       newDownloadState,
                       snapSyncConfiguration,
                       metricsSystem))
               .persistDataStep(
                   new PersistDataStep(
-                      snapSyncState, worldStateStorage, newDownloadState, snapSyncConfiguration))
+                      snapSyncState,
+                      worldStateStorageCoordinator,
+                      newDownloadState,
+                      snapSyncConfiguration))
               .completeTaskStep(maybeCompleteTask.get())
               .downloadState(newDownloadState)
               .fastSyncState(snapSyncState)

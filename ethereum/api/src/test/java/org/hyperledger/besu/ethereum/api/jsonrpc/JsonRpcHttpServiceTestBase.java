@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.mockito.Mockito.mock;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.methods.JsonRpcMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -116,7 +116,9 @@ public class JsonRpcHttpServiceTestBase {
                 synchronizer,
                 MainnetProtocolSchedule.fromConfig(
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
-                    EvmConfiguration.DEFAULT),
+                    EvmConfiguration.DEFAULT,
+                    MiningParameters.MINING_DISABLED,
+                    new BadBlockManager()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
                 mock(TransactionPool.class),
@@ -149,8 +151,7 @@ public class JsonRpcHttpServiceTestBase {
     baseUrl = service.url();
   }
 
-  protected static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config)
-      throws Exception {
+  protected static JsonRpcHttpService createJsonRpcHttpService(final JsonRpcConfiguration config) {
     return new JsonRpcHttpService(
         vertx,
         folder,
@@ -162,7 +163,7 @@ public class JsonRpcHttpServiceTestBase {
         HealthService.ALWAYS_HEALTHY);
   }
 
-  protected static JsonRpcHttpService createJsonRpcHttpService() throws Exception {
+  protected static JsonRpcHttpService createJsonRpcHttpService() {
     return new JsonRpcHttpService(
         vertx,
         folder,

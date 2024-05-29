@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -37,8 +37,8 @@ public interface ParentBeaconBlockRootHelper {
      see EIP-4788: https://github.com/ethereum/EIPs/blob/master/EIPS/eip-4788.md
     */
     // If code is not deployed don't do anything
-    final MutableAccount account = worldUpdater.getOrCreate(BEACON_ROOTS_ADDRESS);
-    if (Hash.EMPTY.equals(account.getCodeHash())) {
+    final MutableAccount account = worldUpdater.getAccount(BEACON_ROOTS_ADDRESS);
+    if (account == null || Hash.EMPTY.equals(account.getCodeHash())) {
       return;
     }
 

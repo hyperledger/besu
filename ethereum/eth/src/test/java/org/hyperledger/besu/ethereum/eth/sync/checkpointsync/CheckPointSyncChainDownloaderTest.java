@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -36,9 +36,12 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.Checkpoint;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.checkpoint.ImmutableCheckpoint;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -53,8 +56,6 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 
 public class CheckPointSyncChainDownloaderTest {
 
-  private final WorldStateStorage worldStateStorage = mock(WorldStateStorage.class);
-
   protected ProtocolSchedule protocolSchedule;
   protected EthProtocolManager ethProtocolManager;
   protected EthContext ethContext;
@@ -66,6 +67,8 @@ public class CheckPointSyncChainDownloaderTest {
   protected Blockchain otherBlockchain;
   private Checkpoint checkpoint;
 
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
+
   static class CheckPointSyncChainDownloaderTestArguments implements ArgumentsProvider {
     @Override
     public Stream<? extends Arguments> provideArguments(final ExtensionContext context) {
@@ -74,11 +77,26 @@ public class CheckPointSyncChainDownloaderTest {
     }
   }
 
-  public void setup(final DataStorageFormat storageFormat) {
-    when(worldStateStorage.isWorldStateAvailable(any(), any())).thenReturn(true);
-    final BlockchainSetupUtil localBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
+  public void setup(final DataStorageFormat dataStorageFormat) {
+    final WorldStateKeyValueStorage worldStateKeyValueStorage;
+    if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
+      worldStateKeyValueStorage = mock(BonsaiWorldStateKeyValueStorage.class);
+      when(((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage)
+              .isWorldStateAvailable(any(), any()))
+          .thenReturn(true);
+    } else {
+      worldStateKeyValueStorage = mock(ForestWorldStateKeyValueStorage.class);
+      when(((ForestWorldStateKeyValueStorage) worldStateKeyValueStorage)
+              .isWorldStateAvailable(any()))
+          .thenReturn(true);
+    }
+    when(worldStateKeyValueStorage.getDataStorageFormat()).thenReturn(dataStorageFormat);
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
+    final BlockchainSetupUtil localBlockchainSetup =
+        BlockchainSetupUtil.forTesting(dataStorageFormat);
     localBlockchain = localBlockchainSetup.getBlockchain();
-    otherBlockchainSetup = BlockchainSetupUtil.forTesting(storageFormat);
+    otherBlockchainSetup = BlockchainSetupUtil.forTesting(dataStorageFormat);
     otherBlockchain = otherBlockchainSetup.getBlockchain();
     protocolSchedule = localBlockchainSetup.getProtocolSchedule();
     protocolContext = localBlockchainSetup.getProtocolContext();
@@ -114,7 +132,7 @@ public class CheckPointSyncChainDownloaderTest {
       final SynchronizerConfiguration syncConfig, final long pivotBlockNumber) {
     return CheckpointSyncChainDownloader.create(
         syncConfig,
-        worldStateStorage,
+        worldStateStorageCoordinator,
         protocolSchedule,
         protocolContext,
         ethContext,

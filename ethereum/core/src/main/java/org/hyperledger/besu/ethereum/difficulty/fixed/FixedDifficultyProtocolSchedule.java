@@ -15,6 +15,8 @@
 package org.hyperledger.besu.ethereum.difficulty.fixed;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
@@ -28,7 +30,9 @@ public class FixedDifficultyProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     return new ProtocolScheduleBuilder(
             config,
             ProtocolSpecAdapters.create(
@@ -37,19 +41,38 @@ public class FixedDifficultyProtocolSchedule {
                     builder.difficultyCalculator(FixedDifficultyCalculators.calculator(config))),
             privacyParameters,
             isRevertReasonEnabled,
-            evmConfiguration)
+            evmConfiguration,
+            miningParameters,
+            badBlockManager)
         .createProtocolSchedule();
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration) {
-    return create(config, PrivacyParameters.DEFAULT, isRevertReasonEnabled, evmConfiguration);
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
+    return create(
+        config,
+        PrivacyParameters.DEFAULT,
+        isRevertReasonEnabled,
+        evmConfiguration,
+        miningParameters,
+        badBlockManager);
   }
 
   public static ProtocolSchedule create(
-      final GenesisConfigOptions config, final EvmConfiguration evmConfiguration) {
-    return create(config, PrivacyParameters.DEFAULT, false, evmConfiguration);
+      final GenesisConfigOptions config,
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
+    return create(
+        config,
+        PrivacyParameters.DEFAULT,
+        false,
+        evmConfiguration,
+        miningParameters,
+        badBlockManager);
   }
 }

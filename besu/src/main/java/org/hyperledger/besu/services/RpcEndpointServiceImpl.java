@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,6 +24,7 @@ import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -31,6 +32,9 @@ import java.util.stream.Collectors;
 /** The RPC endpoint service implementation. */
 public class RpcEndpointServiceImpl implements RpcEndpointService {
   private final Map<String, Function<PluginRpcRequest, ?>> rpcMethods = new HashMap<>();
+
+  /** Default Constructor. */
+  public RpcEndpointServiceImpl() {}
 
   @Override
   public <T> void registerRPCEndpoint(
@@ -58,7 +62,10 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
                 namespaces.stream()
                     .anyMatch(
                         namespace ->
-                            entry.getKey().toUpperCase().startsWith(namespace.toUpperCase())))
+                            entry
+                                .getKey()
+                                .toUpperCase(Locale.ROOT)
+                                .startsWith(namespace.toUpperCase(Locale.ROOT))))
         .map(entry -> new PluginJsonRpcMethod(entry.getKey(), entry.getValue()))
         .collect(Collectors.toMap(PluginJsonRpcMethod::getName, e -> e));
   }
@@ -71,6 +78,7 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
    */
   public boolean hasNamespace(final String namespace) {
     return rpcMethods.keySet().stream()
-        .anyMatch(key -> key.toUpperCase().startsWith(namespace.toUpperCase()));
+        .anyMatch(
+            key -> key.toUpperCase(Locale.ROOT).startsWith(namespace.toUpperCase(Locale.ROOT)));
   }
 }

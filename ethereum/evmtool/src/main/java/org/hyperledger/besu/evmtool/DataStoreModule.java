@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
@@ -142,6 +141,9 @@ public class DataStoreModule {
       @Named("variables") final KeyValueStorage variablesKeyValueStorage,
       final BlockHeaderFunctions blockHashFunction) {
     return new KeyValueStoragePrefixedKeyBlockchainStorage(
-        keyValueStorage, new VariablesKeyValueStorage(variablesKeyValueStorage), blockHashFunction);
+        keyValueStorage,
+        new VariablesKeyValueStorage(variablesKeyValueStorage),
+        blockHashFunction,
+        false);
   }
 }

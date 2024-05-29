@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
@@ -25,14 +24,19 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
 import org.hyperledger.besu.evmtool.T8nExecutor.RejectedTransaction;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.ByteArrayOutputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.PrintStream;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -49,7 +53,9 @@ import io.vertx.core.buffer.Buffer;
 import io.vertx.core.http.HttpServerOptions;
 import io.vertx.core.http.HttpServerRequest;
 import picocli.CommandLine;
+import picocli.CommandLine.ParentCommand;
 
+@SuppressWarnings("java:S106") // using standard output is the point of this class
 @CommandLine.Command(
     name = "t8n-server",
     description = "Run Ethereum State Test server",
@@ -65,6 +71,24 @@ public class T8nServerSubCommand implements Runnable {
       names = {"--port"},
       description = "Port to bind to")
   private int port = 3000;
+
+  @CommandLine.Option(
+      names = {"--output.basedir"},
+      paramLabel = "full path",
+      description = "The output ")
+  private final Path outDir = Path.of(".");
+
+  @ParentCommand private final EvmToolCommand parentCommand;
+
+  @SuppressWarnings("unused")
+  public T8nServerSubCommand() {
+    // PicoCLI requires this
+    this(null);
+  }
+
+  T8nServerSubCommand(final EvmToolCommand parentCommand) {
+    this.parentCommand = parentCommand;
+  }
 
   @Override
   public void run() {
@@ -144,6 +168,57 @@ public class T8nServerSubCommand implements Runnable {
           }
         }
 
+        T8nExecutor.TracerManager tracerManager;
+        if (parentCommand.showJsonResults) {
+          tracerManager =
+              new T8nExecutor.TracerManager() {
+                private final Map<OperationTracer, FileOutputStream> outputStreams =
+                    new HashMap<>();
+
+                @Override
+                public OperationTracer getManagedTracer(final int txIndex, final Hash txHash)
+                    throws Exception {
+                  outDir.toFile().mkdirs();
+                  var traceDest =
+                      new FileOutputStream(
+                          outDir
+                              .resolve(
+                                  String.format("trace-%d-%s.jsonl", txIndex, txHash.toHexString()))
+                              .toFile());
+
+                  var jsonTracer =
+                      new StandardJsonTracer(
+                          new PrintStream(traceDest),
+                          parentCommand.showMemory,
+                          !parentCommand.hideStack,
+                          parentCommand.showReturnData,
+                          parentCommand.showStorage);
+                  outputStreams.put(jsonTracer, traceDest);
+                  return jsonTracer;
+                }
+
+                @Override
+                public void disposeTracer(final OperationTracer tracer) throws IOException {
+                  if (outputStreams.containsKey(tracer)) {
+                    outputStreams.remove(tracer).close();
+                  }
+                }
+              };
+        } else {
+          tracerManager =
+              new T8nExecutor.TracerManager() {
+                @Override
+                public OperationTracer getManagedTracer(final int txIndex, final Hash txHash) {
+                  return OperationTracer.NO_TRACING;
+                }
+
+                @Override
+                public void disposeTracer(final OperationTracer tracer) {
+                  // single-test mode doesn't need to track tracers
+                }
+              };
+        }
+
         result =
             T8nExecutor.runTest(
                 chainId,
@@ -154,17 +229,7 @@ public class T8nServerSubCommand implements Runnable {
                 initialWorldState,
                 transactions,
                 rejections,
-                new T8nExecutor.TracerManager() {
-                  @Override
-                  public OperationTracer getManagedTracer(final int txIndex, final Hash txHash) {
-                    return OperationTracer.NO_TRACING;
-                  }
-
-                  @Override
-                  public void disposeTracer(final OperationTracer tracer) {
-                    // No output streams to dispose of
-                  }
-                });
+                tracerManager);
       }
 
       ObjectNode outputObject = objectMapper.createObjectNode();
@@ -172,15 +237,11 @@ public class T8nServerSubCommand implements Runnable {
       outputObject.set("body", result.bodyBytes());
       outputObject.set("result", result.resultObject());
 
-      try {
-        String response =
-            objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(outputObject);
-        req.response().setChunked(true);
-        req.response().putHeader("Content-Type", "application/json").send(response);
-      } catch (JsonProcessingException e) {
-        req.response().setStatusCode(500).end(e.getMessage());
-      }
-    } catch (Throwable t) {
+      String response =
+          objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(outputObject);
+      req.response().setChunked(true);
+      req.response().putHeader("Content-Type", "application/json").send(response);
+    } catch (Exception t) {
       ByteArrayOutputStream baos = new ByteArrayOutputStream();
       PrintStream ps = new PrintStream(baos, true, StandardCharsets.UTF_8);
       t.printStackTrace(ps);

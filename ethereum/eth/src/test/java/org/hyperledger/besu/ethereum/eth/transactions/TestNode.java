@@ -27,10 +27,12 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
@@ -108,10 +110,14 @@ public class TestNode implements Closeable {
                     .setBindPort(listenPort)
                     .setSupportedProtocols(EthProtocol.get()));
 
-    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.development();
+    final GenesisConfigFile genesisConfigFile = GenesisConfigFile.fromResource("/dev.json");
     final ProtocolSchedule protocolSchedule =
         FixedDifficultyProtocolSchedule.create(
-            GenesisConfigFile.development().getConfigOptions(), false, EvmConfiguration.DEFAULT);
+            GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
+            false,
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager());
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     final BlockHeaderFunctions blockHeaderFunctions =
@@ -121,7 +127,7 @@ public class TestNode implements Closeable {
     final WorldStateArchive worldStateArchive = createInMemoryWorldStateArchive();
     genesisState.writeStateTo(worldStateArchive.getMutable());
     final ProtocolContext protocolContext =
-        new ProtocolContext(blockchain, worldStateArchive, null, Optional.empty());
+        new ProtocolContext(blockchain, worldStateArchive, null, new BadBlockManager());
 
     final SyncState syncState = mock(SyncState.class);
     final SynchronizerConfiguration syncConfig = mock(SynchronizerConfiguration.class);
@@ -147,7 +153,6 @@ public class TestNode implements Closeable {
             Bytes.random(64),
             25,
             25,
-            25,
             false);
 
     final EthScheduler scheduler = new EthScheduler(1, 1, 1, metricsSystem);
@@ -162,8 +167,8 @@ public class TestNode implements Closeable {
             metricsSystem,
             syncState,
             TransactionPoolConfiguration.DEFAULT,
-            null,
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault());
 
     final EthProtocolManager ethProtocolManager =
         new EthProtocolManager(

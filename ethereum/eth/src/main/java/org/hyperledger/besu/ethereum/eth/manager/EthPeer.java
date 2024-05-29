@@ -211,20 +211,20 @@ public class EthPeer implements Comparable<EthPeer> {
 
   public void recordRequestTimeout(final int requestCode) {
     LOG.atDebug()
-        .setMessage("Timed out while waiting for response from peer {}...")
+        .setMessage("Timed out while waiting for response from peer {}")
         .addArgument(this::getLoggableId)
         .log();
     LOG.trace("Timed out while waiting for response from peer {}", this);
-    reputation.recordRequestTimeout(requestCode).ifPresent(this::disconnect);
+    reputation.recordRequestTimeout(requestCode, this).ifPresent(this::disconnect);
   }
 
   public void recordUselessResponse(final String requestType) {
     LOG.atTrace()
-        .setMessage("Received useless response for request type {} from peer {}...")
+        .setMessage("Received useless response for request type {} from peer {}")
         .addArgument(requestType)
         .addArgument(this::getLoggableId)
         .log();
-    reputation.recordUselessResponse(System.currentTimeMillis()).ifPresent(this::disconnect);
+    reputation.recordUselessResponse(System.currentTimeMillis(), this).ifPresent(this::disconnect);
   }
 
   public void recordUsefulResponse() {
@@ -262,7 +262,7 @@ public class EthPeer implements Comparable<EthPeer> {
     if (connectionToUse.getAgreedCapabilities().stream()
         .noneMatch(capability -> capability.getName().equalsIgnoreCase(protocolName))) {
       LOG.atDebug()
-          .setMessage("Protocol {} unavailable for this peer {}...")
+          .setMessage("Protocol {} unavailable for this peer {}")
           .addArgument(protocolName)
           .addArgument(this.getLoggableId())
           .log();
@@ -272,7 +272,7 @@ public class EthPeer implements Comparable<EthPeer> {
         .anyMatch(
             p -> !p.isMessagePermitted(connectionToUse.getRemoteEnode(), messageData.getCode()))) {
       LOG.info(
-          "Permissioning blocked sending of message code {} to {}...",
+          "Permissioning blocked sending of message code {} to {}",
           messageData.getCode(),
           this.getLoggableId());
       if (LOG.isDebugEnabled()) {
@@ -401,6 +401,18 @@ public class EthPeer implements Comparable<EthPeer> {
         messageData);
   }
 
+  /**
+   * Determines the validity of a message received from a peer. A message is considered valid if
+   * either of the following conditions are met: 1) The message is a request type message (e.g.
+   * GET_BLOCK_HEADERS), or 2) The message is a response type message (e.g. BLOCK_HEADERS), the node
+   * has made at least 1 request for that type of message (i.e. it has sent at least 1
+   * GET_BLOCK_HEADERS request), and it has at least 1 outstanding request of that type which it
+   * expects to receive a response for.
+   *
+   * @param message The message being validated
+   * @param protocolName The protocol type of the message
+   * @return true if the message is valid as per the above logic, otherwise false.
+   */
   public boolean validateReceivedMessage(final EthMessage message, final String protocolName) {
     checkArgument(message.getPeer().equals(this), "Mismatched message sent to peer for dispatch");
     return getRequestManager(protocolName, message.getData().getCode())
@@ -425,7 +437,7 @@ public class EthPeer implements Comparable<EthPeer> {
         localRequestManager -> localRequestManager.dispatchResponse(ethMessage),
         () -> {
           LOG.trace(
-              "Message {} not expected has just been received for protocol {}, peer {} ",
+              "Message {} not expected has just been received for protocol {}, {} ",
               messageCode,
               protocolName,
               this);
@@ -442,6 +454,16 @@ public class EthPeer implements Comparable<EthPeer> {
     dispatch(ethMessage, protocolName);
   }
 
+  /**
+   * Attempt to get a request manager for a received response-type message e.g. BLOCK_HEADERS. If
+   * the message is a request-type message e.g. GET_BLOCK_HEADERS no request manager will exist so
+   * Optional.empty() will be returned.
+   *
+   * @param protocolName the type of protocol the message is for
+   * @param code the message code
+   * @return a request manager for the received response message, or Optional.empty() if this is a
+   *     request message
+   */
   private Optional<RequestManager> getRequestManager(final String protocolName, final int code) {
     if (requestManagers.containsKey(protocolName)) {
       final Map<Integer, RequestManager> managers = requestManagers.get(protocolName);
@@ -607,7 +629,7 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s... %s, validated? %s, disconnected? %s, client: %s, %s, %s",
+        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s",
         getLoggableId(),
         reputation,
         isFullyValidated(),

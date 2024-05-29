@@ -23,13 +23,13 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 plugins {
-  id 'com.diffplug.spotless' version '6.23.3'
-  id 'com.github.ben-manes.versions' version '0.50.0'
-  id 'com.github.jk1.dependency-license-report' version '2.5'
-  id 'com.jfrog.artifactory' version '5.1.11'
-  id 'io.spring.dependency-management' version '1.1.4'
+  id 'com.diffplug.spotless' version '6.25.0'
+  id 'com.github.ben-manes.versions' version '0.51.0'
+  id 'com.github.jk1.dependency-license-report' version '2.7'
+  id 'com.jfrog.artifactory' version '5.2.0'
+  id 'io.spring.dependency-management' version '1.1.5'
   id 'me.champeau.jmh' version '0.7.2' apply false
-  id 'net.ltgt.errorprone' version '3.0.1'
+  id 'net.ltgt.errorprone' version '3.1.0'
   id 'maven-publish'
   id 'org.sonarqube' version '4.4.1.3373'
 }
@@ -54,12 +54,12 @@ if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
 
 group = 'org.hyperledger.besu'
 
-defaultTasks 'build', 'checkLicenses', 'javadoc'
+defaultTasks 'build', 'checkLicense', 'javadoc'
 
 def buildAliases = ['dev': [
     'spotlessApply',
     'build',
-    'checkLicenses',
+    'checkLicense',
     'javadoc'
   ]]
 
@@ -88,6 +88,9 @@ def _strListCmdArg(name, defaultValue) {
 def _strListCmdArg(name) {
   return _strListCmdArg(name, null)
 }
+
+// set the shell command to use according to os
+def shell = org.gradle.internal.os.OperatingSystem.current().isWindows() ? "${projectDir}\\wslsh.bat" : '/bin/bash'
 
 licenseReport {
   // This is for the allowed-licenses-file in checkLicense Task
@@ -119,7 +122,7 @@ allprojects {
   apply plugin: 'net.ltgt.errorprone'
   apply from: "${rootDir}/gradle/versions.gradle"
 
-  version = rootProject.version
+  version = calculateVersion()
 
   jacoco {
     toolVersion = '0.8.8'
@@ -129,15 +132,18 @@ allprojects {
   }
 
   task sourcesJar(type: Jar, dependsOn: classes) {
-    classifier = 'sources'
+    archiveClassifier = 'sources'
     from sourceSets.main.allSource
   }
 
   task javadocJar(type: Jar, dependsOn: javadoc) {
-    classifier = 'javadoc'
+    archiveClassifier = 'javadoc'
     from javadoc.outputDirectory
   }
 
+  tasks.build {
+    dependsOn 'javadoc'
+  }
   sourceCompatibility = 17
   targetCompatibility = 17
 
@@ -154,6 +160,7 @@ allprojects {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
+
     mavenCentral()
 
     // ethereum execution spec tests fixtures. Exclusively for ethereum submodule to run ref tests
@@ -175,6 +182,8 @@ allprojects {
   dependencies {
     components.all(BouncyCastleCapability)
     errorprone 'com.google.errorprone:error_prone_core'
+    // https://github.com/hyperledger/besu-errorprone-checks/
+    errorprone "org.hyperledger.besu:besu-errorprone-checks"
   }
 
   configurations.all {
@@ -194,23 +203,43 @@ allprojects {
       target 'src/**/*.java'
       targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
       removeUnusedImports()
-      googleJavaFormat('1.15.0')
+      googleJavaFormat('1.22.0')
       importOrder 'org.hyperledger', 'java', ''
       trimTrailingWhitespace()
       endWithNewline()
+      // apply appropriate license header files.
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license").named("older.year").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
     }
+    // spotless check applied to build.gradle (groovy) files
     groovyGradle {
       target '*.gradle'
-      greclipse('4.21').configFile(rootProject.file('gradle/formatter.properties'))
+      greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
       endWithNewline()
     }
     // Below this line are currently only license header tasks
-    format 'groovy', { target '**/src/*/grovy/**/*.groovy' }
-    format 'bash', { target '**/*.sh' }
-    format 'sol', { target '**/*.sol' }
+    format 'ShellScripts', {
+      target '**/*.sh'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+      trimTrailingWhitespace()
+      endWithNewline()
+
+      licenseHeaderFile("${rootDir}/gradle/spotless/sh.license","^(?!##).+").skipLinesMatching("^#!.+?\$")
+    }
+    format 'Solidity', {
+      target '**/*.sol'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+      trimTrailingWhitespace()
+      endWithNewline()
+
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license","^pragma solidity.+?").named("former").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license","^pragma solidity.+?").named("former.date").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
+    }
   }
 
-  tasks.withType(JavaCompile) {
+  tasks.withType(JavaCompile).configureEach {
     options.compilerArgs += [
       '-Xlint:unchecked',
       '-Xlint:cast',
@@ -223,8 +252,8 @@ allprojects {
     ]
 
     options.errorprone {
-      excludedPaths = '.*/(generated/*.*|.*ReferenceTest_.*|build/.*/annotation-output/.*)'
-
+      excludedPaths = '.*/generated/*.*'
+      disableWarningsInGeneratedCode = true
       // Our equals need to be symmetric, this checker doesn't respect that.
       check('EqualsGetClass', CheckSeverity.OFF)
       // We like to use futures with no return values.
@@ -286,7 +315,7 @@ allprojects {
    *
    */
   test {
-    jvmArgs = [
+    jvmArgs += [
       '-Xmx4g',
       '-XX:-UseGCOverheadLimit',
       // Mockito and jackson-databind do some strange reflection during tests.
@@ -397,7 +426,7 @@ subprojects {
 
     task testSupportJar(type: Jar) {
       archiveBaseName = "${project.name}-support-test"
-      classifier = 'test-support'
+      archiveClassifier = 'test-support'
       from sourceSets.testSupport.output
     }
   }
@@ -562,6 +591,13 @@ subprojects {
 
     dependencies { jmh 'org.slf4j:slf4j-api' }
   }
+
+  // making sure assemble task invokes integration test compile
+  afterEvaluate { project ->
+    if (project.tasks.findByName('compileIntegrationTestJava')) {
+      project.tasks.assemble.dependsOn compileIntegrationTestJava
+    }
+  }
 }
 
 jar { enabled = false }
@@ -638,7 +674,7 @@ task untunedStartScripts(type: CreateStartScripts) {
   defaultJvmOpts = applicationDefaultJvmArgs
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
-  doLast { tweakStartScript(startScripts) }
+  doLast { tweakStartScript(untunedStartScripts) }
 }
 
 task evmToolStartScripts(type: CreateStartScripts) {
@@ -700,28 +736,6 @@ publishing {
       groupId = '.'
       version = project.version
       artifactId = 'besu'
-      artifact("$buildDir/distributions/besu-${project.version}.zip")
-      artifact("$buildDir/distributions/besu-${project.version}.tar.gz") { extension = 'tar.gz' }
-    }
-  }
-}
-
-def artifactoryUser = project.hasProperty('artifactoryUser') ? project.property('artifactoryUser') : System.getenv('ARTIFACTORY_USER')
-def artifactoryKey = project.hasProperty('artifactoryApiKey') ? project.property('artifactoryApiKey') : System.getenv('ARTIFACTORY_KEY')
-def artifactoryOrg = System.getenv('ARTIFACTORY_ORG') ?: 'hyperledger'
-
-artifactory {
-  contextUrl = "https://hyperledger.jfrog.io/${artifactoryOrg}"
-  publish {
-    repository {
-      repoKey = "besu-binaries"
-      username = artifactoryUser
-      password = artifactoryKey
-    }
-    defaults {
-      publications('distArtifactory')
-      publishArtifacts = true
-      publishPom = false
     }
   }
 }
@@ -735,13 +749,6 @@ def dockerBuildVersion = project.hasProperty('release.releaseVersion') ? project
 def dockerOrgName = project.hasProperty('dockerOrgName') ? project.getProperty("dockerOrgName") : "hyperledger"
 def dockerArtifactName = project.hasProperty("dockerArtifactName") ? project.getProperty("dockerArtifactName") : "besu"
 def dockerImageName = "${dockerOrgName}/${dockerArtifactName}"
-def dockerVariants = project.hasProperty("dockerVariants") ? project.getProperty("dockerVariants").split(",") : [
-  "openjdk-17",
-  "openjdk-17-debug",
-  "openj9-jdk-17",
-  "graalvm",
-  "openjdk-latest"
-]
 
 // rename the top level dir from besu-<version> to besu and this makes it really
 // simple for use in docker
@@ -769,33 +776,21 @@ task distDocker {
   def dockerBuildDir = "build/docker-besu/"
 
   doLast {
-    for (def jvmVariant in dockerVariants) {
-      copy {
-        from file("${projectDir}/docker/${jvmVariant}/Dockerfile")
-        into(dockerBuildDir)
-      }
-      exec {
-        def image = "${dockerImageName}:${dockerBuildVersion}-${jvmVariant}"
-        def dockerPlatform = ""
-        if (project.hasProperty('docker-platform')){
-          dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
-          println "Building for platform ${project.getProperty('docker-platform')}"
-        }
-        executable "sh"
-        workingDir dockerBuildDir
-        args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${getCheckedOutGitCommitHash()} -t ${image} ."
-      }
+    copy {
+      from file("${projectDir}/docker/Dockerfile")
+      into(dockerBuildDir)
     }
-
-    // tag the "default" (which is the variant in the zero position)
     exec {
-      executable "sh"
-      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:${dockerBuildVersion}'"
-    }
-    // create a static tag for the benchmark target
-    exec {
-      executable "sh"
-      args "-c", "docker tag '${dockerImageName}:${dockerBuildVersion}-${dockerVariants[0]}' '${dockerImageName}:benchmark'"
+      def image = "${dockerImageName}:${dockerBuildVersion}"
+      def dockerPlatform = ""
+      if (project.hasProperty('docker-platform')){
+        dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
+        println "Building for platform ${project.getProperty('docker-platform')}"
+      }
+      def gitDetails = getGitCommitDetails(7)
+      executable shell
+      workingDir dockerBuildDir
+      args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
     }
   }
 }
@@ -809,13 +804,11 @@ task testDocker {
   }
 
   doLast {
-    for (def variant in dockerVariants) {
-      exec {
-        def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
-        workingDir "${projectDir}/docker/${variant}"
-        executable "sh"
-        args "-c", "bash ../test.sh ${image}-${variant}"
-      }
+    exec {
+      def image = project.hasProperty('release.releaseVersion') ? "${dockerImageName}:" + project.property('release.releaseVersion') : "${dockerImageName}:${project.version}"
+      workingDir "${projectDir}/docker"
+      executable shell
+      args "-c", "./test.sh ${image}"
     }
   }
 }
@@ -835,24 +828,11 @@ task dockerUpload {
   }
 
   doLast {
-    for (def variant in dockerVariants) {
-      def variantImage = "${image}-${variant}"
-      exec {
-        def archVariantImage = "${variantImage}-${architecture}"
-        def cmd = "docker tag '${variantImage}' '${archVariantImage}' && docker push '${archVariantImage}'"
-        additionalTags.each { tag -> cmd += " && docker tag '${variantImage}' '${dockerImageName}:${tag.trim()}-${variant}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${variant}-${architecture}'" }
-        println "Executing '${cmd}'"
-        executable "sh"
-        args "-c", cmd
-      }
-    }
-
     exec {
-      def archImage = "${image}-${architecture}"
-      def cmd = "docker tag ${image} ${archImage} && docker push '${archImage}'"
-      additionalTags.each { tag -> cmd += " && docker tag '${image}' '${dockerImageName}:${tag.trim()}-${architecture}' && docker push '${dockerImageName}:${tag.trim()}-${architecture}'" }
+      def archVariantImage = "${image}-${architecture}"
+      def cmd = "docker tag '${image}' '${archVariantImage}' && docker push '${archVariantImage}'"
       println "Executing '${cmd}'"
-      executable "sh"
+      executable shell
       args "-c", cmd
     }
   }
@@ -864,33 +844,32 @@ task dockerUploadRelease {
 
   doLast {
     for (def architecture in archs) {
-      for (def variant in dockerVariants) {
-        def variantImage = "${image}-${variant}"
-        exec {
-          def cmd = "docker pull '${variantImage}-${architecture}' && docker tag '${variantImage}-${architecture}' '${dockerImageName}:latest-${variant}-${architecture}'"
-          println "Executing '${cmd}'"
-          executable "sh"
-          args "-c", cmd
-        }
-        exec {
-          def cmd = "docker push '${dockerImageName}:latest-${variant}-${architecture}'"
-          println "Executing '${cmd}'"
-          executable "sh"
-          args "-c", cmd
-        }
-      }
 
       exec {
-        def archImage = "${image}-${architecture}"
-        def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}'"
+        def cmd = "docker pull '${image}-${architecture}' && docker tag '${image}-${architecture}' '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
-        executable "sh"
+        executable shell
         args "-c", cmd
       }
       exec {
         def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
         println "Executing '${cmd}'"
-        executable "sh"
+        executable shell
+        args "-c", cmd
+      }
+
+
+      exec {
+        def archImage = "${image}-${architecture}"
+        def cmd = "docker pull '${archImage}' && docker tag ${archImage} '${dockerImageName}:latest-${architecture}'"
+        println "Executing '${cmd}'"
+        executable shell
+        args "-c", cmd
+      }
+      exec {
+        def cmd = "docker push '${dockerImageName}:latest-${architecture}'"
+        println "Executing '${cmd}'"
+        executable shell
         args "-c", cmd
       }
     }
@@ -899,52 +878,23 @@ task dockerUploadRelease {
 
 task manifestDocker {
   def image = "${dockerImageName}:${dockerBuildVersion}"
-  def archs = ["arm64", "amd64"]
-  def tags = ["${image}"]
-
-  if (project.hasProperty('branch') && project.property('branch') == 'main') {
-    tags.add("${dockerImageName}:develop")
-  }
-
-  if (!isInterimBuild(dockerBuildVersion)) {
-    tags.add("${dockerImageName}:" + dockerBuildVersion.split(/\./)[0..1].join('.'))
-  }
-
+  def archs = [
+    "arm64",
+    "amd64"] //TODO: this assumes dockerUpload task has already been run on 2 different archs!
   doLast {
-    for (baseTag in tags) {
-      for (def variant in dockerVariants) {
-        def variantImage = "${baseTag}-${variant}"
-        def targets = ""
-        archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
-
-        exec {
-          def cmd = "docker manifest create '${variantImage}' ${targets}"
-          println "Executing '${cmd}'"
-          executable "sh"
-          args "-c", cmd
-        }
-        exec {
-          def cmd = "docker manifest push '${variantImage}'"
-          println "Executing '${cmd}'"
-          executable "sh"
-          args "-c", cmd
-        }
-      }
-
-      exec {
-        def targets = ""
-        archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
-        def cmd = "docker manifest create '${baseTag}' ${targets}"
-        println "Executing '${cmd}'"
-        executable "sh"
-        args "-c", cmd
-      }
-      exec {
-        def cmd = "docker manifest push '${baseTag}'"
-        println "Executing '${cmd}'"
-        executable "sh"
-        args "-c", cmd
-      }
+    exec {
+      def targets = ""
+      archs.forEach { arch -> targets += "'${image}-${arch}' " }
+      def cmd = "docker manifest create '${image}' ${targets}"
+      println "Executing '${cmd}'"
+      executable shell
+      args "-c", cmd
+    }
+    exec {
+      def cmd = "docker manifest push '${image}'"
+      println "Executing '${cmd}'"
+      executable shell
+      args "-c", cmd
     }
   }
 }
@@ -954,37 +904,19 @@ task manifestDockerRelease {
   def baseTag = "${dockerImageName}:latest";
 
   doLast {
-    for (def variant in dockerVariants) {
-      def variantImage = "${baseTag}-${variant}"
-      def targets = ""
-      archs.forEach { arch -> targets += "'${variantImage}-${arch}' " }
-
-      exec {
-        def cmd = "docker manifest create '${variantImage}' ${targets} --amend"
-        println "Executing '${cmd}'"
-        executable "sh"
-        args "-c", cmd
-      }
-      exec {
-        def cmd = "docker manifest push '${variantImage}'"
-        println "Executing '${cmd}'"
-        executable "sh"
-        args "-c", cmd
-      }
-    }
 
     exec {
       def targets = ""
       archs.forEach { arch -> targets += "'${baseTag}-${arch}' " }
       def cmd = "docker manifest create '${baseTag}' ${targets} --amend"
       println "Executing '${cmd}'"
-      executable "sh"
+      executable shell
       args "-c", cmd
     }
     exec {
       def cmd = "docker manifest push '${baseTag}'"
       println "Executing '${cmd}'"
-      executable "sh"
+      executable shell
       args "-c", cmd
     }
   }
@@ -992,30 +924,9 @@ task manifestDockerRelease {
 
 def sep = Pattern.quote(File.separator)
 
-task checkSpdxHeader(type: CheckSpdxHeader) {
-  apply plugin: 'groovy'
-
-  rootPath = "${projectDir}"
-  spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
-  filesRegex = "(.*.java)|(.*.groovy)"
-  excludeRegex = [
-    "(.*${sep}generalstate${sep}GeneralStateRegressionReferenceTest.*)",
-    "(.*${sep}generalstate${sep}GeneralStateReferenceTest.*)",
-    "(.*${sep}generalstate${sep}LegacyGeneralStateReferenceTest.*)",
-    "(.*${sep}blockchain${sep}BlockchainReferenceTest.*)",
-    "(.*${sep}blockchain${sep}LegacyBlockchainReferenceTest.*)",
-    "(.*${sep}.gradle${sep}.*)",
-    "(.*${sep}.idea${sep}.*)",
-    "(.*${sep}out${sep}.*)",
-    "(.*${sep}bin${sep}.*)",
-    "(.*${sep}build${sep}.*)",
-    "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
-  ].join("|")
-}
-
 jacocoTestReport {
   reports {
-    xml.enabled true
+    xml.required = true
   }
 }
 
@@ -1026,23 +937,10 @@ task jacocoRootReport(type: org.gradle.testing.jacoco.tasks.JacocoReport) {
   executionData.from fileTree(dir: '.', includes: ['**/jacoco/*.exec'])
   reports {
     xml.required = true
-    xml.enabled = true
     csv.required = true
     html.destination file("build/reports/jacocoHtml")
   }
   onlyIf = { true }
-}
-
-configurations { annotationProcessor }
-
-// Prevent errorprone-checks being dependent upon errorprone-checks!
-// However, ensure all subprojects comply with the custom rules.
-configure(subprojects.findAll { it.name != 'errorprone-checks' }) {
-  dependencies { annotationProcessor project(":errorprone-checks") }
-
-  tasks.withType(JavaCompile) {
-    options.annotationProcessorPath = configurations.annotationProcessor
-  }
 }
 
 // http://label-schema.org/rc1/
@@ -1053,43 +951,50 @@ def buildTime() {
   return df.format(new Date())
 }
 
-// Takes the version, and if -SNAPSHOT is part of it replaces SNAPSHOT
-// with the git commit version.
 @Memoized
 def calculateVersion() {
-  String version = rootProject.version
-  if (version.endsWith("-SNAPSHOT")) {
-    version = version.replace("-SNAPSHOT", "-dev-" + getCheckedOutGitCommitHash())
+  // Regex pattern for basic calendar versioning, with provision to omit patch rev
+  def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
+
+  if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
+    return "${project.version}"
+  } else {
+    // If no version is supplied or it doesn't match the semantic versioning, calculate from git
+    println("Generating project version as supplied is version not semver: ${project.version}")
+    def gitDetails = getGitCommitDetails(7) // Adjust length as needed
+    return "${gitDetails.date}-develop-${gitDetails.hash}"
   }
-  return version
 }
 
-
-def getCheckedOutGitCommitHash(length = 8) {
+def getGitCommitDetails(length = 8) {
   try {
     def gitFolder = "$projectDir/.git/"
     if (!file(gitFolder).isDirectory()) {
-      // We are in a submodule.  The file's contents are `gitdir: <gitFolder>\n`.
-      // Read the file, cut off the front, and trim the whitespace.
       gitFolder = file(gitFolder).text.substring(length).trim() + "/"
     }
     def takeFromHash = length
-    /*
-     * '.git/HEAD' contains either
-     *      in case of detached head: the currently checked out commit hash
-     *      otherwise: a reference to a file containing the current commit hash
-     */
-    def head = new File(gitFolder + "HEAD").text.split(":") // .git/HEAD
-    def isCommit = head.length == 1 // e5a7c79edabbf7dd39888442df081b1c9d8e88fd
+    def head = new File(gitFolder + "HEAD").text.split(":")
+    def isCommit = head.length == 1
 
-    if (isCommit) return head[0].trim().take(takeFromHash) // e5a7c79edabb
+    def commitHash, refHeadFile
+    if (isCommit) {
+      commitHash = head[0].trim().take(takeFromHash)
+      refHeadFile = new File(gitFolder + "HEAD")
+    } else {
+      refHeadFile = new File(gitFolder + head[1].trim())
+      commitHash = refHeadFile.text.trim().take(takeFromHash)
+    }
 
-    def refHead = new File(gitFolder + head[1].trim()) // .git/refs/heads/master
-    refHead.text.trim().take takeFromHash
+    // Use head file modification time as a proxy for the build date
+    def lastModified = new Date(refHeadFile.lastModified())
+    // Format the date as "yy.M" (e.g. 24.3 for March 2024)
+    def formattedDate = new SimpleDateFormat("yy.M").format(lastModified)
+
+    return [hash: commitHash, date: formattedDate]
   } catch (Exception e) {
-    logger.warn('Could not calculate git commit, using "xxxxxxxx" (run with --info for stacktrace)')
-    logger.info('Error retrieving git commit', e)
-    return "xxxxxxxx"
+    logger.warn('Could not calculate git commit details, using defaults (run with --info for stacktrace)')
+    logger.info('Error retrieving git commit details', e)
+    return [hash: "xxxxxxxx", date: "00.0"]
   }
 }
 
@@ -1097,6 +1002,7 @@ def getCheckedOutGitCommitHash(length = 8) {
 def isInterimBuild(dockerBuildVersion) {
   return (dockerBuildVersion ==~ /.*-SNAPSHOT/) || (dockerBuildVersion ==~ /.*-alpha/)
   || (dockerBuildVersion ==~ /.*-beta/) || (dockerBuildVersion ==~ /.*-RC.*/)
+  || (dockerBuildVersion ==~ /.*develop.*/)
 }
 
 tasks.register("verifyDistributions") {
@@ -1118,9 +1024,11 @@ tasks.register("verifyDistributions") {
 }
 
 dependencies {
+  errorprone 'com.google.errorprone:error_prone_core'
+  // https://github.com/hyperledger/besu-errorprone-checks/
+  errorprone 'org.hyperledger.besu:besu-errorprone-checks'
   implementation project(':besu')
   implementation project(':ethereum:evmtool')
-  errorprone 'com.google.errorprone:error_prone_core'
 }
 
 @CompileStatic
@@ -1153,12 +1061,11 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
-      from("build/besu.autocomplete.sh") { into "." }
+      from(autocomplete) { into "." }
     }
   }
 }
 
-check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions
 artifactoryPublish.mustRunAfter(distTar)

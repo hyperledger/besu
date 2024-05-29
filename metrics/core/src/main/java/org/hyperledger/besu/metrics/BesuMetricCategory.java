@@ -56,6 +56,7 @@ public enum BesuMetricCategory implements MetricCategory {
   STRATUM("stratum");
 
   private static final Optional<String> BESU_PREFIX = Optional.of("besu_");
+
   /** The constant DEFAULT_METRIC_CATEGORIES. */
   public static final Set<MetricCategory> DEFAULT_METRIC_CATEGORIES;
 

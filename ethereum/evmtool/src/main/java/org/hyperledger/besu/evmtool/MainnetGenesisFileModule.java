@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
@@ -19,7 +18,9 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.crypto.SignatureAlgorithmType;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -74,7 +75,8 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         return schedule.get();
       }
     }
-    return MainnetProtocolSchedule.fromConfig(configOptions, evmConfiguration);
+    return MainnetProtocolSchedule.fromConfig(
+        configOptions, evmConfiguration, MiningParameters.newDefault(), new BadBlockManager());
   }
 
   public static Map<String, Supplier<ProtocolSchedule>> createSchedules() {
@@ -131,7 +133,9 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
-                EvmConfiguration.DEFAULT)
+                EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
+                new BadBlockManager())
             .createProtocolSchedule();
   }
 }

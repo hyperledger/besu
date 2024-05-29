@@ -55,7 +55,7 @@ public class BlockchainReferenceTestTools {
             "test.ethereum.blockchain.eips",
             "FrontierToHomesteadAt5,HomesteadToEIP150At5,HomesteadToDaoAt5,EIP158ToByzantiumAt5,"
                 + "Frontier,Homestead,EIP150,EIP158,Byzantium,Constantinople,ConstantinopleFix,Istanbul,Berlin,"
-                + "London,Merge,Shanghai,Cancun,Prague,Osaka,Bogota");
+                + "London,Merge,Paris,Shanghai,Cancun,Prague,Osaka,Bogota,CancunToPragueAtTime15k");
     NETWORKS_TO_RUN = Arrays.asList(networks.split(","));
   }
 
@@ -87,10 +87,13 @@ public class BlockchainReferenceTestTools {
     // Inconclusive fork choice rule, since in merge CL should be choosing forks and setting the
     // chain head.
     // Perfectly valid test pre-merge.
-    params.ignore("UncleFromSideChain_(Merge|Shanghai|Cancun|Prague|Osaka|Bogota)");
+    params.ignore("UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Bogota)");
 
     // EOF tests are written against an older version of the spec
     params.ignore("/stEOF/");
+
+    // None of the Prague tests have withdrawls and deposits handling
+    params.ignore("\\[Prague\\]");
   }
 
   private BlockchainReferenceTestTools() {
@@ -101,12 +104,13 @@ public class BlockchainReferenceTestTools {
     return params.generate(filePath);
   }
 
+  @SuppressWarnings("java:S5960") // this is actually test code
   public static void executeTest(final BlockchainReferenceTestCaseSpec spec) {
     final BlockHeader genesisBlockHeader = spec.getGenesisBlockHeader();
     final MutableWorldState worldState =
         spec.getWorldStateArchive()
             .getMutable(genesisBlockHeader.getStateRoot(), genesisBlockHeader.getHash())
-            .get();
+            .orElseThrow();
 
     final ProtocolSchedule schedule =
         REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
@@ -126,18 +130,7 @@ public class BlockchainReferenceTestTools {
         final ProtocolSpec protocolSpec = schedule.getByBlockHeader(block.getHeader());
         final BlockImporter blockImporter = protocolSpec.getBlockImporter();
 
-        EVM evm = protocolSpec.getEvm();
-        if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
-          assumeThat(
-                  worldState
-                      .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-                      .anyMatch(AccountState::isEmpty))
-              .withFailMessage("Journaled account configured and empty account detected")
-              .isFalse();
-          assumeThat(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0)
-              .withFailMessage("Journaled account configured and fork prior to the merge specified")
-              .isFalse();
-        }
+        verifyJournaledEVMAccountCompatability(worldState, protocolSpec);
 
         final HeaderValidationMode validationMode =
             "NoProof".equalsIgnoreCase(spec.getSealEngine())
@@ -153,5 +146,21 @@ public class BlockchainReferenceTestTools {
     }
 
     Assertions.assertThat(blockchain.getChainHeadHash()).isEqualTo(spec.getLastBlockHash());
+  }
+
+  static void verifyJournaledEVMAccountCompatability(
+      final MutableWorldState worldState, final ProtocolSpec protocolSpec) {
+    EVM evm = protocolSpec.getEvm();
+    if (evm.getEvmConfiguration().worldUpdaterMode() == WorldUpdaterMode.JOURNALED) {
+      assumeThat(
+              worldState
+                  .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
+                  .anyMatch(AccountState::isEmpty))
+          .withFailMessage("Journaled account configured and empty account detected")
+          .isFalse();
+      assumeThat(EvmSpecVersion.SPURIOUS_DRAGON.compareTo(evm.getEvmVersion()) > 0)
+          .withFailMessage("Journaled account configured and fork prior to the merge specified")
+          .isFalse();
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,7 +18,9 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -42,13 +44,22 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   public BaseFeePrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
+      final EthScheduler ethScheduler,
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final FeeMarket feeMarket,
-      final BlobCache blobCache) {
-    super(poolConfig, nextLayer, metrics, transactionReplacementTester, blobCache);
+      final BlobCache blobCache,
+      final MiningParameters miningParameters) {
+    super(
+        poolConfig,
+        ethScheduler,
+        nextLayer,
+        metrics,
+        transactionReplacementTester,
+        blobCache,
+        miningParameters);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(feeMarket, chainHeadHeaderSupplier.get()));
   }
@@ -146,11 +157,35 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
   @Override
   protected boolean promotionFilter(final PendingTransaction pendingTransaction) {
-    return nextBlockBaseFee
-        .map(
-            baseFee ->
-                pendingTransaction.getTransaction().getMaxGasPrice().greaterOrEqualThan(baseFee))
-        .orElse(false);
+
+    // check if the tx is willing to pay at least the base fee
+    if (nextBlockBaseFee
+        .map(pendingTransaction.getTransaction().getMaxGasPrice()::lessThan)
+        .orElse(true)) {
+      return false;
+    }
+
+    // priority txs are promoted even if they pay less
+    if (!pendingTransaction.hasPriority()) {
+      // check if effective gas price is higher than the min gas price
+      if (pendingTransaction
+          .getTransaction()
+          .getEffectiveGasPrice(nextBlockBaseFee)
+          .lessThan(miningParameters.getMinTransactionGasPrice())) {
+        return false;
+      }
+
+      // check if enough priority fee is paid
+      if (!miningParameters.getMinPriorityFeePerGas().equals(Wei.ZERO)) {
+        final Wei priorityFeePerGas =
+            pendingTransaction.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee);
+        if (priorityFeePerGas.lessThan(miningParameters.getMinPriorityFeePerGas())) {
+          return false;
+        }
+      }
+    }
+
+    return true;
   }
 
   @Override

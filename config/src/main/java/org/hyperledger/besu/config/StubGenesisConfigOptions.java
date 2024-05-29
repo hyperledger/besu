@@ -78,6 +78,10 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private TransitionsConfigOptions transitions = TransitionsConfigOptions.DEFAULT;
   private static final DiscoveryOptions DISCOVERY_OPTIONS = DiscoveryOptions.DEFAULT;
   private boolean zeroBaseFee = false;
+  private boolean fixedBaseFee = false;
+
+  /** Default constructor. */
+  public StubGenesisConfigOptions() {}
 
   @Override
   public StubGenesisConfigOptions clone() {
@@ -129,8 +133,8 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
-  public CliqueConfigOptions getCliqueConfigOptions() {
-    return CliqueConfigOptions.DEFAULT;
+  public JsonCliqueConfigOptions getCliqueConfigOptions() {
+    return JsonCliqueConfigOptions.DEFAULT;
   }
 
   @Override
@@ -425,6 +429,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
+  public boolean isFixedBaseFee() {
+    return fixedBaseFee;
+  }
+
+  @Override
   public List<Long> getForkBlockNumbers() {
     return Collections.emptyList();
   }
@@ -701,6 +710,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions zeroBaseFee(final boolean zeroBaseFee) {
     this.zeroBaseFee = zeroBaseFee;
+    return this;
+  }
+
+  /**
+   * Fixed base fee per gas stub genesis config options.
+   *
+   * @param fixedBaseFee the zero base fee override
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions fixedBaseFee(final boolean fixedBaseFee) {
+    this.fixedBaseFee = fixedBaseFee;
     return this;
   }
 

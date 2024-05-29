@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -33,17 +33,21 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
+import org.hyperledger.besu.ethereum.eth.manager.EthContext;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePersistenceManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.BytecodeRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloadProcess;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageFormat;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.testutil.TestClock;
@@ -72,7 +76,9 @@ public class SnapWorldDownloadStateTest {
   private static final int MAX_REQUESTS_WITHOUT_PROGRESS = 10;
   private static final long MIN_MILLIS_BEFORE_STALLING = 50_000;
 
-  private WorldStateStorage worldStateStorage;
+  private WorldStateKeyValueStorage worldStateKeyValueStorage;
+
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final BlockHeader header =
       new BlockHeaderTestFixture().stateRoot(ROOT_NODE_HASH).buildHeader();
   private final InMemoryTasksPriorityQueues<SnapDataRequest> pendingRequests =
@@ -86,6 +92,7 @@ public class SnapWorldDownloadStateTest {
   private final Blockchain blockchain = mock(Blockchain.class);
   private final DynamicPivotBlockSelector dynamicPivotBlockManager =
       mock(DynamicPivotBlockSelector.class);
+  private final EthContext ethContext = mock(EthContext.class);
 
   private final TestClock clock = new TestClock();
   private SnapWorldDownloadState downloadState;
@@ -107,17 +114,20 @@ public class SnapWorldDownloadStateTest {
     when(metricsManager.getMetricsSystem()).thenReturn(new NoOpMetricsSystem());
 
     if (storageFormat == DataStorageFormat.BONSAI) {
-      worldStateStorage =
+      worldStateKeyValueStorage =
           new BonsaiWorldStateKeyValueStorage(
               new InMemoryKeyValueStorageProvider(),
               new NoOpMetricsSystem(),
-              DataStorageConfiguration.DEFAULT_CONFIG);
+              DataStorageConfiguration.DEFAULT_BONSAI_PARTIAL_DB_CONFIG);
     } else {
-      worldStateStorage = new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
+      worldStateKeyValueStorage =
+          new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage());
     }
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+
     downloadState =
         new SnapWorldDownloadState(
-            worldStateStorage,
+            worldStateStorageCoordinator,
             snapContext,
             blockchain,
             snapSyncState,
@@ -125,7 +135,8 @@ public class SnapWorldDownloadStateTest {
             MAX_REQUESTS_WITHOUT_PROGRESS,
             MIN_MILLIS_BEFORE_STALLING,
             metricsManager,
-            clock);
+            clock,
+            ethContext);
     final DynamicPivotBlockSelector dynamicPivotBlockManager =
         mock(DynamicPivotBlockSelector.class);
     doAnswer(
@@ -140,6 +151,17 @@ public class SnapWorldDownloadStateTest {
     downloadState.setRootNodeData(ROOT_NODE_DATA);
     future = downloadState.getDownloadFuture();
     assertThat(downloadState.isDownloading()).isTrue();
+
+    final EthScheduler ethScheduler = mock(EthScheduler.class);
+    when(ethContext.getScheduler()).thenReturn(ethScheduler);
+    doAnswer(
+            invocation -> {
+              Runnable runnable = invocation.getArgument(0);
+              runnable.run();
+              return null;
+            })
+        .when(ethScheduler)
+        .executeServiceTask(any(Runnable.class));
   }
 
   @ParameterizedTest
@@ -179,7 +201,9 @@ public class SnapWorldDownloadStateTest {
     final CompletableFuture<Void> postFutureChecks =
         future.thenAccept(
             result ->
-                assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+                assertThat(
+                        worldStateStorageCoordinator.getAccountStateTrieNode(
+                            Bytes.EMPTY, ROOT_NODE_HASH))
                     .contains(ROOT_NODE_DATA));
 
     downloadState.checkCompletion(header);
@@ -204,7 +228,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -221,7 +246,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
 
     downloadState.pendingLargeStorageRequests.add(
@@ -231,7 +257,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -248,7 +275,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -266,7 +294,8 @@ public class SnapWorldDownloadStateTest {
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -344,7 +373,8 @@ public class SnapWorldDownloadStateTest {
     verify(snapSyncState, atLeastOnce()).setHealTrieStatus(true);
 
     assertThat(future).isNotDone();
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 
@@ -453,13 +483,14 @@ public class SnapWorldDownloadStateTest {
     setUp(storageFormat);
     Assumptions.assumeTrue(storageFormat == DataStorageFormat.BONSAI);
     Assumptions.assumeTrue(isFlatDbHealingEnabled);
-    ((BonsaiWorldStateKeyValueStorage) worldStateStorage).upgradeToFullFlatDbMode();
+    ((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage).upgradeToFullFlatDbMode();
     when(snapSyncState.isHealTrieInProgress()).thenReturn(true);
     downloadState.checkCompletion(header);
 
     assertThat(future).isNotDone();
     verify(snapSyncState).setHealFlatDatabaseInProgress(true);
-    assertThat(worldStateStorage.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH)).isEmpty();
+    assertThat(worldStateStorageCoordinator.getAccountStateTrieNode(Bytes.EMPTY, ROOT_NODE_HASH))
+        .isEmpty();
     assertThat(downloadState.isDownloading()).isTrue();
   }
 }

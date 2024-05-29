@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthAccounts;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthBlobBaseFee;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthCall;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthChainId;
@@ -174,13 +175,14 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),
-        new EthGasPrice(blockchainQueries, miningCoordinator, apiConfiguration),
+        new EthGasPrice(blockchainQueries, apiConfiguration),
         new EthGetWork(miningCoordinator),
         new EthSubmitWork(miningCoordinator),
         new EthHashrate(miningCoordinator),
         new EthSubmitHashRate(miningCoordinator),
         new EthChainId(protocolSchedule.getChainId()),
         new EthGetMinerDataByBlockHash(blockchainQueries, protocolSchedule),
-        new EthGetMinerDataByBlockNumber(blockchainQueries, protocolSchedule));
+        new EthGetMinerDataByBlockNumber(blockchainQueries, protocolSchedule),
+        new EthBlobBaseFee(blockchainQueries.getBlockchain(), protocolSchedule));
   }
 }

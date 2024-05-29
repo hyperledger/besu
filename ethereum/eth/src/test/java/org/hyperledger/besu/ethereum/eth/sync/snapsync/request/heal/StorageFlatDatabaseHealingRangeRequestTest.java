@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.TrieGenerator;
-import org.hyperledger.besu.ethereum.eth.sync.snapsync.RangeManager;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncProcessState;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapWorldDownloadState;
@@ -29,13 +28,15 @@ import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.RangeStorageEntriesCollector;
 import org.hyperledger.besu.ethereum.trie.TrieIterator;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Iterator;
@@ -70,7 +71,9 @@ class StorageFlatDatabaseHealingRangeRequestTest {
           Address.fromHexString("0xdeadbeeb"));
 
   private MerkleTrie<Bytes, Bytes> trie;
-  private BonsaiWorldStateKeyValueStorage worldStateStorage;
+
+  private WorldStateStorageCoordinator worldStateStorageCoordinator;
+  private BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage;
   private WorldStateProofProvider proofProvider;
   private Hash account0Hash;
   private Hash account0StorageRoot;
@@ -78,13 +81,17 @@ class StorageFlatDatabaseHealingRangeRequestTest {
   @BeforeEach
   public void setup() {
     final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
-    worldStateStorage =
+
+    worldStateKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
-    proofProvider = new WorldStateProofProvider(worldStateStorage);
+            storageProvider,
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+    worldStateStorageCoordinator = new WorldStateStorageCoordinator(worldStateKeyValueStorage);
+    proofProvider = new WorldStateProofProvider(worldStateStorageCoordinator);
     trie =
         TrieGenerator.generateTrie(
-            worldStateStorage,
+            worldStateStorageCoordinator,
             accounts.stream().map(Address::addressHash).collect(Collectors.toList()));
     account0Hash = accounts.get(0).addressHash();
     account0StorageRoot =
@@ -101,7 +108,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
-                worldStateStorage.getAccountStorageTrieNode(account0Hash, location, hash),
+                worldStateKeyValueStorage.getAccountStorageTrieNode(account0Hash, location, hash),
             account0StorageRoot,
             b -> b,
             b -> b);
@@ -145,7 +152,9 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     // Verify that the start key hash of the snapDataRequest is greater than the last key in the
     // slots TreeMap
     List<SnapDataRequest> childRequests =
-        request.getChildRequests(downloadState, worldStateStorage, snapSyncState).toList();
+        request
+            .getChildRequests(downloadState, worldStateStorageCoordinator, snapSyncState)
+            .toList();
     Assertions.assertThat(childRequests).hasSizeGreaterThan(1);
     StorageFlatDatabaseHealingRangeRequest snapDataRequest =
         (StorageFlatDatabaseHealingRangeRequest) childRequests.get(0);
@@ -158,7 +167,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
-                worldStateStorage.getAccountStorageTrieNode(account0Hash, location, hash),
+                worldStateKeyValueStorage.getAccountStorageTrieNode(account0Hash, location, hash),
             account0StorageRoot,
             b -> b,
             b -> b);
@@ -189,7 +198,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
 
     // Verify that no child requests are returned from the request
     final Stream<SnapDataRequest> childRequests =
-        request.getChildRequests(downloadState, worldStateStorage, snapSyncState);
+        request.getChildRequests(downloadState, worldStateStorageCoordinator, snapSyncState);
     Assertions.assertThat(childRequests).isEmpty();
   }
 
@@ -199,7 +208,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
-                worldStateStorage.getAccountStorageTrieNode(account0Hash, location, hash),
+                worldStateKeyValueStorage.getAccountStorageTrieNode(account0Hash, location, hash),
             account0StorageRoot,
             b -> b,
             b -> b);
@@ -240,9 +249,9 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     // Add local data to the request
     request.addLocalData(proofProvider, slots, new ArrayDeque<>(proofs));
 
-    WorldStateStorage.Updater updater = Mockito.spy(worldStateStorage.updater());
+    WorldStateKeyValueStorage.Updater updater = Mockito.spy(worldStateKeyValueStorage.updater());
     request.doPersist(
-        worldStateStorage,
+        worldStateStorageCoordinator,
         updater,
         downloadState,
         snapSyncState,
@@ -256,7 +265,7 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     final StoredMerklePatriciaTrie<Bytes, Bytes> storageTrie =
         new StoredMerklePatriciaTrie<>(
             (location, hash) ->
-                worldStateStorage.getAccountStorageTrieNode(account0Hash, location, hash),
+                worldStateKeyValueStorage.getAccountStorageTrieNode(account0Hash, location, hash),
             account0StorageRoot,
             b -> b,
             b -> b);
@@ -311,9 +320,9 @@ class StorageFlatDatabaseHealingRangeRequestTest {
     request.addLocalData(proofProvider, slots, new ArrayDeque<>(proofs));
 
     BonsaiWorldStateKeyValueStorage.Updater updater =
-        (BonsaiWorldStateKeyValueStorage.Updater) Mockito.spy(worldStateStorage.updater());
+        Mockito.spy(worldStateKeyValueStorage.updater());
     request.doPersist(
-        worldStateStorage,
+        worldStateStorageCoordinator,
         updater,
         downloadState,
         snapSyncState,

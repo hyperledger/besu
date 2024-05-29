@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -66,11 +66,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     final Optional<BlockParameter> maybeBlockParameter =
         request.getOptionalParameter(1, BlockParameter.class);
 
-    if (maybeBlockParameter.isPresent()) {
-      return maybeBlockParameter.get();
-    }
-
-    return BlockParameter.LATEST;
+    return maybeBlockParameter.orElse(BlockParameter.LATEST);
   }
 
   @Override
@@ -153,7 +149,8 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
       final BlockHeader header,
       final WorldUpdater worldUpdater) {
     final Set<TraceTypeParameter.TraceType> traceTypes = traceTypeParameter.getTraceTypes();
-    final DebugOperationTracer tracer = new DebugOperationTracer(buildTraceOptions(traceTypes));
+    final DebugOperationTracer tracer =
+        new DebugOperationTracer(buildTraceOptions(traceTypes), false);
     final Optional<TransactionSimulatorResult> maybeSimulatorResult =
         transactionSimulator.processWithWorldUpdater(
             callParameter, buildTransactionValidationParams(), tracer, header, worldUpdater);
@@ -169,7 +166,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     final TransactionTrace transactionTrace =
         new TransactionTrace(
-            simulatorResult.getTransaction(), simulatorResult.getResult(), tracer.getTraceFrames());
+            simulatorResult.transaction(), simulatorResult.result(), tracer.getTraceFrames());
 
     final Block block = blockchainQueriesSupplier.get().getBlockchain().getChainHeadBlock();
 

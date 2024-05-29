@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,14 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
-public enum RpcErrorType {
+import org.hyperledger.besu.plugin.services.rpc.RpcMethodError;
+
+import java.util.Optional;
+import java.util.function.Function;
+
+import org.apache.tuweni.bytes.Bytes;
+
+public enum RpcErrorType implements RpcMethodError {
   // Standard errors
   PARSE_ERROR(-32700, "Parse error"),
   INVALID_REQUEST(-32600, "Invalid Request"),
@@ -26,7 +33,9 @@ public enum RpcErrorType {
   METHOD_NOT_ENABLED(-32604, "Method not enabled"),
 
   // Resource unavailable error
-  TX_POOL_DISABLED(-32002, "Transaction pool not enabled"),
+  TX_POOL_DISABLED(
+      -32002,
+      "Transaction pool not enabled. (Either txpool explicitly disabled, or node not yet in sync)."),
 
   // eth_getBlockByNumber specific error message
   UNKNOWN_BLOCK(-39001, "Unknown block"),
@@ -61,11 +70,16 @@ public enum RpcErrorType {
   CHAIN_HEAD_WORLD_STATE_NOT_AVAILABLE(-32008, "Initial sync is still in progress"),
   GAS_PRICE_TOO_LOW(-32009, "Gas price below configured minimum gas price"),
   GAS_PRICE_BELOW_CURRENT_BASE_FEE(-32009, "Gas price below current base fee"),
+
+  BLOB_GAS_PRICE_BELOW_CURRENT_BLOB_BASE_FEE(-32009, "blob gas price below current blob base fee"),
   WRONG_CHAIN_ID(-32000, "Wrong chainId"),
   REPLAY_PROTECTED_SIGNATURES_NOT_SUPPORTED(-32000, "ChainId not supported"),
   REPLAY_PROTECTED_SIGNATURE_REQUIRED(-32000, "ChainId is required"),
   TX_FEECAP_EXCEEDED(-32000, "Transaction fee cap exceeded"),
-  REVERT_ERROR(-32000, "Execution reverted"),
+  REVERT_ERROR(
+      -32000,
+      "Execution reverted",
+      data -> JsonRpcErrorResponse.decodeRevertReason(Bytes.fromHexString(data))),
   TRANSACTION_NOT_FOUND(-32000, "Transaction not found"),
   MAX_PRIORITY_FEE_PER_GAS_EXCEEDS_MAX_FEE_PER_GAS(
       -32000, "Max priority fee per gas exceeds max fee per gas"),
@@ -220,17 +234,31 @@ public enum RpcErrorType {
 
   private final int code;
   private final String message;
+  private final Function<String, Optional<String>> dataDecoder;
 
   RpcErrorType(final int code, final String message) {
-    this.code = code;
-    this.message = message;
+    this(code, message, null);
   }
 
+  RpcErrorType(
+      final int code, final String message, final Function<String, Optional<String>> dataDecoder) {
+    this.code = code;
+    this.message = message;
+    this.dataDecoder = dataDecoder;
+  }
+
+  @Override
   public int getCode() {
     return code;
   }
 
+  @Override
   public String getMessage() {
     return message;
+  }
+
+  @Override
+  public Optional<String> decodeData(final String data) {
+    return dataDecoder == null ? Optional.empty() : dataDecoder.apply(data);
   }
 }

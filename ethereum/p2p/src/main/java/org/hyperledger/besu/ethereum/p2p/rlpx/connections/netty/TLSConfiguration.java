@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
 import static java.util.Objects.requireNonNull;

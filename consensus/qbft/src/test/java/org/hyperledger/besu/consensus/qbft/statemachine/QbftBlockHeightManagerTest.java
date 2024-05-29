@@ -31,8 +31,10 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
+import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.BlockTimer;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.RoundTimer;
@@ -58,22 +60,31 @@ import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator.BlockCreationResult;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.BlockImporter;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
+import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.math.BigInteger;
 import java.time.Clock;
 import java.util.List;
 import java.util.Optional;
+import java.util.function.Function;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -104,9 +115,9 @@ public class QbftBlockHeightManagerTest {
   @Mock private Clock clock;
   @Mock private MessageValidatorFactory messageValidatorFactory;
   @Mock private BftBlockCreator blockCreator;
-  @Mock private BlockImporter blockImporter;
   @Mock private BlockTimer blockTimer;
   @Mock private RoundTimer roundTimer;
+  @Mock private DefaultBlockchain blockchain;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   @Mock private ValidatorMulticaster validatorMulticaster;
 
@@ -147,21 +158,37 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
     when(blockCreator.createBlock(anyLong()))
-        .thenReturn(new BlockCreationResult(createdBlock, new TransactionSelectionResults()));
+        .thenReturn(
+            new BlockCreationResult(
+                createdBlock, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     when(futureRoundProposalMessageValidator.validateProposalMessage(any())).thenReturn(true);
     when(messageValidatorFactory.createFutureRoundProposalMessageValidator(anyLong(), any()))
         .thenReturn(futureRoundProposalMessageValidator);
     when(messageValidatorFactory.createMessageValidator(any(), any())).thenReturn(messageValidator);
-    when(blockImporter.importBlock(any(), any(), any())).thenReturn(new BlockImportResult(false));
 
     protocolContext =
         new ProtocolContext(
-            null,
+            blockchain,
             null,
             setupContextWithBftExtraDataEncoder(
                 QbftContext.class, validators, new QbftExtraDataCodec()),
-            Optional.empty());
+            new BadBlockManager());
+
+    final ProtocolScheduleBuilder protocolScheduleBuilder =
+        new ProtocolScheduleBuilder(
+            new StubGenesisConfigOptions(),
+            BigInteger.ONE,
+            ProtocolSpecAdapters.create(0, Function.identity()),
+            new PrivacyParameters(),
+            false,
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager());
+
+    ProtocolSchedule protocolSchedule =
+        new BftProtocolSchedule(
+            (DefaultProtocolSchedule) protocolScheduleBuilder.createProtocolSchedule());
 
     // Ensure the created QbftRound has the valid ConsensusRoundIdentifier;
     when(roundFactory.createNewRound(any(), anyInt()))
@@ -174,7 +201,7 @@ public class QbftBlockHeightManagerTest {
                   createdRoundState,
                   blockCreator,
                   protocolContext,
-                  blockImporter,
+                  protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
                   messageFactory,
@@ -191,7 +218,7 @@ public class QbftBlockHeightManagerTest {
                   providedRoundState,
                   blockCreator,
                   protocolContext,
-                  blockImporter,
+                  protocolSchedule,
                   Subscribers.create(),
                   nodeKey,
                   messageFactory,

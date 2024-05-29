@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
+import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getDepositRequests;
+import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getWithdrawalRequests;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineGetPayloadBodiesResultV1.PayloadBody;
@@ -154,7 +157,7 @@ public class BlockResultFactory {
         blobsBundleV1);
   }
 
-  public EngineGetPayloadResultV6110 payloadTransactionCompleteV6110(
+  public EngineGetPayloadResultV4 payloadTransactionCompleteV4(
       final BlockWithReceipts blockWithReceipts) {
     final List<String> txs =
         blockWithReceipts.getBlock().getBody().getTransactions().stream()
@@ -168,11 +171,12 @@ public class BlockResultFactory {
 
     final BlobsBundleV1 blobsBundleV1 =
         new BlobsBundleV1(blockWithReceipts.getBlock().getBody().getTransactions());
-    return new EngineGetPayloadResultV6110(
+    return new EngineGetPayloadResultV4(
         blockWithReceipts.getHeader(),
         txs,
         blockWithReceipts.getBlock().getBody().getWithdrawals(),
-        blockWithReceipts.getBlock().getBody().getDeposits(),
+        getDepositRequests(blockWithReceipts.getBlock().getBody().getRequests()),
+        getWithdrawalRequests(blockWithReceipts.getBlock().getBody().getRequests()),
         Quantity.create(blockValue),
         blobsBundleV1);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 
 import java.util.List;
 import java.util.Optional;
@@ -141,14 +142,6 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
   boolean isMiningBeforeMerge();
 
   /**
-   * Add bad block.
-   *
-   * @param block the block
-   * @param maybeCause the maybe cause
-   */
-  void addBadBlock(final Block block, Optional<Throwable> maybeCause);
-
-  /**
    * Is bad block.
    *
    * @param blockHash the block hash
@@ -170,6 +163,13 @@ public interface MergeMiningCoordinator extends MiningCoordinator {
    * @param payloadId the payload id
    */
   void finalizeProposalById(final PayloadIdentifier payloadId);
+
+  /**
+   * Return the scheduler
+   *
+   * @return the instance of the scheduler
+   */
+  EthScheduler getEthScheduler();
 
   /** The type Forkchoice result. */
   class ForkchoiceResult {

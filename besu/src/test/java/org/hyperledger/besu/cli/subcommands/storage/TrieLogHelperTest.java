@@ -12,14 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageFormat.BONSAI;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.when;
@@ -31,9 +30,9 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogFactoryImpl;
-import org.hyperledger.besu.ethereum.trie.bonsai.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -87,7 +86,9 @@ class TrieLogHelperTest {
 
     inMemoryWorldState =
         new BonsaiWorldStateKeyValueStorage(
-            storageProvider, new NoOpMetricsSystem(), DataStorageConfiguration.DEFAULT_CONFIG);
+            storageProvider,
+            new NoOpMetricsSystem(),
+            DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
 
     createTrieLog(blockHeader1);
 
@@ -291,8 +292,8 @@ class TrieLogHelperTest {
                 nonValidatingTrieLogHelper.prune(
                     dataStorageConfiguration, inMemoryWorldStateSpy, blockchain, dataDir))
         .isInstanceOf(RuntimeException.class)
-        .hasMessage(
-            "Remaining trie logs (0) did not match --bonsai-historical-block-limit (3). Trie logs backup files have not been deleted, it is safe to rerun the subcommand.");
+        .hasMessageContaining(
+            "Remaining trie logs (0) did not match --bonsai-historical-block-limit (3)");
   }
 
   @Test

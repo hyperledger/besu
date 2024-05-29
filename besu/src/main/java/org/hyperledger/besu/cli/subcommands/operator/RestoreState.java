@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.cli.subcommands.operator;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.MANDATORY_LONG_FORMAT_HELP;
@@ -37,8 +35,8 @@ import org.hyperledger.besu.ethereum.trie.Node;
 import org.hyperledger.besu.ethereum.trie.PersistVisitor;
 import org.hyperledger.besu.ethereum.trie.RestoreVisitor;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
+import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateStorage;
 import org.hyperledger.besu.util.io.RollingFileReader;
 
 import java.io.IOException;
@@ -83,7 +81,10 @@ public class RestoreState implements Runnable {
   private long trieNodeCount;
   private boolean compressed;
   private BesuController besuController;
-  private WorldStateStorage.Updater updater;
+  private ForestWorldStateKeyValueStorage.Updater updater;
+
+  /** Default Constructor. */
+  RestoreState() {}
 
   private Path accountFileName(final int fileNumber, final boolean compressed) {
     return StateBackupService.accountFileName(backupDir, targetBlock, fileNumber, compressed);
@@ -249,10 +250,10 @@ public class RestoreState implements Runnable {
     if (updater != null) {
       updater.commit();
     }
-    final WorldStateStorage worldStateStorage =
+    final ForestWorldStateKeyValueStorage worldStateKeyValueStorage =
         ((ForestWorldStateArchive) besuController.getProtocolContext().getWorldStateArchive())
             .getWorldStateStorage();
-    updater = worldStateStorage.updater();
+    updater = worldStateKeyValueStorage.updater();
   }
 
   private void maybeCommitUpdater() {
@@ -263,20 +264,20 @@ public class RestoreState implements Runnable {
 
   private void updateCode(final Bytes code) {
     maybeCommitUpdater();
-    updater.putCode(null, code);
+    updater.putCode(code);
   }
 
   private void updateAccountState(final Bytes32 key, final Bytes value) {
     maybeCommitUpdater();
     // restore by path not supported
-    updater.putAccountStateTrieNode(null, key, value);
+    updater.putAccountStateTrieNode(key, value);
     trieNodeCount++;
   }
 
   private void updateAccountStorage(final Bytes32 key, final Bytes value) {
     maybeCommitUpdater();
     // restore by path not supported
-    updater.putAccountStorageTrieNode(null, null, key, value);
+    updater.putAccountStorageTrieNode(key, value);
     trieNodeCount++;
   }
 

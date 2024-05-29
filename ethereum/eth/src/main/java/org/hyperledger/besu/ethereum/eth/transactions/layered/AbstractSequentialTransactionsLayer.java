@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.FOLLOW_INVALIDATED;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -27,19 +28,19 @@ import java.util.Map;
 import java.util.NavigableMap;
 import java.util.OptionalLong;
 import java.util.Set;
-import java.util.TreeMap;
 import java.util.function.BiFunction;
 
 public abstract class AbstractSequentialTransactionsLayer extends AbstractTransactionsLayer {
 
   public AbstractSequentialTransactionsLayer(
       final TransactionPoolConfiguration poolConfig,
+      final EthScheduler ethScheduler,
       final TransactionsLayer nextLayer,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final TransactionPoolMetrics metrics,
       final BlobCache blobCache) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache);
+    super(poolConfig, ethScheduler, nextLayer, transactionReplacementTester, metrics, blobCache);
   }
 
   @Override
@@ -48,7 +49,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
 
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     final long invalidNonce = invalidatedTx.getNonce();
-    if (senderTxs != null && invalidNonce <= senderTxs.lastKey()) {
+    if (senderTxs != null && Long.compareUnsigned(invalidNonce, senderTxs.lastKey()) <= 0) {
       // on sequential layers we need to push to next layer all the txs following the invalid one,
       // even if it belongs to a previous layer
 
@@ -142,7 +143,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
 
   @Override
   protected void internalConsistencyCheck(
-      final Map<Address, TreeMap<Long, PendingTransaction>> prevLayerTxsBySender) {
+      final Map<Address, NavigableMap<Long, PendingTransaction>> prevLayerTxsBySender) {
     txsBySender.values().stream()
         .filter(senderTxs -> senderTxs.size() > 1)
         .map(NavigableMap::entrySet)

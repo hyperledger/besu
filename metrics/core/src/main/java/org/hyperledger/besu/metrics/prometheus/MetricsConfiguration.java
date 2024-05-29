@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -31,15 +31,19 @@ import com.google.common.base.MoreObjects;
 /** The Metrics configuration. */
 public class MetricsConfiguration {
   private static final String DEFAULT_METRICS_HOST = "127.0.0.1";
+
   /** The constant DEFAULT_METRICS_PORT. */
   public static final int DEFAULT_METRICS_PORT = 9545;
 
   private static final MetricsProtocol DEFAULT_METRICS_PROTOCOL = MetricsProtocol.PROMETHEUS;
   private static final String DEFAULT_METRICS_PUSH_HOST = "127.0.0.1";
+
   /** The constant DEFAULT_METRICS_PUSH_PORT. */
   public static final int DEFAULT_METRICS_PUSH_PORT = 9001;
+
   /** The constant DEFAULT_METRICS_TIMERS_ENABLED. */
   public static final Boolean DEFAULT_METRICS_TIMERS_ENABLED = true;
+
   /** The constant DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS. */
   public static final int DEFAULT_METRICS_IDLE_TIMEOUT_SECONDS = 60;
 

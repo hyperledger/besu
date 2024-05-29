@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -39,6 +39,7 @@ public class TransactionSelectionResults {
   private final Map<TransactionType, List<Transaction>> transactionsByType =
       new EnumMap<>(TransactionType.class);
   private final List<TransactionReceipt> receipts = Lists.newArrayList();
+
   /**
    * Access to this field needs to be guarded, since it is possible to read it while another
    * processing thread is writing, when the selection time is over.

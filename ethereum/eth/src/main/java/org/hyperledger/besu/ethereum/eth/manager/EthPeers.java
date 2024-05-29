@@ -41,13 +41,13 @@ import java.util.function.Predicate;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
+import javax.annotation.Nonnull;
 
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.cache.Cache;
 import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.RemovalNotification;
 import org.apache.tuweni.bytes.Bytes;
-import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -87,7 +87,6 @@ public class EthPeers {
   private final Subscribers<ConnectCallback> connectCallbacks = Subscribers.create();
   private final Subscribers<DisconnectCallback> disconnectCallbacks = Subscribers.create();
   private final Collection<PendingPeerRequest> pendingRequests = new CopyOnWriteArrayList<>();
-  private final int peerLowerBound;
   private final int peerUpperBound;
   private final int maxRemotelyInitiatedConnections;
   private final Boolean randomPeerPriority;
@@ -108,7 +107,6 @@ public class EthPeers {
       final int maxMessageSize,
       final List<NodeMessagePermissioningProvider> permissioningProviders,
       final Bytes localNodeId,
-      final int peerLowerBound,
       final int peerUpperBound,
       final int maxRemotelyInitiatedConnections,
       final Boolean randomPeerPriority) {
@@ -119,15 +117,10 @@ public class EthPeers {
     this.maxMessageSize = maxMessageSize;
     this.bestPeerComparator = HEAVIEST_CHAIN;
     this.localNodeId = localNodeId;
-    this.peerLowerBound = peerLowerBound;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
     this.randomPeerPriority = randomPeerPriority;
-    LOG.trace(
-        "MaxPeers: {}, Lower Bound: {}, Max Remote: {}",
-        peerUpperBound,
-        peerLowerBound,
-        maxRemotelyInitiatedConnections);
+    LOG.trace("MaxPeers: {}, Max Remote: {}", peerUpperBound, maxRemotelyInitiatedConnections);
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
         "peer_count",
@@ -175,11 +168,7 @@ public class EthPeers {
     }
   }
 
-  public int getPeerLowerBound() {
-    return peerLowerBound;
-  }
-
-  @NotNull
+  @Nonnull
   private List<PeerConnection> getIncompleteConnections(final Bytes id) {
     return incompleteConnections.asMap().keySet().stream()
         .filter(nrc -> nrc.getPeer().getId().equals(id))
@@ -188,14 +177,21 @@ public class EthPeers {
 
   public boolean registerDisconnect(final PeerConnection connection) {
     final EthPeer peer = peer(connection);
-    return registerDisconnect(peer.getId(), peer, connection);
+    return registerDisconnect(peer, connection);
   }
 
-  private boolean registerDisconnect(
-      final Bytes id, final EthPeer peer, final PeerConnection connection) {
+  private boolean registerDisconnect(final EthPeer peer, final PeerConnection connection) {
     incompleteConnections.invalidate(connection);
     boolean removed = false;
-    if (peer != null && peer.getConnection().equals(connection)) {
+    if (peer == null) {
+      LOG.atTrace()
+          .setMessage("attempt to remove null peer with connection {}")
+          .addArgument(connection)
+          .log();
+      return false;
+    }
+    if (peer.getConnection().equals(connection)) {
+      final Bytes id = peer.getId();
       if (!peerHasIncompleteConnection(id)) {
         removed = completeConnections.remove(id, peer);
         disconnectCallbacks.forEach(callback -> callback.onDisconnect(peer));
@@ -308,7 +304,7 @@ public class EthPeers {
         .forEach(
             ep -> {
               if (ep.isDisconnected()) {
-                registerDisconnect(ep.getId(), ep, ep.getConnection());
+                registerDisconnect(ep, ep.getConnection());
               }
             });
   }
@@ -368,16 +364,28 @@ public class EthPeers {
   public boolean shouldConnect(final Peer peer, final boolean inbound) {
     final Bytes id = peer.getId();
     if (peerCount() >= peerUpperBound && !canExceedPeerLimits(id)) {
+      LOG.atTrace()
+          .setMessage("not connecting to peer {} - too many peers")
+          .addArgument(peer.getLoggableId())
+          .log();
       return false;
     }
     final EthPeer ethPeer = completeConnections.get(id);
     if (ethPeer != null && !ethPeer.isDisconnected()) {
+      LOG.atTrace()
+          .setMessage("not connecting to peer {} - already disconnected")
+          .addArgument(ethPeer.getLoggableId())
+          .log();
       return false;
     }
     final List<PeerConnection> incompleteConnections = getIncompleteConnections(id);
     if (!incompleteConnections.isEmpty()) {
       if (incompleteConnections.stream()
           .anyMatch(c -> !c.isDisconnected() && (!inbound || (inbound && c.inboundInitiated())))) {
+        LOG.atTrace()
+            .setMessage("not connecting to peer {} - new connection already in process")
+            .addArgument(peer.getLoggableId())
+            .log();
         return false;
       }
     }
@@ -397,7 +405,7 @@ public class EthPeers {
                   .addArgument(this::peerCount)
                   .addArgument(this::getMaxPeers)
                   .log();
-              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
+              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
             });
   }
 

@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
@@ -63,6 +64,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.WorldStatePreimageKeyValue
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -92,6 +94,7 @@ public class RetestethContext {
   public static final int MAX_PEERS = 25;
 
   private final ReentrantLock contextLock = new ReentrantLock();
+  private final BadBlockManager badBlockManager = new BadBlockManager();
   private Address coinbase;
   private Bytes extraData;
   private MutableBlockchain blockchain;
@@ -154,9 +157,10 @@ public class RetestethContext {
         JsonGenesisConfigOptions.fromJsonObject(
             JsonUtil.getObjectNode(genesisConfig, "config").get());
     protocolSchedule =
-        MainnetProtocolSchedule.fromConfig(jsonGenesisConfigOptions, EvmConfiguration.DEFAULT);
+        MainnetProtocolSchedule.fromConfig(
+            jsonGenesisConfigOptions, EvmConfiguration.DEFAULT, miningParameters, badBlockManager);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
-      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule);
+      protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }
     blockHeaderFunctions = ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
 
@@ -167,16 +171,19 @@ public class RetestethContext {
 
     final WorldStateArchive worldStateArchive =
         new ForestWorldStateArchive(
-            new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage()),
+            new WorldStateStorageCoordinator(
+                new ForestWorldStateKeyValueStorage(new InMemoryKeyValueStorage())),
             new WorldStatePreimageKeyValueStorage(new InMemoryKeyValueStorage()),
             EvmConfiguration.DEFAULT);
     final MutableWorldState worldState = worldStateArchive.getMutable();
     genesisState.writeStateTo(worldState);
 
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
-    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null, Optional.empty());
+    protocolContext = new ProtocolContext(blockchain, worldStateArchive, null, badBlockManager);
 
-    blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
+    blockchainQueries =
+        new BlockchainQueries(
+            protocolSchedule, blockchain, worldStateArchive, ethScheduler, miningParameters);
 
     final String sealengine = JsonUtil.getString(genesisConfig, "sealengine", "");
     headerValidationMode =
@@ -212,7 +219,8 @@ public class RetestethContext {
                 Subscribers.none(),
                 new EpochCalculator.DefaultEpochCalculator());
 
-    blockReplay = new BlockReplay(protocolSchedule, blockchainQueries.getBlockchain());
+    blockReplay =
+        new BlockReplay(protocolSchedule, protocolContext, blockchainQueries.getBlockchain());
 
     final Bytes localNodeKey = Bytes.wrap(new byte[64]);
 
@@ -229,7 +237,6 @@ public class RetestethContext {
             EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
             Collections.emptyList(),
             localNodeKey,
-            MAX_PEERS,
             MAX_PEERS,
             MAX_PEERS,
             false);
@@ -252,8 +259,8 @@ public class RetestethContext {
             metricsSystem,
             syncState,
             transactionPoolConfiguration,
-            null,
-            new BlobCache());
+            new BlobCache(),
+            MiningParameters.newDefault());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Genesis Block {} ", genesisState.getBlock());
@@ -274,7 +281,7 @@ public class RetestethContext {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            keyValueStorage, variablesStorage, blockHeaderFunctions),
+            keyValueStorage, variablesStorage, blockHeaderFunctions, false),
         new NoOpMetricsSystem(),
         100);
   }

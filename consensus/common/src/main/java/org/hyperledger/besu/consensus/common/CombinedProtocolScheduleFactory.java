@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -28,6 +28,8 @@ import java.util.function.Predicate;
 
 /** The Combined protocol schedule factory. */
 public class CombinedProtocolScheduleFactory {
+  /** Default constructor. */
+  public CombinedProtocolScheduleFactory() {}
 
   /**
    * Create protocol schedule.
@@ -53,14 +55,22 @@ public class CombinedProtocolScheduleFactory {
       protocolSchedule.getScheduledProtocolSpecs().stream()
           .filter(protocolSpecMatchesConsensusBlockRange(spec.getBlock(), endBlock))
           .forEach(
-              s ->
-                  combinedProtocolSchedule.putBlockNumberMilestone(s.fork().milestone(), s.spec()));
+              s -> {
+                if (s instanceof ScheduledProtocolSpec.TimestampProtocolSpec) {
+                  combinedProtocolSchedule.putTimestampMilestone(s.fork().milestone(), s.spec());
+                } else if (s instanceof ScheduledProtocolSpec.BlockNumberProtocolSpec) {
+                  combinedProtocolSchedule.putBlockNumberMilestone(s.fork().milestone(), s.spec());
+                } else {
+                  throw new IllegalStateException(
+                      "Unexpected milestone: " + s + " for milestone: " + s.fork().milestone());
+                }
+              });
 
       // When moving to a new consensus mechanism we want to use the last milestone but created by
       // our consensus mechanism's BesuControllerBuilder so any additional rules are applied
       if (spec.getBlock() > 0) {
         combinedProtocolSchedule.putBlockNumberMilestone(
-            spec.getBlock(), protocolSchedule.getByBlockNumber(spec.getBlock()));
+            spec.getBlock(), protocolSchedule.getByBlockNumberOrTimestamp(spec.getBlock(), 0L));
       }
     }
     return combinedProtocolSchedule;

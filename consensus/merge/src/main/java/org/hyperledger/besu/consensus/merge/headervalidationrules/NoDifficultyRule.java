@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.consensus.merge.headervalidationrules;
 
 import static org.hyperledger.besu.consensus.merge.TransitionUtils.isTerminalProofOfWorkBlock;
@@ -30,6 +29,9 @@ import org.slf4j.LoggerFactory;
 public class NoDifficultyRule extends MergeConsensusRule {
 
   private static final Logger LOG = LoggerFactory.getLogger(NoDifficultyRule.class);
+
+  /** Default Constructor. */
+  public NoDifficultyRule() {}
 
   @Override
   public boolean validate(

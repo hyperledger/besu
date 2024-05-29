@@ -1,18 +1,16 @@
 /*
+ * Copyright ConsenSys AG.
  *
- *  * Copyright ConsenSys AG.
- *  *
- *  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  * the License. You may obtain a copy of the License at
- *  *
- *  * http://www.apache.org/licenses/LICENSE-2.0
- *  *
- *  * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
- *  * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
- *  * specific language governing permissions and limitations under the License.
- *  *
- *  * SPDX-License-Identifier: Apache-2.0
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
  *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.eth.peervalidation;
 
@@ -101,6 +99,28 @@ public class RequiredBlocksPeerValidatorTest extends AbstractPeerBlockValidatorT
     final AtomicBoolean requiredBlockRequested = respondToBlockRequest(peer, requiredBlock);
 
     assertThat(requiredBlockRequested).isTrue();
+    assertThat(result).isDone();
+    assertThat(result).isCompletedWithValue(false);
+  }
+
+  @Test
+  public void validatePeer_responsivePeerDoesNotHaveBlockWhenPastForkHeight() {
+    final EthProtocolManager ethProtocolManager = EthProtocolManagerTestUtil.create();
+
+    final PeerValidator validator =
+        new RequiredBlocksPeerValidator(
+            ProtocolScheduleFixture.MAINNET, new NoOpMetricsSystem(), 1, Hash.ZERO);
+
+    final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1);
+
+    final CompletableFuture<Boolean> result =
+        validator.validatePeer(ethProtocolManager.ethContext(), peer.getEthPeer());
+
+    assertThat(result).isNotDone();
+
+    // Respond to block header request with empty
+    peer.respond(RespondingEthPeer.emptyResponder());
+
     assertThat(result).isDone();
     assertThat(result).isCompletedWithValue(false);
   }

@@ -39,12 +39,7 @@ dependencyManagement {
       entry'dagger'
     }
 
-    dependencySet(group: 'com.google.errorprone', version: '2.18.0') {
-      entry 'error_prone_annotation'
-      entry 'error_prone_check_api'
-      entry 'error_prone_core'
-      entry 'error_prone_test_helpers'
-    }
+    dependency 'org.hyperledger.besu:besu-errorprone-checks:1.0.0'
 
     dependency 'com.google.guava:guava:33.0.0-jre'
 
@@ -121,7 +116,7 @@ dependencyManagement {
       entry 'tuweni-units'
     }
 
-    dependencySet(group: 'io.vertx', version: '4.3.5') {
+    dependencySet(group: 'io.vertx', version: '4.5.4') {
       entry 'vertx-auth-jwt'
       entry 'vertx-codegen'
       entry 'vertx-core'
@@ -136,9 +131,10 @@ dependencyManagement {
 
     dependency 'net.java.dev.jna:jna:5.14.0'
 
-    dependency 'org.apache.commons:commons-compress:1.25.0'
+    dependency 'org.apache.commons:commons-compress:1.26.0'
     dependency 'org.apache.commons:commons-lang3:3.14.0'
     dependency 'org.apache.commons:commons-text:1.11.0'
+    dependency 'org.apache.commons:commons-collections4:4.4'
 
     dependencySet(group: 'org.apache.logging.log4j', version: '2.22.1') {
       entry 'log4j-api'
@@ -158,9 +154,9 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.1'
     dependency 'org.openjdk.jol:jol-core:0.17'
-    dependency 'tech.pegasys:jc-kzg-4844:0.8.0'
+    dependency 'tech.pegasys:jc-kzg-4844:1.0.0'
 
-    dependencySet(group: 'org.hyperledger.besu', version: '0.8.2') {
+    dependencySet(group: 'org.hyperledger.besu', version: '0.8.4') {
       entry 'arithmetic'
       entry 'ipa-multipoint'
       entry 'bls12-381'
@@ -217,8 +213,8 @@ dependencyManagement {
 
     dependency 'org.testcontainers:testcontainers:1.19.3'
 
-    dependency 'org.web3j:quorum:4.9.5'
-    dependencySet(group: 'org.web3j', version: '4.10.3') {
+    dependency 'org.web3j:quorum:4.10.0'
+    dependencySet(group: 'org.web3j', version: '4.11.1') {
       entry 'abi'
       entry 'besu'
       entry 'core'
@@ -232,6 +228,8 @@ dependencyManagement {
     dependency 'org.xerial.snappy:snappy-java:1.1.10.5'
 
     dependency 'org.yaml:snakeyaml:2.0'
+
+    dependency 'org.apache.maven:maven-artifact:3.9.6'
 
     dependency 'tech.pegasys.discovery:discovery:22.12.0'
 

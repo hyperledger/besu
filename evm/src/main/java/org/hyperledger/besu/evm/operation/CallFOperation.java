@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -25,6 +25,7 @@ public class CallFOperation extends AbstractOperation {
 
   /** The constant OPCODE. */
   public static final int OPCODE = 0xe3;
+
   /** The Call F success. */
   static final OperationResult callfSuccess = new OperationResult(5, null);
 

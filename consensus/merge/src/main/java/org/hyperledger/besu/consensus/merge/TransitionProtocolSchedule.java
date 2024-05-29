@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,8 +16,10 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
@@ -61,14 +63,19 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    *
    * @param genesisConfigOptions {@link GenesisConfigOptions} containing the config options for the
    *     milestone starting points
+   * @param miningParameters the mining parameters
+   * @param badBlockManager the cache to use to keep invalid blocks
    * @return an initialised TransitionProtocolSchedule using post-merge defaults
    */
   public static TransitionProtocolSchedule fromConfig(
-      final GenesisConfigOptions genesisConfigOptions) {
+      final GenesisConfigOptions genesisConfigOptions,
+      final MiningParameters miningParameters,
+      final BadBlockManager badBlockManager) {
     ProtocolSchedule preMergeProtocolSchedule =
-        MainnetProtocolSchedule.fromConfig(genesisConfigOptions);
+        MainnetProtocolSchedule.fromConfig(genesisConfigOptions, miningParameters, badBlockManager);
     ProtocolSchedule postMergeProtocolSchedule =
-        MergeProtocolSchedule.create(genesisConfigOptions, false);
+        MergeProtocolSchedule.create(
+            genesisConfigOptions, false, miningParameters, badBlockManager);
     return new TransitionProtocolSchedule(
         preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
   }

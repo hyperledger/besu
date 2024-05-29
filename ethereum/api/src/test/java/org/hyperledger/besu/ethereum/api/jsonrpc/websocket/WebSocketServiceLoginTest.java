@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketMeth
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.SubscriptionManager;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
@@ -172,7 +173,10 @@ public class WebSocketServiceLoginTest {
                     peerDiscoveryMock,
                     blockchainQueries,
                     synchronizer,
-                    MainnetProtocolSchedule.fromConfig(genesisConfigOptions),
+                    MainnetProtocolSchedule.fromConfig(
+                        genesisConfigOptions,
+                        MiningParameters.MINING_DISABLED,
+                        new BadBlockManager()),
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),

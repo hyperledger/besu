@@ -11,17 +11,19 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -73,11 +75,17 @@ public class ReferenceTestProtocolSchedules {
     builder.put("ArrowGlacier", createSchedule(genesisStub.clone().arrowGlacierBlock(0)));
     builder.put("GrayGlacier", createSchedule(genesisStub.clone().grayGlacierBlock(0)));
     builder.put("Merge", createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
+    builder.put("Paris", createSchedule(genesisStub.clone().mergeNetSplitBlock(0)));
     builder.put("Shanghai", createSchedule(genesisStub.clone().shanghaiTime(0)));
     builder.put(
         "ShanghaiToCancunAtTime15k",
         createSchedule(genesisStub.clone().shanghaiTime(0).cancunTime(15000)));
     builder.put("Cancun", createSchedule(genesisStub.clone().cancunTime(0)));
+    // also load KZG file for mainnet
+    KZGPointEvalPrecompiledContract.init();
+    builder.put(
+        "CancunToPragueAtTime15k",
+        createSchedule(genesisStub.clone().cancunTime(0).pragueTime(15000)));
     builder.put("Prague", createSchedule(genesisStub.clone().pragueTime(0)));
     builder.put("Future_EIPs", createSchedule(genesisStub.clone().futureEipsTime(0)));
     builder.put("Experimental_EIPs", createSchedule(genesisStub.clone().experimentalEipsTime(0)));
@@ -101,7 +109,9 @@ public class ReferenceTestProtocolSchedules {
             ProtocolSpecAdapters.create(0, Function.identity()),
             PrivacyParameters.DEFAULT,
             false,
-            EvmConfiguration.DEFAULT)
+            EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager())
         .createProtocolSchedule();
   }
 

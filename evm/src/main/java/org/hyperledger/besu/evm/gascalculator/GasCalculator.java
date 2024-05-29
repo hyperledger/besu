@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -157,6 +157,46 @@ public interface GasCalculator {
    * @param recipient The CALL recipient (may be null if self destructed or new)
    * @param contract The address of the recipient (never null)
    * @return The gas cost for the CALL operation
+   * @deprecated use the variant with the `accountIsWarm` parameter.
+   */
+  @Deprecated(since = "24.2.0", forRemoval = true)
+  default long callOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account recipient,
+      final Address contract) {
+    return callOperationGasCost(
+        frame,
+        stipend,
+        inputDataOffset,
+        inputDataLength,
+        outputDataOffset,
+        outputDataLength,
+        transferValue,
+        recipient,
+        contract,
+        true);
+  }
+
+  /**
+   * Returns the gas cost for one of the various CALL operations.
+   *
+   * @param frame The current frame
+   * @param stipend The gas stipend being provided by the CALL caller
+   * @param inputDataOffset The offset in memory to retrieve the CALL input data
+   * @param inputDataLength The CALL input data length
+   * @param outputDataOffset The offset in memory to place the CALL output data
+   * @param outputDataLength The CALL output data length
+   * @param transferValue The wei being transferred
+   * @param recipient The CALL recipient (may be null if self destructed or new)
+   * @param contract The address of the recipient (never null)
+   * @param accountIsWarm The address of the contract is "warm" as per EIP-2929
+   * @return The gas cost for the CALL operation
    */
   long callOperationGasCost(
       MessageFrame frame,
@@ -167,7 +207,37 @@ public interface GasCalculator {
       long outputDataLength,
       Wei transferValue,
       Account recipient,
-      Address contract);
+      Address contract,
+      boolean accountIsWarm);
+
+  /**
+   * Returns the gas cost for AUTHCALL.
+   *
+   * @param frame The current frame
+   * @param stipend The gas stipend being provided by the CALL caller
+   * @param inputDataOffset The offset in memory to retrieve the CALL input data
+   * @param inputDataLength The CALL input data length
+   * @param outputDataOffset The offset in memory to place the CALL output data
+   * @param outputDataLength The CALL output data length
+   * @param transferValue The wei being transferred
+   * @param invoker The contract calling out on behalf of the authority
+   * @param invokee The address of the recipient (never null)
+   * @param accountIsWarm The address of the contract is "warm" as per EIP-2929
+   * @return The gas cost for the CALL operation
+   */
+  default long authCallOperationGasCost(
+      final MessageFrame frame,
+      final long stipend,
+      final long inputDataOffset,
+      final long inputDataLength,
+      final long outputDataOffset,
+      final long outputDataLength,
+      final Wei transferValue,
+      final Account invoker,
+      final Address invokee,
+      final boolean accountIsWarm) {
+    return 0L;
+  }
 
   /**
    * Gets additional call stipend.
@@ -191,7 +261,10 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @return the amount of gas the CREATE operation will consume
+   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
+   *     #memoryExpansionGasCost(MessageFrame, long, long)}, and {@link #initcodeCost(int)}
    */
+  @Deprecated(since = "24.4.1", forRemoval = true)
   long createOperationGasCost(MessageFrame frame);
 
   /**
@@ -199,8 +272,36 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @return the amount of gas the CREATE2 operation will consume
+   * @deprecated Compose the operation cost from {@link #txCreateCost()}, {@link
+   *     #memoryExpansionGasCost(MessageFrame, long, long)}, {@link #createKeccakCost(int)}, and
+   *     {@link #initcodeCost(int)}
    */
+  @Deprecated(since = "24.4.1", forRemoval = true)
   long create2OperationGasCost(MessageFrame frame);
+
+  /**
+   * Returns the base create cost, or TX_CREATE_COST as defined in the execution specs
+   *
+   * @return the TX_CREATE value for this gas schedule
+   */
+  long txCreateCost();
+
+  /**
+   * For Creates that need to hash the initcode, this is the gas cost for such hashing
+   *
+   * @param initCodeLength length of the init code, in bytes
+   * @return gas cost to charge for hashing
+   */
+  long createKeccakCost(int initCodeLength);
+
+  /**
+   * The cost of a create operation's initcode charge. This is just the initcode cost, separate from
+   * the operation base cost and initcode hashing cost.
+   *
+   * @param initCodeLength Number of bytes in the initcode
+   * @return the gas cost for the create initcode
+   */
+  long initcodeCost(final int initCodeLength);
 
   /**
    * Returns the amount of gas parent will provide its child CREATE.
@@ -543,6 +644,20 @@ public interface GasCalculator {
    * @return the new excess blob gas value
    */
   default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
+    return 0L;
+  }
+
+  /**
+   * Returns the gas cost of validating an auth commitment for an AUTHCALL
+   *
+   * @param frame the current frame, with memory to be read from
+   * @param offset start of memory read
+   * @param length amount of memory read
+   * @param authority address to check for warmup
+   * @return total gas cost for the operation
+   */
+  default long authOperationGasCost(
+      final MessageFrame frame, final long offset, final long length, final Address authority) {
     return 0L;
   }
 }

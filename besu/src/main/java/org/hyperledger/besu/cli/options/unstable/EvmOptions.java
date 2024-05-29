@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.cli.options.unstable;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
@@ -30,6 +29,9 @@ public class EvmOptions implements CLIOptions<EvmConfiguration> {
 
   /** The constant WORLDSTATE_UPDATE_MODE. */
   public static final String WORLDSTATE_UPDATE_MODE = "--Xevm-worldstate-update-mode";
+
+  /** Default constructor. */
+  EvmOptions() {}
 
   /**
    * Create evm options.
