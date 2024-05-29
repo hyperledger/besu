@@ -15,11 +15,11 @@
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.encoding.DepositDecoder;
+import org.hyperledger.besu.ethereum.core.encoding.DepositRequestDecoder;
 
 import java.util.Collections;
 import java.util.List;
@@ -44,19 +44,20 @@ public class DepositRequestProcessor implements RequestProcessor {
     if (depositContractAddress.isEmpty()) {
       return Optional.empty();
     }
-    List<Deposit> deposits = findDepositsFromReceipts(transactionReceipts);
-    return Optional.of(deposits);
+    List<DepositRequest> depositRequests = findDepositRequestsFromReceipts(transactionReceipts);
+    return Optional.of(depositRequests);
   }
 
   @VisibleForTesting
-  List<Deposit> findDepositsFromReceipts(final List<TransactionReceipt> transactionReceipts) {
+  List<DepositRequest> findDepositRequestsFromReceipts(
+      final List<TransactionReceipt> transactionReceipts) {
     return depositContractAddress
         .map(
             address ->
                 transactionReceipts.stream()
                     .flatMap(receipt -> receipt.getLogsList().stream())
                     .filter(log -> address.equals(log.getLogger()))
-                    .map(DepositDecoder::decodeFromLog)
+                    .map(DepositRequestDecoder::decodeFromLog)
                     .toList())
         .orElse(Collections.emptyList());
   }

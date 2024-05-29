@@ -25,7 +25,8 @@ import java.util.Objects;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class Deposit extends Request implements org.hyperledger.besu.plugin.data.Deposit {
+public class DepositRequest extends Request
+    implements org.hyperledger.besu.plugin.data.DepositRequest {
 
   private final BLSPublicKey pubkey;
   private final Bytes32 depositWithdrawalCredentials;
@@ -33,7 +34,7 @@ public class Deposit extends Request implements org.hyperledger.besu.plugin.data
   private final BLSSignature signature;
   private final UInt64 index;
 
-  public Deposit(
+  public DepositRequest(
       final BLSPublicKey pubkey,
       final Bytes32 depositWithdrawalCredentials,
       final GWei amount,
@@ -96,7 +97,7 @@ public class Deposit extends Request implements org.hyperledger.besu.plugin.data
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final Deposit that = (Deposit) o;
+    final DepositRequest that = (DepositRequest) o;
     return Objects.equals(pubkey, that.pubkey)
         && Objects.equals(depositWithdrawalCredentials, that.depositWithdrawalCredentials)
         && Objects.equals(amount, that.amount)
