@@ -102,6 +102,11 @@ public class CodeV1 implements Code {
         return Optional.empty();
       }
       subcontainerLayout = EOFLayout.parseEOF(subcontainerWithAuxData);
+    } else {
+      // if no auxdata is added we must validate data is not truncated separately
+      if (subcontainerLayout.dataLength() != subcontainerLayout.data().size()) {
+        return Optional.empty();
+      }
     }
 
     Code subContainerCode = CodeFactory.createCode(subcontainerLayout, auxData == null);
@@ -174,14 +179,5 @@ public class CodeV1 implements Code {
    */
   public EOFLayout getEofLayout() {
     return eofLayout;
-  }
-
-  /**
-   * A more readable representation of the hex bytes, including whitespace and comments after hashes
-   *
-   * @param out the printwriter to pretty print to
-   */
-  public void prettyPrint(final PrintWriter out) {
-    eofLayout.prettyPrint(out);
   }
 }
