@@ -610,16 +610,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
     validateContext(protocolContext);
 
-    if (chainPrunerConfiguration.getChainPruningEnabled()) {
-      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
-      blockchain.observeBlockAdded(chainDataPruner);
-      LOG.info(
-          "Chain data pruning enabled with recent blocks retained to be: "
-              + chainPrunerConfiguration.getChainPruningBlocksRetained()
-              + " and frequency to be: "
-              + chainPrunerConfiguration.getChainPruningBlocksFrequency());
-    }
-
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
         protocolContext.getWorldStateArchive());
 
@@ -667,6 +657,16 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
+
+    if (chainPrunerConfiguration.getChainPruningEnabled()) {
+      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
+      blockchain.observeBlockAdded(chainDataPruner);
+      LOG.info(
+          "Chain data pruning enabled with recent blocks retained to be: "
+              + chainPrunerConfiguration.getChainPruningBlocksRetained()
+              + " and frequency to be: "
+              + chainPrunerConfiguration.getChainPruningBlocksFrequency());
+    }
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(

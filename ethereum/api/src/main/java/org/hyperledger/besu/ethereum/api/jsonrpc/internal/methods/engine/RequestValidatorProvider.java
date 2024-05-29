@@ -66,6 +66,6 @@ public class RequestValidatorProvider {
       final ProtocolSpec protocolSchedule) {
     return Optional.ofNullable(protocolSchedule)
         .map(ProtocolSpec::getRequestsValidatorCoordinator)
-        .orElseGet(() -> new RequestsValidatorCoordinator.Builder().build());
+        .orElseGet(RequestsValidatorCoordinator::empty);
   }
 }
