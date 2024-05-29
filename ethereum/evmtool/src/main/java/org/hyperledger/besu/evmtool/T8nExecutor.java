@@ -32,7 +32,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
@@ -266,14 +266,16 @@ public class T8nExecutor {
         .getBlockHashProcessor()
         .processBlockHashes(blockchain, worldState, referenceTestEnv);
 
-    final WorldUpdater worldStateUpdater = worldState.updater();
+    final WorldUpdater rootWorldStateUpdater = worldState.updater();
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);
     List<Transaction> validTransactions = new ArrayList<>();
     ArrayNode receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
     long blobGasUsed = 0;
+    final WorldUpdater worldStateUpdater = rootWorldStateUpdater.updater();
     for (int transactionIndex = 0; transactionIndex < transactions.size(); transactionIndex++) {
+      worldStateUpdater.markTransactionBoundary();
       Transaction transaction = transactions.get(transactionIndex);
       final Stopwatch timer = Stopwatch.createStarted();
 
@@ -384,6 +386,7 @@ public class T8nExecutor {
       receiptObject.put("blockHash", Hash.ZERO.toHexString());
       receiptObject.put(
           "transactionIndex", Bytes.ofUnsignedLong(transactionIndex).toQuantityHexString());
+      worldStateUpdater.commit();
     }
 
     final ObjectNode resultObject = objectMapper.createObjectNode();
@@ -395,12 +398,12 @@ public class T8nExecutor {
           (rewardString == null)
               ? protocolSpec.getBlockReward()
               : Wei.of(Long.decode(rewardString));
-      worldStateUpdater
+      rootWorldStateUpdater
           .getOrCreateSenderAccount(blockHeader.getCoinbase())
           .incrementBalance(reward);
     }
 
-    worldStateUpdater.commit();
+    rootWorldStateUpdater.commit();
     // Invoke the withdrawal processor to handle CL withdrawals.
     if (!referenceTestEnv.getWithdrawals().isEmpty()) {
       try {
@@ -463,7 +466,7 @@ public class T8nExecutor {
 
       resultObject.put("requestsRoot", requestRoot.toHexString());
       var deposits = resultObject.putArray("depositRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), Deposit.class)
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
           .forEach(
               deposit -> {
                 var obj = deposits.addObject();
