@@ -309,7 +309,7 @@ public class BlockHeader extends SealableBlockHeader
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
         pluginBlockHeader.getBlobGasUsed().map(Long::longValue).orElse(null),
-        pluginBlockHeader.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null),
+        pluginBlockHeader.getExcessBlobGas().map(BlobGas.class::cast).orElse(null),
         pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
         pluginBlockHeader
             .getRequestsRoot()

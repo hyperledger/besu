@@ -174,6 +174,11 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     trieLogStorage.clear();
   }
 
+  public void clearTrie() {
+    subscribers.forEach(StorageSubscriber::onClearTrie);
+    composedWorldStateStorage.clear(TRIE_BRANCH_STORAGE);
+  }
+
   public void clearFlatDatabase() {
     subscribers.forEach(StorageSubscriber::onClearFlatDatabaseStorage);
     getFlatDbStrategy().resetOnResync(composedWorldStateStorage);

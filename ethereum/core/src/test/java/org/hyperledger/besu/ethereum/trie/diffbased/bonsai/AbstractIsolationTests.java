@@ -132,6 +132,7 @@ public abstract class AbstractIsolationTests {
           poolConfiguration,
           new GasPricePrioritizedTransactions(
               poolConfiguration,
+              ethScheduler,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
               transactionReplacementTester,
@@ -197,6 +198,16 @@ public abstract class AbstractIsolationTests {
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(
             new BesuConfiguration() {
+
+              @Override
+              public Optional<String> getRpcHttpHost() {
+                return Optional.empty();
+              }
+
+              @Override
+              public Optional<Integer> getRpcHttpPort() {
+                return Optional.empty();
+              }
 
               @Override
               public Path getStoragePath() {

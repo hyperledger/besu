@@ -84,7 +84,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long BALANCE_OPERATION_GAS_COST = 20L;
 
-  private static final long BLOCKHASH_OPERATION_GAS_COST = 20L;
+  /** The constant BLOCKHASH_OPERATION_GAS_COST = 20gwei. */
+  public static final long BLOCKHASH_OPERATION_GAS_COST = 20L;
 
   private static final long EXP_OPERATION_BASE_GAS_COST = 10L;
 

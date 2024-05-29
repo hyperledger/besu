@@ -24,21 +24,20 @@ import java.util.Objects;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.vertx.core.json.JsonObject;
 
 public class WithdrawalRequestParameter {
 
   private final String sourceAddress;
-  private final String validatorPubKey;
+  private final String validatorPublicKey;
   private final String amount;
 
   @JsonCreator
   public WithdrawalRequestParameter(
       @JsonProperty("sourceAddress") final String sourceAddress,
-      @JsonProperty("pubkey") final String validatorPubKey,
+      @JsonProperty("validatorPublicKey") final String validatorPublicKey,
       @JsonProperty("amount") final String amount) {
     this.sourceAddress = sourceAddress;
-    this.validatorPubKey = validatorPubKey;
+    this.validatorPublicKey = validatorPublicKey;
     this.amount = amount;
   }
 
@@ -46,22 +45,15 @@ public class WithdrawalRequestParameter {
       final WithdrawalRequest withdrawalRequest) {
     return new WithdrawalRequestParameter(
         withdrawalRequest.getSourceAddress().toHexString(),
-        withdrawalRequest.getValidatorPubKey().toHexString(),
+        withdrawalRequest.getValidatorPublicKey().toHexString(),
         withdrawalRequest.getAmount().toShortHexString());
   }
 
   public WithdrawalRequest toWithdrawalRequest() {
     return new WithdrawalRequest(
         Address.fromHexString(sourceAddress),
-        BLSPublicKey.fromHexString(validatorPubKey),
+        BLSPublicKey.fromHexString(validatorPublicKey),
         GWei.fromHexString(amount));
-  }
-
-  public JsonObject asJsonObject() {
-    return new JsonObject()
-        .put("sourceAddress", sourceAddress)
-        .put("validatorPubKey", validatorPubKey)
-        .put("amount", amount);
   }
 
   @JsonGetter
@@ -70,8 +62,8 @@ public class WithdrawalRequestParameter {
   }
 
   @JsonGetter
-  public String getValidatorPubKey() {
-    return validatorPubKey;
+  public String getValidatorPublicKey() {
+    return validatorPublicKey;
   }
 
   @JsonGetter
@@ -85,13 +77,13 @@ public class WithdrawalRequestParameter {
     if (o == null || getClass() != o.getClass()) return false;
     final WithdrawalRequestParameter that = (WithdrawalRequestParameter) o;
     return Objects.equals(sourceAddress, that.sourceAddress)
-        && Objects.equals(validatorPubKey, that.validatorPubKey)
+        && Objects.equals(validatorPublicKey, that.validatorPublicKey)
         && Objects.equals(amount, that.amount);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceAddress, validatorPubKey, amount);
+    return Objects.hash(sourceAddress, validatorPublicKey, amount);
   }
 
   @Override
@@ -100,8 +92,8 @@ public class WithdrawalRequestParameter {
         + "sourceAddress='"
         + sourceAddress
         + '\''
-        + ", validatorPubKey='"
-        + validatorPubKey
+        + ", validatorPublicKey='"
+        + validatorPublicKey
         + '\''
         + ", amount='"
         + amount

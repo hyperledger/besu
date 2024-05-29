@@ -44,6 +44,9 @@ public class WithdrawalRequestContractHelper {
   public static final Address WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS =
       Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
 
+  /** private constructor to prevent instantiations */
+  private WithdrawalRequestContractHelper() {}
+
   @VisibleForTesting
   // Storage slot to store the difference between number of withdrawal requests since last block and
   // target withdrawal requests
@@ -82,7 +85,7 @@ public class WithdrawalRequestContractHelper {
       final MutableWorldState mutableWorldState) {
     final WorldUpdater worldUpdater = mutableWorldState.updater();
     final MutableAccount account = worldUpdater.getAccount(WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS);
-    if (Hash.EMPTY.equals(account.getCodeHash())) {
+    if (account == null || Hash.EMPTY.equals(account.getCodeHash())) {
       return List.of();
     }
 
@@ -150,7 +153,7 @@ public class WithdrawalRequestContractHelper {
               queueHeadIndex.plus(i).multiply(WITHDRAWAL_REQUEST_STORAGE_SLOT_SIZE));
       final Address sourceAddress =
           Address.wrap(account.getStorageValue(queueStorageSlot).toBytes().slice(12, 20));
-      final BLSPublicKey validatorPubKey =
+      final BLSPublicKey validatorPublicKey =
           BLSPublicKey.wrap(
               Bytes.concatenate(
                   account
@@ -162,7 +165,7 @@ public class WithdrawalRequestContractHelper {
           UInt64.fromBytes(account.getStorageValue(queueStorageSlot.plus(2)).slice(16, 8));
 
       withdrawalRequests.add(
-          new WithdrawalRequest(sourceAddress, validatorPubKey, GWei.of(amount)));
+          new WithdrawalRequest(sourceAddress, validatorPublicKey, GWei.of(amount)));
     }
 
     return withdrawalRequests;

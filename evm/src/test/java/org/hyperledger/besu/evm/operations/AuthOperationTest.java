@@ -69,7 +69,7 @@ public class AuthOperationTest {
     MutableAccount authingAccount = mock(MutableAccount.class);
     when(authingAccount.getAddress()).thenReturn(authingAddress);
     when(authingAccount.getNonce()).thenReturn(senderNonce);
-
+    when(frame.getRemainingGas()).thenReturn(1000000L);
     WorldUpdater state = mock(WorldUpdater.class);
 
     when(state.getAccount(authingAddress)).thenReturn(authingAccount);
@@ -121,6 +121,7 @@ public class AuthOperationTest {
     SECPSignature wrongSignature = algo.sign(messageHash, wrongKeys);
 
     MessageFrame frame = mock(MessageFrame.class);
+    when(frame.getRemainingGas()).thenReturn(1000000L);
     when(frame.getContractAddress()).thenReturn(invokerAddress);
     MutableAccount authingAccount = mock(MutableAccount.class);
     when(authingAccount.getAddress()).thenReturn(authingAddress);

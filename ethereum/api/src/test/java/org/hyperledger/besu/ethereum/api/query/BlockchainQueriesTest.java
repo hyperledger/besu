@@ -28,9 +28,11 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator.BlockOptions;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.LogWithMetadata;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.worldstate.WorldState;
@@ -46,6 +48,7 @@ import java.util.stream.Collectors;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.Mockito;
 
 public class BlockchainQueriesTest {
   private BlockDataGenerator gen;
@@ -504,6 +507,9 @@ public class BlockchainQueriesTest {
     assertThat(retrievedOmmerBlockHeader).isEqualTo(ommerBlockHeader);
   }
 
+  @Test
+  public void getGasPriceLowerBound() {}
+
   private void assertBlockMatchesResult(
       final Block targetBlock, final BlockWithMetadata<TransactionWithMetadata, Hash> result) {
     assertThat(result.getHeader()).isEqualTo(targetBlock.getHeader());
@@ -587,17 +593,15 @@ public class BlockchainQueriesTest {
       this.blockchain = blockchain;
       this.blockData = blockData;
       this.worldStateArchive = worldStateArchive;
-      this.blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, scheduler);
+      this.blockchainQueries =
+          new BlockchainQueries(
+              Mockito.mock(ProtocolSchedule.class),
+              blockchain,
+              worldStateArchive,
+              scheduler,
+              MiningParameters.newDefault());
     }
   }
 
-  private static class BlockData {
-    final Block block;
-    final List<TransactionReceipt> receipts;
-
-    private BlockData(final Block block, final List<TransactionReceipt> receipts) {
-      this.block = block;
-      this.receipts = receipts;
-    }
-  }
+  private record BlockData(Block block, List<TransactionReceipt> receipts) {}
 }
