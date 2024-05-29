@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCached
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -54,6 +55,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   protected DiffBasedWorldState persistedState;
 
   protected final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
+  protected final DiffBasedWorldStateConfig defaultWorldStateConfig;
 
   public DiffBasedWorldStateProvider(
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
@@ -70,6 +72,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
             maxLayersToLoad.orElse(DiffBasedCachedWorldStorageManager.RETAINED_LAYERS),
             pluginContext);
     this.blockchain = blockchain;
+    this.defaultWorldStateConfig = new DiffBasedWorldStateConfig();
   }
 
   public DiffBasedWorldStateProvider(
@@ -81,6 +84,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     // TODO: de-dup constructors
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
+    this.defaultWorldStateConfig = new DiffBasedWorldStateConfig();
   }
 
   protected void provideCachedWorldStorageManager(
@@ -250,6 +254,19 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   @Override
   public MutableWorldState getMutable() {
     return persistedState;
+  }
+
+  public DiffBasedWorldStateConfig getDefaultWorldStateConfig() {
+    return defaultWorldStateConfig;
+  }
+
+  public void disableTrie() {
+    defaultWorldStateConfig.setTrieDisabled(true);
+    worldStateKeyValueStorage.clearTrie();
+  }
+
+  public DiffBasedWorldStateKeyValueStorage getWorldStateKeyValueStorage() {
+    return worldStateKeyValueStorage;
   }
 
   public TrieLogManager getTrieLogManager() {

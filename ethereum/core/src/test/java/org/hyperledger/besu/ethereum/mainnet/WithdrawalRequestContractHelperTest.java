@@ -186,13 +186,14 @@ class WithdrawalRequestContractHelperTest {
                   Bytes.fromHexString("0x000000000000000000000000"), request.getSourceAddress())));
       // validator_pubkey
       contract.setStorageValue(
-          UInt256.valueOf(offset++), UInt256.fromBytes(request.getValidatorPubKey().slice(0, 32)));
+          UInt256.valueOf(offset++),
+          UInt256.fromBytes(request.getValidatorPublicKey().slice(0, 32)));
       contract.setStorageValue(
           // set public key to slot, with 16 bytes padding on the right
           UInt256.valueOf(offset++),
           UInt256.fromBytes(
               Bytes.concatenate(
-                  request.getValidatorPubKey().slice(32, 16),
+                  request.getValidatorPublicKey().slice(32, 16),
                   request.getAmount().toBytes(), // 8 bytes for amount
                   Bytes.fromHexString("0x0000000000000000"))));
     }

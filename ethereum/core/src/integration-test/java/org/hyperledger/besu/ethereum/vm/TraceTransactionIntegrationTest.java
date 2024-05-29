@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
@@ -74,13 +73,11 @@ public class TraceTransactionIntegrationTest {
     blockchain = contextTestFixture.getBlockchain();
     worldStateArchive = contextTestFixture.getStateArchive();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
-    ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader());
-    transactionProcessor = protocolSpec.getTransactionProcessor();
-    blockHashLookup =
-        protocolSpec
-            .getBlockHashProcessor()
-            .getBlockHashLookup(genesisBlock.getHeader(), blockchain);
+    transactionProcessor =
+        protocolSchedule
+            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
+            .getTransactionProcessor();
+    blockHashLookup = new CachingBlockHashLookup(genesisBlock.getHeader(), blockchain);
   }
 
   @Test

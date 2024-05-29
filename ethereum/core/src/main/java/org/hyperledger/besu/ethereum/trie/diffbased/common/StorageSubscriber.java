@@ -21,5 +21,7 @@ public interface StorageSubscriber {
 
   default void onClearTrieLog() {}
 
+  default void onClearTrie() {}
+
   default void onCloseStorage() {}
 }

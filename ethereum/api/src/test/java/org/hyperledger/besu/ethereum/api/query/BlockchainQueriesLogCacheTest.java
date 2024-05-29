@@ -28,8 +28,10 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -63,6 +65,7 @@ public class BlockchainQueriesLogCacheTest {
   private Hash testHash;
   private static LogsBloomFilter testLogsBloomFilter;
 
+  @Mock ProtocolSchedule protocolSchedule;
   @Mock MutableBlockchain blockchain;
   @Mock WorldStateArchive worldStateArchive;
   @Mock EthScheduler scheduler;
@@ -127,7 +130,12 @@ public class BlockchainQueriesLogCacheTest {
     when(blockchain.getBlockBody(any())).thenReturn(Optional.of(fakeBody));
     blockchainQueries =
         new BlockchainQueries(
-            blockchain, worldStateArchive, Optional.of(cacheDir), Optional.of(scheduler));
+            protocolSchedule,
+            blockchain,
+            worldStateArchive,
+            Optional.of(cacheDir),
+            Optional.of(scheduler),
+            MiningParameters.newDefault());
   }
 
   /**

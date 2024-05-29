@@ -14,12 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.blockhash;
 
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
-
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -44,51 +41,26 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   /** The HISTORY_SERVE_WINDOW */
   public static final long HISTORY_SERVE_WINDOW = 8192;
 
-  private final long forkTimestamp;
   private final long historySaveWindow;
   private final Address historyStorageAddress;
 
-  /**
-   * Constructs a BlockHashProcessor with a specified fork timestamp.
-   *
-   * @param forkTimestamp The timestamp at which the fork becomes active.
-   */
-  public PragueBlockHashProcessor(final long forkTimestamp) {
-    this(forkTimestamp, HISTORY_STORAGE_ADDRESS, HISTORY_SERVE_WINDOW);
+  /** Constructs a BlockHashProcessor. */
+  public PragueBlockHashProcessor() {
+    this(HISTORY_STORAGE_ADDRESS, HISTORY_SERVE_WINDOW);
   }
 
   /**
-   * Constructs a BlockHashProcessor with a specified fork timestamp and history save window. This
-   * constructor is primarily used for testing.
+   * Constructs a BlockHashProcessor with a specified history save window. This constructor is
+   * primarily used for testing.
    *
-   * @param forkTimestamp The timestamp at which the fork becomes active.
    * @param historyStorageAddress the address of the contract storing the history
    * @param historySaveWindow The number of blocks for which history should be saved.
    */
   @VisibleForTesting
   public PragueBlockHashProcessor(
-      final long forkTimestamp, final Address historyStorageAddress, final long historySaveWindow) {
-    this.forkTimestamp = forkTimestamp;
+      final Address historyStorageAddress, final long historySaveWindow) {
     this.historyStorageAddress = historyStorageAddress;
     this.historySaveWindow = historySaveWindow;
-  }
-
-  @Override
-  public BlockHashLookup getBlockHashLookup(
-      final ProcessableBlockHeader currentHeader, final Blockchain blockchain) {
-    return (frame, blockNumber) -> {
-      long currentBlockNumber = frame.getBlockValues().getNumber();
-      if (currentBlockNumber <= blockNumber
-          || currentBlockNumber - blockNumber > historySaveWindow
-          || blockNumber < 0) {
-        return Hash.ZERO;
-      }
-      return Hash.wrap(
-          frame
-              .getWorldUpdater()
-              .get(historyStorageAddress)
-              .getStorageValue(UInt256.valueOf(blockNumber % historySaveWindow)));
-    };
   }
 
   @Override
@@ -99,21 +71,10 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
     super.processBlockHashes(blockchain, mutableWorldState, currentBlockHeader);
 
     WorldUpdater worldUpdater = mutableWorldState.updater();
-    final MutableAccount historyStorageAccount = worldUpdater.getOrCreate(HISTORY_STORAGE_ADDRESS);
+    final MutableAccount historyStorageAccount = worldUpdater.getOrCreate(historyStorageAddress);
 
     if (currentBlockHeader.getNumber() > 0) {
       storeParentHash(historyStorageAccount, currentBlockHeader);
-
-      BlockHeader ancestor =
-          blockchain.getBlockHeader(currentBlockHeader.getParentHash()).orElseThrow();
-
-      // If fork block, add the parent's direct `HISTORY_SERVE_WINDOW - 1`
-      if (ancestor.getTimestamp() < forkTimestamp) {
-        for (int i = 0; i < (historySaveWindow - 1) && ancestor.getNumber() > 0; i++) {
-          ancestor = blockchain.getBlockHeader(ancestor.getParentHash()).orElseThrow();
-          storeBlockHeaderHash(historyStorageAccount, ancestor);
-        }
-      }
     }
     worldUpdater.commit();
   }
@@ -129,16 +90,6 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   }
 
   /**
-   * Stores the hash of a block in the world state.
-   *
-   * @param account The account associated with the historical block hash storage.
-   * @param header The block header whose hash is to be stored.
-   */
-  private void storeBlockHeaderHash(final MutableAccount account, final BlockHeader header) {
-    storeHash(account, header.getNumber(), header.getHash());
-  }
-
-  /**
    * Stores the hash in the world state.
    *
    * @param account The account associated with the historical block hash storage.
@@ -146,11 +97,10 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
    * @param hash The hash to be stored.
    */
   private void storeHash(final MutableAccount account, final long number, final Hash hash) {
+    UInt256 slot = UInt256.valueOf(number % historySaveWindow);
+    UInt256 value = UInt256.fromBytes(hash);
     LOG.trace(
-        "Writing to {} {}=%{}",
-        account.getAddress(),
-        UInt256.valueOf(number % historySaveWindow).toDecimalString(),
-        UInt256.fromBytes(hash).toHexString());
-    account.setStorageValue(UInt256.valueOf(number % historySaveWindow), UInt256.fromBytes(hash));
+        "Writing to {} {}=%{}", account.getAddress(), slot.toDecimalString(), value.toHexString());
+    account.setStorageValue(slot, value);
   }
 }

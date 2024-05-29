@@ -216,7 +216,7 @@ public class GraphQLHttpServiceTest {
   @Test
   public void query_get() throws Exception {
     final Wei price = Wei.of(16);
-    Mockito.when(blockchainQueries.gasPrice()).thenReturn(Optional.of(price.toLong()));
+    Mockito.when(blockchainQueries.gasPrice()).thenReturn(price);
     Mockito.when(miningCoordinatorMock.getMinTransactionGasPrice()).thenReturn(price);
 
     try (final Response resp = client.newCall(buildGetRequest("?query={gasPrice}")).execute()) {
