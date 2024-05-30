@@ -70,7 +70,7 @@ abstract class AbstractBlockProcessorTest {
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     lenient()
         .when(protocolSpec.getRequestsValidatorCoordinator())
-        .thenReturn(new RequestsValidatorCoordinator.Builder().build());
+        .thenReturn(RequestsValidatorCoordinator.empty());
     lenient()
         .when(protocolSpec.getBlockHashProcessor())
         .thenReturn(new FrontierBlockHashProcessor());

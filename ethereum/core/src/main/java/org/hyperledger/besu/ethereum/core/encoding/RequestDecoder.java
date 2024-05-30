@@ -41,7 +41,7 @@ public class RequestDecoder {
           RequestType.WITHDRAWAL,
           WithdrawalRequestDecoder::decode,
           RequestType.DEPOSIT,
-          DepositDecoder::decode);
+          DepositRequestDecoder::decode);
 
   /**
    * Decodes a request from its RLP encoded bytes.
