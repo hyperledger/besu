@@ -34,7 +34,7 @@ import org.slf4j.LoggerFactory;
 
 /** A Mock DNS Server that returns fixed TXT entries. */
 public class MockDNSServer {
-  private static final Logger LOG = LoggerFactory.getLogger(DNSResolver.class);
+  private static final Logger LOG = LoggerFactory.getLogger(MockDNSServer.class);
   private static final int MAX_PACKET_SIZE = 512;
 
   private final Map<String, String> txtRecords = new HashMap<>();
