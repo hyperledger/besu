@@ -104,8 +104,8 @@ class DNSDaemonTest {
               checkpoint.flag();
             },
             0,
-            100, // starts the lookup after 100 ms
-            5000, // 5 seconds delay on the second lookup
+            1, // initial delay
+            50, // second lookup after 50 ms (due to Mock DNS server, we are very quick).
             "localhost:" + mockDNSServer.port());
 
     final DeploymentOptions options =
