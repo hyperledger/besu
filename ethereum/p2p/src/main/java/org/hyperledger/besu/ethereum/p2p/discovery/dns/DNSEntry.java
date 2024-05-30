@@ -232,7 +232,8 @@ public interface DNSEntry {
   /** Class representing an ENR Tree link */
   class ENRTreeLink implements DNSEntry {
     private final String domainName;
-    private final String pubKey;
+    private final String encodedPubKey;
+    private final SECP256K1.PublicKey pubKey;
 
     /**
      * Creates a new ENRTreeLink
@@ -242,18 +243,23 @@ public interface DNSEntry {
     public ENRTreeLink(final String enrTreeLink) {
       final URI uri = URI.create(enrTreeLink);
       this.domainName = uri.getHost();
-      this.pubKey = uri.getUserInfo();
+      this.encodedPubKey = uri.getUserInfo();
+      this.pubKey = fromBase32(encodedPubKey);
+    }
+
+    private static SECP256K1.PublicKey fromBase32(final String base32) {
+      final byte[] keyBytes = Base32.decodeBytes(base32);
+      final ECPoint ecPoint = SECP256K1.Parameters.CURVE.getCurve().decodePoint(keyBytes);
+      return SECP256K1.PublicKey.fromBytes(Bytes.wrap(ecPoint.getEncoded(false)).slice(1));
     }
 
     /**
-     * Derive public key from the link
+     * Decoded SECP256K1 public key.
      *
-     * @return the public key
+     * @return derived SECP256K1.PublicKey
      */
     public SECP256K1.PublicKey publicKey() {
-      final byte[] keyBytes = Base32.decodeBytes(pubKey);
-      final ECPoint ecPoint = SECP256K1.Parameters.CURVE.getCurve().decodePoint(keyBytes);
-      return SECP256K1.PublicKey.fromBytes(Bytes.wrap(ecPoint.getEncoded(false)).slice(1));
+      return pubKey;
     }
 
     /**
@@ -267,7 +273,7 @@ public interface DNSEntry {
 
     @Override
     public String toString() {
-      return String.format("enrtree://%s@%s", pubKey, domainName);
+      return String.format("enrtree://%s@%s", encodedPubKey, domainName);
     }
   }
 }
