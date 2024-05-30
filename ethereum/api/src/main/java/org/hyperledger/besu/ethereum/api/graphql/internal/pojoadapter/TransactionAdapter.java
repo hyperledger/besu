@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLContextType;
@@ -248,7 +249,13 @@ public class TransactionAdapter extends AdapterBase {
   }
 
   public Optional<BigInteger> getV() {
-    return Optional.ofNullable(transactionWithMetadata.getTransaction().getV());
+    BigInteger v = transactionWithMetadata.getTransaction().getV();
+    return Optional.ofNullable(
+        v == null
+                && (transactionWithMetadata.getTransaction().getType().getEthSerializedType()
+                    < TransactionType.BLOB.getEthSerializedType())
+            ? transactionWithMetadata.getTransaction().getYParity()
+            : v);
   }
 
   public Optional<BigInteger> getYParity() {
