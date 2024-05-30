@@ -74,7 +74,7 @@ public class DNSDaemon extends AbstractVerticle {
     }
 
     LOG.info("Starting DNSDaemon for {}, using {} DNS host.", enrLink, dnsServer.orElse("default"));
-    this.dnsResolver = new DNSResolver(vertx, enrLink, seq, dnsServer);
+    dnsResolver = new DNSResolver(vertx, enrLink, seq, dnsServer);
     if (delay > 0) {
       periodicTaskId = Optional.of(vertx.setPeriodic(initialDelay, delay, this::refreshENRRecords));
     } else {
