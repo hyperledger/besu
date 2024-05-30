@@ -39,7 +39,7 @@ public class PrivTraceTransaction implements Transaction<String> {
           node.privacy().privTraceTransaction(privacyGroupId, transactionHash).send();
 
       assertThat(response).as("check response is not null").isNotNull();
-      assertThat(response.getResult()).as("check result in response isn't null").isNotNull();
+      assertThat(response.getResult()).as("check result in response is not null").isNotNull();
 
       return response.getResult();
     } catch (final IOException e) {
