@@ -17,24 +17,41 @@ package org.hyperledger.besu.services;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.PluginJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
+import org.hyperledger.besu.plugin.services.rpc.PluginRpcResponse;
 
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
 /** The RPC endpoint service implementation. */
 public class RpcEndpointServiceImpl implements RpcEndpointService {
   private final Map<String, Function<PluginRpcRequest, ?>> rpcMethods = new HashMap<>();
+  private Map<String, JsonRpcMethod> inProgressRpcMethods;
 
   /** Default Constructor. */
   public RpcEndpointServiceImpl() {}
+
+  /**
+   * Init the service
+   *
+   * @param inProcessRpcMethods set of RPC methods that can be called
+   */
+  public void init(final Map<String, JsonRpcMethod> inProcessRpcMethods) {
+    this.inProgressRpcMethods = inProcessRpcMethods;
+  }
 
   @Override
   public <T> void registerRPCEndpoint(
@@ -46,6 +63,38 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
     checkNotNull(function);
 
     rpcMethods.put(namespace + "_" + functionName, function);
+  }
+
+  @Override
+  public PluginRpcResponse call(final String methodName, final Object[] params) {
+    checkNotNull(
+        inProgressRpcMethods,
+        "Service not initialized yet, this method must be called after plugin 'beforeExternalServices' call completes");
+    final var method =
+        inProgressRpcMethods.computeIfAbsent(
+            methodName,
+            mn -> {
+              throw new NoSuchElementException("Unknown or not enabled method: " + mn);
+            });
+
+    final var requestContext =
+        new JsonRpcRequestContext(new JsonRpcRequest("2.0", methodName, params));
+    final var response = method.response(requestContext);
+    return new PluginRpcResponse() {
+      @Override
+      public Object getResult() {
+        return switch (response.getType()) {
+          case NONE, UNAUTHORIZED -> null;
+          case SUCCESS -> ((JsonRpcSuccessResponse) response).getResult();
+          case ERROR -> ((JsonRpcErrorResponse) response).getError();
+        };
+      }
+
+      @Override
+      public JsonRpcResponseType getType() {
+        return response.getType();
+      }
+    };
   }
 
   /**

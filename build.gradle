@@ -162,6 +162,8 @@ allprojects {
       forRepositories(ethExecSpecTestsRepo)
       filter { includeModule('ethereum', 'execution-spec-tests')}
     }
+
+    mavenLocal()
   }
 
   dependencies {

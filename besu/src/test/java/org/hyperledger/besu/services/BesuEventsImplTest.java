@@ -174,9 +174,8 @@ public class BesuEventsImplTest {
             new BlobCache(),
             MiningParameters.newDefault());
 
-    serviceImpl =
-        new BesuEventsImpl(
-            blockchain, blockBroadcaster, transactionPool, syncState, badBlockManager);
+    serviceImpl = new BesuEventsImpl();
+    serviceImpl.init(blockchain, blockBroadcaster, transactionPool, syncState, badBlockManager);
   }
 
   @Test

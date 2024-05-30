@@ -40,7 +40,7 @@ jobs:
         run: ./gradlew clean spotlessCheck
 
       - name: Test & Build
-        run: ./gradlew build -x checkLicense
+        run: ./gradlew build
 
       - name: Test Report
         uses: dorny/test-reporter@v1

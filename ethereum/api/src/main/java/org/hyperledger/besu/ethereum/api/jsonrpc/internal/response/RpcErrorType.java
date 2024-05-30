@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
-import org.hyperledger.besu.plugin.services.rpc.RpcMethodError;
+import org.hyperledger.besu.datatypes.rpc.RpcMethodError;
 
 import java.util.Optional;
 import java.util.function.Function;

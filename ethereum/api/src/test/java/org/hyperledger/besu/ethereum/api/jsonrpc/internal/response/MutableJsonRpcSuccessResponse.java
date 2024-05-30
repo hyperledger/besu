@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
+
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
