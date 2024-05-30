@@ -17,8 +17,8 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.DepositContract;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.log.Log;
@@ -30,9 +30,9 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.web3j.tx.Contract;
 
-public class DepositDecoder {
+public class DepositRequestDecoder {
 
-  public static Deposit decode(final RLPInput rlpInput) {
+  public static DepositRequest decode(final RLPInput rlpInput) {
     rlpInput.enterList();
     final BLSPublicKey publicKey = BLSPublicKey.readFrom(rlpInput);
     final Bytes32 depositWithdrawalCredential = Bytes32.wrap(rlpInput.readBytes());
@@ -41,10 +41,10 @@ public class DepositDecoder {
     final UInt64 index = UInt64.valueOf(rlpInput.readBigIntegerScalar());
     rlpInput.leaveList();
 
-    return new Deposit(publicKey, depositWithdrawalCredential, amount, signature, index);
+    return new DepositRequest(publicKey, depositWithdrawalCredential, amount, signature, index);
   }
 
-  public static Deposit decodeFromLog(final Log log) {
+  public static DepositRequest decodeFromLog(final Log log) {
     Contract.EventValuesWithLog eventValues = DepositContract.staticExtractDepositEventWithLog(log);
     final byte[] rawPublicKey = (byte[]) eventValues.getNonIndexedValues().get(0).getValue();
     final byte[] rawWithdrawalCredential =
@@ -53,7 +53,7 @@ public class DepositDecoder {
     final byte[] rawSignature = (byte[]) eventValues.getNonIndexedValues().get(3).getValue();
     final byte[] rawIndex = (byte[]) eventValues.getNonIndexedValues().get(4).getValue();
 
-    return new Deposit(
+    return new DepositRequest(
         BLSPublicKey.wrap(Bytes.wrap(rawPublicKey)),
         Bytes32.wrap(Bytes.wrap(rawWithdrawalCredential)),
         GWei.of(
@@ -64,7 +64,7 @@ public class DepositDecoder {
         UInt64.valueOf(Bytes.wrap(rawIndex).reverse().toLong()));
   }
 
-  public static Deposit decodeOpaqueBytes(final Bytes input) {
+  public static DepositRequest decodeOpaqueBytes(final Bytes input) {
     return decode(RLP.input(input));
   }
 }
