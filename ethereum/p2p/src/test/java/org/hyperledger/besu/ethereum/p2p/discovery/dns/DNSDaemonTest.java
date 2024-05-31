@@ -27,9 +27,9 @@ import io.vertx.junit5.Checkpoint;
 import io.vertx.junit5.VertxExtension;
 import io.vertx.junit5.VertxTestContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -38,19 +38,19 @@ import org.junit.jupiter.api.extension.ExtendWith;
 class DNSDaemonTest {
   private static final String holeskyEnr =
       "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.holesky.ethdisco.net";
-  private static MockDNSServer mockDNSServer;
+  // private static MockDNSServer mockDNSServer;
+  private final MockDnsServerVerticle mockDnsServerVerticle = new MockDnsServerVerticle();
   private DNSDaemon dnsDaemon;
 
   @BeforeAll
   static void setup() throws IOException {
     Security.addProvider(new BouncyCastleProvider());
-    mockDNSServer = new MockDNSServer();
-    mockDNSServer.start();
   }
 
-  @AfterAll
-  static void tearDown() {
-    mockDNSServer.stop();
+  @BeforeEach
+  @DisplayName("Deploy Mock Dns Server Verticle")
+  void prepare(final Vertx vertx, final VertxTestContext vertxTestContext) {
+    vertx.deployVerticle(mockDnsServerVerticle, vertxTestContext.succeedingThenComplete());
   }
 
   @Test
@@ -65,7 +65,7 @@ class DNSDaemonTest {
             0,
             0,
             0,
-            "localhost:" + mockDNSServer.port());
+            "localhost:" + mockDnsServerVerticle.port());
 
     final DeploymentOptions options =
         new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER).setWorkerPoolSize(1);
@@ -106,7 +106,7 @@ class DNSDaemonTest {
             0,
             1, // initial delay
             50, // second lookup after 50 ms (due to Mock DNS server, we are very quick).
-            "localhost:" + mockDNSServer.port());
+            "localhost:" + mockDnsServerVerticle.port());
 
     final DeploymentOptions options =
         new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER).setWorkerPoolSize(1);
@@ -116,6 +116,6 @@ class DNSDaemonTest {
   @AfterEach
   @DisplayName("Check that the vertx worker verticle is still there")
   void lastChecks(final Vertx vertx) {
-    assertThat(vertx.deploymentIDs()).isNotEmpty().hasSize(1);
+    assertThat(vertx.deploymentIDs()).isNotEmpty().hasSize(2);
   }
 }
