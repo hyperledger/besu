@@ -61,7 +61,6 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Supplier;
 
 import com.google.common.annotations.VisibleForTesting;
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -150,7 +149,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
               protocolContext,
               protocolSchedule,
               parentHeader,
-              depositContractAddress,
               ethScheduler);
         };
 
@@ -223,11 +221,6 @@ public class MergeCoordinator implements MergeMiningCoordinator, BadChainListene
   @Override
   public Wei getMinPriorityFeePerGas() {
     return miningParameters.getMinPriorityFeePerGas();
-  }
-
-  @Override
-  public void setExtraData(final Bytes extraData) {
-    this.miningParameters.setExtraData(extraData);
   }
 
   @Override

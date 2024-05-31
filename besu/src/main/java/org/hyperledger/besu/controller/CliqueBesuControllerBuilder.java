@@ -57,6 +57,9 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   private final BlockInterface blockInterface = new CliqueBlockInterface();
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
+  /** Default constructor. */
+  public CliqueBesuControllerBuilder() {}
+
   @Override
   protected void prepForBuild() {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
@@ -69,8 +72,10 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
-    return new CliqueJsonRpcMethods(protocolContext);
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
+    return new CliqueJsonRpcMethods(protocolContext, protocolSchedule, miningParameters);
   }
 
   @Override

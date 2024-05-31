@@ -131,6 +131,7 @@ public abstract class AbstractIsolationTests {
           poolConfiguration,
           new GasPricePrioritizedTransactions(
               poolConfiguration,
+              ethScheduler,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
               transactionReplacementTester,
@@ -151,8 +152,11 @@ public abstract class AbstractIsolationTests {
   @BeforeEach
   public void createStorage() {
     worldStateKeyValueStorage =
+        // FYI: BonsaiSnapshoIsolationTests  work with frozen/cached worldstates, using PARTIAL
+        // flat db strategy allows the tests to make account assertions based on trie
+        // (whereas a full db strategy will not, since the worldstates are frozen/cached)
         createKeyValueStorageProvider()
-            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_PARTIAL_DB_CONFIG);
     archive =
         new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
@@ -193,6 +197,16 @@ public abstract class AbstractIsolationTests {
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(
             new BesuConfiguration() {
+
+              @Override
+              public Optional<String> getRpcHttpHost() {
+                return Optional.empty();
+              }
+
+              @Override
+              public Optional<Integer> getRpcHttpPort() {
+                return Optional.empty();
+              }
 
               @Override
               public Path getStoragePath() {
@@ -252,7 +266,6 @@ public abstract class AbstractIsolationTests {
           protocolContext,
           protocolSchedule,
           parentHeader,
-          Optional.empty(),
           ethScheduler);
     }
 

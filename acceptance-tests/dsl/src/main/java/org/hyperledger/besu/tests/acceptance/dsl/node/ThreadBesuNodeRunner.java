@@ -180,11 +180,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .from(node.getMiningParameters())
             .transactionSelectionService(transactionSelectionServiceImpl)
             .build();
-    commonPluginConfiguration.init(
-        dataDir,
-        dataDir.resolve(DATABASE_PATH),
-        node.getDataStorageConfiguration(),
-        miningParameters);
+    commonPluginConfiguration
+        .init(dataDir, dataDir.resolve(DATABASE_PATH), node.getDataStorageConfiguration())
+        .withMiningParameters(miningParameters);
+
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
             node,

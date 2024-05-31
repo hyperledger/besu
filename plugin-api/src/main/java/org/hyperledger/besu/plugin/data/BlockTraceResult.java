@@ -100,6 +100,9 @@ public class BlockTraceResult {
   public static class Builder {
     List<TransactionTraceResult> transactionTraceResults = new ArrayList<>();
 
+    /** Constructs a new builder instance. */
+    private Builder() {}
+
     /**
      * Adds a transaction trace result to the builder.
      *

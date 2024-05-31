@@ -122,6 +122,11 @@ public class BonsaiAccount extends DiffBasedAccount {
   }
 
   @Override
+  public boolean isStorageEmpty() {
+    return Hash.EMPTY_TRIE_HASH.equals(storageRoot);
+  }
+
+  @Override
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
     return ((BonsaiWorldStateKeyValueStorage) context.getWorldStateStorage())

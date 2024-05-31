@@ -31,11 +31,13 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Optional;
 import java.util.Random;
@@ -63,6 +65,7 @@ public class BaseTransactionPoolTest {
   protected final Transaction transaction2 = createTransaction(2);
   protected final Transaction blobTransaction0 = createEIP4844Transaction(0, KEYS1, 1, 1);
 
+  protected final EthScheduler ethScheduler = new DeterministicEthScheduler();
   protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
 
   protected Transaction createTransaction(final long nonce) {

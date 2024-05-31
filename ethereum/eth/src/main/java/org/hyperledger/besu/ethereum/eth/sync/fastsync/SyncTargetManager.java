@@ -147,7 +147,11 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
             })
         .exceptionally(
             error -> {
-              LOG.debug("Could not confirm best peer had pivot block", error);
+              LOG.debug(
+                  "Could not confirm best peer {} had pivot block {}",
+                  bestPeer.getLoggableId(),
+                  pivotBlockHeader.getNumber(),
+                  error);
               return Optional.empty();
             });
   }

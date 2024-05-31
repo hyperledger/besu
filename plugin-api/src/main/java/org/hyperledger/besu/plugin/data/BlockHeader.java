@@ -121,31 +121,20 @@ public interface BlockHeader extends ProcessableBlockHeader {
   Optional<? extends Hash> getWithdrawalsRoot();
 
   /**
-   * The Keccak 256-bit hash of the root node of the trie structure populated with each deposit in
-   * the deposits list portion of the block.
+   * The Keccak 256-bit hash of the root node of the trie structure populated with each request in
+   * the request list portion of the block.
    *
    * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
-   *     deposit in the deposit list portion of the block.
+   *     request in the request list portion of the block.
    */
   @Unstable
-  Optional<? extends Hash> getDepositsRoot();
-
-  /**
-   * The Keccak 256-bit hash of the root node of the trie structure populated with each withdrawal
-   * request in the withdrawal request list portion of the block.
-   *
-   * @return The Keccak 256-bit hash of the root node of the trie structure populated with each
-   *     withdrawal request in the withdrawal request list portion of the block.
-   */
-  @Unstable
-  Optional<? extends Hash> getWithdrawalRequestsRoot();
+  Optional<? extends Hash> getRequestsRoot();
 
   /**
    * The excess_blob_gas of this header.
    *
    * @return The excess_blob_gas of this header.
    */
-  @Unstable
   Optional<? extends Quantity> getExcessBlobGas();
 
   /**
@@ -153,6 +142,5 @@ public interface BlockHeader extends ProcessableBlockHeader {
    *
    * @return The blob_gas_used of this header.
    */
-  @Unstable
   Optional<? extends Long> getBlobGasUsed();
 }

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -54,8 +55,11 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     provideCachedWorldStorageManager(
-        new BonsaiCachedWorldStorageManager(this, worldStateKeyValueStorage));
-    loadPersistedState(new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration));
+        new BonsaiCachedWorldStorageManager(
+            this, worldStateKeyValueStorage, this::cloneBonsaiWorldStateConfig));
+    loadPersistedState(
+        new BonsaiWorldState(
+            this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
   }
 
   @VisibleForTesting
@@ -69,14 +73,16 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     super(worldStateKeyValueStorage, blockchain, trieLogManager);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
-    loadPersistedState(new BonsaiWorldState(this, worldStateKeyValueStorage, evmConfiguration));
+    loadPersistedState(
+        new BonsaiWorldState(
+            this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
   }
 
   public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {
     return bonsaiCachedMerkleTrieLoader;
   }
 
-  private BonsaiWorldStateKeyValueStorage getWorldStateKeyValueStorage() {
+  private BonsaiWorldStateKeyValueStorage getBonsaiWorldStateKeyValueStorage() {
     return (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage;
   }
 
@@ -89,13 +95,13 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
   public void prepareStateHealing(final Address address, final Bytes location) {
     final Set<Bytes> keysToDelete = new HashSet<>();
     final BonsaiWorldStateKeyValueStorage.Updater updater =
-        getWorldStateKeyValueStorage().updater();
+        getBonsaiWorldStateKeyValueStorage().updater();
     final Hash accountHash = address.addressHash();
     final StoredMerklePatriciaTrie<Bytes, Bytes> accountTrie =
         new StoredMerklePatriciaTrie<>(
             (l, h) -> {
               final Optional<Bytes> node =
-                  getWorldStateKeyValueStorage().getAccountStateTrieNode(l, h);
+                  getBonsaiWorldStateKeyValueStorage().getAccountStateTrieNode(l, h);
               if (node.isPresent()) {
                 keysToDelete.add(l);
               }
@@ -115,7 +121,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
                     new StoredMerklePatriciaTrie<>(
                         (l, h) -> {
                           Optional<Bytes> node =
-                              getWorldStateKeyValueStorage()
+                              getBonsaiWorldStateKeyValueStorage()
                                   .getAccountStorageTrieNode(accountHash, l, h);
                           if (node.isPresent()) {
                             keysToDelete.add(Bytes.concatenate(accountHash, l));
@@ -139,6 +145,10 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     keysToDelete.forEach(updater::removeAccountStateTrieNode);
     updater.commit();
 
-    getWorldStateKeyValueStorage().downgradeToPartialFlatDbMode();
+    getBonsaiWorldStateKeyValueStorage().downgradeToPartialFlatDbMode();
+  }
+
+  private DiffBasedWorldStateConfig cloneBonsaiWorldStateConfig() {
+    return new DiffBasedWorldStateConfig(defaultWorldStateConfig);
   }
 }

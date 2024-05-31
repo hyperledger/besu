@@ -25,6 +25,8 @@ import java.util.stream.Stream;
 
 /** The Docker detector. */
 public class DockerDetector implements NatMethodDetector {
+  /** Default constructor */
+  public DockerDetector() {}
 
   @Override
   public Optional<NatMethod> detect() {

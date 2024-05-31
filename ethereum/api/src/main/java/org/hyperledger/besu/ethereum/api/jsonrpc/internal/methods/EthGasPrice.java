@@ -22,30 +22,15 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcRespon
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
-import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-
-import java.util.Optional;
-import java.util.function.Supplier;
 
 public class EthGasPrice implements JsonRpcMethod {
 
-  private final Supplier<BlockchainQueries> blockchain;
-  private final MiningCoordinator miningCoordinator;
+  private final BlockchainQueries blockchainQueries;
   private final ApiConfiguration apiConfiguration;
 
   public EthGasPrice(
-      final BlockchainQueries blockchain,
-      final MiningCoordinator miningCoordinator,
-      final ApiConfiguration apiConfiguration) {
-    this(() -> blockchain, miningCoordinator, apiConfiguration);
-  }
-
-  public EthGasPrice(
-      final Supplier<BlockchainQueries> blockchain,
-      final MiningCoordinator miningCoordinator,
-      final ApiConfiguration apiConfiguration) {
-    this.blockchain = blockchain;
-    this.miningCoordinator = miningCoordinator;
+      final BlockchainQueries blockchainQueries, final ApiConfiguration apiConfiguration) {
+    this.blockchainQueries = blockchainQueries;
     this.apiConfiguration = apiConfiguration;
   }
 
@@ -61,12 +46,8 @@ public class EthGasPrice implements JsonRpcMethod {
   }
 
   private Wei calculateGasPrice() {
-    Wei gasPrice = getGasPrice().orElseGet(miningCoordinator::getMinTransactionGasPrice);
+    final Wei gasPrice = blockchainQueries.gasPrice();
     return isGasPriceLimitingEnabled() ? limitGasPrice(gasPrice) : gasPrice;
-  }
-
-  private Optional<Wei> getGasPrice() {
-    return blockchain.get().gasPrice().map(Wei::of);
   }
 
   private boolean isGasPriceLimitingEnabled() {
@@ -74,17 +55,17 @@ public class EthGasPrice implements JsonRpcMethod {
   }
 
   private Wei limitGasPrice(final Wei gasPrice) {
-    Wei minTransactionGasPrice = miningCoordinator.getMinTransactionGasPrice();
-    Wei lowerBound =
+    final Wei lowerBoundGasPrice = blockchainQueries.gasPriceLowerBound();
+    final Wei forcedLowerBound =
         calculateBound(
-            minTransactionGasPrice, apiConfiguration.getLowerBoundGasAndPriorityFeeCoefficient());
-    Wei upperBound =
+            lowerBoundGasPrice, apiConfiguration.getLowerBoundGasAndPriorityFeeCoefficient());
+    final Wei forcedUpperBound =
         calculateBound(
-            minTransactionGasPrice, apiConfiguration.getUpperBoundGasAndPriorityFeeCoefficient());
+            lowerBoundGasPrice, apiConfiguration.getUpperBoundGasAndPriorityFeeCoefficient());
 
-    return gasPrice.compareTo(lowerBound) <= 0
-        ? lowerBound
-        : gasPrice.compareTo(upperBound) >= 0 ? upperBound : gasPrice;
+    return gasPrice.compareTo(forcedLowerBound) <= 0
+        ? forcedLowerBound
+        : gasPrice.compareTo(forcedUpperBound) >= 0 ? forcedUpperBound : gasPrice;
   }
 
   private Wei calculateBound(final Wei price, final long coefficient) {

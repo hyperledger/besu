@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import java.util.List;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
-
 public class NoopMiningCoordinator implements MiningCoordinator {
 
   private final MiningParameters miningParameters;
@@ -67,9 +65,6 @@ public class NoopMiningCoordinator implements MiningCoordinator {
   public Wei getMinPriorityFeePerGas() {
     return miningParameters.getMinPriorityFeePerGas();
   }
-
-  @Override
-  public void setExtraData(final Bytes extraData) {}
 
   @Override
   public Optional<Address> getCoinbase() {

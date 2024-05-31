@@ -40,6 +40,8 @@ import org.junit.jupiter.api.Test;
 /** The Abstract key value storage test. */
 @Disabled
 public abstract class AbstractKeyValueStorageTest {
+  /** Default Constructor */
+  protected AbstractKeyValueStorageTest() {}
 
   /**
    * Create store key value storage.

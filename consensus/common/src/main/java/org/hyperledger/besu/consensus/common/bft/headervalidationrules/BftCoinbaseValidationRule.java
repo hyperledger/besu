@@ -33,6 +33,9 @@ public class BftCoinbaseValidationRule implements AttachedBlockHeaderValidationR
 
   private static final Logger LOGGER = LoggerFactory.getLogger(BftCoinbaseValidationRule.class);
 
+  /** Default constructor. */
+  public BftCoinbaseValidationRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext context) {

@@ -94,6 +94,9 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private ForksSchedule<BftConfigOptions> forksSchedule;
   private ValidatorPeers peers;
 
+  /** Default Constructor */
+  public IbftBesuControllerBuilder() {}
+
   @Override
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
     return Suppliers.memoize(IbftExtraDataCodec::new);
@@ -108,8 +111,10 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
-    return new IbftJsonRpcMethods(protocolContext);
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
+    return new IbftJsonRpcMethods(protocolContext, protocolSchedule, miningParameters);
   }
 
   @Override

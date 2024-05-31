@@ -208,6 +208,9 @@ public class JsonRpcHttpOptions {
       description = "Enable JSON pretty print format (default: ${DEFAULT-VALUE})")
   private final Boolean prettyJsonEnabled = DEFAULT_PRETTY_JSON_ENABLED;
 
+  /** Default constructor */
+  public JsonRpcHttpOptions() {}
+
   /**
    * Validates the Rpc Http options.
    *
@@ -470,6 +473,15 @@ public class JsonRpcHttpOptions {
    */
   public List<String> getRpcHttpApis() {
     return rpcHttpApis;
+  }
+
+  /**
+   * Returns the host for RPC over HTTP.
+   *
+   * @return The port number
+   */
+  public String getRpcHttpHost() {
+    return rpcHttpHost;
   }
 
   /**

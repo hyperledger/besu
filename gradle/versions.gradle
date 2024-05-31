@@ -69,11 +69,11 @@ dependencyManagement {
 
     dependency 'io.kubernetes:client-java:18.0.1'
 
-    dependency 'io.netty:netty-all:4.1.104.Final'
+    dependency 'io.netty:netty-all:4.1.110.Final'
     dependency 'io.netty:netty-tcnative-boringssl-static:2.0.62.Final'
-    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.104.Final', classifier: 'linux-x86_64'
-    dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.104.Final', classifier: 'osx-x86_64'
-    dependency 'io.netty:netty-transport-native-unix-common:4.1.104.Final'
+    dependency group: 'io.netty', name: 'netty-transport-native-epoll', version:'4.1.110.Final', classifier: 'linux-x86_64'
+    dependency group: 'io.netty', name: 'netty-transport-native-kqueue', version:'4.1.110.Final', classifier: 'osx-x86_64'
+    dependency 'io.netty:netty-transport-native-unix-common:4.1.110.Final'
 
     dependency 'io.opentelemetry:opentelemetry-api:1.33.0'
     dependency 'io.opentelemetry:opentelemetry-exporter-otlp:1.33.0'
@@ -116,7 +116,7 @@ dependencyManagement {
       entry 'tuweni-units'
     }
 
-    dependencySet(group: 'io.vertx', version: '4.5.4') {
+    dependencySet(group: 'io.vertx', version: '4.5.8') {
       entry 'vertx-auth-jwt'
       entry 'vertx-codegen'
       entry 'vertx-core'
@@ -134,6 +134,7 @@ dependencyManagement {
     dependency 'org.apache.commons:commons-compress:1.26.0'
     dependency 'org.apache.commons:commons-lang3:3.14.0'
     dependency 'org.apache.commons:commons-text:1.11.0'
+    dependency 'org.apache.commons:commons-collections4:4.4'
 
     dependencySet(group: 'org.apache.logging.log4j', version: '2.22.1') {
       entry 'log4j-api'
@@ -155,7 +156,7 @@ dependencyManagement {
     dependency 'org.openjdk.jol:jol-core:0.17'
     dependency 'tech.pegasys:jc-kzg-4844:1.0.0'
 
-    dependencySet(group: 'org.hyperledger.besu', version: '0.8.2') {
+    dependencySet(group: 'org.hyperledger.besu', version: '0.8.4') {
       entry 'arithmetic'
       entry 'ipa-multipoint'
       entry 'bls12-381'
