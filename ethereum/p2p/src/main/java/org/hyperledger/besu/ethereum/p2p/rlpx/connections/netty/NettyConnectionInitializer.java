@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import static org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.IpFilterRuleCreator.createIpRestrictionHandler;
+import static org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.IpFilterRuleCreator.createRuleBasedIpFilter;
 
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
@@ -283,7 +283,7 @@ public class NettyConnectionInitializer
   }
 
   private RuleBasedIpFilter ipRestrictionHandler() {
-    return createIpRestrictionHandler(config.getAllowSubnets());
+    return createRuleBasedIpFilter(config.getAllowSubnets());
   }
 
   void addAdditionalOutboundHandlers(final Channel ch, final Peer peer)

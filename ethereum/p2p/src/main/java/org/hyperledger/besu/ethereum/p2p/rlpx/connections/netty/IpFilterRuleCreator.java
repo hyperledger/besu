@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,11 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.google.common.base.Splitter;
 import io.netty.handler.ipfilter.IpFilterRuleType;
 import io.netty.handler.ipfilter.IpSubnetFilterRule;
 import io.netty.handler.ipfilter.RuleBasedIpFilter;
@@ -34,9 +32,11 @@ public class IpFilterRuleCreator {
    * @param allowedSubnets A list of allowed subnets in CIDR notation.
    * @return A RuleBasedIpFilter configured with rules based on the allowed subnets.
    */
-  public static RuleBasedIpFilter createIpRestrictionHandler(final List<String> allowedSubnets) {
-    IpSubnetFilterRule[] rules = parseSubnetRules(allowedSubnets);
-    return new RuleBasedIpFilter(false, rules);
+  public static RuleBasedIpFilter createRuleBasedIpFilter(final List<String> allowedSubnets) {
+    if (allowedSubnets == null || allowedSubnets.isEmpty()) {
+      return new RuleBasedIpFilter(true); // No restrictions
+    }
+    return new RuleBasedIpFilter(false, parseSubnetRules(allowedSubnets));
   }
 
   /**
@@ -47,33 +47,17 @@ public class IpFilterRuleCreator {
    */
   public static IpSubnetFilterRule[] parseSubnetRules(final List<String> allowedSubnets) {
     if (allowedSubnets == null || allowedSubnets.isEmpty()) {
-      return new IpSubnetFilterRule[0]; // No restrictions
+      return new IpSubnetFilterRule[0];
     }
     List<IpSubnetFilterRule> rulesList = new ArrayList<>();
     for (String subnet : allowedSubnets) {
       try {
-        IpSubnetFilterRule rule = createRule(subnet.trim());
+        IpSubnetFilterRule rule = new IpSubnetFilterRule(subnet, IpFilterRuleType.ACCEPT);
         rulesList.add(rule);
-      } catch (IllegalArgumentException | UnknownHostException e) {
+      } catch (IllegalArgumentException e) {
         LOG.trace("Skipping invalid subnet: {} subnet ({})", subnet, e.getMessage());
       }
     }
     return rulesList.toArray(new IpSubnetFilterRule[0]);
-  }
-
-  public static IpSubnetFilterRule createRule(final String cidr) throws UnknownHostException {
-    if (cidr == null || !cidr.contains("/")) {
-      throw new IllegalArgumentException("Invalid CIDR notation: " + cidr);
-    }
-
-    List<String> parts = Splitter.on('/').splitToList(cidr);
-    if (parts.size() != 2) {
-      throw new IllegalArgumentException("Invalid CIDR notation: " + cidr);
-    }
-
-    String ipAddress = parts.get(0);
-    int cidrPrefix = Integer.parseInt(parts.get(1));
-
-    return new IpSubnetFilterRule(ipAddress, cidrPrefix, IpFilterRuleType.ACCEPT);
   }
 }
