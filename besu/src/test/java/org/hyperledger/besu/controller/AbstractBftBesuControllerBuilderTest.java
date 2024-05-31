@@ -107,13 +107,12 @@ public abstract class AbstractBftBesuControllerBuilderTest {
     lenient().when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
-    final var variableStorage = new VariablesKeyValueStorage(new InMemoryKeyValueStorage());
     lenient()
         .when(storageProvider.createBlockchainStorage(any(), any(), any()))
         .thenReturn(
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 new InMemoryKeyValueStorage(),
-                variableStorage,
+                new VariablesKeyValueStorage(new InMemoryKeyValueStorage()),
                 new MainnetBlockHeaderFunctions(),
                 false));
     lenient()
@@ -121,7 +120,6 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             storageProvider.createWorldStateStorageCoordinator(
                 DataStorageConfiguration.DEFAULT_FOREST_CONFIG))
         .thenReturn(worldStateStorageCoordinator);
-    lenient().when(storageProvider.createVariablesStorage()).thenReturn(variableStorage);
     lenient().when(worldStateKeyValueStorage.isWorldStateAvailable(any())).thenReturn(true);
     lenient()
         .when(worldStateKeyValueStorage.updater())

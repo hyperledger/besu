@@ -47,6 +47,9 @@ public class JsonUtil {
           .disable(JsonFactory.Feature.CANONICALIZE_FIELD_NAMES)
           .build();
 
+  /** Default constructor. */
+  private JsonUtil() {}
+
   /**
    * Converts all the object keys (but none of the string values) to lowercase for easier lookup.
    * This is useful in cases such as the 'genesis.json' file where all keys are assumed to be case

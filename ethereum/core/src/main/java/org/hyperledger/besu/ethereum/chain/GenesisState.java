@@ -38,7 +38,6 @@ import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.net.URL;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
@@ -55,18 +54,9 @@ public final class GenesisState {
 
   private final Block block;
   private final GenesisConfigFile genesisConfigFile;
-  private final Optional<GenesisStateData> maybeGenesisStateData;
 
   private GenesisState(final Block block, final GenesisConfigFile genesisConfigFile) {
-    this(block, genesisConfigFile, Optional.empty());
-  }
-
-  private GenesisState(
-      final Block block,
-      final GenesisConfigFile genesisConfigFile,
-      final Optional<GenesisStateData> genesisStateData) {
     this.block = block;
-    this.maybeGenesisStateData = genesisStateData;
     this.genesisConfigFile = genesisConfigFile;
   }
 
@@ -124,30 +114,30 @@ public final class GenesisState {
       final DataStorageConfiguration dataStorageConfiguration,
       final GenesisConfigFile genesisConfigFile,
       final ProtocolSchedule protocolSchedule) {
-    final var genesisStateData =
-        calculateGenesisStateData(dataStorageConfiguration, genesisConfigFile);
+    final var genesisStateRoot =
+        calculateGenesisStateRoot(dataStorageConfiguration, genesisConfigFile);
     final Block block =
         new Block(
-            buildHeader(genesisConfigFile, genesisStateData.rootHash(), protocolSchedule),
+            buildHeader(genesisConfigFile, genesisStateRoot, protocolSchedule),
             buildBody(genesisConfigFile));
-    return new GenesisState(block, genesisConfigFile, Optional.of(genesisStateData));
+    return new GenesisState(block, genesisConfigFile);
   }
 
   /**
    * Construct a {@link GenesisState} from a JSON object.
    *
-   * @param genesisStateHash The hash of the genesis state.
+   * @param genesisStateRoot The root of the genesis state.
    * @param genesisConfigFile A {@link GenesisConfigFile} describing the genesis block.
    * @param protocolSchedule A protocol Schedule associated with
    * @return A new {@link GenesisState}.
    */
   public static GenesisState fromStorage(
-      final Hash genesisStateHash,
+      final Hash genesisStateRoot,
       final GenesisConfigFile genesisConfigFile,
       final ProtocolSchedule protocolSchedule) {
     final Block block =
         new Block(
-            buildHeader(genesisConfigFile, genesisStateHash, protocolSchedule),
+            buildHeader(genesisConfigFile, genesisStateRoot, protocolSchedule),
             buildBody(genesisConfigFile));
     return new GenesisState(block, genesisConfigFile);
   }
@@ -171,14 +161,7 @@ public final class GenesisState {
    * @param target WorldView to write genesis state to
    */
   public void writeStateTo(final MutableWorldState target) {
-    writeAccountsTo(target, getGenesisAccountsStream(), block.getHeader());
-  }
-
-  private Stream<GenesisAccount> getGenesisAccountsStream() {
-    return maybeGenesisStateData
-        .map(GenesisStateData::genesisAccounts)
-        .map(List::stream)
-        .orElseGet(() -> genesisConfigFile.streamAllocations());
+    writeAccountsTo(target, genesisConfigFile.streamAllocations(), block.getHeader());
   }
 
   private static void writeAccountsTo(
@@ -198,15 +181,12 @@ public final class GenesisState {
     target.persist(rootHeader);
   }
 
-  private static GenesisStateData calculateGenesisStateData(
+  private static Hash calculateGenesisStateRoot(
       final DataStorageConfiguration dataStorageConfiguration,
       final GenesisConfigFile genesisConfigFile) {
     try (var worldState = createGenesisWorldState(dataStorageConfiguration)) {
-      final var cachedGenesisAccounts = new ArrayList<GenesisAccount>();
-      final var cachingGenesisAccountsStream =
-          genesisConfigFile.streamAllocations().peek(ga -> cachedGenesisAccounts.add(ga));
-      writeAccountsTo(worldState, cachingGenesisAccountsStream, null);
-      return new GenesisStateData(worldState.rootHash(), cachedGenesisAccounts);
+      writeAccountsTo(worldState, genesisConfigFile.streamAllocations(), null);
+      return worldState.rootHash();
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -353,11 +333,6 @@ public final class GenesisState {
 
   @Override
   public String toString() {
-    return MoreObjects.toStringHelper(this)
-        .add("block", block)
-        .add("genesisStateDate", maybeGenesisStateData)
-        .toString();
+    return MoreObjects.toStringHelper(this).add("block", block).toString();
   }
-
-  private record GenesisStateData(Hash rootHash, List<GenesisAccount> genesisAccounts) {}
 }

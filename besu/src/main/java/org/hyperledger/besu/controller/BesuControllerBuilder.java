@@ -761,15 +761,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   private GenesisState getGenesisState(
       final Optional<BlockHeader> maybeGenesisBlockHeader,
       final ProtocolSchedule protocolSchedule) {
-    Optional<Hash> genesisStateHash = Optional.empty();
-    if (genesisStateHashCacheEnabled) {
-      genesisStateHash = maybeGenesisBlockHeader.map(BlockHeader::getStateRoot);
-    }
+    final Optional<Hash> maybeGenesisStateRoot =
+        genesisStateHashCacheEnabled
+            ? maybeGenesisBlockHeader.map(BlockHeader::getStateRoot)
+            : Optional.empty();
 
-    if (genesisStateHash.isPresent()) {
-      return GenesisState.fromStorage(genesisStateHash.get(), genesisConfigFile, protocolSchedule);
-    }
-    return GenesisState.fromConfig(dataStorageConfiguration, genesisConfigFile, protocolSchedule);
+    return maybeGenesisStateRoot
+        .map(
+            genesisStateRoot ->
+                GenesisState.fromStorage(genesisStateRoot, genesisConfigFile, protocolSchedule))
+        .orElseGet(
+            () ->
+                GenesisState.fromConfig(
+                    dataStorageConfiguration, genesisConfigFile, protocolSchedule));
   }
 
   private TrieLogPruner createTrieLogPruner(
