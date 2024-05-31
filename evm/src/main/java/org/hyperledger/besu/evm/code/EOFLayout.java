@@ -641,7 +641,7 @@ public record EOFLayout(
         OpcodeInfo ci = V1_OPCODES[byteCode[pc] & 0xff];
 
         if (ci.opcode() == RelativeJumpVectorOperation.OPCODE) {
-          int tableSize = byteCode[pc + 1];
+          int tableSize = byteCode[pc + 1] & 0xff;
           out.printf("%02x%02x", byteCode[pc], byteCode[pc + 1]);
           for (int j = 0; j <= tableSize; j++) {
             out.printf("%02x%02x", byteCode[pc + j * 2 + 2], byteCode[pc + j * 2 + 3]);
@@ -651,8 +651,8 @@ public record EOFLayout(
             if (j != 0) {
               out.print(',');
             }
-            int b0 = byteCode[pc + j * 2 + 2]; // we want sign extension, so no `& 0xff`
-            int b1 = byteCode[pc + j * 2 + 3];
+            int b0 = byteCode[pc + j * 2 + 2]; // we want the sign extension, so no `& 0xff`
+            int b1 = byteCode[pc + j * 2 + 3] & 0xff;
             out.print(b0 << 8 | b1);
           }
           pc += tableSize * 2 + 4;
