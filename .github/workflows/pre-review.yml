@@ -104,15 +104,6 @@ jobs:
         run: ./gradlew test --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
         run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo '{}' | sed 's#\./\(.*\)/build/test-results/.*# \1#'" | tee tmp/currentTests.list
-      - name: Get unit test reports (Support transition) # can be removed after PR is merged
-        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
-        continue-on-error: true
-        with:
-          branch: main
-          name_is_regexp: true
-          name: 'unit-.*-test-results'
-          path: tmp/junit-xml-reports-downloaded
-          if_no_artifact_found: true
       - name: Get unit test reports
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         continue-on-error: true
@@ -143,6 +134,8 @@ jobs:
           path: testList.txt
       - name: run unit tests
         run: cat testList.txt | xargs -P 1 ./gradlew -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: Remove downloaded test results
+        run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Unit Test Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:

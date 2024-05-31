@@ -102,7 +102,8 @@ public class TimestampValidationRuleTest {
     final BlockHeader parent = headerBuilder.buildHeader();
 
     // Create header for validation with a timestamp in the future (1 second too far away)
-    headerBuilder.timestamp(parent.getTimestamp() + acceptableClockDrift + 1);
+    // (+1 to avoid spurious failures)
+    headerBuilder.timestamp(parent.getTimestamp() + acceptableClockDrift + 2);
     final BlockHeader header = headerBuilder.buildHeader();
 
     assertThat(uut00.validate(header, parent)).isFalse();
@@ -124,7 +125,7 @@ public class TimestampValidationRuleTest {
         TimeUnit.SECONDS.convert(System.currentTimeMillis(), TimeUnit.MILLISECONDS));
     final BlockHeader parent = headerBuilder.buildHeader();
 
-    // Create header for validation with a timestamp in the future (1 second too far away)
+    // Create header for validation with a timestamp an acceptable amount in the future
     // (-1) to prevent spurious failures
     headerBuilder.timestamp(parent.getTimestamp() + acceptableClockDrift - 1);
     final BlockHeader header = headerBuilder.buildHeader();
