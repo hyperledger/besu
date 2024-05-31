@@ -29,6 +29,7 @@
 ### Bug fixes
 - Fix parsing `gasLimit` parameter when its value is > `Long.MAX_VALUE` [#7116](https://github.com/hyperledger/besu/pull/7116)
 - Skip validation of withdrawals when importing BFT blocks since withdrawals don't apply to BFT chains [#7115](https://github.com/hyperledger/besu/pull/7115)
+- Make `v` abd `yParity` match in type 1 and 2 transactions in JSON-RPC and GraphQL [#7139](https://github.com/hyperledger/besu/pull/7139)
 
 ### Download Links
 https://github.com/hyperledger/besu/releases/tag/24.5.2
