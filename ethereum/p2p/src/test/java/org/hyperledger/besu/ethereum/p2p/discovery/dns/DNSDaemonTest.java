@@ -105,7 +105,7 @@ class DNSDaemonTest {
             },
             0,
             1, // initial delay
-            50, // second lookup after 50 ms (due to Mock DNS server, we are very quick).
+            300, // second lookup after 300 ms (due to Mock DNS server, we are very quick).
             "localhost:" + mockDnsServerVerticle.port());
 
     final DeploymentOptions options =
