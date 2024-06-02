@@ -125,6 +125,15 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                   .timeout(waitTask, Duration.ofSeconds(5))
                   .whenComplete((r, t) -> executeTaskTimed()));
       return;
+    } else if (cause instanceof TimeoutException) {
+      if (assignedPeer.isPresent()) {
+        LOG.atDebug()
+            .setMessage("Timeout occurred waiting for response from peer {}")
+            .addArgument(assignedPeer.get())
+            .log();
+      } else {
+        LOG.debug("Timeout occurred waiting for response from unknown peer");
+      }
     }
 
     LOG.debug(

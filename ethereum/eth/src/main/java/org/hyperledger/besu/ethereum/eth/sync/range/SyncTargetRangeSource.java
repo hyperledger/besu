@@ -19,6 +19,7 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -33,6 +34,7 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -70,7 +72,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
         peer,
         commonAncestor,
         retriesPermitted,
-        Duration.ofSeconds(5),
+        Duration.ofSeconds(6),
         terminationCondition);
   }
 
@@ -148,6 +150,18 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       final List<BlockHeader> newHeaders =
           pendingRequest.get(newHeaderWaitDuration.toMillis(), MILLISECONDS);
       this.pendingRequests = Optional.empty();
+      LOG.atDebug()
+          .setMessage("New range headers received: {}")
+          .addArgument(newHeaders.size())
+          .log();
+      LOG.atDebug()
+          .setMessage("Headers: {}")
+          .addArgument(
+              newHeaders.stream()
+                  .map(ProcessableBlockHeader::getNumber)
+                  .map(Object::toString)
+                  .collect(Collectors.joining(", ")))
+          .log();
       if (newHeaders.isEmpty()) {
         retryCount++;
         if (retryCount >= retriesPermitted) {
@@ -169,12 +183,19 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
     } catch (final InterruptedException e) {
       LOG.trace("Interrupted while waiting for new range headers", e);
       return null;
-    } catch (final ExecutionException e) {
-      LOG.debug("Failed to retrieve new range headers", e);
+    } catch (final ExecutionException | TimeoutException e) {
+      LOG.debug("Failed to retrieve new range headers: ", e);
       this.pendingRequests = Optional.empty();
       retryCount++;
-      return null;
-    } catch (final TimeoutException e) {
+      if (retryCount >= retriesPermitted) {
+        LOG.atDebug()
+            .setMessage(
+                "Disconnecting target peer for not providing useful range headers: {}, Exception: {}.")
+            .addArgument(peer)
+            .addArgument(e)
+            .log();
+        peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
+      }
       return null;
     }
   }

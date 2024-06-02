@@ -68,6 +68,10 @@ public class RangeHeadersFetcher {
 
   public CompletableFuture<List<BlockHeader>> getNextRangeHeaders(
       final EthPeer peer, final BlockHeader previousRangeHeader) {
+    LOG.atInfo()
+        .setMessage("Requesting next range headers from peer {}")
+        .addArgument(peer.getLoggableId())
+        .log();
     final int skip = syncConfig.getDownloaderChainSegmentSize() - 1;
     final int maximumHeaderRequestSize = syncConfig.getDownloaderHeaderRequestSize();
     final long previousRangeNumber = previousRangeHeader.getNumber();
@@ -78,11 +82,19 @@ public class RangeHeadersFetcher {
       final BlockHeader targetHeader = finalRangeHeader.get();
       final long blocksUntilTarget = targetHeader.getNumber() - previousRangeNumber;
       if (blocksUntilTarget <= 0) {
+        LOG.atInfo()
+            .setMessage("Requesting next range headers: no blocks until target: {}")
+            .addArgument(blocksUntilTarget)
+            .log();
         return completedFuture(emptyList());
       }
       final long maxHeadersToRequest = blocksUntilTarget / (skip + 1);
       additionalHeaderCount = (int) Math.min(maxHeadersToRequest, maximumHeaderRequestSize);
       if (additionalHeaderCount == 0) {
+        LOG.atInfo()
+            .setMessage("Requesting next range headers: additional header count is 0")
+            .addArgument(blocksUntilTarget)
+            .log();
         return completedFuture(singletonList(targetHeader));
       }
     } else {
@@ -97,7 +109,7 @@ public class RangeHeadersFetcher {
       final BlockHeader referenceHeader,
       final int headerCount,
       final int skip) {
-    LOG.trace(
+    LOG.info(
         "Requesting {} range headers, starting from {}, {} blocks apart",
         headerCount,
         referenceHeader.getNumber(),
@@ -114,7 +126,17 @@ public class RangeHeadersFetcher {
         .assignPeer(peer)
         .run()
         .thenApply(PeerTaskResult::getResult)
-        .thenApply(headers -> stripExistingRangeHeaders(referenceHeader, headers));
+        .thenApply(
+            headers -> {
+              if (headers.size() < headerCount) {
+                LOG.debug(
+                    "Peer {} returned fewer headers than requested. Expected: {}, Actual: {}",
+                    peer,
+                    headerCount,
+                    headers.size());
+              }
+              return stripExistingRangeHeaders(referenceHeader, headers);
+            });
   }
 
   private List<BlockHeader> stripExistingRangeHeaders(
