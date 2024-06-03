@@ -6,6 +6,7 @@
 
 ### Additions and Improvements
 - Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)
+- Improve genesis state performance at startup [#6977](https://github.com/hyperledger/besu/pull/6977)
 
 ### Bug fixes
 - Make `eth_gasPrice` aware of the base fee market [#7102](https://github.com/hyperledger/besu/pull/7102)
