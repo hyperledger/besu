@@ -45,7 +45,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -365,22 +364,27 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
               }
 
               // parallel stream here may cause database corruption
-              updatedAccount.getUpdatedStorage().entrySet().forEach(
-                  storageUpdate -> {
-                    final UInt256 keyUInt = storageUpdate.getKey();
-                    final StorageSlotKey slotKey =
-                        new StorageSlotKey(hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
-                    final UInt256 value = storageUpdate.getValue();
-                    final DiffBasedValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
-                    if (pendingValue == null) {
-                      pendingStorageUpdates.put(
-                          slotKey,
-                          new DiffBasedValue<>(
-                              updatedAccount.getOriginalStorageValue(keyUInt), value));
-                    } else {
-                      pendingValue.setUpdated(value);
-                    }
-                  });
+              updatedAccount
+                  .getUpdatedStorage()
+                  .entrySet()
+                  .forEach(
+                      storageUpdate -> {
+                        final UInt256 keyUInt = storageUpdate.getKey();
+                        final StorageSlotKey slotKey =
+                            new StorageSlotKey(
+                                hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
+                        final UInt256 value = storageUpdate.getValue();
+                        final DiffBasedValue<UInt256> pendingValue =
+                            pendingStorageUpdates.get(slotKey);
+                        if (pendingValue == null) {
+                          pendingStorageUpdates.put(
+                              slotKey,
+                              new DiffBasedValue<>(
+                                  updatedAccount.getOriginalStorageValue(keyUInt), value));
+                        } else {
+                          pendingValue.setUpdated(value);
+                        }
+                      });
 
               updatedAccount.getUpdatedStorage().clear();
 
