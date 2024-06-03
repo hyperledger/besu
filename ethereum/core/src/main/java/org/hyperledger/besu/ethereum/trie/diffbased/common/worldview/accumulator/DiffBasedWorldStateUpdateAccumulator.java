@@ -364,12 +364,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 return;
               }
 
-              final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-                  new TreeSet<>(Map.Entry.comparingByKey());
-              entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
-
               // parallel stream here may cause database corruption
-              entries.forEach(
+              updatedAccount.getUpdatedStorage().entrySet().forEach(
                   storageUpdate -> {
                     final UInt256 keyUInt = storageUpdate.getKey();
                     final StorageSlotKey slotKey =
