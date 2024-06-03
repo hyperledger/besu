@@ -23,6 +23,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import io.netty.handler.ipfilter.IpSubnetFilterRule;
+
 public class RlpxConfiguration {
   public static final float DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED = 0.6f;
   private String clientId = "TestClient/1.0.0";
@@ -30,7 +32,7 @@ public class RlpxConfiguration {
   private int bindPort = 30303;
   private List<SubProtocol> supportedProtocols = Collections.emptyList();
 
-  private List<String> allowSubnets = new ArrayList<>();
+  private List<IpSubnetFilterRule> allowSubnets = new ArrayList<>();
 
   public static RlpxConfiguration create() {
     return new RlpxConfiguration();
@@ -77,12 +79,12 @@ public class RlpxConfiguration {
     return this;
   }
 
-  public RlpxConfiguration setAllowSubnets(final List<String> allowSubnets) {
+  public RlpxConfiguration setAllowSubnets(final List<IpSubnetFilterRule> allowSubnets) {
     this.allowSubnets = allowSubnets;
     return this;
   }
 
-  public List<String> getAllowSubnets() {
+  public List<IpSubnetFilterRule> getAllowSubnets() {
     return allowSubnets;
   }
 

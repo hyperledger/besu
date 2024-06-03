@@ -113,6 +113,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
+import io.netty.handler.ipfilter.IpSubnetFilterRule;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
@@ -261,6 +262,7 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<ApiConfiguration> apiConfigurationCaptor;
 
   @Captor protected ArgumentCaptor<EthstatsOptions> ethstatsOptionsArgumentCaptor;
+  @Captor protected ArgumentCaptor<List<IpSubnetFilterRule>> subnetsArgumentCaptor;
 
   @BeforeEach
   public void initMocks() throws Exception {

@@ -58,6 +58,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
+import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.IpFilterRuleCreator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -1215,6 +1216,24 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains("Invalid value for option '--fast-sync-min-peers': 'ten' is not an int");
+  }
+
+  @Test
+  public void netRestrictParsedCorrectly() {
+    final String subnet = "127.0.0.1/24";
+    parseCommand("--net-restrict", subnet);
+    verify(mockRunnerBuilder).allowedSubnets(subnetsArgumentCaptor.capture());
+    var expected = IpFilterRuleCreator.parseSubnetRules(List.of(subnet));
+    assertThat(subnetsArgumentCaptor.getValue().get(0).compareTo(expected.get(0))).isEqualTo(0);
+  }
+
+  @Test
+  public void netRestrictInvalidShouldFail() {
+    final String subnet = "127.0.0.1/abc";
+    parseCommand("--net-restrict", subnet);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid value for option '--net-restrict'");
   }
 
   @Test

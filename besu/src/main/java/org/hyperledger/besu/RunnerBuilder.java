@@ -144,6 +144,7 @@ import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Preconditions;
 import com.google.common.base.Strings;
 import graphql.GraphQL;
+import io.netty.handler.ipfilter.IpSubnetFilterRule;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import org.apache.tuweni.bytes.Bytes;
@@ -192,7 +193,7 @@ public class RunnerBuilder {
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
-  private List<String> allowedSubnets = new ArrayList<>();
+  private List<IpSubnetFilterRule> allowedSubnets = new ArrayList<>();
 
   /** Instantiates a new Runner builder. */
   public RunnerBuilder() {}
@@ -596,7 +597,7 @@ public class RunnerBuilder {
    * @param allowedSubnets the allowedSubnets
    * @return the runner builder
    */
-  public RunnerBuilder allowedSubnets(final List<String> allowedSubnets) {
+  public RunnerBuilder allowedSubnets(final List<IpSubnetFilterRule> allowedSubnets) {
     this.allowedSubnets = allowedSubnets;
     return this;
   }
