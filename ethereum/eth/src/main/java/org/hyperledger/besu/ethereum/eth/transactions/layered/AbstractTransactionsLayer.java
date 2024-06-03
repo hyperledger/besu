@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
+import static java.util.Collections.unmodifiableList;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ADDED;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
@@ -54,7 +55,6 @@ import java.util.function.BiFunction;
 import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -137,6 +137,14 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     return pendingTransactions.containsKey(transaction.getHash())
         || nextLayer.contains(transaction);
   }
+
+  /**
+   * Return the full content of this layer, organized as a list of sender pending txs. For each
+   * sender the collection pending txs is ordered by nonce asc.
+   *
+   * @return a list of sender pending txs
+   */
+  public abstract List<SenderPendingTransactions> getBySender();
 
   @Override
   public List<PendingTransaction> getAll() {
@@ -548,16 +556,16 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     return priorityTxs;
   }
 
-  Stream<PendingTransaction> stream(final Address sender) {
-    return txsBySender.getOrDefault(sender, EMPTY_SENDER_TXS).values().stream();
-  }
-
   @Override
-  public List<PendingTransaction> getAllFor(final Address sender) {
-    return Stream.concat(stream(sender), nextLayer.getAllFor(sender).stream()).toList();
+  public synchronized List<PendingTransaction> getAllFor(final Address sender) {
+    final var fromNextLayers = nextLayer.getAllFor(sender);
+    final var fromThisLayer = txsBySender.getOrDefault(sender, EMPTY_SENDER_TXS).values();
+    final var concatLayers =
+        new ArrayList<PendingTransaction>(fromThisLayer.size() + fromNextLayers.size());
+    concatLayers.addAll(fromThisLayer);
+    concatLayers.addAll(fromNextLayers);
+    return unmodifiableList(concatLayers);
   }
-
-  abstract Stream<PendingTransaction> stream();
 
   @Override
   public int count() {
