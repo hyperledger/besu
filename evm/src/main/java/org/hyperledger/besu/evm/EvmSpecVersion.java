@@ -49,7 +49,9 @@ public enum EvmSpecVersion {
   /** Cancun evm spec version. */
   CANCUN(0, true, "Cancun", "Finalized"),
   /** Prague evm spec version. */
-  PRAGUE(1, false, "Prague", "In Development"),
+  PRAGUE(0, false, "Prague", "In Development"),
+  /** PragueEOF evm spec version. */
+  PRAGUE_EOF(1, false, "PragueEOF", "Prague + EOF.  In Development"),
   /** Osaka evm spec version. */
   OSAKA(1, false, "Osaka", "Placeholder"),
   /** Amstedam evm spec version. */

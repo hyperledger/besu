@@ -165,7 +165,7 @@ public class EOFTestSubCommand implements Runnable {
             continue;
           }
           TestResult actualResult;
-          if (evmVersion.ordinal() < EvmSpecVersion.PRAGUE.ordinal()) {
+          if (evmVersion.ordinal() < EvmSpecVersion.PRAGUE_EOF.ordinal()) {
             actualResult = failed("EOF_InvalidCode");
           } else {
             actualResult = considerCode(code);

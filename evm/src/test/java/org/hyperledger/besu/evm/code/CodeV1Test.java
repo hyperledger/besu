@@ -25,7 +25,6 @@ import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -364,9 +363,8 @@ class CodeV1Test {
 
   @ParameterizedTest
   @ValueSource(strings = {"e5", "e500"})
-  @Disabled("Out of Shahghai, will likely return in Cancun or Prague")
   void testJumpCallFTruncated(final String code) {
-    assertValidation("Truncated CALLF", code);
+    assertValidation("Truncated JUMPF", code);
   }
 
   @ParameterizedTest
@@ -377,9 +375,8 @@ class CodeV1Test {
 
   @ParameterizedTest
   @ValueSource(strings = {"e50004", "e503ff", "e5ffff"})
-  @Disabled("Out of Shahghai, will likely return in Cancun or Prague")
   void testJumpFWrongSection(final String code) {
-    assertValidation("CALLF to non-existent section -", code, false, 3);
+    assertValidation("JUMPF to non-existent section -", code, false, 3);
   }
 
   @ParameterizedTest
@@ -396,7 +393,6 @@ class CodeV1Test {
 
   @ParameterizedTest
   @ValueSource(strings = {"e50001", "e50002", "e50000"})
-  @Disabled("Out of Shahghai, will likely return in Cancun or Prague")
   void testJumpFValid(final String code) {
     assertValidation(null, code, false, 3);
   }

@@ -319,6 +319,14 @@ public final class GenesisState {
     if (pragueTimestamp.isPresent()) {
       return genesis.getTimestamp() >= pragueTimestamp.getAsLong();
     }
+    return isPragueEOFAtGenesis(genesis);
+  }
+
+  private static boolean isPragueEOFAtGenesis(final GenesisConfigFile genesis) {
+    final OptionalLong pragueEOFTimestamp = genesis.getConfigOptions().getPragueEOFTime();
+    if (pragueEOFTimestamp.isPresent()) {
+      return genesis.getTimestamp() >= pragueEOFTimestamp.getAsLong();
+    }
     return isFutureEipsTimeAtGenesis(genesis);
   }
 
