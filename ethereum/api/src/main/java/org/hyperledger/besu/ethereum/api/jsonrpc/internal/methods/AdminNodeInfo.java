@@ -77,8 +77,6 @@ public class AdminNodeInfo implements JsonRpcMethod {
     final Map<String, Object> response = new HashMap<>();
     final Map<String, Integer> ports = new HashMap<>();
 
-    System.out.println("MRW: Returning node info");
-
     if (!peerNetwork.isP2pEnabled()) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(), RpcErrorType.P2P_DISABLED);
