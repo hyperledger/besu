@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.PrometheusMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.Subscribers;
 
@@ -83,6 +84,9 @@ public class DefaultBlockchain implements MutableBlockchain {
   private final Optional<Cache<Hash, List<TransactionReceipt>>> transactionReceiptsCache;
   private final Optional<Cache<Hash, Difficulty>> totalDifficultyCache;
 
+  private final Counter gasUsedCounter;
+  private final Counter numberOfTransactionsCounter;
+
   private DefaultBlockchain(
       final Optional<Block> genesisBlock,
       final BlockchainStorage blockchainStorage,
@@ -117,6 +121,7 @@ public class DefaultBlockchain implements MutableBlockchain {
         "blockchain_height",
         "The current height of the canonical chain",
         this::getChainHeadBlockNumber);
+
     metricsSystem.createGauge(
         BesuMetricCategory.BLOCKCHAIN,
         "difficulty_total",
@@ -135,6 +140,10 @@ public class DefaultBlockchain implements MutableBlockchain {
         "Gas used by the current chain head block",
         () -> getChainHeadHeader().getGasUsed());
 
+    gasUsedCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN, "chain_head_gas_used_counter", "Counter for Gas used");
+
     metricsSystem.createLongGauge(
         BesuMetricCategory.BLOCKCHAIN,
         "chain_head_gas_limit",
@@ -146,6 +155,12 @@ public class DefaultBlockchain implements MutableBlockchain {
         "chain_head_transaction_count",
         "Number of transactions in the current chain head block",
         () -> chainHeadTransactionCount);
+
+    numberOfTransactionsCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.BLOCKCHAIN,
+            "chain_head_transaction_count_counter",
+            "Counter for the number of transactions");
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.BLOCKCHAIN,
@@ -524,6 +539,10 @@ public class DefaultBlockchain implements MutableBlockchain {
     updater.setChainHead(newBlockHash);
     indexTransactionForBlock(
         updater, newBlockHash, blockWithReceipts.getBlock().getBody().getTransactions());
+    gasUsedCounter.inc(blockWithReceipts.getHeader().getGasUsed());
+    numberOfTransactionsCounter.inc(
+        blockWithReceipts.getBlock().getBody().getTransactions().size());
+
     return BlockAddedEvent.createForHeadAdvancement(
         blockWithReceipts.getBlock(),
         LogWithMetadata.generate(

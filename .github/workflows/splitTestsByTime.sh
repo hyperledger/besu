@@ -46,7 +46,7 @@ for line in "${sorted[@]}"; do
 	module_dir=${line_parts[2]}
 	test_with_module="$test_name $module_dir"
 
-  # temp deduplication during the transition phase
+  # deduplication check to avoid executing a test multiple time
   if grep -F -q --line-regexp "$test_with_module" tmp/processedTests.list
   then
     continue
