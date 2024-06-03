@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -67,6 +68,7 @@ public class BesuNodeConfigurationBuilder {
           .build();
   private TransactionPoolConfiguration transactionPoolConfiguration =
       TransactionPoolConfiguration.DEFAULT;
+  private P2PConfiguration p2pConfiguration = new P2PConfiguration.Builder().build();
   private JsonRpcConfiguration jsonRpcConfiguration = JsonRpcConfiguration.createDefault();
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
@@ -79,11 +81,8 @@ public class BesuNodeConfigurationBuilder {
   private String keyFilePath = null;
   private boolean devMode = true;
   private GenesisConfigurationProvider genesisConfigProvider = ignore -> Optional.empty();
-  private Boolean p2pEnabled = true;
-  private int p2pPort = 0;
   private Optional<TLSConfiguration> tlsConfiguration = Optional.empty();
   private final NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
-  private boolean discoveryEnabled = true;
   private boolean bootnodeEligible = true;
   private boolean revertReasonEnabled = false;
   private NetworkName network = null;
@@ -248,6 +247,12 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
+  public BesuNodeConfigurationBuilder p2pConfiguration(
+    final P2PConfiguration p2pConfiguration) {
+    this.p2pConfiguration = p2pConfiguration;
+    return this;
+  }
+
   public BesuNodeConfigurationBuilder webSocketConfiguration(
       final WebSocketConfiguration webSocketConfiguration) {
     this.webSocketConfiguration = webSocketConfiguration;
@@ -361,15 +366,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder p2pEnabled(final Boolean p2pEnabled) {
-    this.p2pEnabled = p2pEnabled;
-    return this;
-  }
-
-  public BesuNodeConfigurationBuilder p2pPort(final int p2pPort) {
-    this.p2pPort = p2pPort;
-    return this;
-  }
 
   private static Path toPath(final String path) throws Exception {
     return Path.of(BesuNodeConfigurationBuilder.class.getResource(path).toURI());
@@ -436,10 +432,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder discoveryEnabled(final boolean discoveryEnabled) {
-    this.discoveryEnabled = discoveryEnabled;
-    return this;
-  }
 
   public BesuNodeConfigurationBuilder plugins(final List<String> plugins) {
     this.plugins.clear();
@@ -533,11 +525,9 @@ public class BesuNodeConfigurationBuilder {
         devMode,
         network,
         genesisConfigProvider,
-        p2pEnabled,
-        p2pPort,
+        p2pConfiguration,
         tlsConfiguration,
         networkingConfiguration,
-        discoveryEnabled,
         bootnodeEligible,
         revertReasonEnabled,
         secp256K1Native,

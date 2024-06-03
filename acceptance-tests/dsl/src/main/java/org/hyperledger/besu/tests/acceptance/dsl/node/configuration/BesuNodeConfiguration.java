@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -53,11 +54,9 @@ public class BesuNodeConfiguration {
   private final Optional<String> keyFilePath;
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
-  private final boolean p2pEnabled;
-  private final int p2pPort;
+  private P2PConfiguration p2pConfiguration;
   private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
-  private final boolean discoveryEnabled;
   private final boolean bootnodeEligible;
   private final boolean revertReasonEnabled;
   private final boolean secp256k1Native;
@@ -91,11 +90,9 @@ public class BesuNodeConfiguration {
       final boolean devMode,
       final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
-      final boolean p2pEnabled,
-      final int p2pPort,
+      final P2PConfiguration p2pConfiguration,
       final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
-      final boolean discoveryEnabled,
       final boolean bootnodeEligible,
       final boolean revertReasonEnabled,
       final boolean secp256k1Native,
@@ -126,11 +123,9 @@ public class BesuNodeConfiguration {
     this.devMode = devMode;
     this.network = network;
     this.genesisConfigProvider = genesisConfigProvider;
-    this.p2pEnabled = p2pEnabled;
-    this.p2pPort = p2pPort;
+    this.p2pConfiguration = p2pConfiguration;
     this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
-    this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
     this.revertReasonEnabled = revertReasonEnabled;
     this.secp256k1Native = secp256k1Native;
@@ -203,20 +198,12 @@ public class BesuNodeConfiguration {
     return devMode;
   }
 
-  public boolean isDiscoveryEnabled() {
-    return discoveryEnabled;
-  }
-
   public GenesisConfigurationProvider getGenesisConfigProvider() {
     return genesisConfigProvider;
   }
 
-  public boolean isP2pEnabled() {
-    return p2pEnabled;
-  }
-
-  public int getP2pPort() {
-    return p2pPort;
+  public P2PConfiguration getP2PConfiguration() {
+    return p2pConfiguration;
   }
 
   public Optional<TLSConfiguration> getTLSConfiguration() {

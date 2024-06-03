@@ -276,9 +276,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .vertx(Vertx.vertx())
         .besuController(besuController)
         .ethNetworkConfig(ethNetworkConfig)
-        .discovery(node.isDiscoveryEnabled())
-        .p2pAdvertisedHost(node.getHostName())
-        .p2pListenPort(0)
+        .p2pConfiguration(node.getP2PConfiguration())
         .networkingConfiguration(node.getNetworkingConfiguration())
         .jsonRpcConfiguration(node.jsonRpcConfiguration())
         .webSocketConfiguration(node.webSocketConfiguration())
@@ -287,7 +285,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .metricsSystem(metricsSystem)
         .permissioningService(permissioningService)
         .metricsConfiguration(node.getMetricsConfiguration())
-        .p2pEnabled(node.isP2pEnabled())
         .p2pTLSConfiguration(node.getTLSConfiguration())
         .graphQLConfiguration(GraphQLConfiguration.createDefault())
         .staticNodes(
