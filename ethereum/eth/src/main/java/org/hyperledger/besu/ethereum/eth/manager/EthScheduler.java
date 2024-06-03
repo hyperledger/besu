@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
 public class EthScheduler {
   private static final Logger LOG = LoggerFactory.getLogger(EthScheduler.class);
 
-  private final Duration defaultTimeout = Duration.ofSeconds(5);
+  private final Duration defaultTimeout = Duration.ofSeconds(7);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdown = new CountDownLatch(1);
   private static final int TX_WORKER_CAPACITY = 1_000;
