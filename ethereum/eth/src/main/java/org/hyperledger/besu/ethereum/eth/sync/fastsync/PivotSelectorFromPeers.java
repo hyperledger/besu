@@ -35,7 +35,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   private static final Logger LOG = LoggerFactory.getLogger(PivotSelectorFromPeers.class);
 
-  private final EthContext ethContext;
+  protected final EthContext ethContext;
   protected final SynchronizerConfiguration syncConfig;
   private final SyncState syncState;
   private final MetricsSystem metricsSystem;
