@@ -125,7 +125,7 @@ allprojects {
   version = calculateVersion()
 
   jacoco {
-    toolVersion = '0.8.8'
+    toolVersion = '0.8.11'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
