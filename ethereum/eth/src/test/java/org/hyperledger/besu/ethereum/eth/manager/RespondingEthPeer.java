@@ -389,17 +389,6 @@ public class RespondingEthPeer {
     };
   }
 
-  public static Responder timeoutResponder() {
-    return (cap, msg) -> {
-      try {
-        Thread.sleep(60000);
-      } catch (final InterruptedException e) {
-        // Ignore
-      }
-      return Optional.empty();
-    };
-  }
-
   public static class Builder {
     private EthProtocolManager ethProtocolManager;
     private Optional<SnapProtocolManager> snapProtocolManager = Optional.empty();

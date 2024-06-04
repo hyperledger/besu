@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedExc
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.ExceptionUtils;
 
@@ -82,6 +83,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       return;
     }
     if (retryCount >= maxRetries) {
+      handleMaxRetriesException();
       result.completeExceptionally(new MaxRetriesReachedException());
       return;
     }
@@ -100,6 +102,17 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
                 executeTaskTimed();
               }
             });
+  }
+
+  protected void handleMaxRetriesException() {
+    if (assignedPeer.isPresent()) {
+      final EthPeer ethPeer = assignedPeer.get();
+      LOG.info(
+          "Max retries reached for task {} with peer {}", this.getClass().getSimpleName(), ethPeer);
+      ethPeer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_MAX_RETRIES_REACHED);
+    } else {
+      LOG.info("Max retries reached for task {}", this.getClass().getSimpleName());
+    }
   }
 
   protected abstract CompletableFuture<T> executePeerTask(Optional<EthPeer> assignedPeer);
@@ -127,12 +140,15 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       return;
     } else if (cause instanceof TimeoutException) {
       if (assignedPeer.isPresent()) {
-        LOG.atDebug()
+        LOG.atInfo()
             .setMessage("Timeout occurred waiting for response from peer {}")
             .addArgument(assignedPeer.get())
             .log();
+        assignedPeer
+            .get()
+            .disconnect(DisconnectMessage.DisconnectReason.TIMEOUT_CONFIRMING_PIVOT_BLOCK);
       } else {
-        LOG.debug("Timeout occurred waiting for response from unknown peer");
+        LOG.info("Timeout occurred waiting for response from unknown peer");
       }
     }
 

@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -121,7 +122,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
     task.assignPeer(bestPeer);
     return ethContext
         .getScheduler()
-        .timeout(task)
+        .timeout(task, Duration.ofSeconds(MAX_QUERY_RETRIES_PER_PEER * 5 + 1))
         .thenCompose(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {
@@ -152,6 +153,8 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                   bestPeer.getLoggableId(),
                   pivotBlockHeader.getNumber(),
                   error);
+              LOG.debug("Timeout occurred waiting for response from peer {}", bestPeer);
+              bestPeer.disconnect(DisconnectReason.USELESS_PEER_CANNOT_CONFIRM_PIVOT_BLOCK);
               return Optional.empty();
             });
   }
