@@ -70,9 +70,8 @@ public class EOFReferenceTestTools {
       params.ignoreAll();
     }
 
-    // Add exclusions heere
-    // params.ignore("EOFTests/efExample/broken.json");
-    // params.ignore("EOFTests/efBroken");
+    // TXCREATE still in tests, but has been removed
+    params.ignore("EOF1_undefined_opcodes_186");
   }
 
   private EOFReferenceTestTools() {

@@ -154,6 +154,10 @@ public enum EvmSpecVersion {
    * @return the EVM spec version for that fork, or null if no fork matched.
    */
   public static EvmSpecVersion fromName(final String name) {
+    // TODO remove once PragueEOF settles
+    if ("prague".equalsIgnoreCase(name)) {
+      return EvmSpecVersion.PRAGUE_EOF;
+    }
     for (var version : EvmSpecVersion.values()) {
       if (version.name().equalsIgnoreCase(name)) {
         return version;
