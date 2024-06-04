@@ -47,8 +47,8 @@ sonarqube {
 
 project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
-if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-  throw new GradleException("Java 17 or later is required to build Besu.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
+  throw new GradleException("Java 21 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -144,8 +144,8 @@ allprojects {
   tasks.build {
     dependsOn 'javadoc'
   }
-  sourceCompatibility = 17
-  targetCompatibility = 17
+  sourceCompatibility = 21
+  targetCompatibility = 21
 
   repositories {
     maven {
