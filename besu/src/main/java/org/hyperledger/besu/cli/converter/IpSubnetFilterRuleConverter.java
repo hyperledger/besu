@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.cli.converter;
 
-import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.IpFilterRuleCreator;
-
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
+import io.netty.handler.ipfilter.IpFilterRuleType;
 import io.netty.handler.ipfilter.IpSubnetFilterRule;
 import picocli.CommandLine;
 
@@ -41,6 +42,19 @@ public class IpSubnetFilterRuleConverter
       return List.of();
     }
     List<String> list = Stream.of(value.split(",")).toList();
-    return IpFilterRuleCreator.parseSubnetRules(list);
+    return parseSubnetRules(list);
+  }
+
+  @VisibleForTesting
+  public static List<IpSubnetFilterRule> parseSubnetRules(final List<String> allowedSubnets) {
+    if (allowedSubnets == null || allowedSubnets.isEmpty()) {
+      return List.of();
+    }
+    List<IpSubnetFilterRule> rulesList = new ArrayList<>();
+    for (String subnet : allowedSubnets) {
+      IpSubnetFilterRule rule = new IpSubnetFilterRule(subnet, IpFilterRuleType.ACCEPT);
+      rulesList.add(rule);
+    }
+    return rulesList;
   }
 }

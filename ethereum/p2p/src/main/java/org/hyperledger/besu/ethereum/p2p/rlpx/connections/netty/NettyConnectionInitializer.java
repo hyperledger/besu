@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty;
 
-import static org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.IpFilterRuleCreator.createRuleBasedIpFilter;
-
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.discovery.DiscoveryPeer;
@@ -58,6 +56,7 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
+import io.netty.handler.ipfilter.IpSubnetFilterRule;
 import io.netty.handler.ipfilter.RuleBasedIpFilter;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 
@@ -283,7 +282,11 @@ public class NettyConnectionInitializer
   }
 
   private RuleBasedIpFilter ipRestrictionHandler() {
-    return createRuleBasedIpFilter(config.getAllowSubnets());
+    if (config.getAllowSubnets() == null || config.getAllowSubnets().isEmpty()) {
+      return new RuleBasedIpFilter(true); // No restrictions
+    }
+    return new RuleBasedIpFilter(
+        false, config.getAllowSubnets().toArray(new IpSubnetFilterRule[0]));
   }
 
   void addAdditionalOutboundHandlers(final Channel ch, final Peer peer)
