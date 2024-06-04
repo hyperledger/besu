@@ -43,6 +43,8 @@ jobs:
           cache-disabled: true
       - name: List unit tests
         run: ./gradlew acceptanceTestNotPrivacy --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: List privacy tests
+        run: ./gradlew acceptanceTestPrivacy --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
         run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTestNotPrivacy'" | tee tmp/currentTests.list
       - name: Get acceptance test reports (Support transition) # can be removed after PR is merged
@@ -87,6 +89,8 @@ jobs:
           path: '*.txt'
       - name: run acceptance tests
         run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: run acceptancePrivacy tests
+        run: ./gradlew acceptanceTestPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Remove downloaded test results
         run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Acceptance Test Results
