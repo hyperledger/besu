@@ -27,7 +27,7 @@ import org.apache.tuweni.units.bigints.UInt64;
  * to beacon chain.
  */
 @Unstable
-public interface Deposit {
+public interface DepositRequest {
 
   /**
    * Public key of the address that sends the deposit

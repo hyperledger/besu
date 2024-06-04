@@ -495,14 +495,10 @@ public class Transaction
 
   @Override
   public BigInteger getV() {
-    if (transactionType != null
-        && transactionType != TransactionType.FRONTIER
-        && transactionType != TransactionType.ACCESS_LIST
-        && transactionType != TransactionType.EIP1559) {
-      // Newer transaction type lacks V, so return null
+    if (transactionType != null && transactionType != TransactionType.FRONTIER) {
+      // EIP-2718 typed transaction, use yParity:
       return null;
     } else {
-      // Mandatory for legacy, optional for EIP-2930 and EIP-1559 TXes, prohibited for all others.
       final BigInteger recId = BigInteger.valueOf(signature.getRecId());
       return chainId
           .map(bigInteger -> recId.add(REPLAY_PROTECTED_V_BASE).add(TWO.multiply(bigInteger)))

@@ -126,7 +126,7 @@ public class TransactionCompleteResult implements TransactionResult {
       this.v =
           (transactionType == TransactionType.ACCESS_LIST
                   || transactionType == TransactionType.EIP1559)
-              ? Quantity.create(transaction.getV())
+              ? Quantity.create(transaction.getYParity())
               : null;
     }
     this.value = Quantity.create(transaction.getValue());

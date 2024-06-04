@@ -78,7 +78,7 @@ public class ProtocolSpecBuilder {
       new WithdrawalsValidator.ProhibitedWithdrawals();
   private WithdrawalsProcessor withdrawalsProcessor;
   private RequestsValidatorCoordinator requestsValidatorCoordinator =
-      new RequestsValidatorCoordinator.Builder().build();
+      RequestsValidatorCoordinator.empty();
   private RequestProcessorCoordinator requestProcessorCoordinator;
   protected BlockHashProcessor blockHashProcessor;
   private FeeMarket feeMarket = FeeMarket.legacy();

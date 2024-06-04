@@ -47,7 +47,7 @@ import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
@@ -76,7 +76,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
-import org.hyperledger.besu.ethereum.mainnet.requests.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -106,7 +106,7 @@ abstract class AbstractBlockCreatorTest {
   protected EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @Test
-  void findDepositsFromReceipts() {
+  void findDepositRequestsFromReceipts() {
     BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
     TransactionReceipt receiptWithoutDeposit1 = blockDataGenerator.receipt();
     TransactionReceipt receiptWithoutDeposit2 = blockDataGenerator.receipt();
@@ -122,8 +122,8 @@ abstract class AbstractBlockCreatorTest {
     List<TransactionReceipt> receipts =
         List.of(receiptWithoutDeposit1, receiptWithDeposit, receiptWithoutDeposit2);
 
-    Deposit expectedDeposit =
-        new Deposit(
+    DepositRequest expectedDepositRequest =
+        new DepositRequest(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
             Bytes32.fromHexString(
@@ -132,17 +132,17 @@ abstract class AbstractBlockCreatorTest {
             BLSSignature.fromHexString(
                 "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
             UInt64.valueOf(539967));
-    final List<Deposit> expectedDeposits = List.of(expectedDeposit);
+    final List<DepositRequest> expectedDepositRequests = List.of(expectedDepositRequest);
 
-    final Optional<List<Request>> depositsFromReceipts =
+    var depositRequestsFromReceipts =
         new DepositRequestProcessor(DEFAULT_DEPOSIT_CONTRACT_ADDRESS).process(null, receipts);
-    assertThat(depositsFromReceipts.get()).isEqualTo(expectedDeposits);
+    assertThat(depositRequestsFromReceipts.get()).isEqualTo(expectedDepositRequests);
   }
 
   @Test
-  void withAllowedDepositsAndContractAddress_DepositsAreParsed() {
+  void withAllowedDepositRequestsAndContractAddress_DepositRequestsAreParsed() {
     final AbstractBlockCreator blockCreator =
-        blockCreatorWithAllowedDeposits(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
+        blockCreatorWithAllowedDepositRequests(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
@@ -154,15 +154,15 @@ abstract class AbstractBlockCreatorTest {
             1L,
             false);
 
-    List<Request> deposits = emptyList();
-    final Hash requestsRoot = BodyValidation.requestsRoot(deposits);
+    List<Request> depositRequests = emptyList();
+    final Hash requestsRoot = BodyValidation.requestsRoot(depositRequests);
     assertThat(blockCreationResult.getBlock().getHeader().getRequestsRoot()).hasValue(requestsRoot);
-    assertThat(blockCreationResult.getBlock().getBody().getRequests()).hasValue(deposits);
+    assertThat(blockCreationResult.getBlock().getBody().getRequests()).hasValue(depositRequests);
   }
 
   @Test
-  void withAllowedDepositsAndNoContractAddress_DepositsAreNotParsed() {
-    final AbstractBlockCreator blockCreator = blockCreatorWithAllowedDeposits(null);
+  void withAllowedDepositRequestsAndNoContractAddress_DepositRequestsAreNotParsed() {
+    final AbstractBlockCreator blockCreator = blockCreatorWithAllowedDepositRequests(null);
 
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
@@ -179,8 +179,8 @@ abstract class AbstractBlockCreatorTest {
   }
 
   @Test
-  void withProhibitedDeposits_DepositsAreNotParsed() {
-    final AbstractBlockCreator blockCreator = blockCreatorWithProhibitedDeposits();
+  void withProhibitedDepositRequests_DepositRequestsAreNotParsed() {
+    final AbstractBlockCreator blockCreator = blockCreatorWithProhibitedDepositRequests();
 
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
@@ -196,7 +196,7 @@ abstract class AbstractBlockCreatorTest {
     assertThat(blockCreationResult.getBlock().getBody().getRequests()).isEmpty();
   }
 
-  private AbstractBlockCreator blockCreatorWithAllowedDeposits(
+  private AbstractBlockCreator blockCreatorWithAllowedDepositRequests(
       final Address depositContractAddress) {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
@@ -207,7 +207,7 @@ abstract class AbstractBlockCreatorTest {
                         new RequestsValidatorCoordinator.Builder()
                             .addValidator(
                                 RequestType.DEPOSIT,
-                                new DepositsValidator((depositContractAddress)))
+                                new DepositRequestValidator((depositContractAddress)))
                             .build())
                     .requestProcessorCoordinator(
                         new RequestProcessorCoordinator.Builder()
@@ -218,7 +218,7 @@ abstract class AbstractBlockCreatorTest {
     return createBlockCreator(protocolSpecAdapters);
   }
 
-  private AbstractBlockCreator blockCreatorWithProhibitedDeposits() {
+  private AbstractBlockCreator blockCreatorWithProhibitedDepositRequests() {
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(0, specBuilder -> specBuilder);
     return createBlockCreator(protocolSpecAdapters);

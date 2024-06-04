@@ -41,6 +41,10 @@ public class RequestsValidatorCoordinator {
   private static final Logger LOG = LoggerFactory.getLogger(RequestsValidatorCoordinator.class);
   private final ImmutableSortedMap<RequestType, RequestValidator> validators;
 
+  public static RequestsValidatorCoordinator empty() {
+    return new Builder().build();
+  }
+
   /**
    * Constructs a new RequestsDelegateValidator with a mapping of request types to their respective
    * validators.
