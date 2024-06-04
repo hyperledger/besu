@@ -5,15 +5,37 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)
+- `admin_nodeInfo` JSON/RPC call returns the currently active EVM version [#7127](https://github.com/hyperledger/besu/pull/7127)
+
+### Bug fixes
+- Make `eth_gasPrice` aware of the base fee market [#7102](https://github.com/hyperledger/besu/pull/7102)
+
+## 24.5.2
+
+### Upcoming Breaking Changes
+- Version 24.5.x will be the last series to support Java 17. Next release after versions 24.5.x will require Java 21 to build and run.
+- Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
+- PKI-backed QBFT will be removed in a future version of Besu. Other forms of QBFT will remain unchanged.
+
+### Additions and Improvements
 - Remove deprecated Goerli testnet [#7049](https://github.com/hyperledger/besu/pull/7049)
 - Default bonsai to use full-flat db and code-storage-by-code-hash [#6984](https://github.com/hyperledger/besu/pull/6894)
 - New RPC methods miner_setExtraData and miner_getExtraData [#7078](https://github.com/hyperledger/besu/pull/7078)
 - Disconnect peers that have multiple discovery ports since they give us bad neighbours [#7089](https://github.com/hyperledger/besu/pull/7089)
 
+### Known Issues
+- [Frequency: occasional < 10%] Chain download halt. Only affects new syncs (new nodes syncing from scratch). Symptom: Block import halts, despite having a full set of peers and world state downloading finishing. Generally restarting besu will resolve the issue. We are tracking this in [#6884](https://github.com/hyperledger/besu/pull/6884)
+
 ### Bug fixes
 - Fix parsing `gasLimit` parameter when its value is > `Long.MAX_VALUE` [#7116](https://github.com/hyperledger/besu/pull/7116)
-- Make `eth_gasPrice` aware of the base fee market [#7102](https://github.com/hyperledger/besu/pull/7102)
 - Skip validation of withdrawals when importing BFT blocks since withdrawals don't apply to BFT chains [#7115](https://github.com/hyperledger/besu/pull/7115)
+- Make `v` abd `yParity` match in type 1 and 2 transactions in JSON-RPC and GraphQL [#7139](https://github.com/hyperledger/besu/pull/7139)
+
+### Download Links
+https://github.com/hyperledger/besu/releases/tag/24.5.2
+https://github.com/hyperledger/besu/releases/download/24.5.2/besu-24.5.2.tar.gz / sha256 4049bf48022ae073065b46e27088399dfb22035e9134ed4ac2c86dd8c5b5fbe9
+https://github.com/hyperledger/besu/releases/download/24.5.2/besu-24.5.2.zip / sha256 23966b501a69e320e8f8f46a3d103ccca45b53f8fee35a6543bd9a260b5784ee
 
 ## 24.5.1
 

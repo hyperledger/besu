@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 
 import java.util.Objects;
 
@@ -28,7 +28,7 @@ import io.vertx.core.json.JsonObject;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 
-public class DepositParameter {
+public class DepositRequestParameter {
 
   private final String pubkey;
 
@@ -39,7 +39,7 @@ public class DepositParameter {
   private final String index;
 
   @JsonCreator
-  public DepositParameter(
+  public DepositRequestParameter(
       @JsonProperty("pubkey") final String pubkey,
       @JsonProperty("withdrawalCredentials") final String withdrawalCredentials,
       @JsonProperty("amount") final String amount,
@@ -52,17 +52,17 @@ public class DepositParameter {
     this.index = index;
   }
 
-  public static DepositParameter fromDeposit(final Deposit deposit) {
-    return new DepositParameter(
-        deposit.getPubkey().toString(),
-        deposit.getWithdrawalCredentials().toString(),
-        deposit.getAmount().toShortHexString(),
-        deposit.getSignature().toString(),
-        deposit.getIndex().toBytes().toQuantityHexString());
+  public static DepositRequestParameter fromDeposit(final DepositRequest depositRequest) {
+    return new DepositRequestParameter(
+        depositRequest.getPubkey().toString(),
+        depositRequest.getWithdrawalCredentials().toString(),
+        depositRequest.getAmount().toShortHexString(),
+        depositRequest.getSignature().toString(),
+        depositRequest.getIndex().toBytes().toQuantityHexString());
   }
 
-  public Deposit toDeposit() {
-    return new Deposit(
+  public DepositRequest toDeposit() {
+    return new DepositRequest(
         BLSPublicKey.fromHexString(pubkey),
         Bytes32.fromHexString(withdrawalCredentials),
         GWei.fromHexString(amount),
@@ -108,7 +108,7 @@ public class DepositParameter {
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
-    final DepositParameter that = (DepositParameter) o;
+    final DepositRequestParameter that = (DepositRequestParameter) o;
     return Objects.equals(pubkey, that.pubkey)
         && Objects.equals(withdrawalCredentials, that.withdrawalCredentials)
         && Objects.equals(amount, that.amount)
@@ -123,7 +123,7 @@ public class DepositParameter {
 
   @Override
   public String toString() {
-    return "DepositParameter{"
+    return "DepositRequestParameter{"
         + "pubKey='"
         + pubkey
         + '\''

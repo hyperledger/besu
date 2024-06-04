@@ -89,7 +89,7 @@ public final class BodyValidation {
   }
 
   /**
-   * Generates the request root for a list of requests
+   * Generates the requests root for a list of requests
    *
    * @param requests list of request
    * @return the requests root
