@@ -6,6 +6,7 @@
 
 ### Additions and Improvements
 - Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)
+- Enable --Xbonsai-limit-trie-logs-enabled by default [#7181](https://github.com/hyperledger/besu/pull/7181)
 - `admin_nodeInfo` JSON/RPC call returns the currently active EVM version [#7127](https://github.com/hyperledger/besu/pull/7127)
 
 ### Bug fixes
