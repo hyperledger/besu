@@ -65,7 +65,7 @@ public class PrettyPrintSubCommand implements Runnable {
       } else {
         EOFLayout layout = EOFLayout.parseEOF(container);
         if (layout.isValid()) {
-          String validation = CodeV1Validation.validate(layout, true);
+          String validation = CodeV1Validation.validate(layout);
           if (validation == null || force) {
             layout.prettyPrint(parentCommand.out);
           }

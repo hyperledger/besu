@@ -65,18 +65,15 @@ public final class CodeV1Validation {
    * containers.
    *
    * @param layout The parsed EOFLayout of the code
-   * @param deep optional flag to see if we should validate deeply.
    * @return either null, indicating no error, or a String describing the validation error.
    */
-  public static String validate(final EOFLayout layout, final boolean deep) {
+  public static String validate(final EOFLayout layout) {
     Queue<EOFLayout> workList = new ArrayDeque<>(layout.getSubcontainerCount());
     workList.add(layout);
 
     while (!workList.isEmpty()) {
       EOFLayout container = workList.poll();
-      if (deep) {
-        workList.addAll(List.of(container.subContainers()));
-      }
+      workList.addAll(List.of(container.subContainers()));
 
       final String codeValidationError = CodeV1Validation.validateCode(container);
       if (codeValidationError != null) {

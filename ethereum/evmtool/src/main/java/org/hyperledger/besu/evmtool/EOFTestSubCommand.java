@@ -215,7 +215,7 @@ public class EOFTestSubCommand implements Runnable {
       return failed("validate " + ((CodeInvalid) code).getInvalidReason());
     }
     if (code instanceof CodeV1 codeV1) {
-      var result = CodeV1Validation.validate(codeV1.getEofLayout(), true);
+      var result = CodeV1Validation.validate(codeV1.getEofLayout());
       if (result != null) {
         return (failed("deep validate error: " + result));
       }

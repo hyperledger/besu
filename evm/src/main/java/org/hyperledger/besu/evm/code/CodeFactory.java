@@ -119,7 +119,7 @@ public final class CodeFactory {
       return new CodeInvalid(layout.container(), "Invalid EOF Layout: " + layout.invalidReason());
     }
 
-    final String validationError = CodeV1Validation.validate(layout, createTransaction);
+    final String validationError = CodeV1Validation.validate(layout);
     if (validationError != null) {
       return new CodeInvalid(layout.container(), "EOF Code Invalid : " + validationError);
     }

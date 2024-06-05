@@ -119,7 +119,7 @@ public class CodeValidateSubCommand implements Runnable {
       return "err: layout - " + layout.invalidReason() + "\n";
     }
 
-    String error = CodeV1Validation.validate(layout, true);
+    String error = CodeV1Validation.validate(layout);
     if (error != null) {
       return "err: " + error + "\n";
     }

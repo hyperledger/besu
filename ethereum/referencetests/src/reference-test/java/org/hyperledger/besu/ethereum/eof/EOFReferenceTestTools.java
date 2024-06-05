@@ -108,7 +108,7 @@ public class EOFReferenceTestTools {
                             : ((CodeInvalid) parsedCode).getInvalidReason()))
             .isEqualTo(results.result());
         if (parsedCode instanceof CodeV1 codeV1) {
-          var deepValidate = CodeV1Validation.validate(codeV1.getEofLayout(), true);
+          var deepValidate = CodeV1Validation.validate(codeV1.getEofLayout());
           assertThat(deepValidate)
               .withFailMessage(
                   () ->
