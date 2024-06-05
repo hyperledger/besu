@@ -42,6 +42,9 @@ public class BlockchainServiceImpl implements BlockchainService {
   private ProtocolSchedule protocolSchedule;
   private MutableBlockchain blockchain;
 
+  /** Instantiates a new Blockchain service implementation. */
+  public BlockchainServiceImpl() {}
+
   /**
    * Instantiates a new Blockchain service.
    *
