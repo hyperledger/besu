@@ -56,8 +56,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
-import io.netty.handler.ipfilter.IpSubnetFilterRule;
-import io.netty.handler.ipfilter.RuleBasedIpFilter;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
 
 public class NettyConnectionInitializer
@@ -208,7 +206,6 @@ public class NettyConnectionInitializer
     return new ChannelInitializer<SocketChannel>() {
       @Override
       protected void initChannel(final SocketChannel ch) throws Exception {
-        ch.pipeline().addFirst(ipRestrictionHandler());
         ch.pipeline()
             .addLast(
                 timeoutHandler(
@@ -230,7 +227,6 @@ public class NettyConnectionInitializer
         final CompletableFuture<PeerConnection> connectionFuture = new CompletableFuture<>();
         connectionFuture.thenAccept(
             connection -> connectSubscribers.forEach(c -> c.onConnect(connection)));
-        ch.pipeline().addFirst(ipRestrictionHandler());
         ch.pipeline()
             .addLast(
                 timeoutHandler(
@@ -279,14 +275,6 @@ public class NettyConnectionInitializer
         connectionFuture::isDone,
         TIMEOUT_SECONDS,
         () -> connectionFuture.completeExceptionally(new TimeoutException(s)));
-  }
-
-  private RuleBasedIpFilter ipRestrictionHandler() {
-    if (config.getAllowSubnets() == null || config.getAllowSubnets().isEmpty()) {
-      return new RuleBasedIpFilter(true); // No restrictions
-    }
-    return new RuleBasedIpFilter(
-        false, config.getAllowSubnets().toArray(new IpSubnetFilterRule[0]));
   }
 
   void addAdditionalOutboundHandlers(final Channel ch, final Peer peer)

@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.converter;
 
-import static org.hyperledger.besu.cli.converter.IpSubnetFilterRuleConverter.parseSubnetRules;
+import static org.hyperledger.besu.cli.converter.SubnetInfoConverter.parseSubnetRules;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -22,15 +22,16 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import io.netty.handler.ipfilter.IpSubnetFilterRule;
+import org.apache.commons.net.util.SubnetUtils;
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.junit.jupiter.api.Test;
 
-public class IpFilterRuleConverterTest {
+public class SubnetInfoConverterTest {
 
   @Test
   void testCreateIpRestrictionHandlerWithValidSubnets() {
     List<String> allowedSubnets = Arrays.asList("192.168.1.0/24", "10.0.0.0/8");
-    List<IpSubnetFilterRule> rules = parseSubnetRules(allowedSubnets);
+    List<SubnetUtils.SubnetInfo> rules = parseSubnetRules(allowedSubnets);
     assertEquals(2, rules.size());
   }
 
@@ -77,13 +78,13 @@ public class IpFilterRuleConverterTest {
   @Test
   void testCreateIpRestrictionHandlerWithEmptyList() {
     List<String> allowedSubnets = Collections.emptyList();
-    List<IpSubnetFilterRule> rules = parseSubnetRules(allowedSubnets);
+    List<SubnetInfo> rules = parseSubnetRules(allowedSubnets);
     assertEquals(0, rules.size()); // No rules should be present
   }
 
   @Test
   void testCreateIpRestrictionHandlerWithNullList() {
-    List<IpSubnetFilterRule> rules = parseSubnetRules(null);
+    List<SubnetInfo> rules = parseSubnetRules(null);
     assertEquals(0, rules.size()); // No rules should be present
   }
 }

@@ -17,13 +17,10 @@ package org.hyperledger.besu.ethereum.p2p.config;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.SubProtocol;
 import org.hyperledger.besu.util.NetworkUtility;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-
-import io.netty.handler.ipfilter.IpSubnetFilterRule;
 
 public class RlpxConfiguration {
   public static final float DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED = 0.6f;
@@ -31,8 +28,6 @@ public class RlpxConfiguration {
   private String bindHost = NetworkUtility.INADDR_ANY;
   private int bindPort = 30303;
   private List<SubProtocol> supportedProtocols = Collections.emptyList();
-
-  private List<IpSubnetFilterRule> allowSubnets = new ArrayList<>();
 
   public static RlpxConfiguration create() {
     return new RlpxConfiguration();
@@ -77,15 +72,6 @@ public class RlpxConfiguration {
   public RlpxConfiguration setClientId(final String clientId) {
     this.clientId = clientId;
     return this;
-  }
-
-  public RlpxConfiguration setAllowSubnets(final List<IpSubnetFilterRule> allowSubnets) {
-    this.allowSubnets = allowSubnets;
-    return this;
-  }
-
-  public List<IpSubnetFilterRule> getAllowSubnets() {
-    return allowSubnets;
   }
 
   @Override

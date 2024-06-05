@@ -19,15 +19,14 @@ import java.util.List;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
-import io.netty.handler.ipfilter.IpFilterRuleType;
-import io.netty.handler.ipfilter.IpSubnetFilterRule;
+import org.apache.commons.net.util.SubnetUtils;
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import picocli.CommandLine;
 
 /** The Ip subnet filter converter for CLI options. */
-public class IpSubnetFilterRuleConverter
-    implements CommandLine.ITypeConverter<List<IpSubnetFilterRule>> {
+public class SubnetInfoConverter implements CommandLine.ITypeConverter<List<SubnetInfo>> {
   /** Default Constructor. */
-  public IpSubnetFilterRuleConverter() {}
+  public SubnetInfoConverter() {}
 
   /**
    * Converts a comma-separated string of IP addresses with CIDR notation into a list of
@@ -37,7 +36,7 @@ public class IpSubnetFilterRuleConverter
    * @return A list of IpSubnetFilterRule objects, or an empty list if the input is null or blank.
    */
   @Override
-  public List<IpSubnetFilterRule> convert(final String value) {
+  public List<SubnetInfo> convert(final String value) {
     // Check if the input string is null or blank, and return an empty list if true.
     if (value == null || value.isBlank()) {
       return List.of();
@@ -54,14 +53,14 @@ public class IpSubnetFilterRuleConverter
    * @return A list of IpSubnetFilterRule objects, or an empty list if the input is null or blank.
    */
   @VisibleForTesting
-  public static List<IpSubnetFilterRule> parseSubnetRules(final List<String> allowedSubnets) {
+  public static List<SubnetInfo> parseSubnetRules(final List<String> allowedSubnets) {
     if (allowedSubnets == null || allowedSubnets.isEmpty()) {
       return List.of();
     }
-    List<IpSubnetFilterRule> rulesList = new ArrayList<>();
+    List<SubnetInfo> rulesList = new ArrayList<>();
     for (String subnet : allowedSubnets) {
-      IpSubnetFilterRule rule = new IpSubnetFilterRule(subnet, IpFilterRuleType.ACCEPT);
-      rulesList.add(rule);
+      SubnetInfo info = new SubnetUtils(subnet).getInfo();
+      rulesList.add(info);
     }
     return rulesList;
   }

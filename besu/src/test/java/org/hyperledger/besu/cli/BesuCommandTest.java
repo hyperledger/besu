@@ -25,7 +25,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
-import static org.hyperledger.besu.cli.converter.IpSubnetFilterRuleConverter.parseSubnetRules;
+import static org.hyperledger.besu.cli.converter.SubnetInfoConverter.parseSubnetRules;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ENGINE;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_BOOTSTRAP_NODES;
 import static org.hyperledger.besu.ethereum.p2p.config.DefaultDiscoveryConfiguration.MAINNET_DISCOVERY_URL;
@@ -1224,7 +1224,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--net-restrict", subnet);
     verify(mockRunnerBuilder).allowedSubnets(subnetsArgumentCaptor.capture());
     var expected = parseSubnetRules(List.of(subnet));
-    assertThat(subnetsArgumentCaptor.getValue().get(0).compareTo(expected.get(0))).isEqualTo(0);
+    assertThat(subnetsArgumentCaptor.getValue()).isEqualTo(expected);
   }
 
   @Test
