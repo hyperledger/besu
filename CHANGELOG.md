@@ -3,7 +3,7 @@
 ## Next Release
 
 ### Breaking Changes
-- Java 21 is required to build and run Besu.
+- Java 21 has been enforced as minimum version to build and run Besu.
 
 ### Additions and Improvements
 - Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)
