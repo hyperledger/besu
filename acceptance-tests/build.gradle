@@ -14,7 +14,7 @@
  */
 
 dependencies {
-  tessera 'net.consensys.quorum.tessera:tessera-dist:23.4.0@tar'
+  tessera 'net.consensys.quorum.tessera:tessera-dist:24.4.1@tar'
 }
 
 jar { enabled = false }

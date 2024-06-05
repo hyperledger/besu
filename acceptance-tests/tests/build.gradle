@@ -85,7 +85,7 @@ dependencies {
   testImplementation 'org.wiremock:wiremock'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
-  tessera 'net.consensys.quorum.tessera:tessera-dist:23.4.0@tar'
+  tessera 'net.consensys.quorum.tessera:tessera-dist:24.4.1@tar'
 }
 
 test.enabled = false
@@ -211,7 +211,7 @@ task acceptanceTestCliqueBft(type: Test) {
 }
 
 
-def tesseraDist = '23.4.0'
+def tesseraDist = '24.4.1'
 
 task acceptanceTestPrivacy(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation

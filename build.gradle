@@ -402,7 +402,7 @@ checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
 check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 
 
-def tesseraDist = '23.4.0'
+def tesseraDist = '24.4.1'
 
 subprojects {
   configurations {
