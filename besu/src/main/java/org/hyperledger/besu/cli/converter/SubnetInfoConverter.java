@@ -23,17 +23,17 @@ import org.apache.commons.net.util.SubnetUtils;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import picocli.CommandLine;
 
-/** The Ip subnet filter converter for CLI options. */
+/** The SubnetInfo converter for CLI options. */
 public class SubnetInfoConverter implements CommandLine.ITypeConverter<List<SubnetInfo>> {
   /** Default Constructor. */
   public SubnetInfoConverter() {}
 
   /**
-   * Converts a comma-separated string of IP addresses with CIDR notation into a list of
-   * IpSubnetFilterRule objects. Each IP address is accepted by the filter rule.
+   * Converts a comma-separated string of IP addresses with CIDR notation into a list of SubnetInfo
+   * objects
    *
    * @param value The comma-separated string of IP addresses with CIDR notation.
-   * @return A list of IpSubnetFilterRule objects, or an empty list if the input is null or blank.
+   * @return A list of SubnetInfo objects, or an empty list if the input is null or blank.
    */
   @Override
   public List<SubnetInfo> convert(final String value) {
@@ -45,13 +45,6 @@ public class SubnetInfoConverter implements CommandLine.ITypeConverter<List<Subn
     return parseSubnetRules(list);
   }
 
-  /**
-   * Converts a list of IP addresses with CIDR notation into a list of IpSubnetFilterRule objects.
-   * Each IP address is accepted by the filter rule.
-   *
-   * @param allowedSubnets A list of IP addresses with CIDR notation.
-   * @return A list of IpSubnetFilterRule objects, or an empty list if the input is null or blank.
-   */
   @VisibleForTesting
   public static List<SubnetInfo> parseSubnetRules(final List<String> allowedSubnets) {
     if (allowedSubnets == null || allowedSubnets.isEmpty()) {
