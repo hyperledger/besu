@@ -262,7 +262,7 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<ApiConfiguration> apiConfigurationCaptor;
 
   @Captor protected ArgumentCaptor<EthstatsOptions> ethstatsOptionsArgumentCaptor;
-  @Captor protected ArgumentCaptor<List<SubnetInfo>> subnetsArgumentCaptor;
+  @Captor protected ArgumentCaptor<List<SubnetInfo>> allowedSubnetsArgumentCaptor;
 
   @BeforeEach
   public void initMocks() throws Exception {
