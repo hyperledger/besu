@@ -23,6 +23,7 @@ import io.netty.handler.ipfilter.IpFilterRuleType;
 import io.netty.handler.ipfilter.IpSubnetFilterRule;
 import picocli.CommandLine;
 
+/** The Ip subnet filter converter for CLI options. */
 public class IpSubnetFilterRuleConverter
     implements CommandLine.ITypeConverter<List<IpSubnetFilterRule>> {
   /** Default Constructor. */
@@ -45,6 +46,13 @@ public class IpSubnetFilterRuleConverter
     return parseSubnetRules(list);
   }
 
+  /**
+   * Converts a list of IP addresses with CIDR notation into a list of IpSubnetFilterRule objects.
+   * Each IP address is accepted by the filter rule.
+   *
+   * @param allowedSubnets A list of IP addresses with CIDR notation.
+   * @return A list of IpSubnetFilterRule objects, or an empty list if the input is null or blank.
+   */
   @VisibleForTesting
   public static List<IpSubnetFilterRule> parseSubnetRules(final List<String> allowedSubnets) {
     if (allowedSubnets == null || allowedSubnets.isEmpty()) {
