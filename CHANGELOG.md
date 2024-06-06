@@ -4,7 +4,7 @@
 
 ### Breaking Changes
 - Java 21 has been enforced as minimum version to build and run Besu.
-- With --Xbonsai-limit-trie-logs-enabled by default in this release, historic trie log data will be removed from the database. It respects the --bonsai-historical-block-limit setting so shouldn't break any RPCs, but may be breaking if you are accessing this data from the database directly
+- With --Xbonsai-limit-trie-logs-enabled by default in this release, historic trie log data will be removed from the database. It respects the --bonsai-historical-block-limit setting so shouldn't break any RPCs, but may be breaking if you are accessing this data from the database directly. Can be disabled with --Xbonsai-limit-trie-logs-enabled=false
 - In profile=ENTERPRISE, use sync-mode=FULL (instead of FAST) and data-storage-format=FOREST (instead of BONSAI) [#7186](https://github.com/hyperledger/besu/pull/7186)
   - If this breaks your node, you can reset sync-mode=FAST and data-storage-format=BONSAI
 
