@@ -136,6 +136,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * Validates the data storage options
    *
    * @param commandLine the full commandLine to check all the options specified by the user
+   * @param syncMode the sync mode
    */
   public void validate(final CommandLine commandLine, final SyncMode syncMode) {
     if (DataStorageFormat.BONSAI == dataStorageFormat
