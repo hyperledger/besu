@@ -1244,8 +1244,13 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesValidBonsaiTrieLimitBackLayersOption() {
-    parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "11");
+  public void parsesValidBonsaiHistoricalBlockLimitOption() {
+    parseCommand(
+        "--Xbonsai-limit-trie-logs-enabled=false",
+        "--data-storage-format",
+        "BONSAI",
+        "--bonsai-historical-block-limit",
+        "11");
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
 
@@ -1258,7 +1263,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesInvalidBonsaiTrieLimitBackLayersOption() {
+  public void parsesInvalidBonsaiHistoricalBlockLimitOption() {
 
     parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "ten");
 

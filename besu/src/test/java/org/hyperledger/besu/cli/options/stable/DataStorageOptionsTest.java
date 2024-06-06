@@ -39,6 +39,15 @@ public class DataStorageOptionsTest
   }
 
   @Test
+  public void bonsaiTrieLogsEnabled_explicitlySetToFalse() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getUnstable().getBonsaiLimitTrieLogsEnabled())
+                .isEqualTo(false),
+        "--Xbonsai-limit-trie-logs-enabled=false");
+  }
+
+  @Test
   public void bonsaiTrieLogPruningWindowSizeShouldBePositive() {
     internalTestFailure(
         "--Xbonsai-trie-logs-pruning-window-size=0 must be greater than 0",
