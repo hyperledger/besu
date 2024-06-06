@@ -4,11 +4,13 @@
 
 ### Breaking Changes
 - Java 21 has been enforced as minimum version to build and run Besu.
+- With --Xbonsai-limit-trie-logs-enabled by default in this release, historic trie log data will be removed from the database unless sync-mode=FULL. It respects the --bonsai-historical-block-limit setting so shouldn't break any RPCs, but may be breaking if you are accessing this data from the database directly. Can be disabled with --Xbonsai-limit-trie-logs-enabled=false
 - In profile=ENTERPRISE, use sync-mode=FULL (instead of FAST) and data-storage-format=FOREST (instead of BONSAI) [#7186](https://github.com/hyperledger/besu/pull/7186)
   - If this breaks your node, you can reset sync-mode=FAST and data-storage-format=BONSAI
 
 ### Additions and Improvements
 - Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)
+- Enable --Xbonsai-limit-trie-logs-enabled by default, unless sync-mode=FULL [#7181](https://github.com/hyperledger/besu/pull/7181)
 - `admin_nodeInfo` JSON/RPC call returns the currently active EVM version [#7127](https://github.com/hyperledger/besu/pull/7127)
 
 ### Bug fixes
