@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 /** The Return data copy operation. */
 public class ReturnDataLoadOperation extends AbstractOperation {
@@ -44,7 +45,7 @@ public class ReturnDataLoadOperation extends AbstractOperation {
     if (offset > retunDataSize) {
       value = Bytes.EMPTY;
     } else if (offset + 32 >= returnData.size()) {
-      value = returnData.slice(offset);
+      value = Bytes32.rightPad(returnData.slice(offset));
     } else {
       value = returnData.slice(offset, 32);
     }
