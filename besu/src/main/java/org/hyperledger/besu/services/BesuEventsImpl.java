@@ -47,6 +47,9 @@ public class BesuEventsImpl implements BesuEvents {
   private SyncState syncState;
   private BadBlockManager badBlockManager;
 
+  /** Default constructor */
+  public BesuEventsImpl() {}
+
   /**
    * Constructor for BesuEventsImpl
    *
