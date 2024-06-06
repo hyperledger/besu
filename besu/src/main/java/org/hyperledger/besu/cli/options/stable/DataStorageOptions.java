@@ -24,6 +24,7 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -136,8 +137,16 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    *
    * @param commandLine the full commandLine to check all the options specified by the user
    */
-  public void validate(final CommandLine commandLine) {
-    if (unstableOptions.bonsaiLimitTrieLogsEnabled) {
+  public void validate(final CommandLine commandLine, final SyncMode syncMode) {
+    if (DataStorageFormat.BONSAI == dataStorageFormat
+        && unstableOptions.bonsaiLimitTrieLogsEnabled) {
+      if (SyncMode.FULL == syncMode) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            String.format(
+                "Cannot enable " + Unstable.BONSAI_LIMIT_TRIE_LOGS_ENABLED + " with sync-mode %s",
+                syncMode));
+      }
       if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
         throw new CommandLine.ParameterException(
             commandLine,

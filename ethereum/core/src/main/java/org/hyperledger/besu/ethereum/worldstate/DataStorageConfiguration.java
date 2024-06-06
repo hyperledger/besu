@@ -76,9 +76,7 @@ public interface DataStorageConfiguration {
     boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = true;
 
     DataStorageConfiguration.Unstable DEFAULT =
-        ImmutableDataStorageConfiguration.Unstable.builder()
-            .bonsaiLimitTrieLogsEnabled(true)
-            .build();
+        ImmutableDataStorageConfiguration.Unstable.builder().build();
 
     DataStorageConfiguration.Unstable DEFAULT_PARTIAL =
         ImmutableDataStorageConfiguration.Unstable.builder().bonsaiFullFlatDbEnabled(false).build();

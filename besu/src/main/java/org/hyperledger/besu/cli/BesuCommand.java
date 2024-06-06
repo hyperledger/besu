@@ -1564,7 +1564,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateDataStorageOptions() {
-    dataStorageOptions.validate(commandLine);
+    dataStorageOptions.validate(commandLine, syncMode);
   }
 
   private void validateRequiredOptions() {

@@ -1087,8 +1087,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void syncMode_full() {
-    parseCommand("--sync-mode", "FULL");
+  public void syncMode_full_requires_bonsaiLimitTrieLogsToBeDisabled() {
+    parseCommand("--sync-mode", "FULL", "--Xbonsai-limit-trie-logs-enabled=false");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
@@ -1241,6 +1241,30 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
             "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact or provide a URL (via --ethstats=nodename:secret@host:port)");
+  }
+
+  @Test
+  public void bonsaiLimitTrieLogsEnabledByDefault() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(dataStorageConfiguration.getUnstable().getBonsaiLimitTrieLogsEnabled()).isTrue();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidDefaultBonsaiLimitTrieLogsWhenFullSyncEnabled() {
+    parseCommand("--sync-mode=FULL");
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Cannot enable --Xbonsai-limit-trie-logs-enabled with sync-mode FULL");
   }
 
   @Test
