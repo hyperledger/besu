@@ -14,35 +14,23 @@
  */
 package org.hyperledger.besu.cli.converter;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import com.google.common.base.Splitter;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import picocli.CommandLine;
 
 /** The SubnetInfo converter for CLI options. */
-public class SubnetInfoConverter implements CommandLine.ITypeConverter<List<SubnetInfo>> {
+public class SubnetInfoConverter implements CommandLine.ITypeConverter<SubnetInfo> {
   /** Default Constructor. */
   public SubnetInfoConverter() {}
 
   /**
-   * Converts a comma-separated string of IP addresses with CIDR notation into a list of SubnetInfo
-   * objects.
+   * Converts an IP addresses with CIDR notation into SubnetInfo
    *
-   * @param value The comma-separated string of IP addresses with CIDR notation.
-   * @return A list of SubnetInfo objects, or an empty list if the input is null or blank.
+   * @param value The IP addresses with CIDR notation.
+   * @return the SubnetInfo
    */
   @Override
-  public List<SubnetInfo> convert(final String value) {
-    List<SubnetInfo> subnetInfo = new ArrayList<>();
-    if (value == null || value.isBlank()) {
-      return subnetInfo;
-    }
-    for (String subnet : Splitter.on(',').split(value)) {
-      subnetInfo.add(new SubnetUtils(subnet).getInfo());
-    }
-    return subnetInfo;
+  public SubnetInfo convert(final String value) {
+    return new SubnetUtils(value).getInfo();
   }
 }
