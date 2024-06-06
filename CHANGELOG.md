@@ -3,6 +3,7 @@
 ## Next Release
 
 ### Breaking Changes
+- Java 21 has been enforced as minimum version to build and run Besu.
 
 ### Additions and Improvements
 - Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)
@@ -23,6 +24,7 @@
 - Default bonsai to use full-flat db and code-storage-by-code-hash [#6984](https://github.com/hyperledger/besu/pull/6894)
 - New RPC methods miner_setExtraData and miner_getExtraData [#7078](https://github.com/hyperledger/besu/pull/7078)
 - Disconnect peers that have multiple discovery ports since they give us bad neighbours [#7089](https://github.com/hyperledger/besu/pull/7089)
+- Port Tuweni dns-discovery into Besu. [#7129](https://github.com/hyperledger/besu/pull/7129)
 
 ### Known Issues
 - [Frequency: occasional < 10%] Chain download halt. Only affects new syncs (new nodes syncing from scratch). Symptom: Block import halts, despite having a full set of peers and world state downloading finishing. Generally restarting besu will resolve the issue. We are tracking this in [#6884](https://github.com/hyperledger/besu/pull/6884)
