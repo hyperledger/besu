@@ -72,7 +72,7 @@ public class PeerPermissionSubnet extends PeerPermissions {
         return true;
       }
     }
-    LOG.info("Peer {} is not allowed in any of the configured subnets.", remotePeerHostAddress);
+    LOG.trace("Peer {} is not allowed in any of the configured subnets.", remotePeerHostAddress);
     return false;
   }
 }
