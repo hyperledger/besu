@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.cli.converter;
 
-import static org.hyperledger.besu.cli.converter.SubnetInfoConverter.parseSubnetRules;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -83,7 +82,11 @@ public class SubnetInfoConverterTest {
 
   @Test
   void testCreateIpRestrictionHandlerWithNullList() {
-    List<SubnetInfo> rules = parseSubnetRules(null);
+    List<SubnetInfo> rules = new SubnetInfoConverter().convert(null);
     assertEquals(0, rules.size()); // No rules should be present
+  }
+
+  private List<SubnetInfo> parseSubnetRules(final List<String> subnets) {
+    return new SubnetInfoConverter().convert(String.join(",", subnets));
   }
 }

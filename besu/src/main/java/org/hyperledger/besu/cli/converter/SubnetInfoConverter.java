@@ -16,14 +16,13 @@ package org.hyperledger.besu.cli.converter;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
-import com.google.common.annotations.VisibleForTesting;
+import com.google.common.base.Splitter;
 import org.apache.commons.net.util.SubnetUtils;
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import picocli.CommandLine;
 
-/** The Ip subnet filter converter for CLI options. */
+/** The SubnetInfo converter for CLI options. */
 public class SubnetInfoConverter implements CommandLine.ITypeConverter<List<SubnetInfo>> {
   /** Default Constructor. */
   public SubnetInfoConverter() {}
@@ -37,31 +36,13 @@ public class SubnetInfoConverter implements CommandLine.ITypeConverter<List<Subn
    */
   @Override
   public List<SubnetInfo> convert(final String value) {
-    // Check if the input string is null or blank, and return an empty list if true.
+    List<SubnetInfo> subnetInfo = new ArrayList<>();
     if (value == null || value.isBlank()) {
-      return List.of();
+      return subnetInfo;
     }
-    List<String> list = Stream.of(value.split(",")).toList();
-    return parseSubnetRules(list);
-  }
-
-  /**
-   * Converts a list of IP addresses with CIDR notation into a list of SubnetInfo objects. Each IP
-   * address is accepted by the filter rule.
-   *
-   * @param allowedSubnets A list of IP addresses with CIDR notation.
-   * @return A list of SubnetInfo objects, or an empty list if the input is null or blank.
-   */
-  @VisibleForTesting
-  public static List<SubnetInfo> parseSubnetRules(final List<String> allowedSubnets) {
-    if (allowedSubnets == null || allowedSubnets.isEmpty()) {
-      return List.of();
+    for (String subnet : Splitter.on(',').split(value)) {
+      subnetInfo.add(new SubnetUtils(subnet).getInfo());
     }
-    List<SubnetInfo> rulesList = new ArrayList<>();
-    for (String subnet : allowedSubnets) {
-      SubnetInfo info = new SubnetUtils(subnet).getInfo();
-      rulesList.add(info);
-    }
-    return rulesList;
+    return subnetInfo;
   }
 }
