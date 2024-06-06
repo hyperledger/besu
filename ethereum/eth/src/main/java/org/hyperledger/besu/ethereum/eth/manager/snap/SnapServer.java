@@ -456,8 +456,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         } else {
           Optional<Bytes> optCode = worldStateStorageCoordinator.getCode(Hash.wrap(codeHash), null);
           if (optCode.isPresent()) {
-            if (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes
-                || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST) {
+            var sizeTooLarge = sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes;
+            var timeTooLong = stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST;
+            if (!codeBytes.isEmpty() && (sizeTooLarge || timeTooLong)) {
               break;
             }
             codeBytes.add(optCode.get());
