@@ -1891,7 +1891,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuControllerBuilder getControllerBuilder() {
     pluginCommonConfiguration
         .init(dataDir(), dataDir().resolve(DATABASE_PATH), getDataStorageConfiguration())
-        .withMiningParameters(getMiningParameters())
+        .withMiningParameters(miningParametersSupplier.get())
         .withJsonRpcHttpOptions(jsonRpcHttpOptions);
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory

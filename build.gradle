@@ -32,8 +32,8 @@ plugins {
   id 'maven-publish'
 }
 
-if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-  throw new GradleException("Java 17 or later is required to build Besu.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
+  throw new GradleException("Java 21 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -110,7 +110,7 @@ allprojects {
   version = calculateVersion()
 
   jacoco {
-    toolVersion = '0.8.8'
+    toolVersion = '0.8.11'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -129,8 +129,8 @@ allprojects {
   tasks.build {
     dependsOn 'javadoc'
   }
-  sourceCompatibility = 17
-  targetCompatibility = 17
+  sourceCompatibility = 21
+  targetCompatibility = 21
 
   repositories {
     maven {
