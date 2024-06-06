@@ -4,6 +4,8 @@
 
 ### Breaking Changes
 - Java 21 has been enforced as minimum version to build and run Besu.
+- In profile=ENTERPRISE, use sync-mode=FULL (instead of FAST) and data-storage-format=FOREST (instead of BONSAI) [#7186](https://github.com/hyperledger/besu/pull/7186)
+  - If this breaks your node, you can reset sync-mode=FAST and data-storage-format=BONSAI
 
 ### Additions and Improvements
 - Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)

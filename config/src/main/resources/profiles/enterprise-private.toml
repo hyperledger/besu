@@ -1,4 +1,5 @@
-sync-mode="FAST"
+sync-mode="FULL"
+data-storage-format="FOREST"
 sync-min-peers=1
 remote-connections-limit-enabled=false
 tx-pool="SEQUENCED"
