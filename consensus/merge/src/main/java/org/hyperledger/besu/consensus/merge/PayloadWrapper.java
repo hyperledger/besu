@@ -27,6 +27,7 @@ public class PayloadWrapper {
 
   /**
    * Construct a wrapper with the following fields.
+   *
    * @param payloadIdentifier Payload identifier
    * @param blockWithReceipts Block with receipts
    */
