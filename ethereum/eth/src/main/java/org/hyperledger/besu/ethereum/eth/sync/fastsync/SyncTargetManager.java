@@ -153,7 +153,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                   bestPeer.getLoggableId(),
                   pivotBlockHeader.getNumber(),
                   error);
-              LOG.debug("Timeout occurred waiting for response from peer {}", bestPeer);
+              LOG.atDebug().setMessage("Exception occurred while waiting for pivot confirmation from peer {}, {}").addArgument(bestPeer).addArgument(error).log();
               bestPeer.disconnect(DisconnectReason.USELESS_PEER_CANNOT_CONFIRM_PIVOT_BLOCK);
               return Optional.empty();
             });
