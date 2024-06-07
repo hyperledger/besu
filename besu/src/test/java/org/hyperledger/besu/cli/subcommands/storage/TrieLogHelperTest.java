@@ -336,7 +336,7 @@ class TrieLogHelperTest {
             () ->
                 helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
         .isInstanceOf(RuntimeException.class)
-        .hasMessage("--Xbonsai-trie-logs-pruning-window-size=0 must be greater than 0");
+        .hasMessage("--bonsai-trie-logs-pruning-window-size=0 must be greater than 0");
   }
 
   @Test
@@ -358,7 +358,7 @@ class TrieLogHelperTest {
                 helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "--Xbonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512");
+            "--bonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512");
   }
 
   @Test
