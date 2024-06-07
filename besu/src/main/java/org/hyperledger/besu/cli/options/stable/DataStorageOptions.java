@@ -83,8 +83,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
         "--bonsai-trie-logs-pruning-window-size";
 
+    @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
     @CommandLine.Option(
-        hidden = true,
         names = {
           BONSAI_LIMIT_TRIE_LOGS_ENABLED,
           "--Xbonsai-limit-trie-logs-enabled",
@@ -95,8 +95,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 
+    @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
     @CommandLine.Option(
-        hidden = true,
         names = {BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE, "--Xbonsai-trie-logs-pruning-window-size"},
         description =
             "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
