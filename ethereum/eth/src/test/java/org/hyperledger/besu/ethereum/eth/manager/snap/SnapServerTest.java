@@ -494,6 +494,29 @@ public class SnapServerTest {
     assertThat(codes.codes().size()).isEqualTo(codeLimit * 90 / 100);
   }
 
+  @Test
+  public void assertCodeMustReturnAtLeastOneByteCode() {
+    insertTestAccounts(acct1, acct2, acct3, acct4);
+
+    final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
+    tmp.startList();
+    tmp.writeBigIntegerScalar(BigInteger.ONE);
+    tmp.writeList(
+        List.of(acct3.accountValue.getCodeHash(), acct4.accountValue.getCodeHash()),
+        (hash, rlpOutput) -> rlpOutput.writeBytes(hash));
+    tmp.writeBigIntegerScalar(BigInteger.ZERO);
+    tmp.endList();
+
+    var codeRequest =
+        (ByteCodesMessage)
+            snapServer.constructGetBytecodesResponse(new GetByteCodesMessage(tmp.encoded()));
+
+    assertThat(codeRequest).isNotNull();
+    ByteCodesMessage.ByteCodes codes = codeRequest.bytecodes(false);
+    assertThat(codes).isNotNull();
+    assertThat(codes.codes().size()).isEqualTo(1);
+  }
+
   static SnapTestAccount createTestAccount(final String hexAddr) {
     return new SnapTestAccount(
         Hash.wrap(Bytes32.rightPad(Bytes.fromHexString(hexAddr))),
