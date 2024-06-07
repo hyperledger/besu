@@ -33,6 +33,17 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningWindowSize())
                 .isEqualTo(600),
+        "--bonsai-limit-trie-logs-enabled",
+        "--bonsai-trie-logs-pruning-window-size",
+        "600");
+  }
+
+  @Test
+  public void bonsaiTrieLogPruningLimitLegacyOption() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningWindowSize())
+                .isEqualTo(600),
         "--Xbonsai-limit-trie-logs-enabled",
         "--Xbonsai-trie-logs-pruning-window-size",
         "600");
@@ -44,24 +55,24 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getUnstable().getBonsaiLimitTrieLogsEnabled())
                 .isEqualTo(false),
-        "--Xbonsai-limit-trie-logs-enabled=false");
+        "--bonsai-limit-trie-logs-enabled=false");
   }
 
   @Test
   public void bonsaiTrieLogPruningWindowSizeShouldBePositive() {
     internalTestFailure(
-        "--Xbonsai-trie-logs-pruning-window-size=0 must be greater than 0",
-        "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-pruning-window-size",
+        "--bonsai-trie-logs-pruning-window-size=0 must be greater than 0",
+        "--bonsai-limit-trie-logs-enabled",
+        "--bonsai-trie-logs-pruning-window-size",
         "0");
   }
 
   @Test
   public void bonsaiTrieLogPruningWindowSizeShouldBeAboveRetentionLimit() {
     internalTestFailure(
-        "--Xbonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512",
-        "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-logs-pruning-window-size",
+        "--bonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512",
+        "--bonsai-limit-trie-logs-enabled",
+        "--bonsai-trie-logs-pruning-window-size",
         "512");
   }
 
@@ -71,7 +82,7 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
                 .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT + 1),
-        "--Xbonsai-limit-trie-logs-enabled",
+        "--bonsai-limit-trie-logs-enabled",
         "--bonsai-historical-block-limit",
         "513");
   }
@@ -82,7 +93,7 @@ public class DataStorageOptionsTest
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
                 .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT),
-        "--Xbonsai-limit-trie-logs-enabled",
+        "--bonsai-limit-trie-logs-enabled",
         "--bonsai-historical-block-limit",
         "512");
   }
@@ -91,7 +102,7 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogRetentionLimitShouldBeAboveMinimum() {
     internalTestFailure(
         "--bonsai-historical-block-limit minimum value is 512",
-        "--Xbonsai-limit-trie-logs-enabled",
+        "--bonsai-limit-trie-logs-enabled",
         "--bonsai-historical-block-limit",
         "511");
   }
