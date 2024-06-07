@@ -26,6 +26,7 @@ public class PayloadWrapper {
   private final Wei blockValue;
 
   /**
+   * Construct a wrapper with the following fields.
    * @param payloadIdentifier Payload identifier
    * @param blockWithReceipts Block with receipts
    */
