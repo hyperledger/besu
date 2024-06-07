@@ -93,14 +93,14 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         fallbackValue = "true",
         description =
             "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
-    private boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
+    private Boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 
     @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
     @CommandLine.Option(
         names = {BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE, "--Xbonsai-trie-logs-pruning-window-size"},
         description =
             "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
-    private int bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+    private Integer bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
     // TODO: --Xsnapsync-synchronizer-flat-db-healing-enabled is deprecated, remove it in a future
     // release
