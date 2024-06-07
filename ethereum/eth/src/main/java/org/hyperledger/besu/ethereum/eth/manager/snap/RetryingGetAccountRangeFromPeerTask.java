@@ -44,7 +44,10 @@ public class RetryingGetAccountRangeFromPeerTask
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
     super(
-        ethContext, MAX_RETRIES, data -> data.accounts().isEmpty() && data.proofs().isEmpty(), metricsSystem);
+        ethContext,
+        MAX_RETRIES,
+        data -> data.accounts().isEmpty() && data.proofs().isEmpty(),
+        metricsSystem);
     this.ethContext = ethContext;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;

@@ -111,12 +111,6 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     return error instanceof TimeoutException || isPeerFailure(error);
   }
 
-  @Override
-  protected void handleMaxRetriesException() {
-    LOG.info("Max retries reached for task {}", this.getClass().getSimpleName());
-  }
-  ;
-
   private Optional<EthPeer> selectNextPeer() {
     final Optional<EthPeer> maybeNextPeer = remainingPeersToTry().findFirst();
 

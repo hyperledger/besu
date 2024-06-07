@@ -122,7 +122,11 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
     task.assignPeer(bestPeer);
     return ethContext
         .getScheduler()
-        .timeout(task, Duration.ofSeconds(MAX_QUERY_RETRIES_PER_PEER * 5 + 1))
+        .timeout(
+            task,
+            Duration.ofSeconds(
+                MAX_QUERY_RETRIES_PER_PEER * 5
+                    + 1)) // 5 because there is a 5 sec timout per request
         .thenCompose(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {
@@ -148,13 +152,13 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
             })
         .exceptionally(
             error -> {
-              LOG.debug(
-                  "Could not confirm best peer {} had pivot block {}",
-                  bestPeer.getLoggableId(),
-                  pivotBlockHeader.getNumber(),
-                  error);
-              LOG.atDebug().setMessage("Exception occurred while waiting for pivot confirmation from peer {}, {}").addArgument(bestPeer).addArgument(error).log();
-              bestPeer.disconnect(DisconnectReason.USELESS_PEER_CANNOT_CONFIRM_PIVOT_BLOCK);
+              LOG.atDebug()
+                  .setMessage("Could not confirm best peer {} had pivot block {}, {}")
+                  .addArgument(bestPeer.getLoggableId())
+                  .addArgument(pivotBlockHeader.getNumber())
+                  .addArgument(error)
+                  .log();
+              // bestPeer.disconnect(DisconnectReason.USELESS_PEER_CANNOT_CONFIRM_PIVOT_BLOCK);
               return Optional.empty();
             });
   }
