@@ -15,7 +15,7 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
 
 import org.hyperledger.besu.cli.options.AbstractCLIOptionsTest;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -31,8 +31,7 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogPruningLimitOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningWindowSize())
-                .isEqualTo(600),
+            assertThat(dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize()).isEqualTo(600),
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-trie-logs-pruning-window-size",
         "600");
@@ -42,8 +41,7 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogPruningLimitLegacyOption() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningWindowSize())
-                .isEqualTo(600),
+            assertThat(dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize()).isEqualTo(600),
         "--Xbonsai-limit-trie-logs-enabled",
         "--Xbonsai-trie-logs-pruning-window-size",
         "600");
@@ -53,8 +51,7 @@ public class DataStorageOptionsTest
   public void bonsaiTrieLogsEnabled_explicitlySetToFalse() {
     internalTestSuccess(
         dataStorageConfiguration ->
-            assertThat(dataStorageConfiguration.getUnstable().getBonsaiLimitTrieLogsEnabled())
-                .isEqualTo(false),
+            assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isEqualTo(false),
         "--bonsai-limit-trie-logs-enabled=false");
   }
 
@@ -157,11 +154,8 @@ public class DataStorageOptionsTest
     return ImmutableDataStorageConfiguration.builder()
         .dataStorageFormat(DataStorageFormat.BONSAI)
         .bonsaiMaxLayersToLoad(513L)
-        .unstable(
-            ImmutableDataStorageConfiguration.Unstable.builder()
-                .bonsaiLimitTrieLogsEnabled(true)
-                .bonsaiTrieLogPruningWindowSize(514)
-                .build())
+        .bonsaiLimitTrieLogsEnabled(true)
+        .bonsaiTrieLogPruningWindowSize(514)
         .build();
   }
 

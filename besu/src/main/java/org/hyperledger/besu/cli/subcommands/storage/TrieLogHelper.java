@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import static com.google.common.base.Preconditions.checkArgument;
 import static org.hyperledger.besu.cli.options.stable.DataStorageOptions.BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
 import org.hyperledger.besu.cli.options.stable.DataStorageOptions;
 import org.hyperledger.besu.datatypes.Hash;
@@ -296,25 +296,23 @@ public class TrieLogHelper {
   void validatePruneConfiguration(final DataStorageConfiguration config) {
     checkArgument(
         config.getBonsaiMaxLayersToLoad()
-            >= DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT,
+            >= DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT,
         String.format(
             BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
-            DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
+            DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
     checkArgument(
-        config.getUnstable().getBonsaiTrieLogPruningWindowSize() > 0,
+        config.getBonsaiTrieLogPruningWindowSize() > 0,
         String.format(
-            DataStorageOptions.Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
-                + "=%d must be greater than 0",
-            config.getUnstable().getBonsaiTrieLogPruningWindowSize()));
+            DataStorageOptions.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+            config.getBonsaiTrieLogPruningWindowSize()));
     checkArgument(
-        config.getUnstable().getBonsaiTrieLogPruningWindowSize()
-            > config.getBonsaiMaxLayersToLoad(),
+        config.getBonsaiTrieLogPruningWindowSize() > config.getBonsaiMaxLayersToLoad(),
         String.format(
-            DataStorageOptions.Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+            DataStorageOptions.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
                 + "=%d must be greater than "
                 + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                 + "=%d",
-            config.getUnstable().getBonsaiTrieLogPruningWindowSize(),
+            config.getBonsaiTrieLogPruningWindowSize(),
             config.getBonsaiMaxLayersToLoad()));
   }
 
