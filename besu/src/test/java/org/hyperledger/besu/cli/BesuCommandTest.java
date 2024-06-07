@@ -1166,7 +1166,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
+    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(5);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1178,7 +1178,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
+    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1190,7 +1190,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
+    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1202,7 +1202,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
+    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }

@@ -2814,6 +2814,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
+    builder.setSnapSyncBftEnabled(this.unstableSynchronizerOptions.isSnapSyncBftEnabled());
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
     builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());

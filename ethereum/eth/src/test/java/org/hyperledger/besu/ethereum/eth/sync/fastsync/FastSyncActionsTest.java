@@ -113,7 +113,7 @@ public class FastSyncActionsTest {
   public void waitForPeersShouldSucceedIfEnoughPeersAreFound(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
-    for (int i = 0; i < syncConfig.getFastSyncMinimumPeerCount(); i++) {
+    for (int i = 0; i < syncConfig.getSyncMinimumPeerCount(); i++) {
       EthProtocolManagerTestUtil.createPeer(
           ethProtocolManager, syncConfig.getFastSyncPivotDistance() + i + 1);
     }
@@ -435,7 +435,7 @@ public class FastSyncActionsTest {
     final long pivotDistance = syncConfig.getFastSyncPivotDistance();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     // Create peers with chains that are too short
-    for (int i = 0; i < syncConfig.getFastSyncMinimumPeerCount(); i++) {
+    for (int i = 0; i < syncConfig.getSyncMinimumPeerCount(); i++) {
       EthProtocolManagerTestUtil.createPeer(ethProtocolManager, pivotDistance);
     }
 

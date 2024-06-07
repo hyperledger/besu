@@ -66,7 +66,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
                     conservativelyEstimatedPivotBlock(), syncConfig.getMaxTrailingPeers()));
     trailingPeerLimiter.enforceTrailingPeerLimit();
 
-    return waitForPeers(syncConfig.getFastSyncMinimumPeerCount());
+    return waitForPeers(syncConfig.getSyncMinimumPeerCount());
   }
 
   @Override
@@ -96,7 +96,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   private boolean enoughFastSyncPeersArePresent() {
     final long peerCount = countPeersThatCanDeterminePivotBlock();
-    final int minPeerCount = syncConfig.getFastSyncMinimumPeerCount();
+    final int minPeerCount = syncConfig.getSyncMinimumPeerCount();
     if (peerCount < minPeerCount) {
       LOG.info(
           "Waiting for valid peers with chain height information.  {} / {} required peers currently available.",

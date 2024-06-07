@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredException;
@@ -73,7 +72,7 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
 
       return bestPeer.flatMap(this::fromBestPeer);
     } else {
-      // Treat single-validator as a special case. We are the only node that can produce
+      // Treat us being the only validator as a special case. We are the only node that can produce
       // blocks so we won't wait to sync with a non-validator node that may or may not exist
       if (validatorProvider.getValidatorsAtHead().size() == 1
           && validatorProvider
@@ -82,20 +81,30 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
         throw new NoSyncRequiredException();
       }
 
-      // Treat the case where we have min-peer-count peers who don't have a chain-head estimate but who are all validators as not needing to sync
-      // This is effectively handling the "new chain with N validators" case, but speaks more generally to the BFT case where a BFT chain
-      // prioritises information from other validators over waiting for non-validator peers to respond.
-      AtomicInteger peerValidatorCount = new AtomicInteger();
-      EthPeers theList = ethContext.getEthPeers();
-      theList.getAllActiveConnections().forEach(peer -> {
-        if (validatorProvider
-              .getValidatorsAtHead().contains(peer.getPeerInfo().getAddress())) {
-          peerValidatorCount.getAndIncrement();
-        }
-      });
-      if (peerValidatorCount.get() >= syncConfig.getFastSyncMinimumPeerCount()) {
-        // We have sync-min-peers x validators connected, all of whom have no head estimate. We'll assume this is a new chain
-        // and skip waiting for any more peers to sync with.
+      // Treat the case where we have sync-min-peers peers, who don't have a chain-head estimate but
+      // who are all validators, as not needing to sync
+      // This is effectively handling the "new chain with N validators" case, but speaks more
+      // generally to the BFT case where a BFT chain
+      // prioritises information from other validators over waiting for non-validator peers to
+      // respond.
+      final AtomicInteger peerValidatorCount = new AtomicInteger();
+      ethContext
+          .getEthPeers()
+          .getAllActiveConnections()
+          .forEach(
+              peer -> {
+                if (validatorProvider
+                    .getValidatorsAtHead()
+                    .contains(peer.getPeerInfo().getAddress())) {
+                  peerValidatorCount.getAndIncrement();
+                }
+              });
+
+      if (peerValidatorCount.get() >= syncConfig.getSyncMinimumPeerCount()) {
+        // We have sync-min-peers x validators connected, all of whom have no head estimate. We'll
+        // assume this is a new chain
+        // and skip waiting for any more peers to sync with. The worst case is this puts us into
+        // full sync mode.
         throw new NoSyncRequiredException();
       }
     }
