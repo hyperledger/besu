@@ -1564,7 +1564,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateDataStorageOptions() {
-    dataStorageOptions.validate(commandLine);
+    dataStorageOptions.validate(commandLine, syncMode);
   }
 
   private void validateRequiredOptions() {
@@ -1876,7 +1876,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public BesuControllerBuilder getControllerBuilder() {
     pluginCommonConfiguration
         .init(dataDir(), dataDir().resolve(DATABASE_PATH), getDataStorageConfiguration())
-        .withMiningParameters(getMiningParameters())
+        .withMiningParameters(miningParametersSupplier.get())
         .withJsonRpcHttpOptions(jsonRpcHttpOptions);
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
@@ -2791,7 +2791,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    if (getDataStorageConfiguration().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
+    if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())
+        && getDataStorageConfiguration().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
       builder.setLimitTrieLogsEnabled();
       builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getBonsaiMaxLayersToLoad());
       builder.setTrieLogsPruningWindowSize(

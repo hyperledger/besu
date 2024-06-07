@@ -24,6 +24,7 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -86,6 +87,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     @CommandLine.Option(
         hidden = true,
         names = {BONSAI_LIMIT_TRIE_LOGS_ENABLED, "--Xbonsai-trie-log-pruning-enabled"},
+        fallbackValue = "true",
         description =
             "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
@@ -134,9 +136,18 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * Validates the data storage options
    *
    * @param commandLine the full commandLine to check all the options specified by the user
+   * @param syncMode the sync mode
    */
-  public void validate(final CommandLine commandLine) {
-    if (unstableOptions.bonsaiLimitTrieLogsEnabled) {
+  public void validate(final CommandLine commandLine, final SyncMode syncMode) {
+    if (DataStorageFormat.BONSAI == dataStorageFormat
+        && unstableOptions.bonsaiLimitTrieLogsEnabled) {
+      if (SyncMode.FULL == syncMode) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            String.format(
+                "Cannot enable " + Unstable.BONSAI_LIMIT_TRIE_LOGS_ENABLED + " with sync-mode %s",
+                syncMode));
+      }
       if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
         throw new CommandLine.ParameterException(
             commandLine,

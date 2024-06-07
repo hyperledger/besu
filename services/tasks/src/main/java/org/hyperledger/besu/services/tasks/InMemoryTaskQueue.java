@@ -32,6 +32,9 @@ public class InMemoryTaskQueue<T> implements TaskCollection<T> {
   private final Set<InMemoryTask<T>> unfinishedOutstandingTasks = new HashSet<>();
   private final AtomicBoolean closed = new AtomicBoolean(false);
 
+  /** Default constructor. */
+  public InMemoryTaskQueue() {}
+
   @Override
   public synchronized void add(final T taskData) {
     assertNotClosed();
