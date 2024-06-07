@@ -39,7 +39,7 @@ import java.util.stream.Collectors;
 /** The RPC endpoint service implementation. */
 public class RpcEndpointServiceImpl implements RpcEndpointService {
   private final Map<String, Function<PluginRpcRequest, ?>> rpcMethods = new HashMap<>();
-  private Map<String, JsonRpcMethod> inProgressRpcMethods;
+  private Map<String, JsonRpcMethod> inProcessRpcMethods;
 
   /** Default Constructor. */
   public RpcEndpointServiceImpl() {}
@@ -50,7 +50,7 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
    * @param inProcessRpcMethods set of RPC methods that can be called
    */
   public void init(final Map<String, JsonRpcMethod> inProcessRpcMethods) {
-    this.inProgressRpcMethods = inProcessRpcMethods;
+    this.inProcessRpcMethods = inProcessRpcMethods;
   }
 
   @Override
@@ -68,14 +68,13 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
   @Override
   public PluginRpcResponse call(final String methodName, final Object[] params) {
     checkNotNull(
-        inProgressRpcMethods,
+        inProcessRpcMethods,
         "Service not initialized yet, this method must be called after plugin 'beforeExternalServices' call completes");
-    final var method =
-        inProgressRpcMethods.computeIfAbsent(
-            methodName,
-            mn -> {
-              throw new NoSuchElementException("Unknown or not enabled method: " + mn);
-            });
+    final var method = inProcessRpcMethods.get(methodName);
+
+    if (method == null) {
+      throw new NoSuchElementException("Unknown or not enabled method: " + methodName);
+    }
 
     final var requestContext =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", methodName, params));
