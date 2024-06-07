@@ -1,5 +1,5 @@
 /*
- * Copyright Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -131,6 +131,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
             poolConfig,
+            ethScheduler,
             evictCollector,
             txPoolMetrics,
             transactionReplacementTester,
@@ -139,6 +140,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
             poolConfig,
+            ethScheduler,
             sparseTransactions,
             txPoolMetrics,
             transactionReplacementTester,
@@ -148,6 +150,7 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
         new BaseFeePrioritizedTransactions(
             poolConfig,
             LayeredPendingTransactionsTest::mockBlockHeader,
+            ethScheduler,
             readyTransactions,
             txPoolMetrics,
             transactionReplacementTester,

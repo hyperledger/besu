@@ -57,20 +57,25 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   private final BlockInterface blockInterface = new CliqueBlockInterface();
   private ForksSchedule<CliqueConfigOptions> forksSchedule;
 
+  /** Default constructor. */
+  public CliqueBesuControllerBuilder() {}
+
   @Override
   protected void prepForBuild() {
     localAddress = Util.publicKeyToAddress(nodeKey.getPublicKey());
-    final CliqueConfigOptions cliqueConfig = configOptionsSupplier.get().getCliqueConfigOptions();
+    final CliqueConfigOptions cliqueConfig = genesisConfigOptions.getCliqueConfigOptions();
     final long blocksPerEpoch = cliqueConfig.getEpochLength();
 
     epochManager = new EpochManager(blocksPerEpoch);
-    forksSchedule = CliqueForksSchedulesFactory.create(configOptionsSupplier.get());
+    forksSchedule = CliqueForksSchedulesFactory.create(genesisConfigOptions);
   }
 
   @Override
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
-    return new CliqueJsonRpcMethods(protocolContext);
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
+    return new CliqueJsonRpcMethods(protocolContext, protocolSchedule, miningParameters);
   }
 
   @Override
@@ -124,7 +129,7 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
   @Override
   protected ProtocolSchedule createProtocolSchedule() {
     return CliqueProtocolSchedule.create(
-        configOptionsSupplier.get(),
+        genesisConfigOptions,
         forksSchedule,
         nodeKey,
         privacyParameters,

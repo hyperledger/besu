@@ -36,6 +36,8 @@ import java.util.Optional;
 
 /** Defines the protocol behaviours for a blockchain using a QBFT consensus mechanism. */
 public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder {
+  /** Default constructor */
+  QbftProtocolScheduleBuilder() {}
 
   /**
    * Create protocol schedule.

@@ -84,7 +84,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long BALANCE_OPERATION_GAS_COST = 20L;
 
-  private static final long BLOCKHASH_OPERATION_GAS_COST = 20L;
+  /** The constant BLOCKHASH_OPERATION_GAS_COST = 20gwei. */
+  public static final long BLOCKHASH_OPERATION_GAS_COST = 20L;
 
   private static final long EXP_OPERATION_BASE_GAS_COST = 10L;
 
@@ -119,6 +120,9 @@ public class FrontierGasCalculator implements GasCalculator {
   public static final long STORAGE_RESET_REFUND_AMOUNT = 15_000L;
 
   private static final long SELF_DESTRUCT_REFUND_AMOUNT = 24_000L;
+
+  /** Default constructor. */
+  public FrontierGasCalculator() {}
 
   @Override
   public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreate) {

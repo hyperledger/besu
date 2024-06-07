@@ -34,6 +34,9 @@ public class PrivacyPluginServiceImpl implements PrivacyPluginService {
       (privacyGroupId, privacyUserId, blockNumber) -> true;
   private PrivacyGroupGenesisProvider privacyGroupGenesisProvider;
 
+  /** Default Constructor. */
+  public PrivacyPluginServiceImpl() {}
+
   @Override
   public void setPayloadProvider(final PrivacyPluginPayloadProvider privacyPluginPayloadProvider) {
     this.privacyPluginPayloadProvider = privacyPluginPayloadProvider;

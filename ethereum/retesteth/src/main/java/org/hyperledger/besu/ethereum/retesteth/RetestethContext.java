@@ -181,7 +181,9 @@ public class RetestethContext {
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
     protocolContext = new ProtocolContext(blockchain, worldStateArchive, null, badBlockManager);
 
-    blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
+    blockchainQueries =
+        new BlockchainQueries(
+            protocolSchedule, blockchain, worldStateArchive, ethScheduler, miningParameters);
 
     final String sealengine = JsonUtil.getString(genesisConfig, "sealengine", "");
     headerValidationMode =

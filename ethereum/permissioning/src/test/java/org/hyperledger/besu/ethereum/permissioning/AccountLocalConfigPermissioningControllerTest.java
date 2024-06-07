@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.permissioning;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchThrowable;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -106,6 +107,40 @@ public class AccountLocalConfigPermissioningControllerTest {
 
     assertThat(controller.getAccountAllowlist())
         .containsExactly("0xfe3b557e8fb62b89f4916b721be55ceb828dbd73");
+  }
+
+  @Test
+  public void whenLoadingDuplicateAccountsFromConfigShouldThrowError() {
+    when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountAllowlist())
+        .thenReturn(
+            List.of(
+                "0xcb88953e60948e3a76fa658d65b7c2d5043c6409",
+                "0xdd76406b124f9e3ae9fbeb47e4d8dc0ab143902d",
+                "0x432132e8561785c33afe931762cf8eeb9c80e3ad",
+                "0xcb88953e60948e3a76fa658d65b7c2d5043c6409"));
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> {
+          controller =
+              new AccountLocalConfigPermissioningController(
+                  permissioningConfig, allowlistPersistor, metricsSystem);
+        });
+  }
+
+  @Test
+  public void whenLoadingInvalidAccountsFromConfigShouldThrowError() {
+    when(permissioningConfig.isAccountAllowlistEnabled()).thenReturn(true);
+    when(permissioningConfig.getAccountAllowlist()).thenReturn(List.of("0x0", "0xzxy"));
+
+    assertThrows(
+        IllegalStateException.class,
+        () -> {
+          controller =
+              new AccountLocalConfigPermissioningController(
+                  permissioningConfig, allowlistPersistor, metricsSystem);
+        });
   }
 
   @Test

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
@@ -41,13 +42,20 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
 
   public AbstractPrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
+      final EthScheduler ethScheduler,
       final TransactionsLayer prioritizedTransactions,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BlobCache blobCache,
       final MiningParameters miningParameters) {
-    super(poolConfig, prioritizedTransactions, transactionReplacementTester, metrics, blobCache);
+    super(
+        poolConfig,
+        ethScheduler,
+        prioritizedTransactions,
+        transactionReplacementTester,
+        metrics,
+        blobCache);
     this.orderByFee = new TreeSet<>(this::compareByFee);
     this.miningParameters = miningParameters;
   }
