@@ -456,9 +456,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         } else {
           Optional<Bytes> optCode = worldStateStorageCoordinator.getCode(Hash.wrap(codeHash), null);
           if (optCode.isPresent()) {
-            var sizeTooLarge = sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes;
-            var timeTooLong = stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST;
-            if (!codeBytes.isEmpty() && (sizeTooLarge || timeTooLong)) {
+            if (!codeBytes.isEmpty()
+                && (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes
+                    || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
               break;
             }
             codeBytes.add(optCode.get());
@@ -512,8 +512,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     var optStorage =
                         storage.getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)));
                     if (optStorage.isPresent()) {
-                      if (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes
-                          || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST) {
+                      if (!trieNodes.isEmpty()
+                          && (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes
+                              || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
                         break;
                       }
                       trieNodes.add(optStorage.get());
@@ -531,7 +532,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                           storage.getTrieNodeUnsafe(
                               Bytes.concatenate(accountPrefix, CompactEncoding.decode(path)));
                       if (optStorage.isPresent()) {
-                        if (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes) {
+                        if (!trieNodes.isEmpty()
+                            && sumListBytes(trieNodes) + optStorage.get().size()
+                                > maxResponseBytes) {
                           break;
                         }
                         trieNodes.add(optStorage.get());
@@ -609,11 +612,12 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         return false;
       }
 
+      var hasNoRecords = recordLimit.get() == 0;
       var underRecordLimit = recordLimit.addAndGet(1) <= MAX_ENTRIES_PER_REQUEST;
       var underByteLimit =
           byteLimit.accumulateAndGet(0, (cur, __) -> cur + encodingSizeAccumulator.apply(pair))
               < maxResponseBytesFudgeFactor;
-      if (underRecordLimit && underByteLimit) {
+      if (hasNoRecords || (underRecordLimit && underByteLimit)) {
         return true;
       } else {
         shouldContinue.set(false);
