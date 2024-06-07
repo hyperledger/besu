@@ -220,9 +220,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     }
 
     // delegate calls to prior EOF versions are prohibited
-    if (isDelegate()
-        && frame.getCode().getEofVersion() > code.getEofVersion()
-        && code.getSize() > 0) {
+    if (isDelegate() && frame.getCode().getEofVersion() > code.getEofVersion()) {
       // "Light failure" - Push failure and continue execution
       frame.popStackItems(getStackItemsConsumed());
       frame.pushStackItem(EOF1_EXCEPTION_STACK_ITEM);
