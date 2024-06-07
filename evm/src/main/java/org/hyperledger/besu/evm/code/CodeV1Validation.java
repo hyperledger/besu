@@ -124,7 +124,7 @@ public final class CodeV1Validation {
     final byte[] rawCode = code.toArrayUnsafe();
     OpcodeInfo opcodeInfo = V1_OPCODES[0xfe];
     int pos = 0;
-    EOFContainerMode eofContainerMode = eofLayout.createMode().get();
+    EOFContainerMode eofContainerMode = eofLayout.containerMode().get();
     boolean hasReturningOpcode = false;
     while (pos < size) {
       final int operationNum = rawCode[pos] & 0xff;
@@ -139,7 +139,7 @@ public final class CodeV1Validation {
         case StopOperation.OPCODE, ReturnOperation.OPCODE:
           if (eofContainerMode == null) {
             eofContainerMode = RUNTIME;
-            eofLayout.createMode().set(RUNTIME);
+            eofLayout.containerMode().set(RUNTIME);
           } else if (!eofContainerMode.equals(RUNTIME)) {
             return format(
                 "%s is only a valid opcode in containers used for runtime operations.",
@@ -272,9 +272,9 @@ public final class CodeV1Validation {
                 opcodeInfo.name(), subcontainerNum, pos - opcodeInfo.pcAdvance());
           }
           EOFLayout subContainer = eofLayout.getSubcontainer(subcontainerNum);
-          var subcontainerMode = subContainer.createMode().get();
+          var subcontainerMode = subContainer.containerMode().get();
           if (subcontainerMode == null) {
-            subContainer.createMode().set(INITCODE);
+            subContainer.containerMode().set(INITCODE);
           } else if (subcontainerMode == RUNTIME) {
             return format(
                 "subcontainer %d cannot be used both as initcode and runtime", subcontainerNum);
@@ -291,7 +291,7 @@ public final class CodeV1Validation {
         case ReturnContractOperation.OPCODE:
           if (eofContainerMode == null) {
             eofContainerMode = INITCODE;
-            eofLayout.createMode().set(INITCODE);
+            eofLayout.containerMode().set(INITCODE);
           } else if (!eofContainerMode.equals(INITCODE)) {
             return format(
                 "%s is only a valid opcode in containers used for initcode", opcodeInfo.name());
@@ -308,9 +308,9 @@ public final class CodeV1Validation {
                 opcodeInfo.name(), returnedContractNum, pos - opcodeInfo.pcAdvance());
           }
           EOFLayout returnedContract = eofLayout.getSubcontainer(returnedContractNum);
-          var returnedContractMode = returnedContract.createMode().get();
+          var returnedContractMode = returnedContract.containerMode().get();
           if (returnedContractMode == null) {
-            returnedContract.createMode().set(RUNTIME);
+            returnedContract.containerMode().set(RUNTIME);
           } else if (returnedContractMode.equals(INITCODE)) {
             return format(
                 "subcontainer %d cannot be used both as initcode and runtime", returnedContractNum);
@@ -398,8 +398,8 @@ public final class CodeV1Validation {
       int unusedBytes = codeLength;
 
       int currentPC = 0;
-      int current_min = initialStackHeight;
-      int current_max = initialStackHeight;
+      int currentMin = initialStackHeight;
+      int currentMax = initialStackHeight;
 
       while (currentPC < codeLength) {
         int thisOp = code[currentPC] & 0xff;
@@ -460,66 +460,66 @@ public final class CodeV1Validation {
               codeSectionToValidate, currentPC);
         }
 
-        if (stackInputs > current_min) {
+        if (stackInputs > currentMin) {
           return format(
               "Operation 0x%02X requires stack of %d but may only have %d items",
-              thisOp, stackInputs, current_min);
+              thisOp, stackInputs, currentMin);
         }
 
         int stackDelta = stackOutputs - stackInputs;
-        current_max = current_max + stackDelta;
-        current_min = current_min + stackDelta;
-        if (current_max + sectionStackUsed - stackOutputs > MAX_STACK_HEIGHT) {
+        currentMax = currentMax + stackDelta;
+        currentMin = currentMin + stackDelta;
+        if (currentMax + sectionStackUsed - stackOutputs > MAX_STACK_HEIGHT) {
           return "Stack height exceeds 1024";
         }
 
         unusedBytes -= pcAdvance;
-        maxStackHeight = max(maxStackHeight, current_max);
+        maxStackHeight = max(maxStackHeight, currentMax);
 
         switch (thisOp) {
           case RelativeJumpOperation.OPCODE:
             int jValue = readBigEndianI16(currentPC + 1, code);
             int targetPC = nextPC + jValue;
             if (targetPC > currentPC) {
-              stack_min[targetPC] = min(stack_min[targetPC], current_min);
-              stack_max[targetPC] = max(stack_max[targetPC], current_max);
+              stack_min[targetPC] = min(stack_min[targetPC], currentMin);
+              stack_max[targetPC] = max(stack_max[targetPC], currentMax);
             } else {
-              if (stack_min[targetPC] != current_min) {
+              if (stack_min[targetPC] != currentMin) {
                 return format(
                     "Stack minimum violation on backwards jump from %d to %d, %d != %d",
-                    currentPC, targetPC, stack_min[currentPC], current_max);
+                    currentPC, targetPC, stack_min[currentPC], currentMax);
               }
-              if (stack_max[targetPC] != current_max) {
+              if (stack_max[targetPC] != currentMax) {
                 return format(
                     "Stack maximum violation on backwards jump from %d to %d, %d != %d",
-                    currentPC, targetPC, stack_max[currentPC], current_max);
+                    currentPC, targetPC, stack_max[currentPC], currentMax);
               }
             }
 
-            // terminal op, reset current_min and current_max to forward set values
+            // terminal op, reset currentMin and currentMax to forward set values
             if (nextPC < codeLength) {
-              current_max = stack_max[nextPC];
-              current_min = stack_min[nextPC];
+              currentMax = stack_max[nextPC];
+              currentMin = stack_min[nextPC];
             }
             break;
           case RelativeJumpIfOperation.OPCODE:
-            stack_max[nextPC] = max(stack_max[nextPC], current_max);
-            stack_min[nextPC] = min(stack_min[nextPC], current_min);
+            stack_max[nextPC] = max(stack_max[nextPC], currentMax);
+            stack_min[nextPC] = min(stack_min[nextPC], currentMin);
             int jiValue = readBigEndianI16(currentPC + 1, code);
             int targetPCi = nextPC + jiValue;
             if (targetPCi > currentPC) {
-              stack_min[targetPCi] = min(stack_min[targetPCi], current_min);
-              stack_max[targetPCi] = max(stack_max[targetPCi], current_max);
+              stack_min[targetPCi] = min(stack_min[targetPCi], currentMin);
+              stack_max[targetPCi] = max(stack_max[targetPCi], currentMax);
             } else {
-              if (stack_min[targetPCi] != current_min) {
+              if (stack_min[targetPCi] != currentMin) {
                 return format(
                     "Stack minimum violation on backwards jump from %d to %d, %d != %d",
-                    currentPC, targetPCi, stack_min[currentPC], current_min);
+                    currentPC, targetPCi, stack_min[currentPC], currentMin);
               }
-              if (stack_max[targetPCi] != current_max) {
+              if (stack_max[targetPCi] != currentMax) {
                 return format(
                     "Stack maximum violation on backwards jump from %d to %d, %d != %d",
-                    currentPC, targetPCi, stack_max[currentPC], current_max);
+                    currentPC, targetPCi, stack_max[currentPC], currentMax);
               }
             }
             break;
@@ -528,88 +528,88 @@ public final class CodeV1Validation {
             unusedBytes -= immediateDataSize + 2;
             int tableEnd = immediateDataSize + currentPC + 4;
             nextPC = tableEnd;
-            stack_max[nextPC] = max(stack_max[nextPC], current_max);
-            stack_min[nextPC] = min(stack_min[nextPC], current_min);
+            stack_max[nextPC] = max(stack_max[nextPC], currentMax);
+            stack_min[nextPC] = min(stack_min[nextPC], currentMin);
             for (int i = currentPC + 2; i < tableEnd; i += 2) {
               int vValue = readBigEndianI16(i, code);
               int targetPCv = tableEnd + vValue;
               if (targetPCv > currentPC) {
-                stack_min[targetPCv] = min(stack_min[targetPCv], current_min);
-                stack_max[targetPCv] = max(stack_max[targetPCv], current_max);
+                stack_min[targetPCv] = min(stack_min[targetPCv], currentMin);
+                stack_max[targetPCv] = max(stack_max[targetPCv], currentMax);
               } else {
-                if (stack_min[targetPCv] != current_min) {
+                if (stack_min[targetPCv] != currentMin) {
                   return format(
                       "Stack minimum violation on backwards jump from %d to %d, %d != %d",
-                      currentPC, targetPCv, stack_min[currentPC], current_min);
+                      currentPC, targetPCv, stack_min[currentPC], currentMin);
                 }
-                if (stack_max[targetPCv] != current_max) {
+                if (stack_max[targetPCv] != currentMax) {
                   return format(
                       "Stack maximum violation on backwards jump from %d to %d, %d != %d",
-                      currentPC, targetPCv, stack_max[currentPC], current_max);
+                      currentPC, targetPCv, stack_max[currentPC], currentMax);
                 }
               }
             }
             break;
           case RetFOperation.OPCODE:
             int returnStackItems = toValidate.getOutputs();
-            if (current_min != current_max) {
+            if (currentMin != currentMax) {
               return format(
                   "RETF in section %d has a stack range (%d/%d)and must have only one stack value",
-                  codeSectionToValidate, current_min, current_max);
+                  codeSectionToValidate, currentMin, currentMax);
             }
             if (stack_min[currentPC] != returnStackItems
                 || stack_min[currentPC] != stack_max[currentPC]) {
               return format(
                   "RETF in section %d calculated height %d does not match configured return stack %d, min height %d, and max height %d",
                   codeSectionToValidate,
-                  current_min,
+                  currentMin,
                   returnStackItems,
                   stack_min[currentPC],
                   stack_max[currentPC]);
             }
-            // terminal op, reset current_min and current_max to forward set values
+            // terminal op, reset currentMin and currentMax to forward set values
             if (nextPC < codeLength) {
-              current_max = stack_max[nextPC];
-              current_min = stack_min[nextPC];
+              currentMax = stack_max[nextPC];
+              currentMin = stack_min[nextPC];
             }
             break;
           case JumpFOperation.OPCODE:
             int jumpFTargetSectionNum = readBigEndianI16(currentPC + 1, code);
             workList.put(jumpFTargetSectionNum);
             CodeSection targetCs = eofLayout.getCodeSection(jumpFTargetSectionNum);
-            if (current_max + targetCs.getMaxStackHeight() - targetCs.getInputs()
+            if (currentMax + targetCs.getMaxStackHeight() - targetCs.getInputs()
                 > MAX_STACK_HEIGHT) {
               return format(
                   "JUMPF at section %d pc %d would exceed maximum stack with %d items",
                   codeSectionToValidate,
                   currentPC,
-                  current_max + targetCs.getMaxStackHeight() - targetCs.getInputs());
+                  currentMax + targetCs.getMaxStackHeight() - targetCs.getInputs());
             }
             if (targetCs.isReturning()) {
-              if (current_min != current_max) {
+              if (currentMin != currentMax) {
                 return format(
                     "JUMPF at section %d pc %d has a variable stack height %d/%d",
-                    codeSectionToValidate, currentPC, current_min, current_max);
+                    codeSectionToValidate, currentPC, currentMin, currentMax);
               }
-              if (current_max != toValidate.outputs + targetCs.inputs - targetCs.outputs) {
+              if (currentMax != toValidate.outputs + targetCs.inputs - targetCs.outputs) {
                 return format(
                     "JUMPF at section %d pc %d has incompatible stack height for returning section %d (%d != %d + %d - %d)",
                     codeSectionToValidate,
                     currentPC,
                     jumpFTargetSectionNum,
-                    current_max,
+                    currentMax,
                     toValidate.outputs,
                     targetCs.inputs,
                     targetCs.outputs);
               }
             } else {
-              if (current_min < targetCs.getInputs()) {
+              if (currentMin < targetCs.getInputs()) {
                 return format(
                     "JUMPF at section %d pc %d has insufficient minimum stack height for non returning section %d (%d != %d)",
                     codeSectionToValidate,
                     currentPC,
                     jumpFTargetSectionNum,
-                    current_min,
+                    currentMin,
                     targetCs.inputs);
               }
             }
@@ -619,19 +619,19 @@ public final class CodeV1Validation {
               ReturnOperation.OPCODE,
               RevertOperation.OPCODE,
               InvalidOperation.OPCODE:
-            // terminal op, reset current_min and current_max to forward set values
+            // terminal op, reset currentMin and currentMax to forward set values
             if (nextPC < codeLength) {
-              current_max = stack_max[nextPC];
-              current_min = stack_min[nextPC];
+              currentMax = stack_max[nextPC];
+              currentMin = stack_min[nextPC];
             }
             break;
           default:
             // Ordinary operations, update stack for next operation
             if (nextPC < codeLength) {
-              current_max = max(stack_max[nextPC], current_max);
-              stack_max[nextPC] = current_max;
-              current_min = min(stack_min[nextPC], current_min);
-              stack_min[nextPC] = min(stack_min[nextPC], current_min);
+              currentMax = max(stack_max[nextPC], currentMax);
+              stack_max[nextPC] = currentMax;
+              currentMin = min(stack_min[nextPC], currentMin);
+              stack_min[nextPC] = min(stack_min[nextPC], currentMin);
             }
             break;
         }

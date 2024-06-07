@@ -37,9 +37,7 @@ public interface Code {
    *
    * @return size of code in bytes.
    */
-  default int getDataSize() {
-    return 0;
-  }
+  int getDataSize();
 
   /**
    * Get the bytes for the entire container, for example what EXTCODECOPY would want. For V0 it is
@@ -100,9 +98,7 @@ public interface Code {
    *
    * @return The subcontainer count or zero if not supported;
    */
-  default int getSubcontainerCount() {
-    return 0;
-  }
+  int getSubcontainerCount();
 
   /**
    * Returns the subcontainer at the selected index. If the container doesn't exist or is invalid,
@@ -113,9 +109,7 @@ public interface Code {
    *     container, pass null.
    * @return Either the subcontainer, or empty.
    */
-  default Optional<Code> getSubContainer(final int index, final Bytes auxData) {
-    return Optional.empty();
-  }
+  Optional<Code> getSubContainer(final int index, final Bytes auxData);
 
   /**
    * Loads data from the appropriate data section
@@ -124,9 +118,7 @@ public interface Code {
    * @param length how many bytes to copy
    * @return A slice of the code containing the requested data
    */
-  default Bytes getData(final int offset, final int length) {
-    return Bytes.EMPTY;
-  }
+  Bytes getData(final int offset, final int length);
 
   /**
    * Read a signed 16-bit big-endian integer
@@ -134,9 +126,7 @@ public interface Code {
    * @param startIndex the index to start reading the integer in the code
    * @return a java int representing the 16-bit signed integer.
    */
-  default int readBigEndianI16(final int startIndex) {
-    return 0;
-  }
+  int readBigEndianI16(final int startIndex);
 
   /**
    * Read an unsigned 16 bit big-endian integer
@@ -144,9 +134,7 @@ public interface Code {
    * @param startIndex the index to start reading the integer in the code
    * @return a java int representing the 16-bit unsigned integer.
    */
-  default int readBigEndianU16(final int startIndex) {
-    return 0;
-  }
+  int readBigEndianU16(final int startIndex);
 
   /**
    * Read an unsigned 8-bit integer
@@ -154,16 +142,12 @@ public interface Code {
    * @param startIndex the index to start reading the integer in the code
    * @return a java int representing the 8-bit unsigned integer.
    */
-  default int readU8(final int startIndex) {
-    return 0;
-  }
+  int readU8(final int startIndex);
 
   /**
    * A more readable representation of the hex bytes, including whitespace and comments after hashes
    *
    * @return The pretty printed code
    */
-  default String prettyPrint() {
-    return getBytes().toString();
-  }
+  String prettyPrint();
 }

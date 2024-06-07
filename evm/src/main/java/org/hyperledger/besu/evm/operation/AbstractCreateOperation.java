@@ -130,7 +130,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   }
 
   /**
-   * How many bytes does thsi operation occupy?
+   * How many bytes does this operation occupy?
    *
    * @return The number of bytes the operation and immediate arguments occupy
    */

@@ -84,13 +84,13 @@ public class EOFReferenceTestTools {
   }
 
   public static void executeTest(
-      final String fork, final Bytes code, final EOFTestCaseSpec.TestResult results) {
+      final String fork, final Bytes code, final EOFTestCaseSpec.TestResult expected) {
     EvmSpecVersion evmVersion = EvmSpecVersion.fromName(fork);
     assertThat(evmVersion).isNotNull();
 
     // hardwire in the magic byte transaction checks
     if (evmVersion.getMaxEofVersion() < 1) {
-      assertThat(results.exception()).isEqualTo("EOF_InvalidCode");
+      assertThat(expected.exception()).isEqualTo("EOF_InvalidCode");
     } else {
       EOFLayout layout = EOFLayout.parseEOF(code);
 
@@ -101,12 +101,12 @@ public class EOFReferenceTestTools {
                 () ->
                     EOFLayout.parseEOF(code).prettyPrint()
                         + "\nExpected exception :"
-                        + results.exception()
+                        + expected.exception()
                         + " actual exception :"
                         + (parsedCode.isValid()
                             ? null
                             : ((CodeInvalid) parsedCode).getInvalidReason()))
-            .isEqualTo(results.result());
+            .isEqualTo(expected.result());
         if (parsedCode instanceof CodeV1 codeV1) {
           var deepValidate = CodeV1Validation.validate(codeV1.getEofLayout());
           assertThat(deepValidate)
@@ -114,13 +114,13 @@ public class EOFReferenceTestTools {
                   () ->
                       codeV1.prettyPrint()
                           + "\nExpected exception :"
-                          + results.exception()
+                          + expected.exception()
                           + " actual exception :"
                           + (parsedCode.isValid() ? null : deepValidate))
               .isNull();
         }
 
-        if (results.result()) {
+        if (expected.result()) {
           System.out.println(code);
           System.out.println(layout.writeContainer(null));
           assertThat(code)
@@ -132,10 +132,10 @@ public class EOFReferenceTestTools {
             .withFailMessage(
                 () ->
                     "Expected exception - "
-                        + results.exception()
+                        + expected.exception()
                         + " actual exception - "
                         + (layout.isValid() ? null : layout.invalidReason()))
-            .isEqualTo(results.result());
+            .isEqualTo(expected.result());
       }
     }
   }

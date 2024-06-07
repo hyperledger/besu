@@ -14,8 +14,21 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-public class PragueEOFGasCalculatorTest {
+import static org.assertj.core.api.Assertions.assertThat;
 
-  // EXTCALL tests will show up here...
+import org.hyperledger.besu.datatypes.Address;
+
+import org.junit.jupiter.api.Test;
+
+class PragueEOFGasCalculatorTest {
+
+  @Test
+  void testPrecompileSize() {
+    PragueEOFGasCalculator subject = new PragueEOFGasCalculator();
+    assertThat(subject.isPrecompile(Address.precompiled(0x14))).isFalse();
+    assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
+  }
+
+  // EXTCALL gas tests will show up here once EXTCALL gass schedule is finalized...
 
 }

@@ -45,6 +45,7 @@ import org.apache.tuweni.bytes.Bytes;
  *     be larger than the data in the data field. Zero if invalid.
  * @param data The data hard coded in the container. Empty if invalid.
  * @param invalidReason If the raw container is invalid, the reason it is invalid. Null if valid.
+ * @param containerMode The mode of the container (runtime or initcode, if known)
  */
 public record EOFLayout(
     Bytes container,
@@ -54,7 +55,7 @@ public record EOFLayout(
     int dataLength,
     Bytes data,
     String invalidReason,
-    AtomicReference<EOFContainerMode> createMode) {
+    AtomicReference<EOFContainerMode> containerMode) {
 
   enum EOFContainerMode {
     UNKNOWN,

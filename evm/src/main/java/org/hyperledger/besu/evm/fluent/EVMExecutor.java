@@ -508,7 +508,7 @@ public class EVMExecutor {
   }
 
   /**
-   * Instantiate Osaka evm executor.
+   * Instantiate PragueEOF evm executor.
    *
    * @param chainId the chain ID
    * @param evmConfiguration the evm configuration

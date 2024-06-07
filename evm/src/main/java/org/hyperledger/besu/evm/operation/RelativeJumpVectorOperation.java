@@ -51,26 +51,29 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
     } catch (ArithmeticException | IllegalArgumentException ae) {
       offsetCase = Integer.MAX_VALUE;
     }
-    final int vectorSize = code.readU8(frame.getPC() + 1);
+    final int vectorSize = getVectorSize(code.getBytes(), frame.getPC() + 1);
+    int jumpDelta =
+        (offsetCase < vectorSize)
+            ? code.readBigEndianI16(
+                frame.getPC() + 2 + offsetCase * 2) // lookup delta if offset is in vector
+            : 0; // if offsetCase is outside the vector the jump delta is zero / next opcode.
     return new OperationResult(
         gasCost,
         null,
-        1
-            + 2 * vectorSize
-            + ((offsetCase > vectorSize)
-                ? 0
-                : code.readBigEndianI16(frame.getPC() + 2 + offsetCase * 2))
-            + 3);
+        2 // Opcode + length immediate
+            + 2 * vectorSize // vector size
+            + jumpDelta);
   }
 
   /**
-   * Gets vector size.
+   * Gets vector size. Vector size is one greater than length immediate, because (a) zero length
+   * tables are useless and (b) it allows for 256 byte tables
    *
    * @param code the code
    * @param offsetCountByteIndex the offset count byte index
    * @return the vector size
    */
   public static int getVectorSize(final Bytes code, final int offsetCountByteIndex) {
-    return (code.get(offsetCountByteIndex) & 0xff) + 1;
+    return (code.toArrayUnsafe()[offsetCountByteIndex] & 0xff) + 1;
   }
 }

@@ -102,7 +102,7 @@ public final class CodeFactory {
 
         final EOFLayout layout = EOFLayout.parseEOF(bytes, !createTransaction);
         if (createTransaction) {
-          layout.createMode().set(INITCODE);
+          layout.containerMode().set(INITCODE);
         }
         return createCode(layout, createTransaction);
       } else {
