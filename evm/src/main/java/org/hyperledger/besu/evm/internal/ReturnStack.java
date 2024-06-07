@@ -17,7 +17,12 @@ package org.hyperledger.besu.evm.internal;
 /** The type Return stack. */
 public class ReturnStack extends FlexStack<ReturnStack.ReturnStackItem> {
 
-  /** The type Return stack item. */
+  /**
+   * The type Return stack item.
+   *
+   * @param codeSectionIndex the code section index
+   * @param pc the pc
+   */
   public record ReturnStackItem(int codeSectionIndex, int pc) {}
 
   /**
