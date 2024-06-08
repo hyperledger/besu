@@ -114,7 +114,7 @@ public class DNSResolver {
   private void visitTree(final ENRTreeLink link, final DNSVisitor visitor) {
     Optional<DNSEntry> optionalEntry = resolveRecord(link.domainName());
     if (optionalEntry.isEmpty()) {
-      LOG.debug("No DNS record found for {}", link.domainName());
+      LOG.trace("No DNS record found for {}", link.domainName());
       return;
     }
 
@@ -142,19 +142,16 @@ public class DNSResolver {
       final String entryName, final String domainName, final DNSVisitor visitor) {
     final Optional<DNSEntry> optionalDNSEntry = resolveRecord(entryName + "." + domainName);
     if (optionalDNSEntry.isEmpty()) {
-      LOG.debug("No DNS record found for {}", entryName + "." + domainName);
       return true;
     }
 
     final DNSEntry entry = optionalDNSEntry.get();
     switch (entry) {
       case ENRNode node -> {
-        // TODO: this always return true because the visitor is reference to list.add
         return visitor.visit(node.nodeRecord());
       }
       case DNSEntry.ENRTree tree -> {
         for (String e : tree.entries()) {
-          // TODO: When would this ever return false?
           boolean keepGoing = internalVisit(e, domainName, visitor);
           if (!keepGoing) {
             return false;
@@ -168,7 +165,7 @@ public class DNSResolver {
   }
 
   /**
-   * Resolves one DNS record associated with the given domain name.
+   * Maps TXT DNS record to DNSEntry.
    *
    * @param domainName the domain name to query
    * @return the DNS entry read from the domain. Empty if no record is found.
@@ -197,7 +194,7 @@ public class DNSResolver {
 
   private boolean checkSignature(
       final ENRTreeRoot root, final SECP256K1.PublicKey pubKey, final SECP256K1.Signature sig) {
-    Bytes32 hash =
+    final Bytes32 hash =
         Hash.keccak256(Bytes.wrap(root.signedContent().getBytes(StandardCharsets.UTF_8)));
     return SECP256K1.verifyHashed(hash, sig, pubKey);
   }
