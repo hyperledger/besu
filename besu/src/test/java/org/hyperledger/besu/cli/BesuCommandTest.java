@@ -1088,7 +1088,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
   @Test
   public void syncMode_full_requires_bonsaiLimitTrieLogsToBeDisabled() {
-    parseCommand("--sync-mode", "FULL", "--Xbonsai-limit-trie-logs-enabled=false");
+    parseCommand("--sync-mode", "FULL", "--bonsai-limit-trie-logs-enabled=false");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
@@ -1252,7 +1252,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final DataStorageConfiguration dataStorageConfiguration =
         dataStorageConfigurationArgumentCaptor.getValue();
     assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
-    assertThat(dataStorageConfiguration.getUnstable().getBonsaiLimitTrieLogsEnabled()).isTrue();
+    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isTrue();
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1264,13 +1264,13 @@ public class BesuCommandTest extends CommandTestAbstract {
     Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Cannot enable --Xbonsai-limit-trie-logs-enabled with sync-mode FULL");
+        .contains("Cannot enable --bonsai-limit-trie-logs-enabled with sync-mode FULL");
   }
 
   @Test
   public void parsesValidBonsaiHistoricalBlockLimitOption() {
     parseCommand(
-        "--Xbonsai-limit-trie-logs-enabled=false",
+        "--bonsai-limit-trie-logs-enabled=false",
         "--data-storage-format",
         "BONSAI",
         "--bonsai-historical-block-limit",

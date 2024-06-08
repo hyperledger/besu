@@ -15,13 +15,53 @@
 package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
+import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 
-/**
- * Wrapper for payload plus extra info.
- *
- * @param payloadIdentifier Payload identifier
- * @param blockWithReceipts Block With Receipts
- */
-public record PayloadWrapper(
-    PayloadIdentifier payloadIdentifier, BlockWithReceipts blockWithReceipts) {}
+/** Wrapper for payload plus extra info. */
+public class PayloadWrapper {
+  private final PayloadIdentifier payloadIdentifier;
+  private final BlockWithReceipts blockWithReceipts;
+  private final Wei blockValue;
+
+  /**
+   * Construct a wrapper with the following fields.
+   *
+   * @param payloadIdentifier Payload identifier
+   * @param blockWithReceipts Block with receipts
+   */
+  public PayloadWrapper(
+      final PayloadIdentifier payloadIdentifier, final BlockWithReceipts blockWithReceipts) {
+    this.blockWithReceipts = blockWithReceipts;
+    this.payloadIdentifier = payloadIdentifier;
+    this.blockValue = BlockValueCalculator.calculateBlockValue(blockWithReceipts);
+  }
+
+  /**
+   * Get the block value
+   *
+   * @return block value in Wei
+   */
+  public Wei blockValue() {
+    return blockValue;
+  }
+
+  /**
+   * Get this payload identifier
+   *
+   * @return payload identifier
+   */
+  public PayloadIdentifier payloadIdentifier() {
+    return payloadIdentifier;
+  }
+
+  /**
+   * Get the block with receipts
+   *
+   * @return block with receipts
+   */
+  public BlockWithReceipts blockWithReceipts() {
+    return blockWithReceipts;
+  }
+}
