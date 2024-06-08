@@ -25,6 +25,8 @@ import java.util.function.Supplier;
 /** The Future utils. */
 public class FutureUtils {
 
+  private FutureUtils() {}
+
   /**
    * Returns a new CompletionStage that, when the provided stage completes exceptionally, is
    * executed with the provided stage's exception as the argument to the supplied function.

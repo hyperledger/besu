@@ -213,6 +213,8 @@ ethstats-cacert-file="./root.cert"
 # Data storage
 data-storage-format="BONSAI"
 bonsai-historical-block-limit=512
+bonsai-limit-trie-logs-enabled=true
+bonsai-trie-logs-pruning-window-size=100_000
 receipt-compaction-enabled=true
 
 # feature flags

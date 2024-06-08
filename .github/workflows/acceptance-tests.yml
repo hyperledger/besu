@@ -34,7 +34,7 @@ jobs:
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: Install required packages
         run:  sudo apt-get install -y xmlstarlet
       - name: setup gradle
