@@ -121,6 +121,8 @@ dependencies {
   jmhImplementation project(':util')
 
   jmhImplementation 'com.google.guava:guava'
+
+  tessera 'net.consensys.quorum.tessera:tessera-dist:24.4.1@tar'
 }
 
 configurations { testArtifacts }

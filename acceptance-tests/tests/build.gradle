@@ -16,6 +16,10 @@ plugins {
   id 'org.web3j.solidity' version '0.4.1'
 }
 
+configurations {
+  tessera.extendsFrom integrationTestRuntimeOnly
+}
+
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
 
 sourceSets.main.solidity.srcDirs = ["$projectDir/contracts"]
@@ -81,6 +85,7 @@ dependencies {
   testImplementation 'org.wiremock:wiremock'
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
+  tessera 'net.consensys.quorum.tessera:tessera-dist:24.4.1@tar'
 }
 
 test.enabled = false
@@ -205,6 +210,9 @@ task acceptanceTestCliqueBft(type: Test) {
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
 
+
+def tesseraDist = '24.4.1'
+
 task acceptanceTestPrivacy(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   include '**/privacy/**'
@@ -212,9 +220,11 @@ task acceptanceTestPrivacy(type: Test) {
   useJUnitPlatform {}
 
   dependsOn(rootProject.installDist)
+  dependsOn(unzipTessera)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+  systemProperty 'tessera-dist', "${buildDir}/tessera/dist/tessera-${tesseraDist}/bin/tessera"
   mustRunAfter rootProject.subprojects*.test
   description = 'Runs Privacy Besu acceptance tests.'
   group = 'verification'
@@ -239,6 +249,7 @@ task acceptanceTestPermissioning(type: Test) {
   useJUnitPlatform {}
 
   dependsOn(rootProject.installDist)
+  dependsOn(unzipTessera)
   setSystemProperties(test.getSystemProperties())
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"

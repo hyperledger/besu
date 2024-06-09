@@ -37,6 +37,7 @@
 - Default bonsai to use full-flat db and code-storage-by-code-hash [#6984](https://github.com/hyperledger/besu/pull/6894)
 - New RPC methods miner_setExtraData and miner_getExtraData [#7078](https://github.com/hyperledger/besu/pull/7078)
 - Disconnect peers that have multiple discovery ports since they give us bad neighbours [#7089](https://github.com/hyperledger/besu/pull/7089)
+- Optimize privacy acceptance tests by eliminating docker and executing them as a processes (thanks @gtebrean) [#5968](https://github.com/hyperledger/besu/pull/5968)
 - Port Tuweni dns-discovery into Besu. [#7129](https://github.com/hyperledger/besu/pull/7129)
 
 ### Known Issues

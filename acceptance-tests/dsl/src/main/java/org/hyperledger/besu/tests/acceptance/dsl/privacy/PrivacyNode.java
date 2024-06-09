@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.privacy.storage.keyvalue.PrivacyKeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValuePrivacyStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
@@ -64,7 +65,6 @@ import io.vertx.core.Vertx;
 import org.awaitility.Awaitility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.testcontainers.containers.Network;
 
 public class PrivacyNode implements AutoCloseable {
 
@@ -81,13 +81,11 @@ public class PrivacyNode implements AutoCloseable {
   public PrivacyNode(
       final PrivacyNodeConfiguration privacyConfiguration,
       final Vertx vertx,
-      final EnclaveType enclaveType,
-      final Optional<Network> containerNetwork)
+      final EnclaveType enclaveType)
       throws IOException {
     final Path enclaveDir = Files.createTempDirectory("acctest-orion");
     final BesuNodeConfiguration config = privacyConfiguration.getBesuConfig();
-    this.enclave =
-        selectEnclave(enclaveType, enclaveDir, config, privacyConfiguration, containerNetwork);
+    this.enclave = selectEnclave(enclaveType, enclaveDir, config, privacyConfiguration);
     this.vertx = vertx;
 
     this.besuConfig = config;
@@ -275,7 +273,7 @@ public class PrivacyNode implements AutoCloseable {
       final Path dataLocation, final Path dbLocation) {
     final var besuConfiguration = new BesuConfigurationImpl();
     besuConfiguration
-        .init(dataLocation, dbLocation, null)
+        .init(dataLocation, dbLocation, DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
         .withMiningParameters(besuConfig.getMiningParameters());
     return new PrivacyKeyValueStorageProviderBuilder()
         .withStorageFactory(
@@ -298,15 +296,14 @@ public class PrivacyNode implements AutoCloseable {
       final EnclaveType enclaveType,
       final Path tempDir,
       final BesuNodeConfiguration config,
-      final PrivacyNodeConfiguration privacyConfiguration,
-      final Optional<Network> containerNetwork) {
+      final PrivacyNodeConfiguration privacyConfiguration) {
 
     switch (enclaveType) {
       case ORION:
         throw new UnsupportedOperationException("The Orion tests are getting deprecated");
       case TESSERA:
         return TesseraTestHarnessFactory.create(
-            config.getName(), tempDir, privacyConfiguration.getKeyConfig(), containerNetwork);
+            config.getName(), tempDir, privacyConfiguration.getKeyConfig());
       default:
         return new NoopEnclaveTestHarness(tempDir, privacyConfiguration.getKeyConfig());
     }

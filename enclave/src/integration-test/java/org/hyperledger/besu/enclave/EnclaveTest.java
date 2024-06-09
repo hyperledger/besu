@@ -23,7 +23,7 @@ import org.hyperledger.besu.enclave.types.ReceiveResponse;
 import org.hyperledger.besu.enclave.types.SendResponse;
 import org.hyperledger.enclave.testutil.EnclaveEncryptorType;
 import org.hyperledger.enclave.testutil.EnclaveKeyConfiguration;
-import org.hyperledger.enclave.testutil.TesseraTestHarness;
+import org.hyperledger.enclave.testutil.EnclaveTestHarness;
 import org.hyperledger.enclave.testutil.TesseraTestHarnessFactory;
 
 import java.net.URI;
@@ -31,7 +31,6 @@ import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.google.common.collect.Lists;
@@ -52,7 +51,7 @@ public class EnclaveTest {
   private Vertx vertx;
   private EnclaveFactory factory;
 
-  private TesseraTestHarness testHarness;
+  private EnclaveTestHarness testHarness;
 
   @BeforeEach
   public void setUp() throws Exception {
@@ -66,8 +65,7 @@ public class EnclaveTest {
             new EnclaveKeyConfiguration(
                 new String[] {"enclave_key_0.pub"},
                 new String[] {"enclave_key_0.key"},
-                EnclaveEncryptorType.NOOP),
-            Optional.empty());
+                EnclaveEncryptorType.NOOP));
 
     testHarness.start();
 
