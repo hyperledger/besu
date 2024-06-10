@@ -107,6 +107,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -843,7 +844,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     if (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2()) {
       LOG.info(
           "{} is configured, creating initial sync for BFT",
-          genesisConfigOptions.getConsensusEngine().toUpperCase());
+          genesisConfigOptions.getConsensusEngine().toUpperCase(Locale.ROOT));
       return new BFTPivotSelectorFromPeers(
           ethContext, syncConfig, syncState, metricsSystem, protocolContext, nodeKey);
     } else if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
