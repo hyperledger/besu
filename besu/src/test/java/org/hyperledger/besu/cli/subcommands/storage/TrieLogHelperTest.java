@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli.subcommands.storage;
 import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.spy;
@@ -135,10 +135,7 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(3L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
             .build();
 
     mockBlockchainBase();
@@ -176,10 +173,7 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(2L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
@@ -199,10 +193,7 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(10L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
@@ -222,10 +213,7 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(2L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
             .build();
 
     mockBlockchainBase();
@@ -246,10 +234,7 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(6L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
             .build();
 
     when(blockchain.getChainHeadBlockNumber()).thenReturn(5L);
@@ -271,10 +256,7 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(3L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
             .build();
 
     mockBlockchainBase();
@@ -303,10 +285,7 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(511L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
             .build();
 
     TrieLogHelper helper = new TrieLogHelper();
@@ -324,11 +303,8 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(512L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .bonsaiTrieLogPruningWindowSize(0)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
+            .bonsaiTrieLogPruningWindowSize(0)
             .build();
 
     TrieLogHelper helper = new TrieLogHelper();
@@ -336,7 +312,7 @@ class TrieLogHelperTest {
             () ->
                 helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
         .isInstanceOf(RuntimeException.class)
-        .hasMessage("--Xbonsai-trie-logs-pruning-window-size=0 must be greater than 0");
+        .hasMessage("--bonsai-trie-logs-pruning-window-size=0 must be greater than 0");
   }
 
   @Test
@@ -345,11 +321,8 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(512L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .bonsaiTrieLogPruningWindowSize(512)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
+            .bonsaiTrieLogPruningWindowSize(512)
             .build();
 
     TrieLogHelper helper = new TrieLogHelper();
@@ -358,7 +331,7 @@ class TrieLogHelperTest {
                 helper.prune(dataStorageConfiguration, inMemoryWorldState, blockchain, Path.of("")))
         .isInstanceOf(RuntimeException.class)
         .hasMessage(
-            "--Xbonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512");
+            "--bonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512");
   }
 
   @Test
@@ -368,10 +341,7 @@ class TrieLogHelperTest {
         ImmutableDataStorageConfiguration.builder()
             .dataStorageFormat(BONSAI)
             .bonsaiMaxLayersToLoad(3L)
-            .unstable(
-                ImmutableDataStorageConfiguration.Unstable.builder()
-                    .bonsaiLimitTrieLogsEnabled(true)
-                    .build())
+            .bonsaiLimitTrieLogsEnabled(true)
             .build();
 
     mockBlockchainBase();
