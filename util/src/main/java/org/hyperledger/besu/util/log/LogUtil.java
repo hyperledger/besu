@@ -28,6 +28,8 @@ public class LogUtil {
   static final String BESU_NAMESPACE = "org.hyperledger.besu";
   static final int MAX_SUMMARY_DEPTH = 20;
 
+  private LogUtil() {}
+
   /**
    * Throttles logging to a given logger.
    *
