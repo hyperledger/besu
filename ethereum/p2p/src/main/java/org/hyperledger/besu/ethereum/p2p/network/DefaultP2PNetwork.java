@@ -82,7 +82,6 @@ import io.vertx.core.DeploymentOptions;
 import io.vertx.core.Future;
 import io.vertx.core.ThreadingModel;
 import io.vertx.core.Vertx;
-import org.apache.commons.lang3.tuple.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.devp2p.EthereumNodeRecord;
 import org.slf4j.Logger;
@@ -152,7 +151,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
   private final CountDownLatch shutdownLatch = new CountDownLatch(2);
   private final Duration shutdownTimeout = Duration.ofSeconds(15);
   private final Vertx vertx;
-  private final AtomicReference<Optional<Pair<String, DNSDaemon>>> dnsDaemonRef =
+  private final AtomicReference<Optional<DNSDaemon>> dnsDaemonRef =
       new AtomicReference<>(Optional.empty());
 
   /**
@@ -242,17 +241,16 @@ public class DefaultP2PNetwork implements P2PNetwork {
                       600000L,
                       config.getDnsDiscoveryServerOverride().orElse(null));
 
-              // TODO: Java 21, we can move to Virtual Thread model
+              // Use Java 21 virtual thread to deploy verticle
               final DeploymentOptions options =
                   new DeploymentOptions()
-                      .setThreadingModel(ThreadingModel.WORKER)
+                      .setThreadingModel(ThreadingModel.VIRTUAL_THREAD)
                       .setInstances(1)
                       .setWorkerPoolSize(1);
 
               final Future<String> deployId = vertx.deployVerticle(dnsDaemon, options);
-              final String dnsDaemonDeployId =
-                  deployId.toCompletionStage().toCompletableFuture().join();
-              dnsDaemonRef.set(Optional.of(Pair.of(dnsDaemonDeployId, dnsDaemon)));
+              deployId.toCompletionStage().toCompletableFuture().join();
+              dnsDaemonRef.set(Optional.of(dnsDaemon));
             });
 
     final int listeningPort = rlpxAgent.start().join();
@@ -301,7 +299,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
     // since dnsDaemon is a vertx verticle, vertx.close will undeploy it.
     // However, we can safely call stop as well.
-    dnsDaemonRef.get().map(Pair::getRight).ifPresent(DNSDaemon::stop);
+    dnsDaemonRef.get().ifPresent(DNSDaemon::stop);
 
     peerConnectionScheduler.shutdownNow();
     peerDiscoveryAgent.stop().whenComplete((res, err) -> shutdownLatch.countDown());
@@ -358,7 +356,7 @@ public class DefaultP2PNetwork implements P2PNetwork {
 
   @VisibleForTesting
   Optional<DNSDaemon> getDnsDaemon() {
-    return dnsDaemonRef.get().map(Pair::getRight);
+    return dnsDaemonRef.get();
   }
 
   @VisibleForTesting

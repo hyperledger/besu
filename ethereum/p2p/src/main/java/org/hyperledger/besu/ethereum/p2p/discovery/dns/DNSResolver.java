@@ -24,12 +24,9 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
-import java.util.concurrent.atomic.AtomicReference;
 
 import com.google.common.base.Splitter;
+import io.vertx.core.Future;
 import io.vertx.core.Vertx;
 import io.vertx.core.dns.DnsClient;
 import io.vertx.core.dns.DnsClientOptions;
@@ -42,9 +39,8 @@ import org.slf4j.LoggerFactory;
 
 // Adapted from https://github.com/tmio/tuweni and licensed under Apache 2.0
 /** Resolves a set of ENR nodes from a host name. */
-public class DNSResolver implements AutoCloseable {
+public class DNSResolver {
   private static final Logger LOG = LoggerFactory.getLogger(DNSResolver.class);
-  private final ExecutorService rawTxtRecordsExecutor = Executors.newSingleThreadExecutor();
   private final String enrLink;
   private long seq;
   private final DnsClient dnsClient;
@@ -118,7 +114,7 @@ public class DNSResolver implements AutoCloseable {
   private void visitTree(final ENRTreeLink link, final DNSVisitor visitor) {
     Optional<DNSEntry> optionalEntry = resolveRecord(link.domainName());
     if (optionalEntry.isEmpty()) {
-      LOG.debug("No DNS record found for {}", link.domainName());
+      LOG.trace("No DNS record found for {}", link.domainName());
       return;
     }
 
@@ -146,32 +142,30 @@ public class DNSResolver implements AutoCloseable {
       final String entryName, final String domainName, final DNSVisitor visitor) {
     final Optional<DNSEntry> optionalDNSEntry = resolveRecord(entryName + "." + domainName);
     if (optionalDNSEntry.isEmpty()) {
-      LOG.debug("No DNS record found for {}", entryName + "." + domainName);
       return true;
     }
 
     final DNSEntry entry = optionalDNSEntry.get();
-    if (entry instanceof ENRNode node) {
-      // TODO: this always return true because the visitor is reference to list.add
-      return visitor.visit(node.nodeRecord());
-    } else if (entry instanceof DNSEntry.ENRTree tree) {
-      for (String e : tree.entries()) {
-        // TODO: When would this ever return false?
-        boolean keepGoing = internalVisit(e, domainName, visitor);
-        if (!keepGoing) {
-          return false;
+    switch (entry) {
+      case ENRNode node -> {
+        return visitor.visit(node.nodeRecord());
+      }
+      case DNSEntry.ENRTree tree -> {
+        for (String e : tree.entries()) {
+          boolean keepGoing = internalVisit(e, domainName, visitor);
+          if (!keepGoing) {
+            return false;
+          }
         }
       }
-    } else if (entry instanceof ENRTreeLink link) {
-      visitTree(link, visitor);
-    } else {
-      LOG.debug("Unsupported type of node {}", entry);
+      case ENRTreeLink link -> visitTree(link, visitor);
+      default -> LOG.debug("Unsupported type of node {}", entry);
     }
     return true;
   }
 
   /**
-   * Resolves one DNS record associated with the given domain name.
+   * Maps TXT DNS record to DNSEntry.
    *
    * @param domainName the domain name to query
    * @return the DNS entry read from the domain. Empty if no record is found.
@@ -187,51 +181,21 @@ public class DNSResolver implements AutoCloseable {
    * @return the first TXT entry of the DNS record. Empty if no record is found.
    */
   Optional<String> resolveRawRecord(final String domainName) {
-    // vertx-dns is async, kotlin coroutines allows us to await, similarly Java 21 new thread
-    // model would also allow us to await. For now, we will use CountDownLatch to block the
-    // current thread until the DNS resolution is complete.
-    LOG.debug("Resolving TXT records on domain: {}", domainName);
-    final CountDownLatch latch = new CountDownLatch(1);
-    final AtomicReference<Optional<String>> record = new AtomicReference<>(Optional.empty());
-    rawTxtRecordsExecutor.submit(
-        () -> {
-          dnsClient
-              .resolveTXT(domainName)
-              .onComplete(
-                  ar -> {
-                    if (ar.succeeded()) {
-                      LOG.trace(
-                          "TXT record resolved on domain {}. Result: {}", domainName, ar.result());
-                      record.set(ar.result().stream().findFirst());
-                    } else {
-                      LOG.trace(
-                          "TXT record not resolved on domain {}, because: {}",
-                          domainName,
-                          ar.cause().getMessage());
-                    }
-                    latch.countDown();
-                  });
-        });
-
+    LOG.trace("Resolving TXT records on domain: {}", domainName);
     try {
-      // causes the worker thread to wait. Once we move to Java 21, this can be simplified.
-      latch.await();
-    } catch (InterruptedException e) {
-      LOG.debug("Interrupted while waiting for DNS resolution");
+      // Future.await parks current virtual thread and waits for the result. Any failure is
+      // thrown as a Throwable.
+      return Future.await(dnsClient.resolveTXT(domainName)).stream().findFirst();
+    } catch (final Throwable e) {
+      LOG.trace("Error while resolving TXT records on domain: {}", domainName, e);
+      return Optional.empty();
     }
-
-    return record.get();
   }
 
   private boolean checkSignature(
       final ENRTreeRoot root, final SECP256K1.PublicKey pubKey, final SECP256K1.Signature sig) {
-    Bytes32 hash =
+    final Bytes32 hash =
         Hash.keccak256(Bytes.wrap(root.signedContent().getBytes(StandardCharsets.UTF_8)));
     return SECP256K1.verifyHashed(hash, sig, pubKey);
-  }
-
-  @Override
-  public void close() {
-    rawTxtRecordsExecutor.shutdown();
   }
 }
