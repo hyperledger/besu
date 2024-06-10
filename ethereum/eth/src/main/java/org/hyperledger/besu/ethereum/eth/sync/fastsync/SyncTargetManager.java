@@ -94,7 +94,9 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
-      if (bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()) {
+      // Do not check the best peers estimated height if we are doing PoS
+      if (!protocolSchedule.getByBlockHeader(pivotBlockHeader).isPoS()
+          && bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()) {
         LOG.info(
             "Best peer {} has chain height {} below pivotBlock height {}. Waiting for better peers. Current {} of max {}",
             maybeBestPeer.map(EthPeer::getLoggableId).orElse("none"),
@@ -112,6 +114,8 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
 
   private CompletableFuture<Optional<EthPeer>> confirmPivotBlockHeader(final EthPeer bestPeer) {
     final BlockHeader pivotBlockHeader = fastSyncState.getPivotBlockHeader().get();
+    // how is it possible that the following task times out without the peer being disconnected?
+
     final RetryingGetHeaderFromPeerByNumberTask task =
         RetryingGetHeaderFromPeerByNumberTask.forSingleNumber(
             protocolSchedule,
@@ -122,11 +126,8 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
     task.assignPeer(bestPeer);
     return ethContext
         .getScheduler()
-        .timeout(
-            task,
-            Duration.ofSeconds(
-                MAX_QUERY_RETRIES_PER_PEER * 5
-                    + 1)) // 5 because there is a 5 sec timout per request
+        .timeout(task, Duration.ofSeconds(MAX_QUERY_RETRIES_PER_PEER * 5 + 1))
+        // 5 because there is a 5 sec timout per request
         .thenCompose(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {
@@ -158,7 +159,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                   .addArgument(pivotBlockHeader.getNumber())
                   .addArgument(error)
                   .log();
-              // bestPeer.disconnect(DisconnectReason.USELESS_PEER_CANNOT_CONFIRM_PIVOT_BLOCK);
+              bestPeer.disconnect(DisconnectReason.USELESS_PEER_CANNOT_CONFIRM_PIVOT_BLOCK);
               return Optional.empty();
             });
   }

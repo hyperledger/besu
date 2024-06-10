@@ -122,7 +122,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
           () ->
               ethContext
                   .getScheduler()
-                  // wait for a new peer, or timeout after 5 seconds
+                  // wait for a new peer for up to 5 seconds
                   .timeout(waitTask, Duration.ofSeconds(5))
                   // execute the task again
                   .whenComplete((r, t) -> executeTaskTimed()));

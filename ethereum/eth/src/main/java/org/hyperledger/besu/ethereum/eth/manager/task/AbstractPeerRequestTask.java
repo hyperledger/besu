@@ -73,11 +73,20 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
           final Optional<RequestManager.ResponseStream> responseStream =
               this.responseStream.abort();
           if (t != null) {
-            LOG.atInfo().setMessage("Request failed: {}").addArgument(t).log();
             t = ExceptionUtils.rootCause(t);
             if (t instanceof TimeoutException && responseStream.isPresent()) {
-              LOG.atInfo().setMessage("Cause: {}").addArgument(t).log();
+              LOG.atInfo()
+                  .setMessage("Request failed with cause: {}, {}")
+                  .addArgument(t)
+                  .addArgument(t.getStackTrace())
+                  .log();
               responseStream.get().getPeer().recordRequestTimeout(requestCode);
+            } else {
+              LOG.atInfo()
+                  .setMessage("Request failed: {}, {}")
+                  .addArgument(t)
+                  .addArgument(t.getStackTrace())
+                  .log();
             }
             result.completeExceptionally(t);
           } else if (r != null) {
