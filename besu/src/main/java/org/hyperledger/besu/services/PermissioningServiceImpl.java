@@ -19,10 +19,9 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissi
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.util.List;
+import javax.inject.Inject;
 
 import com.google.common.collect.Lists;
-
-import javax.inject.Inject;
 
 /** The Permissioning service implementation. */
 public class PermissioningServiceImpl implements PermissioningService {

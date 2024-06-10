@@ -22,18 +22,17 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.PluginJsonRpcM
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 
-import javax.inject.Inject;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /** The RPC endpoint service implementation. */
 public class RpcEndpointServiceImpl implements RpcEndpointService {
   private final Map<String, Function<PluginRpcRequest, ?>> rpcMethods = new HashMap<>();
-
 
   @Inject
   /** Default Constructor. */

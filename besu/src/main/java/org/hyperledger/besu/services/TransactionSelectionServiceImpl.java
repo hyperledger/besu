@@ -18,15 +18,14 @@ import org.hyperledger.besu.plugin.services.TransactionSelectionService;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelector;
 import org.hyperledger.besu.plugin.services.txselection.PluginTransactionSelectorFactory;
 
-import javax.inject.Inject;
 import java.util.Optional;
+import javax.inject.Inject;
 
 /** The Transaction Selection service implementation. */
 public class TransactionSelectionServiceImpl implements TransactionSelectionService {
 
   @Inject
-  public TransactionSelectionServiceImpl() {
-  }
+  public TransactionSelectionServiceImpl() {}
 
   private Optional<PluginTransactionSelectorFactory> factory = Optional.empty();
 

@@ -465,7 +465,7 @@ public abstract class JsonBlockImporterTest {
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
-            .besuComponent(mock(BesuComponent.class))
+        .besuComponent(mock(BesuComponent.class))
         .build();
   }
 }

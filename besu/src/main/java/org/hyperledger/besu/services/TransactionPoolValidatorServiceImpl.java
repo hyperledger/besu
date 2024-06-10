@@ -18,8 +18,8 @@ import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidator;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
 
-import javax.inject.Inject;
 import java.util.Optional;
+import javax.inject.Inject;
 
 /** The Transaction pool validator service implementation. */
 public class TransactionPoolValidatorServiceImpl implements TransactionPoolValidatorService {

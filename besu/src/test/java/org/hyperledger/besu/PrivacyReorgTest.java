@@ -469,11 +469,11 @@ public class PrivacyReorgTest {
         PrivacyReorgTest.PrivacyReorgTestGenesisConfigModule.class,
         EnclaveModule.class,
         PrivacyTestModule.class,
-              MockBesuCommandModule.class,
-              NoOpMetricsSystemModule.class,
-              BonsaiCachedMerkleTrieLoaderModule.class,
-              BlobCacheModule.class,
-              BesuPluginContextModule.class
+        MockBesuCommandModule.class,
+        NoOpMetricsSystemModule.class,
+        BonsaiCachedMerkleTrieLoaderModule.class,
+        BlobCacheModule.class,
+        BesuPluginContextModule.class
       })
   interface PrivacyReorgTestComponent extends BesuComponent {
 
@@ -536,7 +536,7 @@ public class PrivacyReorgTest {
               .gasLimitCalculator(GasLimitCalculator.constant())
               .evmConfiguration(EvmConfiguration.DEFAULT)
               .networkConfiguration(NetworkingConfiguration.create())
-                  .besuComponent(context)
+              .besuComponent(context)
               .build();
       return retval;
     }

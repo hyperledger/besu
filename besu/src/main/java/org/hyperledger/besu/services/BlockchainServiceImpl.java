@@ -29,11 +29,11 @@ import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.TransactionReceipt;
 import org.hyperledger.besu.plugin.services.BlockchainService;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /** The Blockchain service implementation. */
 @Unstable

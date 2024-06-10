@@ -29,8 +29,8 @@ import org.hyperledger.besu.plugin.Unstable;
 import org.hyperledger.besu.plugin.data.TransactionSimulationResult;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 
-import javax.inject.Inject;
 import java.util.Optional;
+import javax.inject.Inject;
 
 /** TransactionSimulationServiceImpl */
 @Unstable

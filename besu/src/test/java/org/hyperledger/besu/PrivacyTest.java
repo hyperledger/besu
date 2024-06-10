@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,6 +17,8 @@ package org.hyperledger.besu;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
 
+import org.hyperledger.besu.cli.config.EthNetworkConfig;
+import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.components.BesuPluginContextModule;
 import org.hyperledger.besu.components.MockBesuCommandModule;
@@ -24,10 +26,6 @@ import org.hyperledger.besu.components.NoOpMetricsSystemModule;
 import org.hyperledger.besu.components.PrivacyParametersModule;
 import org.hyperledger.besu.components.PrivacyTestModule;
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.cli.config.EthNetworkConfig;
-import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.components.DaggerFlexGroupPrivacyTestComponent;
-import org.hyperledger.besu.components.DaggerPrivacyTestComponent;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;

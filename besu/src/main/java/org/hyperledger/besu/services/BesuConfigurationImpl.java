@@ -15,16 +15,15 @@
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
-import org.hyperledger.besu.Besu;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
-import javax.inject.Inject;
 import java.nio.file.Path;
 import java.util.Optional;
+import javax.inject.Inject;
 
 /** A concrete implementation of BesuConfiguration which is used in Besu plugin framework. */
 public class BesuConfigurationImpl implements BesuConfiguration {

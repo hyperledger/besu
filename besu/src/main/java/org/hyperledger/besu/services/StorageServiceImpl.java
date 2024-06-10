@@ -19,11 +19,11 @@ import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 
-import javax.inject.Inject;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
+import javax.inject.Inject;
 
 /** The Storage service implementation. */
 public class StorageServiceImpl implements StorageService {

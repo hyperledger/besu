@@ -483,7 +483,7 @@ public final class RunnerTest {
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
         .randomPeerPriority(Boolean.FALSE)
-            .besuComponent(mock(BesuComponent.class))
+        .besuComponent(mock(BesuComponent.class))
         .maxPeers(25)
         .maxRemotelyInitiatedPeers(15)
         .build();

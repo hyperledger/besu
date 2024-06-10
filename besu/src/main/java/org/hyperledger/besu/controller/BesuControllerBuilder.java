@@ -16,7 +16,6 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import com.google.common.base.Preconditions;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -113,6 +112,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
 
+import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
