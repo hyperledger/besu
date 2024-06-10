@@ -841,7 +841,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final MetricsSystem metricsSystem) {
 
     if (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2()) {
-      LOG.info("QBFT is configured, creating initial sync for BFT");
+      LOG.info(
+          "{} is configured, creating initial sync for BFT",
+          genesisConfigOptions.getConsensusEngine().toUpperCase());
       return new BFTPivotSelectorFromPeers(
           ethContext, syncConfig, syncState, metricsSystem, protocolContext, nodeKey);
     } else if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {

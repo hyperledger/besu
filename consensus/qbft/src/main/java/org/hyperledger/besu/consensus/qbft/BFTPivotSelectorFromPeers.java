@@ -67,6 +67,9 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
       // pivot distance
       if (bestPeer.get().chainState().getEstimatedHeight()
           <= syncConfig.getFastSyncPivotDistance()) {
+        LOG.info(
+            "Best peer for sync found but chain height hasn't reached minimum sync pivot distance {}, exiting sync process",
+            syncConfig.getFastSyncPivotDistance());
         throw new NoSyncRequiredException();
       }
 
@@ -78,6 +81,7 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
           && validatorProvider
               .getValidatorsAtHead()
               .contains(Util.publicKeyToAddress(nodeKey.getPublicKey()))) {
+        LOG.info("This node is the only BFT validator, exiting sync process");
         throw new NoSyncRequiredException();
       }
 
@@ -105,6 +109,9 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
         // assume this is a new chain
         // and skip waiting for any more peers to sync with. The worst case is this puts us into
         // full sync mode.
+        LOG.info(
+            "Peered with {} validators but no best peer found to sync from. Assuming new BFT chain, exiting sync process",
+            peerValidatorCount.get());
         throw new NoSyncRequiredException();
       }
     }

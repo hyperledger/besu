@@ -1552,11 +1552,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateConsensusSyncCompatibilityOptions() {
-    // snap and checkpoint can't be used with BFT but can for clique
+    // snap and checkpoint are experimental for BFT
     if ((genesisConfigOptionsSupplier.get().isIbftLegacy()
             || genesisConfigOptionsSupplier.get().isIbft2()
             || genesisConfigOptionsSupplier.get().isQbft())
-        && genesisConfigOptionsSupplier.get().isEthHash()) {
+        && !unstableSynchronizerOptions.isSnapSyncBftEnabled()) {
       final String errorSuffix = "can't be used with BFT networks";
       if (SyncMode.CHECKPOINT.equals(syncMode) || SyncMode.X_CHECKPOINT.equals(syncMode)) {
         throw new ParameterException(
