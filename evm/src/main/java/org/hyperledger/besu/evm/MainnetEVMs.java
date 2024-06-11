@@ -33,8 +33,6 @@ import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AddressOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
-import org.hyperledger.besu.evm.operation.AuthCallOperation;
-import org.hyperledger.besu.evm.operation.AuthOperation;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
 import org.hyperledger.besu.evm.operation.BaseFeeOperation;
 import org.hyperledger.besu.evm.operation.BlobBaseFeeOperation;
@@ -951,9 +949,7 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerCancunOperations(registry, gasCalculator, chainID);
 
-    // EIP-3074 AUTH and AUTHCALL
-    registry.put(new AuthOperation(gasCalculator));
-    registry.put(new AuthCallOperation(gasCalculator));
+    // TODO add EOF operations here once PragueEOF is collapsed into Prague
   }
 
   /**
