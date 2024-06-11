@@ -86,7 +86,6 @@ class DNSDaemonTest {
   }
 
   @Test
-  @Disabled("this test is flaky")
   @DisplayName("Test DNS Daemon with periodic lookup to a mock DNS server")
   void testDNSDaemonPeriodic(final Vertx vertx, final VertxTestContext testContext)
       throws InterruptedException {
