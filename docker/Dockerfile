@@ -6,7 +6,7 @@ ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true
 # Update and install dependencies without using any cache
 RUN apt-get update $NO_PROXY_CACHE  && \
   # $NO_PROXY_CACHE must not be used here or otherwise will trigger a hadolint error
-  apt-get -o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0 \
+  apt-get $NO_PROXY_CACHE && \
     --no-install-recommends -q --assume-yes install openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3*  && \
   # Clean apt cache
   apt-get clean  && \
