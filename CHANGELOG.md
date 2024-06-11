@@ -17,6 +17,7 @@
 
 ### Additions and Improvements
 - Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)
+- Improve genesis state performance at startup [#6977](https://github.com/hyperledger/besu/pull/6977)
 - Enable --Xbonsai-limit-trie-logs-enabled by default, unless sync-mode=FULL [#7181](https://github.com/hyperledger/besu/pull/7181)
 - Promote experimental --Xbonsai-limit-trie-logs-enabled to production-ready, --bonsai-limit-trie-logs-enabled [#7192](https://github.com/hyperledger/besu/pull/7192)
 - Promote experimental --Xbonsai-trie-logs-pruning-window-size to production-ready, --bonsai-trie-logs-pruning-window-size [#7192](https://github.com/hyperledger/besu/pull/7192)
