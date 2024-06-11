@@ -29,6 +29,13 @@ class PragueEOFGasCalculatorTest {
     assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
   }
 
-  // EXTCALL gas tests will show up here once EXTCALL gass schedule is finalized...
+  @Test
+  void testNewConstants() {
+    CancunGasCalculator cancunGas = new CancunGasCalculator();
+    PragueEOFGasCalculator praugeGasCalculator = new PragueEOFGasCalculator();
 
+    assertThat(praugeGasCalculator.getMinCalleeGas()).isGreaterThan(cancunGas.getMinCalleeGas());
+    assertThat(praugeGasCalculator.getMinRetainedGas())
+        .isGreaterThan(cancunGas.getMinRetainedGas());
+  }
 }

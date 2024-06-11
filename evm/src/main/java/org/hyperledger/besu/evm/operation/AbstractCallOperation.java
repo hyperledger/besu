@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -42,9 +43,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
   static final Bytes LEGACY_SUCCESS_STACK_ITEM = BYTES_ONE;
   static final Bytes LEGACY_FAILURE_STACK_ITEM = Bytes.EMPTY;
-  static final Bytes EOF1_SUCCESS_STACK_ITEM = Bytes.EMPTY;
-  static final Bytes EOF1_EXCEPTION_STACK_ITEM = BYTES_ONE;
-  static final Bytes EOF1_FAILURE_STACK_ITEM = Bytes.of(2);
 
   /**
    * Instantiates a new Abstract call operation.
@@ -219,16 +217,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
 
-    // delegate calls to prior EOF versions are prohibited
-    if (isDelegate() && frame.getCode().getEofVersion() > code.getEofVersion()) {
-      // "Light failure" - Push failure and continue execution
-      frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(EOF1_EXCEPTION_STACK_ITEM);
-      // see note in stack depth check about incrementing cost
-      frame.incrementRemainingGas(cost);
-      return new OperationResult(cost, null, 1);
-    }
-
     MessageFrame.builder()
         .parentMessageFrame(frame)
         .type(MessageFrame.Type.MESSAGE_CALL)
@@ -323,24 +311,19 @@ public abstract class AbstractCallOperation extends AbstractOperation {
 
     frame.popStackItems(getStackItemsConsumed());
     Bytes resultItem;
-    if (frame.getCode().getEofVersion() == 1) {
-      if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        resultItem = EOF1_SUCCESS_STACK_ITEM;
-      } else if (childFrame.getState() == MessageFrame.State.EXCEPTIONAL_HALT) {
-        resultItem = EOF1_EXCEPTION_STACK_ITEM;
-      } else {
-        resultItem = EOF1_FAILURE_STACK_ITEM;
-      }
-    } else {
-      if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        resultItem = LEGACY_SUCCESS_STACK_ITEM;
-      } else {
-        resultItem = LEGACY_FAILURE_STACK_ITEM;
-      }
-    }
+
+    resultItem = getCallResultStackItem(childFrame);
     frame.pushStackItem(resultItem);
 
     final int currentPC = frame.getPC();
     frame.setPC(currentPC + 1);
+  }
+
+  Bytes getCallResultStackItem(final MessageFrame childFrame) {
+    if (childFrame.getState() == State.COMPLETED_SUCCESS) {
+      return LEGACY_SUCCESS_STACK_ITEM;
+    } else {
+      return LEGACY_FAILURE_STACK_ITEM;
+    }
   }
 }

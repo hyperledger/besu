@@ -28,6 +28,9 @@ import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
  */
 public class PragueEOFGasCalculator extends PragueGasCalculator {
 
+  static final long MIN_RETAINED_GAS = 5_000;
+  static final long MIN_CALLEE_GAS = 2300;
+
   /** Instantiates a new Prague Gas Calculator. */
   public PragueEOFGasCalculator() {
     this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
@@ -42,6 +45,13 @@ public class PragueEOFGasCalculator extends PragueGasCalculator {
     super(maxPrecompile);
   }
 
-  // EXTCALL costing will show up here...
+  @Override
+  public long getMinRetainedGas() {
+    return MIN_RETAINED_GAS;
+  }
 
+  @Override
+  public long getMinCalleeGas() {
+    return MIN_CALLEE_GAS;
+  }
 }
