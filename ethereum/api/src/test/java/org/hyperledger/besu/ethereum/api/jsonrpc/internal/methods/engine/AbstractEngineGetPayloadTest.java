@@ -20,6 +20,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
+import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.crypto.KeyPair;
@@ -97,6 +98,8 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
       new Block(mockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
   protected static final BlockWithReceipts mockBlockWithReceipts =
       new BlockWithReceipts(mockBlock, Collections.emptyList());
+  protected static final PayloadWrapper mockPayload =
+      new PayloadWrapper(mockPid, mockBlockWithReceipts);
   private static final Block mockBlockWithWithdrawals =
       new Block(
           mockHeader,
@@ -115,9 +118,13 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
               Optional.of(Collections.emptyList())));
   protected static final BlockWithReceipts mockBlockWithReceiptsAndWithdrawals =
       new BlockWithReceipts(mockBlockWithWithdrawals, Collections.emptyList());
+  protected static final PayloadWrapper mockPayloadWithWithdrawals =
+      new PayloadWrapper(mockPid, mockBlockWithReceiptsAndWithdrawals);
 
   protected static final BlockWithReceipts mockBlockWithReceiptsAndDepositRequests =
       new BlockWithReceipts(mockBlockWithDepositRequests, Collections.emptyList());
+  protected static final PayloadWrapper mockPayloadWithDepositRequests =
+      new PayloadWrapper(mockPid, mockBlockWithReceiptsAndDepositRequests);
 
   @Mock protected ProtocolContext protocolContext;
 
@@ -130,7 +137,7 @@ public abstract class AbstractEngineGetPayloadTest extends AbstractScheduledApiT
   @Override
   public void before() {
     super.before();
-    when(mergeContext.retrieveBlockById(mockPid)).thenReturn(Optional.of(mockBlockWithReceipts));
+    when(mergeContext.retrievePayloadById(mockPid)).thenReturn(Optional.of(mockPayload));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     if (methodFactory.isPresent()) {
       this.method =

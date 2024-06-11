@@ -125,7 +125,7 @@ class TraceServiceImplTest {
               verify(opTracer).traceStartTransaction(any(), eq(tx));
               verify(opTracer)
                   .traceEndTransaction(
-                      any(), eq(tx), anyBoolean(), any(), any(), anyLong(), anyLong());
+                      any(), eq(tx), anyBoolean(), any(), any(), anyLong(), any(), anyLong());
             });
 
     verify(opTracer).traceEndBlock(tracedBlock.getHeader(), tracedBlock.getBody());
@@ -173,7 +173,14 @@ class TraceServiceImplTest {
                         verify(opTracer).traceStartTransaction(any(), eq(tx));
                         verify(opTracer)
                             .traceEndTransaction(
-                                any(), eq(tx), anyBoolean(), any(), any(), anyLong(), anyLong());
+                                any(),
+                                eq(tx),
+                                anyBoolean(),
+                                any(),
+                                any(),
+                                anyLong(),
+                                any(),
+                                anyLong());
                       });
 
               verify(opTracer).traceEndBlock(tracedBlock.getHeader(), tracedBlock.getBody());
@@ -222,6 +229,7 @@ class TraceServiceImplTest {
     assertThat(txStartEndTracer.txEndStatus).isTrue();
     assertThat(txStartEndTracer.txEndOutput).isEqualTo(Bytes.fromHexString("0x"));
     assertThat(txStartEndTracer.txEndGasUsed).isEqualTo(24303);
+    assertThat(txStartEndTracer.txEndSelfDestructs).isEmpty();
     assertThat(txStartEndTracer.txEndTimeNs).isNotNull();
 
     assertThat(txStartEndTracer.txEndLogs).isNotEmpty();
@@ -263,6 +271,7 @@ class TraceServiceImplTest {
     public Bytes txEndOutput;
     public List<Log> txEndLogs;
     public long txEndGasUsed;
+    public Set<Address> txEndSelfDestructs;
     public Long txEndTimeNs;
 
     private final Set<Transaction> traceStartTxCalled = new HashSet<>();
@@ -287,6 +296,7 @@ class TraceServiceImplTest {
         final Bytes output,
         final List<Log> logs,
         final long gasUsed,
+        final Set<Address> selfDestructs,
         final long timeNs) {
       if (!traceEndTxCalled.add(transaction)) {
         fail("traceEndTransaction already called for tx " + transaction);
@@ -297,6 +307,7 @@ class TraceServiceImplTest {
       txEndOutput = output;
       txEndLogs = logs;
       txEndGasUsed = gasUsed;
+      txEndSelfDestructs = selfDestructs;
       txEndTimeNs = timeNs;
     }
 

@@ -14,9 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.datatypes.rpc.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -70,10 +70,9 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
 
     final PayloadIdentifier payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
     mergeMiningCoordinator.finalizeProposalById(payloadId);
-    final Optional<BlockWithReceipts> blockWithReceipts =
-        mergeContext.get().retrieveBlockById(payloadId);
-    if (blockWithReceipts.isPresent()) {
-      final BlockWithReceipts proposal = blockWithReceipts.get();
+    final Optional<PayloadWrapper> maybePayload = mergeContext.get().retrievePayloadById(payloadId);
+    if (maybePayload.isPresent()) {
+      final BlockWithReceipts proposal = maybePayload.get().blockWithReceipts();
       LOG.atDebug()
           .setMessage("assembledBlock for payloadId {}: {}")
           .addArgument(() -> payloadId)
@@ -85,37 +84,33 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       if (!forkValidationResult.isValid()) {
         return new JsonRpcErrorResponse(request.getRequest().getId(), forkValidationResult);
       }
-      return createResponse(request, payloadId, proposal);
+      return createResponse(request, maybePayload.get());
     }
     return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.UNKNOWN_PAYLOAD);
   }
 
-  protected void logProposal(
-      final PayloadIdentifier payloadId,
-      final BlockWithReceipts proposal,
-      final Optional<Wei> maybeReward) {
-    final BlockHeader proposalHeader = proposal.getHeader();
+  protected void logProposal(final PayloadWrapper payload) {
+    final BlockHeader proposalHeader = payload.blockWithReceipts().getHeader();
     final float gasUsedPerc = 100.0f * proposalHeader.getGasUsed() / proposalHeader.getGasLimit();
 
     final String message =
         "Fetch block proposal by identifier: {}, hash: {}, "
             + "number: {}, coinbase: {}, transaction count: {}, gas used: {}%"
-            + maybeReward.map(unused -> ", reward: {}").orElse("{}");
+            + " reward: {}";
 
     LOG.atInfo()
         .setMessage(message)
-        .addArgument(payloadId::toHexString)
+        .addArgument(payload.payloadIdentifier()::toHexString)
         .addArgument(proposalHeader::getHash)
         .addArgument(proposalHeader::getNumber)
         .addArgument(proposalHeader::getCoinbase)
-        .addArgument(() -> proposal.getBlock().getBody().getTransactions().size())
+        .addArgument(
+            () -> payload.blockWithReceipts().getBlock().getBody().getTransactions().size())
         .addArgument(() -> String.format("%1.2f", gasUsedPerc))
-        .addArgument(maybeReward.map(Wei::toHumanReadableString).orElse(""))
+        .addArgument(payload.blockValue()::toHumanReadableString)
         .log();
   }
 
   protected abstract JsonRpcResponse createResponse(
-      final JsonRpcRequestContext request,
-      final PayloadIdentifier payloadId,
-      final BlockWithReceipts blockWithReceipts);
+      final JsonRpcRequestContext request, final PayloadWrapper payload);
 }
