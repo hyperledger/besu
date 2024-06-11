@@ -29,7 +29,6 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -63,9 +62,9 @@ class DNSDaemonTest {
             (seq, records) -> {
               if (seq != EXPECTED_SEQ) {
                 testContext.failNow(
-                        String.format(
-                                "Expecting sequence to be %d in first pass but got: %d",
-                                EXPECTED_SEQ, seq));
+                    String.format(
+                        "Expecting sequence to be %d in first pass but got: %d",
+                        EXPECTED_SEQ, seq));
               }
               if (records.size() != 115) {
                 testContext.failNow(
