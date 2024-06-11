@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
+import static org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil.getWithdrawalRequests;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.Request;
@@ -45,7 +47,7 @@ public class WithdrawalRequestValidator implements RequestValidator {
         block
             .getBody()
             .getRequests()
-            .map(requests -> RequestUtil.filterRequestsOfType(requests, WithdrawalRequest.class))
+            .flatMap(requests -> getWithdrawalRequests(Optional.of(requests)))
             .orElse(Collections.emptyList());
 
     // TODO Do we need to allow for customization? (e.g. if the value changes in the next fork)
@@ -74,7 +76,8 @@ public class WithdrawalRequestValidator implements RequestValidator {
   @Override
   public boolean validate(
       final Block block, final List<Request> requests, final List<TransactionReceipt> receipts) {
-    var withdrawalRequests = RequestUtil.filterRequestsOfType(requests, WithdrawalRequest.class);
+    var withdrawalRequests =
+        getWithdrawalRequests(Optional.of(requests)).orElse(Collections.emptyList());
     return validateWithdrawalRequestsInBlock(block, withdrawalRequests);
   }
 

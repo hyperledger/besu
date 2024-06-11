@@ -23,11 +23,11 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 plugins {
-  id 'com.diffplug.spotless' version '6.23.3'
-  id 'com.github.ben-manes.versions' version '0.50.0'
-  id 'com.github.jk1.dependency-license-report' version '2.5'
-  id 'com.jfrog.artifactory' version '5.1.11'
-  id 'io.spring.dependency-management' version '1.1.4'
+  id 'com.diffplug.spotless' version '6.25.0'
+  id 'com.github.ben-manes.versions' version '0.51.0'
+  id 'com.github.jk1.dependency-license-report' version '2.7'
+  id 'com.jfrog.artifactory' version '5.2.0'
+  id 'io.spring.dependency-management' version '1.1.5'
   id 'me.champeau.jmh' version '0.7.2' apply false
   id 'net.ltgt.errorprone' version '3.1.0'
   id 'maven-publish'
@@ -47,8 +47,8 @@ sonarqube {
 
 project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
-if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-  throw new GradleException("Java 17 or later is required to build Besu.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
+  throw new GradleException("Java 21 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -125,7 +125,7 @@ allprojects {
   version = calculateVersion()
 
   jacoco {
-    toolVersion = '0.8.8'
+    toolVersion = '0.8.11'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -144,8 +144,8 @@ allprojects {
   tasks.build {
     dependsOn 'javadoc'
   }
-  sourceCompatibility = 17
-  targetCompatibility = 17
+  sourceCompatibility = 21
+  targetCompatibility = 21
 
   repositories {
     maven {

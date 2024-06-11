@@ -23,10 +23,10 @@ import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.mainnet.requests.DepositsValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 import org.hyperledger.besu.evm.log.Log;
@@ -41,20 +41,20 @@ import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-public class DepositsValidatorTest {
+public class DepositRequestValidatorTest {
   private final BlockDataGenerator blockDataGenerator = new BlockDataGenerator();
-  private static Deposit DEPOSIT_1;
-  private static Deposit DEPOSIT_2;
+  private static DepositRequest depositRequest1;
+  private static DepositRequest depositRequest2;
   private static Log LOG_1;
   private static Log LOG_2;
   private static Address DEPOSIT_CONTRACT_ADDRESS;
   private static RequestsValidatorCoordinator requestsValidatorCoordinator;
-  private static DepositsValidator depositsValidator;
+  private static DepositRequestValidator depositRequestValidator;
 
   @BeforeAll
   public static void setup() {
-    DEPOSIT_1 =
-        new Deposit(
+    depositRequest1 =
+        new DepositRequest(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
             Bytes32.fromHexString(
@@ -64,8 +64,8 @@ public class DepositsValidatorTest {
                 "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
             UInt64.valueOf(539967));
 
-    DEPOSIT_2 =
-        new Deposit(
+    depositRequest2 =
+        new DepositRequest(
             BLSPublicKey.fromHexString(
                 "0x8706d19a62f28a6a6549f96c5adaebac9124a61d44868ec94f6d2d707c6a2f82c9162071231dfeb40e24bfde4ffdf243"),
             Bytes32.fromHexString(
@@ -97,8 +97,8 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void validateAllowedDeposits() {
-    final List<Request> request = List.of(DEPOSIT_1, DEPOSIT_2);
+  public void validateAllowedDepositRequests() {
+    final List<Request> request = List.of(depositRequest1, depositRequest2);
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
             .setRequests(Optional.of(request))
@@ -113,9 +113,9 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void validateAllowedDepositsSeparateReceipts() {
+  public void validateAllowedDepositRequestsSeparateReceipts() {
 
-    final List<Request> requests = List.of(DEPOSIT_1, DEPOSIT_2);
+    final List<Request> requests = List.of(depositRequest1, depositRequest2);
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
@@ -135,9 +135,9 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void invalidateAllowedDeposits() {
+  public void invalidateAllowedDepositRequests() {
     final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setRequests(Optional.of(List.of(DEPOSIT_1)));
+        BlockDataGenerator.BlockOptions.create().setRequests(Optional.of(List.of(depositRequest1)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
@@ -149,10 +149,10 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void invalidateAllowedDepositsMissingLogInReceipt() {
+  public void invalidateAllowedDepositRequestsMissingLogInReceipt() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequests(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+            .setRequests(Optional.of(List.of(depositRequest1, depositRequest2)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
@@ -164,9 +164,9 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void invalidateAllowedDepositsExtraLogInReceipt() {
+  public void invalidateAllowedDepositRequestsExtraLogInReceipt() {
     final BlockDataGenerator.BlockOptions blockOptions =
-        BlockDataGenerator.BlockOptions.create().setRequests(Optional.of(List.of(DEPOSIT_1)));
+        BlockDataGenerator.BlockOptions.create().setRequests(Optional.of(List.of(depositRequest1)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
@@ -178,10 +178,10 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void invalidateAllowedDepositsWrongOrder() {
+  public void invalidateAllowedDepositRequestsWrongOrder() {
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequests(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+            .setRequests(Optional.of(List.of(depositRequest1, depositRequest2)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
@@ -193,11 +193,11 @@ public class DepositsValidatorTest {
   }
 
   @Test
-  public void invalidateAllowedDepositsMismatchContractAddress() {
+  public void invalidateAllowedDepositRequestsMismatchContractAddress() {
 
     final BlockDataGenerator.BlockOptions blockOptions =
         BlockDataGenerator.BlockOptions.create()
-            .setRequests(Optional.of(List.of(DEPOSIT_1, DEPOSIT_2)));
+            .setRequests(Optional.of(List.of(depositRequest1, depositRequest2)));
     final Block block = blockDataGenerator.block(blockOptions);
 
     final TransactionReceipt receipt1 =
@@ -210,24 +210,25 @@ public class DepositsValidatorTest {
 
   @Test
   public void validateAllowedDepositParams() {
-    final Optional<List<Request>> deposits = Optional.of(List.of(DEPOSIT_1, DEPOSIT_2));
-    assertThat(depositsValidator.validateParameter(deposits)).isTrue();
+    final Optional<List<Request>> depositRequests =
+        Optional.of(List.of(depositRequest1, depositRequest2));
+    assertThat(depositRequestValidator.validateParameter(depositRequests)).isTrue();
 
-    final Optional<List<Request>> emptyDeposits = Optional.of(List.of());
-    assertThat(depositsValidator.validateParameter(emptyDeposits)).isTrue();
+    final Optional<List<Request>> emptyDepositRequests = Optional.of(List.of());
+    assertThat(depositRequestValidator.validateParameter(emptyDepositRequests)).isTrue();
   }
 
   @Test
   public void invalidateAllowedDepositParams() {
-    final Optional<List<Request>> deposits = Optional.empty();
-    assertThat(depositsValidator.validateParameter(deposits)).isFalse();
+    final Optional<List<Request>> depositRequests = Optional.empty();
+    assertThat(depositRequestValidator.validateParameter(depositRequests)).isFalse();
   }
 
   static RequestsValidatorCoordinator createAllowDepositValidator() {
-    depositsValidator = new DepositsValidator(DEPOSIT_CONTRACT_ADDRESS);
+    depositRequestValidator = new DepositRequestValidator(DEPOSIT_CONTRACT_ADDRESS);
     return new RequestsValidatorCoordinator.Builder()
         .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
-        .addValidator(RequestType.DEPOSIT, depositsValidator)
+        .addValidator(RequestType.DEPOSIT, depositRequestValidator)
         .build();
   }
 }

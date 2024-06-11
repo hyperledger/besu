@@ -32,13 +32,17 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
@@ -63,10 +67,11 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -160,7 +165,8 @@ public class T8nExecutor {
                             false)
                         .map(JsonNode::textValue)
                         .toList();
-                var accessListEntry = AccessListEntry.createAccessListEntry(address, storageKeys);
+                AccessListEntry accessListEntry =
+                    AccessListEntry.createAccessListEntry(address, storageKeys);
                 entries.add(accessListEntry);
               }
               builder.accessList(entries);
@@ -260,15 +266,17 @@ public class T8nExecutor {
         .getBlockHashProcessor()
         .processBlockHashes(blockchain, worldState, referenceTestEnv);
 
-    final WorldUpdater worldStateUpdater = worldState.updater();
+    final WorldUpdater rootWorldStateUpdater = worldState.updater();
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);
     List<Transaction> validTransactions = new ArrayList<>();
     ArrayNode receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
     long blobGasUsed = 0;
-    for (int i = 0; i < transactions.size(); i++) {
-      Transaction transaction = transactions.get(i);
+    final WorldUpdater worldStateUpdater = rootWorldStateUpdater.updater();
+    for (int transactionIndex = 0; transactionIndex < transactions.size(); transactionIndex++) {
+      worldStateUpdater.markTransactionBoundary();
+      Transaction transaction = transactions.get(transactionIndex);
       final Stopwatch timer = Stopwatch.createStarted();
 
       GasCalculator gasCalculator = protocolSpec.getGasCalculator();
@@ -277,7 +285,7 @@ public class T8nExecutor {
       if (blobGasUsed > blobGasLimit) {
         invalidTransactions.add(
             new RejectedTransaction(
-                i,
+                transactionIndex,
                 String.format(
                     "blob gas (%d) would exceed block maximum %d", blobGasUsed, blobGasLimit)));
         continue;
@@ -286,7 +294,7 @@ public class T8nExecutor {
 
       final TransactionProcessingResult result;
       try {
-        tracer = tracerManager.getManagedTracer(i, transaction.getHash());
+        tracer = tracerManager.getManagedTracer(transactionIndex, transaction.getHash());
         tracer.tracePrepareTransaction(worldStateUpdater, transaction);
         tracer.traceStartTransaction(worldStateUpdater, transaction);
         result =
@@ -318,7 +326,8 @@ public class T8nExecutor {
       }
       if (result.isInvalid()) {
         invalidTransactions.add(
-            new RejectedTransaction(i, result.getValidationResult().getErrorMessage()));
+            new RejectedTransaction(
+                transactionIndex, result.getValidationResult().getErrorMessage()));
         continue;
       }
       validTransactions.add(transaction);
@@ -354,8 +363,20 @@ public class T8nExecutor {
         receiptObject.putNull("logs");
       } else {
         ArrayNode logsArray = receiptObject.putArray("logs");
-        for (Log log : result.getLogs()) {
-          logsArray.addPOJO(log);
+        List<Log> logs = result.getLogs();
+        for (int logIndex = 0; logIndex < logs.size(); logIndex++) {
+          Log log = logs.get(logIndex);
+          var obj = logsArray.addObject();
+          obj.put("address", log.getLogger().toHexString());
+          var topics = obj.putArray("topics");
+          log.getTopics().forEach(topic -> topics.add(topic.toHexString()));
+          obj.put("data", log.getData().toHexString());
+          obj.put("blockNumber", blockHeader.getNumber());
+          obj.put("transactionHash", transaction.getHash().toHexString());
+          obj.put("transactionIndex", String.format("0x%x", transactionIndex));
+          obj.put("blockHash", blockHeader.getHash().toHexString());
+          obj.put("logIndex", String.format("0x%x", logIndex));
+          obj.put("removed", "false");
         }
       }
       receiptObject.put("transactionHash", transaction.getHash().toHexString());
@@ -363,7 +384,9 @@ public class T8nExecutor {
           "contractAddress", transaction.contractAddress().orElse(Address.ZERO).toHexString());
       receiptObject.put("gasUsed", gasUsedInTransaction.toQuantityHexString());
       receiptObject.put("blockHash", Hash.ZERO.toHexString());
-      receiptObject.put("transactionIndex", Bytes.ofUnsignedLong(i).toQuantityHexString());
+      receiptObject.put(
+          "transactionIndex", Bytes.ofUnsignedLong(transactionIndex).toQuantityHexString());
+      worldStateUpdater.commit();
     }
 
     final ObjectNode resultObject = objectMapper.createObjectNode();
@@ -375,12 +398,12 @@ public class T8nExecutor {
           (rewardString == null)
               ? protocolSpec.getBlockReward()
               : Wei.of(Long.decode(rewardString));
-      worldStateUpdater
+      rootWorldStateUpdater
           .getOrCreateSenderAccount(blockHeader.getCoinbase())
           .incrementBalance(reward);
     }
 
-    worldStateUpdater.commit();
+    rootWorldStateUpdater.commit();
     // Invoke the withdrawal processor to handle CL withdrawals.
     if (!referenceTestEnv.getWithdrawals().isEmpty()) {
       try {
@@ -425,19 +448,45 @@ public class T8nExecutor {
     blockHeader
         .getWithdrawalsRoot()
         .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.toHexString()));
-    AtomicLong bgHolder = new AtomicLong(blobGasUsed);
-    blockHeader
-        .getExcessBlobGas()
-        .ifPresent(
-            ebg -> {
-              resultObject.put(
-                  "currentExcessBlobGas",
-                  calculateExcessBlobGasForParent(protocolSpec, blockHeader)
-                      .toBytes()
-                      .toQuantityHexString());
-              resultObject.put(
-                  "blobGasUsed", Bytes.ofUnsignedLong(bgHolder.longValue()).toQuantityHexString());
-            });
+    var maybeExcessBlobGas = blockHeader.getExcessBlobGas();
+    if (maybeExcessBlobGas.isPresent()) {
+      resultObject.put(
+          "currentExcessBlobGas",
+          calculateExcessBlobGasForParent(protocolSpec, blockHeader)
+              .toBytes()
+              .toQuantityHexString());
+      resultObject.put("blobGasUsed", Bytes.ofUnsignedLong(blobGasUsed).toQuantityHexString());
+    }
+
+    var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
+    if (requestProcessorCoordinator.isPresent()) {
+      var rpc = requestProcessorCoordinator.get();
+      Optional<List<Request>> maybeRequests = rpc.process(worldState, receipts);
+      Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
+
+      resultObject.put("requestsRoot", requestRoot.toHexString());
+      var deposits = resultObject.putArray("depositRequests");
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
+          .forEach(
+              deposit -> {
+                var obj = deposits.addObject();
+                obj.put("pubkey", deposit.getPubkey().toHexString());
+                obj.put("withdrawalCredentials", deposit.getWithdrawalCredentials().toHexString());
+                obj.put("amount", deposit.getAmount().toHexString());
+                obj.put("signature", deposit.getSignature().toHexString());
+                obj.put("index", deposit.getIndex().toHexString());
+              });
+
+      var withdrawlRequests = resultObject.putArray("withdrawalRequests");
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), WithdrawalRequest.class)
+          .forEach(
+              wr -> {
+                var obj = withdrawlRequests.addObject();
+                obj.put("sourceAddress", wr.getSourceAddress().toHexString());
+                obj.put("validatorPublicKey", wr.getValidatorPublicKey().toHexString());
+                obj.put("amount", wr.getAmount().toHexString());
+              });
+    }
 
     ObjectNode allocObject = objectMapper.createObjectNode();
     worldState
@@ -445,12 +494,12 @@ public class T8nExecutor {
         .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
         .forEach(
             a -> {
-              var account = worldState.get(a.getAddress().get());
+              Account account = worldState.get(a.getAddress().get());
               ObjectNode accountObject = allocObject.putObject(account.getAddress().toHexString());
               if (account.getCode() != null && !account.getCode().isEmpty()) {
                 accountObject.put("code", account.getCode().toHexString());
               }
-              var storageEntries =
+              List<Entry<UInt256, UInt256>> storageEntries =
                   account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE).values().stream()
                       .map(
                           e ->

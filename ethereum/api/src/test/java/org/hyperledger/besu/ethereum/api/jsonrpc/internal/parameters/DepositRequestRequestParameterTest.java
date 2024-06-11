@@ -20,18 +20,18 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.Depo
 import org.hyperledger.besu.datatypes.BLSPublicKey;
 import org.hyperledger.besu.datatypes.BLSSignature;
 import org.hyperledger.besu.datatypes.GWei;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-public class DepositParameterTest {
+public class DepositRequestRequestParameterTest {
 
   @Test
   public void toDeposit() {
-    Deposit expected =
-        new Deposit(
+    DepositRequest expected =
+        new DepositRequest(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
             Bytes32.fromHexString(
@@ -45,8 +45,8 @@ public class DepositParameterTest {
 
   @Test
   public void fromDeposit() {
-    Deposit deposit =
-        new Deposit(
+    DepositRequest depositRequest =
+        new DepositRequest(
             BLSPublicKey.fromHexString(
                 "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e"),
             Bytes32.fromHexString(
@@ -56,6 +56,6 @@ public class DepositParameterTest {
                 "0xa889db8300194050a2636c92a95bc7160515867614b7971a9500cdb62f9c0890217d2901c3241f86fac029428fc106930606154bd9e406d7588934a5f15b837180b17194d6e44bd6de23e43b163dfe12e369dcc75a3852cd997963f158217eb5"),
             UInt64.ONE);
 
-    assertThat(DepositParameter.fromDeposit(deposit)).isEqualTo(DEPOSIT_PARAM_1);
+    assertThat(DepositRequestParameter.fromDeposit(depositRequest)).isEqualTo(DEPOSIT_PARAM_1);
   }
 }

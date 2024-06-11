@@ -84,7 +84,13 @@ public class AccountLocalConfigPermissioningController implements TransactionPer
   private void readAccountsFromConfig(final LocalPermissioningConfiguration configuration) {
     if (configuration != null && configuration.isAccountAllowlistEnabled()) {
       if (!configuration.getAccountAllowlist().isEmpty()) {
-        addAccounts(configuration.getAccountAllowlist());
+        AllowlistOperationResult result = addAccounts(configuration.getAccountAllowlist());
+        if (result != AllowlistOperationResult.SUCCESS) {
+          throw new IllegalStateException(
+              String.format(
+                  "Error reloading permissions file. Invalid accounts allowlist, validation failed due to \"%s\"",
+                  result));
+        }
       }
     }
   }

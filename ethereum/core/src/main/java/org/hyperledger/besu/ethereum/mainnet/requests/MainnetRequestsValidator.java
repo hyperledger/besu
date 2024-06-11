@@ -22,7 +22,7 @@ public class MainnetRequestsValidator {
       final Address depositContractAddress) {
     return new RequestsValidatorCoordinator.Builder()
         .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
-        .addValidator(RequestType.DEPOSIT, new DepositsValidator(depositContractAddress))
+        .addValidator(RequestType.DEPOSIT, new DepositRequestValidator(depositContractAddress))
         .build();
   }
 
