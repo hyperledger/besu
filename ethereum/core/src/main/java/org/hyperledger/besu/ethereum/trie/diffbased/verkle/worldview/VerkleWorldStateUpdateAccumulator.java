@@ -25,11 +25,13 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWo
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class VerkleWorldStateUpdateAccumulator
@@ -39,8 +41,9 @@ public class VerkleWorldStateUpdateAccumulator
       final DiffBasedWorldView world,
       final Consumer<DiffBasedValue<VerkleAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
+      final Consumer<Bytes> codePreloader,
       final EvmConfiguration evmConfiguration) {
-    super(world, accountPreloader, storagePreloader, evmConfiguration);
+    super(world, accountPreloader, storagePreloader, codePreloader, evmConfiguration);
   }
 
   @Override
@@ -50,6 +53,7 @@ public class VerkleWorldStateUpdateAccumulator
             wrappedWorldView(),
             getAccountPreloader(),
             getStoragePreloader(),
+            getCodePreloader(),
             getEvmConfiguration());
     copy.cloneFromUpdater(this);
     return copy;
@@ -107,6 +111,16 @@ public class VerkleWorldStateUpdateAccumulator
       final Address address,
       final StorageSlotKey storageSlotKey) {
     return worldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
+  }
+
+  @Override
+  public MutableAccount getAccount(final Address address) {
+    return super.getAccount(address);
+  }
+
+  @Override
+  public Optional<Bytes> getCode(final Address address, final Hash codeHash) {
+    return super.getCode(address, codeHash);
   }
 
   @Override
