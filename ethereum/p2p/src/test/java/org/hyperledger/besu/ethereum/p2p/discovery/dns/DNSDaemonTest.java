@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.p2p.discovery.dns;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import java.io.IOException;
 import java.security.Security;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -38,12 +37,11 @@ import org.junit.jupiter.api.extension.ExtendWith;
 class DNSDaemonTest {
   private static final String holeskyEnr =
       "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.holesky.ethdisco.net";
-  // private static MockDNSServer mockDNSServer;
   private final MockDnsServerVerticle mockDnsServerVerticle = new MockDnsServerVerticle();
   private DNSDaemon dnsDaemon;
 
   @BeforeAll
-  static void setup() throws IOException {
+  static void setup() {
     Security.addProvider(new BouncyCastleProvider());
   }
 
@@ -68,7 +66,9 @@ class DNSDaemonTest {
             "localhost:" + mockDnsServerVerticle.port());
 
     final DeploymentOptions options =
-        new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER).setWorkerPoolSize(1);
+        new DeploymentOptions()
+            .setThreadingModel(ThreadingModel.VIRTUAL_THREAD)
+            .setWorkerPoolSize(1);
     vertx.deployVerticle(dnsDaemon, options);
   }
 
@@ -109,7 +109,9 @@ class DNSDaemonTest {
             "localhost:" + mockDnsServerVerticle.port());
 
     final DeploymentOptions options =
-        new DeploymentOptions().setThreadingModel(ThreadingModel.WORKER).setWorkerPoolSize(1);
+        new DeploymentOptions()
+            .setThreadingModel(ThreadingModel.VIRTUAL_THREAD)
+            .setWorkerPoolSize(1);
     vertx.deployVerticle(dnsDaemon, options);
   }
 
