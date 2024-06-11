@@ -150,7 +150,7 @@ public class ProposalPayloadValidator {
 
     final var validationResult =
         blockValidator.validateAndProcessBlock(
-            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL);
+            protocolContext, block, HeaderValidationMode.LIGHT, HeaderValidationMode.FULL, false);
 
     if (!validationResult.isSuccessful()) {
       LOG.info(
