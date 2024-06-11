@@ -617,6 +617,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
       var underByteLimit =
           byteLimit.accumulateAndGet(0, (cur, __) -> cur + encodingSizeAccumulator.apply(pair))
               < maxResponseBytesFudgeFactor;
+      // Only enforce limits when we have at least 1 record as the spec requires we return at least 1 record
       if (hasNoRecords || (underRecordLimit && underByteLimit)) {
         return true;
       } else {
