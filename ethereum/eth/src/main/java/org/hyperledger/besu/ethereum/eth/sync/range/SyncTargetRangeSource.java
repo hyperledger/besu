@@ -185,7 +185,9 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       return null;
     } catch (final ExecutionException | TimeoutException e) {
       LOG.debug("Failed to retrieve new range headers: ", e);
-      this.pendingRequests = Optional.empty();
+      if (e instanceof ExecutionException) {
+        this.pendingRequests = Optional.empty();
+      }
       retryCount++;
       if (retryCount >= retriesPermitted) {
         LOG.atDebug()
