@@ -59,6 +59,8 @@ public class MainnetTransactionProcessor {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetTransactionProcessor.class);
 
+  private static final Set<Address> EMPTY_ADDRESS_SET = Set.of();
+
   protected final GasCalculator gasCalculator;
 
   protected final TransactionValidatorFactory transactionValidatorFactory;
@@ -451,15 +453,6 @@ public class MainnetTransactionProcessor {
           .log();
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
-      operationTracer.traceEndTransaction(
-          worldUpdater,
-          transaction,
-          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
-          initialFrame.getOutputData(),
-          initialFrame.getLogs(),
-          gasUsedByTransaction,
-          0L);
-
       // update the coinbase
       final var coinbase = worldState.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
@@ -484,6 +477,16 @@ public class MainnetTransactionProcessor {
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       coinbase.incrementBalance(coinbaseWeiDelta);
+
+      operationTracer.traceEndTransaction(
+          worldUpdater,
+          transaction,
+          initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS,
+          initialFrame.getOutputData(),
+          initialFrame.getLogs(),
+          gasUsedByTransaction,
+          initialFrame.getSelfDestructs(),
+          0L);
 
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
@@ -516,13 +519,27 @@ public class MainnetTransactionProcessor {
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(
-          worldState.updater(), transaction, false, Bytes.EMPTY, List.of(), 0, 0L);
+          worldState.updater(),
+          transaction,
+          false,
+          Bytes.EMPTY,
+          List.of(),
+          0,
+          EMPTY_ADDRESS_SET,
+          0L);
 
       // need to throw to trigger the heal
       throw re;
     } catch (final RuntimeException re) {
       operationTracer.traceEndTransaction(
-          worldState.updater(), transaction, false, Bytes.EMPTY, List.of(), 0, 0L);
+          worldState.updater(),
+          transaction,
+          false,
+          Bytes.EMPTY,
+          List.of(),
+          0,
+          EMPTY_ADDRESS_SET,
+          0L);
 
       LOG.error("Critical Exception Processing Transaction", re);
       return TransactionProcessingResult.invalid(
