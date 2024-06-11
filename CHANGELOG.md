@@ -1,6 +1,6 @@
 # Changelog
 
-## Next Release
+## 24.6.0
 
 ### Breaking Changes
 - Java 21 has been enforced as minimum version to build and run Besu.
@@ -13,6 +13,7 @@
 - PKI-backed QBFT will be removed in a future version of Besu. Other forms of QBFT will remain unchanged.
 - --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
 - --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
+- Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
 
 ### Additions and Improvements
 - Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)
@@ -21,10 +22,10 @@
 - Promote experimental --Xbonsai-trie-logs-pruning-window-size to production-ready, --bonsai-trie-logs-pruning-window-size [#7192](https://github.com/hyperledger/besu/pull/7192)
 - `admin_nodeInfo` JSON/RPC call returns the currently active EVM version [#7127](https://github.com/hyperledger/besu/pull/7127)
 - Improve the selection of the most profitable built block [#7174](https://github.com/hyperledger/besu/pull/7174)
-
+- Support for eth_maxPriorityFeePerGas [#5658](https://github.com/hyperledger/besu/issues/5658)
 ### Bug fixes
 - Make `eth_gasPrice` aware of the base fee market [#7102](https://github.com/hyperledger/besu/pull/7102)
-
+- Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)
 ## 24.5.2
 
 ### Upcoming Breaking Changes
