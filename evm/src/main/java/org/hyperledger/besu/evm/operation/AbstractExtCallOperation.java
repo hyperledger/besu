@@ -39,8 +39,13 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
 
   static final int STACK_TO = 0;
 
+  /** EXT*CALL response indicating success */
   public static final Bytes EOF1_SUCCESS_STACK_ITEM = Bytes.EMPTY;
+
+  /** EXT*CALL response indicating a "soft failure" */
   public static final Bytes EOF1_EXCEPTION_STACK_ITEM = BYTES_ONE;
+
+  /** EXT*CALL response indicating a hard failure, such as a REVERT was called */
   public static final Bytes EOF1_FAILURE_STACK_ITEM = Bytes.of(2);
 
   /**
