@@ -1,6 +1,6 @@
 # Changelog
 
-## Next Release
+## 24.6.0
 
 ### Breaking Changes
 - Java 21 has been enforced as minimum version to build and run Besu.
@@ -13,6 +13,7 @@
 - PKI-backed QBFT will be removed in a future version of Besu. Other forms of QBFT will remain unchanged.
 - --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
 - --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
+- Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
 
 ### Additions and Improvements
 - Add two counters to DefaultBlockchain in order to be able to calculate TPS and Mgas/s [#7105](https://github.com/hyperledger/besu/pull/7105)
