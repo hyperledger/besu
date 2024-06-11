@@ -150,10 +150,6 @@ public class TrieKeyPreloader {
           hasher.manyTrieKeyHashes(address, new ArrayList<>(offsetsToGenerate));
       trieKeyHashes.putAll(cachedTrieKeys);
 
-      trieKeyHashes.forEach(
-          (bytes32, bytes322) -> {
-            System.out.println(bytes32 + " " + bytes322);
-          });
       return trieKeyHashes;
 
     } else {
