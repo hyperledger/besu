@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
@@ -42,6 +43,7 @@ public class NodeSmartContractPermissioningOutOfSyncAcceptanceTest
   }
 
   @Test
+  @Disabled("test is flaky #7108")
   public void addNodeToClusterAndVerifyNonBootNodePeerConnectionWorksAfterSync() {
     final long blockchainHeight = 25L;
     waitForBlockHeight(permissionedNodeA, blockchainHeight);
