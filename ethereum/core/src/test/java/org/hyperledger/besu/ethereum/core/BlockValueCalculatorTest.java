@@ -41,8 +41,8 @@ public class BlockValueCalculatorTest {
     final Block block =
         new Block(blockHeader, new BlockBody(Collections.emptyList(), Collections.emptyList()));
     Wei blockValue =
-        new BlockValueCalculator()
-            .calculateBlockValue(new BlockWithReceipts(block, Collections.emptyList()));
+        BlockValueCalculator.calculateBlockValue(
+            new BlockWithReceipts(block, Collections.emptyList()));
     assertThat(blockValue).isEqualTo(Wei.ZERO);
   }
 
@@ -85,9 +85,8 @@ public class BlockValueCalculatorTest {
     final Block block =
         new Block(blockHeader, new BlockBody(List.of(tx1, tx2, tx3), Collections.emptyList()));
     Wei blockValue =
-        new BlockValueCalculator()
-            .calculateBlockValue(
-                new BlockWithReceipts(block, List.of(receipt1, receipt2, receipt3)));
+        BlockValueCalculator.calculateBlockValue(
+            new BlockWithReceipts(block, List.of(receipt1, receipt2, receipt3)));
     // Block value = 71 * 1 + (143-71) * 2 + (214-143) * 5 = 1427
     assertThat(blockValue).isEqualTo(Wei.of(570L));
   }
@@ -114,8 +113,7 @@ public class BlockValueCalculatorTest {
     final Block block =
         new Block(blockHeader, new BlockBody(List.of(tx1), Collections.emptyList()));
     Wei blockValue =
-        new BlockValueCalculator()
-            .calculateBlockValue(new BlockWithReceipts(block, List.of(receipt1)));
+        BlockValueCalculator.calculateBlockValue(new BlockWithReceipts(block, List.of(receipt1)));
     // Block value =~ max_long * 2
     assertThat(blockValue).isGreaterThan(Wei.of(Long.MAX_VALUE));
   }

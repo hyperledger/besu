@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.PoWHasher;
@@ -189,7 +190,12 @@ public class EthGetTransactionReceiptTest {
   private final Blockchain blockchain = mock(Blockchain.class);
 
   private final BlockchainQueries blockchainQueries =
-      spy(new BlockchainQueries(blockchain, mock(WorldStateArchive.class)));
+      spy(
+          new BlockchainQueries(
+              protocolSchedule,
+              blockchain,
+              mock(WorldStateArchive.class),
+              MiningParameters.newDefault()));
   private final EthGetTransactionReceipt ethGetTransactionReceipt =
       new EthGetTransactionReceipt(blockchainQueries, protocolSchedule);
   private final String receiptString =

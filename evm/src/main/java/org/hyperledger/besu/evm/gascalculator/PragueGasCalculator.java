@@ -32,8 +32,8 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
  * </UL>
  */
 public class PragueGasCalculator extends CancunGasCalculator {
-  private final int AUTH_OP_FIXED_FEE = 3100;
-  private final long AUTH_CALL_VALUE_TRANSFER_GAS_COST = 6700;
+  private static final int AUTH_OP_FIXED_FEE = 3100;
+  private static final long AUTH_CALL_VALUE_TRANSFER_GAS_COST = 6700;
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {

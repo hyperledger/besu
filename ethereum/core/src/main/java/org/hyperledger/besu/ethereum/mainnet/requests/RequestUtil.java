@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -40,14 +42,32 @@ public class RequestUtil {
     return requests.stream().filter(requestType::isInstance).map(requestType::cast).toList();
   }
 
+  public static Optional<List<DepositRequest>> getDepositRequests(
+      final Optional<List<Request>> requests) {
+    return requests.map(r -> filterRequestsOfType(r, DepositRequest.class));
+  }
+
+  public static Optional<List<WithdrawalRequest>> getWithdrawalRequests(
+      final Optional<List<Request>> requests) {
+    return requests.map(r -> filterRequestsOfType(r, WithdrawalRequest.class));
+  }
+
+  /**
+   * Combines two optional lists of requests into a single optional list.
+   *
+   * @param maybeDepositRequests Optional list of deposit requests.
+   * @param maybeWithdrawalRequest Optional list of withdrawal requests.
+   * @return An Optional containing the combined list of requests, or an empty Optional if both
+   *     inputs are empty.
+   */
   public static Optional<List<Request>> combine(
-      final Optional<List<Request>> maybeDeposits,
+      final Optional<List<Request>> maybeDepositRequests,
       final Optional<List<Request>> maybeWithdrawalRequest) {
-    if (maybeDeposits.isEmpty() && maybeWithdrawalRequest.isEmpty()) {
+    if (maybeDepositRequests.isEmpty() && maybeWithdrawalRequest.isEmpty()) {
       return Optional.empty();
     }
     List<Request> requests = new ArrayList<>();
-    maybeDeposits.ifPresent(requests::addAll);
+    maybeDepositRequests.ifPresent(requests::addAll);
     maybeWithdrawalRequest.ifPresent(requests::addAll);
     return Optional.of(requests);
   }

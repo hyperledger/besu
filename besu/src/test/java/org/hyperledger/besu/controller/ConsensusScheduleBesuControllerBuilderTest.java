@@ -30,7 +30,6 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordina
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -68,7 +67,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
   private @Mock ProtocolSchedule protocolSchedule1;
   private @Mock ProtocolSchedule protocolSchedule2;
   private @Mock ProtocolSchedule protocolSchedule3;
-  private @Mock NoopMiningCoordinator miningCoordinator1;
+  private @Mock MiningCoordinator miningCoordinator1;
   private @Mock BftMiningCoordinator miningCoordinator2;
 
   @Test

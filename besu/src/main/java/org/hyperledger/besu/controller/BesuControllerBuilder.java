@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -552,29 +553,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
-    final GenesisState genesisState;
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
-
-    Optional<Hash> genesisStateHash = Optional.empty();
-    if (variablesStorage != null && this.genesisStateHashCacheEnabled) {
-      genesisStateHash = variablesStorage.getGenesisStateHash();
-    }
-
-    if (genesisStateHash.isPresent()) {
-      genesisState =
-          GenesisState.fromConfig(genesisStateHash.get(), genesisConfigFile, protocolSchedule);
-    } else {
-      genesisState =
-          GenesisState.fromConfig(dataStorageConfiguration, genesisConfigFile, protocolSchedule);
-      if (variablesStorage != null) {
-        VariablesStorage.Updater updater = variablesStorage.updater();
-        if (updater != null) {
-          updater.setGenesisStateHash(genesisState.getBlock().getHeader().getStateRoot());
-          updater.commit();
-        }
-      }
-    }
 
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration);
@@ -582,6 +562,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(
             protocolSchedule, variablesStorage, dataStorageConfiguration);
+
+    final var maybeStoredGenesisBlockHash = blockchainStorage.getBlockHash(0L);
+
+    final var genesisState =
+        getGenesisState(
+            maybeStoredGenesisBlockHash.flatMap(blockchainStorage::getBlockHeader),
+            protocolSchedule);
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -591,7 +578,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString(),
             numberOfBlocksToCache);
-
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
@@ -601,7 +587,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createWorldStateArchive(
             worldStateStorageCoordinator, blockchain, bonsaiCachedMerkleTrieLoader);
 
-    if (blockchain.getChainHeadBlockNumber() < 1) {
+    if (maybeStoredGenesisBlockHash.isEmpty()) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
     }
 
@@ -609,16 +595,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createProtocolContext(
             blockchain, worldStateArchive, protocolSchedule, this::createConsensusContext);
     validateContext(protocolContext);
-
-    if (chainPrunerConfiguration.getChainPruningEnabled()) {
-      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
-      blockchain.observeBlockAdded(chainDataPruner);
-      LOG.info(
-          "Chain data pruning enabled with recent blocks retained to be: "
-              + chainPrunerConfiguration.getChainPruningBlocksRetained()
-              + " and frequency to be: "
-              + chainPrunerConfiguration.getChainPruningBlocksFrequency());
-    }
 
     protocolSchedule.setPublicWorldStateArchiveForPrivacyBlockProcessor(
         protocolContext.getWorldStateArchive());
@@ -667,6 +643,16 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final EthContext ethContext = new EthContext(ethPeers, ethMessages, snapMessages, scheduler);
     final boolean fullSyncDisabled = !SyncMode.isFullSync(syncConfig.getSyncMode());
     final SyncState syncState = new SyncState(blockchain, ethPeers, fullSyncDisabled, checkpoint);
+
+    if (chainPrunerConfiguration.getChainPruningEnabled()) {
+      final ChainDataPruner chainDataPruner = createChainPruner(blockchainStorage);
+      blockchain.observeBlockAdded(chainDataPruner);
+      LOG.info(
+          "Chain data pruning enabled with recent blocks retained to be: "
+              + chainPrunerConfiguration.getChainPruningBlocksRetained()
+              + " and frequency to be: "
+              + chainPrunerConfiguration.getChainPruningBlocksFrequency());
+    }
 
     final TransactionPool transactionPool =
         TransactionPoolFactory.createTransactionPool(
@@ -731,9 +717,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createSubProtocolConfiguration(ethProtocolManager, maybeSnapProtocolManager);
 
     final JsonRpcMethods additionalJsonRpcMethodFactory =
-        createAdditionalJsonRpcMethodFactory(protocolContext);
+        createAdditionalJsonRpcMethodFactory(protocolContext, protocolSchedule, miningParameters);
 
-    if (dataStorageConfiguration.getUnstable().getBonsaiLimitTrieLogsEnabled()
+    if (dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())) {
       final TrieLogManager trieLogManager =
           ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager();
@@ -772,6 +758,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         dataStorageConfiguration);
   }
 
+  private GenesisState getGenesisState(
+      final Optional<BlockHeader> maybeGenesisBlockHeader,
+      final ProtocolSchedule protocolSchedule) {
+    final Optional<Hash> maybeGenesisStateRoot =
+        genesisStateHashCacheEnabled
+            ? maybeGenesisBlockHeader.map(BlockHeader::getStateRoot)
+            : Optional.empty();
+
+    return maybeGenesisStateRoot
+        .map(
+            genesisStateRoot ->
+                GenesisState.fromStorage(genesisStateRoot, genesisConfigFile, protocolSchedule))
+        .orElseGet(
+            () ->
+                GenesisState.fromConfig(
+                    dataStorageConfiguration, genesisConfigFile, protocolSchedule));
+  }
+
   private TrieLogPruner createTrieLogPruner(
       final WorldStateKeyValueStorage worldStateStorage,
       final Blockchain blockchain,
@@ -784,7 +788,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             blockchain,
             scheduler::executeServiceTask,
             dataStorageConfiguration.getBonsaiMaxLayersToLoad(),
-            dataStorageConfiguration.getUnstable().getBonsaiTrieLogPruningWindowSize(),
+            dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize(),
             isProofOfStake);
     trieLogPruner.initialize();
 
@@ -884,10 +888,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * Create additional json rpc method factory json rpc methods.
    *
    * @param protocolContext the protocol context
+   * @param protocolSchedule the protocol schedule
+   * @param miningParameters the mining parameters
    * @return the json rpc methods
    */
   protected JsonRpcMethods createAdditionalJsonRpcMethodFactory(
-      final ProtocolContext protocolContext) {
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final MiningParameters miningParameters) {
     return apis -> Collections.emptyMap();
   }
 

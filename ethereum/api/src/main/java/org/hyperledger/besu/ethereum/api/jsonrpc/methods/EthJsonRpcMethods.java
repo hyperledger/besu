@@ -52,6 +52,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleCou
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetUncleCountByBlockNumber;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthGetWork;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthHashrate;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthMaxPriorityFeePerGas;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthMining;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewBlockFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.EthNewFilter;
@@ -175,7 +176,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthMining(miningCoordinator),
         new EthCoinbase(miningCoordinator),
         new EthProtocolVersion(supportedCapabilities),
-        new EthGasPrice(blockchainQueries, miningCoordinator, apiConfiguration),
+        new EthGasPrice(blockchainQueries, apiConfiguration),
         new EthGetWork(miningCoordinator),
         new EthSubmitWork(miningCoordinator),
         new EthHashrate(miningCoordinator),
@@ -183,6 +184,7 @@ public class EthJsonRpcMethods extends ApiGroupJsonRpcMethods {
         new EthChainId(protocolSchedule.getChainId()),
         new EthGetMinerDataByBlockHash(blockchainQueries, protocolSchedule),
         new EthGetMinerDataByBlockNumber(blockchainQueries, protocolSchedule),
-        new EthBlobBaseFee(blockchainQueries.getBlockchain(), protocolSchedule));
+        new EthBlobBaseFee(blockchainQueries.getBlockchain(), protocolSchedule),
+        new EthMaxPriorityFeePerGas(blockchainQueries, miningCoordinator));
   }
 }

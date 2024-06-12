@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api;
 
-import java.util.function.LongSupplier;
+import org.hyperledger.besu.datatypes.Wei;
 
 import org.immutables.value.Value;
 
@@ -36,14 +36,8 @@ public abstract class ApiConfiguration {
   }
 
   @Value.Default
-  @Value.Auxiliary
-  public LongSupplier getGasPriceMinSupplier() {
-    return () -> 1_000_000_000L; // 1 GWei
-  }
-
-  @Value.Default
-  public long getGasPriceMax() {
-    return 500_000_000_000L; // 500 GWei
+  public Wei getGasPriceMax() {
+    return Wei.of(500_000_000_000L); // 500 GWei
   }
 
   @Value.Derived

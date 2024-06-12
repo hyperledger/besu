@@ -6,7 +6,7 @@ orbs:
 executors:
   besu_executor_med: # 2cpu, 4G ram
     docker:
-      - image: cimg/openjdk:17.0
+      - image: cimg/openjdk:21.0
     resource_class: medium
     working_directory: ~/project
     environment:
@@ -24,7 +24,7 @@ executors:
 
   besu_executor_xl: # 8cpu, 16G ram
     docker:
-      - image: cimg/openjdk:17.0
+      - image: cimg/openjdk:21.0
     resource_class: xlarge
     working_directory: ~/project
     environment:

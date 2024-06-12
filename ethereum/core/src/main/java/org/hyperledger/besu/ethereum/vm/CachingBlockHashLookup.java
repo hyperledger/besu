@@ -15,13 +15,12 @@
 package org.hyperledger.besu.ethereum.vm;
 
 import static org.hyperledger.besu.datatypes.Hash.ZERO;
-import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
-import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -38,31 +37,17 @@ public class CachingBlockHashLookup implements BlockHashLookup {
 
   private ProcessableBlockHeader searchStartHeader;
   private final Blockchain blockchain;
-  private final long maxLookback;
-
   private final Map<Long, Hash> hashByNumber = new HashMap<>();
 
   public CachingBlockHashLookup(
       final ProcessableBlockHeader currentBlock, final Blockchain blockchain) {
-    this(currentBlock, blockchain, BlockHashOperation.MAX_RELATIVE_BLOCK);
-  }
-
-  public CachingBlockHashLookup(
-      final ProcessableBlockHeader currentBlock,
-      final Blockchain blockchain,
-      final int maxLookback) {
     this.searchStartHeader = currentBlock;
     this.blockchain = blockchain;
-    this.maxLookback = maxLookback;
     hashByNumber.put(currentBlock.getNumber() - 1, currentBlock.getParentHash());
   }
 
   @Override
-  public Hash apply(final MessageFrame frame, final Long blockNumber) {
-    long currentBlockNumber = frame.getBlockValues().getNumber();
-    if (currentBlockNumber <= blockNumber || currentBlockNumber - blockNumber > maxLookback) {
-      return Hash.ZERO;
-    }
+  public Hash apply(final Long blockNumber) {
     final Hash cachedHash = hashByNumber.get(blockNumber);
     if (cachedHash != null) {
       return cachedHash;
