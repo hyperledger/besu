@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -23,6 +24,7 @@ import org.hyperledger.besu.evm.worldstate.WorldView;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -92,6 +94,7 @@ public interface OperationTracer {
    * @param output the bytes output from the transaction
    * @param logs the logs emitted by this transaction
    * @param gasUsed the gas used by the entire transaction
+   * @param selfDestructs the set of addresses that self-destructed during the transaction
    * @param timeNs the time in nanoseconds it took to execute the transaction
    */
   default void traceEndTransaction(
@@ -101,6 +104,7 @@ public interface OperationTracer {
       final Bytes output,
       final List<Log> logs,
       final long gasUsed,
+      final Set<Address> selfDestructs,
       final long timeNs) {}
 
   /**

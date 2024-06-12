@@ -69,6 +69,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
@@ -85,6 +86,8 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class T8nExecutor {
+
+  private static final Set<Address> EMPTY_ADDRESS_SET = Set.of();
 
   public record RejectedTransaction(int index, String error) {}
 
@@ -349,6 +352,7 @@ public class T8nExecutor {
           result.getOutput(),
           result.getLogs(),
           gasUsed - intrinsicGas,
+          EMPTY_ADDRESS_SET,
           timer.elapsed(TimeUnit.NANOSECONDS));
       Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);
       receipts.add(receipt);

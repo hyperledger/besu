@@ -48,9 +48,7 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
   @Override
   public void before() {
     super.before();
-    lenient()
-        .when(mergeContext.retrieveBlockById(mockPid))
-        .thenReturn(Optional.of(mockBlockWithReceipts));
+    lenient().when(mergeContext.retrievePayloadById(mockPid)).thenReturn(Optional.of(mockPayload));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
         new EngineGetPayloadV2(
@@ -72,8 +70,8 @@ public class EngineGetPayloadV2Test extends AbstractEngineGetPayloadTest {
   @Test
   public void shouldReturnBlockForKnownPayloadId() {
     // should return withdrawals for a post-Shanghai block
-    when(mergeContext.retrieveBlockById(mockPid))
-        .thenReturn(Optional.of(mockBlockWithReceiptsAndWithdrawals));
+    when(mergeContext.retrievePayloadById(mockPid))
+        .thenReturn(Optional.of(mockPayloadWithWithdrawals));
 
     final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V2.getMethodName(), mockPid);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);

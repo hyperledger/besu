@@ -88,7 +88,6 @@ public class DNSDaemon extends AbstractVerticle {
   public void stop() {
     LOG.info("Stopping DNSDaemon for {}", enrLink);
     periodicTaskId.ifPresent(vertx::cancelTimer);
-    dnsResolver.close();
   }
 
   /**

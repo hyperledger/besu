@@ -1087,8 +1087,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void syncMode_full() {
-    parseCommand("--sync-mode", "FULL");
+  public void syncMode_full_requires_bonsaiLimitTrieLogsToBeDisabled() {
+    parseCommand("--sync-mode", "FULL", "--bonsai-limit-trie-logs-enabled=false");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
@@ -1266,8 +1266,37 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesValidBonsaiTrieLimitBackLayersOption() {
-    parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "11");
+  public void bonsaiLimitTrieLogsEnabledByDefault() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isTrue();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidDefaultBonsaiLimitTrieLogsWhenFullSyncEnabled() {
+    parseCommand("--sync-mode=FULL");
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Cannot enable --bonsai-limit-trie-logs-enabled with sync-mode FULL");
+  }
+
+  @Test
+  public void parsesValidBonsaiHistoricalBlockLimitOption() {
+    parseCommand(
+        "--bonsai-limit-trie-logs-enabled=false",
+        "--data-storage-format",
+        "BONSAI",
+        "--bonsai-historical-block-limit",
+        "11");
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
 
@@ -1280,7 +1309,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesInvalidBonsaiTrieLimitBackLayersOption() {
+  public void parsesInvalidBonsaiHistoricalBlockLimitOption() {
 
     parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "ten");
 
