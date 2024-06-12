@@ -1,8 +1,11 @@
 # Changelog
 
-## Next Release
+## 24.5.3
 
-### Breaking Changes
+### Bug fixes
+- Rectify build from source failure with updated 0.8.4 artifacts from besu-native [#7210](https://github.com/hyperledger/besu/pull/7210) 
+
+## 24.5.2
 
 ### Additions and Improvements
 - Remove deprecated Goerli testnet [#7049](https://github.com/hyperledger/besu/pull/7049)
