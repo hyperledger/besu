@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.verkle;
+package org.hyperledger.besu.ethereum.core.witness;
 
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 

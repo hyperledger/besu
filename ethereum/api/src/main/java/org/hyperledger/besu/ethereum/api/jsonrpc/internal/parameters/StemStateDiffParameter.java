@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
-import org.hyperledger.besu.ethereum.trie.verkle.StemStateDiff;
+import org.hyperledger.besu.ethereum.core.witness.StemStateDiff;
 
 import java.util.ArrayList;
 import java.util.List;

@@ -12,34 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.verkle;
+package org.hyperledger.besu.ethereum.core.witness;
 
-import java.util.List;
-
-import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-// TODO Maybe create a Bytes31 in Tuweni for stems?
-public record VerkleProof(
-    List<Bytes> otherStems,
-    Bytes depthExtensionPresent,
-    List<Bytes32> commitmentsByPath,
-    Bytes32 d,
-    IPAProof ipaProof) {
+public record SuffixStateDiff(byte suffix, Bytes32 currentValue, Bytes32 newValue) {
 
   @Override
   public String toString() {
-    return "VerkleProof{"
-        + "otherStems="
-        + otherStems
-        + ", depthExtensionPresent="
-        + depthExtensionPresent
-        + ", commitmentsByPath="
-        + commitmentsByPath
-        + ", d="
-        + d
-        + ", ipaProof="
-        + ipaProof
-        + '}';
+    return "SuffixStateDiff{"
+        + "suffix="
+        + suffix
+        + ", currentValue="
+        + currentValue
+        + ", new Value ="
+        + newValue;
   }
 }

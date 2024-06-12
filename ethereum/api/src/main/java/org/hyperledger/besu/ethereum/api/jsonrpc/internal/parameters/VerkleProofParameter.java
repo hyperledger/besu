@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
-import org.hyperledger.besu.ethereum.trie.verkle.VerkleProof;
+import org.hyperledger.besu.ethereum.core.witness.VerkleProof;
 
 import java.util.List;
 
@@ -51,7 +51,7 @@ public class VerkleProofParameter {
   }
 
   public static VerkleProofParameter fromVerkleProof(
-      final org.hyperledger.besu.ethereum.trie.verkle.VerkleProof verkleProof) {
+      final VerkleProof verkleProof) {
     return new VerkleProofParameter(
         verkleProof.otherStems().stream().map(Bytes::toHexString).toList(),
         verkleProof.depthExtensionPresent(),

@@ -12,20 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.verkle;
+package org.hyperledger.besu.ethereum.core.witness;
 
-import org.apache.tuweni.bytes.Bytes32;
+import java.util.List;
 
-public record SuffixStateDiff(byte suffix, Bytes32 currentValue, Bytes32 newValue) {
+import org.apache.tuweni.bytes.Bytes;
+
+public record StemStateDiff(Bytes stem, List<SuffixStateDiff> suffixDiffs) {
 
   @Override
   public String toString() {
-    return "SuffixStateDiff{"
-        + "suffix="
-        + suffix
-        + ", currentValue="
-        + currentValue
-        + ", new Value ="
-        + newValue;
+    return "StemStateDiff{" + "stem=" + stem + ", suffixDiffs=" + suffixDiffs + '}';
   }
 }
