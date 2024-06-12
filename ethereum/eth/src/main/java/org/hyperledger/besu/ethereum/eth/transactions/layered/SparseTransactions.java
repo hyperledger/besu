@@ -328,7 +328,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
    * @return a list of sender pending txs
    */
   @Override
-  public synchronized List<SenderPendingTransactions> getBySender() {
+  public List<SenderPendingTransactions> getBySender() {
     final var sendersToAdd = new HashSet<>(txsBySender.keySet());
     return sparseEvictionOrder.descendingSet().stream()
         .map(PendingTransaction::getSender)

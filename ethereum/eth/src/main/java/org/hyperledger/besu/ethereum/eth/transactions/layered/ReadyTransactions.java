@@ -146,7 +146,7 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
    * @return a list of sender pending txs
    */
   @Override
-  public synchronized List<SenderPendingTransactions> getBySender() {
+  public List<SenderPendingTransactions> getBySender() {
     return orderByMaxFee.descendingSet().stream()
         .map(PendingTransaction::getSender)
         .map(
