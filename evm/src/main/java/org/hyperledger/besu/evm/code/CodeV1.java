@@ -18,12 +18,17 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.internal.Words;
 
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.MutableBytes;
 
 /** The CodeV1. */
 public class CodeV1 implements Code {
@@ -34,16 +39,16 @@ public class CodeV1 implements Code {
   /**
    * Instantiates a new CodeV1.
    *
-   * @param layout the layout
+   * @param eofLayout the layout
    */
-  CodeV1(final EOFLayout layout) {
-    this.eofLayout = layout;
-    this.codeHash = Suppliers.memoize(() -> Hash.hash(eofLayout.getContainer()));
+  CodeV1(final EOFLayout eofLayout) {
+    this.eofLayout = eofLayout;
+    this.codeHash = Suppliers.memoize(() -> Hash.hash(eofLayout.container()));
   }
 
   @Override
   public int getSize() {
-    return eofLayout.getContainer().size();
+    return eofLayout.container().size();
   }
 
   @Override
@@ -60,7 +65,7 @@ public class CodeV1 implements Code {
 
   @Override
   public Bytes getBytes() {
-    return eofLayout.getContainer();
+    return eofLayout.container();
   }
 
   @Override
@@ -80,7 +85,35 @@ public class CodeV1 implements Code {
 
   @Override
   public int getEofVersion() {
-    return eofLayout.getVersion();
+    return eofLayout.version();
+  }
+
+  @Override
+  public int getSubcontainerCount() {
+    return eofLayout.getSubcontainerCount();
+  }
+
+  @Override
+  public Optional<Code> getSubContainer(final int index, final Bytes auxData) {
+    EOFLayout subcontainerLayout = eofLayout.getSubcontainer(index);
+    if (auxData != null && !auxData.isEmpty()) {
+      Bytes subcontainerWithAuxData = subcontainerLayout.writeContainer(auxData);
+      if (subcontainerWithAuxData == null) {
+        return Optional.empty();
+      }
+      subcontainerLayout = EOFLayout.parseEOF(subcontainerWithAuxData);
+    } else {
+      // if no auxdata is added we must validate data is not truncated separately
+      if (subcontainerLayout.dataLength() != subcontainerLayout.data().size()) {
+        return Optional.empty();
+      }
+    }
+
+    Code subContainerCode = CodeFactory.createCode(subcontainerLayout, auxData == null);
+
+    return subContainerCode.isValid() && subContainerCode.getEofVersion() > 0
+        ? Optional.of(subContainerCode)
+        : Optional.empty();
   }
 
   @Override
@@ -94,5 +127,57 @@ public class CodeV1 implements Code {
   @Override
   public int hashCode() {
     return Objects.hash(codeHash, eofLayout);
+  }
+
+  @Override
+  public Bytes getData(final int offset, final int length) {
+    Bytes data = eofLayout.data();
+    int dataLen = data.size();
+    if (offset > dataLen) {
+      return Bytes.EMPTY;
+    } else if ((offset + length) > dataLen) {
+      byte[] result = new byte[length];
+      MutableBytes mbytes = MutableBytes.wrap(result);
+      data.slice(offset).copyTo(mbytes, 0);
+      return Bytes.wrap(result);
+    } else {
+      return data.slice(offset, length);
+    }
+  }
+
+  @Override
+  public int getDataSize() {
+    return eofLayout.data().size();
+  }
+
+  @Override
+  public int readBigEndianI16(final int index) {
+    return Words.readBigEndianI16(index, eofLayout.container().toArrayUnsafe());
+  }
+
+  @Override
+  public int readBigEndianU16(final int index) {
+    return Words.readBigEndianU16(index, eofLayout.container().toArrayUnsafe());
+  }
+
+  @Override
+  public int readU8(final int index) {
+    return eofLayout.container().toArrayUnsafe()[index] & 0xff;
+  }
+
+  @Override
+  public String prettyPrint() {
+    StringWriter sw = new StringWriter();
+    eofLayout.prettyPrint(new PrintWriter(sw, true), "", "");
+    return sw.toString();
+  }
+
+  /**
+   * The EOFLayout object for the code
+   *
+   * @return the EOFLayout object for the parsed code
+   */
+  public EOFLayout getEofLayout() {
+    return eofLayout;
   }
 }

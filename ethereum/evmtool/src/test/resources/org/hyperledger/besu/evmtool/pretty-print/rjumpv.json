@@ -1,0 +1,8 @@
+{
+  "cli": [
+    "pretty-print",
+    "0xEF0001010004020001001304000000008000026000e20200030000fff65b5b00600160015500"
+  ],
+  "stdin": "",
+  "stdout": "0x # EOF\nef0001 # Magic and Version ( 1 )\n010004 # Types length ( 4 )\n020001 # Total code sections ( 1 )\n  0013 # Code section 0 , 19 bytes\n040000 # Data section length(  0 )\n    00 # Terminator (end of header)\n       # Code section 0 types\n    00 # 0 inputs \n    80 # 0 outputs  (Non-returning function)\n  0002 # max stack:  2\n       # Code section 0 - in=0 out=non-returning height=2\n  6000 # [0] PUSH1(0)\ne20200030000fff6 # [2] RJUMPV(3,0,-10)\n    5b # [10] NOOP\n    5b # [11] NOOP\n    00 # [12] STOP\n  6001 # [13] PUSH1(1)\n  6001 # [15] PUSH1(1)\n    55 # [17] SSTORE\n    00 # [18] STOP\n       # Data section (empty)\n"
+}
