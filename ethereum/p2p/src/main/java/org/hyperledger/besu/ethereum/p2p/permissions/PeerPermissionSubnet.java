@@ -63,7 +63,7 @@ public class PeerPermissionSubnet extends PeerPermissions {
   @Override
   public boolean isPermitted(final Peer localNode, final Peer remotePeer, final Action action) {
     // If no subnets are specified, all peers are permitted
-    if (allowedSubnets.isEmpty()) {
+    if (allowedSubnets == null || allowedSubnets.isEmpty()) {
       return true;
     }
     String remotePeerHostAddress = remotePeer.getEnodeURL().getIpAsString();
