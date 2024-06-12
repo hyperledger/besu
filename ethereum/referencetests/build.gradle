@@ -129,6 +129,21 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     )
 }
 
+def eofReferenceTests = tasks.register("eofReferenceTests") {
+  final referenceTestsPath = "src/reference-test/external-resources/EOFTests"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/EOFReferenceTest.java.template"),
+    "EOFTests",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
+    "EOFReferenceTest"
+    )
+}
+
 sourceSets {
   referenceTest {
     java {
@@ -140,7 +155,8 @@ sourceSets {
         eipStateReferenceTests,
         executionSpecTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests
+        generalstateRegressionReferenceTests,
+        eofReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
@@ -247,24 +263,20 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
   mkdir(destination)
   def referenceTestTemplate = templateFile.text
 
-  // This is how many json files to include in each test file
-  def fileSets = jsonPath.getFiles().collate(5)
-
-  fileSets.eachWithIndex { fileSet, idx ->
-    def paths = []
-    fileSet.each { testJsonFile ->
-      def parentFile = testJsonFile.getParentFile()
-      def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
-      if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
-        def pathFile = testJsonFile.getPath()
-        paths << pathFile.substring(pathFile.indexOf(pathstrip))
-      }
+  def paths = []
+  jsonPath.getFiles().forEach { testJsonFile ->
+    def parentFile = testJsonFile.getParentFile()
+    def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
+    if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
+      def pathFile = testJsonFile.getPath()
+      paths << pathFile.substring(pathFile.indexOf(pathstrip))
     }
+  }
 
+  paths.collate(5).eachWithIndex { tests, idx ->
     def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
 
-
-    def allPaths = '"' + paths.join('", "') + '"'
+    def allPaths = '"' + tests.join('",\n        "') + '"'
 
     def testFileContents = referenceTestTemplate
       .replaceAll("%%TESTS_FILE%%", allPaths)
