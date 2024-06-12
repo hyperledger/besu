@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.ethereum.trie.verkle.ExecutionWitness;
+import org.hyperledger.besu.ethereum.core.witness.ExecutionWitness;
 
 import java.util.Optional;
 

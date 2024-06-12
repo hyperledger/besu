@@ -67,7 +67,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.verkle.ExecutionWitness;
+import org.hyperledger.besu.ethereum.core.witness.ExecutionWitness;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.security.InvalidParameterException;

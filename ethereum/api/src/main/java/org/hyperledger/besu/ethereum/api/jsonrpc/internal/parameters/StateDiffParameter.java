@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.trie.verkle.StateDiff;
+import org.hyperledger.besu.ethereum.core.witness.StateDiff;
 
 import java.util.List;
 
