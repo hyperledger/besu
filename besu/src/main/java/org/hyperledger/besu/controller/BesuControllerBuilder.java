@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.chain.DefaultBlockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.chain.VariablesStorage;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -552,29 +553,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();
-    final GenesisState genesisState;
 
     final VariablesStorage variablesStorage = storageProvider.createVariablesStorage();
-
-    Optional<Hash> genesisStateHash = Optional.empty();
-    if (variablesStorage != null && this.genesisStateHashCacheEnabled) {
-      genesisStateHash = variablesStorage.getGenesisStateHash();
-    }
-
-    if (genesisStateHash.isPresent()) {
-      genesisState =
-          GenesisState.fromConfig(genesisStateHash.get(), genesisConfigFile, protocolSchedule);
-    } else {
-      genesisState =
-          GenesisState.fromConfig(dataStorageConfiguration, genesisConfigFile, protocolSchedule);
-      if (variablesStorage != null) {
-        VariablesStorage.Updater updater = variablesStorage.updater();
-        if (updater != null) {
-          updater.setGenesisStateHash(genesisState.getBlock().getHeader().getStateRoot());
-          updater.commit();
-        }
-      }
-    }
 
     final WorldStateStorageCoordinator worldStateStorageCoordinator =
         storageProvider.createWorldStateStorageCoordinator(dataStorageConfiguration);
@@ -582,6 +562,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final BlockchainStorage blockchainStorage =
         storageProvider.createBlockchainStorage(
             protocolSchedule, variablesStorage, dataStorageConfiguration);
+
+    final var maybeStoredGenesisBlockHash = blockchainStorage.getBlockHash(0L);
+
+    final var genesisState =
+        getGenesisState(
+            maybeStoredGenesisBlockHash.flatMap(blockchainStorage::getBlockHeader),
+            protocolSchedule);
 
     final MutableBlockchain blockchain =
         DefaultBlockchain.createMutable(
@@ -591,7 +578,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             reorgLoggingThreshold,
             dataDirectory.toString(),
             numberOfBlocksToCache);
-
     final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader =
         besuComponent
             .map(BesuComponent::getCachedMerkleTrieLoader)
@@ -601,7 +587,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createWorldStateArchive(
             worldStateStorageCoordinator, blockchain, bonsaiCachedMerkleTrieLoader);
 
-    if (blockchain.getChainHeadBlockNumber() < 1) {
+    if (maybeStoredGenesisBlockHash.isEmpty()) {
       genesisState.writeStateTo(worldStateArchive.getMutable());
     }
 
@@ -770,6 +756,24 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         ethPeers,
         storageProvider,
         dataStorageConfiguration);
+  }
+
+  private GenesisState getGenesisState(
+      final Optional<BlockHeader> maybeGenesisBlockHeader,
+      final ProtocolSchedule protocolSchedule) {
+    final Optional<Hash> maybeGenesisStateRoot =
+        genesisStateHashCacheEnabled
+            ? maybeGenesisBlockHeader.map(BlockHeader::getStateRoot)
+            : Optional.empty();
+
+    return maybeGenesisStateRoot
+        .map(
+            genesisStateRoot ->
+                GenesisState.fromStorage(genesisStateRoot, genesisConfigFile, protocolSchedule))
+        .orElseGet(
+            () ->
+                GenesisState.fromConfig(
+                    dataStorageConfiguration, genesisConfigFile, protocolSchedule));
   }
 
   private TrieLogPruner createTrieLogPruner(

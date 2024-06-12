@@ -30,7 +30,7 @@
         "withdrawalRequests": [
           {
             "sourceAddress": "0xa4664c40aacebd82a2db79f0ea36c06bc6a19adb",
-            "validatorPublicKey": "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e",
+            "validatorPubkey": "0xb10a4a15bf67b328c9b101d09e5c6ee6672978fdad9ef0d9e2ceffaee99223555d8601f0cb3bcc4ce1af9864779a416e",
             "amount": "0x0"
           }
         ],
