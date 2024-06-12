@@ -33,16 +33,21 @@ public class PeerPermissionsSubnetTest {
 
   @Test
   public void peerInSubnetRangeShouldBePermitted() {
-    String subnet = "127.0.0.0/24";
-    List<SubnetInfo> allowedSubnets = List.of(new SubnetUtils(subnet).getInfo());
+    List<SubnetInfo> allowedSubnets = List.of(subnet("127.0.0.0/24"));
     PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(allowedSubnets);
     checkPermissions(peerPermissionSubnet, remoteNode, true);
   }
 
   @Test
-  public void peerOutSubnetRangeShouldNolBePermitted() {
-    String subnet = "10.0.0.0/24";
-    List<SubnetInfo> allowedSubnets = List.of(new SubnetUtils(subnet).getInfo());
+  public void peerInAtLeastOneSubnetRangeShouldBePermitted() {
+    List<SubnetInfo> allowedSubnets = List.of(subnet("127.0.0.0/24"), subnet("10.0.0.1/24"));
+    PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(allowedSubnets);
+    checkPermissions(peerPermissionSubnet, remoteNode, true);
+  }
+
+  @Test
+  public void peerOutSubnetRangeShouldNotBePermitted() {
+    List<SubnetInfo> allowedSubnets = List.of(subnet("10.0.0.0/24"));
     PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(allowedSubnets);
     checkPermissions(peerPermissionSubnet, remoteNode, false);
   }
@@ -59,6 +64,10 @@ public class PeerPermissionsSubnetTest {
       assertThat(peerPermissions.isPermitted(createPeer(), remotePeer, action))
           .isEqualTo(expectedResult);
     }
+  }
+
+  private SubnetInfo subnet(final String subnet) {
+    return new SubnetUtils(subnet).getInfo();
   }
 
   private Peer createPeer() {
