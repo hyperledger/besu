@@ -138,7 +138,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     // or the least useful
 
     if (peers.peerCount() >= peers.getMaxPeers()) {
-      failedPeers.stream().filter(peer -> !peer.isDisconnected()).findAny().stream()
+      failedPeers.stream()
           .min(EthPeers.MOST_USEFUL_PEER)
           .or(() -> peers.streamAvailablePeers().min(EthPeers.MOST_USEFUL_PEER))
           .ifPresent(
