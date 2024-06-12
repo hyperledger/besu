@@ -2792,11 +2792,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())
-        && getDataStorageConfiguration().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
+        && getDataStorageConfiguration().getBonsaiLimitTrieLogsEnabled()) {
       builder.setLimitTrieLogsEnabled();
       builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getBonsaiMaxLayersToLoad());
       builder.setTrieLogsPruningWindowSize(
-          getDataStorageConfiguration().getUnstable().getBonsaiTrieLogPruningWindowSize());
+          getDataStorageConfiguration().getBonsaiTrieLogPruningWindowSize());
     }
 
     builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());

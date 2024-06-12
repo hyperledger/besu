@@ -16,12 +16,9 @@ package org.hyperledger.besu.consensus.merge;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockValueCalculator;
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.util.Subscribers;
@@ -29,7 +26,6 @@ import org.hyperledger.besu.util.Subscribers;
 import java.util.Comparator;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -45,13 +41,6 @@ public class PostMergeContext implements MergeContext {
   static final int MAX_BLOCKS_IN_PROGRESS = 12;
 
   private static final AtomicReference<PostMergeContext> singleton = new AtomicReference<>();
-
-  private static final Comparator<BlockWithReceipts> compareByGasUsedDesc =
-      Comparator.comparingLong(
-              (BlockWithReceipts blockWithReceipts) ->
-                  blockWithReceipts.getBlock().getHeader().getGasUsed())
-          .reversed();
-
   private final AtomicReference<SyncState> syncState;
   private final AtomicReference<Difficulty> terminalTotalDifficulty;
   // initial postMerge state is indeterminate until it is set:
@@ -70,7 +59,6 @@ public class PostMergeContext implements MergeContext {
   private final AtomicReference<BlockHeader> lastSafeBlock = new AtomicReference<>();
   private final AtomicReference<Optional<BlockHeader>> terminalPoWBlock =
       new AtomicReference<>(Optional.empty());
-  private final BlockValueCalculator blockValueCalculator = new BlockValueCalculator();
   private boolean isPostMergeAtGenesis;
 
   /** Instantiates a new Post merge context. */
@@ -227,66 +215,65 @@ public class PostMergeContext implements MergeContext {
   }
 
   @Override
-  public void putPayloadById(final PayloadWrapper payloadWrapper) {
-    synchronized (blocksInProgress) {
-      final Optional<BlockWithReceipts> maybeCurrBestBlock =
-          retrieveBlockById(payloadWrapper.payloadIdentifier());
+  public void putPayloadById(final PayloadWrapper newPayload) {
+    final var newBlockWithReceipts = newPayload.blockWithReceipts();
+    final var newBlockValue = newPayload.blockValue();
 
-      maybeCurrBestBlock.ifPresentOrElse(
-          currBestBlock -> {
-            if (compareByGasUsedDesc.compare(payloadWrapper.blockWithReceipts(), currBestBlock)
-                < 0) {
+    synchronized (blocksInProgress) {
+      final Optional<PayloadWrapper> maybeCurrBestPayload =
+          retrievePayloadById(newPayload.payloadIdentifier());
+
+      maybeCurrBestPayload.ifPresent(
+          currBestPayload -> {
+            if (newBlockValue.greaterThan(currBestPayload.blockValue())) {
               LOG.atDebug()
-                  .setMessage("New proposal for payloadId {} {} is better than the previous one {}")
-                  .addArgument(payloadWrapper.payloadIdentifier())
+                  .setMessage(
+                      "New proposal for payloadId {} {} is better than the previous one {} by {}")
+                  .addArgument(newPayload.payloadIdentifier())
+                  .addArgument(() -> logBlockProposal(newBlockWithReceipts.getBlock()))
                   .addArgument(
-                      () -> logBlockProposal(payloadWrapper.blockWithReceipts().getBlock()))
-                  .addArgument(() -> logBlockProposal(currBestBlock.getBlock()))
+                      () -> logBlockProposal(currBestPayload.blockWithReceipts().getBlock()))
+                  .addArgument(
+                      () ->
+                          newBlockValue
+                              .subtract(currBestPayload.blockValue())
+                              .toHumanReadableString())
                   .log();
+
               blocksInProgress.removeAll(
-                  retrievePayloadsById(payloadWrapper.payloadIdentifier())
-                      .collect(Collectors.toUnmodifiableList()));
-              blocksInProgress.add(
-                  new PayloadWrapper(
-                      payloadWrapper.payloadIdentifier(), payloadWrapper.blockWithReceipts()));
-              logCurrentBestBlock(payloadWrapper.blockWithReceipts());
+                  streamPayloadsById(newPayload.payloadIdentifier()).toList());
+
+              logCurrentBestBlock(newPayload);
             }
-          },
-          () ->
-              blocksInProgress.add(
-                  new PayloadWrapper(
-                      payloadWrapper.payloadIdentifier(), payloadWrapper.blockWithReceipts())));
+          });
+      blocksInProgress.add(newPayload);
     }
   }
 
-  private void logCurrentBestBlock(final BlockWithReceipts blockWithReceipts) {
+  private void logCurrentBestBlock(final PayloadWrapper payloadWrapper) {
     if (LOG.isDebugEnabled()) {
-      final Block block = blockWithReceipts.getBlock();
+      final Block block = payloadWrapper.blockWithReceipts().getBlock();
       final float gasUsedPerc =
           100.0f * block.getHeader().getGasUsed() / block.getHeader().getGasLimit();
       final int txsNum = block.getBody().getTransactions().size();
-      final Wei reward = blockValueCalculator.calculateBlockValue(blockWithReceipts);
 
       LOG.debug(
           "Current best proposal for block {}: txs {}, gas used {}%, reward {}",
-          blockWithReceipts.getNumber(),
+          block.getHeader().getNumber(),
           txsNum,
           String.format("%1.2f", gasUsedPerc),
-          reward.toHumanReadableString());
+          payloadWrapper.blockValue().toHumanReadableString());
     }
   }
 
   @Override
-  public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
+  public Optional<PayloadWrapper> retrievePayloadById(final PayloadIdentifier payloadId) {
     synchronized (blocksInProgress) {
-      return retrievePayloadsById(payloadId)
-          .map(payloadWrapper -> payloadWrapper.blockWithReceipts())
-          .sorted(compareByGasUsedDesc)
-          .findFirst();
+      return streamPayloadsById(payloadId).max(Comparator.comparing(PayloadWrapper::blockValue));
     }
   }
 
-  private Stream<PayloadWrapper> retrievePayloadsById(final PayloadIdentifier payloadId) {
+  private Stream<PayloadWrapper> streamPayloadsById(final PayloadIdentifier payloadId) {
     return blocksInProgress.stream().filter(z -> z.payloadIdentifier().equals(payloadId));
   }
 
