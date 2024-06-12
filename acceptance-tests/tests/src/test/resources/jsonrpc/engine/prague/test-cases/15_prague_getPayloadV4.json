@@ -33,7 +33,7 @@
           {
             "sourceAddress": "0x23618e81e3f5cdf7f54c3d65f7fbc0abf5b21e8f",
             "amount": "0x0",
-            "validatorPublicKey": "0x8706d19a62f28a6a6549f96c5adaebac9124a61d44868ec94f6d2d707c6a2f82c9162071231dfeb40e24bfde4ffdf243"
+            "validatorPubkey": "0x8706d19a62f28a6a6549f96c5adaebac9124a61d44868ec94f6d2d707c6a2f82c9162071231dfeb40e24bfde4ffdf243"
           }
         ],
         "blockNumber": "0x4",
