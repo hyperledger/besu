@@ -46,6 +46,7 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -100,7 +101,8 @@ class BlockImportExceptionHandlingTest {
               (BonsaiWorldStateProvider) worldStateArchive,
               (BonsaiWorldStateKeyValueStorage)
                   worldStateStorageCoordinator.worldStateKeyValueStorage(),
-              EvmConfiguration.DEFAULT));
+              EvmConfiguration.DEFAULT,
+              new DiffBasedWorldStateConfig()));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
@@ -112,7 +114,7 @@ class BlockImportExceptionHandlingTest {
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getRequestsValidatorCoordinator())
-        .thenReturn(new RequestsValidatorCoordinator.Builder().build());
+        .thenReturn(RequestsValidatorCoordinator.empty());
     when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
     mainnetBlockValidator =
         new MainnetBlockValidator(

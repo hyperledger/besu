@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogMa
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.VerkleNoOpCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -78,7 +79,8 @@ public class GenesisWorldStateProvider {
         bonsaiCachedMerkleTrieLoader,
         new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
         new NoOpTrieLogManager(),
-        EvmConfiguration.DEFAULT);
+        EvmConfiguration.DEFAULT,
+        new DiffBasedWorldStateConfig());
   }
 
   private static MutableWorldState createGenesisVerkleWorldState() {

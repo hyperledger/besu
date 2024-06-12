@@ -172,21 +172,29 @@ import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategoryRegistry;
+import org.hyperledger.besu.plugin.services.p2p.P2PService;
+import org.hyperledger.besu.plugin.services.rlp.RlpConverterService;
 import org.hyperledger.besu.plugin.services.securitymodule.SecurityModule;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.PrivacyKeyValueStorageFactory;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBPlugin;
+import org.hyperledger.besu.plugin.services.sync.SynchronizationService;
+import org.hyperledger.besu.plugin.services.transactionpool.TransactionPoolService;
 import org.hyperledger.besu.services.BesuConfigurationImpl;
 import org.hyperledger.besu.services.BesuEventsImpl;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.BlockchainServiceImpl;
+import org.hyperledger.besu.services.P2PServiceImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.PicoCLIOptionsImpl;
 import org.hyperledger.besu.services.PrivacyPluginServiceImpl;
+import org.hyperledger.besu.services.RlpConverterServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
 import org.hyperledger.besu.services.SecurityModuleServiceImpl;
 import org.hyperledger.besu.services.StorageServiceImpl;
+import org.hyperledger.besu.services.SynchronizationServiceImpl;
 import org.hyperledger.besu.services.TraceServiceImpl;
+import org.hyperledger.besu.services.TransactionPoolServiceImpl;
 import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
@@ -1161,12 +1169,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final var runner = buildRunner();
       runner.startExternalServices();
 
-      startPlugins();
+      startPlugins(runner);
       validatePluginOptions();
       setReleaseMetrics();
       preSynchronization();
 
       runner.startEthereumMainLoop();
+
+      besuPluginContext.afterExternalServicesMainLoop();
+
       runner.awaitStop();
 
     } catch (final Exception e) {
@@ -1327,7 +1338,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         pidPath);
   }
 
-  private void startPlugins() {
+  private void startPlugins(final Runner runner) {
     blockchainServiceImpl.init(
         besuController.getProtocolContext(), besuController.getProtocolSchedule());
     transactionSimulationServiceImpl.init(
@@ -1347,6 +1358,26 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getSyncState(),
             besuController.getProtocolContext().getBadBlockManager()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
+
+    besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
+
+    besuPluginContext.addService(
+        SynchronizationService.class,
+        new SynchronizationServiceImpl(
+            besuController.getProtocolContext(),
+            besuController.getProtocolSchedule(),
+            besuController.getSyncState(),
+            besuController.getProtocolContext().getWorldStateArchive()));
+
+    besuPluginContext.addService(P2PService.class, new P2PServiceImpl(runner.getP2PNetwork()));
+
+    besuPluginContext.addService(
+        TransactionPoolService.class,
+        new TransactionPoolServiceImpl(besuController.getTransactionPool()));
+
+    besuPluginContext.addService(
+        RlpConverterService.class,
+        new RlpConverterServiceImpl(besuController.getProtocolSchedule()));
 
     besuPluginContext.addService(
         TraceService.class,
@@ -1533,7 +1564,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateDataStorageOptions() {
-    dataStorageOptions.validate(commandLine);
+    dataStorageOptions.validate(commandLine, syncMode);
   }
 
   private void validateRequiredOptions() {
@@ -1653,11 +1684,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void validateChainDataPruningParams() {
     if (unstableChainPruningOptions.getChainDataPruningEnabled()
         && unstableChainPruningOptions.getChainDataPruningBlocksRetained()
-            < ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED) {
+            < unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit()) {
       throw new ParameterException(
           this.commandLine,
           "--Xchain-pruning-blocks-retained must be >= "
-              + ChainPruningOptions.DEFAULT_CHAIN_DATA_PRUNING_MIN_BLOCKS_RETAINED);
+              + unstableChainPruningOptions.getChainDataPruningBlocksRetainedLimit());
     }
   }
 
@@ -1843,11 +1874,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @return instance of BesuControllerBuilder
    */
   public BesuControllerBuilder getControllerBuilder() {
-    pluginCommonConfiguration.init(
-        dataDir(),
-        dataDir().resolve(DATABASE_PATH),
-        getDataStorageConfiguration(),
-        miningParametersSupplier.get());
+    pluginCommonConfiguration
+        .init(dataDir(), dataDir().resolve(DATABASE_PATH), getDataStorageConfiguration())
+        .withMiningParameters(miningParametersSupplier.get())
+        .withJsonRpcHttpOptions(jsonRpcHttpOptions);
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
     return controllerBuilderFactory
         .fromEthNetworkConfig(updateNetworkConfig(network), getDefaultSyncModeIfNotSet())
@@ -2761,11 +2791,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setHighSpecEnabled();
     }
 
-    if (getDataStorageConfiguration().getUnstable().getBonsaiLimitTrieLogsEnabled()) {
+    if (DataStorageFormat.BONSAI.equals(getDataStorageConfiguration().getDataStorageFormat())
+        && getDataStorageConfiguration().getBonsaiLimitTrieLogsEnabled()) {
       builder.setLimitTrieLogsEnabled();
       builder.setTrieLogRetentionLimit(getDataStorageConfiguration().getBonsaiMaxLayersToLoad());
       builder.setTrieLogsPruningWindowSize(
-          getDataStorageConfiguration().getUnstable().getBonsaiTrieLogPruningWindowSize());
+          getDataStorageConfiguration().getBonsaiTrieLogPruningWindowSize());
     }
 
     builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());

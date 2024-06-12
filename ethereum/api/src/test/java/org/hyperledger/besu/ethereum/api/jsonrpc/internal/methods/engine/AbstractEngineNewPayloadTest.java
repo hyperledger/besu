@@ -38,7 +38,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionWitnessParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
@@ -55,7 +55,7 @@ import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
@@ -411,9 +411,9 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
       final BlockHeader header,
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals,
-      final List<DepositParameter> deposits,
+    final List<DepositRequestParameter> depositRequests,
       final List<WithdrawalRequestParameter> withdrawalRequests,
-      final ExecutionWitnessParameter executionWitness) {
+    final ExecutionWitnessParameter executionWitness) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -432,7 +432,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         withdrawals,
         header.getBlobGasUsed().map(UnsignedLongParameter::new).orElse(null),
         header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null),
-        deposits,
+        depositRequests,
         withdrawalRequests,
         executionWitness);
   }
@@ -440,11 +440,11 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
   protected BlockHeader setupValidPayload(
       final BlockProcessingResult value,
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits,
+      final Optional<List<DepositRequest>> maybeDepositRequests,
       final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
 
     BlockHeader mockHeader =
-        createBlockHeader(maybeWithdrawals, maybeDeposits, maybeWithdrawalRequests);
+        createBlockHeader(maybeWithdrawals, maybeDepositRequests, maybeWithdrawalRequests);
     when(blockchain.getBlockByHash(mockHeader.getHash())).thenReturn(Optional.empty());
     // when(blockchain.getBlockHeader(mockHeader.getParentHash()))
     //  .thenReturn(Optional.of(mock(BlockHeader.class)));
@@ -477,21 +477,21 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
 
   protected BlockHeader createBlockHeader(
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits,
+      final Optional<List<DepositRequest>> maybeDepositRequests,
       final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
-    return createBlockHeaderFixture(maybeWithdrawals, maybeDeposits, maybeWithdrawalRequests)
+    return createBlockHeaderFixture(maybeWithdrawals, maybeDepositRequests, maybeWithdrawalRequests)
         .buildHeader();
   }
 
   protected BlockHeaderTestFixture createBlockHeaderFixture(
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits,
+      final Optional<List<DepositRequest>> maybeDepositRequests,
       final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
 
     Optional<List<Request>> maybeRequests;
-    if (maybeDeposits.isPresent() || maybeWithdrawalRequests.isPresent()) {
+    if (maybeDepositRequests.isPresent() || maybeWithdrawalRequests.isPresent()) {
       List<Request> requests = new ArrayList<>();
-      maybeDeposits.ifPresent(requests::addAll);
+      maybeDepositRequests.ifPresent(requests::addAll);
       maybeWithdrawalRequests.ifPresent(requests::addAll);
       maybeRequests = Optional.of(requests);
     } else {
@@ -524,7 +524,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
   }
 
   private void mockProhibitedRequestsValidator() {
-    var validator = new RequestsValidatorCoordinator.Builder().build();
+    var validator = RequestsValidatorCoordinator.empty();
     when(protocolSpec.getRequestsValidatorCoordinator()).thenReturn(validator);
   }
 }

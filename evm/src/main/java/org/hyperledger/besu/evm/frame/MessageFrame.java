@@ -1442,6 +1442,8 @@ public class MessageFrame {
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
     private AccessWitness accessWitness = null;
+    /** Instantiates a new Builder. */
+    public Builder() {}
 
     /**
      * The "parent" message frame. When present some fields will be populated from the parent and

@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.datatypes;
 
-import java.util.Arrays;
-
 /** Enum representing different types of requests with associated serialized type values. */
 public enum RequestType {
   /** DEPOSITS */
@@ -47,12 +45,12 @@ public enum RequestType {
    *     RequestType}.
    */
   public static RequestType of(final int serializedTypeValue) {
-    return Arrays.stream(RequestType.values())
-        .filter(requestType -> requestType.typeValue == serializedTypeValue)
-        .findFirst()
-        .orElseThrow(
-            () ->
-                new IllegalArgumentException(
-                    String.format("Unsupported request type: 0x%02X", serializedTypeValue)));
+    return switch (serializedTypeValue) {
+      case 0x00 -> DEPOSIT;
+      case 0x01 -> WITHDRAWAL;
+      default ->
+          throw new IllegalArgumentException(
+              String.format("Unsupported request type: 0x%02X", serializedTypeValue));
+    };
   }
 }

@@ -51,7 +51,7 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
   public void setup() {
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getRequestsValidatorCoordinator())
-        .thenReturn(new RequestsValidatorCoordinator.Builder().build());
+        .thenReturn(RequestsValidatorCoordinator.empty());
     when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
   }
 

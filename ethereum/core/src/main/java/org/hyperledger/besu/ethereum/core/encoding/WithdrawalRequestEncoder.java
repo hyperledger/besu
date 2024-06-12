@@ -48,7 +48,7 @@ public class WithdrawalRequestEncoder {
       final WithdrawalRequest withdrawalRequest, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     rlpOutput.writeBytes(withdrawalRequest.getSourceAddress());
-    rlpOutput.writeBytes(withdrawalRequest.getValidatorPubKey());
+    rlpOutput.writeBytes(withdrawalRequest.getValidatorPublicKey());
     rlpOutput.writeUInt64Scalar(withdrawalRequest.getAmount());
     rlpOutput.endList();
   }

@@ -35,6 +35,7 @@ import java.util.Optional;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -134,12 +135,11 @@ public class TrieLogManager {
     trieLogObservers.unsubscribe(id);
   }
 
-  private TrieLogFactory setupTrieLogFactory(
-      final DataStorageFormat dataStorageFormat, final BesuContext pluginContext) {
+  private TrieLogFactory setupTrieLogFactory(final DataStorageFormat dataStorageFormat,final BesuContext pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
     var trieLogServicez =
-        Optional.ofNullable(pluginContext)
-            .flatMap(context -> context.getService(TrieLogService.class));
+            Optional.ofNullable(pluginContext)
+                    .flatMap(context -> context.getService(TrieLogService.class));
 
     if (trieLogServicez.isPresent()) {
       var trieLogService = trieLogServicez.get();
@@ -150,19 +150,50 @@ public class TrieLogManager {
       trieLogService.getObservers().forEach(trieLogObservers::subscribe);
 
       // return the TrieLogFactory implementation from the TrieLogService
-      return trieLogService.getTrieLogFactory();
-    } else {
-      // Otherwise default to TrieLogFactoryImpl
-      if (dataStorageFormat.equals(DataStorageFormat.BONSAI)) {
-        return new org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl();
-      } else {
-        return new TrieLogFactoryImpl();
+      if (trieLogService.getTrieLogFactory().isPresent()) {
+        return trieLogService.getTrieLogFactory().get();
       }
     }
+    // Otherwise default to VERKLE TrieLogFactoryImpl
+    if (dataStorageFormat.equals(DataStorageFormat.VERKLE)) {
+      return new TrieLogFactoryImpl();
+    }
+    //or default to BONSAI TrieLogFactoryImpl
+    return new org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl();
   }
 
   private TrieLogProvider getTrieLogProvider() {
     return new TrieLogProvider() {
+      @Override
+      public Optional<Bytes> getRawTrieLogLayer(final Hash blockHash) {
+        return rootWorldStateStorage.getTrieLog(blockHash).map(Bytes::wrap);
+      }
+
+      @Override
+      public Optional<Bytes> getRawTrieLogLayer(final long blockNumber) {
+        return TrieLogManager.this
+            .blockchain
+            .getBlockHeader(blockNumber)
+            .map(BlockHeader::getHash)
+            .flatMap(this::getRawTrieLogLayer);
+      }
+
+      @Override
+      public void saveRawTrieLogLayer(
+          final Hash blockHash, final long blockNumber, final Bytes trieLog) {
+        final DiffBasedWorldStateKeyValueStorage.Updater updater = rootWorldStateStorage.updater();
+        updater
+            .getTrieLogStorageTransaction()
+            .put(blockHash.toArrayUnsafe(), trieLog.toArrayUnsafe());
+        updater.commit();
+        // TODO maybe find a way to have a clean and complete trielog for observers
+        trieLogObservers.forEach(
+            o ->
+                o.onTrieLogAdded(
+                    new TrieLogAddedEvent(
+                        new TrieLogLayer().setBlockHash(blockHash).setBlockNumber(blockNumber))));
+      }
+
       @Override
       public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
         return TrieLogManager.this.getTrieLogLayer(blockHash);

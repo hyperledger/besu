@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
@@ -167,7 +166,7 @@ public interface MergeContext extends ConsensusContext {
    * @param payloadId the payload identifier
    * @return the optional block with receipts
    */
-  Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId);
+  Optional<PayloadWrapper> retrievePayloadById(final PayloadIdentifier payloadId);
 
   /**
    * Is configured for a post-merge from genesis.
