@@ -193,7 +193,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .blobGasUsed(null)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
+    var resp =
+        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -212,7 +213,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
+    var resp =
+        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());

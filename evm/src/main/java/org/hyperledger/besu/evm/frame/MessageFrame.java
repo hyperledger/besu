@@ -1442,6 +1442,7 @@ public class MessageFrame {
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
     private AccessWitness accessWitness = null;
+
     /** Instantiates a new Builder. */
     public Builder() {}
 

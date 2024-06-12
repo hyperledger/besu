@@ -336,4 +336,8 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
       // no op
     }
   }
+
+  protected DiffBasedWorldStateConfig cloneBonsaiWorldStateConfig() {
+    return new DiffBasedWorldStateConfig(defaultWorldStateConfig);
+  }
 }

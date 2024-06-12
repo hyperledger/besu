@@ -135,11 +135,12 @@ public class TrieLogManager {
     trieLogObservers.unsubscribe(id);
   }
 
-  private TrieLogFactory setupTrieLogFactory(final DataStorageFormat dataStorageFormat,final BesuContext pluginContext) {
+  private TrieLogFactory setupTrieLogFactory(
+      final DataStorageFormat dataStorageFormat, final BesuContext pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
     var trieLogServicez =
-            Optional.ofNullable(pluginContext)
-                    .flatMap(context -> context.getService(TrieLogService.class));
+        Optional.ofNullable(pluginContext)
+            .flatMap(context -> context.getService(TrieLogService.class));
 
     if (trieLogServicez.isPresent()) {
       var trieLogService = trieLogServicez.get();
@@ -158,7 +159,7 @@ public class TrieLogManager {
     if (dataStorageFormat.equals(DataStorageFormat.VERKLE)) {
       return new TrieLogFactoryImpl();
     }
-    //or default to BONSAI TrieLogFactoryImpl
+    // or default to BONSAI TrieLogFactoryImpl
     return new org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl();
   }
 

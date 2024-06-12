@@ -43,8 +43,11 @@ public class VerkleWorldStateProvider extends DiffBasedWorldStateProvider {
         maxLayersToLoad,
         pluginContext);
     provideCachedWorldStorageManager(
-        new VerkleCachedWorldStorageManager(this, worldStateKeyValueStorage));
-    loadPersistedState(new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration));
+        new VerkleCachedWorldStorageManager(
+            this, worldStateKeyValueStorage, this::cloneBonsaiWorldStateConfig));
+    loadPersistedState(
+        new VerkleWorldState(
+            this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
   }
 
   @VisibleForTesting
@@ -56,6 +59,8 @@ public class VerkleWorldStateProvider extends DiffBasedWorldStateProvider {
       final EvmConfiguration evmConfiguration) {
     super(worldStateKeyValueStorage, blockchain, trieLogManager);
     provideCachedWorldStorageManager(cachedWorldStorageManager);
-    loadPersistedState(new VerkleWorldState(this, worldStateKeyValueStorage, evmConfiguration));
+    loadPersistedState(
+        new VerkleWorldState(
+            this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
   }
 }

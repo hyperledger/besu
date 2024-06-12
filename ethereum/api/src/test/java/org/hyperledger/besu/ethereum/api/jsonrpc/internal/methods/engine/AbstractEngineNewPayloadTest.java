@@ -411,9 +411,9 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
       final BlockHeader header,
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals,
-    final List<DepositRequestParameter> depositRequests,
+      final List<DepositRequestParameter> depositRequests,
       final List<WithdrawalRequestParameter> withdrawalRequests,
-    final ExecutionWitnessParameter executionWitness) {
+      final ExecutionWitnessParameter executionWitness) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),

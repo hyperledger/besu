@@ -50,8 +50,7 @@ public class VerkleProofParameter {
     this.ipaProof = ipaProof;
   }
 
-  public static VerkleProofParameter fromVerkleProof(
-      final VerkleProof verkleProof) {
+  public static VerkleProofParameter fromVerkleProof(final VerkleProof verkleProof) {
     return new VerkleProofParameter(
         verkleProof.otherStems().stream().map(Bytes::toHexString).toList(),
         verkleProof.depthExtensionPresent(),
