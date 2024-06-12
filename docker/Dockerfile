@@ -5,13 +5,10 @@ ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true
 
 # Update and install dependencies without using any cache
 RUN apt-get update $NO_PROXY_CACHE  && \
-  # $NO_PROXY_CACHE must not be used here or otherwise will trigger a hadolint error
-  apt-get $NO_PROXY_CACHE && \
-    --no-install-recommends -q --assume-yes install openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3*  && \
+  apt-get $NO_PROXY_CACHE --no-install-recommends -q --assume-yes install openjdk-21-jre-headless=21* libjemalloc-dev=5.* adduser=3*  && \
   # Clean apt cache
   apt-get clean  && \
-  rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/*  && \
-  rm -rf /var/lib/apt/lists/*  && \
+  rm -rf /var/cache/apt/archives/*  && rm -rf /var/lib/apt/lists/*  && \
   # Ubuntu 23.10 comes with an "ubuntu" user with uid 1000. We need 1000 for besu.
   userdel ubuntu 2>/dev/null || true && rm -rf /home/ubuntu  && \
   # Ensure we use a stable UID for besu, as file permissions are tied to UIDs.
