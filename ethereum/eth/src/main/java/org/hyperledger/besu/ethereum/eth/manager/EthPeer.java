@@ -210,7 +210,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void recordRequestTimeout(final int requestCode) {
-    LOG.atInfo()
+    LOG.atDebug()
         .setMessage("Timed out while waiting for response from peer {}")
         .addArgument(this::getLoggableId)
         .log();
@@ -219,7 +219,7 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void recordUselessResponse(final String requestType) {
-    LOG.atInfo()
+    LOG.atTrace()
         .setMessage("Received useless response for request type {} from peer {}")
         .addArgument(requestType)
         .addArgument(this::getLoggableId)
@@ -232,11 +232,6 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public void disconnect(final DisconnectReason reason) {
-    LOG.atInfo()
-        .setMessage("Disconnecting peer: {}, reason: {}")
-        .addArgument(this.getLoggableId())
-        .addArgument(reason)
-        .log();
     connection.disconnect(reason);
   }
 

@@ -129,7 +129,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       return;
     }
 
-    LOG.atInfo()
+    LOG.atDebug()
         .setMessage("Retrying after recoverable failure from peer task {}: {}")
         .addArgument(this.getClass().getSimpleName())
         .addArgument(cause.getMessage())

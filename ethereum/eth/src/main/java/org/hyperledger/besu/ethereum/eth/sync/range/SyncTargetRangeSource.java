@@ -19,7 +19,6 @@ import static java.util.concurrent.CompletableFuture.completedFuture;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -34,7 +33,6 @@ import java.util.Queue;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
-import java.util.stream.Collectors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -42,6 +40,7 @@ import org.slf4j.LoggerFactory;
 public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetRangeSource.class);
   private static final Duration RETRY_DELAY_DURATION = Duration.ofSeconds(2);
+  public static final int DEFAULT_TIME_TO_WAIT_IN_SECONDS = 6;
 
   private final RangeHeadersFetcher fetcher;
   private final SyncTargetChecker syncTargetChecker;
@@ -72,7 +71,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
         peer,
         commonAncestor,
         retriesPermitted,
-        Duration.ofSeconds(6),
+        Duration.ofSeconds(DEFAULT_TIME_TO_WAIT_IN_SECONDS),
         terminationCondition);
   }
 
@@ -150,18 +149,6 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       final List<BlockHeader> newHeaders =
           pendingRequest.get(newHeaderWaitDuration.toMillis(), MILLISECONDS);
       this.pendingRequests = Optional.empty();
-      LOG.atDebug()
-          .setMessage("New range headers received: {}")
-          .addArgument(newHeaders.size())
-          .log();
-      LOG.atDebug()
-          .setMessage("Headers: {}")
-          .addArgument(
-              newHeaders.stream()
-                  .map(ProcessableBlockHeader::getNumber)
-                  .map(Object::toString)
-                  .collect(Collectors.joining(", ")))
-          .log();
       if (newHeaders.isEmpty()) {
         retryCount++;
         if (retryCount >= retriesPermitted) {
@@ -184,7 +171,6 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       LOG.trace("Interrupted while waiting for new range headers", e);
       return null;
     } catch (final ExecutionException | TimeoutException e) {
-      LOG.debug("Failed to retrieve new range headers: ", e);
       if (e instanceof ExecutionException) {
         this.pendingRequests = Optional.empty();
       }
