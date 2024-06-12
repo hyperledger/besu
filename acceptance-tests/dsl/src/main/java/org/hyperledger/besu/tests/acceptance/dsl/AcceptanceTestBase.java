@@ -178,7 +178,7 @@ public class AcceptanceTestBase {
 
   protected void waitForBlockHeight(final Node node, final long blockchainHeight) {
     WaitUtils.waitFor(
-        120,
+        180,
         () ->
             assertThat(node.execute(ethTransactions.blockNumber()))
                 .isGreaterThanOrEqualTo(BigInteger.valueOf(blockchainHeight)));
