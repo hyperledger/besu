@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,19 +12,20 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-pragma solidity >=0.7.0 <0.9.0;
+pragma solidity >=0.8.20;
 
 // compile with:
-// solc RevertReason.sol --bin --abi --optimize --overwrite -o .
+// solc SimpleStorageShanghai.sol --bin --abi --optimize --overwrite -o .
 // then create web3j wrappers with:
-// web3j generate solidity -b ./generated/RevertReason.bin -a ./generated/RevertReason.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
-contract RevertReason {
+// web3j generate solidity -b ./SimpleStorageShanghai.bin -a ./SimpleStorageShanghai.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
+contract SimpleStorageShanghai {
+    uint data;
 
-    function revertWithRevertReason() public pure returns (bool) {
-        revert("RevertReason");
+    function set(uint value) public {
+        data = value;
     }
 
-    function revertWithoutRevertReason() public pure returns (bool) {
-        revert();
+    function get() public view returns (uint) {
+        return data;
     }
 }
