@@ -1,0 +1,78 @@
+{
+  "cli": [
+    "state-test",
+    "stdin",
+    "--trace",
+    "--trace.memory",
+    "--trace.stack",
+    "--trace.returndata",
+    "--notime"
+  ],
+  "stdin": {
+    "create-eof": {
+      "env": {
+        "currentCoinbase": "b94f5374fce5edbc8e2a8697c15331677e6ebf0b",
+        "currentDifficulty": "0x20000",
+        "currentRandom": "0x0000000000000000000000000000000000000000000000000000000000020000",
+        "currentGasLimit": "0x26e1f476fe1e22",
+        "currentNumber": "0x2",
+        "currentTimestamp": "0x3e8",
+        "previousHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "currentBaseFee": "0x10"
+      },
+      "pre": {
+        "0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b": {
+          "code": "0x",
+          "storage": {},
+          "balance": "0xffffffffff",
+          "nonce": "0x0"
+        }
+      },
+      "transaction": {
+        "gasPrice": "0x10",
+        "nonce": "0x0",
+        "to": null,
+        "data": [
+          "ef00011100040200010009030001001404000000008000035f355f5fa15f5fee00ef00010100040200010001040000000080000000c0de471fe5"
+        ],
+        "gasLimit": [
+          "0x7a1200"
+        ],
+        "value": [
+          "0xdbbe"
+        ],
+        "secretKey": "0x45a915e4d060149eb4365960e6a7a45f334393093061116b197e3240065ff2d8"
+      },
+      "out": "0x",
+      "post": {
+        "Prague": [
+          {
+            "hash": "0x1a8642a04dae90535f00f53d3a30284c4db051d508a653db89eb100ba9aecbf3",
+            "logs": "0xf48b954a6a6f4ce6b28e4950b7027413f4bdc8f459df6003b6e8d7a1567c8940",
+            "indexes": {
+              "data": 0,
+              "gas": 0,
+              "value": 0
+            }
+          }
+        ],
+        "Cancun": [
+          {
+            "hash": "0xaa80d89bc89f58da8de41d3894bd1a241896ff91f7a5964edaefb39e8e3a4a98",
+            "logs": "0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347",
+            "indexes": {
+              "data": 0,
+              "gas": 0,
+              "value": 0
+            }
+          }
+        ]
+      }
+    }
+  },
+  "stdout": [
+    {"output":"","gasUsed":"0xd198","test":"create-eof","fork":"Prague","d":0,"g":0,"v":0,"postHash":"0x2a9c58298ba5d4ec86ca682b9fcc9ff67c3fc44dbd39f85a2f9b74bfe4e5178e","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":false,"error":"Invalid EOF Layout: Expected kind 1 but read kind 17"},
+    {"pc":0,"op":239,"gas":"0x794068","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"INVALID","error":"Bad instruction"},
+    {"output":"","gasUsed":"0x7a1200","test":"create-eof","fork":"Cancun","d":0,"g":0,"v":0,"postHash":"0xaa80d89bc89f58da8de41d3894bd1a241896ff91f7a5964edaefb39e8e3a4a98","postLogsHash":"0x1dcc4de8dec75d7aab85b567b6ccd41ad312451b948a7413f0a142fd40d49347","pass":true,"error":"INVALID_OPERATION"}
+  ]
+}

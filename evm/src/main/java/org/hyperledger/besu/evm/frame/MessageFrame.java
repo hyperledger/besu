@@ -25,7 +25,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.evm.internal.ReturnStack;
@@ -216,6 +215,7 @@ public class MessageFrame {
   private final Supplier<ReturnStack> returnStack;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
+  private Code createdCode = null;
   private final boolean isStatic;
 
   // Transaction state fields.
@@ -245,9 +245,6 @@ public class MessageFrame {
 
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;
-
-  /** mutated by AUTH operation */
-  private Address authorizedBy = null;
 
   /**
    * Builder builder.
@@ -280,13 +277,7 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
-    this.returnStack =
-        Suppliers.memoize(
-            () -> {
-              var rStack = new ReturnStack();
-              rStack.push(new ReturnStack.ReturnStackItem(0, 0, 0));
-              return rStack;
-            });
+    this.returnStack = Suppliers.memoize(ReturnStack::new);
     this.pc = code.isValid() ? code.getCodeSection(0).getEntryPoint() : 0;
     this.recipient = recipient;
     this.contract = contract;
@@ -337,71 +328,6 @@ public class MessageFrame {
    */
   public int getSection() {
     return section;
-  }
-
-  /**
-   * Call function and return exceptional halt reason.
-   *
-   * @param calledSection the called section
-   * @return the exceptional halt reason
-   */
-  public ExceptionalHaltReason callFunction(final int calledSection) {
-    CodeSection info = code.getCodeSection(calledSection);
-    if (info == null) {
-      return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else if (stack.size() + info.getMaxStackHeight() > txValues.maxStackSize()) {
-      return ExceptionalHaltReason.TOO_MANY_STACK_ITEMS;
-    } else if (stack.size() < info.getInputs()) {
-      return ExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
-    } else {
-      returnStack
-          .get()
-          .push(new ReturnStack.ReturnStackItem(section, pc + 2, stack.size() - info.getInputs()));
-      pc = info.getEntryPoint() - 1; // will be +1ed at end of operations loop
-      this.section = calledSection;
-      return null;
-    }
-  }
-
-  /**
-   * Execute the mechanics of the JUMPF operation.
-   *
-   * @param section the section
-   * @return the exceptional halt reason, if the jump failed
-   */
-  public ExceptionalHaltReason jumpFunction(final int section) {
-    CodeSection info = code.getCodeSection(section);
-    if (info == null) {
-      return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else if (stackSize() != peekReturnStack().getStackHeight() + info.getInputs()) {
-      return ExceptionalHaltReason.JUMPF_STACK_MISMATCH;
-    } else {
-      pc = -1; // will be +1ed at end of operations loop
-      this.section = section;
-      return null;
-    }
-  }
-
-  /**
-   * Return function exceptional halt reason.
-   *
-   * @return the exceptional halt reason
-   */
-  public ExceptionalHaltReason returnFunction() {
-    CodeSection thisInfo = code.getCodeSection(this.section);
-    var rStack = returnStack.get();
-    var returnInfo = rStack.pop();
-    if ((returnInfo.getStackHeight() + thisInfo.getOutputs()) != stack.size()) {
-      return ExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS;
-    } else if (rStack.isEmpty()) {
-      setState(MessageFrame.State.CODE_SUCCESS);
-      setOutputData(Bytes.EMPTY);
-      return null;
-    } else {
-      this.pc = returnInfo.getPC();
-      this.section = returnInfo.getCodeSectionIndex();
-      return null;
-    }
   }
 
   /** Deducts the remaining gas. */
@@ -463,6 +389,24 @@ public class MessageFrame {
    */
   public void setOutputData(final Bytes output) {
     this.output = output;
+  }
+
+  /**
+   * Sets the created code from CREATE* operations
+   *
+   * @param createdCode the code that was created
+   */
+  public void setCreatedCode(final Code createdCode) {
+    this.createdCode = createdCode;
+  }
+
+  /**
+   * gets the created code from CREATE* operations
+   *
+   * @return the code that was created
+   */
+  public Code getCreatedCode() {
+    return createdCode;
   }
 
   /** Clears the output data buffer. */
@@ -1031,18 +975,6 @@ public class MessageFrame {
   }
 
   /**
-   * Returns whether an address' slot is warmed up. Is deliberately publicly exposed for access from
-   * trace
-   *
-   * @param address the address context
-   * @param slot the slot to query
-   * @return whether the address/slot couple is warmed up
-   */
-  public boolean isStorageWarm(final Address address, final Bytes32 slot) {
-    return this.txValues.warmedUpStorage().contains(address, slot);
-  }
-
-  /**
    * Return the world state.
    *
    * @return the world state
@@ -1210,6 +1142,15 @@ public class MessageFrame {
   }
 
   /**
+   * The return stack used for EOF code sections.
+   *
+   * @return the return stack
+   */
+  public ReturnStack getReturnStack() {
+    return returnStack.get();
+  }
+
+  /**
    * Sets exceptional halt reason.
    *
    * @param exceptionalHaltReason the exceptional halt reason
@@ -1373,24 +1314,6 @@ public class MessageFrame {
     return txValues.versionedHashes();
   }
 
-  /**
-   * Accessor for address that authorized future AUTHCALLs.
-   *
-   * @return the revert reason
-   */
-  public Address getAuthorizedBy() {
-    return authorizedBy;
-  }
-
-  /**
-   * Mutator for address that authorizes future AUTHCALLs, set by AUTH opcode
-   *
-   * @param authorizedBy the address that authorizes future AUTHCALLs
-   */
-  public void setAuthorizedBy(final Address authorizedBy) {
-    this.authorizedBy = authorizedBy;
-  }
-
   /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
@@ -1428,7 +1351,9 @@ public class MessageFrame {
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
     /** Instantiates a new Builder. */
-    public Builder() {}
+    public Builder() {
+      // constructor added to deal with JavaDoc linting rules.
+    }
 
     /**
      * The "parent" message frame. When present some fields will be populated from the parent and

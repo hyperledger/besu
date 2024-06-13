@@ -17,6 +17,8 @@ package org.hyperledger.besu.evm;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeSection;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** Represents EVM code associated with an account. */
@@ -29,6 +31,13 @@ public interface Code {
    * @return size of code in bytes.
    */
   int getSize();
+
+  /**
+   * Size of the data in bytes. This is for the data only,
+   *
+   * @return size of code in bytes.
+   */
+  int getDataSize();
 
   /**
    * Get the bytes for the entire container, for example what EXTCODECOPY would want. For V0 it is
@@ -82,4 +91,63 @@ public interface Code {
    * @return The version of hte ode.
    */
   int getEofVersion();
+
+  /**
+   * Returns the count of subcontainers, or zero if there are none or if the code version does not
+   * support subcontainers.
+   *
+   * @return The subcontainer count or zero if not supported;
+   */
+  int getSubcontainerCount();
+
+  /**
+   * Returns the subcontainer at the selected index. If the container doesn't exist or is invalid,
+   * an empty result is returned. Legacy code always returns empty.
+   *
+   * @param index the index in the container to return
+   * @param auxData any Auxiliary data to append to the subcontainer code. If fetching an initcode
+   *     container, pass null.
+   * @return Either the subcontainer, or empty.
+   */
+  Optional<Code> getSubContainer(final int index, final Bytes auxData);
+
+  /**
+   * Loads data from the appropriate data section
+   *
+   * @param offset Where within the data section to start copying
+   * @param length how many bytes to copy
+   * @return A slice of the code containing the requested data
+   */
+  Bytes getData(final int offset, final int length);
+
+  /**
+   * Read a signed 16-bit big-endian integer
+   *
+   * @param startIndex the index to start reading the integer in the code
+   * @return a java int representing the 16-bit signed integer.
+   */
+  int readBigEndianI16(final int startIndex);
+
+  /**
+   * Read an unsigned 16 bit big-endian integer
+   *
+   * @param startIndex the index to start reading the integer in the code
+   * @return a java int representing the 16-bit unsigned integer.
+   */
+  int readBigEndianU16(final int startIndex);
+
+  /**
+   * Read an unsigned 8-bit integer
+   *
+   * @param startIndex the index to start reading the integer in the code
+   * @return a java int representing the 8-bit unsigned integer.
+   */
+  int readU8(final int startIndex);
+
+  /**
+   * A more readable representation of the hex bytes, including whitespace and comments after hashes
+   *
+   * @return The pretty printed code
+   */
+  String prettyPrint();
 }
