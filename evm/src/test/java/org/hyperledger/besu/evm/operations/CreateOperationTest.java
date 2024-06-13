@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operations;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.MainnetEVMs.DEV_NET_CHAIN_ID;
 import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.CODE_TOO_LARGE;
+import static org.hyperledger.besu.evm.frame.ExceptionalHaltReason.INVALID_OPERATION;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
@@ -74,7 +75,7 @@ class CreateOperationTest {
               + "F3" // RETURN
           );
   public static final Bytes SIMPLE_EOF =
-      Bytes.fromHexString("0xEF00010100040200010001030000000000000000");
+      Bytes.fromHexString("0xEF00010100040200010001040000000080000000");
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
 
   private static final int SHANGHAI_CREATE_GAS = 41240;
@@ -223,12 +224,12 @@ class CreateOperationTest {
   }
 
   @Test
-  void eofV1CannotCreateLegacy() {
+  void eofV1CannotCall() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
     final MessageFrame messageFrame =
         new TestMessageFrameBuilder()
-            .code(CodeFactory.createCode(SIMPLE_EOF, 1, true))
+            .code(CodeFactory.createCode(SIMPLE_EOF, 1))
             .pushStackItem(memoryLength)
             .pushStackItem(memoryOffset)
             .pushStackItem(Bytes.EMPTY)
@@ -238,38 +239,12 @@ class CreateOperationTest {
 
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
-
-    final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    assertThat(result.getHaltReason()).isNull();
-    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
-  }
-
-  @Test
-  void legacyCanCreateEOFv1() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_EOF.size());
-    final MessageFrame messageFrame =
-        new TestMessageFrameBuilder()
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 1, true))
-            .pushStackItem(memoryLength)
-            .pushStackItem(memoryOffset)
-            .pushStackItem(Bytes.EMPTY)
-            .worldUpdater(worldUpdater)
-            .build();
-    messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_EOF);
-
-    when(account.getNonce()).thenReturn(55L);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.get(any())).thenReturn(account);
-    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
-    assertThat(result.getHaltReason()).isNull();
-    assertThat(messageFrame.getState()).isEqualTo(MessageFrame.State.CODE_SUSPENDED);
+    assertThat(result.getHaltReason()).isEqualTo(INVALID_OPERATION);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 
   @Nonnull
@@ -286,7 +261,7 @@ class CreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
+            .code(CodeFactory.createCode(SIMPLE_CREATE, 0))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
