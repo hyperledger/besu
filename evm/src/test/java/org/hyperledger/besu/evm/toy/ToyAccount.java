@@ -171,7 +171,10 @@ public class ToyAccount implements MutableAccount {
    */
   @Override
   public boolean isStorageEmpty() {
-    return storage.isEmpty();
+    if (storage.isEmpty()) {
+      return parent == null || parent.isStorageEmpty();
+    }
+    return false;
   }
 
   @Override

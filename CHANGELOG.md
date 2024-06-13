@@ -25,10 +25,13 @@
 - Improve the selection of the most profitable built block [#7174](https://github.com/hyperledger/besu/pull/7174)
 - Support for eth_maxPriorityFeePerGas [#5658](https://github.com/hyperledger/besu/issues/5658)
 - Enable continuous profiling with default setting [#7006](https://github.com/hyperledger/besu/pull/7006)
+- A full and up to date implementation of EOF for Prague [#7169](https://github.com/hyperledger/besu/pull/7169) 
 
 ### Bug fixes
 - Make `eth_gasPrice` aware of the base fee market [#7102](https://github.com/hyperledger/besu/pull/7102)
 - Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)
+- Fix "Invalid block detected" for BFT chains using Bonsai DB [#7204](https://github.com/hyperledger/besu/pull/7204)
+
 ## 24.5.2
 
 ### Upcoming Breaking Changes

@@ -35,11 +35,9 @@ public class EOFValidationCodeRule implements ContractValidationRule {
   private static final Logger LOG = LoggerFactory.getLogger(EOFValidationCodeRule.class);
 
   final int maxEofVersion;
-  final boolean inCreateTransaction;
 
-  private EOFValidationCodeRule(final int maxEofVersion, final boolean inCreateTransaction) {
+  private EOFValidationCodeRule(final int maxEofVersion) {
     this.maxEofVersion = maxEofVersion;
-    this.inCreateTransaction = inCreateTransaction;
   }
 
   /**
@@ -53,13 +51,13 @@ public class EOFValidationCodeRule implements ContractValidationRule {
   @Override
   public Optional<ExceptionalHaltReason> validate(
       final Bytes contractCode, final MessageFrame frame) {
-    Code code = CodeFactory.createCode(contractCode, maxEofVersion, inCreateTransaction);
+    Code code = CodeFactory.createCode(contractCode, maxEofVersion);
     if (!code.isValid()) {
       LOG.trace("EOF Validation Error: {}", ((CodeInvalid) code).getInvalidReason());
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     }
 
-    if (frame.getCode().getEofVersion() > code.getEofVersion()) {
+    if (frame.getCode().getEofVersion() != code.getEofVersion()) {
       LOG.trace(
           "Cannot deploy older eof versions: initcode version - {} runtime code version - {}",
           frame.getCode().getEofVersion(),
@@ -74,11 +72,9 @@ public class EOFValidationCodeRule implements ContractValidationRule {
    * Create EOF validation.
    *
    * @param maxEofVersion Maximum EOF version to validate
-   * @param inCreateTransaction Is this inside a create transaction?
    * @return The EOF validation contract validation rule.
    */
-  public static ContractValidationRule of(
-      final int maxEofVersion, final boolean inCreateTransaction) {
-    return new EOFValidationCodeRule(maxEofVersion, inCreateTransaction);
+  public static ContractValidationRule of(final int maxEofVersion) {
+    return new EOFValidationCodeRule(maxEofVersion);
   }
 }

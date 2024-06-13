@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.operation.AbstractCallOperation.LEGACY_FAILURE_STACK_ITEM;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -31,6 +32,7 @@ import org.hyperledger.besu.evm.internal.Words;
 import java.util.Optional;
 import java.util.function.Supplier;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Abstract create operation. */
@@ -40,8 +42,15 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
 
+  /** The constant UNDERFLOW_RESPONSE. */
+  protected static final OperationResult INVALID_OPERATION =
+      new OperationResult(0L, ExceptionalHaltReason.INVALID_OPERATION);
+
   /** The maximum init code size */
-  protected int maxInitcodeSize;
+  protected final int maxInitcodeSize;
+
+  /** The EOF Version this create operation requires initcode to be in */
+  protected final int eofVersion;
 
   /**
    * Instantiates a new Abstract create operation.
@@ -52,6 +61,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param stackItemsProduced the stack items produced
    * @param gasCalculator the gas calculator
    * @param maxInitcodeSize Maximum init code size
+   * @param eofVersion the EOF version this create operation is valid in
    */
   protected AbstractCreateOperation(
       final int opcode,
@@ -59,19 +69,25 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       final int stackItemsConsumed,
       final int stackItemsProduced,
       final GasCalculator gasCalculator,
-      final int maxInitcodeSize) {
+      final int maxInitcodeSize,
+      final int eofVersion) {
     super(opcode, name, stackItemsConsumed, stackItemsProduced, gasCalculator);
     this.maxInitcodeSize = maxInitcodeSize;
+    this.eofVersion = eofVersion;
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    if (frame.getCode().getEofVersion() != eofVersion) {
+      return INVALID_OPERATION;
+    }
+
     // manual check because some reads won't come until the "complete" step.
     if (frame.stackSize() < getStackItemsConsumed()) {
       return UNDERFLOW_RESPONSE;
     }
 
-    Supplier<Code> codeSupplier = () -> getInitCode(frame, evm);
+    Supplier<Code> codeSupplier = Suppliers.memoize(() -> getInitCode(frame, evm));
 
     final long cost = cost(frame, codeSupplier);
     if (frame.isStatic()) {
@@ -85,36 +101,41 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final MutableAccount account = frame.getWorldUpdater().getAccount(address);
 
     frame.clearReturnData();
-    final long inputOffset = clampedToLong(frame.getStackItem(1));
-    final long inputSize = clampedToLong(frame.getStackItem(2));
-    if (inputSize > maxInitcodeSize) {
-      frame.popStackItems(getStackItemsConsumed());
-      return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
-    }
+
+    Code code = codeSupplier.get();
 
     if (value.compareTo(account.getBalance()) > 0
         || frame.getDepth() >= 1024
         || account.getNonce() == -1
-        || codeSupplier.get() == null) {
+        || code == null
+        || code.getEofVersion() != frame.getCode().getEofVersion()) {
       fail(frame);
     } else {
       account.incrementNonce();
 
-      final Bytes inputData = frame.readMemory(inputOffset, inputSize);
-      // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
-      // addresses disk loading delay, and we already have the code.
-      Code code = evm.getCodeUncached(inputData);
+      if (code.getSize() > maxInitcodeSize) {
+        frame.popStackItems(getStackItemsConsumed());
+        return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+      }
+      if (!code.isValid()) {
+        fail(frame);
+      } else {
 
-      if (code.isValid() && frame.getCode().getEofVersion() <= code.getEofVersion()) {
         frame.decrementRemainingGas(cost);
         spawnChildMessage(frame, code, evm);
         frame.incrementRemainingGas(cost);
-      } else {
-        fail(frame);
       }
     }
+    return new OperationResult(cost, null, getPcIncrement());
+  }
 
-    return new OperationResult(cost, null);
+  /**
+   * How many bytes does this operation occupy?
+   *
+   * @return The number of bytes the operation and immediate arguments occupy
+   */
+  protected int getPcIncrement() {
+    return 1;
   }
 
   /**
@@ -149,13 +170,14 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final long inputSize = clampedToLong(frame.getStackItem(2));
     frame.readMutableMemory(inputOffset, inputSize);
     frame.popStackItems(getStackItemsConsumed());
-    frame.pushStackItem(FAILURE_STACK_ITEM);
+    frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
   }
 
   private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
     final Wei value = Wei.wrap(parent.getStackItem(0));
 
     final Address contractAddress = targetContractAddress(parent, code);
+    final Bytes inputData = getInputData(parent);
 
     final long childGasStipend =
         gasCalculator().gasAvailableForChildCreate(parent.getRemainingGas());
@@ -168,7 +190,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         .initialGas(childGasStipend)
         .address(contractAddress)
         .contract(contractAddress)
-        .inputData(Bytes.EMPTY)
+        .inputData(inputData)
         .sender(parent.getRecipientAddress())
         .value(value)
         .apparentValue(value)
@@ -179,11 +201,24 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     parent.setState(MessageFrame.State.CODE_SUSPENDED);
   }
 
+  /**
+   * Get the input data to be appended to the EOF factory contract. For CREATE and CREATE2 this is
+   * always empty
+   *
+   * @param frame the message frame the operation was called in
+   * @return the input data as raw bytes, or `Bytes.EMPTY` if there is no aux data
+   */
+  protected Bytes getInputData(final MessageFrame frame) {
+    return Bytes.EMPTY;
+  }
+
   private void complete(final MessageFrame frame, final MessageFrame childFrame, final EVM evm) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
     Code outputCode =
-        CodeFactory.createCode(childFrame.getOutputData(), evm.getMaxEOFVersion(), true);
+        (childFrame.getCreatedCode() != null)
+            ? childFrame.getCreatedCode()
+            : CodeFactory.createCode(childFrame.getOutputData(), evm.getMaxEOFVersion());
     frame.popStackItems(getStackItemsConsumed());
 
     if (outputCode.isValid()) {
@@ -198,18 +233,18 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         onSuccess(frame, createdAddress);
       } else {
         frame.setReturnData(childFrame.getOutputData());
-        frame.pushStackItem(FAILURE_STACK_ITEM);
+        frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
         onFailure(frame, childFrame.getExceptionalHaltReason());
       }
     } else {
       frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
       frame.setReturnData(childFrame.getOutputData());
-      frame.pushStackItem(FAILURE_STACK_ITEM);
+      frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       onInvalid(frame, (CodeInvalid) outputCode);
     }
 
     final int currentPC = frame.getPC();
-    frame.setPC(currentPC + 1);
+    frame.setPC(currentPC + getPcIncrement());
   }
 
   /**
