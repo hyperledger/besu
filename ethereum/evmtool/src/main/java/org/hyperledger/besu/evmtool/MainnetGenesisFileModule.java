@@ -117,6 +117,9 @@ class MainnetGenesisFileModule extends GenesisFileModule {
             "prague",
             createSchedule(new StubGenesisConfigOptions().pragueTime(0).baseFeePerGas(0x0a))),
         Map.entry(
+            "pragueeof",
+            createSchedule(new StubGenesisConfigOptions().pragueEOFTime(0).baseFeePerGas(0x0a))),
+        Map.entry(
             "futureeips",
             createSchedule(new StubGenesisConfigOptions().futureEipsTime(0).baseFeePerGas(0x0a))),
         Map.entry(

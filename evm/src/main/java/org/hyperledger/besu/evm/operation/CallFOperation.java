@@ -14,11 +14,12 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
-
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.ReturnStack;
 
 /** The Call F operation. */
 public class CallFOperation extends AbstractOperation {
@@ -40,26 +41,18 @@ public class CallFOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-    return staticOperation(frame, code, frame.getPC());
-  }
-
-  /**
-   * Performs Call F operation.
-   *
-   * @param frame the frame
-   * @param code the code
-   * @param pc the pc
-   * @return the successful operation result
-   */
-  public static OperationResult staticOperation(
-      final MessageFrame frame, final byte[] code, final int pc) {
-    int section = readBigEndianU16(pc + 1, code);
-    var exception = frame.callFunction(section);
-    if (exception == null) {
-      return callfSuccess;
-    } else {
-      return new OperationResult(callfSuccess.gasCost, exception);
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
     }
+
+    int pc = frame.getPC();
+    int section = code.readBigEndianU16(pc + 1);
+    CodeSection info = code.getCodeSection(section);
+    frame.getReturnStack().push(new ReturnStack.ReturnStackItem(frame.getSection(), pc + 2));
+    frame.setPC(info.getEntryPoint() - 1); // will be +1ed at end of operations loop
+    frame.setSection(section);
+
+    return callfSuccess;
   }
 }

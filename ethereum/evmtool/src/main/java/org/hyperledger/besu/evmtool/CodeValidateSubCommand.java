@@ -17,8 +17,9 @@ package org.hyperledger.besu.evmtool;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evmtool.CodeValidateSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeFactory;
-import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.CodeV1Validation;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.util.LogConfigurator;
 
@@ -39,7 +40,7 @@ import picocli.CommandLine;
 
 @CommandLine.Command(
     name = COMMAND_NAME,
-    description = "Execute an Ethereum State Test.",
+    description = "Validates EVM code for fuzzing",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class CodeValidateSubCommand implements Runnable {
@@ -109,24 +110,26 @@ public class CodeValidateSubCommand implements Runnable {
     } catch (RuntimeException re) {
       return "err: hex string -" + re + "\n";
     }
-    if (codeBytes.size() == 0) {
+    if (codeBytes.isEmpty()) {
       return "";
     }
 
-    var layout = EOFLayout.parseEOF(codeBytes);
+    EOFLayout layout = EOFLayout.parseEOF(codeBytes);
     if (!layout.isValid()) {
-      return "err: layout - " + layout.getInvalidReason() + "\n";
+      return "err: layout - " + layout.invalidReason() + "\n";
     }
 
-    var code = CodeFactory.createCode(codeBytes, 1, true);
-    if (!code.isValid()) {
-      return "err: " + ((CodeInvalid) code).getInvalidReason() + "\n";
+    String error = CodeV1Validation.validate(layout);
+    if (error != null) {
+      return "err: " + error + "\n";
     }
+
+    Code code = CodeFactory.createCode(codeBytes, 1);
 
     return "OK "
         + IntStream.range(0, code.getCodeSectionCount())
             .mapToObj(code::getCodeSection)
-            .map(cs -> layout.getContainer().slice(cs.getEntryPoint(), cs.getLength()))
+            .map(cs -> layout.container().slice(cs.getEntryPoint(), cs.getLength()))
             .map(Bytes::toUnprefixedHexString)
             .collect(Collectors.joining(","))
         + "\n";
