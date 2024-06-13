@@ -74,7 +74,7 @@ class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(CodeFactory.createCode(jumpBytes, 0, false))
+            .code(CodeFactory.createCode(jumpBytes, 0))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -89,7 +89,7 @@ class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(CodeFactory.createCode(jumpBytes, 0, false))
+            .code(CodeFactory.createCode(jumpBytes, 0))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -104,7 +104,7 @@ class JumpOperationTest {
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0xFFFFFFFF"))
-            .code(CodeFactory.createCode(jumpBytes, 0, false))
+            .code(CodeFactory.createCode(jumpBytes, 0))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
@@ -114,7 +114,7 @@ class JumpOperationTest {
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x04"))
-            .code(CodeFactory.createCode(badJump, 0, false))
+            .code(CodeFactory.createCode(badJump, 0))
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
@@ -132,7 +132,7 @@ class JumpOperationTest {
     final MessageFrame longContract =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x12c"))
-            .code(CodeFactory.createCode(longCode, 0, false))
+            .code(CodeFactory.createCode(longCode, 0))
             .build();
     longContract.setPC(255);
 
