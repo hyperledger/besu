@@ -138,7 +138,7 @@ public class EVM {
   /**
    * Returns the non-fork related configuration parameters of the EVM.
    *
-   * @return the EVM coniguration.
+   * @return the EVM configuration.
    */
   public EvmConfiguration getEvmConfiguration() {
     return evmConfiguration;
@@ -365,6 +365,16 @@ public class EVM {
    * @return the code
    */
   public Code getCodeUncached(final Bytes codeBytes) {
-    return CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion(), false);
+    return CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion());
+  }
+
+  /**
+   * Gets code for creation. Skips code cache and allows for extra data after EOF contracts.
+   *
+   * @param codeBytes the code bytes
+   * @return the code
+   */
+  public Code getCodeForCreation(final Bytes codeBytes) {
+    return CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion(), false, true);
   }
 }

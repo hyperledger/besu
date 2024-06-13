@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -79,7 +79,7 @@ public class SelfDestructOperationTest {
             .sender(beneficiaryAddress)
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SELFDESTRUCT_CODE, 0, true))
+            .code(CodeFactory.createCode(SELFDESTRUCT_CODE, 0))
             .completer(__ -> {})
             .address(originatorAddress)
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))

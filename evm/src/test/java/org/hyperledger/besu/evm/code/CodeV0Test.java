@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evm.code;
 
 import static org.hyperledger.besu.evm.frame.MessageFrame.Type.MESSAGE_CALL;
@@ -64,7 +62,7 @@ class CodeV0Test {
   void shouldReuseJumpDestMap() {
     final JumpOperation operation = new JumpOperation(gasCalculator);
     final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
-    final CodeV0 getsCached = (CodeV0) spy(CodeFactory.createCode(jumpBytes, 0, false));
+    final CodeV0 getsCached = (CodeV0) spy(CodeFactory.createCode(jumpBytes, 0));
     MessageFrame frame = createJumpFrame(getsCached);
 
     OperationResult result = operation.execute(frame, evm);

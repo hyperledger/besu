@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.precompile;
 
@@ -72,7 +71,7 @@ class BLS12G2MulPrecompiledContractTest {
     if (actualComputation == null) {
       final ArgumentCaptor<Bytes> revertReason = ArgumentCaptor.forClass(Bytes.class);
       verify(messageFrame).setRevertReason(revertReason.capture());
-      assertThat(new String(revertReason.getValue().toArrayUnsafe(), UTF_8)).isEqualTo(notes);
+      assertThat(new String(revertReason.getValue().toArrayUnsafe(), UTF_8)).contains(notes);
 
       assertThat(expectedComputation.size()).isZero();
     } else {

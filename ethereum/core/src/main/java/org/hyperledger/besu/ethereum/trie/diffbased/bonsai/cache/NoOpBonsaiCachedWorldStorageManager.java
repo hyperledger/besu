@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 
 import java.util.Optional;
 import java.util.function.Function;
@@ -26,7 +27,7 @@ public class NoOpBonsaiCachedWorldStorageManager extends BonsaiCachedWorldStorag
 
   public NoOpBonsaiCachedWorldStorageManager(
       final BonsaiWorldStateKeyValueStorage bonsaiWorldStateKeyValueStorage) {
-    super(null, bonsaiWorldStateKeyValueStorage);
+    super(null, bonsaiWorldStateKeyValueStorage, DiffBasedWorldStateConfig::new);
   }
 
   @Override

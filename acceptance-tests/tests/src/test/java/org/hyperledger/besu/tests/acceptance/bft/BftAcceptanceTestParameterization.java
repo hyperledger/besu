@@ -38,7 +38,14 @@ public class BftAcceptanceTestParameterization {
   @FunctionalInterface
   public interface NodeCreator {
 
-    BesuNode create(BesuNodeFactory factory, String name) throws Exception;
+    BesuNode create(BesuNodeFactory factory, String name, boolean fixedPort) throws Exception;
+  }
+
+  @FunctionalInterface
+  public interface FixedPortNodeCreator {
+
+    BesuNode createFixedPort(BesuNodeFactory factory, String name, boolean fixedPort)
+        throws Exception;
   }
 
   @FunctionalInterface
@@ -57,7 +64,11 @@ public class BftAcceptanceTestParameterization {
   }
 
   public BesuNode createNode(BesuNodeFactory factory, String name) throws Exception {
-    return creatorFn.create(factory, name);
+    return creatorFn.create(factory, name, false);
+  }
+
+  public BesuNode createNodeFixedPort(BesuNodeFactory factory, String name) throws Exception {
+    return creatorFn.create(factory, name, true);
   }
 
   public BesuNode createNodeWithValidators(

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import static org.hyperledger.besu.datatypes.Address.KZG_POINT_EVAL;
+import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
 
 /**
  * Gas Calculator for Prague
@@ -30,7 +30,7 @@ public class PragueGasCalculator extends CancunGasCalculator {
 
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
-    this(KZG_POINT_EVAL.toArrayUnsafe()[19]);
+    this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
   }
 
   /**

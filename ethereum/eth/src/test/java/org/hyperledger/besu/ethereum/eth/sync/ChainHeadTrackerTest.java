@@ -53,7 +53,7 @@ public class ChainHeadTrackerTest {
 
   private final ProtocolSchedule protocolSchedule =
       FixedDifficultyProtocolSchedule.create(
-          GenesisConfigFile.development().getConfigOptions(),
+          GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
           false,
           EvmConfiguration.DEFAULT,
           MiningParameters.MINING_DISABLED,

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.List;
@@ -110,7 +111,12 @@ public class PrivateStorageMigration {
         final List<BlockHeader> ommers = block.getBody().getOmmers();
 
         privateMigrationBlockProcessor.processBlock(
-            blockchain, publicWorldState, blockHeader, transactionsToProcess, ommers);
+            blockchain,
+            publicWorldState,
+            new CachingBlockHashLookup(blockHeader, blockchain),
+            blockHeader,
+            transactionsToProcess,
+            ommers);
       }
     }
 

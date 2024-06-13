@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -132,7 +131,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> staticNodes;
   private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
-  private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private final boolean isStrictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
 
@@ -169,7 +167,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
       final boolean isStrictTxReplayProtectionEnabled,
       final Map<String, String> environment)
       throws IOException {
@@ -230,7 +227,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
-    this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.environment = environment;
     LOG.info("Created BesuNode {}", this);
   }
@@ -763,10 +759,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return runCommand;
   }
 
-  public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
-    return pkiKeyStoreConfiguration;
-  }
-
   public boolean isStrictTxReplayProtectionEnabled() {
     return isStrictTxReplayProtectionEnabled;
   }
@@ -788,21 +780,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     if (nodeRequests != null) {
       nodeRequests.shutdown();
       nodeRequests = null;
-    }
-
-    deleteRuntimeFiles();
-  }
-
-  private void deleteRuntimeFiles() {
-    try {
-      Files.deleteIfExists(homeDirectory.resolve("besu.networks"));
-    } catch (IOException e) {
-      LOG.error("Failed to clean up besu.networks file in {}", homeDirectory, e);
-    }
-    try {
-      Files.deleteIfExists(homeDirectory.resolve("besu.ports"));
-    } catch (IOException e) {
-      LOG.error("Failed to clean up besu.ports file in {}", homeDirectory, e);
     }
   }
 

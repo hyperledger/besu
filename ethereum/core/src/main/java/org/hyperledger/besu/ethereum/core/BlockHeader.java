@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -64,8 +64,7 @@ public class BlockHeader extends SealableBlockHeader
       final Long blobGasUsed,
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
-      final Hash depositsRoot,
-      final Hash exitsRoot,
+      final Hash requestsRoot,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -87,8 +86,7 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositsRoot,
-        exitsRoot);
+        requestsRoot);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -173,11 +171,8 @@ public class BlockHeader extends SealableBlockHeader
     if (parentBeaconBlockRoot != null) {
       out.writeBytes(parentBeaconBlockRoot);
     }
-    if (depositsRoot != null) {
-      out.writeBytes(depositsRoot);
-    }
-    if (exitsRoot != null) {
-      out.writeBytes(exitsRoot);
+    if (requestsRoot != null) {
+      out.writeBytes(requestsRoot);
     }
     out.endList();
   }
@@ -209,9 +204,7 @@ public class BlockHeader extends SealableBlockHeader
     final BlobGas excessBlobGas =
         !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
     final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
-    final Hash depositHashRoot =
-        !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
-    final Hash exitsHashRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+    final Hash requestsRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -234,8 +227,7 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        depositHashRoot,
-        exitsHashRoot,
+        requestsRoot,
         blockHeaderFunctions);
   }
 
@@ -286,11 +278,8 @@ public class BlockHeader extends SealableBlockHeader
     if (parentBeaconBlockRoot != null) {
       sb.append("parentBeaconBlockRoot=").append(parentBeaconBlockRoot).append(", ");
     }
-    if (depositsRoot != null) {
-      sb.append("depositsRoot=").append(depositsRoot);
-    }
-    if (exitsRoot != null) {
-      sb.append("exitsRoot=").append(exitsRoot);
+    if (requestsRoot != null) {
+      sb.append("requestsRoot=").append(requestsRoot);
     }
     return sb.append("}").toString();
   }
@@ -320,13 +309,12 @@ public class BlockHeader extends SealableBlockHeader
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
         pluginBlockHeader.getBlobGasUsed().map(Long::longValue).orElse(null),
-        pluginBlockHeader.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null),
+        pluginBlockHeader.getExcessBlobGas().map(BlobGas.class::cast).orElse(null),
         pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
         pluginBlockHeader
-            .getDepositsRoot()
+            .getRequestsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
-        pluginBlockHeader.getExitsRoot().map(h -> Hash.fromHexString(h.toHexString())).orElse(null),
         blockHeaderFunctions);
   }
 

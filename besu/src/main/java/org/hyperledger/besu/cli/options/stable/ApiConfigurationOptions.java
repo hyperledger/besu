@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,9 +17,9 @@ package org.hyperledger.besu.cli.options.stable;
 import static java.util.Arrays.asList;
 
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
-import org.hyperledger.besu.ethereum.core.MiningParameters;
 
 import org.slf4j.Logger;
 import picocli.CommandLine;
@@ -29,6 +29,8 @@ import picocli.CommandLine;
  * and trace filter range.
  */
 public class ApiConfigurationOptions {
+  /** Default constructor. */
+  public ApiConfigurationOptions() {}
 
   @CommandLine.Option(
       names = {"--api-gas-price-blocks"},
@@ -117,17 +119,14 @@ public class ApiConfigurationOptions {
   /**
    * Creates an ApiConfiguration based on the provided options.
    *
-   * @param miningParameters The mining parameters
    * @return An ApiConfiguration instance
    */
-  public ApiConfiguration apiConfiguration(final MiningParameters miningParameters) {
+  public ApiConfiguration apiConfiguration() {
     var builder =
         ImmutableApiConfiguration.builder()
             .gasPriceBlocks(apiGasPriceBlocks)
             .gasPricePercentile(apiGasPricePercentile)
-            .gasPriceMinSupplier(
-                miningParameters.getMinTransactionGasPrice().getAsBigInteger()::longValueExact)
-            .gasPriceMax(apiGasPriceMax)
+            .gasPriceMax(Wei.of(apiGasPriceMax))
             .maxLogsRange(rpcMaxLogsRange)
             .gasCap(rpcGasCap)
             .isGasAndPriorityFeeLimitingEnabled(apiGasAndPriorityFeeLimitingEnabled)

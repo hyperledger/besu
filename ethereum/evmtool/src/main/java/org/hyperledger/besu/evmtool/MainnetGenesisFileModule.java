@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
@@ -117,6 +116,9 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         Map.entry(
             "prague",
             createSchedule(new StubGenesisConfigOptions().pragueTime(0).baseFeePerGas(0x0a))),
+        Map.entry(
+            "pragueeof",
+            createSchedule(new StubGenesisConfigOptions().pragueEOFTime(0).baseFeePerGas(0x0a))),
         Map.entry(
             "futureeips",
             createSchedule(new StubGenesisConfigOptions().futureEipsTime(0).baseFeePerGas(0x0a))),

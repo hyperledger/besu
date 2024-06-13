@@ -164,6 +164,9 @@ public class RocksDBStats {
     HistogramType.READ_NUM_MERGE_OPERANDS,
   };
 
+  /** Default constructor */
+  private RocksDBStats() {}
+
   /**
    * Register rocks db metrics.
    *

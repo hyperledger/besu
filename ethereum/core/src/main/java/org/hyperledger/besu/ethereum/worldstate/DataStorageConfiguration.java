@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.worldstate;
 
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -25,6 +23,9 @@ import org.immutables.value.Value;
 public interface DataStorageConfiguration {
 
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
+  boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = true;
+  long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+  int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 30_000;
   boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = false;
 
   DataStorageConfiguration DEFAULT_CONFIG =
@@ -40,6 +41,13 @@ public interface DataStorageConfiguration {
           .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
           .build();
 
+  DataStorageConfiguration DEFAULT_BONSAI_PARTIAL_DB_CONFIG =
+      ImmutableDataStorageConfiguration.builder()
+          .dataStorageFormat(DataStorageFormat.BONSAI)
+          .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .unstable(Unstable.DEFAULT_PARTIAL)
+          .build();
+
   DataStorageConfiguration DEFAULT_FOREST_CONFIG =
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.FOREST)
@@ -50,6 +58,16 @@ public interface DataStorageConfiguration {
   DataStorageFormat getDataStorageFormat();
 
   Long getBonsaiMaxLayersToLoad();
+
+  @Value.Default
+  default boolean getBonsaiLimitTrieLogsEnabled() {
+    return DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
+  }
+
+  @Value.Default
+  default int getBonsaiTrieLogPruningWindowSize() {
+    return DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+  }
 
   @Value.Default
   default boolean getReceiptCompactionEnabled() {
@@ -64,22 +82,18 @@ public interface DataStorageConfiguration {
   @Value.Immutable
   interface Unstable {
 
-    boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = false;
-    long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
-    int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 30_000;
-    boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = false;
+    boolean DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED = true;
+    boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = true;
 
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();
 
-    @Value.Default
-    default boolean getBonsaiLimitTrieLogsEnabled() {
-      return DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
-    }
+    DataStorageConfiguration.Unstable DEFAULT_PARTIAL =
+        ImmutableDataStorageConfiguration.Unstable.builder().bonsaiFullFlatDbEnabled(false).build();
 
     @Value.Default
-    default int getBonsaiTrieLogPruningWindowSize() {
-      return DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+    default boolean getBonsaiFullFlatDbEnabled() {
+      return DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED;
     }
 
     @Value.Default

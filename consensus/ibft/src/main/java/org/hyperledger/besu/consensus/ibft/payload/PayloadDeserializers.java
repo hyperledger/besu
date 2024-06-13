@@ -22,6 +22,8 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 /** The Payload deserializers. */
 public class PayloadDeserializers {
+  /** Default constructor. */
+  protected PayloadDeserializers() {}
 
   /**
    * Read signed proposal payload from rlp input.

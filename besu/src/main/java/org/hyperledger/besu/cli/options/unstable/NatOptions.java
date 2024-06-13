@@ -37,6 +37,9 @@ public class NatOptions {
       arity = "1")
   private final Boolean natMethodFallbackEnabled = true;
 
+  /** Default constructor. */
+  NatOptions() {}
+
   /**
    * Create nat options.
    *

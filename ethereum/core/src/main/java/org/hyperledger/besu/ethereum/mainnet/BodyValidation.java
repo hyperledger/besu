@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,15 +18,13 @@ import static org.hyperledger.besu.crypto.Hash.keccak256;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.core.encoding.DepositEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
+import org.hyperledger.besu.ethereum.core.encoding.RequestEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder;
-import org.hyperledger.besu.ethereum.core.encoding.ValidatorExitEncoder;
 import org.hyperledger.besu.ethereum.core.encoding.WithdrawalEncoder;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
@@ -91,32 +89,15 @@ public final class BodyValidation {
   }
 
   /**
-   * Generates the deposits root for a list of deposits
+   * Generates the requests root for a list of requests
    *
-   * @param deposits the transactions
-   * @return the transaction root
+   * @param requests list of request
+   * @return the requests root
    */
-  public static Hash depositsRoot(final List<Deposit> deposits) {
+  public static Hash requestsRoot(final List<Request> requests) {
     final MerkleTrie<Bytes, Bytes> trie = trie();
-
-    IntStream.range(0, deposits.size())
-        .forEach(i -> trie.put(indexKey(i), DepositEncoder.encodeOpaqueBytes(deposits.get(i))));
-
-    return Hash.wrap(trie.getRootHash());
-  }
-
-  /**
-   * Generates the exits root for a list of exits
-   *
-   * @param exits list of exits
-   * @return the exits root
-   */
-  public static Hash exitsRoot(final List<ValidatorExit> exits) {
-    final MerkleTrie<Bytes, Bytes> trie = trie();
-
-    IntStream.range(0, exits.size())
-        .forEach(i -> trie.put(indexKey(i), ValidatorExitEncoder.encodeOpaqueBytes(exits.get(i))));
-
+    IntStream.range(0, requests.size())
+        .forEach(i -> trie.put(indexKey(i), RequestEncoder.encodeOpaqueBytes(requests.get(i))));
     return Hash.wrap(trie.getRootHash());
   }
 

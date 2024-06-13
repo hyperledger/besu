@@ -187,7 +187,6 @@ public class TransactionTracer {
       final OperationTracer tracer,
       final Wei blobGasPrice) {
     return transactionProcessor.processTransaction(
-        blockchain,
         worldUpdater,
         header,
         transaction,

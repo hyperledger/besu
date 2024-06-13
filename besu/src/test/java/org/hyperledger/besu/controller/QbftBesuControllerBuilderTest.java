@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -32,6 +32,8 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.List;
 
@@ -45,7 +47,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuilderTest {
 
   @Override
-  public void setupBftGenesisConfigOptions() throws JsonProcessingException {
+  public void setupBftGenesisConfigFile() throws JsonProcessingException {
 
     // qbft prepForBuild setup
     lenient()
@@ -99,10 +101,13 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
   @Test
   public void missingTransactionValidatorProviderThrowsError() {
     final ProtocolContext protocolContext = mock(ProtocolContext.class);
+    final ProtocolSchedule protocolSchedule = mock(ProtocolSchedule.class);
     when(protocolContext.getBlockchain()).thenReturn(mock(MutableBlockchain.class));
 
     assertThatThrownBy(
-            () -> bftBesuControllerBuilder.createAdditionalJsonRpcMethodFactory(protocolContext))
+            () ->
+                bftBesuControllerBuilder.createAdditionalJsonRpcMethodFactory(
+                    protocolContext, protocolSchedule, MiningParameters.newDefault()))
         .isInstanceOf(NullPointerException.class)
         .hasMessage("transactionValidatorProvider should have been initialised");
   }

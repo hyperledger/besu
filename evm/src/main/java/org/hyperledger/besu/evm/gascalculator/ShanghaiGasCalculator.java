@@ -1,5 +1,3 @@
-package org.hyperledger.besu.evm.gascalculator;
-
 /*
  * Copyright contributors to Hyperledger Besu.
  *
@@ -14,6 +12,7 @@ package org.hyperledger.besu.evm.gascalculator;
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.evm.gascalculator;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.numWords;

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
@@ -49,12 +50,13 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
   public ReadyTransactions(
       final TransactionPoolConfiguration poolConfig,
+      final EthScheduler ethScheduler,
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BlobCache blobCache) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache);
+    super(poolConfig, ethScheduler, nextLayer, transactionReplacementTester, metrics, blobCache);
   }
 
   @Override
@@ -146,7 +148,8 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] remainingPromotionsPerType) {
     long accumulatedSpace = 0;
     final List<PendingTransaction> promotedTxs = new ArrayList<>();
 
@@ -155,10 +158,12 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
     for (final var senderFirstTx : orderByMaxFee.descendingSet()) {
       final var senderTxs = txsBySender.get(senderFirstTx.getSender());
       for (final var candidateTx : senderTxs.values()) {
-        if (promotionFilter.test(candidateTx)) {
+        final var txType = candidateTx.getTransaction().getType();
+        if (promotionFilter.test(candidateTx) && remainingPromotionsPerType[txType.ordinal()] > 0) {
           accumulatedSpace += candidateTx.memorySize();
           if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
             promotedTxs.add(candidateTx);
+            --remainingPromotionsPerType[txType.ordinal()];
           } else {
             // no room for more txs the search is over exit the loops
             break search;

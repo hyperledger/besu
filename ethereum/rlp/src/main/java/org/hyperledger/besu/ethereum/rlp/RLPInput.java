@@ -50,8 +50,7 @@ import org.apache.tuweni.units.bigints.UInt64;
  * word, a method like {@link #readLongScalar()} does not expect an encoded value of exactly 8 bytes
  * (by opposition to {@link #readLong}), but rather one that is "up to" 8 bytes.
  *
- * @see BytesValueRLPInput for a {@link RLPInput} that decode an RLP encoded value stored in a
- *     {@link Bytes}.
+ * @see BytesValueRLPInput
  */
 public interface RLPInput {
 

@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.referencetests;
 
@@ -112,7 +111,7 @@ public class StateTestVersionedTransaction {
     this.maxFeePerGas = Optional.ofNullable(maxFeePerGas).map(Wei::fromHexString).orElse(null);
     this.maxPriorityFeePerGas =
         Optional.ofNullable(maxPriorityFeePerGas).map(Wei::fromHexString).orElse(null);
-    this.to = to.isEmpty() ? null : Address.fromHexString(to);
+    this.to = (to == null || to.isEmpty()) ? null : Address.fromHexString(to);
 
     SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();
     this.keys =

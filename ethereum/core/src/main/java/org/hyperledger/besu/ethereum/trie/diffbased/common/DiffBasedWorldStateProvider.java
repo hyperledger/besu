@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.trie.diffbased.common;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -28,6 +26,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCached
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -56,6 +55,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   protected DiffBasedWorldState persistedState;
 
   protected final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
+  protected final DiffBasedWorldStateConfig defaultWorldStateConfig;
 
   public DiffBasedWorldStateProvider(
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
@@ -72,6 +72,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
             maxLayersToLoad.orElse(DiffBasedCachedWorldStorageManager.RETAINED_LAYERS),
             pluginContext);
     this.blockchain = blockchain;
+    this.defaultWorldStateConfig = new DiffBasedWorldStateConfig();
   }
 
   public DiffBasedWorldStateProvider(
@@ -83,6 +84,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     // TODO: de-dup constructors
     this.trieLogManager = trieLogManager;
     this.blockchain = blockchain;
+    this.defaultWorldStateConfig = new DiffBasedWorldStateConfig();
   }
 
   protected void provideCachedWorldStorageManager(
@@ -252,6 +254,19 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   @Override
   public MutableWorldState getMutable() {
     return persistedState;
+  }
+
+  public DiffBasedWorldStateConfig getDefaultWorldStateConfig() {
+    return defaultWorldStateConfig;
+  }
+
+  public void disableTrie() {
+    defaultWorldStateConfig.setTrieDisabled(true);
+    worldStateKeyValueStorage.clearTrie();
+  }
+
+  public DiffBasedWorldStateKeyValueStorage getWorldStateKeyValueStorage() {
+    return worldStateKeyValueStorage;
   }
 
   public TrieLogManager getTrieLogManager() {

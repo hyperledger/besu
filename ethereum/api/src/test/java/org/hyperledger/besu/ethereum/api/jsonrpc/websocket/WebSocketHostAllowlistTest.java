@@ -196,9 +196,9 @@ public class WebSocketHostAllowlistTest {
   public void httpRequestWithMalformedHostIsRejected() throws Throwable {
     webSocketConfiguration.setAuthenticationEnabled(false);
     webSocketConfiguration.setHostsAllowlist(hostsAllowlist);
-    doHttpRequestAndVerify(testContext, "ally:friend", 403);
-    doHttpRequestAndVerify(testContext, "ally:123456", 403);
-    doHttpRequestAndVerify(testContext, "ally:friend:1234", 403);
+    doHttpRequestAndVerify(testContext, "ally:friend", 400);
+    doHttpRequestAndVerify(testContext, "ally:123456", 400);
+    doHttpRequestAndVerify(testContext, "ally:friend:1234", 400);
   }
 
   private void doHttpRequestAndVerify(

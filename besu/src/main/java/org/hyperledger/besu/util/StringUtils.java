@@ -19,6 +19,8 @@ import java.util.function.Function;
 
 /** some useful tools to display strings in command line help or error messages */
 public class StringUtils {
+  /** Default Constructor. */
+  StringUtils() {}
 
   /**
    * Joins a list into string elements with a delimiter but having a last different delimiter

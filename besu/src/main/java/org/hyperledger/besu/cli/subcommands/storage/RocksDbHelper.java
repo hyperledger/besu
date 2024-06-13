@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.cli.subcommands.storage;
 
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -35,6 +34,9 @@ import org.slf4j.LoggerFactory;
 /** RocksDB subcommand helper methods. */
 public class RocksDbHelper {
   private static final Logger LOG = LoggerFactory.getLogger(RocksDbHelper.class);
+
+  /** Default Constructor. */
+  RocksDbHelper() {}
 
   static void forEachColumnFamily(
       final String dbPath, final BiConsumer<RocksDB, ColumnFamilyHandle> task) {

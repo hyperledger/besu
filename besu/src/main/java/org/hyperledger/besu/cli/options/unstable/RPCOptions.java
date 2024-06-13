@@ -35,6 +35,9 @@ public class RPCOptions {
       arity = "1")
   private final Long wsTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
+  /** Default Constructor. */
+  RPCOptions() {}
+
   /**
    * Create rpc options.
    *
