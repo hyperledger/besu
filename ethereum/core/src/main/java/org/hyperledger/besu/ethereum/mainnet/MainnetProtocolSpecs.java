@@ -58,6 +58,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
@@ -735,9 +736,6 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
 
     final Address depositContractAddress =
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
@@ -750,47 +748,64 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             evmConfiguration,
             miningParameters)
-        // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
+        // EIP-3074 AUTH and AUTCALL gas
         .gasCalculator(PragueGasCalculator::new)
+        // EIP-3074 AUTH and AUTCALL
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.prague(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        // change contract call creator to accept EOF code
+
+        // EIP-2537 BLS12-381 precompiles
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
+
+        // EIP-7002 Withdrawls / EIP-6610 Deposits / EIP-7685 Requests
+        .requestsValidator(pragueRequestsValidator(depositContractAddress))
+        // EIP-7002 Withdrawls / EIP-6610 Deposits / EIP-7685 Requests
+        .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
+
+        // EIP-2935 Blockhash processor
+        .blockHashProcessor(new PragueBlockHashProcessor())
+        .name("Prague");
+  }
+
+  static ProtocolSpecBuilder pragueEOFDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+
+    return pragueDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters)
+        // EIP-7692 EOF v1 Gas calculator
+        .gasCalculator(PragueEOFGasCalculator::new)
+        // EIP-7692 EOF v1 EVM and opcodes
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.pragueEOF(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // EIP-7698 EOF v1 creation transaction
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
                     gasCalculator,
                     evm,
                     true,
-                    List.of(
-                        MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
+                    List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        // warm blockahsh contract
-        .transactionProcessorBuilder(
-            (gasCalculator,
-                feeMarket,
-                transactionValidator,
-                contractCreationProcessor,
-                messageCallProcessor) ->
-                new MainnetTransactionProcessor(
-                    gasCalculator,
-                    transactionValidator,
-                    contractCreationProcessor,
-                    messageCallProcessor,
-                    true,
-                    true,
-                    stackSizeLimit,
-                    feeMarket,
-                    CoinbaseFeePriceCalculator.eip1559()))
-
-        // use prague precompiled contracts
-        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
-        .requestsValidator(pragueRequestsValidator(depositContractAddress))
-        .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
-        .blockHashProcessor(new PragueBlockHashProcessor())
-        .name("Prague");
+        .name("PragueEOF");
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(
@@ -803,7 +818,7 @@ public abstract class MainnetProtocolSpecs {
       final MiningParameters miningParameters) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    return pragueDefinition(
+    return pragueEOFDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
@@ -823,8 +838,7 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     evm,
                     true,
-                    List.of(
-                        MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
+                    List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         // use future configured precompiled contracts

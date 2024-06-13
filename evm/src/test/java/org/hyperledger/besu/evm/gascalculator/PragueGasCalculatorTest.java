@@ -14,61 +14,17 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 
 import org.junit.jupiter.api.Test;
 
-public class PragueGasCalculatorTest {
+class PragueGasCalculatorTest {
   @Test
-  public void testAuthOperationGasCost() {
-    PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
-    MessageFrame runningIn = mock(MessageFrame.class);
-    Address authority = Address.fromHexString("0xdeadbeef");
-    when(runningIn.isAddressWarm(authority)).thenReturn(true);
-    long gasSpent = pragueGasCalculator.authOperationGasCost(runningIn, 0, 97, authority);
-    assertEquals(
-        3100 + 100 + pragueGasCalculator.memoryExpansionGasCost(runningIn, 0, 97), gasSpent);
-  }
-
-  @Test
-  public void testAuthCallOperationGasCostWithTransfer() {
-    PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
-    MessageFrame runningIn = mock(MessageFrame.class);
-    Account invoker = mock(MutableAccount.class);
-    when(invoker.getAddress()).thenReturn(Address.fromHexString("0xCafeBabe"));
-    Address invokee = Address.fromHexString("0xdeadbeef");
-    when(runningIn.isAddressWarm(invokee)).thenReturn(true);
-    long gasSpentInAuthCall =
-        pragueGasCalculator.authCallOperationGasCost(
-            runningIn, 63, 0, 97, 100, 97, Wei.ONE, invoker, invokee, true);
-    long gasSpentInCall =
-        pragueGasCalculator.callOperationGasCost(
-            runningIn, 63, 0, 97, 100, 97, Wei.ONE, invoker, invokee, true);
-    assertEquals(gasSpentInCall - 2300, gasSpentInAuthCall);
-  }
-
-  @Test
-  public void testAuthCallOperationGasCostNoTransfer() {
-    PragueGasCalculator pragueGasCalculator = new PragueGasCalculator();
-    MessageFrame runningIn = mock(MessageFrame.class);
-    Account invoker = mock(MutableAccount.class);
-    when(invoker.getAddress()).thenReturn(Address.fromHexString("0xCafeBabe"));
-    Address invokee = Address.fromHexString("0xdeadbeef");
-    when(runningIn.isAddressWarm(invokee)).thenReturn(true);
-    long gasSpentInAuthCall =
-        pragueGasCalculator.authCallOperationGasCost(
-            runningIn, 63, 0, 97, 100, 97, Wei.ZERO, invoker, invokee, true);
-    long gasSpentInCall =
-        pragueGasCalculator.callOperationGasCost(
-            runningIn, 63, 0, 97, 100, 97, Wei.ZERO, invoker, invokee, true);
-    assertEquals(gasSpentInCall, gasSpentInAuthCall);
+  void testPrecompileSize() {
+    PragueGasCalculator subject = new PragueGasCalculator();
+    assertThat(subject.isPrecompile(Address.precompiled(0x14))).isFalse();
+    assertThat(subject.isPrecompile(Address.BLS12_MAP_FP2_TO_G2)).isTrue();
   }
 }

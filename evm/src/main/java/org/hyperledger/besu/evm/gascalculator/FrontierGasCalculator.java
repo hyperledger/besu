@@ -76,7 +76,8 @@ public class FrontierGasCalculator implements GasCalculator {
 
   private static final long NEW_ACCOUNT_GAS_COST = 25_000L;
 
-  private static final long CREATE_OPERATION_GAS_COST = 32_000L;
+  /** Yellow paper constant for the cost of creating a new contract on-chain */
+  protected static final long CREATE_OPERATION_GAS_COST = 32_000L;
 
   private static final long COPY_WORD_GAS_COST = 3L;
 
@@ -122,7 +123,9 @@ public class FrontierGasCalculator implements GasCalculator {
   private static final long SELF_DESTRUCT_REFUND_AMOUNT = 24_000L;
 
   /** Default constructor. */
-  public FrontierGasCalculator() {}
+  public FrontierGasCalculator() {
+    // Default Constructor, for JavaDoc lint
+  }
 
   @Override
   public long transactionIntrinsicGasCost(final Bytes payload, final boolean isContractCreate) {
@@ -214,21 +217,13 @@ public class FrontierGasCalculator implements GasCalculator {
     return CALL_OPERATION_BASE_GAS_COST;
   }
 
-  /**
-   * Returns the gas cost to transfer funds in a call operation.
-   *
-   * @return the gas cost to transfer funds in a call operation
-   */
-  long callValueTransferGasCost() {
+  @Override
+  public long callValueTransferGasCost() {
     return CALL_VALUE_TRANSFER_GAS_COST;
   }
 
-  /**
-   * Returns the gas cost to create a new account.
-   *
-   * @return the gas cost to create a new account
-   */
-  long newAccountGasCost() {
+  @Override
+  public long newAccountGasCost() {
     return NEW_ACCOUNT_GAS_COST;
   }
 
@@ -307,6 +302,16 @@ public class FrontierGasCalculator implements GasCalculator {
     } else {
       return stipend;
     }
+  }
+
+  @Override
+  public long getMinRetainedGas() {
+    return 0;
+  }
+
+  @Override
+  public long getMinCalleeGas() {
+    return 0;
   }
 
   /**
