@@ -48,6 +48,8 @@ public enum EvmSpecVersion {
   SHANGHAI(0, true, "Shanghai", "Finalized"),
   /** Cancun evm spec version. */
   CANCUN(0, true, "Cancun", "Finalized"),
+  /** Cancun evm spec version. */
+  CANCUN_EOF(1, false, "CancunEOF", "For Testing"),
   /** Prague evm spec version. */
   PRAGUE(0, false, "Prague", "In Development"),
   /** PragueEOF evm spec version. */
@@ -157,6 +159,10 @@ public enum EvmSpecVersion {
     // TODO remove once PragueEOF settles
     if ("prague".equalsIgnoreCase(name)) {
       return EvmSpecVersion.PRAGUE_EOF;
+    }
+    // TODO remove once PragueEOF settles
+    if ("cancuneof".equalsIgnoreCase(name)) {
+      return EvmSpecVersion.CANCUN_EOF;
     }
     for (var version : EvmSpecVersion.values()) {
       if (version.name().equalsIgnoreCase(name)) {

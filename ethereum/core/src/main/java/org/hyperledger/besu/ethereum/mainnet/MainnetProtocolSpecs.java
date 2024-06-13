@@ -74,6 +74,7 @@ import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.Set;
@@ -446,13 +447,18 @@ public abstract class MainnetProtocolSpecs {
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber =
         genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
-    final BaseFeeMarket londonFeeMarket =
-        genesisConfigOptions.isZeroBaseFee()
-            ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
-            : genesisConfigOptions.isFixedBaseFee()
-                ? FeeMarket.fixedBaseFee(
-                    londonForkBlockNumber, miningParameters.getMinTransactionGasPrice())
-                : FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+    final BaseFeeMarket londonFeeMarket;
+    if (genesisConfigOptions.isZeroBaseFee()) {
+      londonFeeMarket = FeeMarket.zeroBaseFee(londonForkBlockNumber);
+    } else if (genesisConfigOptions.isFixedBaseFee()) {
+      londonFeeMarket =
+          FeeMarket.fixedBaseFee(
+              londonForkBlockNumber, miningParameters.getMinTransactionGasPrice());
+    } else {
+      londonFeeMarket =
+          FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+    }
+
     return berlinDefinition(
             chainId,
             configContractSizeLimit,
@@ -661,13 +667,17 @@ public abstract class MainnetProtocolSpecs {
 
     final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
-    final BaseFeeMarket cancunFeeMarket =
-        genesisConfigOptions.isZeroBaseFee()
-            ? FeeMarket.zeroBaseFee(londonForkBlockNumber)
-            : genesisConfigOptions.isFixedBaseFee()
-                ? FeeMarket.fixedBaseFee(
-                    londonForkBlockNumber, miningParameters.getMinTransactionGasPrice())
-                : FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+    final BaseFeeMarket cancunFeeMarket;
+    if (genesisConfigOptions.isZeroBaseFee()) {
+      cancunFeeMarket = FeeMarket.zeroBaseFee(londonForkBlockNumber);
+    } else if (genesisConfigOptions.isFixedBaseFee()) {
+      cancunFeeMarket =
+          FeeMarket.fixedBaseFee(
+              londonForkBlockNumber, miningParameters.getMinTransactionGasPrice());
+    } else {
+      cancunFeeMarket =
+          FeeMarket.cancun(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
+    }
 
     return shanghaiDefinition(
             chainId,
@@ -728,6 +738,30 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
+  static ProtocolSpecBuilder cancunEOFDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+
+    ProtocolSpecBuilder protocolSpecBuilder =
+        cancunDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder, contractSizeLimit)
+        .name("CancunEOF");
+  }
+
   static ProtocolSpecBuilder pragueDefinition(
       final Optional<BigInteger> chainId,
       final OptionalInt configContractSizeLimit,
@@ -780,14 +814,25 @@ public abstract class MainnetProtocolSpecs {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
 
-    return pragueDefinition(
+    ProtocolSpecBuilder protocolSpecBuilder =
+        pragueDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
             enableRevertReason,
             genesisConfigOptions,
             evmConfiguration,
-            miningParameters)
+            miningParameters);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder, contractSizeLimit)
+        .name("PragueEOF");
+  }
+
+  private static ProtocolSpecBuilder addEOF(
+      final Optional<BigInteger> chainId,
+      final EvmConfiguration evmConfiguration,
+      final ProtocolSpecBuilder protocolSpecBuilder,
+      final int contractSizeLimit) {
+    return protocolSpecBuilder
         // EIP-7692 EOF v1 Gas calculator
         .gasCalculator(PragueEOFGasCalculator::new)
         // EIP-7692 EOF v1 EVM and opcodes
@@ -804,8 +849,7 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
                     1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        .name("PragueEOF");
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES));
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(
@@ -965,7 +1009,8 @@ public abstract class MainnetProtocolSpecs {
         final JsonArray json =
             new JsonArray(
                 Resources.toString(
-                    this.getClass().getResource("/daoAddresses.json"), StandardCharsets.UTF_8));
+                    Objects.requireNonNull(this.getClass().getResource("/daoAddresses.json")),
+                    StandardCharsets.UTF_8));
         final List<Address> addresses =
             IntStream.range(0, json.size())
                 .mapToObj(json::getString)

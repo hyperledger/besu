@@ -78,7 +78,7 @@ class EofCreateOperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.cancunEOF(EvmConfiguration.DEFAULT);
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     assertThat(createFrame).isNotNull();
     final ContractCreationProcessor ccp =
@@ -112,7 +112,7 @@ class EofCreateOperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    final EVM evm = MainnetEVMs.cancunEOF(EvmConfiguration.DEFAULT);
     var precompiles = MainnetPrecompiledContracts.prague(evm.getGasCalculator());
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     assertThat(createFrame).isNotNull();

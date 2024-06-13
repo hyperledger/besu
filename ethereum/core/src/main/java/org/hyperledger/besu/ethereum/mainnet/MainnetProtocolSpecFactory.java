@@ -178,6 +178,17 @@ public class MainnetProtocolSpecFactory {
         miningParameters);
   }
 
+  public ProtocolSpecBuilder cancunEOFDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.cancunEOFDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningParameters);
+  }
+
   public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.pragueDefinition(
         chainId,

@@ -1515,6 +1515,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
+        || genesisConfigOptionsSupplier.get().getCancunEOFTime().isPresent()
         || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
         || genesisConfigOptionsSupplier.get().getPragueEOFTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
