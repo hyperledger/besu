@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -16,6 +16,7 @@ package org.hyperledger.besu.datatypes;
 
 import java.math.BigInteger;
 import java.util.Arrays;
+import java.util.Locale;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.BaseUInt256Value;
@@ -194,8 +195,10 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
     /** The Pow. */
     final int pow;
+
     /** The Divisor. */
     final double divisor;
+
     /** The Decimals. */
     final int decimals;
 
@@ -224,7 +227,7 @@ public final class Wei extends BaseUInt256Value<Wei> implements Quantity {
 
     @Override
     public String toString() {
-      return name().toLowerCase();
+      return name().toLowerCase(Locale.ROOT);
     }
   }
 }

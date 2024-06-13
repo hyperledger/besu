@@ -158,7 +158,7 @@ public class RetestethContext {
             JsonUtil.getObjectNode(genesisConfig, "config").get());
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
-            jsonGenesisConfigOptions, EvmConfiguration.DEFAULT, badBlockManager);
+            jsonGenesisConfigOptions, EvmConfiguration.DEFAULT, miningParameters, badBlockManager);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
       protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }
@@ -181,7 +181,9 @@ public class RetestethContext {
     blockchain = createInMemoryBlockchain(genesisState.getBlock());
     protocolContext = new ProtocolContext(blockchain, worldStateArchive, null, badBlockManager);
 
-    blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive, ethScheduler);
+    blockchainQueries =
+        new BlockchainQueries(
+            protocolSchedule, blockchain, worldStateArchive, ethScheduler, miningParameters);
 
     final String sealengine = JsonUtil.getString(genesisConfig, "sealengine", "");
     headerValidationMode =
@@ -279,7 +281,7 @@ public class RetestethContext {
     return DefaultBlockchain.createMutable(
         genesisBlock,
         new KeyValueStoragePrefixedKeyBlockchainStorage(
-            keyValueStorage, variablesStorage, blockHeaderFunctions),
+            keyValueStorage, variablesStorage, blockHeaderFunctions, false),
         new NoOpMetricsSystem(),
         100);
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,6 +17,7 @@ package org.hyperledger.besu.config;
 import org.hyperledger.besu.datatypes.Address;
 
 import java.math.BigInteger;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -117,7 +118,7 @@ public class JsonBftConfigOptions implements BftConfigOptions {
       return BigInteger.ZERO;
     }
     final String weiStr = configFileContent.get();
-    if (weiStr.toLowerCase().startsWith("0x")) {
+    if (weiStr.toLowerCase(Locale.ROOT).startsWith("0x")) {
       return new BigInteger(1, Bytes.fromHexStringLenient(weiStr).toArrayUnsafe());
     }
     return new BigInteger(weiStr);

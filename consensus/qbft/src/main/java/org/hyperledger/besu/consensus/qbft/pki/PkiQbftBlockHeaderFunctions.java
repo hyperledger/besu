@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.consensus.qbft.pki;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHeaderFunctions;
@@ -20,6 +19,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderFunctions;
 
 /** The Pki qbft block header functions. */
 public class PkiQbftBlockHeaderFunctions {
+  /** Default constructor */
+  private PkiQbftBlockHeaderFunctions() {}
 
   /**
    * Create block header functions for cms signature.

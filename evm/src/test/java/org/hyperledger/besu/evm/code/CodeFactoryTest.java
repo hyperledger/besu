@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.code;
 
@@ -26,12 +25,12 @@ class CodeFactoryTest {
 
   @Test
   void invalidCodeIncompleteMagic() {
-    invalidCode("0xEF");
+    invalidCode("0xEF", true);
   }
 
   @Test
   void invalidCodeInvalidMagic() {
-    invalidCode("0xEFFF0101000302000400600000AABBCCDD");
+    invalidCode("0xEFFF0101000302000400600000AABBCCDD", true);
   }
 
   @Test
@@ -180,7 +179,12 @@ class CodeFactoryTest {
   }
 
   private static void invalidCode(final String str) {
-    Code code = CodeFactory.createCode(Bytes.fromHexString(str), 1, true);
+    Code code = CodeFactory.createCode(Bytes.fromHexString(str), 1);
+    assertThat(code.isValid()).isFalse();
+  }
+
+  private static void invalidCode(final String str, final boolean legacy) {
+    Code code = CodeFactory.createCode(Bytes.fromHexString(str), 1, legacy, false);
     assertThat(code.isValid()).isFalse();
   }
 }

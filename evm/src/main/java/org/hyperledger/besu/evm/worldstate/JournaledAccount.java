@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evm.worldstate;
 
 import static com.google.common.base.Preconditions.checkNotNull;
@@ -319,6 +317,18 @@ public class JournaledAccount implements MutableAccount, Undoable {
     }
     storageWasCleared = true;
     updatedStorage.clear();
+  }
+
+  /**
+   * Does this account have any storage slots that are set to non-zero values?
+   *
+   * @return true if the account has no storage values set to non-zero values. False if any storage
+   *     is set.
+   */
+  @Override
+  public boolean isStorageEmpty() {
+    return updatedStorage.isEmpty()
+        && (storageWasCleared || account == null || account.isStorageEmpty());
   }
 
   /**

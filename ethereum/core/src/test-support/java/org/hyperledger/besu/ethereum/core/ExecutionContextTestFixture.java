@@ -64,7 +64,8 @@ public class ExecutionContextTestFixture {
             new KeyValueStoragePrefixedKeyBlockchainStorage(
                 blockchainKeyValueStorage,
                 new VariablesKeyValueStorage(variablesKeyValueStorage),
-                new MainnetBlockHeaderFunctions()),
+                new MainnetBlockHeaderFunctions(),
+                false),
             new NoOpMetricsSystem(),
             0);
     this.stateArchive = createInMemoryWorldStateArchive();
@@ -140,6 +141,7 @@ public class ExecutionContextTestFixture {
                     new PrivacyParameters(),
                     false,
                     EvmConfiguration.DEFAULT,
+                    MiningParameters.MINING_DISABLED,
                     new BadBlockManager())
                 .createProtocolSchedule();
       }

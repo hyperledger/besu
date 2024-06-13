@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -67,6 +67,7 @@ public class EthProtocolVersion {
           EthPV63.NODE_DATA,
           EthPV63.GET_RECEIPTS,
           EthPV63.RECEIPTS);
+
   /**
    * eth/65 (EIP-2464, January 2020)
    *

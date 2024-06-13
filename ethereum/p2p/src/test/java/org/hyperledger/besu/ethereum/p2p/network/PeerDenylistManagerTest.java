@@ -63,6 +63,16 @@ public class PeerDenylistManagerTest {
   }
 
   @Test
+  public void denylistPeerForBadBehaviorWithDifferentMessage() {
+    final PeerConnection peer = generatePeerConnection();
+
+    checkPermissions(denylist, peer.getPeer(), true);
+    peerDenylistManager.onDisconnect(
+        peer, DisconnectReason.BREACH_OF_PROTOCOL_INVALID_MESSAGE_CODE_FOR_PROTOCOL, false);
+    checkPermissions(denylist, peer.getPeer(), false);
+  }
+
+  @Test
   public void doesNotDenylistPeerForOurBadBehavior() {
     final PeerConnection peer = generatePeerConnection();
 
@@ -99,6 +109,15 @@ public class PeerDenylistManagerTest {
     peerDenylistManager.onDisconnect(
         peer, DisconnectReason.INCOMPATIBLE_P2P_PROTOCOL_VERSION, true);
     checkPermissions(denylist, peer.getPeer(), false);
+  }
+
+  @Test
+  public void disconnectReasonWithEmptyValue_doesNotAddToDenylist() {
+    final PeerConnection peer = generatePeerConnection();
+
+    checkPermissions(denylist, peer.getPeer(), true);
+    peerDenylistManager.onDisconnect(peer, DisconnectReason.UNKNOWN, false);
+    checkPermissions(denylist, peer.getPeer(), true);
   }
 
   private void checkPermissions(

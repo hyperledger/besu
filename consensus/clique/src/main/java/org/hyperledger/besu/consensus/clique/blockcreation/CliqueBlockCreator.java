@@ -76,7 +76,6 @@ public class CliqueBlockCreator extends AbstractBlockCreator {
         protocolContext,
         protocolSchedule,
         parentHeader,
-        Optional.empty(),
         ethScheduler);
     this.nodeKey = nodeKey;
     this.epochManager = epochManager;

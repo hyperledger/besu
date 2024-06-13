@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -116,7 +116,7 @@ public final class GetStorageRangeMessage extends AbstractSnapMessageData {
     }
     if (input.nextIsNull()) {
       input.skipNext();
-      range.endKeyHash(Hash.ZERO);
+      range.endKeyHash(Hash.LAST);
     } else {
       range.endKeyHash(Hash.wrap(Bytes32.wrap(input.readBytes32())));
     }

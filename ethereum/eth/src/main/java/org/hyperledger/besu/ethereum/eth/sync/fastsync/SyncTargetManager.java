@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -133,7 +133,7 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
                       pivotBlockHeader.getHash(),
                       result.size() == 1 ? result.get(0).getHash() : "invalid response",
                       bestPeer);
-                  bestPeer.disconnect(DisconnectReason.USELESS_PEER);
+                  bestPeer.disconnect(DisconnectReason.USELESS_PEER_MISMATCHED_PIVOT_BLOCK);
                   return CompletableFuture.completedFuture(Optional.<EthPeer>empty());
                 }
                 LOG.debug(
@@ -147,7 +147,11 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
             })
         .exceptionally(
             error -> {
-              LOG.debug("Could not confirm best peer had pivot block", error);
+              LOG.debug(
+                  "Could not confirm best peer {} had pivot block {}",
+                  bestPeer.getLoggableId(),
+                  pivotBlockHeader.getNumber(),
+                  error);
               return Optional.empty();
             });
   }

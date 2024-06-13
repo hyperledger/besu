@@ -17,7 +17,7 @@
   "response": {
     "jsonrpc": "2.0",
     "id": 4,
-    "error":{"code":-32009,"message":"blob gas price below current blob base fee"}
+    "result": "0x0000000000000000000000000000000000000000000000000000000000000001"
   },
   "statusCode": 200
 }

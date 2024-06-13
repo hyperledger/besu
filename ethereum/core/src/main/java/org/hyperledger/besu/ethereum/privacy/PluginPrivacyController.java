@@ -124,7 +124,7 @@ public class PluginPrivacyController extends AbstractPrivacyController {
   @Override
   public Optional<PrivacyGroup> findPrivacyGroupByGroupId(
       final String privacyGroupId, final String privacyUserId) {
-    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId);
+    verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId);
 
     return Optional.of(
         new PrivacyGroup(
@@ -155,7 +155,7 @@ public class PluginPrivacyController extends AbstractPrivacyController {
 
   @Override
   public void verifyPrivacyGroupContainsPrivacyUserId(
-      final String privacyUserId, final String privacyGroupId) {
-    verifyPrivacyGroupContainsPrivacyUserId(privacyUserId, privacyGroupId, Optional.empty());
+      final String privacyGroupId, final String privacyUserId) {
+    verifyPrivacyGroupContainsPrivacyUserId(privacyGroupId, privacyUserId, Optional.empty());
   }
 }

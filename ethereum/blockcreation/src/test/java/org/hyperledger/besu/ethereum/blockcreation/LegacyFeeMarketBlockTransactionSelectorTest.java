@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,6 +22,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
@@ -41,13 +42,16 @@ import org.hyperledger.besu.util.number.Fraction;
 import java.time.ZoneId;
 import java.util.function.Function;
 
+import org.junit.jupiter.api.Disabled;
+
+@Disabled(
+    "disabled since it's flaky with a timeout see https://github.com/hyperledger/besu/issues/6850")
 public class LegacyFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
   @Override
   protected GenesisConfigFile getGenesisConfigFile() {
-    return GenesisConfigFile.genesisFileFromResources(
-        "/block-transaction-selector/gas-price-genesis.json");
+    return GenesisConfigFile.fromResource("/block-transaction-selector/gas-price-genesis.json");
   }
 
   @Override
@@ -59,6 +63,7 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager())
         .createProtocolSchedule();
   }

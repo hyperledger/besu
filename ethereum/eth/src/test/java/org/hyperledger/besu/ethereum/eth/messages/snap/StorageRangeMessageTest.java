@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import kotlin.collections.ArrayDeque;
@@ -33,7 +34,7 @@ public final class StorageRangeMessageTest {
   @Test
   public void roundTripTest() {
 
-    final ArrayDeque<TreeMap<Bytes32, Bytes>> keys = new ArrayDeque<>();
+    final ArrayDeque<NavigableMap<Bytes32, Bytes>> keys = new ArrayDeque<>();
     final TreeMap<Bytes32, Bytes> storage = new TreeMap<>();
     storage.put(Hash.wrap(Bytes32.leftPad(Bytes.of(1))), Bytes32.random());
     keys.add(storage);

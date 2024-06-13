@@ -200,6 +200,13 @@ class GenesisConfigOptionsTest {
   }
 
   @Test
+  void shouldGetPragueEOFTime() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("pragueEOFTime", 1670470143));
+    assertThat(config.getPragueEOFTime()).hasValue(1670470143);
+  }
+
+  @Test
   void shouldGetFutureEipsTime() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("futureEipsTime", 1337));
     assertThat(config.getFutureEipsTime()).hasValue(1337);
@@ -232,6 +239,7 @@ class GenesisConfigOptionsTest {
     assertThat(config.getShanghaiTime()).isEmpty();
     assertThat(config.getCancunTime()).isEmpty();
     assertThat(config.getPragueTime()).isEmpty();
+    assertThat(config.getPragueEOFTime()).isEmpty();
     assertThat(config.getFutureEipsTime()).isEmpty();
     assertThat(config.getExperimentalEipsTime()).isEmpty();
   }
@@ -293,6 +301,27 @@ class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(Map.of("zerobasefee", true));
 
     assertThat(config.asMap()).containsOnlyKeys("zeroBaseFee").containsValue(true);
+  }
+
+  @Test
+  void isFixedBaseFeeShouldDefaultToFalse() {
+    final GenesisConfigOptions config = GenesisConfigFile.fromConfig("{}").getConfigOptions();
+
+    assertThat(config.isFixedBaseFee()).isFalse();
+  }
+
+  @Test
+  void isFixedBaseFeeParsedCorrectly() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("fixedbasefee", true));
+
+    assertThat(config.isFixedBaseFee()).isTrue();
+  }
+
+  @Test
+  void asMapIncludesFixedBaseFee() {
+    final GenesisConfigOptions config = fromConfigOptions(Map.of("fixedbasefee", true));
+
+    assertThat(config.asMap()).containsOnlyKeys("fixedBaseFee").containsValue(true);
   }
 
   @Test

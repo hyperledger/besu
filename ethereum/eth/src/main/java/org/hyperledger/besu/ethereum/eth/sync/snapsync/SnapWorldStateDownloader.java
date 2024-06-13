@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -27,7 +27,8 @@ import org.hyperledger.besu.ethereum.eth.sync.snapsync.context.SnapSyncStatePers
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.AccountRangeDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
-import org.hyperledger.besu.ethereum.trie.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.RangeManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -35,10 +36,10 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
@@ -146,14 +147,15 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
               snapsyncMetricsManager,
-              clock);
+              clock,
+              ethContext);
 
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
       snapsyncMetricsManager.initRange(ranges);
 
       final List<AccountRangeDataRequest> currentAccountRange =
           snapContext.getCurrentAccountRange();
-      final HashSet<Bytes> inconsistentAccounts = snapContext.getAccountsHealingList();
+      final Set<Bytes> inconsistentAccounts = snapContext.getAccountsHealingList();
 
       if (!currentAccountRange.isEmpty()) { // continue to download worldstate ranges
         newDownloadState.setAccountsHealingList(inconsistentAccounts);
@@ -182,16 +184,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       } else {
         // start from scratch
         worldStateStorageCoordinator.clear();
-        // we have to upgrade to full flat db mode if we are in bonsai mode
-        if (snapSyncConfiguration.isFlatDbHealingEnabled()) {
-          worldStateStorageCoordinator.applyOnMatchingStrategy(
-              DataStorageFormat.BONSAI,
-              strategy -> {
-                BonsaiWorldStateKeyValueStorage onBonsai =
-                    (BonsaiWorldStateKeyValueStorage) strategy;
-                onBonsai.upgradeToFullFlatDbMode();
-              });
-        }
         ranges.forEach(
             (key, value) ->
                 newDownloadState.enqueueRequest(

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -43,9 +43,11 @@ public class CompleteTaskStep {
 
   public synchronized void markAsCompleteOrFailed(
       final SnapWorldDownloadState downloadState, final Task<SnapDataRequest> task) {
-    if (task.getData().isResponseReceived()
-        || (task.getData() instanceof TrieNodeHealingRequest
-            && task.getData().isExpired(snapSyncState))) {
+    final boolean isResponseReceived = task.getData().isResponseReceived();
+    final boolean isExpiredRequest =
+        task.getData() instanceof TrieNodeHealingRequest && task.getData().isExpired(snapSyncState);
+    // if pivot block has changed, the request is expired and we mark this one completed
+    if (isResponseReceived || isExpiredRequest) {
       completedRequestsCounter.inc();
       task.markCompleted();
       downloadState.checkCompletion(snapSyncState.getPivotBlockHeader().orElseThrow());

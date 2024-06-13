@@ -17,6 +17,7 @@ package org.hyperledger.besu;
 import static java.util.Collections.emptySet;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
+import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_BACKGROUND_THREAD_COUNT;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_CACHE_CAPACITY;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBCLIOptions.DEFAULT_IS_HIGH_SPEC;
@@ -85,6 +86,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.Future;
 import io.vertx.core.Promise;
@@ -180,7 +182,8 @@ public final class RunnerTest {
             aheadDbNodeKey,
             createKeyValueStorageProvider(
                 dataDirAhead, dbAhead, dataStorageConfiguration, miningParameters),
-            noOpMetricsSystem);
+            noOpMetricsSystem,
+            miningParameters);
     setupState(
         blockCount, controllerAhead.getProtocolSchedule(), controllerAhead.getProtocolContext());
 
@@ -235,12 +238,13 @@ public final class RunnerTest {
               dataDirBehind,
               behindDbNodeKey,
               new InMemoryKeyValueStorageProvider(),
-              noOpMetricsSystem);
+              noOpMetricsSystem,
+              miningParameters);
 
       final EnodeURL aheadEnode = runnerAhead.getLocalEnode().get();
       final EthNetworkConfig behindEthNetworkConfiguration =
           new EthNetworkConfig(
-              EthNetworkConfig.jsonConfig(DEV),
+              GenesisConfigFile.fromResource(DEV.getGenesisFile()),
               DEV.getNetworkId(),
               Collections.singletonList(aheadEnode),
               null);
@@ -365,8 +369,11 @@ public final class RunnerTest {
         .build();
   }
 
-  private GenesisConfigFile getFastSyncGenesis() {
-    final ObjectNode jsonNode = GenesisConfigFile.mainnetJsonNode();
+  private GenesisConfigFile getFastSyncGenesis() throws IOException {
+    final ObjectNode jsonNode =
+        (ObjectNode)
+            new ObjectMapper()
+                .readTree(GenesisConfigFile.class.getResource(MAINNET.getGenesisFile()));
     final Optional<ObjectNode> configNode = JsonUtil.getObjectNode(jsonNode, "config");
     configNode.ifPresent(
         (node) -> {
@@ -384,7 +391,9 @@ public final class RunnerTest {
       final DataStorageConfiguration dataStorageConfiguration,
       final MiningParameters miningParameters) {
     final var besuConfiguration = new BesuConfigurationImpl();
-    besuConfiguration.init(dataDir, dbDir, dataStorageConfiguration, miningParameters);
+    besuConfiguration
+        .init(dataDir, dbDir, dataStorageConfiguration)
+        .withMiningParameters(miningParameters);
     return new KeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValueStorageFactory(
@@ -452,14 +461,15 @@ public final class RunnerTest {
       final Path dataDir,
       final NodeKey nodeKey,
       final StorageProvider storageProvider,
-      final ObservableMetricsSystem metricsSystem) {
+      final ObservableMetricsSystem metricsSystem,
+      final MiningParameters miningParameters) {
     return new MainnetBesuControllerBuilder()
         .genesisConfigFile(genesisConfig)
         .synchronizerConfiguration(syncConfig)
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .dataDirectory(dataDir)
         .networkId(NETWORK_ID)
-        .miningParameters(MiningParameters.newDefault())
+        .miningParameters(miningParameters)
         .nodeKey(nodeKey)
         .storageProvider(storageProvider)
         .metricsSystem(metricsSystem)

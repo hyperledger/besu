@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.nat.kubernetes;
 
 import org.hyperledger.besu.nat.NatMethod;
@@ -32,6 +31,9 @@ public class KubernetesDetector implements NatMethodDetector {
   private static final Optional<String> KUBERNETES_SERVICE_HOST =
       Optional.ofNullable(System.getenv("KUBERNETES_SERVICE_HOST"));
   private static final Path KUBERNETES_WATERMARK_FILE = Paths.get("var/run/secrets/kubernetes.io");
+
+  /** Default constructor */
+  public KubernetesDetector() {}
 
   @Override
   public Optional<NatMethod> detect() {

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
 import static org.mockito.ArgumentMatchers.argThat;
@@ -39,8 +38,10 @@ public class AbstractScheduledApiTest {
       new ScheduledProtocolSpec.Hardfork("Shanghai", 20);
   protected final ScheduledProtocolSpec.Hardfork cancunHardfork =
       new ScheduledProtocolSpec.Hardfork("Cancun", 30);
+  protected final ScheduledProtocolSpec.Hardfork pragueHardfork =
+      new ScheduledProtocolSpec.Hardfork("Prague", 40);
   protected final ScheduledProtocolSpec.Hardfork experimentalHardfork =
-      new ScheduledProtocolSpec.Hardfork("ExperimentalEips", 40);
+      new ScheduledProtocolSpec.Hardfork("ExperimentalEips", 50);
 
   @Mock protected DefaultProtocolSchedule protocolSchedule;
 
@@ -74,6 +75,9 @@ public class AbstractScheduledApiTest {
     lenient()
         .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(cancunHardfork))))
         .thenReturn(Optional.of(cancunHardfork));
+    lenient()
+        .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(pragueHardfork))))
+        .thenReturn(Optional.of(pragueHardfork));
     lenient()
         .when(protocolSchedule.hardforkFor(argThat(new HardforkMatcher(shanghaiHardfork))))
         .thenReturn(Optional.of(shanghaiHardfork));

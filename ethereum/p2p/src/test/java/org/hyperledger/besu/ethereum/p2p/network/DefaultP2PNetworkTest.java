@@ -57,9 +57,7 @@ import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
-import io.vertx.core.Context;
 import io.vertx.core.Vertx;
-import io.vertx.core.dns.DnsClient;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.crypto.SECP256K1;
 import org.assertj.core.api.Assertions;
@@ -335,16 +333,21 @@ public final class DefaultP2PNetworkTest {
     final NetworkingConfiguration dnsConfig =
         when(spy(config).getDiscovery()).thenReturn(disco).getMock();
 
-    Vertx vertx = mock(Vertx.class);
-    when(vertx.createDnsClient(any())).thenReturn(mock(DnsClient.class));
-    when(vertx.getOrCreateContext()).thenReturn(mock(Context.class));
+    final Vertx vertx = Vertx.vertx(); // use real instance
 
     // spy on DefaultP2PNetwork
     final DefaultP2PNetwork testClass =
         (DefaultP2PNetwork) builder().vertx(vertx).config(dnsConfig).build();
 
     testClass.start();
-    assertThat(testClass.getDnsDaemon()).isPresent();
+    try {
+      // the actual lookup won't work because of mock discovery url, however, a valid DNSDaemon
+      // should be created.
+      assertThat(testClass.getDnsDaemon()).isPresent();
+    } finally {
+      testClass.stop();
+      vertx.close();
+    }
   }
 
   @Test
@@ -358,17 +361,19 @@ public final class DefaultP2PNetworkTest {
     doReturn(disco).when(dnsConfig).getDiscovery();
     doReturn(Optional.of("localhost")).when(dnsConfig).getDnsDiscoveryServerOverride();
 
-    Vertx vertx = mock(Vertx.class);
-    when(vertx.createDnsClient(any())).thenReturn(mock(DnsClient.class));
-    when(vertx.getOrCreateContext()).thenReturn(mock(Context.class));
-
+    Vertx vertx = Vertx.vertx(); // use real instance
     final DefaultP2PNetwork testClass =
         (DefaultP2PNetwork) builder().config(dnsConfig).vertx(vertx).build();
     testClass.start();
 
     // ensure we used the dns server override config when building DNSDaemon:
-    assertThat(testClass.getDnsDaemon()).isPresent();
-    verify(dnsConfig, times(2)).getDnsDiscoveryServerOverride();
+    try {
+      assertThat(testClass.getDnsDaemon()).isPresent();
+      verify(dnsConfig, times(2)).getDnsDiscoveryServerOverride();
+    } finally {
+      testClass.stop();
+      vertx.close();
+    }
   }
 
   private DefaultP2PNetwork network() {

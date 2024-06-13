@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.core;
 
 import static org.hyperledger.besu.config.JsonUtil.normalizeKeys;
@@ -39,6 +38,7 @@ public class ProtocolScheduleFixture {
           PrivacyParameters.DEFAULT,
           false,
           EvmConfiguration.DEFAULT,
+          MiningParameters.newDefault(),
           new BadBlockManager());
 
   private static GenesisConfigOptions getMainnetConfigOptions() {

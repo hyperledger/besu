@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -56,7 +56,7 @@ public class AddModOperation extends AbstractFixedCostOperation {
     final Bytes value2 = frame.popStackItem();
 
     if (value2.isZero()) {
-      frame.pushStackItem(FAILURE_STACK_ITEM);
+      frame.pushStackItem(Bytes.EMPTY);
     } else {
       BigInteger b0 = new BigInteger(1, value0.toArrayUnsafe());
       BigInteger b1 = new BigInteger(1, value1.toArrayUnsafe());

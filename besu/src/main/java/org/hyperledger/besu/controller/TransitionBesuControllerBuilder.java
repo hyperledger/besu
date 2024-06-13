@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,7 +15,6 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
@@ -52,8 +51,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.Pruner;
-import org.hyperledger.besu.ethereum.trie.forest.pruner.PrunerConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
@@ -219,7 +216,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
-      final Optional<Pruner> maybePruner,
       final EthContext ethContext,
       final SyncState syncState,
       final EthProtocolManager ethProtocolManager,
@@ -231,14 +227,12 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 protocolSchedule,
                 worldStateStorageCoordinator,
                 protocolContext,
-                maybePruner,
                 ethContext,
                 syncState,
                 ethProtocolManager,
                 pivotBlockSelector);
-    final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
 
-    if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
+    if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
           "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
       protocolContext
@@ -249,6 +243,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     return sync;
   }
 
+  @SuppressWarnings("UnusedVariable")
   private void initTransitionWatcher(
       final ProtocolContext protocolContext, final TransitionCoordinator composedCoordinator) {
 
@@ -384,25 +379,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
     super.isRevertReasonEnabled(isRevertReasonEnabled);
     return propagateConfig(z -> z.isRevertReasonEnabled(isRevertReasonEnabled));
-  }
-
-  @Override
-  public BesuControllerBuilder isPruningEnabled(final boolean isPruningEnabled) {
-    super.isPruningEnabled(isPruningEnabled);
-    return propagateConfig(z -> z.isPruningEnabled(isPruningEnabled));
-  }
-
-  @Override
-  public BesuControllerBuilder pruningConfiguration(final PrunerConfiguration prunerConfiguration) {
-    super.pruningConfiguration(prunerConfiguration);
-    return propagateConfig(z -> z.pruningConfiguration(prunerConfiguration));
-  }
-
-  @Override
-  public BesuControllerBuilder genesisConfigOverrides(
-      final Map<String, String> genesisConfigOverrides) {
-    super.genesisConfigOverrides(genesisConfigOverrides);
-    return propagateConfig(z -> z.genesisConfigOverrides(genesisConfigOverrides));
   }
 
   @Override

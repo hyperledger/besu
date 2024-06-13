@@ -35,6 +35,7 @@ public class CliqueBlockInterface implements BlockInterface {
 
   /** The constant ADD_NONCE. */
   public static final long ADD_NONCE = 0xFFFFFFFFFFFFFFFFL;
+
   /** The constant DROP_NONCE. */
   public static final long DROP_NONCE = 0x0L;
 
@@ -42,6 +43,9 @@ public class CliqueBlockInterface implements BlockInterface {
       ImmutableBiMap.of(
           VoteType.ADD, ADD_NONCE,
           VoteType.DROP, DROP_NONCE);
+
+  /** Default constructor. */
+  public CliqueBlockInterface() {}
 
   @Override
   public Address getProposerOfBlock(final BlockHeader header) {

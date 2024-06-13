@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,10 +18,12 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.TransactionType;
+import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
 import java.math.BigInteger;
+import java.util.List;
 
 public class AbstractTransactionReplacementTest {
   protected static PendingTransaction frontierTx(final long price) {
@@ -46,6 +48,22 @@ public class AbstractTransactionReplacementTest {
             .type(TransactionType.EIP1559)
             .maxPriorityFeePerGas(Wei.of(maxPriorityFeePerGas))
             .maxFeePerGas(Wei.of(maxFeePerGas))
+            .build();
+    when(pendingTransaction.getTransaction()).thenReturn(transaction);
+    return pendingTransaction;
+  }
+
+  protected static PendingTransaction blobTx(
+      final long maxPriorityFeePerGas, final long maxFeePerGas, final long maxFeePerBlobGas) {
+    final PendingTransaction pendingTransaction = mock(PendingTransaction.class);
+    final Transaction transaction =
+        Transaction.builder()
+            .chainId(BigInteger.ZERO)
+            .type(TransactionType.BLOB)
+            .maxPriorityFeePerGas(Wei.of(maxPriorityFeePerGas))
+            .maxFeePerGas(Wei.of(maxFeePerGas))
+            .maxFeePerBlobGas(Wei.of(maxFeePerBlobGas))
+            .versionedHashes(List.of(VersionedHash.DEFAULT_VERSIONED_HASH))
             .build();
     when(pendingTransaction.getTransaction()).thenReturn(transaction);
     return pendingTransaction;

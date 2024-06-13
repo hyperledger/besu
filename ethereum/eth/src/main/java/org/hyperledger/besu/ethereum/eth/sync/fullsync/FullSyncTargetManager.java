@@ -67,7 +67,7 @@ class FullSyncTargetManager extends AbstractSyncTargetManager {
           syncTarget.peer(),
           commonAncestor.getNumber(),
           commonAncestor.getHash());
-      syncTarget.peer().disconnect(DisconnectReason.USELESS_PEER);
+      syncTarget.peer().disconnect(DisconnectReason.USELESS_PEER_WORLD_STATE_NOT_AVAILABLE);
       return Optional.empty();
     }
   }

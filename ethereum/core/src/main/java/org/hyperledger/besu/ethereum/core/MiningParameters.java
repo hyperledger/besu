@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -122,6 +122,15 @@ public abstract class MiningParameters {
     return this;
   }
 
+  public OptionalInt getBlockPeriodSeconds() {
+    return getMutableRuntimeValues().blockPeriodSeconds;
+  }
+
+  public MiningParameters setBlockPeriodSeconds(final int blockPeriodSeconds) {
+    getMutableRuntimeValues().blockPeriodSeconds = OptionalInt.of(blockPeriodSeconds);
+    return this;
+  }
+
   @Value.Default
   public boolean isStratumMiningEnabled() {
     return false;
@@ -161,12 +170,10 @@ public abstract class MiningParameters {
     };
   }
 
-  public abstract OptionalInt getGenesisBlockPeriodSeconds();
-
-  @Value.Derived
   public long getBlockTxsSelectionMaxTime() {
-    if (getGenesisBlockPeriodSeconds().isPresent()) {
-      return (TimeUnit.SECONDS.toMillis(getGenesisBlockPeriodSeconds().getAsInt())
+    final var maybeBlockPeriodSeconds = getMutableRuntimeValues().blockPeriodSeconds;
+    if (maybeBlockPeriodSeconds.isPresent()) {
+      return (TimeUnit.SECONDS.toMillis(maybeBlockPeriodSeconds.getAsInt())
               * getPoaBlockTxsSelectionMaxTime().getValue())
           / 100;
     }
@@ -222,6 +229,8 @@ public abstract class MiningParameters {
       return DEFAULT_MIN_BLOCK_OCCUPANCY_RATIO;
     }
 
+    OptionalInt getBlockPeriodSeconds();
+
     Optional<Address> getCoinbase();
 
     OptionalLong getTargetGasLimit();
@@ -238,6 +247,7 @@ public abstract class MiningParameters {
     private volatile Optional<Address> coinbase;
     private volatile OptionalLong targetGasLimit;
     private volatile Optional<Iterable<Long>> nonceGenerator;
+    private volatile OptionalInt blockPeriodSeconds;
 
     private MutableRuntimeValues(final MutableInitValues initValues) {
       miningEnabled = initValues.isMiningEnabled();
@@ -248,6 +258,7 @@ public abstract class MiningParameters {
       coinbase = initValues.getCoinbase();
       targetGasLimit = initValues.getTargetGasLimit();
       nonceGenerator = initValues.nonceGenerator();
+      blockPeriodSeconds = initValues.getBlockPeriodSeconds();
     }
 
     @Override
@@ -262,7 +273,8 @@ public abstract class MiningParameters {
           && Objects.equals(coinbase, that.coinbase)
           && Objects.equals(minPriorityFeePerGas, that.minPriorityFeePerGas)
           && Objects.equals(targetGasLimit, that.targetGasLimit)
-          && Objects.equals(nonceGenerator, that.nonceGenerator);
+          && Objects.equals(nonceGenerator, that.nonceGenerator)
+          && Objects.equals(blockPeriodSeconds, that.blockPeriodSeconds);
     }
 
     @Override
@@ -275,7 +287,8 @@ public abstract class MiningParameters {
           minBlockOccupancyRatio,
           coinbase,
           targetGasLimit,
-          nonceGenerator);
+          nonceGenerator,
+          blockPeriodSeconds);
     }
 
     @Override
@@ -297,6 +310,8 @@ public abstract class MiningParameters {
           + targetGasLimit
           + ", nonceGenerator="
           + nonceGenerator
+          + ", blockPeriodSeconds="
+          + blockPeriodSeconds
           + '}';
     }
   }

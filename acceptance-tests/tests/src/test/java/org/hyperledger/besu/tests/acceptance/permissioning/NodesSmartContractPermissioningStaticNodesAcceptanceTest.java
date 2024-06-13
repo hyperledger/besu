@@ -24,16 +24,18 @@ import java.util.Arrays;
 import java.util.List;
 import javax.annotation.Nonnull;
 
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
+import org.junit.jupiter.api.Test;
 
+@Disabled("flaky test #7155")
 public class NodesSmartContractPermissioningStaticNodesAcceptanceTest
     extends NodeSmartContractPermissioningAcceptanceTestBase {
 
   private Node miner;
   private Node permissionedNode;
 
-  @Before
+  @BeforeEach
   public void setUp() {
     miner = miner("miner");
     permissionedCluster.start(miner);

@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
@@ -47,6 +48,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String DISCOVERY_CONFIG_KEY = "discovery";
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
   private static final String ZERO_BASE_FEE_KEY = "zerobasefee";
+  private static final String FIXED_BASE_FEE_KEY = "fixedbasefee";
   private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
 
   private final ObjectNode configRoot;
@@ -297,6 +299,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getPragueEOFTime() {
+    return getOptionalLong("pragueeoftime");
+  }
+
+  @Override
   public OptionalLong getFutureEipsTime() {
     return getOptionalLong("futureeipstime");
   }
@@ -422,6 +429,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public boolean isFixedBaseFee() {
+    return getOptionalBoolean(FIXED_BASE_FEE_KEY).orElse(false);
+  }
+
+  @Override
   public Optional<Address> getDepositContractAddress() {
     Optional<String> inputAddress = JsonUtil.getString(configRoot, DEPOSIT_CONTRACT_ADDRESS_KEY);
     return inputAddress.map(Address::fromHexString);
@@ -450,6 +462,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
+    getPragueEOFTime().ifPresent(l -> builder.put("pragueEOFTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -490,6 +503,10 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
 
     if (isZeroBaseFee()) {
       builder.put("zeroBaseFee", true);
+    }
+
+    if (isFixedBaseFee()) {
+      builder.put("fixedBaseFee", true);
     }
 
     return builder.build();
@@ -594,6 +611,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getShanghaiTime(),
             getCancunTime(),
             getPragueTime(),
+            getPragueEOFTime(),
             getFutureEipsTime(),
             getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
@@ -604,5 +622,19 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         .distinct()
         .sorted()
         .toList();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final JsonGenesisConfigOptions that = (JsonGenesisConfigOptions) o;
+    return Objects.equals(configRoot, that.configRoot)
+        && Objects.equals(configOverrides, that.configOverrides);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(configRoot, configOverrides);
   }
 }

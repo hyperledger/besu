@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,21 +11,21 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evm.code;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.internal.Words;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * For code versions where code can be deemed "invalid" this represents a cachable instance of
+ * For code versions where code can be deemed "invalid" this represents a cacheable instance of
  * invalid code. Note that EXTCODE operations can still access invalid code.
  */
 public class CodeInvalid implements Code {
@@ -62,6 +62,11 @@ public class CodeInvalid implements Code {
   }
 
   @Override
+  public int getDataSize() {
+    return 0;
+  }
+
+  @Override
   public Bytes getBytes() {
     return codeBytes;
   }
@@ -93,6 +98,41 @@ public class CodeInvalid implements Code {
 
   @Override
   public int getEofVersion() {
-    return -1;
+    return Integer.MAX_VALUE;
+  }
+
+  @Override
+  public int getSubcontainerCount() {
+    return 0;
+  }
+
+  @Override
+  public Optional<Code> getSubContainer(final int index, final Bytes auxData) {
+    return Optional.empty();
+  }
+
+  @Override
+  public Bytes getData(final int offset, final int length) {
+    return Bytes.EMPTY;
+  }
+
+  @Override
+  public int readBigEndianI16(final int index) {
+    return Words.readBigEndianI16(index, codeBytes.toArrayUnsafe());
+  }
+
+  @Override
+  public int readBigEndianU16(final int index) {
+    return Words.readBigEndianU16(index, codeBytes.toArrayUnsafe());
+  }
+
+  @Override
+  public int readU8(final int index) {
+    return codeBytes.toArrayUnsafe()[index] & 0xff;
+  }
+
+  @Override
+  public String prettyPrint() {
+    return codeBytes.toHexString();
   }
 }

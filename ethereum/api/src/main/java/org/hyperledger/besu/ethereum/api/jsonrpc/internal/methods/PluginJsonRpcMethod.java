@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -13,9 +13,6 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
-
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.PLUGIN_INTERNAL_ERROR;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -53,13 +50,9 @@ public class PluginJsonRpcMethod implements JsonRpcMethod {
       final Object result = function.apply(() -> request.getRequest().getParams());
       return new JsonRpcSuccessResponse(request.getRequest().getId(), result);
     } catch (final PluginRpcEndpointException ex) {
-      final JsonRpcError error = new JsonRpcError(PLUGIN_INTERNAL_ERROR, ex.getMessage());
-      LOG.error("Error calling plugin JSON-RPC endpoint", ex);
+      final JsonRpcError error = new JsonRpcError(ex.getRpcMethodError(), ex.getData());
+      LOG.debug("Error calling plugin JSON-RPC endpoint", ex);
       return new JsonRpcErrorResponse(request.getRequest().getId(), error);
-    } catch (final Exception ex) {
-      LOG.error("Error calling plugin JSON-RPC endpoint", ex);
-      return new JsonRpcErrorResponse(
-          request.getRequest().getId(), new JsonRpcError(INTERNAL_ERROR));
     }
   }
 }

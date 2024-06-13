@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -93,6 +93,11 @@ abstract class AbstractJsonRpcTest {
               .readTimeout(900, java.util.concurrent.TimeUnit.SECONDS)
               .build();
     }
+
+    if (testCase.getWaitTime() > 0L) {
+      waitForMillis(testCase.getWaitTime());
+    }
+
     final Call testRequest =
         client.newCall(
             new Request.Builder()
@@ -110,6 +115,14 @@ abstract class AbstractJsonRpcTest {
         .withFailMessage(
             "%s\ndid not equal\n %s", actualBody.toPrettyString(), expectedBody.toPrettyString())
         .isEqualTo(expectedBody);
+  }
+
+  private static void waitForMillis(final long millis) {
+    try {
+      Thread.sleep(millis);
+    } catch (InterruptedException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected void evaluateResponse(

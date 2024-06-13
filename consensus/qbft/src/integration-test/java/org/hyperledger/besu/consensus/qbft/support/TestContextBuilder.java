@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
@@ -115,7 +116,6 @@ import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
@@ -150,6 +150,7 @@ public class TestContextBuilder {
   private boolean useLondonMilestone = false;
   private boolean useShanghaiMilestone = false;
   private boolean useZeroBaseFee = false;
+  private boolean useFixedBaseFee = false;
   public static final int EPOCH_LENGTH = 10_000;
   public static final int BLOCK_TIMER_SEC = 3;
   public static final int ROUND_TIMER_SEC = 12;
@@ -227,6 +228,11 @@ public class TestContextBuilder {
     return this;
   }
 
+  public TestContextBuilder useFixedBaseFee(final boolean useFixedBaseFee) {
+    this.useFixedBaseFee = useFixedBaseFee;
+    return this;
+  }
+
   public TestContextBuilder qbftForks(final List<QbftFork> qbftForks) {
     this.qbftForks = qbftForks;
     return this;
@@ -294,6 +300,7 @@ public class TestContextBuilder {
             useLondonMilestone,
             useShanghaiMilestone,
             useZeroBaseFee,
+            useFixedBaseFee,
             qbftForks);
 
     // Add each networkNode to the Multicaster (such that each can receive msgs from local node).
@@ -358,8 +365,9 @@ public class TestContextBuilder {
   }
 
   private GenesisState createGenesisBlock(final String genesisFile) throws IOException {
-    final String json = Files.readString(Path.of(genesisFile));
-    return GenesisState.fromJson(json, ProtocolScheduleFixture.MAINNET);
+    return GenesisState.fromConfig(
+        GenesisConfigFile.fromSource(Path.of(genesisFile).toUri().toURL()),
+        ProtocolScheduleFixture.MAINNET);
   }
 
   private static ControllerAndState createControllerAndFinalState(
@@ -375,6 +383,7 @@ public class TestContextBuilder {
       final boolean useLondonMilestone,
       final boolean useShanghaiMilestone,
       final boolean useZeroBaseFee,
+      final boolean useFixedBaseFee,
       final List<QbftFork> qbftForks) {
 
     final MiningParameters miningParams =
@@ -407,6 +416,9 @@ public class TestContextBuilder {
     if (useZeroBaseFee) {
       genesisConfigOptions.zeroBaseFee(true);
     }
+    if (useFixedBaseFee) {
+      genesisConfigOptions.fixedBaseFee(true);
+    }
     genesisConfigOptions.qbftConfigOptions(
         new JsonQbftConfigOptions(JsonUtil.objectNodeFromMap(qbftConfigValues)));
     genesisConfigOptions.transitions(TestTransitions.createQbftTestTransitions(qbftForks));
@@ -425,6 +437,7 @@ public class TestContextBuilder {
             forksSchedule,
             BFT_EXTRA_DATA_ENCODER,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);

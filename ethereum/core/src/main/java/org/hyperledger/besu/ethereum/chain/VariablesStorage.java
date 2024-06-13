@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,7 +29,8 @@ public interface VariablesStorage {
     FORK_HEADS("forkHeads"),
     FINALIZED_BLOCK_HASH("finalizedBlockHash"),
     SAFE_BLOCK_HASH("safeBlockHash"),
-    SEQ_NO_STORE("local-enr-seqno");
+    SEQ_NO_STORE("local-enr-seqno"),
+    GENESIS_STATE_HASH("genesisStateHash");
 
     private final String key;
     private final byte[] byteArray;
@@ -65,6 +66,8 @@ public interface VariablesStorage {
 
   Optional<Bytes> getLocalEnrSeqno();
 
+  Optional<Hash> getGenesisStateHash();
+
   Updater updater();
 
   interface Updater {
@@ -78,6 +81,8 @@ public interface VariablesStorage {
     void setSafeBlock(Hash blockHash);
 
     void setLocalEnrSeqno(Bytes nodeRecord);
+
+    void setGenesisStateHash(Hash genesisStateHash);
 
     void removeAll();
 

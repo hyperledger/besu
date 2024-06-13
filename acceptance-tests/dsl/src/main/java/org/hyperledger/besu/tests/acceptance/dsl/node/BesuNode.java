@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.condition.Condition;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.NodeConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
@@ -62,6 +61,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Properties;
@@ -131,7 +131,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final List<String> staticNodes;
   private boolean isDnsEnabled = false;
   private Optional<Integer> exitCode = Optional.empty();
-  private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private final boolean isStrictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
 
@@ -168,7 +167,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
       final boolean isStrictTxReplayProtectionEnabled,
       final Map<String, String> environment)
       throws IOException {
@@ -229,7 +227,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.staticNodes = staticNodes;
     this.isDnsEnabled = isDnsEnabled;
     privacyParameters.ifPresent(this::setPrivacyParameters);
-    this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.environment = environment;
     LOG.info("Created BesuNode {}", this);
   }
@@ -431,11 +428,14 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
           getGenesisConfig()
               .map(
                   gc ->
-                      gc.toLowerCase().contains("ibft") ? ConsensusType.IBFT2 : ConsensusType.QBFT)
+                      gc.toLowerCase(Locale.ROOT).contains("ibft")
+                          ? ConsensusType.IBFT2
+                          : ConsensusType.QBFT)
               .orElse(ConsensusType.IBFT2);
 
       nodeRequests =
           new NodeRequests(
+              web3jService,
               new JsonRpc2_0Web3j(web3jService, 2000, Async.defaultExecutorService()),
               new CliqueRequestFactory(web3jService),
               new BftRequestFactory(web3jService, bftType),
@@ -757,10 +757,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public List<String> getRunCommand() {
     return runCommand;
-  }
-
-  public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
-    return pkiKeyStoreConfiguration;
   }
 
   public boolean isStrictTxReplayProtectionEnabled() {

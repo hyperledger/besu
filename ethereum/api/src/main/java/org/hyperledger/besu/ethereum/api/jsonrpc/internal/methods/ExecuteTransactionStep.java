@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu..
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -26,9 +26,9 @@ import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import java.util.List;
 import java.util.Optional;
@@ -98,7 +98,6 @@ public class ExecuteTransactionStep implements Function<TransactionTrace, Transa
       final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(header, blockchain);
       result =
           transactionProcessor.processTransaction(
-              blockchain,
               chainUpdater.getNextUpdater(),
               header,
               transactionTrace.getTransaction(),

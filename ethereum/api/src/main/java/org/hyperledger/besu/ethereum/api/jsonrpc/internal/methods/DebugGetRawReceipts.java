@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -55,7 +55,7 @@ public class DebugGetRawReceipts extends AbstractBlockParameterOrBlockHashMethod
 
   private String[] toRLP(final List<TransactionReceipt> receipts) {
     return receipts.stream()
-        .map(receipt -> RLP.encode(receipt::writeTo).toHexString())
+        .map(receipt -> RLP.encode(receipt::writeToForNetwork).toHexString())
         .toArray(String[]::new);
   }
 }

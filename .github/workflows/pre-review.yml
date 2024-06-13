@@ -1,10 +1,18 @@
 name: pre-review
 
 on:
-  pull_request_target:
+  pull_request:
     branches:
       - main
       - release-*
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+env:
+  GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true"
+  total-runners: 8
 
 jobs:
   repolint:
@@ -28,7 +36,6 @@ jobs:
       - uses: gradle/wrapper-validation-action@56b90f209b02bf6d1deae490e9ef18b21a389cd4
   spotless:
     runs-on: ubuntu-22.04
-    if: ${{ github.actor != 'dependabot[bot]' }}
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -38,11 +45,13 @@ jobs:
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: run spotless
-        run: ./gradlew spotlessCheck -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew spotlessCheck
   compile:
     runs-on: ubuntu-22.04
     timeout-minutes: 30
@@ -56,30 +65,25 @@ jobs:
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
+        with:
+          cache-disabled: true
       - name: Gradle Compile
-        run: ./gradlew build -x test -x spotlessCheck -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew build -x test -x spotlessCheck
   unitTests:
     env:
         GRADLEW_UNIT_TEST_ARGS: ${{matrix.gradle_args}}
     runs-on: ubuntu-22.04
-    needs: [ compile ]
+    needs: [spotless, gradle-wrapper, repolint]
     permissions:
       checks: write
       statuses: write
     strategy:
       fail-fast: true
       matrix:
-        gradle_args:
-          - "test -x besu:test -x consensus:test -x crypto:test -x ethereum:eth:test -x ethereum:api:test -x ethereum:core:test"
-          - "besu:test consensus:test crypto:test"
-          - "ethereum:api:testBonsai"
-          - "ethereum:api:testForest"
-          - "ethereum:api:testRemainder"
-          - "ethereum:eth:test"
-          - "ethereum:core:test"
+        runner_index: [0,1,2,3,4,5,6,7]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -89,24 +93,70 @@ jobs:
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
+      - name: Install required packages
+        run:  sudo apt-get install -y xmlstarlet
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
-      - name: run unit tests
-        id: unitTest
-        run: ./gradlew $GRADLEW_UNIT_TEST_ARGS -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: Publish Test Report
-        uses: mikepenz/action-junit-report@5f47764eec0e1c1f19f40c8e60a5ba47e47015c5
-        if: success() || failure() # always run even if the build step fails
         with:
-          report_paths: '**/test-results/**/TEST-*.xml'
-          annotate_only: true
+          cache-disabled: true
+      - name: List unit tests
+        run: ./gradlew test --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: Extract current test list
+        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo '{}' | sed 's#\./\(.*\)/build/test-results/.*# \1#'" | tee tmp/currentTests.list
+      - name: Get unit test reports
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
+        continue-on-error: true
+        with:
+          branch: main
+          workflow: update-test-reports.yml
+          name: unit-test-results
+          path: tmp/junit-xml-reports-downloaded
+          if_no_artifact_found: ignore
+      - name: Split tests
+        run: .github/workflows/splitTestsByTime.sh tmp/junit-xml-reports-downloaded "tmp/junit-xml-reports-downloaded/unit-.*-test-results" "build/test-results" ${{env.total-runners}} ${{ matrix.runner_index }} > testList.txt
+      - name: Upload Timing
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        if: matrix.runner_index == 0
+        with:
+          name: unit-tests-timing
+          path: 'tmp/timing.tsv'
+      - name: Upload Lists
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        if: matrix.runner_index == 0
+        with:
+          name: unit-tests-lists
+          path: 'tmp/*.list'
+      - name: Upload gradle test tasks
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          name: testList-${{ matrix.runner_index }}.txt
+          path: testList.txt
+      - name: run unit tests
+        run: cat testList.txt | xargs -P 1 ./gradlew -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: Remove downloaded test results
+        run: rm -rf tmp/junit-xml-reports-downloaded
+      - name: Upload Unit Test Results
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          name: unit-${{matrix.runner_index}}-test-results
+          path: '**/test-results/**/TEST-*.xml'
   unittests-passed:
+    name: "unittests-passed"
     runs-on: ubuntu-22.04
-    needs: [unitTests]
+    needs: [compile, unitTests]
     permissions:
       checks: write
       statuses: write
+    if: always()
     steps:
-      - name: consolidation
-        run: echo "consolidating statuses"
+      # Fail if any `needs` job was not a success.
+      # Along with `if: always()`, this allows this job to act as a single required status check for the entire workflow.
+      - name: Fail on workflow error
+        run: exit 1
+        if: >-
+          ${{
+            contains(needs.*.result, 'failure')
+            || contains(needs.*.result, 'cancelled')
+            || contains(needs.*.result, 'skipped')
+          }}

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -31,8 +31,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
 
-import java.util.HashSet;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Stream;
 
@@ -93,7 +93,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
   }
 
   public static AccountTrieNodeHealingRequest createAccountTrieNodeDataRequest(
-      final Hash hash, final Bytes location, final HashSet<Bytes> inconsistentAccounts) {
+      final Hash hash, final Bytes location, final Set<Bytes> inconsistentAccounts) {
     return new AccountTrieNodeHealingRequest(hash, hash, location, inconsistentAccounts);
   }
 
@@ -101,7 +101,7 @@ public abstract class SnapDataRequest implements TasksPriorityProvider {
       final Hash hash,
       final Hash rootHash,
       final Bytes location,
-      final HashSet<Bytes> inconsistentAccounts) {
+      final Set<Bytes> inconsistentAccounts) {
     return new AccountTrieNodeHealingRequest(hash, rootHash, location, inconsistentAccounts);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -43,13 +44,13 @@ import org.apache.tuweni.bytes.Bytes32;
 /** Represents a healing request for an account trie node. */
 public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
 
-  private final HashSet<Bytes> inconsistentAccounts;
+  private final Set<Bytes> inconsistentAccounts;
 
   public AccountTrieNodeHealingRequest(
       final Hash hash,
       final Hash originalRootHash,
       final Bytes location,
-      final HashSet<Bytes> inconsistentAccounts) {
+      final Set<Bytes> inconsistentAccounts) {
     super(hash, originalRootHash, location);
     this.inconsistentAccounts = inconsistentAccounts;
   }
@@ -89,7 +90,7 @@ public class AccountTrieNodeHealingRequest extends TrieNodeHealingRequest {
         childHash, getRootHash(), location, getSubLocation(location));
   }
 
-  private HashSet<Bytes> getSubLocation(final Bytes location) {
+  private Set<Bytes> getSubLocation(final Bytes location) {
     final HashSet<Bytes> foundAccountsToHeal = new HashSet<>();
     for (Bytes account : inconsistentAccounts) {
       if (account.commonPrefixLength(location) == location.size()) {

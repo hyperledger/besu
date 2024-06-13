@@ -16,11 +16,13 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
@@ -40,6 +42,7 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final EvmConfiguration evmConfiguration;
+  private final MiningParameters miningParameters;
   private final BadBlockManager badBlockManager;
 
   private DefaultProtocolSchedule protocolSchedule;
@@ -51,6 +54,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
     this(
         config,
@@ -59,6 +63,7 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager);
   }
 
@@ -68,6 +73,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
     this(
         config,
@@ -76,6 +82,7 @@ public class ProtocolScheduleBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager);
   }
 
@@ -86,6 +93,7 @@ public class ProtocolScheduleBuilder {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
@@ -93,6 +101,7 @@ public class ProtocolScheduleBuilder {
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
+    this.miningParameters = miningParameters;
     this.badBlockManager = badBlockManager;
   }
 
@@ -113,11 +122,12 @@ public class ProtocolScheduleBuilder {
             config.getEvmStackSize(),
             isRevertReasonEnabled,
             config.getEcip1017EraRounds(),
-            evmConfiguration);
+            evmConfiguration,
+            miningParameters);
 
     validateForkOrdering();
 
-    final TreeMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
+    final NavigableMap<Long, BuilderMapEntry> builders = buildMilestoneMap(specFactory);
 
     // At this stage, all milestones are flagged with correct modifier, but ProtocolSpecs must be
     // inserted _AT_ the modifier block entry.
@@ -242,6 +252,7 @@ public class ProtocolScheduleBuilder {
     lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Prague", config.getPragueTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("PragueEOF", config.getPragueEOFTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
     lastForkBlock =
         validateForkOrder("ExperimentalEips", config.getExperimentalEipsTime(), lastForkBlock);
@@ -281,7 +292,7 @@ public class ProtocolScheduleBuilder {
     return referenceForkBlock;
   }
 
-  private TreeMap<Long, BuilderMapEntry> buildMilestoneMap(
+  private NavigableMap<Long, BuilderMapEntry> buildMilestoneMap(
       final MainnetProtocolSpecFactory specFactory) {
     return createMilestones(specFactory)
         .flatMap(Optional::stream)
@@ -321,6 +332,7 @@ public class ProtocolScheduleBuilder {
         timestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
         timestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),
         timestampMilestone(config.getPragueTime(), specFactory.pragueDefinition(config)),
+        timestampMilestone(config.getPragueEOFTime(), specFactory.pragueEOFDefinition(config)),
         timestampMilestone(config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),
         timestampMilestone(
             config.getExperimentalEipsTime(), specFactory.experimentalEipsDefinition(config)),
@@ -386,15 +398,18 @@ public class ProtocolScheduleBuilder {
       final Function<ProtocolSpecBuilder, ProtocolSpecBuilder> modifier) {
 
     switch (milestoneType) {
-      case BLOCK_NUMBER -> protocolSchedule.putBlockNumberMilestone(
-          blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
-      case TIMESTAMP -> protocolSchedule.putTimestampMilestone(
-          blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
-      default -> throw new IllegalStateException(
-          "Unexpected milestoneType: "
-              + milestoneType
-              + " for milestone: "
-              + blockNumberOrTimestamp);
+      case BLOCK_NUMBER ->
+          protocolSchedule.putBlockNumberMilestone(
+              blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+      case TIMESTAMP ->
+          protocolSchedule.putTimestampMilestone(
+              blockNumberOrTimestamp, getProtocolSpec(protocolSchedule, definition, modifier));
+      default ->
+          throw new IllegalStateException(
+              "Unexpected milestoneType: "
+                  + milestoneType
+                  + " for milestone: "
+                  + blockNumberOrTimestamp);
     }
   }
 

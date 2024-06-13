@@ -18,20 +18,20 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
+import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.OperandStack;
 import org.hyperledger.besu.evm.internal.ReturnStack;
 import org.hyperledger.besu.evm.internal.StorageEntry;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -44,7 +44,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.Consumer;
-import java.util.function.Function;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -216,11 +215,11 @@ public class MessageFrame {
   private final Supplier<ReturnStack> returnStack;
   private Bytes output = Bytes.EMPTY;
   private Bytes returnData = Bytes.EMPTY;
+  private Code createdCode = null;
   private final boolean isStatic;
 
   // Transaction state fields.
   private final List<Log> logs = new ArrayList<>();
-  private long gasRefund = 0L;
   private final Map<Address, Wei> refunds = new HashMap<>();
 
   // Execution Environment fields.
@@ -278,13 +277,7 @@ public class MessageFrame {
     this.worldUpdater = worldUpdater;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
-    this.returnStack =
-        Suppliers.memoize(
-            () -> {
-              var rStack = new ReturnStack();
-              rStack.push(new ReturnStack.ReturnStackItem(0, 0, 0));
-              return rStack;
-            });
+    this.returnStack = Suppliers.memoize(ReturnStack::new);
     this.pc = code.isValid() ? code.getCodeSection(0).getEntryPoint() : 0;
     this.recipient = recipient;
     this.contract = contract;
@@ -337,71 +330,6 @@ public class MessageFrame {
     return section;
   }
 
-  /**
-   * Call function and return exceptional halt reason.
-   *
-   * @param calledSection the called section
-   * @return the exceptional halt reason
-   */
-  public ExceptionalHaltReason callFunction(final int calledSection) {
-    CodeSection info = code.getCodeSection(calledSection);
-    if (info == null) {
-      return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else if (stack.size() + info.getMaxStackHeight() > txValues.maxStackSize()) {
-      return ExceptionalHaltReason.TOO_MANY_STACK_ITEMS;
-    } else if (stack.size() < info.getInputs()) {
-      return ExceptionalHaltReason.TOO_FEW_INPUTS_FOR_CODE_SECTION;
-    } else {
-      returnStack
-          .get()
-          .push(new ReturnStack.ReturnStackItem(section, pc + 2, stack.size() - info.getInputs()));
-      pc = info.getEntryPoint() - 1; // will be +1ed at end of operations loop
-      this.section = calledSection;
-      return null;
-    }
-  }
-
-  /**
-   * Execute the mechanics of the JUMPF operation.
-   *
-   * @param section the section
-   * @return the exceptional halt reason, if the jump failed
-   */
-  public ExceptionalHaltReason jumpFunction(final int section) {
-    CodeSection info = code.getCodeSection(section);
-    if (info == null) {
-      return ExceptionalHaltReason.CODE_SECTION_MISSING;
-    } else if (stackSize() != peekReturnStack().getStackHeight() + info.getInputs()) {
-      return ExceptionalHaltReason.JUMPF_STACK_MISMATCH;
-    } else {
-      pc = -1; // will be +1ed at end of operations loop
-      this.section = section;
-      return null;
-    }
-  }
-
-  /**
-   * Return function exceptional halt reason.
-   *
-   * @return the exceptional halt reason
-   */
-  public ExceptionalHaltReason returnFunction() {
-    CodeSection thisInfo = code.getCodeSection(this.section);
-    var rStack = returnStack.get();
-    var returnInfo = rStack.pop();
-    if ((returnInfo.getStackHeight() + thisInfo.getOutputs()) != stack.size()) {
-      return ExceptionalHaltReason.INCORRECT_CODE_SECTION_RETURN_OUTPUTS;
-    } else if (rStack.isEmpty()) {
-      setState(MessageFrame.State.CODE_SUCCESS);
-      setOutputData(Bytes.EMPTY);
-      return null;
-    } else {
-      this.pc = returnInfo.getPC();
-      this.section = returnInfo.getCodeSectionIndex();
-      return null;
-    }
-  }
-
   /** Deducts the remaining gas. */
   public void clearGasRemaining() {
     this.gasRemaining = 0L;
@@ -414,7 +342,8 @@ public class MessageFrame {
    * @return the amount of gas available, after deductions.
    */
   public long decrementRemainingGas(final long amount) {
-    return this.gasRemaining -= amount;
+    this.gasRemaining -= amount;
+    return this.gasRemaining;
   }
 
   /**
@@ -460,6 +389,24 @@ public class MessageFrame {
    */
   public void setOutputData(final Bytes output) {
     this.output = output;
+  }
+
+  /**
+   * Sets the created code from CREATE* operations
+   *
+   * @param createdCode the code that was created
+   */
+  public void setCreatedCode(final Code createdCode) {
+    this.createdCode = createdCode;
+  }
+
+  /**
+   * gets the created code from CREATE* operations
+   *
+   * @return the code that was created
+   */
+  public Code getCreatedCode() {
+    return createdCode;
   }
 
   /** Clears the output data buffer. */
@@ -892,12 +839,12 @@ public class MessageFrame {
    * @param amount The amount to increment the refund
    */
   public void incrementGasRefund(final long amount) {
-    this.gasRefund += amount;
+    this.txValues.gasRefunds().set(this.txValues.gasRefunds().get() + amount);
   }
 
   /** Clear the accumulated gas refund. */
   public void clearGasRefund() {
-    gasRefund = 0L;
+    this.txValues.gasRefunds().set(0L);
   }
 
   /**
@@ -906,7 +853,7 @@ public class MessageFrame {
    * @return accumulated gas refund
    */
   public long getGasRefund() {
-    return gasRefund;
+    return txValues.gasRefunds().get();
   }
 
   /**
@@ -944,6 +891,7 @@ public class MessageFrame {
   public void addCreate(final Address address) {
     txValues.creates().add(address);
   }
+
   /**
    * Add addresses to the create set if they are not already present.
    *
@@ -1027,18 +975,6 @@ public class MessageFrame {
   }
 
   /**
-   * Returns whether an address' slot is warmed up. Is deliberately publicly exposed for access from
-   * trace
-   *
-   * @param address the address context
-   * @param slot the slot to query
-   * @return whether the address/slot couple is warmed up
-   */
-  public boolean isStorageWarm(final Address address, final Bytes32 slot) {
-    return this.txValues.warmedUpStorage().contains(address, slot);
-  }
-
-  /**
    * Return the world state.
    *
    * @return the world state
@@ -1118,6 +1054,7 @@ public class MessageFrame {
   public int getDepth() {
     return getMessageStackSize() - 1;
   }
+
   /**
    * Returns the recipient that originated the message.
    *
@@ -1205,6 +1142,15 @@ public class MessageFrame {
   }
 
   /**
+   * The return stack used for EOF code sections.
+   *
+   * @return the return stack
+   */
+  public ReturnStack getReturnStack() {
+    return returnStack.get();
+  }
+
+  /**
    * Sets exceptional halt reason.
    *
    * @param exceptionalHaltReason the exceptional halt reason
@@ -1237,7 +1183,7 @@ public class MessageFrame {
    *
    * @return the block hash lookup
    */
-  public Function<Long, Hash> getBlockHashLookup() {
+  public BlockHashLookup getBlockHashLookup() {
     return txValues.blockHashLookup();
   }
 
@@ -1396,13 +1342,18 @@ public class MessageFrame {
     private boolean isStatic = false;
     private Consumer<MessageFrame> completer;
     private Address miningBeneficiary;
-    private Function<Long, Hash> blockHashLookup;
+    private BlockHashLookup blockHashLookup;
     private Map<String, Object> contextVariables;
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
+
+    /** Instantiates a new Builder. */
+    public Builder() {
+      // constructor added to deal with JavaDoc linting rules.
+    }
 
     /**
      * The "parent" message frame. When present some fields will be populated from the parent and
@@ -1620,7 +1571,7 @@ public class MessageFrame {
      * @param blockHashLookup the block hash lookup
      * @return the builder
      */
-    public Builder blockHashLookup(final Function<Long, Hash> blockHashLookup) {
+    public Builder blockHashLookup(final BlockHashLookup blockHashLookup) {
       this.blockHashLookup = blockHashLookup;
       return this;
     }
@@ -1729,7 +1680,8 @@ public class MessageFrame {
                 versionedHashes,
                 UndoTable.of(HashBasedTable.create()),
                 UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
-                UndoSet.of(new BytesTrieSet<>(Address.SIZE)));
+                UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
+                new UndoScalar<>(0L));
         updater = worldUpdater;
         newStatic = isStatic;
       } else {

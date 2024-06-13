@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -216,6 +216,7 @@ public class ForestMutableWorldState implements MutableWorldState {
     return Optional.ofNullable(newAccountKeyPreimages.get(trieKey))
         .or(() -> preimageStorage.getAccountTrieKeyPreimage(trieKey));
   }
+
   // An immutable class that represents an individual account as stored in
   // the world state's underlying merkle patricia trie.
   protected class WorldStateAccount implements Account {
@@ -322,6 +323,18 @@ public class ForestMutableWorldState implements MutableWorldState {
                 storageEntries.put(key, entry);
               });
       return storageEntries;
+    }
+
+    /**
+     * Does this account have any storage slots that are set to non-zero values?
+     *
+     * @return true if the account has no storage values set to non-zero values. False if any
+     *     storage is set.
+     */
+    @Override
+    public boolean isStorageEmpty() {
+      return Hash.EMPTY_TRIE_HASH.equals(
+          storageTrie == null ? getStorageRoot() : storageTrie.getRootHash());
     }
 
     @Override

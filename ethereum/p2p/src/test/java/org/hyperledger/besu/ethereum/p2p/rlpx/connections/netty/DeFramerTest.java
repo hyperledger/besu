@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -92,7 +93,8 @@ public class DeFramerTest {
   private final PeerConnection peerConnection = mock(PeerConnection.class);
   private final CompletableFuture<PeerConnection> connectFuture = new CompletableFuture<>();
   private final int remotePort = 12345;
-  private final InetSocketAddress remoteAddress = new InetSocketAddress("127.0.0.1", remotePort);
+  private final InetSocketAddress remoteAddress =
+      new InetSocketAddress(InetAddress.getLoopbackAddress(), remotePort);
 
   private final int p2pVersion = 5;
   private final String clientId = "abc";
@@ -136,7 +138,8 @@ public class DeFramerTest {
 
     deFramer.exceptionCaught(ctx, new DecoderException(new FramingException("Test")));
 
-    verify(peerConnection).disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    verify(peerConnection)
+        .disconnect(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_MESSAGE_RECEIVED_CAUGHT_EXCEPTION);
   }
 
   @Test
@@ -146,7 +149,8 @@ public class DeFramerTest {
 
     deFramer.exceptionCaught(ctx, new DecoderException(new RLPException("Test")));
 
-    verify(peerConnection).disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+    verify(peerConnection)
+        .disconnect(DisconnectReason.BREACH_OF_PROTOCOL_INVALID_MESSAGE_RECEIVED_CAUGHT_EXCEPTION);
   }
 
   @Test

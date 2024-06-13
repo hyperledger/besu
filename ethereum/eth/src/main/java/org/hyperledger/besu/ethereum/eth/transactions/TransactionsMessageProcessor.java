@@ -92,7 +92,7 @@ class TransactionsMessageProcessor {
             "Malformed transaction message received (BREACH_OF_PROTOCOL), disconnecting: {}",
             peer,
             ex);
-        peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL);
+        peer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
       }
     }
   }

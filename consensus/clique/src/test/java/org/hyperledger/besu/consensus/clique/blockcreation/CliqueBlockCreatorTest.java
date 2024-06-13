@@ -106,6 +106,7 @@ public class CliqueBlockCreatorTest {
             proposerNodeKey,
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager());
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());

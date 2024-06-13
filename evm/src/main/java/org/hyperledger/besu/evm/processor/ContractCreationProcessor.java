@@ -98,7 +98,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   private static boolean accountExists(final Account account) {
     // The account exists if it has sent a transaction
     // or already has its code initialized.
-    return account.getNonce() > 0 || !account.getCode().isEmpty();
+    return account.getNonce() != 0 || !account.getCode().isEmpty() || !account.isStorageEmpty();
   }
 
   @Override
@@ -137,7 +137,8 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
   @Override
   public void codeSuccess(final MessageFrame frame, final OperationTracer operationTracer) {
-    final Bytes contractCode = frame.getOutputData();
+    final Bytes contractCode =
+        frame.getCreatedCode() == null ? frame.getOutputData() : frame.getCreatedCode().getBytes();
 
     final long depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
 

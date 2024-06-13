@@ -1,0 +1,14 @@
+{
+  "request": {
+    "jsonrpc": "2.0",
+    "method": "eth_sendRawTransaction",
+    "params": ["0xf8a08085e8d4a51000832dc6c09400a3ca265ebcb825b45f985a16cefb49958ce01702b8388706d19a62f28a6a6549f96c5adaebac9124a61d44868ec94f6d2d707c6a2f82c9162071231dfeb40e24bfde4ffdf2430000000000000000822fdfa00476c1a81f80f4c130acb5f8b8075468ba0893d766b7ec51a8d9723c573ad034a03bd3eaedabbaaf745f15023185ba66584ad3ee8bb40b9bef8c0b9ed27f8b1959"],
+    "id": 67
+  },
+  "response": {
+    "jsonrpc": "2.0",
+    "id": 67,
+    "result": "0x5878bb7458f51c06a121396769543bdc8b40221b7e214880b1e292fa04058f17"
+  },
+  "statusCode": 200
+}

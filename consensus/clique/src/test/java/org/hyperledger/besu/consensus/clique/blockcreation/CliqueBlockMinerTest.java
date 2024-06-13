@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -34,6 +33,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.blockcreation.BlockCreationTiming;
 import org.hyperledger.besu.ethereum.blockcreation.BlockCreator;
 import org.hyperledger.besu.ethereum.blockcreation.DefaultBlockScheduler;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.TransactionSelectionResults;
@@ -93,7 +93,8 @@ class CliqueBlockMinerTest {
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(
-            new BlockCreator.BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+            new BlockCreator.BlockCreationResult(
+                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
@@ -148,7 +149,8 @@ class CliqueBlockMinerTest {
         (parentHeader) -> blockCreator;
     when(blockCreator.createBlock(anyLong()))
         .thenReturn(
-            new BlockCreator.BlockCreationResult(blockToCreate, new TransactionSelectionResults()));
+            new BlockCreator.BlockCreationResult(
+                blockToCreate, new TransactionSelectionResults(), new BlockCreationTiming()));
 
     final BlockImporter blockImporter = mock(BlockImporter.class);
     final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);

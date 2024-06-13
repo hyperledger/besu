@@ -108,6 +108,7 @@ public class JsonRpcHttpServiceHostAllowlistTest {
                 synchronizer,
                 MainnetProtocolSchedule.fromConfig(
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
+                    MiningParameters.MINING_DISABLED,
                     new BadBlockManager()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
@@ -205,8 +206,8 @@ public class JsonRpcHttpServiceHostAllowlistTest {
   @Test
   public void requestWithMalformedHostIsRejected() throws IOException {
     jsonRpcConfig.setHostsAllowlist(hostsAllowlist);
-    assertThat(doRequest("ally:friend")).isEqualTo(403);
-    assertThat(doRequest("ally:123456")).isEqualTo(403);
-    assertThat(doRequest("ally:friend:1234")).isEqualTo(403);
+    assertThat(doRequest("ally:friend")).isEqualTo(400);
+    assertThat(doRequest("ally:123456")).isEqualTo(400);
+    assertThat(doRequest("ally:friend:1234")).isEqualTo(400);
   }
 }

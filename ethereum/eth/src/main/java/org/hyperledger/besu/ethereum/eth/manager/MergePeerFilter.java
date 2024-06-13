@@ -1,8 +1,8 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
- *  the License. You may obtain a copy of the License at
+ * the License. You may obtain a copy of the License at
  *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.eth.manager;
 
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
@@ -47,7 +45,7 @@ public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceL
         LOG.debug(
             "Disconnecting peer with difficulty {}, likely still on PoW chain",
             status.totalDifficulty());
-        peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+        peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_DIFFICULTY);
         return true;
       } else {
         return false;
@@ -61,7 +59,7 @@ public class MergePeerFilter implements MergeStateHandler, UnverifiedForkchoiceL
     final int code = message.getData().getCode();
     if (isFinalized() && (code == EthPV62.NEW_BLOCK || code == EthPV62.NEW_BLOCK_HASHES)) {
       LOG.debug("disconnecting peer for sending new blocks after transition to PoS");
-      peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED);
+      peer.disconnect(DisconnectReason.SUBPROTOCOL_TRIGGERED_POW_BLOCKS);
       return true;
     } else {
       return false;

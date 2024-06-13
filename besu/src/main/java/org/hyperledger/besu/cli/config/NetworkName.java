@@ -15,6 +15,7 @@
 package org.hyperledger.besu.cli.config;
 
 import java.math.BigInteger;
+import java.util.Locale;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -25,8 +26,6 @@ public enum NetworkName {
   MAINNET("/mainnet.json", BigInteger.valueOf(1)),
   /** Sepolia network name. */
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
-  /** Goerli network name. */
-  GOERLI("/goerli.json", BigInteger.valueOf(5)),
   /** Holešky network name. */
   HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
 
@@ -91,7 +90,7 @@ public enum NetworkName {
    * @return the string
    */
   public String normalize() {
-    return StringUtils.capitalize(name().toLowerCase());
+    return StringUtils.capitalize(name().toLowerCase(Locale.ROOT));
   }
 
   /**

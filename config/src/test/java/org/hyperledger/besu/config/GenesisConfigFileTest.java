@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.io.IOException;
@@ -50,7 +51,11 @@ class GenesisConfigFileTest {
     // Sanity check some basic properties to confirm this is the mainnet file.
     assertThat(config.getConfigOptions().isEthHash()).isTrue();
     assertThat(config.getConfigOptions().getChainId()).hasValue(MAINNET_CHAIN_ID);
-    assertThat(config.streamAllocations().map(GenesisAllocation::getAddress))
+    assertThat(
+            config
+                .streamAllocations()
+                .map(GenesisAccount::address)
+                .map(Address::toUnprefixedHexString))
         .contains(
             "000d836201318ec6899a67540690382780743280",
             "001762430ea9c3a26e5749afdb70da5f78ddbb8c",
@@ -59,11 +64,15 @@ class GenesisConfigFileTest {
 
   @Test
   void shouldLoadDevelopmentConfigFile() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     // Sanity check some basic properties to confirm this is the dev file.
     assertThat(config.getConfigOptions().isEthHash()).isTrue();
     assertThat(config.getConfigOptions().getChainId()).hasValue(DEVELOPMENT_CHAIN_ID);
-    assertThat(config.streamAllocations().map(GenesisAllocation::getAddress))
+    assertThat(
+            config
+                .streamAllocations()
+                .map(GenesisAccount::address)
+                .map(Address::toUnprefixedHexString))
         .contains(
             "fe3b557e8fb62b89f4916b721be55ceb828dbd73",
             "627306090abab3a6e1400e9345bc60c78a8bef57",
@@ -198,7 +207,7 @@ class GenesisConfigFileTest {
   @Test
   void assertSepoliaTerminalTotalDifficulty() {
     GenesisConfigOptions sepoliaOptions =
-        GenesisConfigFile.genesisFileFromResources("/sepolia.json").getConfigOptions();
+        GenesisConfigFile.fromResource("/sepolia.json").getConfigOptions();
 
     assertThat(sepoliaOptions.getTerminalTotalDifficulty()).isPresent();
     assertThat(sepoliaOptions.getTerminalTotalDifficulty())
@@ -206,19 +215,9 @@ class GenesisConfigFileTest {
   }
 
   @Test
-  void assertGoerliTerminalTotalDifficulty() {
-    GenesisConfigOptions goerliOptions =
-        GenesisConfigFile.genesisFileFromResources("/goerli.json").getConfigOptions();
-
-    assertThat(goerliOptions.getTerminalTotalDifficulty()).isPresent();
-    assertThat(goerliOptions.getTerminalTotalDifficulty())
-        .contains(UInt256.valueOf(new BigInteger("10790000")));
-  }
-
-  @Test
   void assertMainnetTerminalTotalDifficulty() {
     GenesisConfigOptions mainnetOptions =
-        GenesisConfigFile.genesisFileFromResources("/mainnet.json").getConfigOptions();
+        GenesisConfigFile.fromResource("/mainnet.json").getConfigOptions();
 
     assertThat(mainnetOptions.getTerminalTotalDifficulty()).isPresent();
     // tentative as of 2022-08-11:
@@ -229,7 +228,7 @@ class GenesisConfigFileTest {
   @Test
   void assertTerminalTotalDifficultyOverride() {
     GenesisConfigOptions sepoliaOverrideOptions =
-        GenesisConfigFile.genesisFileFromResources("/sepolia.json")
+        GenesisConfigFile.fromResource("/sepolia.json")
             .getConfigOptions(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)));
 
     assertThat(sepoliaOverrideOptions.getTerminalTotalDifficulty()).isPresent();
@@ -281,31 +280,41 @@ class GenesisConfigFileTest {
                 + "  }"
                 + "}");
 
-    final Map<String, GenesisAllocation> allocations =
+    final Map<Address, GenesisAccount> allocations =
         config
             .streamAllocations()
-            .collect(Collectors.toMap(GenesisAllocation::getAddress, Function.identity()));
-    assertThat(allocations)
-        .containsOnlyKeys(
+            .collect(Collectors.toMap(GenesisAccount::address, Function.identity()));
+    assertThat(allocations.keySet())
+        .map(Address::toUnprefixedHexString)
+        .containsOnly(
             "fe3b557e8fb62b89f4916b721be55ceb828dbd73",
             "627306090abab3a6e1400e9345bc60c78a8bef57",
             "f17f52151ebef6c7334fad080c5704d77216b732");
-    final GenesisAllocation alloc1 = allocations.get("fe3b557e8fb62b89f4916b721be55ceb828dbd73");
-    final GenesisAllocation alloc2 = allocations.get("627306090abab3a6e1400e9345bc60c78a8bef57");
-    final GenesisAllocation alloc3 = allocations.get("f17f52151ebef6c7334fad080c5704d77216b732");
+    final GenesisAccount alloc1 =
+        allocations.get(Address.fromHexString("fe3b557e8fb62b89f4916b721be55ceb828dbd73"));
+    final GenesisAccount alloc2 =
+        allocations.get(Address.fromHexString("627306090abab3a6e1400e9345bc60c78a8bef57"));
+    final GenesisAccount alloc3 =
+        allocations.get(Address.fromHexString("f17f52151ebef6c7334fad080c5704d77216b732"));
 
-    assertThat(alloc1.getBalance()).isEqualTo("0xad78ebc5ac6200000");
-    assertThat(alloc2.getBalance()).isEqualTo("1000");
-    assertThat(alloc3.getBalance()).isEqualTo("90000000000000000000000");
-    assertThat(alloc3.getStorage()).hasSize(2);
-    assertThat(alloc3.getStorage())
+    assertThat(alloc1.balance())
+        .isEqualTo(GenesisReader.ParserUtils.parseBalance("0xad78ebc5ac6200000"));
+    assertThat(alloc2.balance()).isEqualTo(GenesisReader.ParserUtils.parseBalance("1000"));
+    assertThat(alloc3.balance())
+        .isEqualTo(GenesisReader.ParserUtils.parseBalance("90000000000000000000000"));
+    assertThat(alloc3.storage()).hasSize(2);
+    assertThat(alloc3.storage())
         .containsEntry(
-            "0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a4",
-            "0x937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0");
-    assertThat(alloc3.getStorage())
+            UInt256.fromHexString(
+                "0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a4"),
+            UInt256.fromHexString(
+                "0x937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0"));
+    assertThat(alloc3.storage())
         .containsEntry(
-            "0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a3",
-            "0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012");
+            UInt256.fromHexString(
+                "0xc4c3a3f99b26e5e534b71d6f33ca6ea5c174decfb16dd7237c60eff9774ef4a3"),
+            UInt256.fromHexString(
+                "0x6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012"));
   }
 
   @Test
@@ -337,7 +346,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testOverridePresent() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     final int bigBlock = 999_999_999;
     final String bigBlockString = Integer.toString(bigBlock);
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
@@ -354,7 +363,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testOverrideNull() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("istanbulBlock", null);
     override.put("chainId", null);
@@ -368,7 +377,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testOverrideCaseInsensitivity() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     final int bigBlock = 999_999_999;
     final String bigBlockString = Integer.toString(bigBlock);
     final Map<String, String> override = new HashMap<>();
@@ -387,7 +396,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testOverrideEmptyString() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
     final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
     override.put("istanbulBlock", "");
     override.put("chainId", "");
@@ -400,7 +409,7 @@ class GenesisConfigFileTest {
 
   @Test
   void testNoOverride() {
-    final GenesisConfigFile config = GenesisConfigFile.development();
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/dev.json");
 
     assertThat(config.getConfigOptions().getLondonBlockNumber()).hasValue(0);
     assertThat(config.getConfigOptions().getIstanbulBlockNumber()).isNotPresent();
@@ -413,7 +422,7 @@ class GenesisConfigFileTest {
   @Test
   void testConstantinopleFixShouldNotBeSupportedAlongPetersburg() {
     // petersburg node
-    final GenesisConfigFile config = GenesisConfigFile.genesisFileFromResources("/all_forks.json");
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/all_forks.json");
 
     assertThat(config.getConfigOptions().getPetersburgBlockNumber()).hasValue(7);
 
