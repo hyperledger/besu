@@ -17,7 +17,7 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
  
       # Shell parameter expansion does not support directly on a step
       # Adding a separate step to set the image tag. This allows running
@@ -31,7 +31,7 @@ jobs:
 
       - name: Vulnerability scanner
         id: trivy
-        uses: aquasecurity/trivy-action@0.22.0
+        uses: aquasecurity/trivy-action@595be6a0f6560a0a8fc419ddf630567fc623531d
         with:
           image-ref: hyperledger/besu:${{ steps.tag.outputs.TAG }}
           format: sarif
@@ -39,6 +39,6 @@ jobs:
 
       # Check the vulnerabilities via GitHub security tab
       - name: Upload results
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@23acc5c183826b7a8a97bce3cecc52db901f8251
         with:
           sarif_file: 'trivy-results.sarif'
