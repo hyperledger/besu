@@ -87,6 +87,8 @@ public class EOFReferenceTestTools {
     // Orphan containers are no longer allowed
     params.ignore("efValidation/EOF1_returncontract_valid-Prague\\[EOF1_returncontract_valid_1\\]");
     params.ignore("efValidation/EOF1_returncontract_valid-Prague\\[EOF1_returncontract_valid_2\\]");
+    params.ignore("efValidation/EOF1_eofcreate_valid-Prague\\[EOF1_eofcreate_valid_1\\]");
+    params.ignore("efValidation/EOF1_eofcreate_valid-Prague\\[EOF1_eofcreate_valid_2\\]");
     params.ignore("efValidation/EOF1_section_order-Prague\\[EOF1_section_order_6\\]");
   }
 
