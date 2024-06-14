@@ -139,7 +139,7 @@ public abstract class BenchmarkExecutor {
       case PETERSBURG -> new PetersburgGasCalculator();
       case ISTANBUL -> new IstanbulGasCalculator();
       case BERLIN -> new BerlinGasCalculator();
-      case LONDON, PARIS -> new LondonGasCalculator();
+      case LONDON, PARIS, LINEA -> new LondonGasCalculator();
       case SHANGHAI -> new ShanghaiGasCalculator();
       case CANCUN -> new CancunGasCalculator();
       case PRAGUE -> new PragueGasCalculator();
