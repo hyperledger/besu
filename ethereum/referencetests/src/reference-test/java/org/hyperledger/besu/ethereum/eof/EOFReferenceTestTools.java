@@ -72,6 +72,22 @@ public class EOFReferenceTestTools {
 
     // TXCREATE still in tests, but has been removed
     params.ignore("EOF1_undefined_opcodes_186");
+
+    // embedded containers rules changed
+    params.ignore("EOF1_embedded_container");
+
+    // truncated data is only allowed in embedded containers
+    params.ignore("ori/validInvalid-Prague\\[validInvalid_48\\]");
+    params.ignore("efExample/validInvalid-Prague\\[validInvalid_1\\]");
+    params.ignore("efValidation/EOF1_truncated_section-Prague\\[EOF1_truncated_section_3\\]");
+    params.ignore("efValidation/EOF1_truncated_section-Prague\\[EOF1_truncated_section_4\\]");
+    params.ignore("EIP3540/validInvalid-Prague\\[validInvalid_2\\]");
+    params.ignore("EIP3540/validInvalid-Prague\\[validInvalid_3\\]");
+
+    // Orphan containers are no longer allowed
+    params.ignore("efValidation/EOF1_returncontract_valid-Prague\\[EOF1_returncontract_valid_1\\]");
+    params.ignore("efValidation/EOF1_returncontract_valid-Prague\\[EOF1_returncontract_valid_2\\]");
+    params.ignore("efValidation/EOF1_section_order-Prague\\[EOF1_section_order_6\\]");
   }
 
   private EOFReferenceTestTools() {
