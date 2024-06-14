@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
@@ -33,8 +34,6 @@ import org.hyperledger.besu.evm.operation.AddModOperation;
 import org.hyperledger.besu.evm.operation.AddOperation;
 import org.hyperledger.besu.evm.operation.AddressOperation;
 import org.hyperledger.besu.evm.operation.AndOperation;
-import org.hyperledger.besu.evm.operation.AuthCallOperation;
-import org.hyperledger.besu.evm.operation.AuthOperation;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
 import org.hyperledger.besu.evm.operation.BaseFeeOperation;
 import org.hyperledger.besu.evm.operation.BlobBaseFeeOperation;
@@ -55,15 +54,25 @@ import org.hyperledger.besu.evm.operation.CodeSizeOperation;
 import org.hyperledger.besu.evm.operation.CoinbaseOperation;
 import org.hyperledger.besu.evm.operation.Create2Operation;
 import org.hyperledger.besu.evm.operation.CreateOperation;
+import org.hyperledger.besu.evm.operation.DataCopyOperation;
+import org.hyperledger.besu.evm.operation.DataLoadNOperation;
+import org.hyperledger.besu.evm.operation.DataLoadOperation;
+import org.hyperledger.besu.evm.operation.DataSizeOperation;
 import org.hyperledger.besu.evm.operation.DelegateCallOperation;
 import org.hyperledger.besu.evm.operation.DifficultyOperation;
 import org.hyperledger.besu.evm.operation.DivOperation;
+import org.hyperledger.besu.evm.operation.DupNOperation;
 import org.hyperledger.besu.evm.operation.DupOperation;
+import org.hyperledger.besu.evm.operation.EOFCreateOperation;
 import org.hyperledger.besu.evm.operation.EqOperation;
+import org.hyperledger.besu.evm.operation.ExchangeOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
+import org.hyperledger.besu.evm.operation.ExtCallOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeCopyOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.ExtCodeSizeOperation;
+import org.hyperledger.besu.evm.operation.ExtDelegateCallOperation;
+import org.hyperledger.besu.evm.operation.ExtStaticCallOperation;
 import org.hyperledger.besu.evm.operation.GasLimitOperation;
 import org.hyperledger.besu.evm.operation.GasOperation;
 import org.hyperledger.besu.evm.operation.GasPriceOperation;
@@ -71,6 +80,7 @@ import org.hyperledger.besu.evm.operation.GtOperation;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.IsZeroOperation;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
+import org.hyperledger.besu.evm.operation.JumpFOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.JumpiOperation;
 import org.hyperledger.besu.evm.operation.Keccak256Operation;
@@ -98,7 +108,9 @@ import org.hyperledger.besu.evm.operation.RelativeJumpIfOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpOperation;
 import org.hyperledger.besu.evm.operation.RelativeJumpVectorOperation;
 import org.hyperledger.besu.evm.operation.RetFOperation;
+import org.hyperledger.besu.evm.operation.ReturnContractOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataCopyOperation;
+import org.hyperledger.besu.evm.operation.ReturnDataLoadOperation;
 import org.hyperledger.besu.evm.operation.ReturnDataSizeOperation;
 import org.hyperledger.besu.evm.operation.ReturnOperation;
 import org.hyperledger.besu.evm.operation.RevertOperation;
@@ -117,6 +129,7 @@ import org.hyperledger.besu.evm.operation.SignExtendOperation;
 import org.hyperledger.besu.evm.operation.StaticCallOperation;
 import org.hyperledger.besu.evm.operation.StopOperation;
 import org.hyperledger.besu.evm.operation.SubOperation;
+import org.hyperledger.besu.evm.operation.SwapNOperation;
 import org.hyperledger.besu.evm.operation.SwapOperation;
 import org.hyperledger.besu.evm.operation.TLoadOperation;
 import org.hyperledger.besu.evm.operation.TStoreOperation;
@@ -1015,9 +1028,108 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerCancunOperations(registry, gasCalculator, chainID);
 
-    // EIP-3074 AUTH and AUTHCALL
-    registry.put(new AuthOperation(gasCalculator));
-    registry.put(new AuthCallOperation(gasCalculator));
+    // TODO add EOF operations here once PragueEOF is collapsed into Prague
+  }
+
+  /**
+   * PragueEOF evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM pragueEOF(final EvmConfiguration evmConfiguration) {
+    return pragueEOF(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * PragueEOF evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM pragueEOF(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return pragueEOF(new PragueEOFGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * PragueEOF evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM pragueEOF(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        pragueEOFOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.PRAGUE_EOF);
+  }
+
+  /**
+   * Operation registry for PragueEOF's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry pragueEOFOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerPragueEOFOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register PragueEOF's operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerPragueEOFOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerPragueOperations(registry, gasCalculator, chainID);
+
+    // EIP-663 Unlimited Swap and Dup
+    registry.put(new DupNOperation(gasCalculator));
+    registry.put(new SwapNOperation(gasCalculator));
+    registry.put(new ExchangeOperation(gasCalculator));
+
+    // EIP-4200 relative jump
+    registry.put(new RelativeJumpOperation(gasCalculator));
+    registry.put(new RelativeJumpIfOperation(gasCalculator));
+    registry.put(new RelativeJumpVectorOperation(gasCalculator));
+
+    // EIP-4750 EOF Code Sections
+    registry.put(new CallFOperation(gasCalculator));
+    registry.put(new RetFOperation(gasCalculator));
+
+    // EIP-6209 JUMPF Instruction
+    registry.put(new JumpFOperation(gasCalculator));
+
+    // EIP-7069 Revamped EOF Call
+    registry.put(new ExtCallOperation(gasCalculator));
+    registry.put(new ExtDelegateCallOperation(gasCalculator));
+    registry.put(new ExtStaticCallOperation(gasCalculator));
+    registry.put(new ReturnDataLoadOperation(gasCalculator));
+
+    // EIP-7480 EOF Data Section Access
+    registry.put(new DataLoadOperation(gasCalculator));
+    registry.put(new DataLoadNOperation(gasCalculator));
+    registry.put(new DataSizeOperation(gasCalculator));
+    registry.put(new DataCopyOperation(gasCalculator));
+
+    // EIP-7620 EOF Create and Return Contract operation
+    registry.put(new EOFCreateOperation(gasCalculator));
+    registry.put(new ReturnContractOperation(gasCalculator));
   }
 
   /**
@@ -1085,7 +1197,75 @@ public class MainnetEVMs {
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
-    registerPragueOperations(registry, gasCalculator, chainID);
+    registerPragueEOFOperations(registry, gasCalculator, chainID);
+  }
+
+  /**
+   * Amsterdam evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM amsterdam(final EvmConfiguration evmConfiguration) {
+    return amsterdam(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * Amsterdam evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM amsterdam(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return amsterdam(new PragueGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Amsterdam evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM amsterdam(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        amsterdamOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.AMSTERDAM);
+  }
+
+  /**
+   * Operation registry for amsterdam's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry amsterdamOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerAmsterdamOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register amsterdam operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerAmsterdamOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerOsakaOperations(registry, gasCalculator, chainID);
   }
 
   /**
@@ -1153,7 +1333,143 @@ public class MainnetEVMs {
       final OperationRegistry registry,
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
-    registerOsakaOperations(registry, gasCalculator, chainID);
+    registerAmsterdamOperations(registry, gasCalculator, chainID);
+  }
+
+  /**
+   * Polis evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM polis(final EvmConfiguration evmConfiguration) {
+    return polis(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * Polis evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM polis(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return polis(new PragueGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Polis evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM polis(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        polisOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.POLIS);
+  }
+
+  /**
+   * Operation registry for Polis's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry polisOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerPolisOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register polis operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerPolisOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerBogotaOperations(registry, gasCalculator, chainID);
+  }
+
+  /**
+   * Bangkok evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM bangkok(final EvmConfiguration evmConfiguration) {
+    return bangkok(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * Bangkok evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM bangkok(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return bangkok(new PragueGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * Bangkok evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM bangkok(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        bangkokOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.BANGKOK);
+  }
+
+  /**
+   * Operation registry for bangkok's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry bangkokOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerBangkokOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register bangkok operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerBangkokOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerPolisOperations(registry, gasCalculator, chainID);
   }
 
   /**
@@ -1222,13 +1538,6 @@ public class MainnetEVMs {
       final GasCalculator gasCalculator,
       final BigInteger chainID) {
     registerBogotaOperations(registry, gasCalculator, chainID);
-
-    // "big" EOF
-    registry.put(new RelativeJumpOperation(gasCalculator));
-    registry.put(new RelativeJumpIfOperation(gasCalculator));
-    registry.put(new RelativeJumpVectorOperation(gasCalculator));
-    registry.put(new CallFOperation(gasCalculator));
-    registry.put(new RetFOperation(gasCalculator));
   }
 
   /**

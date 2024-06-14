@@ -189,6 +189,17 @@ public class MainnetProtocolSpecFactory {
         miningParameters);
   }
 
+  public ProtocolSpecBuilder pragueEOFDefinition(final GenesisConfigOptions genesisConfigOptions) {
+    return MainnetProtocolSpecs.pragueEOFDefinition(
+        chainId,
+        contractSizeLimit,
+        evmStackSize,
+        isRevertReasonEnabled,
+        genesisConfigOptions,
+        evmConfiguration,
+        miningParameters);
+  }
+
   /**
    * The "future" fork consists of EIPs that have been approved for Ethereum Mainnet but not
    * scheduled for a fork. This is also known as "Eligible For Inclusion" (EFI) or "Considered for

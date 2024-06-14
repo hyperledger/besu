@@ -43,6 +43,7 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
+import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
@@ -245,6 +246,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -530,6 +532,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       return autoDiscoveredDefaultIP;
     }
+
+    @Option(
+        names = {"--net-restrict"},
+        arity = "1..*",
+        split = ",",
+        converter = SubnetInfoConverter.class,
+        description =
+            "Comma-separated list of allowed IP subnets (e.g., '192.168.1.0/24,10.0.0.0/8').")
+    private List<SubnetInfo> allowedSubnets;
   }
 
   @Option(
@@ -1518,7 +1529,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
-        || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()) {
+        || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
+        || genesisConfigOptionsSupplier.get().getPragueEOFTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
         KZGPointEvalPrecompiledContract.init(kzgTrustedSetupFile);
       } else {
@@ -2336,6 +2348,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
+            .allowedSubnets(p2PDiscoveryOptionGroup.allowedSubnets)
             .build();
 
     addShutdownHook(runner);

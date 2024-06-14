@@ -50,10 +50,18 @@ public enum EvmSpecVersion {
   CANCUN(0, true, "Cancun", "Finalized"),
   /** Prague evm spec version. */
   PRAGUE(0, false, "Prague", "In Development"),
+  /** PragueEOF evm spec version. */
+  PRAGUE_EOF(1, false, "PragueEOF", "Prague + EOF.  In Development"),
   /** Osaka evm spec version. */
-  OSAKA(0, false, "Osaka", "Placeholder"),
+  OSAKA(1, false, "Osaka", "Placeholder"),
+  /** Amstedam evm spec version. */
+  AMSTERDAM(1, false, "Amsterdam", "Placeholder"),
   /** Bogota evm spec version. */
-  BOGOTA(0, false, "Bogota", "Placeholder"),
+  BOGOTA(1, false, "Bogota", "Placeholder"),
+  /** Polis evm spec version. */
+  POLIS(1, false, "Polis", "Placeholder"),
+  /** Bogota evm spec version. */
+  BANGKOK(1, false, "Bangkok", "Placeholder"),
   /** Development fork for unscheduled EIPs */
   FUTURE_EIPS(1, false, "Future_EIPs", "Development, for accepted and unscheduled EIPs"),
   /** Development fork for EIPs not accepted to Mainnet */
@@ -147,6 +155,10 @@ public enum EvmSpecVersion {
    * @return the EVM spec version for that fork, or null if no fork matched.
    */
   public static EvmSpecVersion fromName(final String name) {
+    // TODO remove once PragueEOF settles
+    if ("prague".equalsIgnoreCase(name)) {
+      return EvmSpecVersion.PRAGUE_EOF;
+    }
     for (var version : EvmSpecVersion.values()) {
       if (version.name().equalsIgnoreCase(name)) {
         return version;

@@ -309,6 +309,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getPragueEOFTime() {
+    return getOptionalLong("pragueeoftime");
+  }
+
+  @Override
   public OptionalLong getFutureEipsTime() {
     return getOptionalLong("futureeipstime");
   }
@@ -467,6 +472,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
+    getPragueEOFTime().ifPresent(l -> builder.put("pragueEOFTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -620,6 +626,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getShanghaiTime(),
             getCancunTime(),
             getPragueTime(),
+            getPragueEOFTime(),
             getFutureEipsTime(),
             getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
