@@ -14,6 +14,7 @@
 ### Deprecations
 
 ### Additions and Improvements
+- Allow optional loading of `jemalloc` (if installed) by setting the environment variable `BESU_USING_JEMALLOC` to true/false. It that env is not set at all it will behave as if it is set to `true`
 - Update "host allow list" logic to transition from deprecated `host()` method to suggested `authority()` method.[#6878](https://github.com/hyperledger/besu/issues/6878)
 - `txpool_besuPendingTransactions`change parameter `numResults` to optional parameter [#6708](https://github.com/hyperledger/besu/pull/6708)
 - Extend `Blockchain` service [#6592](https://github.com/hyperledger/besu/pull/6592)

@@ -408,7 +408,6 @@ public class ConfigurationOverviewBuilder {
                   logger.info(
                       "BESU_USING_JEMALLOC is present but is not set to true, jemalloc library not loaded");
                 }
-
               } catch (final Throwable throwable) {
                 logger.warn(
                     "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version");
