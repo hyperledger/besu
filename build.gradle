@@ -934,10 +934,11 @@ def calculateVersion() {
   def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
 
   if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
+    if (project.hasProperty('versionappendcommit') && project.versionappendcommit == "true") {
+      def gitDetails = getGitCommitDetails(7) // Adjust length as needed
+      return "${project.version}-${gitDetails.hash}"
+    }
     return "${project.version}"
-  } else if (project.hasProperty('versionprefix') && (project.versionprefix =~ calVerPattern)) {
-    def gitDetails = getGitCommitDetails(7) // Adjust length as needed
-    return "${project.versionprefix}-${gitDetails.hash}"
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
     println("Generating project version as supplied is version not semver: ${project.version}")
