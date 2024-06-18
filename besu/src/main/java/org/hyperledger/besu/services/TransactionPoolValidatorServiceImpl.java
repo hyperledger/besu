@@ -24,13 +24,12 @@ import javax.inject.Inject;
 /** The Transaction pool validator service implementation. */
 public class TransactionPoolValidatorServiceImpl implements TransactionPoolValidatorService {
 
+  /** Default Constructor. */
   @Inject
   public TransactionPoolValidatorServiceImpl() {}
 
   private Optional<PluginTransactionPoolValidatorFactory> factory = Optional.empty();
 
-  /** Default Constructor. */
-  public TransactionPoolValidatorServiceImpl() {}
 
   @Override
   public PluginTransactionPoolValidator createTransactionValidator() {

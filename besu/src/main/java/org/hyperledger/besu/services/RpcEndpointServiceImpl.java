@@ -34,8 +34,8 @@ import javax.inject.Inject;
 public class RpcEndpointServiceImpl implements RpcEndpointService {
   private final Map<String, Function<PluginRpcRequest, ?>> rpcMethods = new HashMap<>();
 
-  @Inject
   /** Default Constructor. */
+  @Inject
   public RpcEndpointServiceImpl() {}
 
   @Override

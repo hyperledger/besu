@@ -61,12 +61,6 @@ public class PrivacyTestModule {
   }
 
   @Provides
-  @Singleton
-  MiningParameters provideMiningParameters() {
-    return MiningParameters.newDefault();
-  }
-
-  @Provides
   DataStorageConfiguration provideDataStorageConfiguration() {
     return DataStorageConfiguration.DEFAULT_FOREST_CONFIG;
   }
@@ -96,10 +90,9 @@ public class PrivacyTestModule {
   PrivacyStorageProvider provideKeyValueStorageProvider(
       @Named("dbDir") final Path dbDir,
       final DataStorageConfiguration dataStorageConfiguration,
-      final MiningParameters miningParameters,
       @Named("dataDir") final Path dataDir) {
     final var besuConfiguration = new BesuConfigurationImpl();
-    besuConfiguration.init(dataDir, dbDir, dataStorageConfiguration, miningParameters);
+    besuConfiguration.init(dataDir, dbDir, dataStorageConfiguration);
     return new PrivacyKeyValueStorageProviderBuilder()
         .withStorageFactory(
             new RocksDBKeyValuePrivacyStorageFactory(

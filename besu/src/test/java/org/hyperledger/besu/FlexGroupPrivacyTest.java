@@ -140,18 +140,16 @@ class FlexGroupPrivacyTest {
     @SuppressWarnings("CloseableProvides")
     BesuController provideBesuController(
         final PrivacyParameters privacyParameters,
-        final MiningParameters miningParameters,
         final DataStorageConfiguration dataStorageConfiguration,
         final FlexGroupPrivacyTestComponent context,
         @Named("dataDir") final Path dataDir) {
 
       return new BesuController.Builder()
-          .fromGenesisConfig(GenesisConfigFile.mainnet(), SyncMode.FULL)
+          .fromGenesisFile(GenesisConfigFile.mainnet(), SyncMode.FULL)
           .synchronizerConfiguration(SynchronizerConfiguration.builder().build())
           .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
           .storageProvider(new InMemoryKeyValueStorageProvider())
           .networkId(BigInteger.ONE)
-          .miningParameters(miningParameters)
           .dataStorageConfiguration(dataStorageConfiguration)
           .nodeKey(NodeKeyUtils.generate())
           .metricsSystem(new NoOpMetricsSystem())
