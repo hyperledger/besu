@@ -189,7 +189,6 @@ public class RunnerBuilder {
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
-  private List<SubnetInfo> allowedSubnets = new ArrayList<>();
 
   /** Instantiates a new Runner builder. */
   public RunnerBuilder() {}
@@ -535,17 +534,6 @@ public class RunnerBuilder {
   }
 
   /**
-   * Add subnet configuration
-   *
-   * @param allowedSubnets the allowedSubnets
-   * @return the runner builder
-   */
-  public RunnerBuilder allowedSubnets(final List<SubnetInfo> allowedSubnets) {
-    this.allowedSubnets = allowedSubnets;
-    return this;
-  }
-
-  /**
    * Build Runner instance.
    *
    * @return the runner
@@ -604,7 +592,7 @@ public class RunnerBuilder {
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     p2pConfiguration.getBannedNodeIds().forEach(bannedNodes::add);
 
-    PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(allowedSubnets);
+    PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(p2pConfiguration.getAllowedSubnets());
     final PeerPermissions defaultPeerPermissions =
         PeerPermissions.combine(peerPermissionSubnet, bannedNodes);
 

@@ -247,8 +247,7 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder p2pConfiguration(
-    final P2PConfiguration p2pConfiguration) {
+  public BesuNodeConfigurationBuilder p2pConfiguration(final P2PConfiguration p2pConfiguration) {
     this.p2pConfiguration = p2pConfiguration;
     return this;
   }
@@ -366,7 +365,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-
   private static Path toPath(final String path) throws Exception {
     return Path.of(BesuNodeConfigurationBuilder.class.getResource(path).toURI());
   }
@@ -431,7 +429,6 @@ public class BesuNodeConfigurationBuilder {
 
     return this;
   }
-
 
   public BesuNodeConfigurationBuilder plugins(final List<String> plugins) {
     this.plugins.clear();

@@ -137,6 +137,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   public BesuNode(
       final String name,
       final Optional<Path> dataPath,
+      final P2PConfiguration p2PConfiguration,
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration txPoolConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
@@ -151,7 +152,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean devMode,
       final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
-      final P2PConfiguration p2PConfiguration,
       final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
       final boolean bootnodeEligible,
@@ -285,6 +285,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         "enode://" + getNodeId() + "@" + LOCALHOST + ":" + getRuntimeP2pPort() + discport);
   }
 
+  public String getP2pPort() {
+    return String.valueOf(p2PConfiguration.getP2pPort());
+  }
+
   private String getRuntimeP2pPort() {
     final String port = portsProperties.getProperty("p2p");
     if (port == null) {
@@ -384,6 +388,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     } else {
       return Optional.empty();
     }
+  }
+
+  @Override
+  public String getHostName() {
+    return LOCALHOST;
   }
 
   public NodeRequests nodeRequests() {
@@ -636,6 +645,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     return unmodifiableList(bootnodes);
   }
 
+  @Override
+  public boolean isP2pEnabled() {
+    return p2PConfiguration.isP2pEnabled();
+  }
 
   public Optional<TLSConfiguration> getTLSConfiguration() {
     return tlsConfiguration;
@@ -699,6 +712,11 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   public boolean isAltbn128Native() {
     return altbn128Native;
+  }
+
+  @Override
+  public boolean isDiscoveryEnabled() {
+    return p2PConfiguration.isPeerDiscoveryEnabled();
   }
 
   Optional<PermissioningConfiguration> getPermissioningConfiguration() {

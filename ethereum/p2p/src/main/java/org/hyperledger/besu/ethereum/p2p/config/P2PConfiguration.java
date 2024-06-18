@@ -19,6 +19,7 @@ import org.hyperledger.besu.util.number.Percentage;
 import java.util.Collection;
 import java.util.List;
 
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 
 public class P2PConfiguration {
@@ -35,20 +36,22 @@ public class P2PConfiguration {
   private final String discoveryDnsUrl;
   private final boolean randomPeerPriority;
   private final Collection<Bytes> bannedNodeIds;
+  private final List<SubnetInfo> allowedSubnets;
 
   public P2PConfiguration(
-    final  boolean p2pEnabled,
-    final boolean peerDiscoveryEnabled,
-    final  List<String> bootNodes,
-    final  String p2pHost,
-    final   String p2pInterface,
-    final  int p2pPort,
-    final   int maxPeers,
-    final   boolean isLimitRemoteWireConnectionsEnabled,
-    final  Percentage maxRemoteConnectionsPercentage,
-    final   String discoveryDnsUrl,
-    final  boolean randomPeerPriority,
-    final   Collection<Bytes> bannedNodeIds) {
+      final boolean p2pEnabled,
+      final boolean peerDiscoveryEnabled,
+      final List<String> bootNodes,
+      final String p2pHost,
+      final String p2pInterface,
+      final int p2pPort,
+      final int maxPeers,
+      final boolean isLimitRemoteWireConnectionsEnabled,
+      final Percentage maxRemoteConnectionsPercentage,
+      final String discoveryDnsUrl,
+      final boolean randomPeerPriority,
+      final Collection<Bytes> bannedNodeIds,
+      final List<SubnetInfo> allowedSubnets) {
     this.p2pEnabled = p2pEnabled;
     this.peerDiscoveryEnabled = peerDiscoveryEnabled;
     this.bootNodes = bootNodes;
@@ -61,6 +64,7 @@ public class P2PConfiguration {
     this.discoveryDnsUrl = discoveryDnsUrl;
     this.randomPeerPriority = randomPeerPriority;
     this.bannedNodeIds = bannedNodeIds;
+    this.allowedSubnets = allowedSubnets;
   }
 
   public boolean isP2pEnabled() {
@@ -111,6 +115,14 @@ public class P2PConfiguration {
     return bannedNodeIds;
   }
 
+  public List<SubnetInfo> getAllowedSubnets() {
+    return allowedSubnets;
+  }
+
+  public static P2PConfiguration.Builder builder() {
+    return new P2PConfiguration.Builder();
+  }
+
   public static class Builder {
     private boolean p2pEnabled = true;
     private boolean peerDiscoveryEnabled = true;
@@ -124,6 +136,7 @@ public class P2PConfiguration {
     private String discoveryDnsUrl;
     private boolean randomPeerPriority = false;
     private Collection<Bytes> bannedNodeIds;
+    private List<SubnetInfo> allowedSubnets;
 
     public Builder p2pEnabled(final boolean p2pEnabled) {
       this.p2pEnabled = p2pEnabled;
@@ -161,7 +174,7 @@ public class P2PConfiguration {
     }
 
     public Builder isLimitRemoteWireConnectionsEnabled(
-      final boolean isLimitRemoteWireConnectionsEnabled) {
+        final boolean isLimitRemoteWireConnectionsEnabled) {
       this.isLimitRemoteWireConnectionsEnabled = isLimitRemoteWireConnectionsEnabled;
       return this;
     }
@@ -186,6 +199,11 @@ public class P2PConfiguration {
       return this;
     }
 
+    public Builder allowedSubnets(final List<SubnetInfo> allowedSubnets) {
+      this.allowedSubnets = allowedSubnets;
+      return this;
+    }
+
     public P2PConfiguration build() {
       return new P2PConfiguration(
           p2pEnabled,
@@ -199,7 +217,8 @@ public class P2PConfiguration {
           maxRemoteConnectionsPercentage,
           discoveryDnsUrl,
           randomPeerPriority,
-          bannedNodeIds);
+          bannedNodeIds,
+          allowedSubnets);
     }
   }
 }

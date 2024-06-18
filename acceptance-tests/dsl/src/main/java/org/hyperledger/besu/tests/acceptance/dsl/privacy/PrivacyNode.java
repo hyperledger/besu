@@ -100,6 +100,7 @@ public class PrivacyNode implements AutoCloseable {
         new BesuNode(
             besuConfig.getName(),
             besuConfig.getDataPath(),
+            besuConfig.getP2PConfiguration(),
             besuConfig.getMiningParameters(),
             besuConfig.getTransactionPoolConfiguration(),
             besuConfig.getJsonRpcConfiguration(),
@@ -114,7 +115,6 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.isDevMode(),
             besuConfig.getNetwork(),
             besuConfig.getGenesisConfigProvider(),
-            besuConfig.getP2PConfiguration(),
             besuConfig.getTLSConfiguration(),
             besuConfig.getNetworkingConfiguration(),
             besuConfig.isBootnodeEligible(),

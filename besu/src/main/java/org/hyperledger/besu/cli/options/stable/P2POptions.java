@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.p2p.config.AutoDiscoverDefaultIP.aut
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
+import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
 import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
@@ -31,9 +32,11 @@ import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
+/** The P2POptions Config Cli Options. */
 public class P2POptions implements CLIOptions<P2PConfiguration> {
 
   // Completely disables P2P within Besu.
@@ -153,7 +156,19 @@ public class P2POptions implements CLIOptions<P2PConfiguration> {
     }
   }
 
+  @CommandLine.Option(
+      names = {"--net-restrict"},
+      arity = "1..*",
+      split = ",",
+      converter = SubnetInfoConverter.class,
+      description =
+          "Comma-separated list of allowed IP subnets (e.g., '192.168.1.0/24,10.0.0.0/8').")
+  private List<SubnetInfo> allowedSubnets;
+
   private Collection<Bytes> bannedNodeIds = new ArrayList<>();
+
+  /** Default constructor. */
+  public P2POptions() {}
 
   @Override
   public P2PConfiguration toDomainObject() {
@@ -170,6 +185,7 @@ public class P2POptions implements CLIOptions<P2PConfiguration> {
         .discoveryDnsUrl(discoveryDnsUrl)
         .randomPeerPriority(randomPeerPriority)
         .bannedNodeIds(bannedNodeIds)
+        .allowedSubnets(allowedSubnets)
         .build();
   }
 

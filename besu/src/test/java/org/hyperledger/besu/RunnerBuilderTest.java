@@ -59,6 +59,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
@@ -150,11 +151,14 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .p2pListenInterface("0.0.0.0")
-            .p2pListenPort(p2pListenPort)
-            .p2pAdvertisedHost(p2pAdvertisedHost)
-            .p2pEnabled(true)
-            .discovery(false)
+            .p2pConfiguration(
+                P2PConfiguration.builder()
+                    .p2pInterface("0.0.0.0")
+                    .p2pPort(p2pListenPort)
+                    .p2pHost(p2pAdvertisedHost)
+                    .p2pEnabled(true)
+                    .peerDiscoveryEnabled(false)
+                    .build())
             .besuController(besuController)
             .ethNetworkConfig(mock(EthNetworkConfig.class))
             .metricsSystem(mock(ObservableMetricsSystem.class))
@@ -194,11 +198,14 @@ public final class RunnerBuilderTest {
     when(protocolContext.getBlockchain()).thenReturn(inMemoryBlockchain);
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
-            .p2pListenInterface("0.0.0.0")
-            .p2pListenPort(p2pListenPort)
-            .p2pAdvertisedHost(p2pAdvertisedHost)
-            .p2pEnabled(true)
+            .p2pConfiguration(
+                P2PConfiguration.builder()
+                    .p2pInterface("0.0.0.0")
+                    .p2pPort(p2pListenPort)
+                    .p2pHost(p2pAdvertisedHost)
+                    .p2pEnabled(true)
+                    .peerDiscoveryEnabled(true)
+                    .build())
             .natMethod(NatMethod.NONE)
             .besuController(besuController)
             .ethNetworkConfig(mock(EthNetworkConfig.class))
@@ -252,11 +259,14 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
-            .p2pListenInterface("0.0.0.0")
-            .p2pListenPort(30303)
-            .p2pAdvertisedHost("127.0.0.1")
-            .p2pEnabled(true)
+            .p2pConfiguration(
+                P2PConfiguration.builder()
+                    .p2pInterface("0.0.0.0")
+                    .p2pPort(30303)
+                    .p2pHost("127.0.0.1")
+                    .p2pEnabled(true)
+                    .peerDiscoveryEnabled(true)
+                    .build())
             .natMethod(NatMethod.NONE)
             .besuController(besuController)
             .ethNetworkConfig(mockMainnet)
@@ -295,11 +305,14 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
-            .p2pListenInterface("0.0.0.0")
-            .p2pListenPort(30303)
-            .p2pAdvertisedHost("127.0.0.1")
-            .p2pEnabled(true)
+            .p2pConfiguration(
+                P2PConfiguration.builder()
+                    .p2pInterface("0.0.0.0")
+                    .p2pPort(30303)
+                    .p2pHost("127.0.0.1")
+                    .p2pEnabled(true)
+                    .peerDiscoveryEnabled(true)
+                    .build())
             .natMethod(NatMethod.NONE)
             .besuController(besuController)
             .ethNetworkConfig(mockMainnet)
@@ -337,11 +350,14 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
-            .p2pListenInterface("0.0.0.0")
-            .p2pListenPort(30303)
-            .p2pAdvertisedHost("127.0.0.1")
-            .p2pEnabled(true)
+            .p2pConfiguration(
+                P2PConfiguration.builder()
+                    .p2pInterface("0.0.0.0")
+                    .p2pPort(30303)
+                    .p2pHost("127.0.0.1")
+                    .p2pEnabled(true)
+                    .peerDiscoveryEnabled(true)
+                    .build())
             .natMethod(NatMethod.NONE)
             .besuController(besuController)
             .ethNetworkConfig(mockMainnet)
@@ -381,11 +397,14 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .discovery(true)
-            .p2pListenInterface("0.0.0.0")
-            .p2pListenPort(30303)
-            .p2pAdvertisedHost("127.0.0.1")
-            .p2pEnabled(true)
+            .p2pConfiguration(
+                P2PConfiguration.builder()
+                    .p2pInterface("0.0.0.0")
+                    .p2pPort(30303)
+                    .p2pHost("127.0.0.1")
+                    .p2pEnabled(true)
+                    .peerDiscoveryEnabled(true)
+                    .build())
             .natMethod(NatMethod.NONE)
             .besuController(besuController)
             .ethNetworkConfig(mockMainnet)

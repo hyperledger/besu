@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
@@ -110,6 +111,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   private static final WebSocketConfiguration DEFAULT_WEB_SOCKET_CONFIGURATION;
   private static final MetricsConfiguration DEFAULT_METRICS_CONFIGURATION;
   private static final ApiConfiguration DEFAULT_API_CONFIGURATION;
+  private static final P2PConfiguration DEFAULT_P2P_CONFIGURATION;
 
   private static final int GENESIS_CONFIG_TEST_CHAINID = 3141592;
   private static final JsonObject GENESIS_VALID_JSON =
@@ -149,6 +151,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     DEFAULT_WEB_SOCKET_CONFIGURATION = WebSocketConfiguration.createDefault();
     DEFAULT_METRICS_CONFIGURATION = MetricsConfiguration.builder().build();
     DEFAULT_API_CONFIGURATION = ImmutableApiConfiguration.builder().build();
+    DEFAULT_P2P_CONFIGURATION = P2PConfiguration.builder().build();
   }
 
   @BeforeEach
@@ -200,7 +203,6 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final ArgumentCaptor<EthNetworkConfig> ethNetworkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
-    verify(mockRunnerBuilder).discovery(eq(true));
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
@@ -208,8 +210,6 @@ public class BesuCommandTest extends CommandTestAbstract {
                 MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
-    verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
-    verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(DEFAULT_JSON_RPC_CONFIGURATION));
     verify(mockRunnerBuilder).graphQLConfiguration(eq(DEFAULT_GRAPH_QL_CONFIGURATION));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(DEFAULT_WEB_SOCKET_CONFIGURATION));
@@ -217,6 +217,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
     verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
     verify(mockRunnerBuilder).apiConfiguration(DEFAULT_API_CONFIGURATION);
+    verify(mockRunnerBuilder).p2pConfiguration(DEFAULT_P2P_CONFIGURATION);
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture(), any());
@@ -634,8 +635,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void p2pEnabledOptionValueTrueMustBeUsed() {
     parseCommand("--p2p-enabled", "true");
 
-    verify(mockRunnerBuilder).p2pEnabled(eq(true));
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
+
+    assertThat(p2PConfigurationArgumentCaptor.getValue().isP2pEnabled()).isTrue();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -645,8 +648,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void p2pEnabledOptionValueFalseMustBeUsed() {
     parseCommand("--p2p-enabled", "false");
 
-    verify(mockRunnerBuilder).p2pEnabled(eq(false));
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
+
+    assertThat(p2PConfigurationArgumentCaptor.getValue().isP2pEnabled()).isFalse();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -727,8 +732,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueTrueMustBeUsed() {
     parseCommand("--discovery-enabled", "true");
 
-    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
+
+    assertThat(p2PConfigurationArgumentCaptor.getValue().isPeerDiscoveryEnabled()).isTrue();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -738,8 +745,10 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueFalseMustBeUsed() {
     parseCommand("--discovery-enabled", "false");
 
-    verify(mockRunnerBuilder).discovery(eq(false));
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
+
+    assertThat(p2PConfigurationArgumentCaptor.getValue().isPeerDiscoveryEnabled()).isFalse();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -905,10 +914,11 @@ public class BesuCommandTest extends CommandTestAbstract {
         Arrays.stream(nodes).map(Bytes::toShortHexString).collect(Collectors.joining(","));
     parseCommand("--banned-node-ids", nodeIdsArg);
 
-    verify(mockRunnerBuilder).bannedNodeIds(bytesCollectionCollector.capture());
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(bytesCollectionCollector.getValue().toArray()).isEqualTo(nodes);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getBannedNodeIds().toArray())
+        .isEqualTo(nodes);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -939,12 +949,11 @@ public class BesuCommandTest extends CommandTestAbstract {
     final int port = 1234;
     parseCommand("--p2p-host", host, "--p2p-port", String.valueOf(port));
 
-    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
-    verify(mockRunnerBuilder).p2pListenPort(intArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(port);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pHost()).isEqualTo(host);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pPort()).isEqualTo(port);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -956,13 +965,12 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String ip = "1.2.3.4";
     parseCommand("--p2p-interface", ip);
 
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-
-    verify(mockRunnerBuilder).p2pListenInterface(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(stringArgumentCaptor.getValue()).isEqualTo(ip);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pInterface()).isEqualTo(ip);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
@@ -971,10 +979,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String host = "localhost";
     parseCommand("--p2p-host", host);
 
-    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pHost()).isEqualTo(host);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -986,10 +994,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String host = "2600:DB8::8545";
     parseCommand("--p2p-host", host);
 
-    verify(mockRunnerBuilder).p2pAdvertisedHost(stringArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(stringArgumentCaptor.getValue()).isEqualTo(host);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pHost()).isEqualTo(host);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1222,12 +1230,13 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String subnet1 = "127.0.0.1/24";
     final String subnet2 = "10.0.0.1/24";
     parseCommand("--net-restrict", String.join(",", subnet1, subnet2));
-    verify(mockRunnerBuilder).allowedSubnets(allowedSubnetsArgumentCaptor.capture());
-    assertThat(allowedSubnetsArgumentCaptor.getValue().size()).isEqualTo(2);
-    assertThat(allowedSubnetsArgumentCaptor.getValue().get(0).getCidrSignature())
-        .isEqualTo(subnet1);
-    assertThat(allowedSubnetsArgumentCaptor.getValue().get(1).getCidrSignature())
-        .isEqualTo(subnet2);
+    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
+
+    var subnets = p2PConfigurationArgumentCaptor.getValue().getAllowedSubnets();
+    assertThat(subnets.size()).isEqualTo(2);
+    assertThat(subnets.get(0).getCidrSignature()).isEqualTo(subnet1);
+    assertThat(subnets.get(1).getCidrSignature()).isEqualTo(subnet2);
   }
 
   @Test
