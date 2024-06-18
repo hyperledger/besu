@@ -142,7 +142,7 @@ public class EthPeers {
     this.syncMode = syncMode;
     this.forkIdManager = forkIdManager;
     snapServerTargetNumber =
-          peerUpperBound / 2; // 50% of peers should be snap servers while snap syncing
+        peerUpperBound / 2; // 50% of peers should be snap servers while snap syncing
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
         "peer_count",
@@ -522,7 +522,8 @@ public class EthPeers {
             peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
             CompletableFuture<Void> isServingSnapFuture;
             if (SyncMode.isCheckpointSync(syncMode) || SyncMode.isSnapSync(syncMode)) {
-              // even if we have finished the snap sync, we still want to know if the peer is a snap server
+              // even if we have finished the snap sync, we still want to know if the peer is a snap
+              // server
               isServingSnapFuture =
                   CompletableFuture.runAsync(
                       () -> {
@@ -556,7 +557,10 @@ public class EthPeers {
           isServer = snapServerChecker.check(peer, peersHeadBlockHeader).get(10L, TimeUnit.SECONDS);
         } catch (Exception e) {
           // TODO: change LOG to debug?
-          LOG.info("XXXXXX Error checking if peer is a snap server. {}", e.getStackTrace());
+          LOG.atInfo()
+              .setMessage("XXXXXX Error checking if peer is a snap server. {}")
+              .addArgument(e.getStackTrace())
+              .log();
           peer.setIsServingSnap(false);
           return;
         }
@@ -726,8 +730,9 @@ public class EthPeers {
   }
 
   private boolean needMoreSnapServers() {
-    return snapSyncServerPeersNeeded && activeConnections.values().stream().filter(EthPeer::isServingSnap).count()
-        < snapServerTargetNumber;
+    return snapSyncServerPeersNeeded
+        && activeConnections.values().stream().filter(EthPeer::isServingSnap).count()
+            < snapServerTargetNumber;
   }
 
   private void disconnectNonSnapServerPeerOrLeastUseful() {
