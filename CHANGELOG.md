@@ -11,6 +11,7 @@
 - A full and up to date implementation of EOF for Prague [#7169](https://github.com/hyperledger/besu/pull/7169)
 - Add Subnet-Based Peer Permissions.  [#7168](https://github.com/hyperledger/besu/pull/7168)
 - Reduce lock contention on transaction pool when building a block [#7180](https://github.com/hyperledger/besu/pull/7180)
+- Added EIP-7702 [#7237](https://github.com/hyperledger/besu/pull/7237)
 
 ### Bug fixes
 - Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)
