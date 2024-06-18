@@ -178,7 +178,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       if (retryCount >= retriesPermitted) {
         LOG.atDebug()
             .setMessage(
-                "Disconnecting target peer for not providing useful range headers: {}, Exception: {}.")
+                "Disconnecting target peer {} for not providing useful range headers: Exception: {}.")
             .addArgument(peer)
             .addArgument(e)
             .log();
