@@ -21,6 +21,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -67,9 +68,7 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
   @Override
   public void before() {
     super.before();
-    lenient()
-        .when(mergeContext.retrieveBlockById(mockPid))
-        .thenReturn(Optional.of(mockBlockWithReceipts));
+    lenient().when(mergeContext.retrievePayloadById(mockPid)).thenReturn(Optional.of(mockPayload));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
         new EngineGetPayloadV3(
@@ -132,8 +131,10 @@ public class EngineGetPayloadV3Test extends AbstractEngineGetPayloadTest {
                     Optional.of(Collections.emptyList()),
                     Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
+    PayloadWrapper payloadPostCancun = new PayloadWrapper(postCancunPid, postCancunBlock);
 
-    when(mergeContext.retrieveBlockById(postCancunPid)).thenReturn(Optional.of(postCancunBlock));
+    when(mergeContext.retrievePayloadById(postCancunPid))
+        .thenReturn(Optional.of(payloadPostCancun));
 
     final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V3.getMethodName(), postCancunPid);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
