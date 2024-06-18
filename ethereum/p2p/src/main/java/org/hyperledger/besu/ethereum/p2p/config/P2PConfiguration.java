@@ -25,11 +25,11 @@ import org.apache.tuweni.bytes.Bytes;
 public class P2PConfiguration {
   // Public IP stored to prevent having to research it each time we need it.
   private final boolean p2pEnabled;
-  private final boolean peerDiscoveryEnabled;
+  private final boolean discoveryEnabled;
   private final List<String> bootNodes;
-  private final String p2pHost;
+  private final String host;
   private final String p2pInterface;
-  private final int p2pPort;
+  private final int port;
   private final int maxPeers;
   private final boolean isLimitRemoteWireConnectionsEnabled;
   private final Percentage maxRemoteConnectionsPercentage;
@@ -42,7 +42,7 @@ public class P2PConfiguration {
       final boolean p2pEnabled,
       final boolean peerDiscoveryEnabled,
       final List<String> bootNodes,
-      final String p2pHost,
+      final String host,
       final String p2pInterface,
       final int p2pPort,
       final int maxPeers,
@@ -53,11 +53,11 @@ public class P2PConfiguration {
       final Collection<Bytes> bannedNodeIds,
       final List<SubnetInfo> allowedSubnets) {
     this.p2pEnabled = p2pEnabled;
-    this.peerDiscoveryEnabled = peerDiscoveryEnabled;
+    this.discoveryEnabled = peerDiscoveryEnabled;
     this.bootNodes = bootNodes;
-    this.p2pHost = p2pHost;
+    this.host = host;
     this.p2pInterface = p2pInterface;
-    this.p2pPort = p2pPort;
+    this.port = p2pPort;
     this.maxPeers = maxPeers;
     this.isLimitRemoteWireConnectionsEnabled = isLimitRemoteWireConnectionsEnabled;
     this.maxRemoteConnectionsPercentage = maxRemoteConnectionsPercentage;
@@ -71,24 +71,24 @@ public class P2PConfiguration {
     return p2pEnabled;
   }
 
-  public boolean isPeerDiscoveryEnabled() {
-    return peerDiscoveryEnabled;
+  public boolean isDiscoveryEnabled() {
+    return discoveryEnabled;
   }
 
   public List<String> getBootNodes() {
     return bootNodes;
   }
 
-  public String getP2pHost() {
-    return p2pHost;
+  public String getHost() {
+    return host;
   }
 
   public String getP2pInterface() {
     return p2pInterface;
   }
 
-  public int getP2pPort() {
-    return p2pPort;
+  public int getPort() {
+    return port;
   }
 
   public int getMaxPeers() {

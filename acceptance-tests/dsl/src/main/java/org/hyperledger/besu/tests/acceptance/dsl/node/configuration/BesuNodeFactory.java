@@ -180,9 +180,9 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
-            .p2pConfiguration(P2PConfiguration.builder().peerDiscoveryEnabled(false).build())
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
             .webSocketEnabled()
+            .p2pConfiguration(P2PConfiguration.builder().peerDiscoveryEnabled(false).build())
             .build());
   }
 

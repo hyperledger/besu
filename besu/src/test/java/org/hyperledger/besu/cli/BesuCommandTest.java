@@ -735,7 +735,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(p2PConfigurationArgumentCaptor.getValue().isPeerDiscoveryEnabled()).isTrue();
+    assertThat(p2PConfigurationArgumentCaptor.getValue().isDiscoveryEnabled()).isTrue();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -748,7 +748,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(p2PConfigurationArgumentCaptor.getValue().isPeerDiscoveryEnabled()).isFalse();
+    assertThat(p2PConfigurationArgumentCaptor.getValue().isDiscoveryEnabled()).isFalse();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -952,8 +952,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pHost()).isEqualTo(host);
-    assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pPort()).isEqualTo(port);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getHost()).isEqualTo(host);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getPort()).isEqualTo(port);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -982,7 +982,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pHost()).isEqualTo(host);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -997,7 +997,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
-    assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pHost()).isEqualTo(host);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getHost()).isEqualTo(host);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

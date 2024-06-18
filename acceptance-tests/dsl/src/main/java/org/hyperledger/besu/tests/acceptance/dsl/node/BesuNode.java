@@ -286,7 +286,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   }
 
   public String getP2pPort() {
-    return String.valueOf(p2PConfiguration.getP2pPort());
+    return String.valueOf(p2PConfiguration.getPort());
   }
 
   private String getRuntimeP2pPort() {
@@ -716,7 +716,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   @Override
   public boolean isDiscoveryEnabled() {
-    return p2PConfiguration.isPeerDiscoveryEnabled();
+    return p2PConfiguration.isDiscoveryEnabled();
   }
 
   Optional<PermissioningConfiguration> getPermissioningConfiguration() {
@@ -770,7 +770,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         .add("homeDirectory", homeDirectory)
         .add("keyPair", keyPair)
         .add("p2pEnabled", p2PConfiguration.isP2pEnabled())
-        .add("discoveryEnabled", p2PConfiguration.isPeerDiscoveryEnabled())
+        .add("discoveryEnabled", p2PConfiguration.isDiscoveryEnabled())
         .add("privacyEnabled", privacyParameters.isEnabled())
         .toString();
   }

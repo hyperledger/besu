@@ -2284,7 +2284,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
     if (listBootNodes != null) {
-      if (!p2pConfiguration.isPeerDiscoveryEnabled()) {
+      if (!p2pConfiguration.isDiscoveryEnabled()) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
@@ -2419,12 +2419,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .filter(port -> port > 0)
         .forEach(
             port -> {
-              if (port.equals(p2pConfiguration.getP2pPort())
+              if (port.equals(p2pConfiguration.getPort())
                   && (NetworkUtility.isPortUnavailableForTcp(port)
                       || NetworkUtility.isPortUnavailableForUdp(port))) {
                 unavailablePorts.add(port);
               }
-              if (!port.equals(p2pConfiguration.getP2pPort())
+              if (!port.equals(p2pConfiguration.getPort())
                   && NetworkUtility.isPortUnavailableForTcp(port)) {
                 unavailablePorts.add(port);
               }
@@ -2444,8 +2444,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   private List<Integer> getEffectivePorts() {
     final List<Integer> effectivePorts = new ArrayList<>();
-    addPortIfEnabled(
-        effectivePorts, p2pConfiguration.getP2pPort(), p2pConfiguration.isP2pEnabled());
+    addPortIfEnabled(effectivePorts, p2pConfiguration.getPort(), p2pConfiguration.isP2pEnabled());
     addPortIfEnabled(
         effectivePorts, graphQlOptions.getGraphQLHttpPort(), graphQlOptions.isGraphQLHttpEnabled());
     addPortIfEnabled(

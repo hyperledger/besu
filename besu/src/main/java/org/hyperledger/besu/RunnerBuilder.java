@@ -147,7 +147,6 @@ import com.google.common.base.Strings;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -545,9 +544,9 @@ public class RunnerBuilder {
     final DiscoveryConfiguration discoveryConfiguration =
         DiscoveryConfiguration.create()
             .setBindHost(p2pConfiguration.getP2pInterface())
-            .setBindPort(p2pConfiguration.getP2pPort())
-            .setAdvertisedHost(p2pConfiguration.getP2pHost());
-    if (p2pConfiguration.isPeerDiscoveryEnabled()) {
+            .setBindPort(p2pConfiguration.getPort())
+            .setAdvertisedHost(p2pConfiguration.getHost());
+    if (p2pConfiguration.isDiscoveryEnabled()) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {
         bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).bootNodes();
@@ -584,7 +583,7 @@ public class RunnerBuilder {
     final RlpxConfiguration rlpxConfiguration =
         RlpxConfiguration.create()
             .setBindHost(p2pConfiguration.getP2pInterface())
-            .setBindPort(p2pConfiguration.getP2pPort())
+            .setBindPort(p2pConfiguration.getPort())
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuInfo.nodeName(identityString));
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
@@ -592,7 +591,8 @@ public class RunnerBuilder {
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     p2pConfiguration.getBannedNodeIds().forEach(bannedNodes::add);
 
-    PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(p2pConfiguration.getAllowedSubnets());
+    PeerPermissionSubnet peerPermissionSubnet =
+        new PeerPermissionSubnet(p2pConfiguration.getAllowedSubnets());
     final PeerPermissions defaultPeerPermissions =
         PeerPermissions.combine(peerPermissionSubnet, bannedNodes);
 
@@ -1104,8 +1104,8 @@ public class RunnerBuilder {
       case DOCKER:
         return Optional.of(
             new DockerNatManager(
-                p2pConfiguration.getP2pHost(),
-                p2pConfiguration.getP2pPort(),
+                p2pConfiguration.getHost(),
+                p2pConfiguration.getPort(),
                 jsonRpcConfiguration.getPort()));
       case KUBERNETES:
         return Optional.of(new KubernetesNatManager(natManagerServiceName));
