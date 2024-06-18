@@ -41,7 +41,7 @@ public class CachedInvalidCodeRule implements ContractValidationRule {
   @Override
   public Optional<ExceptionalHaltReason> validate(
       final Bytes contractCode, final MessageFrame frame) {
-    final Code code = CodeFactory.createCode(contractCode, maxEofVersion, false);
+    final Code code = CodeFactory.createCode(contractCode, maxEofVersion);
     if (!code.isValid()) {
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     } else {
