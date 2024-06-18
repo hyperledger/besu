@@ -27,6 +27,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
@@ -41,13 +42,10 @@ import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -63,12 +61,15 @@ public class LayeredPendingTransactions implements PendingTransactions {
   private static final Marker INVALID_TX_REMOVED = MarkerFactory.getMarker("INVALID_TX_REMOVED");
   private final TransactionPoolConfiguration poolConfig;
   private final AbstractPrioritizedTransactions prioritizedTransactions;
+  private final EthScheduler ethScheduler;
 
   public LayeredPendingTransactions(
       final TransactionPoolConfiguration poolConfig,
-      final AbstractPrioritizedTransactions prioritizedTransactions) {
+      final AbstractPrioritizedTransactions prioritizedTransactions,
+      final EthScheduler ethScheduler) {
     this.poolConfig = poolConfig;
     this.prioritizedTransactions = prioritizedTransactions;
+    this.ethScheduler = ethScheduler;
   }
 
   @Override
@@ -311,79 +312,57 @@ public class LayeredPendingTransactions implements PendingTransactions {
   }
 
   @Override
-  // There's a small edge case here we could encounter.
-  // When we pass an upgrade block that has a new transaction type, we start allowing transactions
-  // of that new type into our pool.
-  // If we then reorg to a block lower than the upgrade block height _and_ we create a block, that
-  // block could end up with transactions of the new type.
-  // This seems like it would be very rare but worth it to document that we don't handle that case
-  // right now.
-  public synchronized void selectTransactions(
-      final PendingTransactions.TransactionSelector selector) {
+  public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
     final List<PendingTransaction> invalidTransactions = new ArrayList<>();
-    final Set<Hash> alreadyChecked = new HashSet<>();
-    final Set<Address> skipSenders = new HashSet<>();
-    final AtomicBoolean completed = new AtomicBoolean(false);
 
-    prioritizedTransactions.stream()
-        .takeWhile(unused -> !completed.get())
-        .filter(highPrioPendingTx -> !skipSenders.contains(highPrioPendingTx.getSender()))
-        .peek(this::logSenderTxs)
-        .forEach(
-            highPrioPendingTx ->
-                prioritizedTransactions.stream(highPrioPendingTx.getSender())
-                    .takeWhile(
-                        candidatePendingTx ->
-                            !skipSenders.contains(candidatePendingTx.getSender())
-                                && !completed.get())
-                    .filter(
-                        candidatePendingTx ->
-                            !alreadyChecked.contains(candidatePendingTx.getHash())
-                                && Long.compareUnsigned(
-                                        candidatePendingTx.getNonce(), highPrioPendingTx.getNonce())
-                                    <= 0)
-                    .forEach(
-                        candidatePendingTx -> {
-                          alreadyChecked.add(candidatePendingTx.getHash());
-                          final var res = selector.evaluateTransaction(candidatePendingTx);
+    final List<SenderPendingTransactions> candidateTxsBySender;
+    synchronized (this) {
+      // since selecting transactions for block creation is a potential long operation
+      // we want to avoid to keep the lock for all the process, but we just lock to get
+      // the candidate transactions
+      candidateTxsBySender = prioritizedTransactions.getBySender();
+    }
 
-                          LOG.atTrace()
-                              .setMessage("Selection result {} for transaction {}")
-                              .addArgument(res)
-                              .addArgument(candidatePendingTx::toTraceLog)
-                              .log();
+    selection:
+    for (final var senderTxs : candidateTxsBySender) {
+      LOG.trace("highPrioSenderTxs {}", senderTxs);
 
-                          if (res.discard()) {
-                            invalidTransactions.add(candidatePendingTx);
-                            logDiscardedTransaction(candidatePendingTx, res);
-                          }
+      for (final var candidatePendingTx : senderTxs.pendingTransactions()) {
+        final var selectionResult = selector.evaluateTransaction(candidatePendingTx);
 
-                          if (res.stop()) {
-                            completed.set(true);
-                          }
+        LOG.atTrace()
+            .setMessage("Selection result {} for transaction {}")
+            .addArgument(selectionResult)
+            .addArgument(candidatePendingTx::toTraceLog)
+            .log();
 
-                          if (!res.selected()) {
-                            // avoid processing other txs from this sender if this one is skipped
-                            // since the following will not be selected due to the nonce gap
-                            skipSenders.add(candidatePendingTx.getSender());
-                            LOG.trace("Skipping tx from sender {}", candidatePendingTx.getSender());
-                          }
-                        }));
+        if (selectionResult.discard()) {
+          invalidTransactions.add(candidatePendingTx);
+          logDiscardedTransaction(candidatePendingTx, selectionResult);
+        }
 
-    invalidTransactions.forEach(
-        invalidTx -> prioritizedTransactions.remove(invalidTx, INVALIDATED));
-  }
+        if (selectionResult.stop()) {
+          LOG.trace("Stopping selection");
+          break selection;
+        }
 
-  private void logSenderTxs(final PendingTransaction highPrioPendingTx) {
-    LOG.atTrace()
-        .setMessage("highPrioPendingTx {}, senderTxs {}")
-        .addArgument(highPrioPendingTx::toTraceLog)
-        .addArgument(
-            () ->
-                prioritizedTransactions.stream(highPrioPendingTx.getSender())
-                    .map(PendingTransaction::toTraceLog)
-                    .collect(Collectors.joining(", ")))
-        .log();
+        if (!selectionResult.selected()) {
+          // avoid processing other txs from this sender if this one is skipped
+          // since the following will not be selected due to the nonce gap
+          LOG.trace("Skipping remaining txs for sender {}", candidatePendingTx.getSender());
+          break;
+        }
+      }
+    }
+
+    ethScheduler.scheduleTxWorkerTask(
+        () ->
+            invalidTransactions.forEach(
+                invalidTx -> {
+                  synchronized (this) {
+                    prioritizedTransactions.remove(invalidTx, INVALIDATED);
+                  }
+                }));
   }
 
   @Override

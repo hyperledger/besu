@@ -164,7 +164,7 @@ public class BlockTransactionSelector {
   public TransactionSelectionResults buildTransactionListForBlock() {
     LOG.atDebug()
         .setMessage("Transaction pool stats {}")
-        .addArgument(blockSelectionContext.transactionPool().logStats())
+        .addArgument(blockSelectionContext.transactionPool()::logStats)
         .log();
     timeLimitedSelection();
     LOG.atTrace()

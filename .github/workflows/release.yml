@@ -79,7 +79,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-22.04
-    needs: [testWindows]
+    needs: [testWindows, artifacts]
     permissions:
       contents: write
     steps:

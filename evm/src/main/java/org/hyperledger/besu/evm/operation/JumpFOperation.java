@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.readBigEndianU16;
-
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -27,7 +26,7 @@ public class JumpFOperation extends AbstractOperation {
   public static final int OPCODE = 0xe5;
 
   /** The Jump F success operation result. */
-  static final OperationResult jumpfSuccess = new OperationResult(3, null);
+  static final OperationResult jumpfSuccess = new OperationResult(5, null);
 
   /**
    * Instantiates a new Jump F operation.
@@ -40,26 +39,15 @@ public class JumpFOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    final byte[] code = frame.getCode().getBytes().toArrayUnsafe();
-    return staticOperation(frame, code, frame.getPC());
-  }
-
-  /**
-   * Performs Jump F operation.
-   *
-   * @param frame the frame
-   * @param code the code
-   * @param pc the pc
-   * @return the successful operation result
-   */
-  public static OperationResult staticOperation(
-      final MessageFrame frame, final byte[] code, final int pc) {
-    int section = readBigEndianU16(pc + 1, code);
-    var exception = frame.jumpFunction(section);
-    if (exception == null) {
-      return jumpfSuccess;
-    } else {
-      return new OperationResult(jumpfSuccess.gasCost, exception);
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
     }
+    int pc = frame.getPC();
+    int section = code.readBigEndianU16(pc + 1);
+    var info = code.getCodeSection(section);
+    frame.setPC(info.getEntryPoint() - 1); // will be +1ed at end of operations loop
+    frame.setSection(section);
+    return jumpfSuccess;
   }
 }
