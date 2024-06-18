@@ -94,7 +94,7 @@ public class ChainHeadTracker {
                 .addArgument(error)
                 .log();
             peer.disconnect(
-                DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_STATE);
+                DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);
             future.complete(null);
           }
         });

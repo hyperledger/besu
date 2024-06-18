@@ -40,7 +40,7 @@ public class SnapServerChecker {
     this.metricsSystem = metricsSystem;
   }
 
-  public static void createSnapServerChecker(
+  public static void createAndSetSnapServerChecker(
       final EthContext ethContext, final MetricsSystem metricsSystem) {
     final SnapServerChecker checker = new SnapServerChecker(ethContext, metricsSystem);
     ethContext.getEthPeers().setSnapServerChecker(checker);

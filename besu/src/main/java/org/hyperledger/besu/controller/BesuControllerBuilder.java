@@ -705,6 +705,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethProtocolManager,
             pivotBlockSelector);
 
+    if (SyncMode.isSnapSync(syncConfig.getSyncMode()) || SyncMode.isCheckpointSync(syncConfig.getSyncMode())) {
+      synchronizer.subscribeInSync( (b)-> ethPeers.snapSyncServerPeersNeeded(!b));
+      ethPeers.snapSyncServerPeersNeeded(true);
+    } else {
+      ethPeers.snapSyncServerPeersNeeded(false);
+    }
+
     protocolContext.setSynchronizer(Optional.of(synchronizer));
 
     final Optional<SnapProtocolManager> maybeSnapProtocolManager =
