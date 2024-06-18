@@ -104,6 +104,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     Code code = codeSupplier.get();
 
+    if (code != null && code.getSize() > maxInitcodeSize) {
+      frame.popStackItems(getStackItemsConsumed());
+      return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+    }
+
     if (value.compareTo(account.getBalance()) > 0
         || frame.getDepth() >= 1024
         || account.getNonce() == -1
@@ -113,14 +118,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     } else {
       account.incrementNonce();
 
-      if (code.getSize() > maxInitcodeSize) {
-        frame.popStackItems(getStackItemsConsumed());
-        return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
-      }
       if (!code.isValid()) {
         fail(frame);
       } else {
-
         frame.decrementRemainingGas(cost);
         spawnChildMessage(frame, code, evm);
         frame.incrementRemainingGas(cost);
