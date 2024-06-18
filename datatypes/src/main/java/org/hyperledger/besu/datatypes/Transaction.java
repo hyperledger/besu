@@ -234,4 +234,7 @@ public interface Transaction {
    * @return the size in bytes of the encoded transaction.
    */
   int getSize();
+
+  /** Returns the set code transaction payload if this transaction is a 7702 transaction. */
+  Optional<List<SetCodeAuthorization>> getSetCodeTransactionPayloads();
 }

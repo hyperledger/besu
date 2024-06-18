@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -91,6 +92,9 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonInclude(JsonInclude.Include.NON_NULL)
   private final List<VersionedHash> versionedHashes;
 
+  @JsonInclude(JsonInclude.Include.NON_NULL)
+  private final List<SetCodeAuthorization> setCodeAuthorizationList;
+
   public TransactionCompleteResult(final TransactionWithMetadata tx) {
     final Transaction transaction = tx.getTransaction();
     final TransactionType transactionType = transaction.getType();
@@ -125,7 +129,8 @@ public class TransactionCompleteResult implements TransactionResult {
       this.yParity = Quantity.create(transaction.getYParity());
       this.v =
           (transactionType == TransactionType.ACCESS_LIST
-                  || transactionType == TransactionType.EIP1559)
+                      || transactionType == TransactionType.EIP1559)
+                  || transactionType == TransactionType.SET_CODE
               ? Quantity.create(transaction.getYParity())
               : null;
     }
@@ -133,6 +138,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
     this.versionedHashes = transaction.getVersionedHashes().orElse(null);
+    this.setCodeAuthorizationList = transaction.getSetCodeTransactionPayloads().orElse(null);
   }
 
   @JsonGetter(value = "accessList")
@@ -245,5 +251,10 @@ public class TransactionCompleteResult implements TransactionResult {
   @JsonGetter(value = "blobVersionedHashes")
   public List<VersionedHash> getVersionedHashes() {
     return versionedHashes;
+  }
+
+  @JsonGetter(value = "setCodeTransactionPayloadList")
+  public List<SetCodeAuthorization> getSetCodeTransactionPayloadList() {
+    return setCodeAuthorizationList;
   }
 }

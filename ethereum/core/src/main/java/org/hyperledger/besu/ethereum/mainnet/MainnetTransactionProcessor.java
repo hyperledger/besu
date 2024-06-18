@@ -80,6 +80,8 @@ public class MainnetTransactionProcessor {
   protected final FeeMarket feeMarket;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
+  private final SetCodeTransactionProcessor setCodeTransactionProcessor;
+
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
@@ -89,7 +91,8 @@ public class MainnetTransactionProcessor {
       final boolean warmCoinbase,
       final int maxStackSize,
       final FeeMarket feeMarket,
-      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
+      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
+      final SetCodeTransactionProcessor setCodeTransactionProcessor) {
     this.gasCalculator = gasCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -99,6 +102,7 @@ public class MainnetTransactionProcessor {
     this.maxStackSize = maxStackSize;
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
+    this.setCodeTransactionProcessor = setCodeTransactionProcessor;
   }
 
   /**
@@ -374,6 +378,9 @@ public class MainnetTransactionProcessor {
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
+      } else if (transaction.getSetCodeTransactionPayloads().isPresent()) {
+        addressList.addAll(
+            setCodeTransactionProcessor.addContractToAuthority(worldUpdater, transaction));
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
       }

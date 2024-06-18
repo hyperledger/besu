@@ -185,7 +185,8 @@ public class ClassicProtocolSpecs {
                     false,
                     stackSizeLimit,
                     feeMarket,
-                    CoinbaseFeePriceCalculator.frontier()))
+                    CoinbaseFeePriceCalculator.frontier(),
+                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
         .name("Atlantis");
   }
 
@@ -374,7 +375,8 @@ public class ClassicProtocolSpecs {
                     true,
                     stackSizeLimit,
                     feeMarket,
-                    CoinbaseFeePriceCalculator.frontier()))
+                    CoinbaseFeePriceCalculator.frontier(),
+                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
         .name("Spiral");
   }
 }
