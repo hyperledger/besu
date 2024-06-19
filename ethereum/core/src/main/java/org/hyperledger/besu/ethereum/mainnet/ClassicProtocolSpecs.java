@@ -165,11 +165,7 @@ public class ClassicProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
-                    gasCalculator,
-                    evm,
-                    true,
-                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
-                    1))
+                    evm, true, Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)), 1))
         .transactionProcessorBuilder(
             (gasCalculator,
                 feeMarket,
@@ -328,7 +324,6 @@ public class ClassicProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),

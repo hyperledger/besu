@@ -122,7 +122,6 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     false,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
@@ -199,11 +198,7 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
-                    gasCalculator,
-                    evm,
-                    true,
-                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
-                    0))
+                    evm, true, Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)), 0))
         .transactionValidatorFactoryBuilder(
             (gasCalculator, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
@@ -276,7 +271,6 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
@@ -388,7 +382,6 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
                     Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
@@ -497,7 +490,6 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),
@@ -799,7 +791,6 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
@@ -835,7 +826,6 @@ public abstract class MainnetProtocolSpecs {
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
                     List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),

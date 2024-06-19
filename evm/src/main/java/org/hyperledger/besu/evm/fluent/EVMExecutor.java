@@ -658,12 +658,7 @@ public class EVMExecutor {
         contractCreationProcessor,
         () ->
             new ContractCreationProcessor(
-                evm.getGasCalculator(),
-                evm,
-                requireDeposit,
-                contractValidationRules,
-                initialNonce,
-                forceCommitAddresses));
+                evm, requireDeposit, contractValidationRules, initialNonce, forceCommitAddresses));
   }
 
   /**

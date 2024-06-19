@@ -17,6 +17,9 @@ package org.hyperledger.besu.evm.code;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
@@ -25,12 +28,12 @@ class CodeFactoryTest {
 
   @Test
   void invalidCodeIncompleteMagic() {
-    invalidCode("0xEF", true);
+    invalidCodeForCreation("0xEF");
   }
 
   @Test
   void invalidCodeInvalidMagic() {
-    invalidCode("0xEFFF0101000302000400600000AABBCCDD", true);
+    invalidCodeForCreation("0xEFFF0101000302000400600000AABBCCDD");
   }
 
   @Test
@@ -179,12 +182,14 @@ class CodeFactoryTest {
   }
 
   private static void invalidCode(final String str) {
-    Code code = CodeFactory.createCode(Bytes.fromHexString(str), 1);
+    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    Code code = evm.getCodeUncached(Bytes.fromHexString(str));
     assertThat(code.isValid()).isFalse();
   }
 
-  private static void invalidCode(final String str, final boolean legacy) {
-    Code code = CodeFactory.createCode(Bytes.fromHexString(str), 1, legacy, false);
+  private static void invalidCodeForCreation(final String str) {
+    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    Code code = evm.getCodeForCreation(Bytes.fromHexString(str));
     assertThat(code.isValid()).isFalse();
   }
 }

@@ -63,6 +63,12 @@ public interface ExceptionalHaltReason {
   /** The constant NONEXISTENT_CONTAINER */
   ExceptionalHaltReason NONEXISTENT_CONTAINER = DefaultExceptionalHaltReason.NONEXISTENT_CONTAINER;
 
+  /** The constant INVALID_CONTAINER */
+  ExceptionalHaltReason INVALID_CONTAINER = DefaultExceptionalHaltReason.INVALID_CONTAINER;
+
+  /** The constant DATA_TOO_SMALL */
+  ExceptionalHaltReason DATA_TOO_SMALL = DefaultExceptionalHaltReason.DATA_TOO_SMALL;
+
   /** The constant ADDRESS_OUT_OF_RANGE */
   ExceptionalHaltReason ADDRESS_OUT_OF_RANGE = DefaultExceptionalHaltReason.ADDRESS_OUT_OF_RANGE;
 
@@ -112,7 +118,11 @@ public interface ExceptionalHaltReason {
     EOF_CREATE_VERSION_INCOMPATIBLE(
         "EOF Code is attempting to create EOF code of an earlier version"),
     /** Container referenced by EOFCREATE operation does not exist */
-    NONEXISTENT_CONTAINER("Referenced subcontainer index does not exist (too large?)"),
+    NONEXISTENT_CONTAINER("Referenced subcontainer index does not exist"),
+    /** Container referenced by EOFCREATE operation is invalid */
+    INVALID_CONTAINER("Referenced subcontainer index is invalid"),
+    /** Container referenced by EOFCREATE operation does not exist */
+    DATA_TOO_SMALL("Insufficient AuxData provided to a truncated container"),
     /** A given address cannot be used by EOF */
     ADDRESS_OUT_OF_RANGE("Address has more than 20 bytes and is out of range");
 
