@@ -116,7 +116,10 @@ public class EVM {
     this.codeCache = new CodeCache(evmConfiguration);
     this.evmSpecVersion = evmSpecVersion;
 
-    codeFactory = new CodeFactory(evmSpecVersion.maxEofVersion, evmSpecVersion.maxInitcodeSize);
+    codeFactory =
+        new CodeFactory(
+            evmSpecVersion.maxEofVersion,
+            evmConfiguration.maxInitcodeSizeOverride().orElse(evmSpecVersion.maxInitcodeSize));
 
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
   }

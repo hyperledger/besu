@@ -21,6 +21,7 @@ import static org.hyperledger.besu.evm.frame.MessageFrame.State.COMPLETED_SUCCES
 import static org.hyperledger.besu.evm.frame.MessageFrame.State.EXCEPTIONAL_HALT;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.EOFValidationCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
@@ -98,7 +99,7 @@ class ContractCreationProcessorTest
         new ContractCreationProcessor(
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("EF00010101010101");
@@ -118,7 +119,7 @@ class ContractCreationProcessorTest
         new ContractCreationProcessor(
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("0101010101010101");
@@ -136,13 +137,12 @@ class ContractCreationProcessorTest
         new ContractCreationProcessor(
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
-    final Bytes contractCode = INNER_CONTRACT;
-    final MessageFrame messageFrame =
+      final MessageFrame messageFrame =
         new TestMessageFrameBuilder().code(evm.getCodeUncached(EOF_CREATE_CONTRACT)).build();
-    messageFrame.setOutputData(contractCode);
+    messageFrame.setOutputData(INNER_CONTRACT);
     messageFrame.setGasRemaining(10600L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
@@ -154,9 +154,8 @@ class ContractCreationProcessorTest
     processor =
         new ContractCreationProcessor(
             evm, true, Collections.singletonList(PrefixCodeRule.of()), 1, Collections.emptyList());
-    final Bytes contractCode = INNER_CONTRACT;
-    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
-    messageFrame.setOutputData(contractCode);
+      final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
+    messageFrame.setOutputData(INNER_CONTRACT);
     messageFrame.setGasRemaining(10600L);
 
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
@@ -169,7 +168,7 @@ class ContractCreationProcessorTest
         new ContractCreationProcessor(
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("6030602001");
@@ -189,7 +188,7 @@ class ContractCreationProcessorTest
         new ContractCreationProcessor(
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
     final Bytes contractCode = EOF_CREATE_CONTRACT;
@@ -207,10 +206,11 @@ class ContractCreationProcessorTest
         new ContractCreationProcessor(
             evm,
             true,
-            Collections.singletonList(MaxCodeSizeRule.of(24 * 1024)),
+            Collections.singletonList(MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON)),
             1,
             Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024 + 1));
+    final Bytes contractCode =
+        Bytes.fromHexString("00".repeat(EvmSpecVersion.SPURIOUS_DRAGON.getMaxCodeSize() + 1));
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(10_000_000L);
@@ -227,10 +227,11 @@ class ContractCreationProcessorTest
         new ContractCreationProcessor(
             evm,
             true,
-            Collections.singletonList(MaxCodeSizeRule.of(24 * 1024)),
+            Collections.singletonList(MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON)),
             1,
             Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024));
+    final Bytes contractCode =
+        Bytes.fromHexString("00".repeat(EvmSpecVersion.SPURIOUS_DRAGON.getMaxCodeSize()));
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
     messageFrame.setGasRemaining(5_000_000L);

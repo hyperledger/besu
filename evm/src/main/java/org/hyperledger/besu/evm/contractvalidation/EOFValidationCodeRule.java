@@ -75,8 +75,20 @@ public class EOFValidationCodeRule implements ContractValidationRule {
    *
    * @param maxEofVersion Maximum EOF version to validate
    * @return The EOF validation contract validation rule.
+   * @deprecated use {@link #from(EVM)}
    */
+  @Deprecated(forRemoval = true, since = "24.6.1")
   public static ContractValidationRule of(final int maxEofVersion) {
     return new EOFValidationCodeRule(maxEofVersion);
+  }
+
+  /**
+   * Create EOF validation.
+   *
+   * @param evm The EVM for which we are enforcing the rule
+   * @return The EOF validation contract validation rule.
+   */
+  public static ContractValidationRule from(final EVM evm) {
+    return new EOFValidationCodeRule(evm.getMaxEOFVersion());
   }
 }
