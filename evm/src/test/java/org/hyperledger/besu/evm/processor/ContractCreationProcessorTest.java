@@ -140,7 +140,7 @@ class ContractCreationProcessorTest
             Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
-      final MessageFrame messageFrame =
+    final MessageFrame messageFrame =
         new TestMessageFrameBuilder().code(evm.getCodeUncached(EOF_CREATE_CONTRACT)).build();
     messageFrame.setOutputData(INNER_CONTRACT);
     messageFrame.setGasRemaining(10600L);
@@ -154,7 +154,7 @@ class ContractCreationProcessorTest
     processor =
         new ContractCreationProcessor(
             evm, true, Collections.singletonList(PrefixCodeRule.of()), 1, Collections.emptyList());
-      final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
+    final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(INNER_CONTRACT);
     messageFrame.setGasRemaining(10600L);
 
