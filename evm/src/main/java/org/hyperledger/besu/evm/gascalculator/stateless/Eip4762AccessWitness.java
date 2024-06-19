@@ -422,7 +422,7 @@ public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.Acce
   @Override
   public List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
     return List.of(
-        TRIE_KEY_ADAPTER.locateStorageKeyOffset(storageKey),
-        TRIE_KEY_ADAPTER.locateStorageKeySuffix(storageKey));
+        TRIE_KEY_ADAPTER.getStorageKeyTrieIndex(storageKey),
+        TRIE_KEY_ADAPTER.getStorageKeySuffix(storageKey));
   }
 }

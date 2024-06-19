@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -131,6 +132,11 @@ public class ToyAccount implements MutableAccount {
       throw new ModificationNotAllowedException();
     }
     balance = value;
+  }
+
+  @Override
+  public Optional<Integer> getCodeSize() {
+    return  Optional.of(this.code == null ? 0 : this.code.size());
   }
 
   @Override

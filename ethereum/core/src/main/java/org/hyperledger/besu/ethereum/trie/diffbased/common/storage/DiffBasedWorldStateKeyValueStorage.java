@@ -122,37 +122,6 @@ public abstract class DiffBasedWorldStateKeyValueStorage
         .map(Hash::wrap);
   }
 
-  public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
-      final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return getFlatDbStrategy()
-        .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, max);
-  }
-
-  public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
-    return getFlatDbStrategy()
-        .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, takeWhile);
-  }
-
-  public NavigableMap<Bytes32, Bytes> streamFlatStorages(
-      final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
-    return getFlatDbStrategy()
-        .streamStorageFlatDatabase(
-            composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, max);
-  }
-
-  public NavigableMap<Bytes32, Bytes> streamFlatStorages(
-      final Hash accountHash,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
-    return getFlatDbStrategy()
-        .streamStorageFlatDatabase(
-            composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, takeWhile);
-  }
-
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return composedWorldStateStorage
         .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)

@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
@@ -73,8 +74,8 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getAccount(final Hash accountHash) {
-    return isClosedGet() ? Optional.empty() : super.getAccount(accountHash);
+  public Optional<Bytes> getFlatBasicData(final Address address) {
+    return isClosedGet() ? Optional.empty() : super.getFlatBasicData(address);
   }
 
   @Override
@@ -104,10 +105,10 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
 
   @Override
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
+      final Address address, final StorageSlotKey storageSlotKey) {
     return isClosedGet()
         ? Optional.empty()
-        : super.getStorageValueByStorageSlotKey(accountHash, storageSlotKey);
+        : super.getStorageValueByStorageSlotKey(address, storageSlotKey);
   }
 
   @Override

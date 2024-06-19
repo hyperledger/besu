@@ -19,14 +19,15 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.VerkleFlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -45,20 +46,20 @@ import org.apache.tuweni.bytes.Bytes32;
 public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValueStorage
     implements WorldStateKeyValueStorage {
 
-  protected FullFlatDbStrategy flatDbStrategy;
+  protected VerkleFlatDbStrategy flatDbStrategy;
 
   public VerkleWorldStateKeyValueStorage(
       final StorageProvider provider, final MetricsSystem metricsSystem) {
     super(
         provider.getStorageBySegmentIdentifiers(
-            List.of(
-                ACCOUNT_INFO_STATE, CODE_STORAGE, ACCOUNT_STORAGE_STORAGE, TRIE_BRANCH_STORAGE)),
+            List.of(CODE_STORAGE, TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
-    this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
+    this.flatDbStrategy = new VerkleFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
   }
 
+
   public VerkleWorldStateKeyValueStorage(
-      final FullFlatDbStrategy flatDbStrategy,
+      final VerkleFlatDbStrategy flatDbStrategy,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
     super(composedWorldStateStorage, trieLogStorage);
@@ -66,7 +67,7 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   @Override
-  public FlatDbStrategy getFlatDbStrategy() {
+  public VerkleFlatDbStrategy getFlatDbStrategy() {
     return flatDbStrategy;
   }
 
@@ -88,15 +89,14 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     }
   }
 
-  public Optional<Bytes> getAccount(final Hash accountHash) {
-    return getFlatDbStrategy().getFlatAccount(null, null, accountHash, composedWorldStateStorage);
+  public Optional<Bytes> getFlatBasicData(final Address address) {
+    return getFlatDbStrategy().getFlatBasicData(address, composedWorldStateStorage);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
-      final Hash accountHash, final StorageSlotKey storageSlotKey) {
+      final Address address, final StorageSlotKey storageSlotKey) {
     return getFlatDbStrategy()
-        .getFlatStorageValueByStorageSlotKey(
-            null, null, null, accountHash, storageSlotKey, composedWorldStateStorage);
+        .getFlatStorageValueByStorageSlotKey(address, storageSlotKey, composedWorldStateStorage);
   }
 
   @Override
@@ -116,12 +116,12 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
 
     private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
-    private final FlatDbStrategy flatDbStrategy;
+    private final VerkleFlatDbStrategy flatDbStrategy;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final FlatDbStrategy flatDbStrategy) {
+        final VerkleFlatDbStrategy flatDbStrategy) {
 
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;
@@ -148,20 +148,6 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       return this;
     }
 
-    public Updater removeAccountInfoState(final Hash accountHash) {
-      flatDbStrategy.removeFlatAccount(composedWorldStateTransaction, accountHash);
-      return this;
-    }
-
-    public Updater putAccountInfoState(final Hash accountHash, final Bytes accountValue) {
-      if (accountValue.size() == 0) {
-        // Don't save empty values
-        return this;
-      }
-      flatDbStrategy.putFlatAccount(composedWorldStateTransaction, accountHash, accountValue);
-      return this;
-    }
-
     @Override
     public Updater saveWorldState(final Bytes blockHash, final Bytes32 nodeHash, final Bytes node) {
       composedWorldStateTransaction.put(
@@ -184,18 +170,6 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       return this;
     }
 
-    public synchronized Updater putStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash, final Bytes storage) {
-      flatDbStrategy.putFlatAccountStorageValueByStorageSlotHash(
-          composedWorldStateTransaction, accountHash, slotHash, storage);
-      return this;
-    }
-
-    public synchronized void removeStorageValueBySlotHash(
-        final Hash accountHash, final Hash slotHash) {
-      flatDbStrategy.removeFlatAccountStorageValueByStorageSlotHash(
-          composedWorldStateTransaction, accountHash, slotHash);
-    }
 
     @Override
     public SegmentedKeyValueStorageTransaction getWorldStateTransaction() {

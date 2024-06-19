@@ -19,11 +19,13 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
+import kotlin.Pair;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.MerkleTrie;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.BonsaiFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategyProvider;
@@ -42,6 +44,7 @@ import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTran
 import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
+import java.util.function.Predicate;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -87,15 +90,13 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     if (codeHash.equals(Hash.EMPTY)) {
       return Optional.of(Bytes.EMPTY);
     } else {
-      return flatDbStrategyProvider
-          .getFlatDbStrategy(composedWorldStateStorage)
+      return getFlatDbStrategy()
           .getFlatCode(codeHash, accountHash, composedWorldStateStorage);
     }
   }
 
   public Optional<Bytes> getAccount(final Hash accountHash) {
-    return flatDbStrategyProvider
-        .getFlatDbStrategy(composedWorldStateStorage)
+    return getFlatDbStrategy()
         .getFlatAccount(
             this::getWorldStateRootHash,
             this::getAccountStateTrieNode,
@@ -148,8 +149,7 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       final Supplier<Optional<Hash>> storageRootSupplier,
       final Hash accountHash,
       final StorageSlotKey storageSlotKey) {
-    return flatDbStrategyProvider
-        .getFlatDbStrategy(composedWorldStateStorage)
+    return getFlatDbStrategy()
         .getFlatStorageValueByStorageSlotKey(
             this::getWorldStateRootHash,
             storageRootSupplier,
@@ -157,6 +157,37 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
             accountHash,
             storageSlotKey,
             composedWorldStateStorage);
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
+          final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
+    return getFlatDbStrategy()
+            .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, max);
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
+          final Bytes startKeyHash,
+          final Bytes32 endKeyHash,
+          final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return getFlatDbStrategy()
+            .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, takeWhile);
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamFlatStorages(
+          final Hash accountHash, final Bytes startKeyHash, final Bytes32 endKeyHash, final long max) {
+    return getFlatDbStrategy()
+            .streamStorageFlatDatabase(
+                    composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, max);
+  }
+
+  public NavigableMap<Bytes32, Bytes> streamFlatStorages(
+          final Hash accountHash,
+          final Bytes startKeyHash,
+          final Bytes32 endKeyHash,
+          final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return getFlatDbStrategy()
+            .streamStorageFlatDatabase(
+                    composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, takeWhile);
   }
 
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
@@ -180,8 +211,8 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   }
 
   @Override
-  public FlatDbStrategy getFlatDbStrategy() {
-    return flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
+  public BonsaiFlatDbStrategy getFlatDbStrategy() {
+    return (BonsaiFlatDbStrategy) flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage);
   }
 
   @Override
@@ -189,19 +220,19 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     return new Updater(
         composedWorldStateStorage.startTransaction(),
         trieLogStorage.startTransaction(),
-        flatDbStrategyProvider.getFlatDbStrategy(composedWorldStateStorage));
+        getFlatDbStrategy());
   }
 
   public static class Updater implements DiffBasedWorldStateKeyValueStorage.Updater {
 
     private final SegmentedKeyValueStorageTransaction composedWorldStateTransaction;
     private final KeyValueStorageTransaction trieLogStorageTransaction;
-    private final FlatDbStrategy flatDbStrategy;
+    private final BonsaiFlatDbStrategy flatDbStrategy;
 
     public Updater(
         final SegmentedKeyValueStorageTransaction composedWorldStateTransaction,
         final KeyValueStorageTransaction trieLogStorageTransaction,
-        final FlatDbStrategy flatDbStrategy) {
+        final BonsaiFlatDbStrategy flatDbStrategy) {
 
       this.composedWorldStateTransaction = composedWorldStateTransaction;
       this.trieLogStorageTransaction = trieLogStorageTransaction;

@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
 import java.util.Objects;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes32;
 
@@ -33,6 +34,7 @@ public class StateTrieAccountValue implements AccountValue {
   protected final Wei balance;
   protected final Hash storageRoot;
   protected final Hash codeHash;
+  protected final Optional<Integer> codeSize;
 
   public StateTrieAccountValue(
       final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash) {
@@ -43,6 +45,15 @@ public class StateTrieAccountValue implements AccountValue {
     this.balance = balance;
     this.storageRoot = storageRoot;
     this.codeHash = codeHash;
+    this.codeSize = Optional.empty();
+  }
+
+  public StateTrieAccountValue(final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash, final int codeSize) {
+    this.nonce = nonce;
+    this.balance = balance;
+    this.storageRoot = storageRoot;
+    this.codeHash = codeHash;
+    this.codeSize = Optional.of(codeSize);
   }
 
   /**
@@ -83,6 +94,11 @@ public class StateTrieAccountValue implements AccountValue {
   @Override
   public Hash getCodeHash() {
     return codeHash;
+  }
+
+  @Override
+  public Optional<Integer> getCodeSize() {
+    return codeSize;
   }
 
   @Override

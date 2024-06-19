@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.account;
 import org.hyperledger.besu.datatypes.Wei;
 
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -79,7 +80,9 @@ public interface MutableAccount extends Account {
    */
   void setBalance(Wei value);
 
-  /**
+    Optional<Integer> getCodeSize();
+
+    /**
    * Sets the code for the account.
    *
    * @param code the code to set for the account.

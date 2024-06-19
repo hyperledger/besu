@@ -25,6 +25,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -204,6 +205,11 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   }
 
   @Override
+  public Optional<Integer> getCodeSize() {
+    return Optional.of(getCode().size());
+  }
+
+  @Override
   public UInt256 getStorageValue(final UInt256 key) {
     return context.getStorageValue(address, key);
   }
@@ -240,6 +246,10 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
   @Override
   public void becomeImmutable() {
     immutable = true;
+  }
+
+  public DiffBasedWorldView getContext() {
+    return context;
   }
 
   @Override

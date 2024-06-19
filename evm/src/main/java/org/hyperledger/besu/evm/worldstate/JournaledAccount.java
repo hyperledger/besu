@@ -28,6 +28,7 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.Optional;
 import java.util.TreeMap;
 import javax.annotation.Nullable;
 
@@ -207,6 +208,11 @@ public class JournaledAccount implements MutableAccount, Undoable {
       throw new ModificationNotAllowedException();
     }
     balance.set(value);
+  }
+
+  @Override
+  public Optional<Integer> getCodeSize() {
+    return Optional.of(code.get().size());
   }
 
   @Override

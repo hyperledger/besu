@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
@@ -86,26 +87,6 @@ public abstract class FlatDbStrategy {
             "Number of storage slots found in the flat database");
   }
 
-  /*
-   * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
-   */
-  public abstract Optional<Bytes> getFlatAccount(
-      Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-      NodeLoader nodeLoader,
-      Hash accountHash,
-      SegmentedKeyValueStorage storage);
-
-  /*
-   * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
-   */
-
-  public abstract Optional<Bytes> getFlatStorageValueByStorageSlotKey(
-      Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-      Supplier<Optional<Hash>> storageRootSupplier,
-      NodeLoader nodeLoader,
-      Hash accountHash,
-      StorageSlotKey storageSlotKey,
-      SegmentedKeyValueStorage storageStorage);
 
   public boolean isCodeByCodeHash() {
     return codeStorageStrategy instanceof CodeHashCodeStorageStrategy;
@@ -121,46 +102,6 @@ public abstract class FlatDbStrategy {
     } else {
       return codeStorageStrategy.getFlatCode(codeHash, accountHash, storage);
     }
-  }
-
-  /*
-   * Puts the account data for the given account hash, using the world state root hash supplier and node loader.
-   */
-  public void putFlatAccount(
-      final SegmentedKeyValueStorageTransaction transaction,
-      final Hash accountHash,
-      final Bytes accountValue) {
-    transaction.put(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe(), accountValue.toArrayUnsafe());
-  }
-
-  public void removeFlatAccount(
-      final SegmentedKeyValueStorageTransaction transaction, final Hash accountHash) {
-    transaction.remove(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe());
-  }
-
-  /*
-   * Puts the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
-   */
-  public void putFlatAccountStorageValueByStorageSlotHash(
-      final SegmentedKeyValueStorageTransaction transaction,
-      final Hash accountHash,
-      final Hash slotHash,
-      final Bytes storage) {
-    transaction.put(
-        ACCOUNT_STORAGE_STORAGE,
-        Bytes.concatenate(accountHash, slotHash).toArrayUnsafe(),
-        storage.toArrayUnsafe());
-  }
-
-  /*
-   * Removes the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
-   */
-  public void removeFlatAccountStorageValueByStorageSlotHash(
-      final SegmentedKeyValueStorageTransaction transaction,
-      final Hash accountHash,
-      final Hash slotHash) {
-    transaction.remove(
-        ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
   }
 
   /*
@@ -184,98 +125,7 @@ public abstract class FlatDbStrategy {
     codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
   }
 
-  public void clearAll(final SegmentedKeyValueStorage storage) {
-    storage.clear(ACCOUNT_INFO_STATE);
-    storage.clear(ACCOUNT_STORAGE_STORAGE);
-    storage.clear(CODE_STORAGE);
-  }
+  public abstract void clearAll(final SegmentedKeyValueStorage storage) ;
 
-  public void resetOnResync(final SegmentedKeyValueStorage storage) {
-    storage.clear(ACCOUNT_INFO_STATE);
-    storage.clear(ACCOUNT_STORAGE_STORAGE);
-  }
-
-  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
-      final SegmentedKeyValueStorage storage,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final long max) {
-
-    return toNavigableMap(accountsToPairStream(storage, startKeyHash, endKeyHash).limit(max));
-  }
-
-  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
-      final SegmentedKeyValueStorage storage,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
-
-    return toNavigableMap(
-        accountsToPairStream(storage, startKeyHash, endKeyHash).takeWhile(takeWhile));
-  }
-
-  /** streams RLP encoded storage values using a specified stream limit. */
-  public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
-      final SegmentedKeyValueStorage storage,
-      final Hash accountHash,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final long max) {
-
-    return toNavigableMap(
-        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash, RLP::encodeValue)
-            .limit(max));
-  }
-
-  /** streams raw storage Bytes using a specified predicate filter and value mapper. */
-  public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
-      final SegmentedKeyValueStorage storage,
-      final Hash accountHash,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
-
-    return toNavigableMap(
-        storageToPairStream(storage, accountHash, startKeyHash, endKeyHash, RLP::encodeValue)
-            .takeWhile(takeWhile));
-  }
-
-  private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
-      final SegmentedKeyValueStorage storage,
-      final Hash accountHash,
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Function<Bytes, Bytes> valueMapper) {
-
-    return storage
-        .streamFromKey(
-            ACCOUNT_STORAGE_STORAGE,
-            Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe(),
-            Bytes.concatenate(accountHash, endKeyHash).toArrayUnsafe())
-        .map(
-            pair ->
-                new Pair<>(
-                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
-                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
-  }
-
-  private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
-      final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
-    return storage
-        .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
-        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
-  }
-
-  private static NavigableMap<Bytes32, Bytes> toNavigableMap(
-      final Stream<Pair<Bytes32, Bytes>> pairStream) {
-    final TreeMap<Bytes32, Bytes> collected =
-        pairStream.collect(
-            Collectors.toMap(
-                Pair::getFirst,
-                Pair::getSecond,
-                (v1, v2) -> v1,
-                () -> new TreeMap<>(Comparator.comparing(Bytes::toHexString))));
-    pairStream.close();
-    return collected;
-  }
+  public abstract void resetOnResync(final SegmentedKeyValueStorage storage);
 }

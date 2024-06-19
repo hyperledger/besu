@@ -149,8 +149,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
             hashAndSaveAccountPreImage(address),
             nonce,
             balance,
-            Hash.EMPTY_TRIE_HASH,
-            Hash.EMPTY,
             true);
     diffBasedValue.setUpdated(newAccount);
     return track(new UpdateTrackingAccount<>(newAccount));
@@ -181,7 +179,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     return loadAccount(address, DiffBasedValue::getUpdated);
   }
 
-  protected ACCOUNT loadAccount(
+  public ACCOUNT loadAccount(
       final Address address, final Function<DiffBasedValue<ACCOUNT>, ACCOUNT> accountFunction) {
     try {
       final DiffBasedValue<ACCOUNT> diffBasedValue = accountsToUpdate.get(address);
@@ -803,8 +801,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       final Hash addressHash,
       final long nonce,
       final Wei balance,
-      final Hash storageRoot,
-      final Hash codeHash,
       final boolean mutable);
 
   protected abstract ACCOUNT createAccount(

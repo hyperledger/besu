@@ -17,11 +17,11 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredNodeFactory;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
@@ -45,7 +45,7 @@ import org.apache.tuweni.rlp.RLP;
  * methods, which checks if the data is present in the flat database, and if not, queries the merkle
  * trie
  */
-public class PartialFlatDbStrategy extends FlatDbStrategy {
+public class PartialBonsaiFlatDbStrategy extends BonsaiFlatDbStrategy {
 
   protected final Counter getAccountMerkleTrieCounter;
   protected final Counter getAccountMissingMerkleTrieCounter;
@@ -53,7 +53,7 @@ public class PartialFlatDbStrategy extends FlatDbStrategy {
   protected final Counter getStorageValueMerkleTrieCounter;
   protected final Counter getStorageValueMissingMerkleTrieCounter;
 
-  public PartialFlatDbStrategy(
+  public PartialBonsaiFlatDbStrategy(
       final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
     super(metricsSystem, codeStorageStrategy);
     getAccountMerkleTrieCounter =

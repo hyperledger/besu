@@ -18,8 +18,8 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullFlatDbStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialFlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.FullBonsaiFlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialBonsaiFlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -62,9 +62,9 @@ public class FlatDbStrategyProvider {
               ? new CodeHashCodeStorageStrategy()
               : new AccountHashCodeStorageStrategy();
       if (flatDbMode == FlatDbMode.FULL) {
-        this.flatDbStrategy = new FullFlatDbStrategy(metricsSystem, codeStorageStrategy);
+        this.flatDbStrategy = new FullBonsaiFlatDbStrategy(metricsSystem, codeStorageStrategy);
       } else {
-        this.flatDbStrategy = new PartialFlatDbStrategy(metricsSystem, codeStorageStrategy);
+        this.flatDbStrategy = new PartialBonsaiFlatDbStrategy(metricsSystem, codeStorageStrategy);
       }
     }
   }

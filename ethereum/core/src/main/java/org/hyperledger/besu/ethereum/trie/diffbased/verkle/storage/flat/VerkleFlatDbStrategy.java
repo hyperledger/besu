@@ -12,33 +12,39 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
+package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-
+import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
+import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyAdapter;
+import org.hyperledger.besu.ethereum.trie.verkle.hasher.TrieKeyCachedPedersenHasher;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
 import java.util.Optional;
 import java.util.function.Supplier;
 
-import org.apache.tuweni.bytes.Bytes;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
-public class FullFlatDbStrategy extends FlatDbStrategy {
+public class VerkleFlatDbStrategy extends FlatDbStrategy {
 
   protected final Counter getAccountNotFoundInFlatDatabaseCounter;
 
   protected final Counter getStorageValueNotFoundInFlatDatabaseCounter;
 
-  public FullFlatDbStrategy(
+  protected static final TrieKeyAdapter trieKeyPreloader = new TrieKeyAdapter(new TrieKeyCachedPedersenHasher(10000)); //TODO need to specify a good cache value
+
+  public VerkleFlatDbStrategy(
       final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
     super(metricsSystem, codeStorageStrategy);
 
@@ -55,15 +61,12 @@ public class FullFlatDbStrategy extends FlatDbStrategy {
             "Number of storage slots not found in the flat database");
   }
 
-  @Override
-  public Optional<Bytes> getFlatAccount(
-      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-      final NodeLoader nodeLoader,
-      final Hash accountHash,
-      final SegmentedKeyValueStorage storage) {
+  public Optional<Bytes> getFlatBasicData(
+          final Address address,
+          final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
     final Optional<Bytes> accountFound =
-        storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
+            storage.get(TRIE_BRANCH_STORAGE, trieKeyPreloader.getHeaderStem(address).toArrayUnsafe()).map(Bytes::wrap);
     if (accountFound.isPresent()) {
       getAccountFoundInFlatDatabaseCounter.inc();
     } else {
@@ -72,20 +75,16 @@ public class FullFlatDbStrategy extends FlatDbStrategy {
     return accountFound;
   }
 
-  @Override
   public Optional<Bytes> getFlatStorageValueByStorageSlotKey(
-      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-      final Supplier<Optional<Hash>> storageRootSupplier,
-      final NodeLoader nodeLoader,
-      final Hash accountHash,
+      final Address address,
       final StorageSlotKey storageSlotKey,
       final SegmentedKeyValueStorage storage) {
     getStorageValueCounter.inc();
     final Optional<Bytes> storageFound =
         storage
             .get(
-                ACCOUNT_STORAGE_STORAGE,
-                Bytes.concatenate(accountHash, storageSlotKey.getSlotHash()).toArrayUnsafe())
+                    TRIE_BRANCH_STORAGE,
+                    trieKeyPreloader.getStorageStem(address, storageSlotKey.getSlotKey().orElseThrow()).toArrayUnsafe())
             .map(Bytes::wrap);
     if (storageFound.isPresent()) {
       getStorageValueFlatDatabaseCounter.inc();
@@ -94,6 +93,12 @@ public class FullFlatDbStrategy extends FlatDbStrategy {
     }
 
     return storageFound;
+  }
+
+  @Override
+  public void clearAll(final SegmentedKeyValueStorage storage) {
+    // NOOP
+    // we cannot clear flatdb in verkle as we are using directly the trie
   }
 
   @Override

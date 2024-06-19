@@ -29,10 +29,12 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWo
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.FlatBasicData;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.VerkleFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 import org.hyperledger.besu.ethereum.verkletrie.TrieKeyPreloader;
 import org.hyperledger.besu.ethereum.verkletrie.TrieKeyPreloader.HasherContext;
@@ -233,8 +235,6 @@ public class VerkleWorldState extends DiffBasedWorldState {
                           + accountUpdate.getUpdated());
                   stateTrie.remove(bytes);
                 });
-        maybeStateUpdater.ifPresent(
-            bonsaiUpdater -> bonsaiUpdater.removeAccountInfoState(addressHash));
       } else {
         final Bytes priorValue = priorAccount == null ? null : priorAccount.serializeAccount();
         final Bytes accountValue = updatedAccount.serializeAccount();
@@ -258,9 +258,6 @@ public class VerkleWorldState extends DiffBasedWorldState {
                             + updatedAccount.getBalance());
                     stateTrie.put(bytes, bytes2);
                   });
-          maybeStateUpdater.ifPresent(
-              bonsaiUpdater ->
-                  bonsaiUpdater.putAccountInfoState(hashAndSavePreImage(accountKey), accountValue));
         }
       }
     }
@@ -340,9 +337,6 @@ public class VerkleWorldState extends DiffBasedWorldState {
                     System.out.println("remove storage" + bytes);
                     stateTrie.remove(bytes);
                   });
-          maybeStateUpdater.ifPresent(
-              diffBasedUpdater ->
-                  diffBasedUpdater.removeStorageValueBySlotHash(updatedAddressHash, slotHash));
         } else {
           final Pair<Bytes, Bytes> storage =
               verkleEntryFactory.generateKeyValuesForStorage(
@@ -357,10 +351,6 @@ public class VerkleWorldState extends DiffBasedWorldState {
                   () -> {
                     storageUpdate.getValue().setPrior(null);
                   });
-          maybeStateUpdater.ifPresent(
-              bonsaiUpdater ->
-                  bonsaiUpdater.putStorageValueBySlotHash(
-                      updatedAddressHash, slotHash, updatedStorage));
         }
       }
     }
@@ -376,10 +366,14 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
   @Override
   public Account get(final Address address) {
+    return getBasicFlatData(address).getVerkleAccount();
+  }
+
+  public FlatBasicData getBasicFlatData(final Address address) {
     return getWorldStateStorage()
-        .getAccount(address.addressHash())
-        .map(bytes -> VerkleAccount.fromRLP(accumulator, address, bytes, true))
-        .orElse(null);
+            .getFlatBasicData(address)
+            .map(bytes -> FlatBasicData.fromRLP(accumulator, address, bytes, true))
+            .orElse(null);
   }
 
   @Override
@@ -405,7 +399,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
   public Optional<UInt256> getStorageValueByStorageSlotKey(
       final Address address, final StorageSlotKey storageSlotKey) {
     return getWorldStateStorage()
-        .getStorageValueByStorageSlotKey(address.addressHash(), storageSlotKey)
+        .getStorageValueByStorageSlotKey(address, storageSlotKey)
         .map(UInt256::fromBytes);
   }
 
@@ -433,7 +427,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
     return calculateRootHash(
         Optional.of(
             new VerkleWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
+                noOpSegmentedTx, noOpTx, (VerkleFlatDbStrategy) worldStateKeyValueStorage.getFlatDbStrategy())),
         accumulator.copy());
   }
 
