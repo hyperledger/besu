@@ -70,6 +70,17 @@ public class EOFReferenceTestTools {
 
     // TXCREATE still in tests, but has been removed
     params.ignore("EOF1_undefined_opcodes_186");
+
+    // embedded containers rules changed
+    params.ignore("efValidation/EOF1_embedded_container-Prague\\[EOF1_embedded_container_1\\]");
+
+    // truncated data is only allowed in embedded containers
+    params.ignore("ori/validInvalid-Prague\\[validInvalid_48\\]");
+    params.ignore("efExample/validInvalid-Prague\\[validInvalid_1\\]");
+    params.ignore("efValidation/EOF1_truncated_section-Prague\\[EOF1_truncated_section_3\\]");
+    params.ignore("efValidation/EOF1_truncated_section-Prague\\[EOF1_truncated_section_4\\]");
+    params.ignore("EIP3540/validInvalid-Prague\\[validInvalid_2\\]");
+    params.ignore("EIP3540/validInvalid-Prague\\[validInvalid_3\\]");
   }
 
   private EOFReferenceTestTools() {
@@ -81,6 +92,7 @@ public class EOFReferenceTestTools {
     return params.generate(filePath);
   }
 
+  @SuppressWarnings("java:S5960") // This is not production code, this is testing code.
   public static void executeTest(
       final String fork, final Bytes code, final EOFTestCaseSpec.TestResult expected) {
     EVM evm = ReferenceTestProtocolSchedules.create().geSpecByName(fork).getEvm();
