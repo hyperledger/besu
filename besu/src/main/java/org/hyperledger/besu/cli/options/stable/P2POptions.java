@@ -14,6 +14,9 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
+import static java.util.Arrays.asList;
+import static org.hyperledger.besu.cli.options.unstable.NetworkingOptions.PEER_LOWER_BOUND_FLAG;
+import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.ethereum.p2p.config.AutoDiscoverDefaultIP.autoDiscoverDefaultIP;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
@@ -27,13 +30,15 @@ import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
 import picocli.CommandLine;
 
 /** The P2POptions Config Cli Options. */
@@ -165,10 +170,69 @@ public class P2POptions implements CLIOptions<P2PConfiguration> {
           "Comma-separated list of allowed IP subnets (e.g., '192.168.1.0/24,10.0.0.0/8').")
   private List<SubnetInfo> allowedSubnets;
 
-  private Collection<Bytes> bannedNodeIds = new ArrayList<>();
+  private List<Bytes> bannedNodeIds = new ArrayList<>();
 
   /** Default constructor. */
   public P2POptions() {}
+
+  /**
+   * Validates P2P options
+   *
+   * @param commandLine the commandLine
+   * @param logger the logger
+   */
+  public void validate(final CommandLine commandLine, final Logger logger) {
+    final float fraction = Fraction.fromPercentage(maxRemoteConnectionsPercentage).getValue();
+    if (!(fraction >= 0.0 && fraction <= 1.0)) {
+      throw new CommandLine.ParameterException(
+          commandLine,
+          "Fraction of remote connections allowed must be between 0.0 and 1.0 (inclusive).");
+    }
+    checkP2pOptionsDependencies(commandLine, logger);
+  }
+
+  /**
+   * Validates P2P interface IP address/host name. Visible for testing.
+   *
+   * @param commandLine the commandLine
+   * @param logger the logger
+   */
+  public void validateP2PInterface(final CommandLine commandLine, final Logger logger) {
+    final String failMessage = "The provided --p2p-interface is not available: " + p2pInterface;
+    try {
+      if (!NetworkUtility.isNetworkInterfaceAvailable(p2pInterface)) {
+        throw new CommandLine.ParameterException(commandLine, failMessage);
+      }
+    } catch (final UnknownHostException | SocketException e) {
+      throw new CommandLine.ParameterException(commandLine, failMessage, e);
+    }
+    ensureValidPeerBoundParams(commandLine, logger);
+  }
+
+  private void ensureValidPeerBoundParams(final CommandLine commandLine, final Logger logger) {
+    if (isOptionSet(commandLine, PEER_LOWER_BOUND_FLAG)) {
+      logger.warn(PEER_LOWER_BOUND_FLAG + " is deprecated and will be removed soon.");
+    }
+  }
+
+  private void checkP2pOptionsDependencies(final CommandLine commandLine, final Logger logger) {
+    // Check that P2P options are able to work
+    CommandLineUtils.checkOptionDependencies(
+        logger,
+        commandLine,
+        "--p2p-enabled",
+        !p2pEnabled,
+        asList(
+            "--bootnodes",
+            "--discovery-enabled",
+            "--max-peers",
+            "--banned-node-id",
+            "--banned-node-ids",
+            "--p2p-host",
+            "--p2p-interface",
+            "--p2p-port",
+            "--remote-connections-max-percentage"));
+  }
 
   @Override
   public P2PConfiguration toDomainObject() {

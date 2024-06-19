@@ -54,6 +54,7 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -192,9 +193,7 @@ public final class RunnerTest {
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
             .vertx(vertx)
-            .discovery(true)
-            .p2pAdvertisedHost(listenHost)
-            .p2pListenPort(0)
+            .p2PConfiguration(P2PConfiguration.builder().p2pHost(listenHost).p2pPort(0).build())
             .metricsSystem(noOpMetricsSystem)
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())
@@ -480,9 +479,12 @@ public final class RunnerTest {
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
-        .randomPeerPriority(Boolean.FALSE)
-        .maxPeers(25)
-        .maxRemotelyInitiatedPeers(15)
+        .p2PConfiguration(
+            P2PConfiguration.builder()
+                .randomPeerPriority(false)
+                .maxPeers(25)
+                .randomPeerPriority(false)
+                .build())
         .build();
   }
 }

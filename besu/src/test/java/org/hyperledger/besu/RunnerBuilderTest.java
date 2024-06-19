@@ -151,7 +151,7 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .p2pConfiguration(
+            .p2PConfiguration(
                 P2PConfiguration.builder()
                     .p2pInterface("0.0.0.0")
                     .p2pPort(p2pListenPort)
@@ -198,7 +198,7 @@ public final class RunnerBuilderTest {
     when(protocolContext.getBlockchain()).thenReturn(inMemoryBlockchain);
     final Runner runner =
         new RunnerBuilder()
-            .p2pConfiguration(
+            .p2PConfiguration(
                 P2PConfiguration.builder()
                     .p2pInterface("0.0.0.0")
                     .p2pPort(p2pListenPort)
@@ -259,7 +259,7 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .p2pConfiguration(
+            .p2PConfiguration(
                 P2PConfiguration.builder()
                     .p2pInterface("0.0.0.0")
                     .p2pPort(30303)
@@ -305,7 +305,7 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .p2pConfiguration(
+            .p2PConfiguration(
                 P2PConfiguration.builder()
                     .p2pInterface("0.0.0.0")
                     .p2pPort(30303)
@@ -350,7 +350,7 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .p2pConfiguration(
+            .p2PConfiguration(
                 P2PConfiguration.builder()
                     .p2pInterface("0.0.0.0")
                     .p2pPort(30303)
@@ -397,7 +397,7 @@ public final class RunnerBuilderTest {
 
     final Runner runner =
         new RunnerBuilder()
-            .p2pConfiguration(
+            .p2PConfiguration(
                 P2PConfiguration.builder()
                     .p2pInterface("0.0.0.0")
                     .p2pPort(30303)

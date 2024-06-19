@@ -161,7 +161,7 @@ public class RunnerBuilder {
   private BesuController besuController;
 
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
-  private P2PConfiguration p2pConfiguration;
+  private P2PConfiguration p2PConfiguration;
   private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
   private NatMethod natMethod = NatMethod.AUTO;
   private String natManagerServiceName;
@@ -217,14 +217,14 @@ public class RunnerBuilder {
   /**
    * TLSConfiguration p2pTLSConfiguration.
    *
-   * @param p2pConfiguration the TLSConfiguration p2pTLSConfiguration
+   * @param p2PConfiguration the TLSConfiguration p2pTLSConfiguration
    * @return the runner builder
    */
-  public RunnerBuilder p2pConfiguration(final P2PConfiguration p2pConfiguration) {
+  public RunnerBuilder p2PConfiguration(final P2PConfiguration p2PConfiguration) {
     checkArgument(
-        !isNull(p2pConfiguration.getP2pInterface()),
+        !isNull(p2PConfiguration.getP2pInterface()),
         "Invalid null value supplied for p2pListenInterface");
-    this.p2pConfiguration = p2pConfiguration;
+    this.p2PConfiguration = p2PConfiguration;
     return this;
   }
 
@@ -543,10 +543,10 @@ public class RunnerBuilder {
 
     final DiscoveryConfiguration discoveryConfiguration =
         DiscoveryConfiguration.create()
-            .setBindHost(p2pConfiguration.getP2pInterface())
-            .setBindPort(p2pConfiguration.getPort())
-            .setAdvertisedHost(p2pConfiguration.getHost());
-    if (p2pConfiguration.isDiscoveryEnabled()) {
+            .setBindHost(p2PConfiguration.getP2pInterface())
+            .setBindPort(p2PConfiguration.getPort())
+            .setAdvertisedHost(p2PConfiguration.getHost());
+    if (p2PConfiguration.isDiscoveryEnabled()) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {
         bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).bootNodes();
@@ -582,17 +582,17 @@ public class RunnerBuilder {
 
     final RlpxConfiguration rlpxConfiguration =
         RlpxConfiguration.create()
-            .setBindHost(p2pConfiguration.getP2pInterface())
-            .setBindPort(p2pConfiguration.getPort())
+            .setBindHost(p2PConfiguration.getP2pInterface())
+            .setBindPort(p2PConfiguration.getPort())
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuInfo.nodeName(identityString));
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
-    p2pConfiguration.getBannedNodeIds().forEach(bannedNodes::add);
+    p2PConfiguration.getBannedNodeIds().forEach(bannedNodes::add);
 
     PeerPermissionSubnet peerPermissionSubnet =
-        new PeerPermissionSubnet(p2pConfiguration.getAllowedSubnets());
+        new PeerPermissionSubnet(p2PConfiguration.getAllowedSubnets());
     final PeerPermissions defaultPeerPermissions =
         PeerPermissions.combine(peerPermissionSubnet, bannedNodes);
 
@@ -649,7 +649,7 @@ public class RunnerBuilder {
         NetworkRunner.builder()
             .protocolManagers(protocolManagers)
             .subProtocols(subProtocols)
-            .network(p2pConfiguration.isP2pEnabled() ? activeNetwork : inactiveNetwork)
+            .network(p2PConfiguration.isP2pEnabled() ? activeNetwork : inactiveNetwork)
             .metricsSystem(metricsSystem)
             .build();
 
@@ -1104,8 +1104,8 @@ public class RunnerBuilder {
       case DOCKER:
         return Optional.of(
             new DockerNatManager(
-                p2pConfiguration.getHost(),
-                p2pConfiguration.getPort(),
+                p2PConfiguration.getHost(),
+                p2PConfiguration.getPort(),
                 jsonRpcConfiguration.getPort()));
       case KUBERNETES:
         return Optional.of(new KubernetesNatManager(natManagerServiceName));

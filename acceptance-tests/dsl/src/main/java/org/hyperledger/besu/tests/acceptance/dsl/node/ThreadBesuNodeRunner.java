@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
@@ -236,8 +237,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .transactionPoolValidatorService(transactionPoolValidatorServiceImpl)
             .build();
 
-    final int maxPeers = 25;
-
     builder
         .synchronizerConfiguration(new SynchronizerConfiguration.Builder().build())
         .dataDirectory(node.homeDirectory())
@@ -253,10 +252,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .storageProvider(storageProvider)
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .maxPeers(maxPeers)
-        .maxRemotelyInitiatedPeers(15)
-        .networkConfiguration(node.getNetworkingConfiguration())
-        .randomPeerPriority(false);
+        .p2PConfiguration(P2PConfiguration.createDefault())
+        .networkConfiguration(node.getNetworkingConfiguration());
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
@@ -276,7 +273,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .vertx(Vertx.vertx())
         .besuController(besuController)
         .ethNetworkConfig(ethNetworkConfig)
-        .p2pConfiguration(node.getP2PConfiguration())
+        .p2PConfiguration(node.getP2PConfiguration())
         .networkingConfiguration(node.getNetworkingConfiguration())
         .jsonRpcConfiguration(node.jsonRpcConfiguration())
         .webSocketConfiguration(node.webSocketConfiguration())

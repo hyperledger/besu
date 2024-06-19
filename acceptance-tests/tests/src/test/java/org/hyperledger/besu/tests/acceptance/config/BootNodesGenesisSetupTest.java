@@ -18,6 +18,7 @@ import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
 import org.hyperledger.besu.crypto.SECPPublicKey;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.BesuNodeConfigurationBuilder;
@@ -108,7 +109,7 @@ public class BootNodesGenesisSetupTest extends AcceptanceTestBase {
     return nodeBuilder
         .devMode(false)
         .keyPair(keyPair)
-        .p2pPort(p2pBindingPort)
+        .p2pConfiguration(P2PConfiguration.builder().p2pPort(p2pBindingPort).build())
         .genesisConfigProvider(
             (nodes) ->
                 Optional.of(

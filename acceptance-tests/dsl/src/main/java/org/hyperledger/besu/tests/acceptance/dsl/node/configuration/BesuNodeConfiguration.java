@@ -54,7 +54,7 @@ public class BesuNodeConfiguration {
   private final Optional<String> keyFilePath;
   private final boolean devMode;
   private final GenesisConfigurationProvider genesisConfigProvider;
-  private P2PConfiguration p2pConfiguration;
+  private final P2PConfiguration p2pConfiguration;
   private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean bootnodeEligible;

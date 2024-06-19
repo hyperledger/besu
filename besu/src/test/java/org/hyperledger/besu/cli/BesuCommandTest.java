@@ -151,7 +151,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     DEFAULT_WEB_SOCKET_CONFIGURATION = WebSocketConfiguration.createDefault();
     DEFAULT_METRICS_CONFIGURATION = MetricsConfiguration.builder().build();
     DEFAULT_API_CONFIGURATION = ImmutableApiConfiguration.builder().build();
-    DEFAULT_P2P_CONFIGURATION = P2PConfiguration.builder().build();
+    DEFAULT_P2P_CONFIGURATION = P2PConfiguration.createDefault();
   }
 
   @BeforeEach
@@ -199,8 +199,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void callingBesuCommandWithoutOptionsMustSyncWithDefaultValues() {
     parseCommand();
 
-    final int maxPeers = 25;
-
     final ArgumentCaptor<EthNetworkConfig> ethNetworkArg =
         ArgumentCaptor.forClass(EthNetworkConfig.class);
     verify(mockRunnerBuilder)
@@ -216,8 +214,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockRunnerBuilder).metricsConfiguration(eq(DEFAULT_METRICS_CONFIGURATION));
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkArg.capture());
     verify(mockRunnerBuilder).autoLogBloomCaching(eq(true));
-    verify(mockRunnerBuilder).apiConfiguration(DEFAULT_API_CONFIGURATION);
-    verify(mockRunnerBuilder).p2pConfiguration(DEFAULT_P2P_CONFIGURATION);
+    verify(mockRunnerBuilder).apiConfiguration(eq(DEFAULT_API_CONFIGURATION));
+    verify(mockRunnerBuilder).p2PConfiguration(eq(DEFAULT_P2P_CONFIGURATION));
     verify(mockRunnerBuilder).build();
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(ethNetworkArg.capture(), any());
@@ -229,8 +227,6 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockControllerBuilder).nodeKey(isNotNull());
     verify(mockControllerBuilder).storageProvider(storageProviderArgumentCaptor.capture());
     verify(mockControllerBuilder).gasLimitCalculator(eq(GasLimitCalculator.constant()));
-    verify(mockControllerBuilder).maxPeers(eq(maxPeers));
-    verify(mockControllerBuilder).maxRemotelyInitiatedPeers(eq((int) Math.floor(0.6 * maxPeers)));
     verify(mockControllerBuilder).build();
 
     assertThat(storageProviderArgumentCaptor.getValue()).isNotNull();
@@ -635,7 +631,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void p2pEnabledOptionValueTrueMustBeUsed() {
     parseCommand("--p2p-enabled", "true");
 
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(p2PConfigurationArgumentCaptor.getValue().isP2pEnabled()).isTrue();
@@ -648,7 +644,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void p2pEnabledOptionValueFalseMustBeUsed() {
     parseCommand("--p2p-enabled", "false");
 
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(p2PConfigurationArgumentCaptor.getValue().isP2pEnabled()).isFalse();
@@ -732,7 +728,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueTrueMustBeUsed() {
     parseCommand("--discovery-enabled", "true");
 
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(p2PConfigurationArgumentCaptor.getValue().isDiscoveryEnabled()).isTrue();
@@ -745,7 +741,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   public void discoveryOptionValueFalseMustBeUsed() {
     parseCommand("--discovery-enabled", "false");
 
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(p2PConfigurationArgumentCaptor.getValue().isDiscoveryEnabled()).isFalse();
@@ -914,7 +910,7 @@ public class BesuCommandTest extends CommandTestAbstract {
         Arrays.stream(nodes).map(Bytes::toShortHexString).collect(Collectors.joining(","));
     parseCommand("--banned-node-ids", nodeIdsArg);
 
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(p2PConfigurationArgumentCaptor.getValue().getBannedNodeIds().toArray())
@@ -949,7 +945,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final int port = 1234;
     parseCommand("--p2p-host", host, "--p2p-port", String.valueOf(port));
 
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(p2PConfigurationArgumentCaptor.getValue().getHost()).isEqualTo(host);
@@ -965,7 +961,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String ip = "1.2.3.4";
     parseCommand("--p2p-interface", ip);
 
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(p2PConfigurationArgumentCaptor.getValue().getP2pInterface()).isEqualTo(ip);
@@ -979,7 +975,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String host = "localhost";
     parseCommand("--p2p-host", host);
 
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(p2PConfigurationArgumentCaptor.getValue().getHost()).isEqualTo(host);
@@ -994,7 +990,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String host = "2600:DB8::8545";
     parseCommand("--p2p-host", host);
 
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     assertThat(p2PConfigurationArgumentCaptor.getValue().getHost()).isEqualTo(host);
@@ -1009,10 +1005,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     final int maxPeers = 123;
     parseCommand("--max-peers", String.valueOf(maxPeers));
 
-    verify(mockControllerBuilder).maxPeers(intArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
 
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getMaxPeers()).isEqualTo(maxPeers);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1027,10 +1023,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
-    verify(mockControllerBuilder).maxPeers(intArgumentCaptor.capture());
-    assertThat(intArgumentCaptor.getValue()).isEqualTo(maxPeers);
-
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
+
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getMaxPeers()).isEqualTo(maxPeers);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1045,12 +1041,13 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--remote-connections-max-percentage",
         String.valueOf(remoteConnectionsPercentage));
 
-    verify(mockControllerBuilder).maxRemotelyInitiatedPeers(intArgumentCaptor.capture());
-    verify(mockControllerBuilder).build();
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).build();
 
-    assertThat(intArgumentCaptor.getValue())
-        .isEqualTo(
-            (int) Math.floor(25 * Fraction.fromPercentage(remoteConnectionsPercentage).getValue()));
+    var maxRemotelyInitiatedPeers =
+        (int) Math.floor(25 * Fraction.fromPercentage(remoteConnectionsPercentage).getValue());
+    assertThat(p2PConfigurationArgumentCaptor.getValue().getMaxRemoteInitiatedPeers())
+        .isEqualTo(maxRemotelyInitiatedPeers);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -1230,7 +1227,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final String subnet1 = "127.0.0.1/24";
     final String subnet2 = "10.0.0.1/24";
     parseCommand("--net-restrict", String.join(",", subnet1, subnet2));
-    verify(mockRunnerBuilder).p2pConfiguration(p2PConfigurationArgumentCaptor.capture());
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
     verify(mockRunnerBuilder).build();
 
     var subnets = p2PConfigurationArgumentCaptor.getValue().getAllowedSubnets();

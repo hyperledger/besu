@@ -19,7 +19,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.atLeast;
@@ -292,13 +291,9 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.reorgLoggingThreshold(anyLong())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.dataStorageConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.evmConfiguration(any())).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.p2PConfiguration(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.networkConfiguration(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.randomPeerPriority(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.chainPruningConfiguration(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.maxPeers(anyInt())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.maxRemotelyInitiatedPeers(anyInt()))
-        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.besuComponent(any(BesuComponent.class)))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
@@ -324,7 +319,6 @@ public abstract class CommandTestAbstract {
 
     when(mockRunnerBuilder.vertx(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.besuController(any())).thenReturn(mockRunnerBuilder);
-    when(mockRunnerBuilder.p2pConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.ethNetworkConfig(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.networkingConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.permissioningConfiguration(any())).thenReturn(mockRunnerBuilder);
@@ -351,6 +345,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.rpcEndpointService(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.apiConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.p2PConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.enodeDnsConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
@@ -577,7 +572,7 @@ public abstract class CommandTestAbstract {
     }
 
     @Override
-    protected void validateP2PInterface(final String p2pInterface) {
+    protected void validateP2PInterface() {
       // For testing, don't actually query for networking interfaces to validate this option
     }
 
