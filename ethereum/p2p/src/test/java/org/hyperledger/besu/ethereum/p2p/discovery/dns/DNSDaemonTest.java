@@ -29,13 +29,13 @@ import org.bouncycastle.jce.provider.BouncyCastleProvider;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 
 @ExtendWith(VertxExtension.class)
 class DNSDaemonTest {
+  private static final int EXPECTED_SEQ = 932;
   private static final String holeskyEnr =
       "enrtree://AKA3AM6LPBYEUDMVNU3BSVQJ5AD45Y7YPOHJLEF6W26QOE4VTUDPE@all.holesky.ethdisco.net";
   private final MockDnsServerVerticle mockDnsServerVerticle = new MockDnsServerVerticle();
@@ -54,13 +54,24 @@ class DNSDaemonTest {
 
   @Test
   @DisplayName("Test DNS Daemon with a mock DNS server")
-  void testDNSDaemon(final Vertx vertx, final VertxTestContext testContext)
-      throws InterruptedException {
+  void testDNSDaemon(final Vertx vertx, final VertxTestContext testContext) {
     final Checkpoint checkpoint = testContext.checkpoint();
     dnsDaemon =
         new DNSDaemon(
             holeskyEnr,
-            (seq, records) -> checkpoint.flag(),
+            (seq, records) -> {
+              if (seq != EXPECTED_SEQ) {
+                testContext.failNow(
+                    String.format(
+                        "Expecting sequence to be %d in first pass but got: %d",
+                        EXPECTED_SEQ, seq));
+              }
+              if (records.size() != 115) {
+                testContext.failNow(
+                    "Expecting 115 records in first pass but got: " + records.size());
+              }
+              checkpoint.flag();
+            },
             0,
             0,
             0,
@@ -74,7 +85,6 @@ class DNSDaemonTest {
   }
 
   @Test
-  @Disabled("this test is flaky")
   @DisplayName("Test DNS Daemon with periodic lookup to a mock DNS server")
   void testDNSDaemonPeriodic(final Vertx vertx, final VertxTestContext testContext)
       throws InterruptedException {
@@ -87,18 +97,28 @@ class DNSDaemonTest {
             (seq, records) -> {
               switch (pass.incrementAndGet()) {
                 case 1:
-                  testContext.verify(
-                      () -> {
-                        assertThat(seq).isEqualTo(932);
-                        assertThat(records).hasSize(115);
-                      });
+                  if (seq != EXPECTED_SEQ) {
+                    testContext.failNow(
+                        String.format(
+                            "Expecting sequence to be %d in first pass but got: %d",
+                            EXPECTED_SEQ, seq));
+                  }
+                  if (records.size() != 115) {
+                    testContext.failNow(
+                        "Expecting 115 records in first pass but got: " + records.size());
+                  }
                   break;
                 case 2:
-                  testContext.verify(
-                      () -> {
-                        assertThat(seq).isEqualTo(932);
-                        assertThat(records).isEmpty();
-                      });
+                  if (seq != EXPECTED_SEQ) {
+                    testContext.failNow(
+                        String.format(
+                            "Expecting sequence to be %d in second pass but got: %d",
+                            EXPECTED_SEQ, seq));
+                  }
+                  if (!records.isEmpty()) {
+                    testContext.failNow(
+                        "Expecting 0 records in second pass but got: " + records.size());
+                  }
                   break;
                 default:
                   testContext.failNow("Third pass is not expected");
@@ -107,7 +127,7 @@ class DNSDaemonTest {
             },
             0,
             1, // initial delay
-            300, // second lookup after 300 ms (due to Mock DNS server, we are very quick).
+            3000, // second lookup after 3 seconds (the thread scheduling can be slower in CI)
             "localhost:" + mockDnsServerVerticle.port());
 
     final DeploymentOptions options =

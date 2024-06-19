@@ -24,6 +24,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -39,6 +40,9 @@ public abstract class AbstractCallOperation extends AbstractOperation {
   /** The constant UNDERFLOW_RESPONSE. */
   protected static final OperationResult UNDERFLOW_RESPONSE =
       new OperationResult(0L, ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+
+  static final Bytes LEGACY_SUCCESS_STACK_ITEM = BYTES_ONE;
+  static final Bytes LEGACY_FAILURE_STACK_ITEM = Bytes.EMPTY;
 
   /**
    * Instantiates a new Abstract call operation.
@@ -158,6 +162,15 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     return frame.isStatic();
   }
 
+  /**
+   * Returns whether the child message call is a delegate call.
+   *
+   * @return {@code true} if the child message call is a delegate call; otherwise {@code false}
+   */
+  protected boolean isDelegate() {
+    return false;
+  }
+
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
     // manual check because some reads won't come until the "complete" step.
@@ -184,9 +197,11 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     if (value(frame).compareTo(balance) > 0 || frame.getDepth() >= 1024) {
       frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
+      // For the following, we either increment the gas or return zero so weo don't get double
+      // charged. If we return zero then the traces don't have the right per-opcode cost.
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
       frame.popStackItems(getStackItemsConsumed());
-      frame.pushStackItem(FAILURE_STACK_ITEM);
+      frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       return new OperationResult(cost, null);
     }
 
@@ -197,29 +212,30 @@ public abstract class AbstractCallOperation extends AbstractOperation {
             ? CodeV0.EMPTY_CODE
             : evm.getCode(contract.getCodeHash(), contract.getCode());
 
-    if (code.isValid()) {
-      // frame addition is automatically handled by parent messageFrameStack
-      MessageFrame.builder()
-          .parentMessageFrame(frame)
-          .type(MessageFrame.Type.MESSAGE_CALL)
-          .initialGas(gasAvailableForChildCall(frame))
-          .address(address(frame))
-          .contract(to)
-          .inputData(inputData)
-          .sender(sender(frame))
-          .value(value(frame))
-          .apparentValue(apparentValue(frame))
-          .code(code)
-          .isStatic(isStatic(frame))
-          .completer(child -> complete(frame, child))
-          .build();
-      frame.incrementRemainingGas(cost);
-
-      frame.setState(MessageFrame.State.CODE_SUSPENDED);
-      return new OperationResult(cost, null, 0);
-    } else {
+    // invalid code results in a quick exit
+    if (!code.isValid()) {
       return new OperationResult(cost, ExceptionalHaltReason.INVALID_CODE, 0);
     }
+
+    MessageFrame.builder()
+        .parentMessageFrame(frame)
+        .type(MessageFrame.Type.MESSAGE_CALL)
+        .initialGas(gasAvailableForChildCall(frame))
+        .address(address(frame))
+        .contract(to)
+        .inputData(inputData)
+        .sender(sender(frame))
+        .value(value(frame))
+        .apparentValue(apparentValue(frame))
+        .code(code)
+        .isStatic(isStatic(frame))
+        .completer(child -> complete(frame, child))
+        .build();
+    // see note in stack depth check about incrementing cost
+    frame.incrementRemainingGas(cost);
+
+    frame.setState(MessageFrame.State.CODE_SUSPENDED);
+    return new OperationResult(cost, null, 0);
   }
 
   /**
@@ -281,7 +297,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     if (outputSize > outputData.size()) {
       frame.expandMemory(outputOffset, outputSize);
       frame.writeMemory(outputOffset, outputData.size(), outputData, true);
-    } else {
+    } else if (outputSize > 0) {
       frame.writeMemory(outputOffset, outputSize, outputData, true);
     }
 
@@ -294,13 +310,20 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.incrementRemainingGas(gasRemaining);
 
     frame.popStackItems(getStackItemsConsumed());
-    if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      frame.pushStackItem(SUCCESS_STACK_ITEM);
-    } else {
-      frame.pushStackItem(FAILURE_STACK_ITEM);
-    }
+    Bytes resultItem;
+
+    resultItem = getCallResultStackItem(childFrame);
+    frame.pushStackItem(resultItem);
 
     final int currentPC = frame.getPC();
     frame.setPC(currentPC + 1);
+  }
+
+  Bytes getCallResultStackItem(final MessageFrame childFrame) {
+    if (childFrame.getState() == State.COMPLETED_SUCCESS) {
+      return LEGACY_SUCCESS_STACK_ITEM;
+    } else {
+      return LEGACY_FAILURE_STACK_ITEM;
+    }
   }
 }

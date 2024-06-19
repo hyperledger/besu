@@ -18,7 +18,6 @@ import org.hyperledger.besu.evm.internal.Words;
 
 import java.util.Arrays;
 
-import com.google.common.annotations.VisibleForTesting;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.bytes.MutableBytes;
@@ -55,9 +54,6 @@ public class Memory {
   }
 
   private static RuntimeException overflow(final String v) {
-    // TODO: we should probably have another specific exception so this properly end up as an
-    // exceptional halt condition with a clear message (message that can indicate that if anyone
-    // runs into this, he should contact us so we know it's a case we do need to handle).
     final String msg = "Memory index or length %s too large, cannot be larger than %d";
     throw new IllegalStateException(String.format(msg, v, MAX_BYTES));
   }
@@ -180,7 +176,6 @@ public class Memory {
    *
    * @return The current number of active words stored in memory.
    */
-  @VisibleForTesting
   public int getActiveWords() {
     return activeWords;
   }
