@@ -79,6 +79,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
@@ -187,19 +188,16 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** The Evm configuration. */
   protected EvmConfiguration evmConfiguration;
 
-  /** The Max peers. */
-  protected int maxPeers;
+  /** The P2P configuration. */
+  protected P2PConfiguration p2PConfiguration = P2PConfiguration.createDefault();
 
   /** Manages a cache of bad blocks globally */
   protected final BadBlockManager badBlockManager = new BadBlockManager();
-
-  private int maxRemotelyInitiatedPeers;
 
   /** The Chain pruner configuration. */
   protected ChainPrunerConfiguration chainPrunerConfiguration = ChainPrunerConfiguration.DEFAULT;
 
   private NetworkingConfiguration networkingConfiguration;
-  private Boolean randomPeerPriority;
 
   /** the Dagger configured context that can provide dependencies */
   protected Optional<BesuComponent> besuComponent = Optional.empty();
@@ -460,24 +458,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
-   * Max peers besu controller builder.
+   * P2P Configuration besu controller builder.
    *
-   * @param maxPeers the max peers
+   * @param p2PConfiguration p2PConfiguration
    * @return the besu controller builder
    */
-  public BesuControllerBuilder maxPeers(final int maxPeers) {
-    this.maxPeers = maxPeers;
-    return this;
-  }
-
-  /**
-   * Maximum number of remotely initiated peer connections
-   *
-   * @param maxRemotelyInitiatedPeers maximum number of remotely initiated peer connections
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder maxRemotelyInitiatedPeers(final int maxRemotelyInitiatedPeers) {
-    this.maxRemotelyInitiatedPeers = maxRemotelyInitiatedPeers;
+  public BesuControllerBuilder p2PConfiguration(final P2PConfiguration p2PConfiguration) {
+    this.p2PConfiguration = p2PConfiguration;
     return this;
   }
 
@@ -513,17 +500,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   public BesuControllerBuilder networkConfiguration(
       final NetworkingConfiguration networkingConfiguration) {
     this.networkingConfiguration = networkingConfiguration;
-    return this;
-  }
-
-  /**
-   * sets the randomPeerPriority flag in the builder
-   *
-   * @param randomPeerPriority the random peer priority flag
-   * @return the besu controller builder
-   */
-  public BesuControllerBuilder randomPeerPriority(final Boolean randomPeerPriority) {
-    this.randomPeerPriority = randomPeerPriority;
     return this;
   }
 
@@ -611,9 +587,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             maxMessageSize,
             messagePermissioningProviders,
             nodeKey.getPublicKey().getEncodedBytes(),
-            maxPeers,
-            maxRemotelyInitiatedPeers,
-            randomPeerPriority);
+            p2PConfiguration.getMaxPeers(),
+            p2PConfiguration.getMaxRemoteInitiatedPeers(),
+            p2PConfiguration.isRandomPeerPriority());
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();

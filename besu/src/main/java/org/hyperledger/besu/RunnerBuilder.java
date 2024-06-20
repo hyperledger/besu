@@ -78,6 +78,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.precompiles.privacy.FlexiblePrivacyPrecompiledContract;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.RlpxConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.SubProtocolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.network.DefaultP2PNetwork;
@@ -125,7 +126,6 @@ import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 import org.hyperledger.besu.services.PermissioningServiceImpl;
 import org.hyperledger.besu.services.RpcEndpointServiceImpl;
-import org.hyperledger.besu.util.NetworkUtility;
 
 import java.io.IOException;
 import java.nio.file.Path;
@@ -147,7 +147,6 @@ import com.google.common.base.Strings;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
-import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -162,13 +161,8 @@ public class RunnerBuilder {
   private BesuController besuController;
 
   private NetworkingConfiguration networkingConfiguration = NetworkingConfiguration.create();
-  private final Collection<Bytes> bannedNodeIds = new ArrayList<>();
-  private boolean p2pEnabled = true;
+  private P2PConfiguration p2PConfiguration;
   private Optional<TLSConfiguration> p2pTLSConfiguration = Optional.empty();
-  private boolean discovery;
-  private String p2pAdvertisedHost;
-  private String p2pListenInterface = NetworkUtility.INADDR_ANY;
-  private int p2pListenPort;
   private NatMethod natMethod = NatMethod.AUTO;
   private String natManagerServiceName;
   private boolean natMethodFallbackEnabled;
@@ -194,7 +188,6 @@ public class RunnerBuilder {
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
-  private List<SubnetInfo> allowedSubnets = new ArrayList<>();
 
   /** Instantiates a new Runner builder. */
   public RunnerBuilder() {}
@@ -222,13 +215,16 @@ public class RunnerBuilder {
   }
 
   /**
-   * P2p enabled.
+   * P2P Configuration Configuration.
    *
-   * @param p2pEnabled the p 2 p enabled
+   * @param p2PConfiguration the p2pConfiguration
    * @return the runner builder
    */
-  public RunnerBuilder p2pEnabled(final boolean p2pEnabled) {
-    this.p2pEnabled = p2pEnabled;
+  public RunnerBuilder p2PConfiguration(final P2PConfiguration p2PConfiguration) {
+    checkArgument(
+        !isNull(p2PConfiguration.getP2pInterface()),
+        "Invalid null value supplied for p2pListenInterface");
+    this.p2PConfiguration = p2PConfiguration;
     return this;
   }
 
@@ -257,17 +253,6 @@ public class RunnerBuilder {
   }
 
   /**
-   * Enable Discovery.
-   *
-   * @param discovery the discovery
-   * @return the runner builder
-   */
-  public RunnerBuilder discovery(final boolean discovery) {
-    this.discovery = discovery;
-    return this;
-  }
-
-  /**
    * Add Eth network config.
    *
    * @param ethNetworkConfig the eth network config
@@ -287,40 +272,6 @@ public class RunnerBuilder {
   public RunnerBuilder networkingConfiguration(
       final NetworkingConfiguration networkingConfiguration) {
     this.networkingConfiguration = networkingConfiguration;
-    return this;
-  }
-
-  /**
-   * Add P2p advertised host.
-   *
-   * @param p2pAdvertisedHost the P2P advertised host
-   * @return the runner builder
-   */
-  public RunnerBuilder p2pAdvertisedHost(final String p2pAdvertisedHost) {
-    this.p2pAdvertisedHost = p2pAdvertisedHost;
-    return this;
-  }
-
-  /**
-   * Add P2P Listener interface ip/host name.
-   *
-   * @param ip the ip
-   * @return the runner builder
-   */
-  public RunnerBuilder p2pListenInterface(final String ip) {
-    checkArgument(!isNull(ip), "Invalid null value supplied for p2pListenInterface");
-    this.p2pListenInterface = ip;
-    return this;
-  }
-
-  /**
-   * Add P2P listen port.
-   *
-   * @param p2pListenPort the p 2 p listen port
-   * @return the runner builder
-   */
-  public RunnerBuilder p2pListenPort(final int p2pListenPort) {
-    this.p2pListenPort = p2pListenPort;
     return this;
   }
 
@@ -459,17 +410,6 @@ public class RunnerBuilder {
   }
 
   /**
-   * Add list of Banned node id.
-   *
-   * @param bannedNodeIds the banned node ids
-   * @return the runner builder
-   */
-  public RunnerBuilder bannedNodeIds(final Collection<Bytes> bannedNodeIds) {
-    this.bannedNodeIds.addAll(bannedNodeIds);
-    return this;
-  }
-
-  /**
    * Add Metrics configuration.
    *
    * @param metricsConfiguration the metrics configuration
@@ -593,17 +533,6 @@ public class RunnerBuilder {
   }
 
   /**
-   * Add subnet configuration
-   *
-   * @param allowedSubnets the allowedSubnets
-   * @return the runner builder
-   */
-  public RunnerBuilder allowedSubnets(final List<SubnetInfo> allowedSubnets) {
-    this.allowedSubnets = allowedSubnets;
-    return this;
-  }
-
-  /**
    * Build Runner instance.
    *
    * @return the runner
@@ -614,10 +543,10 @@ public class RunnerBuilder {
 
     final DiscoveryConfiguration discoveryConfiguration =
         DiscoveryConfiguration.create()
-            .setBindHost(p2pListenInterface)
-            .setBindPort(p2pListenPort)
-            .setAdvertisedHost(p2pAdvertisedHost);
-    if (discovery) {
+            .setBindHost(p2PConfiguration.getP2pInterface())
+            .setBindPort(p2PConfiguration.getPort())
+            .setAdvertisedHost(p2PConfiguration.getHost());
+    if (p2PConfiguration.isDiscoveryEnabled()) {
       final List<EnodeURL> bootstrap;
       if (ethNetworkConfig.bootNodes() == null) {
         bootstrap = EthNetworkConfig.getNetworkConfig(NetworkName.MAINNET).bootNodes();
@@ -653,16 +582,17 @@ public class RunnerBuilder {
 
     final RlpxConfiguration rlpxConfiguration =
         RlpxConfiguration.create()
-            .setBindHost(p2pListenInterface)
-            .setBindPort(p2pListenPort)
+            .setBindHost(p2PConfiguration.getP2pInterface())
+            .setBindPort(p2PConfiguration.getPort())
             .setSupportedProtocols(subProtocols)
             .setClientId(BesuInfo.nodeName(identityString));
     networkingConfiguration.setRlpx(rlpxConfiguration).setDiscovery(discoveryConfiguration);
 
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
-    bannedNodeIds.forEach(bannedNodes::add);
+    p2PConfiguration.getBannedNodeIds().forEach(bannedNodes::add);
 
-    PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(allowedSubnets);
+    PeerPermissionSubnet peerPermissionSubnet =
+        new PeerPermissionSubnet(p2PConfiguration.getAllowedSubnets());
     final PeerPermissions defaultPeerPermissions =
         PeerPermissions.combine(peerPermissionSubnet, bannedNodes);
 
@@ -719,7 +649,7 @@ public class RunnerBuilder {
         NetworkRunner.builder()
             .protocolManagers(protocolManagers)
             .subProtocols(subProtocols)
-            .network(p2pEnabled ? activeNetwork : inactiveNetwork)
+            .network(p2PConfiguration.isP2pEnabled() ? activeNetwork : inactiveNetwork)
             .metricsSystem(metricsSystem)
             .build();
 
@@ -1173,7 +1103,10 @@ public class RunnerBuilder {
         return Optional.of(new UpnpNatManager());
       case DOCKER:
         return Optional.of(
-            new DockerNatManager(p2pAdvertisedHost, p2pListenPort, jsonRpcConfiguration.getPort()));
+            new DockerNatManager(
+                p2PConfiguration.getHost(),
+                p2PConfiguration.getPort(),
+                jsonRpcConfiguration.getPort()));
       case KUBERNETES:
         return Optional.of(new KubernetesNatManager(natManagerServiceName));
       case NONE:

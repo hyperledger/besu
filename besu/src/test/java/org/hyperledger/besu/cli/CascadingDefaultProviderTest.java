@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguratio
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
@@ -108,10 +109,12 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     parseCommand("--config-file", toml.toString());
 
-    verify(mockRunnerBuilder).discovery(eq(false));
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
+    P2PConfiguration p2PConfiguration = p2PConfigurationArgumentCaptor.getValue();
+    assertThat(p2PConfiguration.isDiscoveryEnabled()).isFalse();
+    assertThat(p2PConfiguration.getHost()).isEqualTo("1.2.3.4");
+    assertThat(p2PConfiguration.getPort()).isEqualTo(1234);
     verify(mockRunnerBuilder).ethNetworkConfig(ethNetworkConfigArgumentCaptor.capture());
-    verify(mockRunnerBuilder).p2pAdvertisedHost(eq("1.2.3.4"));
-    verify(mockRunnerBuilder).p2pListenPort(eq(1234));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
     verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));
@@ -162,7 +165,12 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
 
     final MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
 
-    verify(mockRunnerBuilder).discovery(eq(true));
+    verify(mockRunnerBuilder).p2PConfiguration(p2PConfigurationArgumentCaptor.capture());
+    P2PConfiguration p2PConfiguration = p2PConfigurationArgumentCaptor.getValue();
+    assertThat(p2PConfiguration.isDiscoveryEnabled()).isTrue();
+    assertThat(p2PConfiguration.getHost()).isEqualTo("127.0.0.1");
+    assertThat(p2PConfiguration.getPort()).isEqualTo(30303);
+
     verify(mockRunnerBuilder)
         .ethNetworkConfig(
             new EthNetworkConfig(
@@ -170,8 +178,6 @@ public class CascadingDefaultProviderTest extends CommandTestAbstract {
                 MAINNET.getNetworkId(),
                 MAINNET_BOOTSTRAP_NODES,
                 MAINNET_DISCOVERY_URL));
-    verify(mockRunnerBuilder).p2pAdvertisedHost(eq("127.0.0.1"));
-    verify(mockRunnerBuilder).p2pListenPort(eq(30303));
     verify(mockRunnerBuilder).jsonRpcConfiguration(eq(jsonRpcConfiguration));
     verify(mockRunnerBuilder).graphQLConfiguration(eq(graphQLConfiguration));
     verify(mockRunnerBuilder).webSocketConfiguration(eq(webSocketConfiguration));

@@ -28,6 +28,7 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitV
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.pki.keystore.KeyStoreWrapper;
@@ -54,10 +55,16 @@ public class BesuNodeFactory {
 
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
 
+  private final P2PConfiguration P2P_DISABLED =
+      P2PConfiguration.builder().p2pEnabled(false).build();
+  private final P2PConfiguration DISCOVERY_DISABLED =
+      P2PConfiguration.builder().discoveryEnabled(false).build();
+
   public BesuNode create(final BesuNodeConfiguration config) throws IOException {
     return new BesuNode(
         config.getName(),
         config.getDataPath(),
+        config.getP2PConfiguration(),
         config.getMiningParameters(),
         config.getTransactionPoolConfiguration(),
         config.getJsonRpcConfiguration(),
@@ -72,11 +79,8 @@ public class BesuNodeFactory {
         config.isDevMode(),
         config.getNetwork(),
         config.getGenesisConfigProvider(),
-        config.isP2pEnabled(),
-        config.getP2pPort(),
         config.getTLSConfiguration(),
         config.getNetworkingConfiguration(),
-        config.isDiscoveryEnabled(),
         config.isBootnodeEligible(),
         config.isRevertReasonEnabled(),
         config.isSecp256k1Native(),
@@ -183,7 +187,7 @@ public class BesuNodeFactory {
             .name(name)
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
             .webSocketEnabled()
-            .discoveryEnabled(false)
+            .p2PConfiguration(DISCOVERY_DISABLED)
             .build());
   }
 
@@ -198,7 +202,6 @@ public class BesuNodeFactory {
             // .setMetricsConfiguration(metricsConfiguration)
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
             .webSocketEnabled()
-            .p2pEnabled(true)
             .build());
   }
 
@@ -207,7 +210,7 @@ public class BesuNodeFactory {
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
-            .p2pEnabled(false)
+            .p2PConfiguration(P2P_DISABLED)
             .build());
   }
 
@@ -277,7 +280,7 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
-            .p2pEnabled(false)
+            .p2PConfiguration(P2P_DISABLED)
             .jsonRpcConfiguration(node.createJsonRpcEnabledConfig())
             .build());
   }
@@ -359,7 +362,7 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
-            .discoveryEnabled(false)
+            .p2PConfiguration(DISCOVERY_DISABLED)
             .engineRpcEnabled(false)
             .build());
   }
@@ -478,11 +481,12 @@ public class BesuNodeFactory {
             .devMode(false)
             .genesisConfigProvider(GenesisConfigurationFactory::createIbft2GenesisConfig);
     if (fixedPort) {
-      builder.p2pPort(
+      int port =
           Math.abs(name.hashCode() % 60000)
               + 1024
-              + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
+              + 500; // Generate a consistent port for p2p based on node name (+ 500 to avoid
       // clashing with RPC port or other nodes with a similar name)
+      builder.p2PConfiguration(P2PConfiguration.builder().port(port).build());
     }
     return create(builder.build());
   }
@@ -530,11 +534,12 @@ public class BesuNodeFactory {
             .devMode(false)
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
     if (fixedPort) {
-      builder.p2pPort(
+      int port =
           Math.abs(name.hashCode() % 60000)
               + 1024
-              + 500); // Generate a consistent port for p2p based on node name (+ 500 to avoid
+              + 500; // Generate a consistent port for p2p based on node name (+ 500 to avoid
       // clashing with RPC port or other nodes with a similar name)
+      builder.p2PConfiguration(P2PConfiguration.builder().port(port).build());
     }
     return create(builder.build());
   }
@@ -717,7 +722,7 @@ public class BesuNodeFactory {
         .name(name)
         .jsonRpcEnabled()
         .webSocketEnabled()
-        .discoveryEnabled(false)
+        .p2PConfiguration(DISCOVERY_DISABLED)
         .staticNodes(staticNodesUrls)
         .bootnodeEligible(false);
   }
