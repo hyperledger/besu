@@ -46,6 +46,12 @@ for line in "${sorted[@]}"; do
 	module_dir=${line_parts[2]}
 	test_with_module="$test_name $module_dir"
 
+  # deduplication check to avoid executing a test multiple time
+  if grep -F -q --line-regexp "$test_with_module" tmp/processedTests.list
+  then
+    continue
+  fi
+
   # Does the test still exists?
   if grep -F -q --line-regexp "$test_with_module" tmp/currentTests.list
   then

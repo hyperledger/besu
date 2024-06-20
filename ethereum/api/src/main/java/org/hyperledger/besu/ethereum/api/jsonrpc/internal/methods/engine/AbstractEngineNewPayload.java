@@ -36,7 +36,7 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionWitnessParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
@@ -57,6 +57,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.witness.ExecutionWitness;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -67,7 +68,6 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.verkle.ExecutionWitness;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 
 import java.security.InvalidParameterException;
@@ -164,12 +164,12 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawals"));
     }
 
-    final Optional<List<Request>> maybeDeposits =
-        Optional.ofNullable(blockParam.getDeposits())
-            .map(ds -> ds.stream().map(DepositParameter::toDeposit).collect(toList()));
+    final Optional<List<Request>> maybeDepositRequests =
+        Optional.ofNullable(blockParam.getDepositRequests())
+            .map(ds -> ds.stream().map(DepositRequestParameter::toDeposit).collect(toList()));
     if (!getDepositRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
-        .validateParameter(maybeDeposits)) {
+        .validateParameter(maybeDepositRequests)) {
       return new JsonRpcErrorResponse(
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposit request"));
     }
@@ -199,7 +199,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     }
 
     Optional<List<Request>> maybeRequests =
-        RequestUtil.combine(maybeDeposits, maybeWithdrawalRequests);
+        RequestUtil.combine(maybeDepositRequests, maybeWithdrawalRequests);
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");

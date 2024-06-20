@@ -100,15 +100,16 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     } else {
       account.incrementNonce();
 
+      System.out.println("aalloo");
       final Bytes inputData = frame.readMemory(inputOffset, inputSize);
       // Never cache CREATEx initcode. The amount of reuse is very low, and caching mostly
       // addresses disk loading delay, and we already have the code.
       Code code = evm.getCodeUncached(inputData);
 
-      final Address contractAddress = targetContractAddress(frame, code);
       final Wei contractValue = Wei.wrap(frame.getStackItem(0));
 
       if (code.isValid() && frame.getCode().getEofVersion() <= code.getEofVersion()) {
+        final Address contractAddress = targetContractAddress(frame, code);
         frame.decrementRemainingGas(statelessCost(frame, contractAddress, contractValue));
         frame.decrementRemainingGas(cost);
         spawnChildMessage(frame, contractAddress, contractValue, code, evm);

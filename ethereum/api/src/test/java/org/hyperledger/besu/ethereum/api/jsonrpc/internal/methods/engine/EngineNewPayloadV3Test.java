@@ -44,7 +44,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePayloadS
 import org.hyperledger.besu.ethereum.core.BlobTestFixture;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
@@ -137,7 +137,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             Optional.empty(),
             Optional.empty());
     final EnginePayloadParameter payload =
-        mockEnginePayload(mockHeader, Collections.emptyList(), null, null, null);
+        mockEnginePayload(mockHeader, Collections.emptyList(), null, null, null, null);
 
     ValidationResult<RpcErrorType> res =
         method.validateParameters(
@@ -150,7 +150,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
   @Override
   protected BlockHeader createBlockHeader(
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits,
+      final Optional<List<DepositRequest>> maybeDepositRequests,
       final Optional<List<WithdrawalRequest>> maybeWithdrawalRequests) {
     BlockHeader parentBlockHeader =
         new BlockHeaderTestFixture()
@@ -193,7 +193,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .blobGasUsed(null)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null));
+    var resp =
+        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -212,7 +213,8 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null));
+    var resp =
+        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());

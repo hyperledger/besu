@@ -79,7 +79,7 @@ public class ProtocolSpecBuilder {
   private WithdrawalsProcessor withdrawalsProcessor;
 
   private RequestsValidatorCoordinator requestsValidatorCoordinator =
-      new RequestsValidatorCoordinator.Builder().build();
+      RequestsValidatorCoordinator.empty();
   private RequestProcessorCoordinator requestProcessorCoordinator;
   protected BlockHashProcessor blockHashProcessor;
 

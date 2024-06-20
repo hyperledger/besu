@@ -15,7 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
-import org.hyperledger.besu.ethereum.trie.verkle.IPAProof;
+import org.hyperledger.besu.ethereum.core.witness.IPAProof;
 
 import java.util.List;
 
@@ -52,7 +52,7 @@ public class IPAProofParameter {
   }
 
   public static IPAProof toIPAProof(final IPAProofParameter ipaProofParameter) {
-    return new org.hyperledger.besu.ethereum.trie.verkle.IPAProof(
+    return new IPAProof(
         ipaProofParameter.getCl().stream().map(Bytes32::fromHexString).toList(),
         ipaProofParameter.getCr().stream().map(Bytes32::fromHexString).toList(),
         ipaProofParameter.getFinalEvaluation());

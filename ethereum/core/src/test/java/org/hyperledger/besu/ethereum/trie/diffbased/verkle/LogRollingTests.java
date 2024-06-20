@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
@@ -217,7 +218,8 @@ class LogRollingTests {
         new VerkleWorldState(
             archive,
             new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount contract =
@@ -243,7 +245,8 @@ class LogRollingTests {
         new VerkleWorldState(
             archive,
             new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
     final WorldUpdater updater = worldState.updater();
 
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -256,7 +259,8 @@ class LogRollingTests {
         new VerkleWorldState(
             secondArchive,
             new VerkleWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
     final VerkleWorldStateUpdateAccumulator secondUpdater =
         (VerkleWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -287,7 +291,8 @@ class LogRollingTests {
         new VerkleWorldState(
             archive,
             new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -308,7 +313,8 @@ class LogRollingTests {
         new VerkleWorldState(
             secondArchive,
             new VerkleWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
     final VerkleWorldStateUpdateAccumulator secondUpdater =
         (VerkleWorldStateUpdateAccumulator) secondWorldState.updater();
 
@@ -340,7 +346,8 @@ class LogRollingTests {
         new VerkleWorldState(
             archive,
             new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -368,7 +375,8 @@ class LogRollingTests {
         new VerkleWorldState(
             secondArchive,
             new VerkleWorldStateKeyValueStorage(secondProvider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
 
     final WorldUpdater secondUpdater = secondWorldState.updater();
     final MutableAccount secondMutableAccount =
@@ -397,7 +405,8 @@ class LogRollingTests {
         new VerkleWorldState(
             archive,
             new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -437,7 +446,8 @@ class LogRollingTests {
         new VerkleWorldState(
             archive,
             new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));
@@ -506,7 +516,8 @@ class LogRollingTests {
         new VerkleWorldState(
             archive,
             new VerkleWorldStateKeyValueStorage(provider, new NoOpMetricsSystem()),
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
 
     final WorldUpdater updater = worldState.updater();
     final MutableAccount mutableAccount = updater.createAccount(addressOne, 1, Wei.of(1L));

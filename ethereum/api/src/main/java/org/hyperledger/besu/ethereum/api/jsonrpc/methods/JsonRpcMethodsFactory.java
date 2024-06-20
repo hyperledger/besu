@@ -97,7 +97,8 @@ public class JsonRpcMethodsFactory {
                   namedPlugins,
                   natService,
                   ethPeers,
-                  enodeDnsConfiguration),
+                  enodeDnsConfiguration,
+                  protocolSchedule),
               new DebugJsonRpcMethods(
                   blockchainQueries,
                   protocolContext,

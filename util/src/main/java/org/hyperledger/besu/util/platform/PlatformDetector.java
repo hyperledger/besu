@@ -43,6 +43,8 @@ public class PlatformDetector {
   private static String _glibc;
   private static String _jemalloc;
 
+  private PlatformDetector() {}
+
   /**
    * Gets OS type.
    *

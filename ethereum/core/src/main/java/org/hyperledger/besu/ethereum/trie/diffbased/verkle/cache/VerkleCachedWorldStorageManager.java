@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStatePr
 import org.hyperledger.besu.ethereum.trie.diffbased.common.cache.DiffBasedCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleSnapshotWorldStateKeyValueStorage;
@@ -25,12 +26,15 @@ import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
+import java.util.function.Supplier;
+
 public class VerkleCachedWorldStorageManager extends DiffBasedCachedWorldStorageManager {
 
   public VerkleCachedWorldStorageManager(
       final DiffBasedWorldStateProvider archive,
-      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage) {
-    super(archive, worldStateKeyValueStorage);
+      final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
+      final Supplier<DiffBasedWorldStateConfig> defaultBonsaiWorldStateConfigSupplier) {
+    super(archive, worldStateKeyValueStorage, defaultBonsaiWorldStateConfigSupplier);
   }
 
   @Override
@@ -41,7 +45,8 @@ public class VerkleCachedWorldStorageManager extends DiffBasedCachedWorldStorage
     return new VerkleWorldState(
         (VerkleWorldStateProvider) archive,
         (VerkleWorldStateKeyValueStorage) worldStateKeyValueStorage,
-        evmConfiguration);
+        evmConfiguration,
+        defaultBonsaiWorldStateConfigSupplier.get());
   }
 
   @Override

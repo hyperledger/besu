@@ -18,9 +18,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.witness.ExecutionWitness;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
-import org.hyperledger.besu.ethereum.trie.verkle.ExecutionWitness;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.Objects;
@@ -330,7 +330,7 @@ public class BlockHeader extends SealableBlockHeader
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
         pluginBlockHeader.getBlobGasUsed().map(Long::longValue).orElse(null),
-        pluginBlockHeader.getExcessBlobGas().map(BlobGas::fromQuantity).orElse(null),
+        pluginBlockHeader.getExcessBlobGas().map(BlobGas.class::cast).orElse(null),
         pluginBlockHeader.getParentBeaconBlockRoot().orElse(null),
         pluginBlockHeader
             .getRequestsRoot()
