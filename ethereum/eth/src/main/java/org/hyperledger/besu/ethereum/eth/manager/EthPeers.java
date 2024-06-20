@@ -704,10 +704,14 @@ public class EthPeers {
                           .min(MOST_USEFUL_PEER)
                           .ifPresent(
                               p -> {
-                                  p.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
-                                  LOG.atTrace().setMessage("Disconnecting peer {} to be replaced by prioritised peer {}").addArgument(p.getLoggableId()).addArgument(peer.getLoggableId()).log();
-                              })
-              );
+                                p.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+                                LOG.atTrace()
+                                    .setMessage(
+                                        "Disconnecting peer {} to be replaced by prioritised peer {}")
+                                    .addArgument(p.getLoggableId())
+                                    .addArgument(peer.getLoggableId())
+                                    .log();
+                              }));
         } else {
           LOG.atTrace()
               .setMessage("Too many peers. Disconnect connection: {}, max connections {}")

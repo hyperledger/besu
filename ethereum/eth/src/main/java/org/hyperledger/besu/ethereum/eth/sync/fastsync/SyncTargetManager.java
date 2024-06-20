@@ -85,14 +85,14 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
               "Unable to find sync target. Currently checking %d peers for usefulness. Pivot block: %d",
               ethContext.getEthPeers().peerCount(), pivotBlockHeader.getNumber()),
           logDebug,
-              LOG_DEBUG_REPEAT_DELAY);
+          LOG_DEBUG_REPEAT_DELAY);
       throttledLog(
           LOG::info,
           String.format(
               "Unable to find sync target. Currently checking %d peers for usefulness.",
               ethContext.getEthPeers().peerCount()),
           logInfo,
-              LOG_INFO_REPEAT_DELAY);
+          LOG_INFO_REPEAT_DELAY);
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
