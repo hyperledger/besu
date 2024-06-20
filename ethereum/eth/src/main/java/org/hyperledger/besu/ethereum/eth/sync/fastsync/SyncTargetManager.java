@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 public class SyncTargetManager extends AbstractSyncTargetManager {
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
+  private static final int SECONDS_PER_REQUEST = 6; // 5 seconds timeout + 1 second wait between retries
 
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final ProtocolSchedule protocolSchedule;
@@ -124,8 +125,8 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
     task.assignPeer(bestPeer);
     return ethContext
         .getScheduler()
-        .timeout(task, Duration.ofSeconds(MAX_QUERY_RETRIES_PER_PEER * 5 + 1))
-        // 5 because there is a 5 sec timout per request
+        // Task is a retrying task. Make sure that the timeout is long enough to allow for retries.
+        .timeout(task, Duration.ofSeconds(MAX_QUERY_RETRIES_PER_PEER * SECONDS_PER_REQUEST + 2))
         .thenCompose(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {

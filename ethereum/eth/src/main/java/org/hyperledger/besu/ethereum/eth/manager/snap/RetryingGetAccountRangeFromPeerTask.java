@@ -30,7 +30,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class RetryingGetAccountRangeFromPeerTask
     extends AbstractRetryingPeerTask<AccountRangeMessage.AccountRangeData> {
 
-  public static final int MAX_RETRIES = 5;
+  public static final int MAX_RETRIES = 4;
   private final EthContext ethContext;
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
