@@ -3,7 +3,6 @@
 ## Next Release
 
 ### Breaking Changes
-
 ### Additions and Improvements
 - Support for eth_maxPriorityFeePerGas [#5658](https://github.com/hyperledger/besu/issues/5658)
 - Improve genesis state performance at startup [#6977](https://github.com/hyperledger/besu/pull/6977)
@@ -11,10 +10,13 @@
 - A full and up to date implementation of EOF for Prague [#7169](https://github.com/hyperledger/besu/pull/7169)
 - Add Subnet-Based Peer Permissions.  [#7168](https://github.com/hyperledger/besu/pull/7168)
 - Reduce lock contention on transaction pool when building a block [#7180](https://github.com/hyperledger/besu/pull/7180)
+- Refactored how code, initcode, and max stack size are configured in forks. [#7245](https://github.com/hyperledger/besu/pull/7245)
 
 ### Bug fixes
 - Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)
 - Fix "Invalid block detected" for BFT chains using Bonsai DB [#7204](https://github.com/hyperledger/besu/pull/7204)
+- Fix "Could not confirm best peer had pivot block" [#7109](https://github.com/hyperledger/besu/issues/7109)
+- Fix "Chain Download Halt" [#6884](https://github.com/hyperledger/besu/issues/6884)
 
 ## 24.6.0
 

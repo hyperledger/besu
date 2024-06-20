@@ -72,7 +72,7 @@ public class EOFReferenceTestTools {
     params.ignore("EOF1_undefined_opcodes_186");
 
     // embedded containers rules changed
-    params.ignore("efValidation/EOF1_embedded_container-Prague\\[EOF1_embedded_container_1\\]");
+      params.ignore("efValidation/EOF1_embedded_container-Prague\\[EOF1_embedded_container_\\d+\\]");
 
     // truncated data is only allowed in embedded containers
     params.ignore("ori/validInvalid-Prague\\[validInvalid_48\\]");
@@ -81,6 +81,13 @@ public class EOFReferenceTestTools {
     params.ignore("efValidation/EOF1_truncated_section-Prague\\[EOF1_truncated_section_4\\]");
     params.ignore("EIP3540/validInvalid-Prague\\[validInvalid_2\\]");
     params.ignore("EIP3540/validInvalid-Prague\\[validInvalid_3\\]");
+
+    // Orphan containers are no longer allowed
+    params.ignore("efValidation/EOF1_returncontract_valid-Prague\\[EOF1_returncontract_valid_1\\]");
+    params.ignore("efValidation/EOF1_returncontract_valid-Prague\\[EOF1_returncontract_valid_2\\]");
+    params.ignore("efValidation/EOF1_eofcreate_valid-Prague\\[EOF1_eofcreate_valid_1\\]");
+    params.ignore("efValidation/EOF1_eofcreate_valid-Prague\\[EOF1_eofcreate_valid_2\\]");
+    params.ignore("efValidation/EOF1_section_order-Prague\\[EOF1_section_order_6\\]");
   }
 
   private EOFReferenceTestTools() {

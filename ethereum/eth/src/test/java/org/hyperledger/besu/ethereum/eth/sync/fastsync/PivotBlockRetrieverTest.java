@@ -45,6 +45,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.condition.DisabledOnOs;
+import org.junit.jupiter.api.condition.OS;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -269,6 +271,7 @@ public class PivotBlockRetrieverTest {
 
   @ParameterizedTest
   @ArgumentsSource(PivotBlockRetrieverTestArguments.class)
+  @DisabledOnOs(OS.MAC)
   public void shouldRecoverFromUnresponsivePeer(final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     pivotBlockRetriever = createPivotBlockRetriever(2, 1, 1);

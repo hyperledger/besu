@@ -75,6 +75,8 @@ public class CodeV1Validation implements EOFValidator {
    * @param layout The parsed EOFLayout of the code
    * @return either null, indicating no error, or a String describing the validation error.
    */
+  @SuppressWarnings(
+      "ReferenceEquality") // comparison `container != layout` is deliberate and correct
   @Override
   public String validate(final EOFLayout layout) {
     if (layout.container().size() > maxContainerSize) {
@@ -87,6 +89,16 @@ public class CodeV1Validation implements EOFValidator {
     while (!workList.isEmpty()) {
       EOFLayout container = workList.poll();
       workList.addAll(List.of(container.subContainers()));
+      if (container != layout && container.containerMode().get() == null) {
+        return "Unreferenced container #" + layout.indexOfSubcontainer(container);
+      }
+      if (container.containerMode().get() != RUNTIME
+          && container.data().size() != container.dataLength()) {
+        return "Incomplete data section "
+            + (container == layout
+                ? " at root"
+                : " in container #" + layout.indexOfSubcontainer(container));
+      }
 
       final String codeValidationError = validateCode(container);
       if (codeValidationError != null) {

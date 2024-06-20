@@ -410,6 +410,16 @@ public record EOFLayout(
   }
 
   /**
+   * Finds the first instance of the subcontainer in the list of container, or -1 if not present
+   *
+   * @param container the container to search for
+   * @return the index of the container, or -1 if not found.
+   */
+  public int indexOfSubcontainer(final EOFLayout container) {
+    return Arrays.asList(subContainers).indexOf(container);
+  }
+
+  /**
    * Is valid.
    *
    * @return the boolean
