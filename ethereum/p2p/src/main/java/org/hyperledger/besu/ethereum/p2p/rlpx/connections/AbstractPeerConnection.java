@@ -185,15 +185,20 @@ public abstract class AbstractPeerConnection implements PeerConnection {
   @Override
   public void disconnect(final DisconnectReason reason) {
     if (disconnected.compareAndSet(false, true)) {
-      connectionEventDispatcher.dispatchDisconnect(this, reason, false);
-      doSend(null, DisconnectMessage.create(reason));
-      LOG.atDebug()
-          .setMessage("Disconnecting connection {}, peer {} reason {}")
-          .addArgument(this.hashCode())
-          .addArgument(peer.getLoggableId())
-          .addArgument(reason)
-          .log();
-      closeConnection();
+      try {
+        // send the disconnect message first, in case the dispatchDisconnect throws an exception
+        doSend(null, DisconnectMessage.create(reason));
+        LOG.atDebug()
+            .setMessage("Disconnecting connection {}, peer {} reason {}")
+            .addArgument(this.hashCode())
+            .addArgument(peer.getLoggableId())
+            .addArgument(reason)
+            .log();
+        connectionEventDispatcher.dispatchDisconnect(this, reason, false);
+      } finally {
+        // always close the connection
+        closeConnection();
+      }
     }
   }
 
