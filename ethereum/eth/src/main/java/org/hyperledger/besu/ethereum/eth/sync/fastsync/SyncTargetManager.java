@@ -41,6 +41,8 @@ import org.slf4j.LoggerFactory;
 
 public class SyncTargetManager extends AbstractSyncTargetManager {
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
+  private static final int LOG_DEBUG_REPEAT_DELAY = 15;
+  private static final int LOG_INFO_REPEAT_DELAY = 120;
 
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final ProtocolSchedule protocolSchedule;
@@ -50,8 +52,6 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
   private final FastSyncState fastSyncState;
   private final AtomicBoolean logDebug = new AtomicBoolean(true);
   private final AtomicBoolean logInfo = new AtomicBoolean(true);
-  private final int logDebugRepeatDelay = 15;
-  private final int logInfoRepeatDelay = 120;
 
   public SyncTargetManager(
       final SynchronizerConfiguration config,
@@ -82,14 +82,14 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
               "Unable to find sync target. Currently checking %d peers for usefulness. Pivot block: %d",
               ethContext.getEthPeers().peerCount(), pivotBlockHeader.getNumber()),
           logDebug,
-          logDebugRepeatDelay);
+              LOG_DEBUG_REPEAT_DELAY);
       throttledLog(
           LOG::info,
           String.format(
               "Unable to find sync target. Currently checking %d peers for usefulness.",
               ethContext.getEthPeers().peerCount()),
           logInfo,
-          logInfoRepeatDelay);
+              LOG_INFO_REPEAT_DELAY);
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
