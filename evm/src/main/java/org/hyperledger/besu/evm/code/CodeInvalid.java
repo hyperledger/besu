@@ -25,7 +25,7 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
 /**
- * For code versions where code can be deemed "invalid" this represents a cachable instance of
+ * For code versions where code can be deemed "invalid" this represents a cacheable instance of
  * invalid code. Note that EXTCODE operations can still access invalid code.
  */
 public class CodeInvalid implements Code {

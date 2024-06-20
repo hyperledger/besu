@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -444,12 +444,13 @@ public class EthPeer implements Comparable<EthPeer> {
     Optional<RequestManager> requestManager = getRequestManager(protocolName, messageCode);
     requestManager.ifPresentOrElse(
         localRequestManager -> localRequestManager.dispatchResponse(ethMessage),
-        () ->
-            LOG.debug(
-                "Message {} not expected has just been received for protocol {}, {} ",
-                messageCode,
-                protocolName,
-                this));
+        () -> {
+          LOG.trace(
+              "Request message {} has just been received for protocol {}, peer {} ",
+              messageCode,
+              protocolName,
+              this);
+        });
     return requestManager;
   }
 
@@ -603,12 +604,10 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   public int outstandingRequests() {
-    final int sum =
-        requestManagers.values().stream()
-            .flatMap(m -> m.values().stream())
-            .mapToInt(RequestManager::outstandingRequests)
-            .sum();
-    return sum;
+    return requestManagers.values().stream()
+        .flatMap(m -> m.values().stream())
+        .mapToInt(RequestManager::outstandingRequests)
+        .sum();
   }
 
   public long getLastRequestTimestamp() {
@@ -639,7 +638,7 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s, isServingSNAP %s, has height %s, connected for %s ms",
+        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s, isServingSnap %s, has height %s, connected for %s ms",
         getLoggableId(),
         reputation,
         isFullyValidated(),

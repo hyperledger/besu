@@ -133,15 +133,18 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
           () ->
               ethContext
                   .getScheduler()
+                  // wait for a new peer for up to 5 seconds
                   .timeout(waitTask, Duration.ofSeconds(5))
+                  // execute the task again
                   .whenComplete((r, t) -> executeTaskTimed()));
       return;
     }
 
-    LOG.debug(
-        "Retrying after recoverable failure from peer task {}: {}",
-        this.getClass().getSimpleName(),
-        cause.getMessage());
+    LOG.atDebug()
+        .setMessage("Retrying after recoverable failure from peer task {}: {}")
+        .addArgument(this.getClass().getSimpleName())
+        .addArgument(cause.getMessage())
+        .log();
     // Wait before retrying on failure
     executeSubTask(
         () ->

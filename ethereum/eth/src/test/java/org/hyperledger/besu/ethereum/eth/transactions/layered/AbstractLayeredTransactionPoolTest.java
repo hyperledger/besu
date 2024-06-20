@@ -58,7 +58,8 @@ public abstract class AbstractLayeredTransactionPoolTest extends AbstractTransac
     return new LayeredPendingTransactions(
         poolConfig,
         createPrioritizedTransactions(
-            poolConfig, readyLayer, txPoolMetrics, transactionReplacementTester));
+            poolConfig, readyLayer, txPoolMetrics, transactionReplacementTester),
+        ethScheduler);
   }
 
   protected abstract AbstractPrioritizedTransactions createPrioritizedTransactions(
