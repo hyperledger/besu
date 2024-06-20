@@ -45,6 +45,7 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -264,6 +265,7 @@ public class MainnetTransactionProcessor {
       final Wei blobGasPrice) {
     try {
       final var transactionValidator = transactionValidatorFactory.get();
+      final Set<Address> setCodeAuthorities = new HashSet<>();
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
           transactionValidator.validate(
@@ -336,13 +338,17 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
+      final long setCodeGas =
+          gasCalculator.setCodeListGasCost(transaction.setCodeTransactionPayloadSize());
+      final long gasAvailable =
+          transaction.getGasLimit() - intrinsicGas - accessListGas - setCodeGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - setCode)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
-          accessListGas);
+          accessListGas,
+          setCodeGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
@@ -378,9 +384,10 @@ public class MainnetTransactionProcessor {
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
-      } else if (transaction.getSetCodeTransactionPayloads().isPresent()) {
-        addressList.addAll(
+      } else if (transaction.setCodeTransactionPayloads().isPresent()) {
+        setCodeAuthorities.addAll(
             setCodeTransactionProcessor.addContractToAuthority(worldUpdater, transaction));
+        addressList.addAll(setCodeAuthorities);
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
       }
@@ -492,6 +499,7 @@ public class MainnetTransactionProcessor {
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       coinbase.incrementBalance(coinbaseWeiDelta);
+      setCodeTransactionProcessor.removeCodeFromAuthorities(worldUpdater, setCodeAuthorities);
 
       operationTracer.traceEndTransaction(
           worldUpdater,

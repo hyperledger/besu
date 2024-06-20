@@ -236,5 +236,8 @@ public interface Transaction {
   int getSize();
 
   /** Returns the set code transaction payload if this transaction is a 7702 transaction. */
-  Optional<List<SetCodeAuthorization>> getSetCodeTransactionPayloads();
+  Optional<List<SetCodeAuthorization>> setCodeTransactionPayloads();
+
+  /** Returns the size of the set code transaction payload list. */
+  int setCodeTransactionPayloadSize();
 }

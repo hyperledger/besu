@@ -65,7 +65,7 @@ public class SetCodeTransactionEncoder {
     writeAccessList(out, transaction.getAccessList());
     encodeSetCodeInner(
         transaction
-            .getSetCodeTransactionPayloads()
+            .setCodeTransactionPayloads()
             .orElseThrow(
                 () ->
                     new IllegalStateException(

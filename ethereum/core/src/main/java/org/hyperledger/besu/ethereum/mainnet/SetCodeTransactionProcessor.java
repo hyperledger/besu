@@ -51,7 +51,7 @@ public class SetCodeTransactionProcessor {
     final Set<Address> authorityList = new HashSet<>();
 
     transaction
-        .getSetCodeTransactionPayloads()
+        .setCodeTransactionPayloads()
         .get()
         .forEach(
             payload -> {
@@ -71,11 +71,8 @@ public class SetCodeTransactionProcessor {
                           return;
                         }
 
-                        if (!account.getCode().isEmpty()) {
-                          return;
-                        }
-
-                        account.setCode(worldUpdater.getAccount(payload.address()).getCode());
+                        worldUpdater.addCodeToEOA(
+                            authorityAddress, worldUpdater.getAccount(payload.address()).getCode());
                         authorityList.add(authorityAddress);
                       });
             });
@@ -93,5 +90,10 @@ public class SetCodeTransactionProcessor {
         .get()
         .recoverPublicKeyFromSignature(hash, authorization.signature())
         .map(Address::extract);
+  }
+
+  public void removeCodeFromAuthorities(
+      final WorldUpdater worldUpdater, final Set<Address> authorities) {
+    authorities.forEach(worldUpdater::removeCodeFromEOAs);
   }
 }

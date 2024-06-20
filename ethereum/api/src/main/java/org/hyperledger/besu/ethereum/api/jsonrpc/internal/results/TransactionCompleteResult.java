@@ -138,7 +138,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
     this.versionedHashes = transaction.getVersionedHashes().orElse(null);
-    this.setCodeAuthorizationList = transaction.getSetCodeTransactionPayloads().orElse(null);
+    this.setCodeAuthorizationList = transaction.setCodeTransactionPayloads().orElse(null);
   }
 
   @JsonGetter(value = "accessList")
