@@ -92,7 +92,8 @@ public class RangeHeadersFetcher {
       additionalHeaderCount = (int) Math.min(maxHeadersToRequest, maximumHeaderRequestSize);
       if (additionalHeaderCount == 0) {
         LOG.atTrace()
-            .setMessage("Requesting next range headers: additional header count is 0, blocks until target: {}")
+            .setMessage(
+                "Requesting next range headers: additional header count is 0, blocks until target: {}")
             .addArgument(blocksUntilTarget)
             .log();
         return completedFuture(singletonList(targetHeader));

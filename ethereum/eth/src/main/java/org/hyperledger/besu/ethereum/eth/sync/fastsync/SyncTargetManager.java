@@ -42,7 +42,7 @@ import org.slf4j.LoggerFactory;
 
 public class SyncTargetManager extends AbstractSyncTargetManager {
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
-  private static final int SECONDS_PER_REQUEST = 6; // 5 seconds timeout + 1 second wait between retries
+  private static final int SECONDS_PER_REQUEST = 6; // 5s per request + 1s wait between retries
 
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final ProtocolSchedule protocolSchedule;
