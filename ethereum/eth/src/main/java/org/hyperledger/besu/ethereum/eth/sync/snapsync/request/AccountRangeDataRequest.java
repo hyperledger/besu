@@ -58,12 +58,12 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   private static final Logger LOG = LoggerFactory.getLogger(AccountRangeDataRequest.class);
 
-  private final Bytes32 startKeyHash;
-  private final Bytes32 endKeyHash;
-  private final Optional<Bytes32> startStorageRange;
-  private final Optional<Bytes32> endStorageRange;
+  protected final Bytes32 startKeyHash;
+  protected final Bytes32 endKeyHash;
+  protected final Optional<Bytes32> startStorageRange;
+  protected final Optional<Bytes32> endStorageRange;
 
-  private final StackTrie stackTrie;
+  protected final StackTrie stackTrie;
   private Optional<Boolean> isProofValid;
 
   protected AccountRangeDataRequest(
@@ -157,6 +157,7 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final WorldStateProofProvider worldStateProofProvider,
       final NavigableMap<Bytes32, Bytes> accounts,
       final ArrayDeque<Bytes> proofs) {
+    System.out.println("MRW: Adding response to account range request");
     if (!accounts.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, getRootHash(), proofs, accounts)) {

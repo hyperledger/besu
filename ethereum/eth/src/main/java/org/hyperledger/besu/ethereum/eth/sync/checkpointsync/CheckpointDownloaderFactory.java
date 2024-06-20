@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -52,17 +53,18 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
 
   @SuppressWarnings("UnusedVariable")
   public static Optional<FastSyncDownloader<?>> createCheckpointDownloader(
-      final SnapSyncStatePersistenceManager snapContext,
-      final PivotBlockSelector pivotBlockSelector,
-      final SynchronizerConfiguration syncConfig,
-      final Path dataDirectory,
-      final ProtocolSchedule protocolSchedule,
-      final ProtocolContext protocolContext,
-      final MetricsSystem metricsSystem,
-      final EthContext ethContext,
-      final WorldStateStorageCoordinator worldStateStorageCoordinator,
-      final SyncState syncState,
-      final Clock clock) {
+          final SnapSyncStatePersistenceManager snapContext,
+          final PivotBlockSelector pivotBlockSelector,
+          final SynchronizerConfiguration syncConfig,
+          final Path dataDirectory,
+          final ProtocolSchedule protocolSchedule,
+          final ProtocolContext protocolContext,
+          final MetricsSystem metricsSystem,
+          final EthContext ethContext,
+          final WorldStateStorageCoordinator worldStateStorageCoordinator,
+          final SyncState syncState,
+          final Clock clock,
+          final GenesisConfigOptions genesisConfigOptions) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -149,7 +151,8 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
-            metricsSystem);
+            metricsSystem,
+            genesisConfigOptions);
     final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
             fastSyncActions,

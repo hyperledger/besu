@@ -19,6 +19,7 @@ import org.hyperledger.besu.consensus.common.bft.events.BftEvent;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
 import org.slf4j.Logger;
@@ -30,6 +31,7 @@ public class BftEventQueue {
 
   private static final Logger LOG = LoggerFactory.getLogger(BftEventQueue.class);
   private final int messageQueueLimit;
+  private final AtomicBoolean started = new AtomicBoolean(false);
 
   /**
    * Instantiates a new Bft event queue.
@@ -40,17 +42,27 @@ public class BftEventQueue {
     this.messageQueueLimit = messageQueueLimit;
   }
 
+  /** Start the event queue. Until it has been started no events will be queued for processing. */
+  public void start() {
+    started.set(true);
+  }
+
   /**
-   * Put an Bft event onto the queue
+   * Put an Bft event onto the queue. Note: the event queue must be started before an event will be
+   * queued for processing. Events received before the queue is started will be discarded.
    *
    * @param event Provided bft event
    */
   public void add(final BftEvent event) {
+    // if (started.get()) {
+    // System.out.println("MRW: BFT event type received: " + event.getType());
     if (queue.size() > messageQueueLimit) {
+      new Exception().printStackTrace();
       LOG.warn("Queue size exceeded trying to add new bft event {}", event);
     } else {
       queue.add(event);
     }
+    // }
   }
 
   /**

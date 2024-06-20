@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.datatypes.Address;
@@ -86,7 +87,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition terminationCondition,
-      final PivotBlockSelector pivotBlockSelector) {
+      final PivotBlockSelector pivotBlockSelector,
+      final GenesisConfigOptions genesisConfigOptions) {
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.protocolContext = protocolContext;
@@ -154,7 +156,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   ethContext,
                   worldStateStorageCoordinator,
                   syncState,
-                  clock);
+                  clock,
+                  genesisConfigOptions);
     } else {
       this.fastSyncFactory =
           () ->
@@ -169,7 +172,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   ethContext,
                   worldStateStorageCoordinator,
                   syncState,
-                  clock);
+                  clock,
+                  genesisConfigOptions);
     }
 
     // create a non-resync fast sync downloader:
