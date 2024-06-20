@@ -1749,7 +1749,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void holeskyValuesAreUsed() {
+  public void luksoValuesAreUsed() {
     parseCommand("--network", "lukso");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
