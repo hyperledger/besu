@@ -30,8 +30,8 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.TrieKeyPreloader;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.TrieKeyPreloader.HasherContext;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.StemPreloader;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.StemPreloader.HasherContext;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.verkletrie.VerkleEntryFactory;
@@ -58,7 +58,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
   private static final Logger LOG = LoggerFactory.getLogger(VerkleWorldState.class);
 
-  private final TrieKeyPreloader trieKeyPreloader;
+  private final StemPreloader stemPreloader;
 
   public VerkleWorldState(
       final VerkleWorldStateProvider archive,
@@ -77,13 +77,13 @@ public class VerkleWorldState extends DiffBasedWorldState {
       final TrieLogManager trieLogManager,
       final EvmConfiguration evmConfiguration) {
     super(worldStateKeyValueStorage, cachedWorldStorageManager, trieLogManager);
-    this.trieKeyPreloader = new TrieKeyPreloader();
+    this.stemPreloader = new StemPreloader();
     this.setAccumulator(
         new VerkleWorldStateUpdateAccumulator(
             this,
-            (addr, value) -> trieKeyPreloader.preLoadAccount(addr),
-            trieKeyPreloader::preLoadStorageSlot,
-            trieKeyPreloader::preLoadCode,
+            (addr, value) -> stemPreloader.preLoadAccount(addr),
+            stemPreloader::preLoadStorageSlot,
+            stemPreloader::preLoadCode,
             evmConfiguration));
   }
 
@@ -123,7 +123,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
               preloadedHashers.put(
                   accountKey,
-                  trieKeyPreloader.createPreloadedHasher(
+                  stemPreloader.createPreloadedHasher(
                       accountKey, storageAccountUpdate, codeUpdate));
             });
 
@@ -161,8 +161,14 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
     // LOG.info(stateTrie.toDotTree());
     final Bytes32 rootHash = stateTrie.getRootHash();
-    LOG.info("end commit " + rootHash);
-    trieKeyPreloader.reset();
+    LOG.info(
+        "end commit "
+            + rootHash
+            + " "
+            + stemPreloader.getNbMissedStems()
+            + "/"
+            + stemPreloader.getNbCachedStems());
+    stemPreloader.reset();
     return Hash.wrap(rootHash);
   }
 

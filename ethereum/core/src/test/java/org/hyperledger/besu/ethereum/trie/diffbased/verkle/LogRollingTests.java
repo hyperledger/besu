@@ -464,7 +464,6 @@ class LogRollingTests {
     worldState.persist(headerThree);
     final TrieLogLayer layerThree = getTrieLogLayer(trieLogStorage, headerThree.getHash());
 
-    System.out.println(layerThree.dump());
     final WorldUpdater updater4 = worldState.updater();
     final MutableAccount mutableAccount4 = updater4.getAccount(addressOne);
     mutableAccount4.setStorageValue(UInt256.ONE, UInt256.valueOf(1));
