@@ -122,7 +122,8 @@ public class RespondingEthPeer {
       final Difficulty totalDifficulty,
       final OptionalLong estimatedHeight,
       final List<PeerValidator> peerValidators,
-      final boolean isServingSnap) {
+      final boolean isServingSnap,
+      final boolean addToEthPeers) {
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
 
     final Set<Capability> caps = new HashSet<>(Collections.singletonList(EthProtocol.ETH63));
@@ -135,13 +136,16 @@ public class RespondingEthPeer {
     final EthPeer peer = ethPeers.peer(peerConnection);
     peer.registerStatusReceived(chainHeadHash, totalDifficulty, 63, peerConnection);
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
-    peer.registerStatusSent(peerConnection);
-    while (ethPeers.peerCount()
-        <= before) { // this is needed to make sure that the peer is added to the active connections
-      try {
-        Thread.sleep(100L);
-      } catch (InterruptedException e) {
-        throw new RuntimeException(e);
+    if (addToEthPeers) {
+      peer.registerStatusSent(peerConnection);
+      while (ethPeers.peerCount()
+          <= before) { // this is needed to make sure that the peer is added to the active
+        // connections
+        try {
+          Thread.sleep(100L);
+        } catch (InterruptedException e) {
+          throw new RuntimeException(e);
+        }
       }
     }
     peer.setIsServingSnap(isServingSnap);
@@ -408,6 +412,7 @@ public class RespondingEthPeer {
     private OptionalLong estimatedHeight = OptionalLong.of(1000L);
     private final List<PeerValidator> peerValidators = new ArrayList<>();
     private boolean isServingSnap = false;
+    private boolean addToEthPeers = true;
 
     public RespondingEthPeer build() {
       checkNotNull(ethProtocolManager, "Must configure EthProtocolManager");
@@ -419,7 +424,8 @@ public class RespondingEthPeer {
           totalDifficulty,
           estimatedHeight,
           peerValidators,
-          isServingSnap);
+          isServingSnap,
+          addToEthPeers);
     }
 
     public Builder ethProtocolManager(final EthProtocolManager ethProtocolManager) {
@@ -470,6 +476,11 @@ public class RespondingEthPeer {
 
     public Builder peerValidators(final PeerValidator... peerValidators) {
       peerValidators(Arrays.asList(peerValidators));
+      return this;
+    }
+
+    public Builder addToEthPeers(final boolean addToEthPeers) {
+      this.addToEthPeers = addToEthPeers;
       return this;
     }
   }

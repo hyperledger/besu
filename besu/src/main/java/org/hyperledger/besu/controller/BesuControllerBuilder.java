@@ -707,10 +707,10 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     if (SyncMode.isSnapSync(syncConfig.getSyncMode())
         || SyncMode.isCheckpointSync(syncConfig.getSyncMode())) {
-      synchronizer.subscribeInSync((b) -> ethPeers.snapSyncServerPeersNeeded(!b));
-      ethPeers.snapSyncServerPeersNeeded(true);
+      synchronizer.subscribeInSync((b) -> ethPeers.snapServerPeersNeeded(!b));
+      ethPeers.snapServerPeersNeeded(true);
     } else {
-      ethPeers.snapSyncServerPeersNeeded(false);
+      ethPeers.snapServerPeersNeeded(false);
     }
 
     protocolContext.setSynchronizer(Optional.of(synchronizer));

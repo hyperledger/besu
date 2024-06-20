@@ -104,6 +104,7 @@ public class EthPeers {
   private final SyncMode syncMode;
   private final ForkIdManager forkIdManager;
   private final int snapServerTargetNumber;
+  private final boolean shouldLimitRemoteConnections;
 
   private Comparator<EthPeer> bestPeerComparator;
   private final Bytes localNodeId;
@@ -113,7 +114,7 @@ public class EthPeers {
   //  private List<ProtocolManager> protocolManagers;
   private ChainHeadTracker tracker;
   private SnapServerChecker snapServerChecker;
-  private boolean snapSyncServerPeersNeeded = false;
+  private boolean snapServerPeersNeeded = false;
 
   public EthPeers(
       final String protocolName,
@@ -141,8 +142,10 @@ public class EthPeers {
     LOG.trace("MaxPeers: {}, Max Remote: {}", peerUpperBound, maxRemotelyInitiatedConnections);
     this.syncMode = syncMode;
     this.forkIdManager = forkIdManager;
-    snapServerTargetNumber =
+    this.snapServerTargetNumber =
         peerUpperBound / 2; // 50% of peers should be snap servers while snap syncing
+    this.shouldLimitRemoteConnections = maxRemotelyInitiatedConnections < peerUpperBound;
+
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.ETHEREUM,
         "peer_count",
@@ -453,24 +456,6 @@ public class EthPeers {
             });
   }
 
-  public void disconnectWorstIncomingUselessPeer() {
-    streamAvailablePeers()
-        .filter(p -> p.getConnection().inboundInitiated())
-        .filter(p -> !canExceedPeerLimits(p.getId()))
-        .min(getBestChainComparator())
-        .ifPresent(
-            peer -> {
-              LOG.atDebug()
-                  .setMessage(
-                      "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                  .addArgument(peer::getLoggableId)
-                  .addArgument(this::peerCount)
-                  .addArgument(this::getMaxPeers)
-                  .log();
-              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER);
-            });
-  }
-
   public void setChainHeadTracker(final ChainHeadTracker tracker) {
     this.tracker = tracker;
   }
@@ -479,8 +464,8 @@ public class EthPeers {
     this.snapServerChecker = checker;
   }
 
-  public void snapSyncServerPeersNeeded(final boolean b) {
-    snapSyncServerPeersNeeded = b;
+  public void snapServerPeersNeeded(final boolean b) {
+    this.snapServerPeersNeeded = b;
   }
 
   @FunctionalInterface
@@ -602,7 +587,7 @@ public class EthPeers {
   }
 
   private void enforceRemoteConnectionLimits() {
-    if (!shouldLimitRemoteConnections() || peerCount() < maxRemotelyInitiatedConnections) {
+    if (!shouldLimitRemoteConnections || peerCount() < maxRemotelyInitiatedConnections) {
       // Nothing to do
       return;
     }
@@ -646,13 +631,9 @@ public class EthPeers {
             });
   }
 
-  private boolean remoteConnectionLimitReached() {
-    return shouldLimitRemoteConnections()
-        && countUntrustedRemotelyInitiatedConnections() >= maxRemotelyInitiatedConnections;
-  }
-
-  private boolean shouldLimitRemoteConnections() {
-    return maxRemotelyInitiatedConnections < peerUpperBound;
+  private boolean inboundInitiatedConnectionLimitExceeded() {
+    return shouldLimitRemoteConnections
+        && countUntrustedRemotelyInitiatedConnections() > maxRemotelyInitiatedConnections;
   }
 
   private long countUntrustedRemotelyInitiatedConnections() {
@@ -682,9 +663,9 @@ public class EthPeers {
     }
   }
 
-  private boolean addPeerToEthPeers(final EthPeer peer) {
+  boolean addPeerToEthPeers(final EthPeer peer) {
     // We have a connection to a peer that is on the right chain and is willing to connect to us.
-    // Figure out whether we want to keep this peer to add it to the active connections.
+    // Figure out whether we want to add it to the active connections.
     final PeerConnection connection = peer.getConnection();
     if (activeConnections.containsValue(peer)) {
       //            connection.disconnect(DisconnectMessage.DisconnectReason.ALREADY_CONNECTED);
@@ -692,21 +673,44 @@ public class EthPeers {
     }
     final Bytes id = peer.getId();
     if (!randomPeerPriority) {
-      // Disconnect if too many peers
+
       if (peerCount() >= peerUpperBound) {
-        if (needMoreSnapServers()) {
-          disconnectNonSnapServerPeerOrLeastUseful();
-        } else if (!remoteConnectionLimitReached() && !peer.getConnection().inboundInitiated()) {
-          if (peer.isServingSnap()) {
-            disconnectWorstIncomingUselessPeer();
-          } else {
-            disconnectNonSnapServerPeerOrLeastUseful();
-          }
-        } else if (!canExceedPeerLimits(id)) {
-          LOG.trace(
-              "Too many peers. Disconnect connection: {}, max connections {}",
-              connection,
-              peerUpperBound);
+        final long numSnapServers = numberOfSnapServers();
+        final boolean inboundLimitExceeded = inboundInitiatedConnectionLimitExceeded();
+        // three reasons why we would disconnect an existing peer to accommodate the new peer
+        if (canExceedPeerLimits(id)
+            || (snapServerPeersNeeded
+                && numSnapServers < snapServerTargetNumber
+                && peer.isServingSnap())
+            || (inboundLimitExceeded && !peer.getConnection().inboundInitiated())) {
+
+          final boolean filterOutSnapServers =
+              snapServerPeersNeeded && (numSnapServers <= snapServerTargetNumber);
+
+          // find and disconnect the least useful peer we can disconnect
+          activeConnections.values().stream()
+              .filter(p -> !canExceedPeerLimits(p.getId()))
+              .filter(filterOutSnapServers ? p -> !p.isServingSnap() : p -> true)
+              .filter(inboundLimitExceeded ? p -> p.getConnection().inboundInitiated() : p -> true)
+              .min(MOST_USEFUL_PEER)
+              .ifPresentOrElse(
+                  pe -> pe.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS),
+                  () ->
+                      activeConnections.values().stream()
+                          .filter(p -> !canExceedPeerLimits(p.getId()))
+                          .min(MOST_USEFUL_PEER)
+                          .ifPresent(
+                              p -> {
+                                  p.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+                                  LOG.atTrace().setMessage("Disconnecting peer {} to be replaced by prioritised peer {}").addArgument(p.getLoggableId()).addArgument(peer.getLoggableId()).log();
+                              })
+              );
+        } else {
+          LOG.atTrace()
+              .setMessage("Too many peers. Disconnect connection: {}, max connections {}")
+              .addArgument(connection)
+              .addArgument(peerUpperBound)
+              .log();
           connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
           return false;
         }
@@ -719,6 +723,7 @@ public class EthPeers {
         LOG.debug("Did not add peer {} with connection {} to activeConnections", id, connection);
       }
       return added;
+
     } else {
       // randomPeerPriority! Add the peer and if there are too many connections fix it
       // TODO: random peer priority does not care yet about snap server peers -> check later
@@ -730,22 +735,10 @@ public class EthPeers {
   }
 
   private boolean needMoreSnapServers() {
-    return snapSyncServerPeersNeeded
-        && activeConnections.values().stream().filter(EthPeer::isServingSnap).count()
-            < snapServerTargetNumber;
+    return snapServerPeersNeeded && numberOfSnapServers() < snapServerTargetNumber;
   }
 
-  private void disconnectNonSnapServerPeerOrLeastUseful() {
-    activeConnections.values().stream()
-        .filter(p -> !p.isServingSnap())
-        .filter(p -> !canExceedPeerLimits(p.getId()))
-        .min(MOST_USEFUL_PEER)
-        .ifPresentOrElse(
-            p -> p.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS),
-            () ->
-                activeConnections.values().stream()
-                    .min(MOST_USEFUL_PEER)
-                    .ifPresent(
-                        p -> p.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS)));
+  private long numberOfSnapServers() {
+    return activeConnections.values().stream().filter(EthPeer::isServingSnap).count();
   }
 }

@@ -292,7 +292,7 @@ public class EthProtocolManagerTestUtil {
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
       final EthScheduler ethScheduler) {
-    final EthPeers peers =
+    final EthPeers ethPeers =
         new EthPeers(
             EthProtocol.NAME,
             () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
@@ -308,7 +308,7 @@ public class EthProtocolManagerTestUtil {
             new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
 
     final ChainHeadTracker chainHeadTrackerMock = getChainHeadTrackerMock();
-    peers.setChainHeadTracker(chainHeadTrackerMock);
+    ethPeers.setChainHeadTracker(chainHeadTrackerMock);
 
     final EthMessages messages = new EthMessages();
 
@@ -318,9 +318,9 @@ public class EthProtocolManagerTestUtil {
         BlockchainSetupUtil.forTesting(DataStorageFormat.FOREST).getWorldArchive(),
         mock(TransactionPool.class),
         EthProtocolConfiguration.defaultConfig(),
-        peers,
+        ethPeers,
         messages,
-        new EthContext(peers, messages, ethScheduler));
+        new EthContext(ethPeers, messages, ethScheduler));
   }
 
   public static EthProtocolManager create() {
@@ -484,6 +484,21 @@ public class EthProtocolManagerTestUtil {
         .totalDifficulty(head.getTotalDifficulty())
         .chainHeadHash(head.getHash())
         .estimatedHeight(blockchain.getChainHeadBlockNumber())
+        .build();
+  }
+
+  public static RespondingEthPeer createPeer(
+      final EthProtocolManager ethProtocolManager,
+      final Difficulty td,
+      final int estimatedHeight,
+      final boolean isServingSnap,
+      final boolean addToEthPeers) {
+    return RespondingEthPeer.builder()
+        .ethProtocolManager(ethProtocolManager)
+        .totalDifficulty(td)
+        .estimatedHeight(estimatedHeight)
+        .isServingSnap(isServingSnap)
+        .addToEthPeers(addToEthPeers)
         .build();
   }
 }

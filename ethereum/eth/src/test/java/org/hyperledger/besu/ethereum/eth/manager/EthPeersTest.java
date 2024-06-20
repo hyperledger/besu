@@ -375,6 +375,59 @@ public class EthPeersTest {
     assertThat(ethPeers.toString()).contains(peerA.getLoggableId());
   }
 
+  @Test
+  public void snapServersPreferredWhileSyncing() {
+
+    ethPeers.snapServerPeersNeeded(true);
+
+    while (ethPeers.peerCount() < ethPeers.getMaxPeers()) {
+      final EthPeer ethPeer =
+          EthProtocolManagerTestUtil.createPeer(
+                  ethProtocolManager, Difficulty.of(50), 20, false, false)
+              .getEthPeer();
+      assertThat(ethPeers.addPeerToEthPeers(ethPeer)).isTrue();
+    }
+
+    final EthPeer nonSnapServingPeer =
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, Difficulty.of(50), 20, false, false)
+            .getEthPeer();
+
+    assertThat(ethPeers.addPeerToEthPeers(nonSnapServingPeer)).isFalse();
+    assertThat(nonSnapServingPeer.getConnection().isDisconnected()).isTrue();
+
+    final EthPeer snapServingPeer =
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, Difficulty.of(50), 20, true, false)
+            .getEthPeer();
+
+    assertThat(ethPeers.addPeerToEthPeers(snapServingPeer)).isTrue();
+    assertThat(ethPeers.peerCount()).isEqualTo(ethPeers.getMaxPeers());
+  }
+
+  @Test
+  public void snapServersNotPreferedWhenInSync() {
+
+    ethPeers.snapServerPeersNeeded(false);
+
+    while (ethPeers.peerCount() < ethPeers.getMaxPeers()) {
+      final EthPeer ethPeer =
+          EthProtocolManagerTestUtil.createPeer(
+                  ethProtocolManager, Difficulty.of(50), 20, false, false)
+              .getEthPeer();
+      assertThat(ethPeers.addPeerToEthPeers(ethPeer)).isTrue();
+    }
+
+    final EthPeer snapServingPeer =
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, Difficulty.of(50), 20, true, false)
+            .getEthPeer();
+
+    assertThat(ethPeers.addPeerToEthPeers(snapServingPeer)).isFalse();
+    assertThat(snapServingPeer.getConnection().isDisconnected()).isTrue();
+    assertThat(ethPeers.peerCount()).isEqualTo(ethPeers.getMaxPeers());
+  }
+
   private void freeUpCapacity(final EthPeer ethPeer) {
     ethPeers.dispatchMessage(ethPeer, new EthMessage(ethPeer, NodeDataMessage.create(emptyList())));
   }
