@@ -42,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 public class SyncTargetManager extends AbstractSyncTargetManager {
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
+
   private static final int LOG_DEBUG_REPEAT_DELAY = 15;
   private static final int LOG_INFO_REPEAT_DELAY = 120;
   private static final int SECONDS_PER_REQUEST = 6; // 5s per request + 1s wait between retries
