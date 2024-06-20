@@ -681,8 +681,13 @@ public class Transaction
   }
 
   @Override
-  public Optional<List<SetCodeAuthorization>> getSetCodeTransactionPayloads() {
+  public Optional<List<SetCodeAuthorization>> setCodeTransactionPayloads() {
     return maybeSetCodeTransactionPayloads;
+  }
+
+  @Override
+  public int setCodeTransactionPayloadSize() {
+    return maybeSetCodeTransactionPayloads.map(List::size).orElse(0);
   }
 
   /**

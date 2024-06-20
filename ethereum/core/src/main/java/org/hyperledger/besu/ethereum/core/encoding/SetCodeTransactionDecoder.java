@@ -90,7 +90,8 @@ public class SetCodeTransactionDecoder {
     return transaction;
   }
 
-  private static SetCodeAuthorization decodeInnerPayload(final RLPInput input) {
+  public static SetCodeAuthorization decodeInnerPayload(final RLPInput input) {
+    input.enterList();
     final BigInteger chainId = input.readBigIntegerScalar();
     final Address address = Address.wrap(input.readBytes());
 
@@ -99,11 +100,19 @@ public class SetCodeTransactionDecoder {
       throw new IllegalArgumentException("Optional nonce must be an empty list, but isn't");
     }
 
+    if (!input.nextIsList()) {
+      throw new IllegalArgumentException("Optional nonce must be an list, but isn't");
+    }
+
+    final long noncesSize = input.nextSize();
+
     input.enterList();
-    while (input.nextSize() != 0) {
+    for (int i = 0; i < noncesSize; i++) {
       nonces.add(input.readLongScalar());
     }
     input.leaveList();
+
+    final byte yParity = (byte) input.readUnsignedByteScalar();
 
     final SECPSignature signature =
         SIGNATURE_ALGORITHM
@@ -111,7 +120,9 @@ public class SetCodeTransactionDecoder {
             .createSignature(
                 input.readUInt256Scalar().toUnsignedBigInteger(),
                 input.readUInt256Scalar().toUnsignedBigInteger(),
-                (byte) input.readUnsignedByteScalar());
+                yParity);
+
+    input.leaveList();
 
     return new SetCodeAuthorization(chainId, address, nonces, signature);
   }

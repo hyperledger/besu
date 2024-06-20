@@ -44,7 +44,8 @@ public class PragueGasCalculator extends CancunGasCalculator {
     super(maxPrecompile);
   }
 
-  public long getSetCodeListGasCost(final int authorizationListLength) {
+  @Override
+  public long setCodeListGasCost(final int authorizationListLength) {
     return PER_CONTRACT_CODE_BASE_COST * authorizationListLength;
   }
 }

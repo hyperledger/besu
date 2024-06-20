@@ -28,6 +28,8 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
  * WorldView}* provided in the constructor in memory.
@@ -187,5 +189,27 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   protected void reset() {
     updatedAccounts.clear();
     deletedAccounts.clear();
+  }
+
+  @Override
+  public void addCodeToEOA(final Address address, final Bytes code) {
+    final MutableAccount account = getAccount(address);
+
+    if (!account.getCode().isEmpty()) {
+      return;
+    }
+
+    account.setCode(code);
+  }
+
+  @Override
+  public void removeCodeFromEOAs(final Address address) {
+    final MutableAccount account = getAccount(address);
+
+    if (account.getCode().isEmpty()) {
+      return;
+    }
+
+    account.setCode(Bytes.EMPTY);
   }
 }

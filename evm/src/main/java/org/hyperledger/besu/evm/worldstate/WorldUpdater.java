@@ -24,6 +24,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * An object that buffers updates made over a particular {@link WorldView}.
  *
@@ -154,6 +156,25 @@ public interface WorldUpdater extends MutableWorldView {
 
   /** Mark transaction boundary. */
   default void markTransactionBoundary() {
+    // default is to ignore
+  }
+
+  /**
+   * Add code to EOA in case of EIP-7702 transaction.
+   *
+   * @param address the address of the EOA account to add code.
+   * @param code the code to add to the EOA account.
+   */
+  default void addCodeToEOA(final Address address, final Bytes code) {
+    // default is to ignore
+  }
+
+  /**
+   * Remove code from EOA in case of EIP-7702 transaction.
+   *
+   * @param address the address of the EOA account to remove code.
+   */
+  default void removeCodeFromEOAs(final Address address) {
     // default is to ignore
   }
 }
