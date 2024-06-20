@@ -157,7 +157,6 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       final WorldStateProofProvider worldStateProofProvider,
       final NavigableMap<Bytes32, Bytes> accounts,
       final ArrayDeque<Bytes> proofs) {
-    System.out.println("MRW: Adding response to account range request");
     if (!accounts.isEmpty() || !proofs.isEmpty()) {
       if (!worldStateProofProvider.isValidRangeProof(
           startKeyHash, endKeyHash, getRootHash(), proofs, accounts)) {

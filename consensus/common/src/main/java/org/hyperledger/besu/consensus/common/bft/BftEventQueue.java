@@ -55,7 +55,6 @@ public class BftEventQueue {
    */
   public void add(final BftEvent event) {
     // if (started.get()) {
-    // System.out.println("MRW: BFT event type received: " + event.getType());
     if (queue.size() > messageQueueLimit) {
       new Exception().printStackTrace();
       LOG.warn("Queue size exceeded trying to add new bft event {}", event);

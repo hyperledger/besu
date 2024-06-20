@@ -53,18 +53,18 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
 
   @SuppressWarnings("UnusedVariable")
   public static Optional<FastSyncDownloader<?>> createCheckpointDownloader(
-          final SnapSyncStatePersistenceManager snapContext,
-          final PivotBlockSelector pivotBlockSelector,
-          final SynchronizerConfiguration syncConfig,
-          final Path dataDirectory,
-          final ProtocolSchedule protocolSchedule,
-          final ProtocolContext protocolContext,
-          final MetricsSystem metricsSystem,
-          final EthContext ethContext,
-          final WorldStateStorageCoordinator worldStateStorageCoordinator,
-          final SyncState syncState,
-          final Clock clock,
-          final GenesisConfigOptions genesisConfigOptions) {
+      final SnapSyncStatePersistenceManager snapContext,
+      final PivotBlockSelector pivotBlockSelector,
+      final SynchronizerConfiguration syncConfig,
+      final Path dataDirectory,
+      final ProtocolSchedule protocolSchedule,
+      final ProtocolContext protocolContext,
+      final MetricsSystem metricsSystem,
+      final EthContext ethContext,
+      final WorldStateStorageCoordinator worldStateStorageCoordinator,
+      final SyncState syncState,
+      final Clock clock,
+      final GenesisConfigOptions genesisConfigOptions) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
