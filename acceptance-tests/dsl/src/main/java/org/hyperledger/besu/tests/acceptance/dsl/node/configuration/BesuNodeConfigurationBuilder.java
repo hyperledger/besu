@@ -247,7 +247,7 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder p2pConfiguration(final P2PConfiguration p2pConfiguration) {
+  public BesuNodeConfigurationBuilder p2PConfiguration(final P2PConfiguration p2pConfiguration) {
     this.p2pConfiguration = p2pConfiguration;
     return this;
   }

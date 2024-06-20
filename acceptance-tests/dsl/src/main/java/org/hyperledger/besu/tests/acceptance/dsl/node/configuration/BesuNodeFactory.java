@@ -55,6 +55,11 @@ public class BesuNodeFactory {
 
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
 
+  private final P2PConfiguration P2P_DISABLED =
+      P2PConfiguration.builder().p2pEnabled(false).build();
+  private final P2PConfiguration DISCOVERY_DISABLED =
+      P2PConfiguration.builder().discoveryEnabled(false).build();
+
   public BesuNode create(final BesuNodeConfiguration config) throws IOException {
     return new BesuNode(
         config.getName(),
@@ -182,7 +187,7 @@ public class BesuNodeFactory {
             .name(name)
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
             .webSocketEnabled()
-            .p2pConfiguration(P2PConfiguration.builder().peerDiscoveryEnabled(false).build())
+            .p2PConfiguration(DISCOVERY_DISABLED)
             .build());
   }
 
@@ -197,7 +202,6 @@ public class BesuNodeFactory {
             // .setMetricsConfiguration(metricsConfiguration)
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
             .webSocketEnabled()
-            .p2pConfiguration(P2PConfiguration.builder().p2pEnabled(true).build())
             .build());
   }
 
@@ -206,7 +210,7 @@ public class BesuNodeFactory {
         new BesuNodeConfigurationBuilder()
             .name(name)
             .jsonRpcConfiguration(node.jsonRpcConfigWithAdmin())
-            .p2pConfiguration(P2PConfiguration.builder().p2pEnabled(false).build())
+            .p2PConfiguration(P2P_DISABLED)
             .build());
   }
 
@@ -276,7 +280,7 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
-            .p2pConfiguration(P2PConfiguration.builder().p2pEnabled(false).build())
+            .p2PConfiguration(P2P_DISABLED)
             .jsonRpcConfiguration(node.createJsonRpcEnabledConfig())
             .build());
   }
@@ -358,7 +362,7 @@ public class BesuNodeFactory {
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
-            .p2pConfiguration(P2PConfiguration.builder().peerDiscoveryEnabled(false).build())
+            .p2PConfiguration(DISCOVERY_DISABLED)
             .engineRpcEnabled(false)
             .build());
   }
@@ -477,12 +481,12 @@ public class BesuNodeFactory {
             .devMode(false)
             .genesisConfigProvider(GenesisConfigurationFactory::createIbft2GenesisConfig);
     if (fixedPort) {
-      var port =
+      int port =
           Math.abs(name.hashCode() % 60000)
               + 1024
               + 500; // Generate a consistent port for p2p based on node name (+ 500 to avoid
       // clashing with RPC port or other nodes with a similar name)
-      builder.p2pConfiguration(P2PConfiguration.builder().p2pPort(port).build());
+      builder.p2PConfiguration(P2PConfiguration.builder().port(port).build());
     }
     return create(builder.build());
   }
@@ -530,12 +534,12 @@ public class BesuNodeFactory {
             .devMode(false)
             .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig);
     if (fixedPort) {
-      var port =
+      int port =
           Math.abs(name.hashCode() % 60000)
               + 1024
               + 500; // Generate a consistent port for p2p based on node name (+ 500 to avoid
       // clashing with RPC port or other nodes with a similar name)
-      builder.p2pConfiguration(P2PConfiguration.builder().p2pPort(port).build());
+      builder.p2PConfiguration(P2PConfiguration.builder().port(port).build());
     }
     return create(builder.build());
   }
@@ -718,7 +722,7 @@ public class BesuNodeFactory {
         .name(name)
         .jsonRpcEnabled()
         .webSocketEnabled()
-        .p2pConfiguration(P2PConfiguration.builder().peerDiscoveryEnabled(false).build())
+        .p2PConfiguration(DISCOVERY_DISABLED)
         .staticNodes(staticNodesUrls)
         .bootnodeEligible(false);
   }

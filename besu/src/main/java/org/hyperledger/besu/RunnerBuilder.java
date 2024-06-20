@@ -215,9 +215,9 @@ public class RunnerBuilder {
   }
 
   /**
-   * TLSConfiguration p2pTLSConfiguration.
+   * P2P Configuration Configuration.
    *
-   * @param p2PConfiguration the TLSConfiguration p2pTLSConfiguration
+   * @param p2PConfiguration the p2pConfiguration
    * @return the runner builder
    */
   public RunnerBuilder p2PConfiguration(final P2PConfiguration p2PConfiguration) {

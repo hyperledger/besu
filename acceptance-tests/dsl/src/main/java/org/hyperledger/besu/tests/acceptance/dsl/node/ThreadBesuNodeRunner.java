@@ -252,8 +252,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .storageProvider(storageProvider)
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
-        .p2PConfiguration(P2PConfiguration.createDefault())
-        .networkConfiguration(node.getNetworkingConfiguration());
+        .networkConfiguration(node.getNetworkingConfiguration())
+        .p2PConfiguration(P2PConfiguration.createDefault());
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)

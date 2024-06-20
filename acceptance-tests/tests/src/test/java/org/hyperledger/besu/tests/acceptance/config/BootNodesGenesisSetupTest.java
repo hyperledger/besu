@@ -109,7 +109,7 @@ public class BootNodesGenesisSetupTest extends AcceptanceTestBase {
     return nodeBuilder
         .devMode(false)
         .keyPair(keyPair)
-        .p2pConfiguration(P2PConfiguration.builder().p2pPort(p2pBindingPort).build())
+        .p2PConfiguration(P2PConfiguration.builder().port(p2pBindingPort).build())
         .genesisConfigProvider(
             (nodes) ->
                 Optional.of(

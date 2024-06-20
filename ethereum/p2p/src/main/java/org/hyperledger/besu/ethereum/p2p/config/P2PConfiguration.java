@@ -128,10 +128,10 @@ public class P2PConfiguration {
   public static P2PConfiguration createDefault() {
     return new Builder()
         .p2pEnabled(true)
-        .peerDiscoveryEnabled(true)
-        .p2pHost(autoDiscoverDefaultIP().getHostAddress())
+        .discoveryEnabled(true)
+        .host(autoDiscoverDefaultIP().getHostAddress())
         .p2pInterface(NetworkUtility.INADDR_ANY)
-        .p2pPort(EnodeURLImpl.DEFAULT_LISTENING_PORT)
+        .port(EnodeURLImpl.DEFAULT_LISTENING_PORT)
         .maxPeers(25)
         .maxRemoteConnectionsPercentage(
             Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_CONNECTIONS_ALLOWED).toPercentage())
@@ -145,9 +145,9 @@ public class P2PConfiguration {
 
   public static class Builder {
     private boolean p2pEnabled = true;
-    private boolean peerDiscoveryEnabled = true;
+    private boolean discoveryEnabled = true;
     private List<String> bootNodes;
-    private String p2pHost;
+    private String host;
     private String p2pInterface = NetworkUtility.INADDR_ANY;
     private int p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
     private int maxPeers;
@@ -164,8 +164,8 @@ public class P2PConfiguration {
       return this;
     }
 
-    public Builder peerDiscoveryEnabled(final boolean peerDiscoveryEnabled) {
-      this.peerDiscoveryEnabled = peerDiscoveryEnabled;
+    public Builder discoveryEnabled(final boolean discoveryEnabled) {
+      this.discoveryEnabled = discoveryEnabled;
       return this;
     }
 
@@ -174,8 +174,8 @@ public class P2PConfiguration {
       return this;
     }
 
-    public Builder p2pHost(final String p2pHost) {
-      this.p2pHost = p2pHost;
+    public Builder host(final String host) {
+      this.host = host;
       return this;
     }
 
@@ -184,8 +184,8 @@ public class P2PConfiguration {
       return this;
     }
 
-    public Builder p2pPort(final int p2pPort) {
-      this.p2pPort = p2pPort;
+    public Builder port(final int listeningPort) {
+      this.p2pPort = listeningPort;
       return this;
     }
 
@@ -228,9 +228,9 @@ public class P2PConfiguration {
     public P2PConfiguration build() {
       return new P2PConfiguration(
           p2pEnabled,
-          peerDiscoveryEnabled,
+          discoveryEnabled,
           bootNodes,
-          p2pHost,
+          host,
           p2pInterface,
           p2pPort,
           maxPeers,

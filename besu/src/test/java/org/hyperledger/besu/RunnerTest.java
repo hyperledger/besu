@@ -193,7 +193,7 @@ public final class RunnerTest {
     final RunnerBuilder runnerBuilder =
         new RunnerBuilder()
             .vertx(vertx)
-            .p2PConfiguration(P2PConfiguration.builder().p2pHost(listenHost).p2pPort(0).build())
+            .p2PConfiguration(P2PConfiguration.builder().host(listenHost).port(0).build())
             .metricsSystem(noOpMetricsSystem)
             .permissioningService(new PermissioningServiceImpl())
             .staticNodes(emptySet())

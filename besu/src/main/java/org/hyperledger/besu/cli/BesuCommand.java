@@ -2095,6 +2095,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         runnerBuilder
             .vertx(vertx)
             .besuController(controller)
+            .p2PConfiguration(p2pConfiguration)
             .natMethod(natMethod)
             .natManagerServiceName(unstableNatOptions.getNatManagerServiceName())
             .natMethodFallbackEnabled(unstableNatOptions.getNatMethodFallbackEnabled())
@@ -2121,7 +2122,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
-            .p2PConfiguration(p2pConfiguration)
             .build();
 
     addShutdownHook(runner);
