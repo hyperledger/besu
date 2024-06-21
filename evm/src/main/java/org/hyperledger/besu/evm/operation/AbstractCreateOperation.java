@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -218,7 +217,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     Code outputCode =
         (childFrame.getCreatedCode() != null)
             ? childFrame.getCreatedCode()
-            : CodeFactory.createCode(childFrame.getOutputData(), evm.getMaxEOFVersion());
+            : evm.getCodeForCreation(childFrame.getOutputData());
     frame.popStackItems(getStackItemsConsumed());
 
     if (outputCode.isValid()) {

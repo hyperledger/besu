@@ -30,7 +30,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -166,7 +165,7 @@ class AbstractCreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 0))
+            .code(evm.getCodeUncached(SIMPLE_CREATE))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))

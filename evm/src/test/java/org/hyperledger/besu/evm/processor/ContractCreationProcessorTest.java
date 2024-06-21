@@ -19,27 +19,25 @@ import static org.hyperledger.besu.evm.EOFTestConstants.EOF_CREATE_CONTRACT;
 import static org.hyperledger.besu.evm.EOFTestConstants.INNER_CONTRACT;
 import static org.hyperledger.besu.evm.frame.MessageFrame.State.COMPLETED_SUCCESS;
 import static org.hyperledger.besu.evm.frame.MessageFrame.State.EXCEPTIONAL_HALT;
-import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.EOFValidationCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Collections;
 
 import org.apache.tuweni.bytes.Bytes;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @Nested
@@ -47,8 +45,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ContractCreationProcessorTest
     extends AbstractMessageProcessorTest<ContractCreationProcessor> {
 
-  @Mock GasCalculator gasCalculator;
-  @Mock EVM evm;
+  EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
 
   private ContractCreationProcessor processor;
 
@@ -56,7 +53,7 @@ class ContractCreationProcessorTest
   void shouldThrowAnExceptionWhenCodeContractFormatInvalidPreEOF() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
             Collections.singletonList(PrefixCodeRule.of()),
@@ -65,9 +62,8 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("EF01010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(10600L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
     assertThat(messageFrame.getExceptionalHaltReason())
@@ -78,7 +74,7 @@ class ContractCreationProcessorTest
   void shouldNotThrowAnExceptionWhenCodeContractIsValid() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
             Collections.singletonList(PrefixCodeRule.of()),
@@ -87,9 +83,8 @@ class ContractCreationProcessorTest
     final Bytes contractCode = Bytes.fromHexString("0101010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(10600L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -98,13 +93,12 @@ class ContractCreationProcessorTest
   void shouldNotThrowAnExceptionWhenPrefixCodeRuleNotAdded() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
+            evm.getGasCalculator(), evm, true, Collections.emptyList(), 1, Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("0F01010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(10600L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -113,18 +107,17 @@ class ContractCreationProcessorTest
   void shouldThrowAnExceptionWhenCodeContractFormatInvalidPostEOF() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("EF00010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(10600L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
     assertThat(messageFrame.getExceptionalHaltReason())
@@ -135,18 +128,17 @@ class ContractCreationProcessorTest
   void eofValidationShouldAllowLegacyDeployFromLegacyInit() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("0101010101010101");
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(10600L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -155,19 +147,17 @@ class ContractCreationProcessorTest
   void eofValidationShouldAllowEOFCode() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
-    final Bytes contractCode = INNER_CONTRACT;
     final MessageFrame messageFrame =
-        new TestMessageFrameBuilder().code(CodeFactory.createCode(EOF_CREATE_CONTRACT, 1)).build();
-    messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+        new TestMessageFrameBuilder().code(evm.getCodeUncached(EOF_CREATE_CONTRACT)).build();
+    messageFrame.setOutputData(INNER_CONTRACT);
+    messageFrame.setGasRemaining(10600L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -176,18 +166,16 @@ class ContractCreationProcessorTest
   void prefixValidationShouldPreventEOFCode() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
             Collections.singletonList(PrefixCodeRule.of()),
             1,
             Collections.emptyList());
-    final Bytes contractCode = INNER_CONTRACT;
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
-    messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setOutputData(INNER_CONTRACT);
+    messageFrame.setGasRemaining(10600L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
   }
@@ -196,41 +184,38 @@ class ContractCreationProcessorTest
   void eofValidationShouldPreventLegacyDeployFromEOFInit() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("6030602001");
     final Bytes initCode = EOF_CREATE_CONTRACT;
     final MessageFrame messageFrame =
-        new TestMessageFrameBuilder().code(CodeFactory.createCode(initCode, 1)).build();
+        new TestMessageFrameBuilder().code(evm.getCodeForCreation(initCode)).build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(10600L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
   }
 
   @Test
-  @Disabled("This is what's changing")
   void eofValidationPreventsEOFDeployFromLegacyInit() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
-            Collections.singletonList(EOFValidationCodeRule.of(1)),
+            Collections.singletonList(EOFValidationCodeRule.from(evm)),
             1,
             Collections.emptyList());
     final Bytes contractCode = EOF_CREATE_CONTRACT;
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(10600L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
   }
@@ -239,18 +224,18 @@ class ContractCreationProcessorTest
   void shouldThrowAnExceptionWhenCodeContractTooLarge() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
-            Collections.singletonList(MaxCodeSizeRule.of(24 * 1024)),
+            Collections.singletonList(MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON)),
             1,
             Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024 + 1));
+    final Bytes contractCode =
+        Bytes.fromHexString("00".repeat(EvmSpecVersion.SPURIOUS_DRAGON.getMaxCodeSize() + 1));
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(10_000_000L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(EXCEPTIONAL_HALT);
     assertThat(messageFrame.getExceptionalHaltReason())
@@ -261,18 +246,18 @@ class ContractCreationProcessorTest
   void shouldNotThrowAnExceptionWhenCodeContractTooLarge() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator,
+            evm.getGasCalculator(),
             evm,
             true,
-            Collections.singletonList(MaxCodeSizeRule.of(24 * 1024)),
+            Collections.singletonList(MaxCodeSizeRule.from(EvmSpecVersion.SPURIOUS_DRAGON)),
             1,
             Collections.emptyList());
-    final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024));
+    final Bytes contractCode =
+        Bytes.fromHexString("00".repeat(EvmSpecVersion.SPURIOUS_DRAGON.getMaxCodeSize()));
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(5_000_000L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -281,13 +266,12 @@ class ContractCreationProcessorTest
   void shouldNotThrowAnExceptionWhenCodeSizeRuleNotAdded() {
     processor =
         new ContractCreationProcessor(
-            gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
+            evm.getGasCalculator(), evm, true, Collections.emptyList(), 1, Collections.emptyList());
     final Bytes contractCode = Bytes.fromHexString("00".repeat(24 * 1024 + 1));
     final MessageFrame messageFrame = new TestMessageFrameBuilder().build();
     messageFrame.setOutputData(contractCode);
-    messageFrame.setGasRemaining(100L);
+    messageFrame.setGasRemaining(5_000_000L);
 
-    when(gasCalculator.codeDepositGasCost(contractCode.size())).thenReturn(10L);
     processor.codeSuccess(messageFrame, OperationTracer.NO_TRACING);
     assertThat(messageFrame.getState()).isEqualTo(COMPLETED_SUCCESS);
   }
@@ -295,6 +279,6 @@ class ContractCreationProcessorTest
   @Override
   protected ContractCreationProcessor getAbstractMessageProcessor() {
     return new ContractCreationProcessor(
-        gasCalculator, evm, true, Collections.emptyList(), 1, Collections.emptyList());
+        evm.getGasCalculator(), evm, true, Collections.emptyList(), 1, Collections.emptyList());
   }
 }
