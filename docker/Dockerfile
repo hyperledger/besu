@@ -1,5 +1,4 @@
-
-FROM ubuntu:23.10
+FROM ubuntu:24.04
 ARG VERSION="dev"
 ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0"
 
@@ -12,7 +11,7 @@ RUN apt-get update $NO_PROXY_CACHE  && \
   apt-get clean  && \
   rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/*  && \
   rm -rf /var/lib/apt/lists/*  && \
-  # Ubuntu 23.10 comes with an "ubuntu" user with uid 1000. We need 1000 for besu.
+  # Starting from version 23.10, Ubuntu comes with an "ubuntu" user with uid 1000. We need 1000 for besu.
   userdel ubuntu 2>/dev/null || true && rm -rf /home/ubuntu  && \
   # Ensure we use a stable UID for besu, as file permissions are tied to UIDs.
   adduser --uid 1000 --disabled-password --gecos "" --home /opt/besu besu  && \
