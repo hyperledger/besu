@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
@@ -29,16 +30,25 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class is a BFT-specific implementatino of the pivot-block selection used for snap-sync. It
+ * makes some pragmatic decisions about cases specific to permissioned chains, e.g. when there is a
+ * single validator node at the start of a chain, or a brand new chain has all nodes at block 0. For
+ * other cases the behaviour is the same as public-chain pivot selection, namely that the best peer
+ * is asked for its candidate pivot block.
+ */
 public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
 
   private static final Logger LOG = LoggerFactory.getLogger(BFTPivotSelectorFromPeers.class);
 
   private final ProtocolContext protocolContext;
+  private final BlockHeader blockHeader;
   private final NodeKey nodeKey;
 
   public BFTPivotSelectorFromPeers(
@@ -47,11 +57,13 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
       final SyncState syncState,
       final MetricsSystem metricsSystem,
       final ProtocolContext protocolContext,
-      final NodeKey nodeKey) {
+      final NodeKey nodeKey,
+      final BlockHeader blockHeader) {
     super(ethContext, syncConfig, syncState, metricsSystem);
     this.protocolContext = protocolContext;
+    this.blockHeader = blockHeader;
     this.nodeKey = nodeKey;
-    LOG.info("Creating BFTPivotSelectorFromPeers");
+    LOG.info("Creating pivot block selector for BFT node");
   }
 
   @Override
@@ -75,44 +87,56 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
 
       return bestPeer.flatMap(this::fromBestPeer);
     } else {
+      final boolean weAreAValidator =
+          validatorProvider
+              .getValidatorsAtHead()
+              .contains(Util.publicKeyToAddress(nodeKey.getPublicKey()));
+
       // Treat us being the only validator as a special case. We are the only node that can produce
       // blocks so we won't wait to sync with a non-validator node that may or may not exist
-      if (validatorProvider.getValidatorsAtHead().size() == 1
-          && validatorProvider
-              .getValidatorsAtHead()
-              .contains(Util.publicKeyToAddress(nodeKey.getPublicKey()))) {
+      if (weAreAValidator && validatorProvider.getValidatorsAtHead().size() == 1) {
         LOG.info("This node is the only BFT validator, exiting sync process");
         throw new NoSyncRequiredException();
       }
 
-      // Treat the case where we have sync-min-peers peers, who don't have a chain-head estimate but
-      // who are all validators, as not needing to sync
-      // This is effectively handling the "new chain with N validators" case, but speaks more
-      // generally to the BFT case where a BFT chain
-      // prioritises information from other validators over waiting for non-validator peers to
-      // respond.
-      final AtomicInteger peerValidatorCount = new AtomicInteger();
-      ethContext
-          .getEthPeers()
-          .getAllActiveConnections()
-          .forEach(
-              peer -> {
-                if (validatorProvider
-                    .getValidatorsAtHead()
-                    .contains(peer.getPeerInfo().getAddress())) {
-                  peerValidatorCount.getAndIncrement();
-                }
-              });
+      // Treat the case where we are at block 0 and don't yet have any validator peers with a chain
+      // height estimate as potentially a new QBFT chain. Check if any of the other peers have the
+      // same block hash as our genesis block. Note, if we have a non-validator peer
+      if (blockHeader.getNumber() == 0) {
+        final AtomicInteger peerValidatorCount = new AtomicInteger();
+        final AtomicBoolean peerAtOurGenesisBlock = new AtomicBoolean();
+        ethContext
+            .getEthPeers()
+            .streamAllPeers()
+            .forEach(
+                peer -> {
+                  // If we are at block 0 and our block hash matches at least one of our peers we
+                  // assume we're all at block 0 and therefore won't try to snap sync.
+                  if (peer.chainState()
+                      .getBestBlock()
+                      .getHash()
+                      .equals(blockHeader.getBlockHash())) {
+                    peerAtOurGenesisBlock.set(true);
+                  }
+                  if (!peer.getConnection().isDisconnected()
+                      && validatorProvider
+                          .getValidatorsAtHead()
+                          .contains(peer.getConnection().getPeerInfo().getAddress())) {
+                    peerValidatorCount.getAndIncrement();
+                  }
+                });
 
-      if (peerValidatorCount.get() >= syncConfig.getSyncMinimumPeerCount()) {
-        // We have sync-min-peers x validators connected, all of whom have no head estimate. We'll
-        // assume this is a new chain
-        // and skip waiting for any more peers to sync with. The worst case is this puts us into
-        // full sync mode.
-        LOG.info(
-            "Peered with {} validators but no best peer found to sync from. Assuming new BFT chain, exiting sync process",
-            peerValidatorCount.get());
-        throw new NoSyncRequiredException();
+        if (weAreAValidator
+            && peerValidatorCount.get() >= syncConfig.getSyncMinimumPeerCount()
+            && peerAtOurGenesisBlock.get()) {
+          // We have sync-min-peers x validators connected, all of whom have no head estimate. We'll
+          // assume this is a new chain and skip waiting for any more peers to sync with. The worst
+          // case is this puts us into full sync mode.
+          LOG.info(
+              "Peered with {} validators but no best peer found to sync from and their current block hash matches our genesis block. Assuming new BFT chain, exiting snap-sync",
+              peerValidatorCount.get());
+          throw new NoSyncRequiredException();
+        }
       }
     }
 

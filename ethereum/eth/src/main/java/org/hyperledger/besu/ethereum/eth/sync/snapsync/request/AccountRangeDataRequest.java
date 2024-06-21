@@ -170,6 +170,12 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       } else {
         stackTrie.addElement(startKeyHash, proofs, accounts);
         isProofValid = Optional.of(true);
+        LOG.atDebug()
+            .setMessage("{} accounts received during sync for account range {} {}")
+            .addArgument(accounts.size())
+            .addArgument(startKeyHash)
+            .addArgument(endKeyHash)
+            .log();
       }
     }
   }

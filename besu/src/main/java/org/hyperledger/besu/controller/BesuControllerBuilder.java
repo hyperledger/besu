@@ -685,7 +685,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
-            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
 
     final Synchronizer synchronizer =
         createSynchronizer(
@@ -840,14 +840,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Blockchain blockchain) {
 
     if (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2()) {
       LOG.info(
           "{} is configured, creating initial sync for BFT",
           genesisConfigOptions.getConsensusEngine().toUpperCase(Locale.ROOT));
       return new BFTPivotSelectorFromPeers(
-          ethContext, syncConfig, syncState, metricsSystem, protocolContext, nodeKey);
+          ethContext, syncConfig, syncState, metricsSystem, protocolContext, nodeKey, blockchain.getChainHeadHeader());
     } else if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
