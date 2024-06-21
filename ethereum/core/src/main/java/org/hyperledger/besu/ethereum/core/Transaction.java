@@ -1179,7 +1179,7 @@ public class Transaction
     protected Optional<BigInteger> v = Optional.empty();
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
-    protected Optional<List<SetCodeAuthorization>> setCodeTransactionPayloads;
+    protected Optional<List<SetCodeAuthorization>> setCodeTransactionPayloads = Optional.empty();
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;

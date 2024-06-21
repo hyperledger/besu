@@ -1376,6 +1376,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                     case ACCESS_LIST -> createAccessListPendingTransaction(sender, n);
                     case EIP1559 -> createEIP1559PendingTransaction(sender, n);
                     case BLOB -> createBlobPendingTransaction(sender, n);
+                    case SET_CODE -> throw new UnsupportedOperationException(); // TODO 7702
                   });
     }
 

@@ -174,7 +174,7 @@ public interface WorldUpdater extends MutableWorldView {
    *
    * @param address the address of the EOA account to remove code.
    */
-  default void removeCodeFromEOAs(final Address address) {
+  default void removeCodeFromEOA(final Address address) {
     // default is to ignore
   }
 }
