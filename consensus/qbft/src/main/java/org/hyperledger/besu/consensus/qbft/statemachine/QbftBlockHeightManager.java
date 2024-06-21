@@ -174,7 +174,7 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
       } else {
         LOG.info(
               "Block has no transactions but emptyBlockPeriodSeconds did not expired yet: " +  roundIdentifier);
-        finalState.getBlockTimer().resetTimerForEmptyBlock(roundIdentifier, currentTimeInMillis);
+        finalState.getBlockTimer().resetTimerForEmptyBlock(roundIdentifier, parentHeader, currentTimeInMillis);
         finalState.getRoundTimer().cancelTimer();
         currentRound = Optional.empty();
       }
