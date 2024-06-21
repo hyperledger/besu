@@ -128,16 +128,16 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
 
   @Override
   public T get() {
-    while (hasMore()) {
-      try {
+    try {
+      while (hasMore()) {
         final T value = queue.poll(1, TimeUnit.SECONDS);
         if (value != null) {
           outputCounter.inc();
           return value;
         }
-      } catch (final InterruptedException e) {
-        LOG.trace("Interrupted while waiting for next item from pipe {}", pipeName);
       }
+    } catch (final InterruptedException e) {
+      LOG.trace("Interrupted while waiting for next item from pipe {}", pipeName);
     }
     return null;
   }

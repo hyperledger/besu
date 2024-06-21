@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncMetricsManager.Step.DOWNLOAD;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
-import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createBFTAccountRangeDataRequest;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
@@ -52,6 +51,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("unused")
 public class SnapWorldStateDownloader implements WorldStateDownloader {
 
   private static final Logger LOG = LoggerFactory.getLogger(SnapWorldStateDownloader.class);
@@ -192,9 +192,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
         ranges.forEach(
             (key, value) ->
                 newDownloadState.enqueueRequest(
-                    (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2())
-                        ? createBFTAccountRangeDataRequest(stateRoot, key, value)
-                        : createAccountRangeDataRequest(stateRoot, key, value)));
+                    createAccountRangeDataRequest(stateRoot, key, value)));
       }
 
       Optional<CompleteTaskStep> maybeCompleteTask =
