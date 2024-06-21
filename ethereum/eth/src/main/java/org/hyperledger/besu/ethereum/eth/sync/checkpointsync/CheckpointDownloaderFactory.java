@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;

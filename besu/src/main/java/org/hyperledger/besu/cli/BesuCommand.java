@@ -143,6 +143,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -2198,14 +2199,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .saveFile((dataPath.resolve(txPoolConf.getSaveFile().getPath()).toFile()));
 
     if (genesisConfigOptionsSupplier.get().isZeroBaseFee()) {
-      logger.info(
+      logger.warn(
           "Forcing price bump for transaction replacement to 0, since we are on a zero basefee network");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
     }
 
     if (miningParametersSupplier.get().getMinTransactionGasPrice().equals(Wei.ZERO)
         && !transactionPoolOptions.isPriceBumpSet(commandLine)) {
-      logger.info(
+      logger.warn(
           "Forcing price bump for transaction replacement to 0, since min-gas-price is set to 0");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
     }
@@ -2245,6 +2246,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private DataStorageConfiguration getDataStorageConfiguration() {
     if (dataStorageConfiguration == null) {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
+
+      final ImmutableDataStorageConfiguration.Builder theBuilder =
+          ImmutableDataStorageConfiguration.builder().from(dataStorageConfiguration);
+      if (syncMode == SyncMode.FULL
+          && dataStorageOptions.toDomainObject().getDataStorageFormat()
+              == DataStorageFormat.BONSAI) {
+        logger.warn("Forcing bonsai-limit-trie-logs-enabled to false, since sync mode is FULL");
+        theBuilder.bonsaiLimitTrieLogsEnabled(false);
+      }
+      dataStorageConfiguration = theBuilder.build();
     }
     return dataStorageConfiguration;
   }

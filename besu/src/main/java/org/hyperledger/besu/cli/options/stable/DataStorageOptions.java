@@ -143,13 +143,6 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    */
   public void validate(final CommandLine commandLine, final SyncMode syncMode) {
     if (DataStorageFormat.BONSAI == dataStorageFormat && bonsaiLimitTrieLogsEnabled) {
-      if (SyncMode.FULL == syncMode) {
-        throw new CommandLine.ParameterException(
-            commandLine,
-            String.format(
-                "Cannot enable " + BONSAI_LIMIT_TRIE_LOGS_ENABLED + " with sync-mode %s",
-                syncMode));
-      }
       if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
         throw new CommandLine.ParameterException(
             commandLine,
