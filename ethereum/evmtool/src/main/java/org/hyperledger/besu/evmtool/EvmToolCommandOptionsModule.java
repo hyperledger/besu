@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evmtool;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
@@ -89,7 +87,7 @@ public class EvmToolCommandOptionsModule {
   @Singleton
   BesuConfiguration provideBesuConfiguration() {
     final var besuConfiguration = new BesuConfigurationImpl();
-    besuConfiguration.init(dataPath, dataPath.resolve(BesuController.DATABASE_PATH), null, null);
+    besuConfiguration.init(dataPath, dataPath.resolve(BesuController.DATABASE_PATH), null);
     return besuConfiguration;
   }
 

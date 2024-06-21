@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,13 +14,13 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ValidatorExitParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
-import org.hyperledger.besu.ethereum.core.ValidatorExit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,11 +42,12 @@ public class EngineGetPayloadResultV4 {
       final BlockHeader header,
       final List<String> transactions,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Deposit>> deposits,
-      final Optional<List<ValidatorExit>> exits,
+      final Optional<List<DepositRequest>> depositRequests,
+      final Optional<List<WithdrawalRequest>> withdrawalRequests,
       final String blockValue,
       final BlobsBundleV1 blobsBundle) {
-    this.executionPayload = new PayloadResult(header, transactions, withdrawals, deposits, exits);
+    this.executionPayload =
+        new PayloadResult(header, transactions, withdrawals, depositRequests, withdrawalRequests);
     this.blockValue = blockValue;
     this.blobsBundle = blobsBundle;
     this.shouldOverrideBuilder = false;
@@ -93,15 +94,15 @@ public class EngineGetPayloadResultV4 {
 
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
-    private final List<DepositParameter> deposits;
-    private final List<ValidatorExitParameter> exits;
+    private final List<DepositRequestParameter> depositRequests;
+    private final List<WithdrawalRequestParameter> withdrawalRequests;
 
     public PayloadResult(
         final BlockHeader header,
         final List<String> transactions,
         final Optional<List<Withdrawal>> withdrawals,
-        final Optional<List<Deposit>> deposits,
-        final Optional<List<ValidatorExit>> exits) {
+        final Optional<List<DepositRequest>> depositRequests,
+        final Optional<List<WithdrawalRequest>> withdrawalRequests) {
       this.blockNumber = Quantity.create(header.getNumber());
       this.blockHash = header.getHash().toString();
       this.parentHash = header.getParentHash().toString();
@@ -124,17 +125,20 @@ public class EngineGetPayloadResultV4 {
                           .map(WithdrawalParameter::fromWithdrawal)
                           .collect(Collectors.toList()))
               .orElse(null);
-      this.deposits =
-          deposits
+      this.depositRequests =
+          depositRequests
               .map(
-                  ds -> ds.stream().map(DepositParameter::fromDeposit).collect(Collectors.toList()))
+                  ds ->
+                      ds.stream()
+                          .map(DepositRequestParameter::fromDeposit)
+                          .collect(Collectors.toList()))
               .orElse(null);
-      this.exits =
-          exits
+      this.withdrawalRequests =
+          withdrawalRequests
               .map(
-                  exit ->
-                      exit.stream()
-                          .map(ValidatorExitParameter::fromValidatorExit)
+                  wr ->
+                      wr.stream()
+                          .map(WithdrawalRequestParameter::fromWithdrawalRequest)
                           .collect(Collectors.toList()))
               .orElse(null);
       this.blobGasUsed = header.getBlobGasUsed().map(Quantity::create).orElse(Quantity.HEX_ZERO);
@@ -214,14 +218,14 @@ public class EngineGetPayloadResultV4 {
       return withdrawals;
     }
 
-    @JsonGetter(value = "depositReceipts")
-    public List<DepositParameter> getDeposits() {
-      return deposits;
+    @JsonGetter(value = "depositRequests")
+    public List<DepositRequestParameter> getDepositRequests() {
+      return depositRequests;
     }
 
-    @JsonGetter(value = "exits")
-    public List<ValidatorExitParameter> getExits() {
-      return exits;
+    @JsonGetter(value = "withdrawalRequests")
+    public List<WithdrawalRequestParameter> getWithdrawalRequests() {
+      return withdrawalRequests;
     }
 
     @JsonGetter(value = "feeRecipient")

@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.operation;
 
@@ -79,7 +78,7 @@ class AbstractCreateOperationTest {
   public static final Bytes INVALID_EOF =
       Bytes.fromHexString(
           "0x"
-              + "73EF99010100040200010001030000000000000000" // PUSH20 contract
+              + "73EF00990100040200010001030000000000000000" // PUSH20 contract
               + "6000" // PUSH1 0x00
               + "52" // MSTORE
               + "6014" // PUSH1 20
@@ -105,7 +104,7 @@ class AbstractCreateOperationTest {
      * @param maxInitcodeSize Maximum init code size
      */
     public FakeCreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, maxInitcodeSize);
+      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, maxInitcodeSize, 0);
     }
 
     @Override
@@ -167,7 +166,7 @@ class AbstractCreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
+            .code(CodeFactory.createCode(SIMPLE_CREATE, 0))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
@@ -192,6 +191,7 @@ class AbstractCreateOperationTest {
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
     when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     operation.execute(messageFrame, evm);

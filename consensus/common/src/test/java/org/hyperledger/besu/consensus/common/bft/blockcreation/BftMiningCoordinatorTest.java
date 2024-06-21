@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.Collections;
 import java.util.concurrent.TimeUnit;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -87,13 +86,6 @@ public class BftMiningCoordinatorTest {
     final Wei minGasPrice = Wei.of(10);
     when(bftBlockCreatorFactory.getMinTransactionGasPrice()).thenReturn(minGasPrice);
     assertThat(bftMiningCoordinator.getMinTransactionGasPrice()).isEqualTo(minGasPrice);
-  }
-
-  @Test
-  public void setsTheExtraData() {
-    final Bytes extraData = Bytes.fromHexStringLenient("0x1234");
-    bftMiningCoordinator.setExtraData(extraData);
-    verify(bftBlockCreatorFactory).setExtraData(extraData);
   }
 
   @Test

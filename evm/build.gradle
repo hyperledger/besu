@@ -47,6 +47,7 @@ dependencies {
   implementation 'tech.pegasys:jc-kzg-4844'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
+  compileOnly 'io.vertx:vertx-core'
 
   testImplementation 'com.fasterxml.jackson.core:jackson-databind'
   testImplementation 'info.picocli:picocli'

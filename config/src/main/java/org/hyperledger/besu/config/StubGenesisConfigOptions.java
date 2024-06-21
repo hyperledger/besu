@@ -49,6 +49,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong shanghaiTime = OptionalLong.empty();
   private OptionalLong cancunTime = OptionalLong.empty();
   private OptionalLong pragueTime = OptionalLong.empty();
+  private OptionalLong pragueEOFTime = OptionalLong.empty();
   private OptionalLong futureEipsTime = OptionalLong.empty();
   private OptionalLong experimentalEipsTime = OptionalLong.empty();
   private OptionalLong terminalBlockNumber = OptionalLong.empty();
@@ -79,6 +80,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private static final DiscoveryOptions DISCOVERY_OPTIONS = DiscoveryOptions.DEFAULT;
   private boolean zeroBaseFee = false;
   private boolean fixedBaseFee = false;
+
+  /** Default constructor. */
+  public StubGenesisConfigOptions() {}
 
   @Override
   public StubGenesisConfigOptions clone() {
@@ -237,6 +241,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public OptionalLong getPragueTime() {
     return pragueTime;
+  }
+
+  @Override
+  public OptionalLong getPragueEOFTime() {
+    return pragueEOFTime;
   }
 
   @Override
@@ -629,6 +638,18 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions pragueTime(final long timestamp) {
     pragueTime = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * PragueEOF time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions pragueEOFTime(final long timestamp) {
+    pragueTime = OptionalLong.of(timestamp);
+    pragueEOFTime = pragueTime;
     return this;
   }
 

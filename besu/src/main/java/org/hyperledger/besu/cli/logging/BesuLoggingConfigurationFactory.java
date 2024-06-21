@@ -21,6 +21,8 @@ import org.apache.logging.log4j.core.config.ConfigurationSource;
 
 /** Custom Log4J Configuration Factory for Besu */
 public class BesuLoggingConfigurationFactory extends ConfigurationFactory {
+  /** Default constructor. */
+  public BesuLoggingConfigurationFactory() {}
 
   @Override
   protected String[] getSupportedTypes() {

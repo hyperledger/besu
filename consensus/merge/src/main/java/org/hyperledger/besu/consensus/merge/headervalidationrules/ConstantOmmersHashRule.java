@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.consensus.merge.headervalidationrules;
 
 import org.hyperledger.besu.consensus.merge.MergeContext;
@@ -33,6 +32,9 @@ public class ConstantOmmersHashRule implements AttachedBlockHeaderValidationRule
   private static final Hash mergeConstant = Hash.EMPTY_LIST_HASH;
 
   private static final Logger LOG = LoggerFactory.getLogger(ConstantOmmersHashRule.class);
+
+  /** Default constructor. */
+  public ConstantOmmersHashRule() {}
 
   @Override
   public boolean validate(

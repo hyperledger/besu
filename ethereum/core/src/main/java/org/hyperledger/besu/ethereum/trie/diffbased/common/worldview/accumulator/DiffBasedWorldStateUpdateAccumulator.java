@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator;
 
 import org.hyperledger.besu.datatypes.AccountValue;
@@ -46,7 +45,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -313,11 +311,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                           new StorageConsumingMap<>(
                               updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
 
-              if (tracked.getStorageWasCleared()) {
-                storageToClear.add(updatedAddress);
-                pendingStorageUpdates.clear();
-              }
-
               if (tracked.getWrappedAccount() == null) {
                 updatedAccount = createAccount(this, tracked);
                 tracked.setWrappedAccount(updatedAccount);
@@ -359,33 +352,39 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 pendingCode.setUpdated(updatedAccount.getCode());
               }
 
+              if (tracked.getStorageWasCleared()) {
+                storageToClear.add(updatedAddress);
+                pendingStorageUpdates.clear();
+              }
+
               // This is especially to avoid unnecessary computation for withdrawals and
               // self-destruct beneficiaries
               if (updatedAccount.getUpdatedStorage().isEmpty()) {
                 return;
               }
 
-              final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-                  new TreeSet<>(Map.Entry.comparingByKey());
-              entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
-
               // parallel stream here may cause database corruption
-              entries.forEach(
-                  storageUpdate -> {
-                    final UInt256 keyUInt = storageUpdate.getKey();
-                    final StorageSlotKey slotKey =
-                        new StorageSlotKey(hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
-                    final UInt256 value = storageUpdate.getValue();
-                    final DiffBasedValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
-                    if (pendingValue == null) {
-                      pendingStorageUpdates.put(
-                          slotKey,
-                          new DiffBasedValue<>(
-                              updatedAccount.getOriginalStorageValue(keyUInt), value));
-                    } else {
-                      pendingValue.setUpdated(value);
-                    }
-                  });
+              updatedAccount
+                  .getUpdatedStorage()
+                  .entrySet()
+                  .forEach(
+                      storageUpdate -> {
+                        final UInt256 keyUInt = storageUpdate.getKey();
+                        final StorageSlotKey slotKey =
+                            new StorageSlotKey(
+                                hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
+                        final UInt256 value = storageUpdate.getValue();
+                        final DiffBasedValue<UInt256> pendingValue =
+                            pendingStorageUpdates.get(slotKey);
+                        if (pendingValue == null) {
+                          pendingStorageUpdates.put(
+                              slotKey,
+                              new DiffBasedValue<>(
+                                  updatedAccount.getOriginalStorageValue(keyUInt), value));
+                        } else {
+                          pendingValue.setUpdated(value);
+                        }
+                      });
 
               updatedAccount.getUpdatedStorage().clear();
 

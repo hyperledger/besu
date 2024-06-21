@@ -80,6 +80,7 @@ dependencies {
   implementation 'org.xerial.snappy:snappy-java'
   implementation 'tech.pegasys:jc-kzg-4844'
   implementation 'org.rocksdb:rocksdbjni'
+  implementation 'commons-net:commons-net'
 
   runtimeOnly 'org.apache.logging.log4j:log4j-jul'
   runtimeOnly 'com.splunk.logging:splunk-library-javalogging'

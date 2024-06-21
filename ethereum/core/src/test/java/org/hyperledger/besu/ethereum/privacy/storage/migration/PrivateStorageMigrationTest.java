@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MiningBeneficiaryCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver;
 import org.hyperledger.besu.ethereum.privacy.storage.LegacyPrivateStateStorage;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
@@ -93,6 +94,7 @@ public class PrivateStorageMigrationTest {
   @Mock private TransactionReceiptFactory transactionReceiptFactory;
   @Mock private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   @Mock private PrivateMigrationBlockProcessor privateMigrationBlockProcessor;
+  @Mock private BlockHashProcessor blockHashProcessor;
 
   private PrivateStateKeyValueStorage privateStateStorage;
   private PrivateStateRootResolver privateStateRootResolver;
@@ -115,6 +117,7 @@ public class PrivateStorageMigrationTest {
         .when(protocolSpec.getMiningBeneficiaryCalculator())
         .thenReturn(miningBeneficiaryCalculator);
     lenient().when(protocolSpec.isSkipZeroBlockRewards()).thenReturn(false);
+    lenient().when(protocolSpec.getBlockHashProcessor()).thenReturn(blockHashProcessor);
 
     migration =
         new PrivateStorageMigration(
@@ -201,6 +204,7 @@ public class PrivateStorageMigrationTest {
         .processBlock(
             any(),
             any(),
+            any(),
             eq(blockWithPMT.getHeader()),
             eq(blockWithPMT.getBody().getTransactions()),
             eq(blockWithPMT.getBody().getOmmers()));
@@ -223,7 +227,7 @@ public class PrivateStorageMigrationTest {
     final ArgumentCaptor<List> txsCaptor = ArgumentCaptor.forClass(List.class);
 
     verify(privateMigrationBlockProcessor)
-        .processBlock(any(), any(), any(), txsCaptor.capture(), any());
+        .processBlock(any(), any(), any(), any(), txsCaptor.capture(), any());
 
     // won't process transaction after PMT, that's why we only process 2 txs
     final List<Transaction> processedTxs = txsCaptor.getValue();

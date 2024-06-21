@@ -20,10 +20,9 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
-
-import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -81,7 +80,7 @@ class BlockHashOperationTest {
       final long requestedBlock,
       final Bytes32 expectedOutput,
       final long currentBlockNumber,
-      final Function<Long, Hash> blockHashLookup) {
+      final BlockHashLookup blockHashLookup) {
     assertBlockHash(
         UInt256.valueOf(requestedBlock), expectedOutput, currentBlockNumber, blockHashLookup);
   }
@@ -90,7 +89,7 @@ class BlockHashOperationTest {
       final Bytes32 input,
       final Bytes32 expectedOutput,
       final long currentBlockNumber,
-      final Function<Long, Hash> blockHashLookup) {
+      final BlockHashLookup blockHashLookup) {
     final MessageFrame frame =
         new TestMessageFrameBuilder()
             .blockHashLookup(blockHashLookup)

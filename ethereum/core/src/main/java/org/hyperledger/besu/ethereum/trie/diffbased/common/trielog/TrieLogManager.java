@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 
@@ -35,6 +34,7 @@ import java.util.Optional;
 import java.util.stream.LongStream;
 import java.util.stream.Stream;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -148,15 +148,46 @@ public class TrieLogManager {
       trieLogService.getObservers().forEach(trieLogObservers::subscribe);
 
       // return the TrieLogFactory implementation from the TrieLogService
-      return trieLogService.getTrieLogFactory();
-    } else {
-      // Otherwise default to TrieLogFactoryImpl
-      return new TrieLogFactoryImpl();
+      if (trieLogService.getTrieLogFactory().isPresent()) {
+        return trieLogService.getTrieLogFactory().get();
+      }
     }
+    // Otherwise default to TrieLogFactoryImpl
+    return new TrieLogFactoryImpl();
   }
 
   private TrieLogProvider getTrieLogProvider() {
     return new TrieLogProvider() {
+      @Override
+      public Optional<Bytes> getRawTrieLogLayer(final Hash blockHash) {
+        return rootWorldStateStorage.getTrieLog(blockHash).map(Bytes::wrap);
+      }
+
+      @Override
+      public Optional<Bytes> getRawTrieLogLayer(final long blockNumber) {
+        return TrieLogManager.this
+            .blockchain
+            .getBlockHeader(blockNumber)
+            .map(BlockHeader::getHash)
+            .flatMap(this::getRawTrieLogLayer);
+      }
+
+      @Override
+      public void saveRawTrieLogLayer(
+          final Hash blockHash, final long blockNumber, final Bytes trieLog) {
+        final DiffBasedWorldStateKeyValueStorage.Updater updater = rootWorldStateStorage.updater();
+        updater
+            .getTrieLogStorageTransaction()
+            .put(blockHash.toArrayUnsafe(), trieLog.toArrayUnsafe());
+        updater.commit();
+        // TODO maybe find a way to have a clean and complete trielog for observers
+        trieLogObservers.forEach(
+            o ->
+                o.onTrieLogAdded(
+                    new TrieLogAddedEvent(
+                        new TrieLogLayer().setBlockHash(blockHash).setBlockNumber(blockNumber))));
+      }
+
       @Override
       public Optional<TrieLog> getTrieLogLayer(final Hash blockHash) {
         return TrieLogManager.this.getTrieLogLayer(blockHash);

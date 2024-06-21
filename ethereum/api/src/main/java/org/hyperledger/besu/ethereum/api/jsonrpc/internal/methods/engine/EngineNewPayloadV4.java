@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -63,7 +63,7 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
     } else if (maybeBeaconBlockRootParam.isEmpty()) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root field");
-    } else if (payloadParameter.getDeposits() == null) {
+    } else if (payloadParameter.getDepositRequests() == null) {
       return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing deposit field");
     } else {
       return ValidationResult.valid();

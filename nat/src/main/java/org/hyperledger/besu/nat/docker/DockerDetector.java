@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.nat.docker;
 
 import org.hyperledger.besu.nat.NatMethod;
@@ -26,6 +25,8 @@ import java.util.stream.Stream;
 
 /** The Docker detector. */
 public class DockerDetector implements NatMethodDetector {
+  /** Default constructor */
+  public DockerDetector() {}
 
   @Override
   public Optional<NatMethod> detect() {

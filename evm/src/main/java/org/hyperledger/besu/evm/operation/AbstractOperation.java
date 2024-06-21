@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -25,8 +25,6 @@ import org.apache.tuweni.bytes.Bytes;
 public abstract class AbstractOperation implements Operation {
 
   static final Bytes BYTES_ONE = Bytes.of(1);
-  static final Bytes SUCCESS_STACK_ITEM = BYTES_ONE;
-  static final Bytes FAILURE_STACK_ITEM = Bytes.EMPTY;
 
   private final int opcode;
   private final String name;

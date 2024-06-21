@@ -1,14 +1,22 @@
 
 FROM ubuntu:22.04
 ARG VERSION="dev"
+ENV NO_PROXY_CACHE="-o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0"
 
-RUN apt-get update && \
- apt-get install --no-install-recommends -q --assume-yes ca-certificates-java=20190909* && \
- apt-get install --no-install-recommends -q --assume-yes openjdk-17-jre-headless=17* && \
- apt-get clean  && \
- rm -rf /var/lib/apt/lists/*  && \
- adduser --disabled-password --gecos "" --home /opt/besu besu && \
-    chown besu:besu /opt/besu
+# Update and install dependencies without using any cache
+RUN apt-get update $NO_PROXY_CACHE  && \
+  # $NO_PROXY_CACHE must not be used here or otherwise will trigger a hadolint error
+  apt-get -o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0 \
+    --no-install-recommends -q --assume-yes install ca-certificates-java=20190909*  && \
+  apt-get -o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0 \
+    --no-install-recommends -q --assume-yes install openjdk-17-jre-headless=17*  && \
+  # Clean apt cache  \
+  apt-get clean  && \
+  rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/*  && \
+  rm -rf /var/lib/apt/lists/*  && \
+  # Creating a user for besu
+  adduser --disabled-password --gecos "" --home /opt/besu besu  && \
+  chown besu:besu /opt/besu
 
 USER besu
 WORKDIR /opt/besu-evmtool

@@ -29,6 +29,8 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 /** The Option parser. */
 public class OptionParser {
+  /** Default Constructor. */
+  OptionParser() {}
 
   /**
    * Parse long range range.

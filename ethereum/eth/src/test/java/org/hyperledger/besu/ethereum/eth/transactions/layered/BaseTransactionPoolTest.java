@@ -1,5 +1,5 @@
 /*
- * Copyright Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -31,11 +31,13 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionTestFixture;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactions;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.metrics.StubMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.Optional;
 import java.util.Random;
@@ -61,7 +63,9 @@ public class BaseTransactionPoolTest {
   protected final Transaction transaction0 = createTransaction(0);
   protected final Transaction transaction1 = createTransaction(1);
   protected final Transaction transaction2 = createTransaction(2);
+  protected final Transaction blobTransaction0 = createEIP4844Transaction(0, KEYS1, 1, 1);
 
+  protected final EthScheduler ethScheduler = new DeterministicEthScheduler();
   protected final StubMetricsSystem metricsSystem = new StubMetricsSystem();
 
   protected Transaction createTransaction(final long nonce) {
@@ -103,13 +107,33 @@ public class BaseTransactionPoolTest {
         keys);
   }
 
+  protected Transaction createTransactionOfSize(
+      final long nonce, final Wei maxGasPrice, final int txSize, final KeyPair keys) {
+
+    final TransactionType txType =
+        TransactionType.values()[
+            randomizeTxType.nextInt(txSize < blobTransaction0.getSize() ? 3 : 4)];
+
+    final Transaction baseTx =
+        createTransaction(txType, nonce, maxGasPrice, maxGasPrice.divide(10), 0, 1, keys);
+    final int payloadSize = txSize - baseTx.getSize();
+
+    return createTransaction(
+        txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, keys);
+  }
+
   protected Transaction createTransaction(
       final long nonce, final Wei maxGasPrice, final int payloadSize, final KeyPair keys) {
 
-    // ToDo 4844: include BLOB tx here
-    final TransactionType txType = TransactionType.values()[randomizeTxType.nextInt(3)];
+    final TransactionType txType = TransactionType.values()[randomizeTxType.nextInt(4)];
 
-    return createTransaction(txType, nonce, maxGasPrice, payloadSize, keys);
+    return switch (txType) {
+      case FRONTIER, ACCESS_LIST, EIP1559 ->
+          createTransaction(txType, nonce, maxGasPrice, payloadSize, keys);
+      case BLOB ->
+          createTransaction(
+              txType, nonce, maxGasPrice, maxGasPrice.divide(10), payloadSize, 1, keys);
+    };
   }
 
   protected Transaction createTransaction(
@@ -157,6 +181,7 @@ public class BaseTransactionPoolTest {
       tx.maxFeePerGas(Optional.of(maxGasPrice))
           .maxPriorityFeePerGas(Optional.of(maxPriorityFeePerGas));
       if (type.supportsBlob() && blobCount > 0) {
+        tx.maxFeePerBlobGas(Optional.of(maxGasPrice));
         final var versionHashes =
             IntStream.range(0, blobCount)
                 .mapToObj(i -> new VersionedHash((byte) 1, Hash.ZERO))
@@ -186,7 +211,9 @@ public class BaseTransactionPoolTest {
         originalTransaction.getType(),
         originalTransaction.getNonce(),
         originalTransaction.getMaxGasPrice().multiply(2),
+        originalTransaction.getMaxGasPrice().multiply(2).divide(10),
         0,
+        1,
         keys);
   }
 

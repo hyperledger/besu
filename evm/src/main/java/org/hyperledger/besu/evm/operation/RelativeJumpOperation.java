@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,16 +11,13 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.evm.internal.Words;
-
-import org.apache.tuweni.bytes.Bytes;
 
 /** The type Relative jump operation. */
 public class RelativeJumpOperation extends AbstractFixedCostOperation {
@@ -59,9 +56,11 @@ public class RelativeJumpOperation extends AbstractFixedCostOperation {
 
   @Override
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes code = frame.getCode().getBytes();
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
     final int pcPostInstruction = frame.getPC() + 1;
-    return new OperationResult(
-        gasCost, null, 2 + Words.readBigEndianI16(pcPostInstruction, code.toArrayUnsafe()) + 1);
+    return new OperationResult(gasCost, null, 2 + code.readBigEndianI16(pcPostInstruction) + 1);
   }
 }

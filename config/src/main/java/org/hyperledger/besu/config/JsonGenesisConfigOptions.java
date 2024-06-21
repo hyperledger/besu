@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
@@ -298,6 +299,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getPragueEOFTime() {
+    return getOptionalLong("pragueeoftime");
+  }
+
+  @Override
   public OptionalLong getFutureEipsTime() {
     return getOptionalLong("futureeipstime");
   }
@@ -456,6 +462,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
+    getPragueEOFTime().ifPresent(l -> builder.put("pragueEOFTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -604,6 +611,7 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
             getShanghaiTime(),
             getCancunTime(),
             getPragueTime(),
+            getPragueEOFTime(),
             getFutureEipsTime(),
             getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
@@ -614,5 +622,19 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         .distinct()
         .sorted()
         .toList();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final JsonGenesisConfigOptions that = (JsonGenesisConfigOptions) o;
+    return Objects.equals(configRoot, that.configRoot)
+        && Objects.equals(configOverrides, that.configOverrides);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(configRoot, configOverrides);
   }
 }

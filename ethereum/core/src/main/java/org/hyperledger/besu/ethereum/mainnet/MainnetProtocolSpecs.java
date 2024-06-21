@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsProcessors;
+import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
+
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
 import org.hyperledger.besu.datatypes.Address;
@@ -23,7 +27,6 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.MainnetBlockValidator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -31,6 +34,9 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
@@ -52,6 +58,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
@@ -97,9 +104,6 @@ public abstract class MainnetProtocolSpecs {
   private static final Wei BYZANTIUM_BLOCK_REWARD = Wei.fromEth(3);
 
   private static final Wei CONSTANTINOPLE_BLOCK_REWARD = Wei.fromEth(2);
-
-  public static final Address DEFAULT_DEPOSIT_CONTRACT_ADDRESS =
-      Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa");
 
   private MainnetProtocolSpecs() {}
 
@@ -169,6 +173,7 @@ public abstract class MainnetProtocolSpecs {
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
         .miningBeneficiaryCalculator(BlockHeader::getCoinbase)
         .evmConfiguration(evmConfiguration)
+        .blockHashProcessor(new FrontierBlockHashProcessor())
         .name("Frontier");
   }
 
@@ -719,6 +724,7 @@ public abstract class MainnetProtocolSpecs {
                     SHANGHAI_INIT_CODE_SIZE_LIMIT))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
+        .blockHashProcessor(new CancunBlockHashProcessor())
         .name("Cancun");
   }
 
@@ -730,8 +736,6 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
 
     final Address depositContractAddress =
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
@@ -744,28 +748,64 @@ public abstract class MainnetProtocolSpecs {
             genesisConfigOptions,
             evmConfiguration,
             miningParameters)
-        // EVM changes to support EOF EIPs (3670, 4200, 4750, 5450)
+        // EIP-3074 AUTH and AUTCALL gas
         .gasCalculator(PragueGasCalculator::new)
+        // EIP-3074 AUTH and AUTCALL
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.prague(
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
-        // change contract call creator to accept EOF code
+
+        // EIP-2537 BLS12-381 precompiles
+        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
+
+        // EIP-7002 Withdrawls / EIP-6610 Deposits / EIP-7685 Requests
+        .requestsValidator(pragueRequestsValidator(depositContractAddress))
+        // EIP-7002 Withdrawls / EIP-6610 Deposits / EIP-7685 Requests
+        .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
+
+        // EIP-2935 Blockhash processor
+        .blockHashProcessor(new PragueBlockHashProcessor())
+        .name("Prague");
+  }
+
+  static ProtocolSpecBuilder pragueEOFDefinition(
+      final Optional<BigInteger> chainId,
+      final OptionalInt configContractSizeLimit,
+      final OptionalInt configStackSizeLimit,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
+    final int contractSizeLimit =
+        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
+
+    return pragueDefinition(
+            chainId,
+            configContractSizeLimit,
+            configStackSizeLimit,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters)
+        // EIP-7692 EOF v1 Gas calculator
+        .gasCalculator(PragueEOFGasCalculator::new)
+        // EIP-7692 EOF v1 EVM and opcodes
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.pragueEOF(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        // EIP-7698 EOF v1 creation transaction
         .contractCreationProcessorBuilder(
             (gasCalculator, evm) ->
                 new ContractCreationProcessor(
                     gasCalculator,
                     evm,
                     true,
-                    List.of(
-                        MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
+                    List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        // use prague precompiled contracts
-        .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
-        .depositsValidator(new DepositsValidator.AllowedDeposits(depositContractAddress))
-        .exitsValidator(new PragueValidatorExitsValidator())
-        .name("Prague");
+        .name("PragueEOF");
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(
@@ -778,7 +818,7 @@ public abstract class MainnetProtocolSpecs {
       final MiningParameters miningParameters) {
     final int contractSizeLimit =
         configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    return pragueDefinition(
+    return pragueEOFDefinition(
             chainId,
             configContractSizeLimit,
             configStackSizeLimit,
@@ -798,8 +838,7 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator,
                     evm,
                     true,
-                    List.of(
-                        MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1, false)),
+                    List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         // use future configured precompiled contracts
@@ -906,7 +945,6 @@ public abstract class MainnetProtocolSpecs {
         final List<Transaction> transactions,
         final List<BlockHeader> ommers,
         final Optional<List<Withdrawal>> withdrawals,
-        final Optional<List<Deposit>> deposits,
         final PrivateMetadataUpdater privateMetadataUpdater) {
       updateWorldStateForDao(worldState);
       return wrapped.processBlock(
@@ -916,7 +954,6 @@ public abstract class MainnetProtocolSpecs {
           transactions,
           ommers,
           withdrawals,
-          deposits,
           privateMetadataUpdater);
     }
 

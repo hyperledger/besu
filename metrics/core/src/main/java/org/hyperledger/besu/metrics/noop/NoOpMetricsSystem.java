@@ -73,6 +73,9 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   public static final LabelledGauge NO_OP_LABELLED_3_GAUGE =
       new LabelledGaugeNoOpMetric(3, NO_OP_GAUGE);
 
+  /** Default constructor */
+  public NoOpMetricsSystem() {}
+
   @Override
   public LabelledMetric<Counter> createLabelledCounter(
       final MetricCategory category,

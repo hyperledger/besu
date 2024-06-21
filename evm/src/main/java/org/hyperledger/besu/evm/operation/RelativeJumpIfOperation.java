@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,10 +11,10 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -22,7 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The type Relative jump If operation. */
-public class RelativeJumpIfOperation extends RelativeJumpOperation {
+public class RelativeJumpIfOperation extends AbstractFixedCostOperation {
 
   /** The constant OPCODE. */
   public static final int OPCODE = 0xe1;
@@ -38,11 +38,16 @@ public class RelativeJumpIfOperation extends RelativeJumpOperation {
 
   @Override
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes condition = frame.popStackItem();
-    // If condition is zero (false), no jump is will be performed. Therefore, skip the rest.
-    if (!condition.isZero()) {
-      return super.executeFixedCostOperation(frame, evm);
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
     }
-    return new OperationResult(gasCost, null, 2 + 1);
+    final Bytes condition = frame.popStackItem();
+    if (!condition.isZero()) {
+      final int pcPostInstruction = frame.getPC() + 1;
+      return new OperationResult(gasCost, null, 2 + code.readBigEndianI16(pcPostInstruction) + 1);
+    } else {
+      return new OperationResult(gasCost, null, 2 + 1);
+    }
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
@@ -43,26 +44,31 @@ import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import com.google.common.collect.Iterables;
 
 public class SparseTransactions extends AbstractTransactionsLayer {
+  /**
+   * Order sparse tx by priority flag and sequence asc, so that we pick for eviction txs that have
+   * no priority and with the lowest sequence number (oldest) first.
+   */
   private final NavigableSet<PendingTransaction> sparseEvictionOrder =
       new TreeSet<>(
           Comparator.comparing(PendingTransaction::hasPriority)
               .thenComparing(PendingTransaction::getSequence));
+
   private final Map<Address, Integer> gapBySender = new HashMap<>();
   private final List<SendersByPriority> orderByGap;
 
   public SparseTransactions(
       final TransactionPoolConfiguration poolConfig,
+      final EthScheduler ethScheduler,
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BlobCache blobCache) {
-    super(poolConfig, nextLayer, transactionReplacementTester, metrics, blobCache);
+    super(poolConfig, ethScheduler, nextLayer, transactionReplacementTester, metrics, blobCache);
     orderByGap = new ArrayList<>(poolConfig.getMaxFutureBySender());
     IntStream.range(0, poolConfig.getMaxFutureBySender())
         .forEach(i -> orderByGap.add(new SendersByPriority()));
@@ -147,7 +153,8 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
-      final int freeSlots) {
+      final int freeSlots,
+      final int[] remainingPromotionsPerType) {
     long accumulatedSpace = 0;
     final List<PendingTransaction> promotedTxs = new ArrayList<>();
 
@@ -158,11 +165,12 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       final var senderSeqTxs = getSequentialSubset(txsBySender.get(sender));
 
       for (final var candidateTx : senderSeqTxs.values()) {
-
-        if (promotionFilter.test(candidateTx)) {
+        final var txType = candidateTx.getTransaction().getType();
+        if (promotionFilter.test(candidateTx) && remainingPromotionsPerType[txType.ordinal()] > 0) {
           accumulatedSpace += candidateTx.memorySize();
           if (promotedTxs.size() < freeSlots && accumulatedSpace <= freeSpace) {
             promotedTxs.add(candidateTx);
+            --remainingPromotionsPerType[txType.ordinal()];
           } else {
             // no room for more txs the search is over exit the loops
             break search;
@@ -216,7 +224,8 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   }
 
   @Override
-  public void remove(final PendingTransaction invalidatedTx, final RemovalReason reason) {
+  public synchronized void remove(
+      final PendingTransaction invalidatedTx, final RemovalReason reason) {
 
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     if (senderTxs != null && senderTxs.containsKey(invalidatedTx.getNonce())) {
@@ -308,9 +317,27 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     return false;
   }
 
+  /**
+   * Return the full content of this layer, organized as a list of sender pending txs. For each
+   * sender the collection pending txs is ordered by nonce asc.
+   *
+   * <p>Returned sender list order detail: first the sender of the tx that will be evicted as last.
+   * So for example if the same sender has the first and the last txs in the eviction order, it will
+   * be the first in the returned list, since we give precedence to tx that will be evicted later.
+   *
+   * @return a list of sender pending txs
+   */
   @Override
-  public Stream<PendingTransaction> stream() {
-    return sparseEvictionOrder.descendingSet().stream();
+  public List<SenderPendingTransactions> getBySender() {
+    final var sendersToAdd = new HashSet<>(txsBySender.keySet());
+    return sparseEvictionOrder.descendingSet().stream()
+        .map(PendingTransaction::getSender)
+        .filter(sendersToAdd::remove)
+        .map(
+            sender ->
+                new SenderPendingTransactions(
+                    sender, List.copyOf(txsBySender.get(sender).values())))
+        .toList();
   }
 
   @Override
