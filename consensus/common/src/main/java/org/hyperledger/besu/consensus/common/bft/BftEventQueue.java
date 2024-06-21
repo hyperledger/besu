@@ -22,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.annotation.Nullable;
 
+import org.hyperledger.besu.consensus.common.bft.events.BftEvents;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -47,6 +48,10 @@ public class BftEventQueue {
     started.set(true);
   }
 
+  private boolean isStarted() {
+    return started.get();
+  }
+
   /**
    * Put an Bft event onto the queue. Note: the event queue must be started before an event will be
    * queued for processing. Events received before the queue is started will be discarded.
@@ -54,14 +59,15 @@ public class BftEventQueue {
    * @param event Provided bft event
    */
   public void add(final BftEvent event) {
-    // if (started.get()) {
-    if (queue.size() > messageQueueLimit) {
-      new Exception().printStackTrace();
-      LOG.warn("Queue size exceeded trying to add new bft event {}", event);
-    } else {
-      queue.add(event);
+
+    // Don't queue events other than block timer expiry, until we know we can process them
+    if (isStarted() || event.getType() == BftEvents.Type.BLOCK_TIMER_EXPIRY) {
+      if (queue.size() > messageQueueLimit) {
+        LOG.warn("Queue size exceeded trying to add new bft event {}", event);
+      } else {
+        queue.add(event);
+      }
     }
-    // }
   }
 
   /**
