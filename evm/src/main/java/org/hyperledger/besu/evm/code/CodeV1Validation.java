@@ -72,7 +72,7 @@ public class CodeV1Validation implements EOFValidator {
    * Validates the code and stack for the EOF Layout, with optional deep consideration of the
    * containers.
    *
-   * @param layout The parsed EOFLayout of the code
+   * @param layout The parsed EOFLayout of the code that will be examined by stack and bytecode validation.
    * @return either null, indicating no error, or a String describing the validation error.
    */
   @SuppressWarnings(
