@@ -145,6 +145,20 @@ public interface GasCalculator {
   long callOperationBaseGasCost();
 
   /**
+   * Returns the gas cost to transfer funds in a call operation.
+   *
+   * @return the gas cost to transfer funds in a call operation
+   */
+  long callValueTransferGasCost();
+
+  /**
+   * Returns the gas cost to create a new account.
+   *
+   * @return the gas cost to create a new account
+   */
+  long newAccountGasCost();
+
+  /**
    * Returns the gas cost for one of the various CALL operations.
    *
    * @param frame The current frame
@@ -211,35 +225,6 @@ public interface GasCalculator {
       boolean accountIsWarm);
 
   /**
-   * Returns the gas cost for AUTHCALL.
-   *
-   * @param frame The current frame
-   * @param stipend The gas stipend being provided by the CALL caller
-   * @param inputDataOffset The offset in memory to retrieve the CALL input data
-   * @param inputDataLength The CALL input data length
-   * @param outputDataOffset The offset in memory to place the CALL output data
-   * @param outputDataLength The CALL output data length
-   * @param transferValue The wei being transferred
-   * @param invoker The contract calling out on behalf of the authority
-   * @param invokee The address of the recipient (never null)
-   * @param accountIsWarm The address of the contract is "warm" as per EIP-2929
-   * @return The gas cost for the CALL operation
-   */
-  default long authCallOperationGasCost(
-      final MessageFrame frame,
-      final long stipend,
-      final long inputDataOffset,
-      final long inputDataLength,
-      final long outputDataOffset,
-      final long outputDataLength,
-      final Wei transferValue,
-      final Account invoker,
-      final Address invokee,
-      final boolean accountIsWarm) {
-    return 0L;
-  }
-
-  /**
    * Gets additional call stipend.
    *
    * @return the additional call stipend
@@ -255,6 +240,20 @@ public interface GasCalculator {
    * @return the amount of gas parent will provide its child CALL
    */
   long gasAvailableForChildCall(MessageFrame frame, long stipend, boolean transfersValue);
+
+  /**
+   * For EXT*CALL, the minimum amount of gas the parent must retain. First described in EIP-7069
+   *
+   * @return MIN_RETAINED_GAS
+   */
+  long getMinRetainedGas();
+
+  /**
+   * For EXT*CALL, the minimum amount of gas that a child must receive. First described in EIP-7069
+   *
+   * @return MIN_CALLEE_GAS
+   */
+  long getMinCalleeGas();
 
   /**
    * Returns the amount of gas the CREATE operation will consume.
@@ -644,20 +643,6 @@ public interface GasCalculator {
    * @return the new excess blob gas value
    */
   default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
-    return 0L;
-  }
-
-  /**
-   * Returns the gas cost of validating an auth commitment for an AUTHCALL
-   *
-   * @param frame the current frame, with memory to be read from
-   * @param offset start of memory read
-   * @param length amount of memory read
-   * @param authority address to check for warmup
-   * @return total gas cost for the operation
-   */
-  default long authOperationGasCost(
-      final MessageFrame frame, final long offset, final long length, final Address authority) {
     return 0L;
   }
 }

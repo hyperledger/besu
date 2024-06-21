@@ -243,12 +243,12 @@ public abstract class AbstractMessageProcessor {
   }
 
   /**
-   * Gets code from evm, skipping the code cache
+   * Gets code from evm, with handling for EOF code plus calldata
    *
    * @param codeBytes the code bytes
    * @return the code from evm
    */
-  public Code getCodeFromEVMUncached(final Bytes codeBytes) {
-    return evm.getCodeUncached(codeBytes);
+  public Code getCodeFromEVMForCreation(final Bytes codeBytes) {
+    return evm.getCodeForCreation(codeBytes);
   }
 }
