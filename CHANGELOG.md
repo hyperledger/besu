@@ -3,6 +3,7 @@
 ## Next Release
 
 ### Breaking Changes
+-- `Xp2p-peer-lower-bound` has been removed. [#7247](https://github.com/hyperledger/besu/pull/7247)
 
 ### Additions and Improvements
 - Support for eth_maxPriorityFeePerGas [#5658](https://github.com/hyperledger/besu/issues/5658)
