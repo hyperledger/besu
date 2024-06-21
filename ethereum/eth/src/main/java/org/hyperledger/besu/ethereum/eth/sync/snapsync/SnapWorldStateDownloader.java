@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.SnapSyncMetricsManager.Step.DOWNLOAD;
 import static org.hyperledger.besu.ethereum.eth.sync.snapsync.request.SnapDataRequest.createAccountRangeDataRequest;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -67,7 +66,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final int maxNodeRequestsWithoutProgress;
   private final ProtocolContext protocolContext;
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
-  private final GenesisConfigOptions genesisConfigOptions;
 
   private final AtomicReference<SnapWorldDownloadState> downloadState = new AtomicReference<>();
 
@@ -82,8 +80,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final int maxNodeRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock,
-      final MetricsSystem metricsSystem,
-      final GenesisConfigOptions genesisConfigOptions) {
+      final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.protocolContext = protocolContext;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
@@ -95,7 +92,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
     this.minMillisBeforeStalling = minMillisBeforeStalling;
     this.clock = clock;
     this.metricsSystem = metricsSystem;
-    this.genesisConfigOptions = genesisConfigOptions;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.SYNCHRONIZER,

@@ -78,10 +78,10 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
       // For a recently created permissioned chain we can skip snap sync until we're past the
       // pivot distance
       if (bestPeer.get().chainState().getEstimatedHeight()
-          <= syncConfig.getFastSyncPivotDistance()) {
+          <= syncConfig.getSyncPivotDistance()) {
         LOG.info(
             "Best peer for sync found but chain height hasn't reached minimum sync pivot distance {}, exiting sync process",
-            syncConfig.getFastSyncPivotDistance());
+            syncConfig.getSyncPivotDistance());
         throw new NoSyncRequiredException();
       }
 

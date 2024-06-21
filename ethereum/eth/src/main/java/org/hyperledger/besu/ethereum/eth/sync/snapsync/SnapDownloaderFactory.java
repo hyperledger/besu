@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync.snapsync;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
@@ -59,8 +58,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SyncState syncState,
-      final Clock clock,
-      final GenesisConfigOptions genesisConfigOptions) {
+      final Clock clock) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -114,8 +112,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
-            metricsSystem,
-            genesisConfigOptions);
+            metricsSystem);
     final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
             new FastSyncActions(

@@ -831,8 +831,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         clock,
         metricsSystem,
         getFullSyncTerminationCondition(protocolContext.getBlockchain()),
-        pivotBlockSelector,
-        genesisConfigOptions);
+        pivotBlockSelector);
   }
 
   private PivotBlockSelector createPivotSelector(

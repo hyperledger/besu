@@ -53,7 +53,7 @@ public class SynchronizerConfiguration {
   public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
 
   // Fast sync config
-  private final int fastSyncPivotDistance;
+  private final int syncPivotDistance;
   private final float fastSyncFullValidationRate;
   private final int syncMinimumPeerCount;
   private final int worldStateHashCountPerRequest;
@@ -87,7 +87,7 @@ public class SynchronizerConfiguration {
   private final long propagationManagerGetBlockTimeoutMillis;
 
   private SynchronizerConfiguration(
-      final int fastSyncPivotDistance,
+      final int syncPivotDistance,
       final float fastSyncFullValidationRate,
       final int syncMinimumPeerCount,
       final int worldStateHashCountPerRequest,
@@ -109,7 +109,7 @@ public class SynchronizerConfiguration {
       final int maxTrailingPeers,
       final long propagationManagerGetBlockTimeoutMillis,
       final boolean checkpointPostMergeEnabled) {
-    this.fastSyncPivotDistance = fastSyncPivotDistance;
+    this.syncPivotDistance = syncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
     this.syncMinimumPeerCount = syncMinimumPeerCount;
     this.worldStateHashCountPerRequest = worldStateHashCountPerRequest;
@@ -171,12 +171,14 @@ public class SynchronizerConfiguration {
   }
 
   /**
-   * The distance from the chain head at which we should switch from fast sync to full sync.
+   * The distance from the chain head at which we should switch from fast, snap, or checkpoint sync
+   * to full sync.
    *
-   * @return distance from the chain head at which we should switch from fast sync to full sync.
+   * @return distance from the chain head at which we should switch from fast, snap or checkpoint
+   *     sync to full sync.
    */
-  public int getFastSyncPivotDistance() {
-    return fastSyncPivotDistance;
+  public int getSyncPivotDistance() {
+    return syncPivotDistance;
   }
 
   public long getDownloaderChangeTargetThresholdByHeight() {

@@ -80,7 +80,7 @@ public class FastSyncDownloader<REQUEST> {
     if (!running.compareAndSet(false, true)) {
       throw new IllegalStateException("SyncDownloader already running");
     }
-    LOG.info("Starting fast sync");
+    LOG.info("Starting pivot-based sync");
     return start(initialFastSyncState);
   }
 

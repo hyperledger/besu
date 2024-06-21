@@ -63,8 +63,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SyncState syncState,
-      final Clock clock,
-      final GenesisConfigOptions genesisConfigOptions) {
+      final Clock clock) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -151,8 +150,7 @@ public class CheckpointDownloaderFactory extends SnapDownloaderFactory {
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
-            metricsSystem,
-            genesisConfigOptions);
+            metricsSystem);
     final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
             fastSyncActions,

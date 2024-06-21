@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.eth.sync;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.ForkchoiceEvent;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceListener;
 import org.hyperledger.besu.datatypes.Address;
@@ -87,8 +86,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       final Clock clock,
       final MetricsSystem metricsSystem,
       final SyncTerminationCondition terminationCondition,
-      final PivotBlockSelector pivotBlockSelector,
-      final GenesisConfigOptions genesisConfigOptions) {
+      final PivotBlockSelector pivotBlockSelector) {
     this.syncState = syncState;
     this.pivotBlockSelector = pivotBlockSelector;
     this.protocolContext = protocolContext;
@@ -156,8 +154,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   ethContext,
                   worldStateStorageCoordinator,
                   syncState,
-                  clock,
-                  genesisConfigOptions);
+                  clock);
     } else {
       this.fastSyncFactory =
           () ->
@@ -172,8 +169,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   ethContext,
                   worldStateStorageCoordinator,
                   syncState,
-                  clock,
-                  genesisConfigOptions);
+                  clock);
     }
 
     // create a non-resync fast sync downloader:
@@ -249,7 +245,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     }
 
     if (result instanceof NoSyncRequiredState) {
-      LOG.info("Sync completed (no sync required)");
+      LOG.info("Sync ended (no sync required)");
       syncState.markInitialSyncPhaseAsDone();
     } else {
       fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);

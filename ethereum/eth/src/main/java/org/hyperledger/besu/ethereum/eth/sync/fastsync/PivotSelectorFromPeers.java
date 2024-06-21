@@ -76,7 +76,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   protected Optional<FastSyncState> fromBestPeer(final EthPeer peer) {
     final long pivotBlockNumber =
-        peer.chainState().getEstimatedHeight() - syncConfig.getFastSyncPivotDistance();
+        peer.chainState().getEstimatedHeight() - syncConfig.getSyncPivotDistance();
     if (pivotBlockNumber <= BlockHeader.GENESIS_BLOCK_NUMBER) {
       // Peer's chain isn't long enough, return an empty value, so we can try again.
       LOG.info("Waiting for peers with sufficient chain height");
@@ -126,7 +126,7 @@ public class PivotSelectorFromPeers implements PivotBlockSelector {
 
   private long conservativelyEstimatedPivotBlock() {
     final long estimatedNextPivot =
-        syncState.getLocalChainHeight() + syncConfig.getFastSyncPivotDistance();
+        syncState.getLocalChainHeight() + syncConfig.getSyncPivotDistance();
     return Math.min(syncState.bestChainHeight(), estimatedNextPivot);
   }
 

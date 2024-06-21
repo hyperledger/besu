@@ -143,7 +143,7 @@ public class FastSyncActions {
                                     metricsSystem,
                                     currentState.getPivotBlockNumber().getAsLong(),
                                     syncConfig.getSyncMinimumPeerCount(),
-                                    syncConfig.getFastSyncPivotDistance())
+                                    syncConfig.getSyncPivotDistance())
                                 .downloadPivotBlockHeader()));
   }
 

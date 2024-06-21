@@ -361,7 +361,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.downloaderParallelism = config.getDownloaderParallelism();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
-    options.fastSyncPivotDistance = config.getFastSyncPivotDistance();
+    options.fastSyncPivotDistance = config.getSyncPivotDistance();
     options.fastSyncFullValidationRate = config.getFastSyncFullValidationRate();
     options.worldStateHashCountPerRequest = config.getWorldStateHashCountPerRequest();
     options.worldStateRequestParallelism = config.getWorldStateRequestParallelism();
