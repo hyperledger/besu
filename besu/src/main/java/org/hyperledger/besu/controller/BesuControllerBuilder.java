@@ -848,7 +848,13 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
           "{} is configured, creating initial sync for BFT",
           genesisConfigOptions.getConsensusEngine().toUpperCase(Locale.ROOT));
       return new BFTPivotSelectorFromPeers(
-          ethContext, syncConfig, syncState, metricsSystem, protocolContext, nodeKey, blockchain.getChainHeadHeader());
+          ethContext,
+          syncConfig,
+          syncState,
+          metricsSystem,
+          protocolContext,
+          nodeKey,
+          blockchain.getChainHeadHeader());
     } else if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
