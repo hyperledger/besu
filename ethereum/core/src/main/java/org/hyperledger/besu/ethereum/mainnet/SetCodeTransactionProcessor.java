@@ -94,6 +94,6 @@ public class SetCodeTransactionProcessor {
 
   public void removeCodeFromAuthorities(
       final WorldUpdater worldUpdater, final Set<Address> authorities) {
-    authorities.forEach(worldUpdater::removeCodeFromEOAs);
+    authorities.forEach(worldUpdater::removeCodeFromEOA);
   }
 }

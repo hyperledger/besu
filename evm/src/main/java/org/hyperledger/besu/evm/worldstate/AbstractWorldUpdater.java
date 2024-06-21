@@ -23,12 +23,15 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
@@ -42,8 +45,11 @@ import org.apache.tuweni.bytes.Bytes;
 public abstract class AbstractWorldUpdater<W extends WorldView, A extends Account>
     implements WorldUpdater {
 
+  private static final Logger LOG = LoggerFactory.getLogger(AbstractWorldUpdater.class);
+
   private final W world;
   private final EvmConfiguration evmConfiguration;
+  private final Map<Address, Bytes> temporaryEOACode = new HashMap<>();
 
   /** The Updated accounts. */
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new ConcurrentHashMap<>();
@@ -102,7 +108,20 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     if (deletedAccounts.contains(address)) {
       return null;
     }
-    return getForMutation(address);
+
+    final A account = getForMutation(address);
+
+    if (temporaryEOACode.containsKey(address)) {
+      try {
+        ((MutableAccount) account).setCode(temporaryEOACode.get(address));
+      } catch (ClassCastException e) {
+        LOG.warn(
+            "Tried to set code on an EOA account {}, but account is not a mutable account",
+            address);
+      }
+    }
+
+    return account;
   }
 
   @Override
@@ -193,23 +212,25 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   @Override
   public void addCodeToEOA(final Address address, final Bytes code) {
-    final MutableAccount account = getAccount(address);
-
-    if (!account.getCode().isEmpty()) {
+    if (temporaryEOACode.containsKey(address)) {
       return;
     }
 
-    account.setCode(code);
+    temporaryEOACode.put(address, code);
   }
 
   @Override
-  public void removeCodeFromEOAs(final Address address) {
-    final MutableAccount account = getAccount(address);
-
-    if (account.getCode().isEmpty()) {
+  public void removeCodeFromEOA(final Address address) {
+    if (!temporaryEOACode.containsKey(address)) {
       return;
     }
 
-    account.setCode(Bytes.EMPTY);
+    try {
+      ((MutableAccount) get(address)).setCode(temporaryEOACode.get(address));
+    } catch (ClassCastException e) {
+      LOG.warn(
+          "Tried to reset code on a EOA account {}, but the account is not a mutable", address);
+    }
+    temporaryEOACode.remove(address);
   }
 }
