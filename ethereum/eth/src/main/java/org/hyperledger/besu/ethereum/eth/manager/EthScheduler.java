@@ -47,7 +47,6 @@ import org.slf4j.LoggerFactory;
 public class EthScheduler {
   private static final Logger LOG = LoggerFactory.getLogger(EthScheduler.class);
 
-  private final Duration defaultTimeout = Duration.ofSeconds(5);
   private final AtomicBoolean stopped = new AtomicBoolean(false);
   private final CountDownLatch shutdown = new CountDownLatch(1);
   private static final int TX_WORKER_CAPACITY = 1_000;
@@ -217,10 +216,6 @@ public class EthScheduler {
 
   public CompletableFuture<Void> scheduleBlockCreationTask(final Runnable task) {
     return CompletableFuture.runAsync(task, blockCreationExecutor);
-  }
-
-  public <T> CompletableFuture<T> timeout(final EthTask<T> task) {
-    return timeout(task, defaultTimeout);
   }
 
   public <T> CompletableFuture<T> timeout(final EthTask<T> task, final Duration timeout) {

@@ -40,6 +40,7 @@ import org.slf4j.LoggerFactory;
 public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetRangeSource.class);
   private static final Duration RETRY_DELAY_DURATION = Duration.ofSeconds(2);
+  public static final int DEFAULT_TIME_TO_WAIT_IN_SECONDS = 6;
 
   private final RangeHeadersFetcher fetcher;
   private final SyncTargetChecker syncTargetChecker;
@@ -70,7 +71,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
         peer,
         commonAncestor,
         retriesPermitted,
-        Duration.ofSeconds(5),
+        Duration.ofSeconds(DEFAULT_TIME_TO_WAIT_IN_SECONDS),
         terminationCondition);
   }
 
@@ -153,7 +154,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
         if (retryCount >= retriesPermitted) {
           LOG.atDebug()
               .setMessage(
-                  "Disconnecting target peer for providing useless or empty range header: {}.")
+                  "Disconnecting target peer {} for providing useless or empty range headers.")
               .addArgument(peer)
               .log();
           peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
@@ -169,12 +170,20 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
     } catch (final InterruptedException e) {
       LOG.trace("Interrupted while waiting for new range headers", e);
       return null;
-    } catch (final ExecutionException e) {
-      LOG.debug("Failed to retrieve new range headers", e);
-      this.pendingRequests = Optional.empty();
+    } catch (final ExecutionException | TimeoutException e) {
+      if (e instanceof ExecutionException) {
+        this.pendingRequests = Optional.empty();
+      }
       retryCount++;
-      return null;
-    } catch (final TimeoutException e) {
+      if (retryCount >= retriesPermitted) {
+        LOG.atDebug()
+            .setMessage(
+                "Disconnecting target peer {} for not providing useful range headers: Exception: {}.")
+            .addArgument(peer)
+            .addArgument(e)
+            .log();
+        peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
+      }
       return null;
     }
   }

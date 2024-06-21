@@ -56,7 +56,7 @@ import org.slf4j.LoggerFactory;
  */
 public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadHeaderSequenceTask.class);
-  private static final int DEFAULT_RETRIES = 4;
+  private static final int DEFAULT_RETRIES = 5;
 
   private final EthContext ethContext;
   private final ProtocolContext protocolContext;

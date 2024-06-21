@@ -198,9 +198,12 @@ public class EthPeers {
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
         if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
-          LOG.debug("Disconnected USEFULL peer {}", peer);
+          LOG.atDebug().setMessage("Disconnected USEFULL peer {}").addArgument(peer).log();
         } else {
-          LOG.debug("Disconnected EthPeer {}", peer.getLoggableId());
+          LOG.atDebug()
+              .setMessage("Disconnected EthPeer {}")
+              .addArgument(peer.getLoggableId())
+              .log();
         }
       }
     }
@@ -318,11 +321,11 @@ public class EthPeers {
   public Stream<EthPeer> streamBestPeers() {
     return streamAvailablePeers()
         .filter(EthPeer::isFullyValidated)
-        .sorted(getBestChainComparator().reversed());
+        .sorted(getBestPeerComparator().reversed());
   }
 
   public Optional<EthPeer> bestPeer() {
-    return streamAvailablePeers().max(getBestChainComparator());
+    return streamAvailablePeers().max(getBestPeerComparator());
   }
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
@@ -331,15 +334,15 @@ public class EthPeers {
   }
 
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
-    return streamAvailablePeers().filter(matchesCriteria).max(getBestChainComparator());
+    return streamAvailablePeers().filter(matchesCriteria).max(getBestPeerComparator());
   }
 
-  public void setBestChainComparator(final Comparator<EthPeer> comparator) {
+  public void setBestPeerComparator(final Comparator<EthPeer> comparator) {
     LOG.info("Updating the default best peer comparator");
     bestPeerComparator = comparator;
   }
 
-  public Comparator<EthPeer> getBestChainComparator() {
+  public Comparator<EthPeer> getBestPeerComparator() {
     return bestPeerComparator;
   }
 
@@ -394,8 +397,7 @@ public class EthPeers {
 
   public void disconnectWorstUselessPeer() {
     streamAvailablePeers()
-        .sorted(getBestChainComparator())
-        .findFirst()
+        .min(getBestPeerComparator())
         .ifPresent(
             peer -> {
               LOG.atDebug()
@@ -551,10 +553,11 @@ public class EthPeers {
     if (!randomPeerPriority) {
       // Disconnect if too many peers
       if (!canExceedPeerLimits(id) && peerCount() >= peerUpperBound) {
-        LOG.trace(
-            "Too many peers. Disconnect connection: {}, max connections {}",
-            connection,
-            peerUpperBound);
+        LOG.atTrace()
+            .setMessage("Too many peers. Disconnect connection: {}, max connections {}")
+            .addArgument(connection)
+            .addArgument(peerUpperBound)
+            .log();
         connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
         return false;
       }
@@ -562,18 +565,28 @@ public class EthPeers {
       if (connection.inboundInitiated()
           && !canExceedPeerLimits(id)
           && remoteConnectionLimitReached()) {
-        LOG.trace(
-            "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}",
-            connection,
-            maxRemotelyInitiatedConnections);
+        LOG.atTrace()
+            .setMessage(
+                "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}")
+            .addArgument(connection)
+            .addArgument(maxRemotelyInitiatedConnections)
+            .log();
         connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
         return false;
       }
       final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
       if (added) {
-        LOG.trace("Added peer {} with connection {} to completeConnections", id, connection);
+        LOG.atTrace()
+            .setMessage("Added peer {} with connection {} to completeConnections")
+            .addArgument(id)
+            .addArgument(connection)
+            .log();
       } else {
-        LOG.trace("Did not add peer {} with connection {} to completeConnections", id, connection);
+        LOG.atTrace()
+            .setMessage("Did not add peer {} with connection {} to completeConnections")
+            .addArgument(id)
+            .addArgument(connection)
+            .log();
       }
       return added;
     } else {

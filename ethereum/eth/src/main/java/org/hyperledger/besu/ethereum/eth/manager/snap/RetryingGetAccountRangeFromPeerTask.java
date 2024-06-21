@@ -30,6 +30,7 @@ import org.apache.tuweni.bytes.Bytes32;
 public class RetryingGetAccountRangeFromPeerTask
     extends AbstractRetryingPeerTask<AccountRangeMessage.AccountRangeData> {
 
+  public static final int MAX_RETRIES = 4;
   private final EthContext ethContext;
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
@@ -43,7 +44,10 @@ public class RetryingGetAccountRangeFromPeerTask
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
     super(
-        ethContext, 4, data -> data.accounts().isEmpty() && data.proofs().isEmpty(), metricsSystem);
+        ethContext,
+        MAX_RETRIES,
+        data -> data.accounts().isEmpty() && data.proofs().isEmpty(),
+        metricsSystem);
     this.ethContext = ethContext;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;

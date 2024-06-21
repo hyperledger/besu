@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.cli.options.unstable;
 
-import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.options.OptionParser;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -27,9 +26,6 @@ import picocli.CommandLine;
 
 /** The Networking Cli options. */
 public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
-  /** The constant PEER_LOWER_BOUND_FLAG */
-  public static final String PEER_LOWER_BOUND_FLAG = "--Xp2p-peer-lower-bound";
-
   private final String INITIATE_CONNECTIONS_FREQUENCY_FLAG =
       "--Xp2p-initiate-connections-frequency";
   private final String CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG =
@@ -77,13 +73,6 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
       description = "Whether to enable filtering of peers based on the ENR field ForkId)")
   private final Boolean filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID;
 
-  @CommandLine.Option(
-      hidden = true,
-      names = PEER_LOWER_BOUND_FLAG,
-      description =
-          "(Deprecated) Lower bound on the target number of P2P connections (default: ${DEFAULT-VALUE})")
-  private final Integer peerLowerBoundConfig = DefaultCommandValues.DEFAULT_MAX_PEERS;
-
   private NetworkingOptions() {}
 
   /**
@@ -130,9 +119,7 @@ public class NetworkingOptions implements CLIOptions<NetworkingConfiguration> {
             CHECK_MAINTAINED_CONNECTIONS_FREQUENCY_FLAG,
             OptionParser.format(checkMaintainedConnectionsFrequencySec),
             INITIATE_CONNECTIONS_FREQUENCY_FLAG,
-            OptionParser.format(initiateConnectionsFrequencySec),
-            PEER_LOWER_BOUND_FLAG,
-            OptionParser.format((peerLowerBoundConfig)));
+            OptionParser.format(initiateConnectionsFrequencySec));
 
     if (dnsDiscoveryServerOverride.isPresent()) {
       retval.add(DNS_DISCOVERY_SERVER_OVERRIDE_FLAG);
