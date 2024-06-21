@@ -96,9 +96,17 @@ public class BlockTimer {
     startTimer(round, expiryTime);
   }
 
-
-  public synchronized boolean checkEmptyBlockExpired(final BlockHeader chainHeadHeader, final long currentTimeInMillis) {
-    final long emptyBlockPeriodExpiryTime = (chainHeadHeader.getTimestamp() + emptyBlockPeriodSeconds) * 1000;
+  /**
+   * Checks if the empty block timer is expired
+   *
+   * @param chainHeadHeader The header of the chain head
+   * @param currentTimeInMillis The current time
+   * @return a boolean value
+   */
+  public synchronized boolean checkEmptyBlockExpired(
+      final BlockHeader chainHeadHeader, final long currentTimeInMillis) {
+    final long emptyBlockPeriodExpiryTime =
+        (chainHeadHeader.getTimestamp() + emptyBlockPeriodSeconds) * 1000;
 
     if (currentTimeInMillis > emptyBlockPeriodExpiryTime) {
       LOG.info("Empty Block expired");
@@ -108,8 +116,19 @@ public class BlockTimer {
     return false;
   }
 
-  public void resetTimerForEmptyBlock(final ConsensusRoundIdentifier roundIdentifier, final BlockHeader chainHeadHeader, final long currentTimeInMillis){
-    final long emptyBlockPeriodExpiryTime = (chainHeadHeader.getTimestamp() + emptyBlockPeriodSeconds) * 1000;
+  /**
+   * Resets the empty block timer
+   *
+   * @param roundIdentifier The current round identifier
+   * @param chainHeadHeader The header of the chain head
+   * @param currentTimeInMillis The current time
+   */
+  public void resetTimerForEmptyBlock(
+      final ConsensusRoundIdentifier roundIdentifier,
+      final BlockHeader chainHeadHeader,
+      final long currentTimeInMillis) {
+    final long emptyBlockPeriodExpiryTime =
+        (chainHeadHeader.getTimestamp() + emptyBlockPeriodSeconds) * 1000;
     final long nextBlockPeriodExpiryTime = currentTimeInMillis + blockPeriodSeconds * 1000;
 
     startTimer(roundIdentifier, Math.min(emptyBlockPeriodExpiryTime, nextBlockPeriodExpiryTime));
@@ -133,18 +152,27 @@ public class BlockTimer {
     }
   }
 
-  private synchronized void setBlockTimes(
-      final ConsensusRoundIdentifier round) {
+  private synchronized void setBlockTimes(final ConsensusRoundIdentifier round) {
     final BftConfigOptions currentConfigOptions =
         forksSchedule.getFork(round.getSequenceNumber()).getValue();
     this.blockPeriodSeconds = currentConfigOptions.getBlockPeriodSeconds();
     this.emptyBlockPeriodSeconds = currentConfigOptions.getEmptyBlockPeriodSeconds();
   }
 
+  /**
+   * Retrieves the Block Period Seconds
+   *
+   * @return the Block Period Seconds
+   */
   public synchronized long getBlockPeriodSeconds() {
     return blockPeriodSeconds;
   }
 
+  /**
+   * Retrieves the Empty Block Period Seconds
+   *
+   * @return the Empty Block Period Seconds
+   */
   public synchronized long getEmptyBlockPeriodSeconds() {
     return emptyBlockPeriodSeconds;
   }

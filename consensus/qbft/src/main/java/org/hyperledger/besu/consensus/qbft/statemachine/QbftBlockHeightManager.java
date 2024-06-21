@@ -153,28 +153,37 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
     if (blockHasTransactions) {
       if (isProposer) {
-        LOG.info("Block has transactions and this node is a proposer so it will send a proposal: " +  roundIdentifier);
+        LOG.info(
+            "Block has transactions and this node is a proposer so it will send a proposal: "
+                + roundIdentifier);
         qbftRound.sendProposalMessage(block);
       } else {
         LOG.info(
-            "Block has transactions but this node is not a proposer so it will not send a proposal: " +  roundIdentifier);
+            "Block has transactions but this node is not a proposer so it will not send a proposal: "
+                + roundIdentifier);
       }
     } else {
       final long currentTimeInMillis = finalState.getClock().millis();
-      boolean emptyBlockExpired = finalState.getBlockTimer().checkEmptyBlockExpired(parentHeader, currentTimeInMillis);
+      boolean emptyBlockExpired =
+          finalState.getBlockTimer().checkEmptyBlockExpired(parentHeader, currentTimeInMillis);
       if (emptyBlockExpired) {
         if (isProposer) {
           LOG.info(
-              "Block has no transactions and this node is a proposer so it will send a proposal: " +  roundIdentifier);
+              "Block has no transactions and this node is a proposer so it will send a proposal: "
+                  + roundIdentifier);
           qbftRound.sendProposalMessage(block);
         } else {
           LOG.info(
-              "Block has no transactions but this node is not a proposer so it will not send a proposal: " +  roundIdentifier);
+              "Block has no transactions but this node is not a proposer so it will not send a proposal: "
+                  + roundIdentifier);
         }
       } else {
         LOG.info(
-              "Block has no transactions but emptyBlockPeriodSeconds did not expired yet: " +  roundIdentifier);
-        finalState.getBlockTimer().resetTimerForEmptyBlock(roundIdentifier, parentHeader, currentTimeInMillis);
+            "Block has no transactions but emptyBlockPeriodSeconds did not expired yet: "
+                + roundIdentifier);
+        finalState
+            .getBlockTimer()
+            .resetTimerForEmptyBlock(roundIdentifier, parentHeader, currentTimeInMillis);
         finalState.getRoundTimer().cancelTimer();
         currentRound = Optional.empty();
       }
