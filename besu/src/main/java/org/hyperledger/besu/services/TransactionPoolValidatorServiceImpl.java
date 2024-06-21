@@ -30,7 +30,6 @@ public class TransactionPoolValidatorServiceImpl implements TransactionPoolValid
 
   private Optional<PluginTransactionPoolValidatorFactory> factory = Optional.empty();
 
-
   @Override
   public PluginTransactionPoolValidator createTransactionValidator() {
     return factory

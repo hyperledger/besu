@@ -150,6 +150,7 @@ class FlexGroupPrivacyTest {
           .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
           .storageProvider(new InMemoryKeyValueStorageProvider())
           .networkId(BigInteger.ONE)
+          .miningParameters(MiningParameters.newDefault())
           .dataStorageConfiguration(dataStorageConfiguration)
           .nodeKey(NodeKeyUtils.generate())
           .metricsSystem(new NoOpMetricsSystem())

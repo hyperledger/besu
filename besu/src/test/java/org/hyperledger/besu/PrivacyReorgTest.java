@@ -90,7 +90,6 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.io.TempDir;
 
 @SuppressWarnings("rawtypes")
 public class PrivacyReorgTest {
@@ -190,7 +189,6 @@ public class PrivacyReorgTest {
             .build();
 
     privacyParameters.setPrivacyUserId(ENCLAVE_PUBLIC_KEY.toBase64String());
-
   }
 
   @Test

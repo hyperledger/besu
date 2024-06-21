@@ -30,7 +30,6 @@ public class TransactionSelectionServiceImpl implements TransactionSelectionServ
 
   private Optional<PluginTransactionSelectorFactory> factory = Optional.empty();
 
-
   @Override
   public PluginTransactionSelector createPluginTransactionSelector() {
     return factory

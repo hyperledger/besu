@@ -112,7 +112,6 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Supplier;
 
-import com.google.common.base.Preconditions;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -536,8 +535,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
     checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
-    checkNotNull(besuComponent, "Missing Dagger context");
-    Preconditions.checkState(besuComponent.isPresent(), "Missing Dagger context");
+    // checkNotNull(besuComponent, "Missing Dagger context");
+    // Preconditions.checkState(besuComponent.isPresent(), "Missing Dagger context");
 
     prepForBuild();
 
