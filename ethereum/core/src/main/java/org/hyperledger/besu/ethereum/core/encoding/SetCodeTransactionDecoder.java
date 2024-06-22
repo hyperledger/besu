@@ -45,7 +45,7 @@ public class SetCodeTransactionDecoder {
     final BigInteger chainId = input.readBigIntegerScalar();
     final Transaction.Builder builder =
         Transaction.builder()
-            .type(TransactionType.EIP1559)
+            .type(TransactionType.SET_CODE)
             .chainId(chainId)
             .nonce(input.readLongScalar())
             .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
@@ -67,26 +67,18 @@ public class SetCodeTransactionDecoder {
                     }))
             .setCodeTransactionPayloads(
                 input.readList(
-                    setCodeTransactionPayloadsRLPInput -> {
-                      setCodeTransactionPayloadsRLPInput.enterList();
-                      final SetCodeAuthorization setCodeAuthorization =
-                          decodeInnerPayload(setCodeTransactionPayloadsRLPInput);
-                      setCodeTransactionPayloadsRLPInput.leaveList();
-                      return setCodeAuthorization;
-                    }));
+                    setCodeTransactionPayloadsRLPInput ->
+                        decodeInnerPayload(setCodeTransactionPayloadsRLPInput)));
 
     final byte recId = (byte) input.readUnsignedByteScalar();
-    final Transaction transaction =
-        builder
-            .signature(
-                SIGNATURE_ALGORITHM
-                    .get()
-                    .createSignature(
-                        input.readUInt256Scalar().toUnsignedBigInteger(),
-                        input.readUInt256Scalar().toUnsignedBigInteger(),
-                        recId))
-            .build();
+    final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
+
     input.leaveList();
+
+    final Transaction transaction =
+        builder.signature(SIGNATURE_ALGORITHM.get().createSignature(r, s, recId)).build();
+
     return transaction;
   }
 
@@ -96,9 +88,6 @@ public class SetCodeTransactionDecoder {
     final Address address = Address.wrap(input.readBytes());
 
     final List<Long> nonces = new ArrayList<>();
-    if (!input.nextIsList()) {
-      throw new IllegalArgumentException("Optional nonce must be an empty list, but isn't");
-    }
 
     if (!input.nextIsList()) {
       throw new IllegalArgumentException("Optional nonce must be an list, but isn't");
@@ -113,16 +102,12 @@ public class SetCodeTransactionDecoder {
     input.leaveList();
 
     final byte yParity = (byte) input.readUnsignedByteScalar();
-
-    final SECPSignature signature =
-        SIGNATURE_ALGORITHM
-            .get()
-            .createSignature(
-                input.readUInt256Scalar().toUnsignedBigInteger(),
-                input.readUInt256Scalar().toUnsignedBigInteger(),
-                yParity);
+    final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
+    final BigInteger s = input.readUInt256Scalar().toUnsignedBigInteger();
 
     input.leaveList();
+
+    final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, yParity);
 
     return new SetCodeAuthorization(chainId, address, nonces, signature);
   }
