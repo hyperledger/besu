@@ -162,14 +162,14 @@ public abstract class BaseBftController implements BftEventHandler {
 
   @Override
   public void handleBlockTimerExpiry(final BlockTimerExpiry blockTimerExpiry) {
-    final ConsensusRoundIdentifier roundIndentifier = blockTimerExpiry.getRoundIndentifier();
-    if (isMsgForCurrentHeight(roundIndentifier)) {
-      getCurrentHeightManager().handleBlockTimerExpiry(roundIndentifier);
+    final ConsensusRoundIdentifier roundIdentifier = blockTimerExpiry.getRoundIdentifier();
+    if (isMsgForCurrentHeight(roundIdentifier)) {
+      getCurrentHeightManager().handleBlockTimerExpiry(roundIdentifier);
     } else {
       LOG.trace(
           "Block timer event discarded as it is not for current block height chainHeight={} eventHeight={}",
           getCurrentHeightManager().getChainHeight(),
-          roundIndentifier.getSequenceNumber());
+          roundIdentifier.getSequenceNumber());
     }
   }
 
