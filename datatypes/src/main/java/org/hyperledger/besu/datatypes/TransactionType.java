@@ -32,7 +32,7 @@ public enum TransactionType {
   SET_CODE(0x04);
 
   private static final Set<TransactionType> ACCESS_LIST_SUPPORTED_TRANSACTION_TYPES =
-      Set.of(ACCESS_LIST, EIP1559, BLOB);
+      Set.of(ACCESS_LIST, EIP1559, BLOB, SET_CODE);
 
   private static final EnumSet<TransactionType> LEGACY_FEE_MARKET_TRANSACTION_TYPES =
       EnumSet.of(TransactionType.FRONTIER, TransactionType.ACCESS_LIST);
@@ -85,7 +85,8 @@ public enum TransactionType {
               TransactionType.FRONTIER,
               TransactionType.ACCESS_LIST,
               TransactionType.EIP1559,
-              TransactionType.BLOB
+              TransactionType.BLOB,
+              TransactionType.SET_CODE
             })
         .filter(transactionType -> transactionType.typeValue == serializedTypeValue)
         .findFirst()
