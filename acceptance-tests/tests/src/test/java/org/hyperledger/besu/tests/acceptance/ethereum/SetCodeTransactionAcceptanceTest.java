@@ -82,7 +82,6 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
 
     cluster.verify(authorizer.balanceEquals(0));
     cluster.verify(
-        transactionSponsor.balanceEquals(Amount.wei(new BigInteger("90000000000000000000000"))));
-
+        transactionSponsor.balanceEquals(Amount.wei(new BigInteger("180000000000000000000000"))));
   }
 }
