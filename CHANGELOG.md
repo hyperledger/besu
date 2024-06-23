@@ -3,6 +3,7 @@
 ## Next Release
 
 ### Breaking Changes
+- `Xp2p-peer-lower-bound` has been removed. [#7247](https://github.com/hyperledger/besu/pull/7247)
 
 ### Additions and Improvements
 - Support for eth_maxPriorityFeePerGas [#5658](https://github.com/hyperledger/besu/issues/5658)
@@ -16,6 +17,8 @@
 ### Bug fixes
 - Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)
 - Fix "Invalid block detected" for BFT chains using Bonsai DB [#7204](https://github.com/hyperledger/besu/pull/7204)
+- Fix "Could not confirm best peer had pivot block" [#7109](https://github.com/hyperledger/besu/issues/7109)
+- Fix "Chain Download Halt" [#6884](https://github.com/hyperledger/besu/issues/6884)
 
 ## 24.6.0
 

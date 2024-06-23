@@ -67,6 +67,8 @@ public final class CodeV1Validation {
    * @param layout The parsed EOFLayout of the code
    * @return either null, indicating no error, or a String describing the validation error.
    */
+  @SuppressWarnings(
+      "ReferenceEquality") // comparison `container != layout` is deliberate and correct
   public static String validate(final EOFLayout layout) {
     Queue<EOFLayout> workList = new ArrayDeque<>(layout.getSubcontainerCount());
     workList.add(layout);
@@ -74,6 +76,16 @@ public final class CodeV1Validation {
     while (!workList.isEmpty()) {
       EOFLayout container = workList.poll();
       workList.addAll(List.of(container.subContainers()));
+      if (container != layout && container.containerMode().get() == null) {
+        return "Unreferenced container #" + layout.indexOfSubcontainer(container);
+      }
+      if (container.containerMode().get() != RUNTIME
+          && container.data().size() != container.dataLength()) {
+        return "Incomplete data section "
+            + (container == layout
+                ? " at root"
+                : " in container #" + layout.indexOfSubcontainer(container));
+      }
 
       final String codeValidationError = CodeV1Validation.validateCode(container);
       if (codeValidationError != null) {
