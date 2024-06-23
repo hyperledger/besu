@@ -11,6 +11,7 @@
 - A full and up to date implementation of EOF for Prague [#7169](https://github.com/hyperledger/besu/pull/7169)
 - Add Subnet-Based Peer Permissions.  [#7168](https://github.com/hyperledger/besu/pull/7168)
 - Reduce lock contention on transaction pool when building a block [#7180](https://github.com/hyperledger/besu/pull/7180)
+- Add LUKSO as predefined network name [#7223](https://github.com/hyperledger/besu/pull/7223)
 
 ### Bug fixes
 - Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)
@@ -37,8 +38,6 @@
 - Promote experimental --Xbonsai-trie-logs-pruning-window-size to production-ready, --bonsai-trie-logs-pruning-window-size [#7192](https://github.com/hyperledger/besu/pull/7192)
 - `admin_nodeInfo` JSON/RPC call returns the currently active EVM version [#7127](https://github.com/hyperledger/besu/pull/7127)
 - Improve the selection of the most profitable built block [#7174](https://github.com/hyperledger/besu/pull/7174)
-- Support for eth_maxPriorityFeePerGas [#5658](https://github.com/hyperledger/besu/issues/5658)
-- Add LUKSO as predefined network name [#7223](https://github.com/hyperledger/besu/pull/7223)
 
 ### Bug fixes
 - Make `eth_gasPrice` aware of the base fee market [#7102](https://github.com/hyperledger/besu/pull/7102)
