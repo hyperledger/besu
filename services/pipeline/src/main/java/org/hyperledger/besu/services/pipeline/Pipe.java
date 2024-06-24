@@ -87,6 +87,11 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
     this.pipeName = pipeName;
   }
 
+  /**
+   * Get the name of this pipe
+   *
+   * @return the name of the pipe
+   */
   public String getPipeName() {
     return pipeName;
   }

@@ -2243,15 +2243,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (dataStorageConfiguration == null) {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
 
-      final ImmutableDataStorageConfiguration.Builder theBuilder =
+      final ImmutableDataStorageConfiguration.Builder dataStorageConfigBuilder =
           ImmutableDataStorageConfiguration.builder().from(dataStorageConfiguration);
+
+      // If FULL sync mode + Bonsai DB we disable bonsai-limit-trie-logs-enabled and
+      // log a warning
       if (syncMode == SyncMode.FULL
           && dataStorageOptions.toDomainObject().getDataStorageFormat()
               == DataStorageFormat.BONSAI) {
         logger.warn("Forcing bonsai-limit-trie-logs-enabled to false, since sync mode is FULL");
-        theBuilder.bonsaiLimitTrieLogsEnabled(false);
+        dataStorageConfigBuilder.bonsaiLimitTrieLogsEnabled(false);
       }
-      dataStorageConfiguration = theBuilder.build();
+      dataStorageConfiguration = dataStorageConfigBuilder.build();
     }
     return dataStorageConfiguration;
   }

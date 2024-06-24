@@ -51,6 +51,17 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
   private final BlockHeader blockHeader;
   private final NodeKey nodeKey;
 
+  /**
+   * Create a BFT-specific pivot selector
+   *
+   * @param ethContext the eth context
+   * @param syncConfig the sync config
+   * @param syncState the sync state
+   * @param metricsSystem the metrics
+   * @param protocolContext the protocol context
+   * @param nodeKey the node key
+   * @param blockHeader the block header
+   */
   public BFTPivotSelectorFromPeers(
       final EthContext ethContext,
       final SynchronizerConfiguration syncConfig,
