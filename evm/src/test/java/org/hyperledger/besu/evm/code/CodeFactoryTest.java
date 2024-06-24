@@ -18,6 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.EOFTestConstants.bytesFromPrettyPrint;
 
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import org.junit.jupiter.api.Test;
 
@@ -25,12 +28,12 @@ class CodeFactoryTest {
 
   @Test
   void invalidCodeIncompleteMagic() {
-    invalidCode("0xEF", true);
+    invalidCodeForCreation("0xEF");
   }
 
   @Test
   void invalidCodeInvalidMagic() {
-    invalidCode("0xEFFF0101000302000400600000AABBCCDD", true);
+    invalidCodeForCreation("0xEFFF0101000302000400600000AABBCCDD");
   }
 
   @Test
@@ -180,7 +183,9 @@ class CodeFactoryTest {
 
   @Test
   void invalidDataTruncated() {
-    invalidCode("EF0001 010004 0200010001 040003 00 00800000 FE BEEF", "Incomplete data section");
+    invalidCode(
+        "EF0001 010004 0200010001 040003 00 00800000 FE BEEF",
+        "Truncated data section when a complete section was required");
   }
 
   @Test
@@ -588,35 +593,28 @@ class CodeFactoryTest {
         "RETURNCONTRACT is only a valid opcode in containers used for initcode");
   }
 
-  //  // valid subcontainer references
-  //  // invalid subcontainer references
-  //
-  //  {
-  //    "EF0001 010004 0200010001 040003 00 00800000 FE BEEF",
-  //            "Incomplete data section",
-  //            "Incomplete data section",
-  //            1
-  //  },
-  //
-
   private static void validCode(final String str) {
-    Code code = CodeFactory.createCode(bytesFromPrettyPrint(str), 1);
+    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    Code code = evm.getCodeUncached(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isTrue();
   }
 
   private static void invalidCode(final String str, final String error) {
-    Code code = CodeFactory.createCode(bytesFromPrettyPrint(str), 1);
+    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    Code code = evm.getCodeUncached(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isFalse();
     assertThat(((CodeInvalid) code).getInvalidReason()).contains(error);
   }
 
   private static void invalidCode(final String str) {
-    Code code = CodeFactory.createCode(bytesFromPrettyPrint(str), 1);
+    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    Code code = evm.getCodeUncached(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isFalse();
   }
 
-  private static void invalidCode(final String str, final boolean legacy) {
-    Code code = CodeFactory.createCode(bytesFromPrettyPrint(str), 1, legacy, false);
+  private static void invalidCodeForCreation(final String str) {
+    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+    Code code = evm.getCodeForCreation(bytesFromPrettyPrint(str));
     assertThat(code.isValid()).isFalse();
   }
 }

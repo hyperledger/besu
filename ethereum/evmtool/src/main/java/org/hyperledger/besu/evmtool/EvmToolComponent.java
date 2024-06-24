@@ -15,14 +15,13 @@
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.MetricsConfigurationModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 
-import java.util.function.Function;
 import javax.inject.Singleton;
 
 import dagger.Component;
@@ -40,7 +39,9 @@ import dagger.Component;
     })
 public interface EvmToolComponent {
 
-  Function<BlockHeader, ProtocolSpec> getProtocolSpec();
+  ProtocolSpec getProtocolSpec();
+
+  EVM getEVM();
 
   WorldUpdater getWorldUpdater();
 
