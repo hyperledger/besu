@@ -28,16 +28,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class WithdrawalRequestParameter {
 
   private final String sourceAddress;
-  private final String validatorPublicKey;
+  private final String validatorPubkey;
   private final String amount;
 
   @JsonCreator
   public WithdrawalRequestParameter(
       @JsonProperty("sourceAddress") final String sourceAddress,
-      @JsonProperty("validatorPublicKey") final String validatorPublicKey,
+      @JsonProperty("validatorPubkey") final String validatorPubkey,
       @JsonProperty("amount") final String amount) {
     this.sourceAddress = sourceAddress;
-    this.validatorPublicKey = validatorPublicKey;
+    this.validatorPubkey = validatorPubkey;
     this.amount = amount;
   }
 
@@ -52,7 +52,7 @@ public class WithdrawalRequestParameter {
   public WithdrawalRequest toWithdrawalRequest() {
     return new WithdrawalRequest(
         Address.fromHexString(sourceAddress),
-        BLSPublicKey.fromHexString(validatorPublicKey),
+        BLSPublicKey.fromHexString(validatorPubkey),
         GWei.fromHexString(amount));
   }
 
@@ -62,8 +62,8 @@ public class WithdrawalRequestParameter {
   }
 
   @JsonGetter
-  public String getValidatorPublicKey() {
-    return validatorPublicKey;
+  public String getValidatorPubkey() {
+    return validatorPubkey;
   }
 
   @JsonGetter
@@ -77,13 +77,13 @@ public class WithdrawalRequestParameter {
     if (o == null || getClass() != o.getClass()) return false;
     final WithdrawalRequestParameter that = (WithdrawalRequestParameter) o;
     return Objects.equals(sourceAddress, that.sourceAddress)
-        && Objects.equals(validatorPublicKey, that.validatorPublicKey)
+        && Objects.equals(validatorPubkey, that.validatorPubkey)
         && Objects.equals(amount, that.amount);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceAddress, validatorPublicKey, amount);
+    return Objects.hash(sourceAddress, validatorPubkey, amount);
   }
 
   @Override
@@ -92,8 +92,8 @@ public class WithdrawalRequestParameter {
         + "sourceAddress='"
         + sourceAddress
         + '\''
-        + ", validatorPublicKey='"
-        + validatorPublicKey
+        + ", validatorPubkey='"
+        + validatorPubkey
         + '\''
         + ", amount='"
         + amount

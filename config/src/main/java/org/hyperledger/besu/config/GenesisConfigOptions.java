@@ -250,6 +250,13 @@ public interface GenesisConfigOptions {
   OptionalLong getPragueTime();
 
   /**
+   * Gets Prague EOF time.
+   *
+   * @return the prague time
+   */
+  OptionalLong getPragueEOFTime();
+
+  /**
    * Gets future eips time.
    *
    * @return the future eips time

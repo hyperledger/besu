@@ -198,9 +198,12 @@ public class EthPeers {
         peer.handleDisconnect();
         abortPendingRequestsAssignedToDisconnectedPeers();
         if (peer.getReputation().getScore() > USEFULL_PEER_SCORE_THRESHOLD) {
-          LOG.debug("Disconnected USEFULL peer {}", peer);
+          LOG.atDebug().setMessage("Disconnected USEFULL peer {}").addArgument(peer).log();
         } else {
-          LOG.debug("Disconnected EthPeer {}", peer.getLoggableId());
+          LOG.atDebug()
+              .setMessage("Disconnected EthPeer {}")
+              .addArgument(peer.getLoggableId())
+              .log();
         }
       }
     }
@@ -318,11 +321,11 @@ public class EthPeers {
   public Stream<EthPeer> streamBestPeers() {
     return streamAvailablePeers()
         .filter(EthPeer::isFullyValidated)
-        .sorted(getBestChainComparator().reversed());
+        .sorted(getBestPeerComparator().reversed());
   }
 
   public Optional<EthPeer> bestPeer() {
-    return streamAvailablePeers().max(getBestChainComparator());
+    return streamAvailablePeers().max(getBestPeerComparator());
   }
 
   public Optional<EthPeer> bestPeerWithHeightEstimate() {
@@ -331,15 +334,15 @@ public class EthPeers {
   }
 
   public Optional<EthPeer> bestPeerMatchingCriteria(final Predicate<EthPeer> matchesCriteria) {
-    return streamAvailablePeers().filter(matchesCriteria).max(getBestChainComparator());
+    return streamAvailablePeers().filter(matchesCriteria).max(getBestPeerComparator());
   }
 
-  public void setBestChainComparator(final Comparator<EthPeer> comparator) {
+  public void setBestPeerComparator(final Comparator<EthPeer> comparator) {
     LOG.info("Updating the default best peer comparator to {}", comparator);
     bestPeerComparator = comparator;
   }
 
-  public Comparator<EthPeer> getBestChainComparator() {
+  public Comparator<EthPeer> getBestPeerComparator() {
     return bestPeerComparator;
   }
 
@@ -390,7 +393,7 @@ public class EthPeers {
     if (peerCount() >= getMaxPeers()) {
       streamAvailablePeers()
           .filter(p -> !canExceedPeerLimits(p.getId()))
-          .min(getBestChainComparator())
+          .min(getBestPeerComparator())
           .ifPresent(
               worstCurrentlyConnectedPeer -> {
                 // TODO remove this debug log
@@ -399,7 +402,7 @@ public class EthPeers {
                     .addArgument(worstCurrentlyConnectedPeer)
                     .addArgument(connectingPeer)
                     .log();
-                if (getBestChainComparator().compare(worstCurrentlyConnectedPeer, connectingPeer)
+                if (getBestPeerComparator().compare(worstCurrentlyConnectedPeer, connectingPeer)
                     < 0) {
 
                   LOG.atDebug()
@@ -581,9 +584,17 @@ public class EthPeers {
     enforceConnectionLimits();
     final boolean added = completeConnections.containsKey(id);
     if (added) {
-      LOG.trace("Added peer {} with connection {} to completeConnections", id, connection);
+        LOG.atTrace()
+                .setMessage("Added peer {} with connection {} to completeConnections")
+                .addArgument(id)
+                .addArgument(connection)
+                .log();
     } else {
-      LOG.trace("Did not add peer {} with connection {} to completeConnections", id, connection);
+        LOG.atTrace()
+                .setMessage("Did not add peer {} with connection {} to completeConnections")
+                .addArgument(id)
+                .addArgument(connection)
+                .log();
     }
     return added;
   }

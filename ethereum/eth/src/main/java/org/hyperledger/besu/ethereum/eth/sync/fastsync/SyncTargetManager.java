@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.Di
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
+import java.time.Duration;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -41,6 +42,7 @@ import org.slf4j.LoggerFactory;
 
 public class SyncTargetManager extends AbstractSyncTargetManager {
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetManager.class);
+  private static final int SECONDS_PER_REQUEST = 6; // 5s per request + 1s wait between retries
 
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private final ProtocolSchedule protocolSchedule;
@@ -93,7 +95,9 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
       return completedFuture(Optional.empty());
     } else {
       final EthPeer bestPeer = maybeBestPeer.get();
-      if (bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()) {
+      // Do not check the best peers estimated height if we are doing PoS
+      if (!protocolSchedule.getByBlockHeader(pivotBlockHeader).isPoS()
+          && bestPeer.chainState().getEstimatedHeight() < pivotBlockHeader.getNumber()) {
         LOG.info(
             "Best peer {} has chain height {} below pivotBlock height {}. Waiting for better peers. Current {} of max {}",
             maybeBestPeer.map(EthPeer::getLoggableId).orElse("none"),
@@ -120,7 +124,8 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
     task.assignPeer(bestPeer);
     return ethContext
         .getScheduler()
-        .timeout(task)
+        // Task is a retrying task. Make sure that the timeout is long enough to allow for retries.
+        .timeout(task, Duration.ofSeconds(MAX_QUERY_RETRIES_PER_PEER * SECONDS_PER_REQUEST + 2))
         .thenCompose(
             result -> {
               if (peerHasDifferentPivotBlock(result)) {
@@ -146,11 +151,13 @@ public class SyncTargetManager extends AbstractSyncTargetManager {
             })
         .exceptionally(
             error -> {
-              LOG.debug(
-                  "Could not confirm best peer {} had pivot block {}",
-                  bestPeer.getLoggableId(),
-                  pivotBlockHeader.getNumber(),
-                  error);
+              LOG.atDebug()
+                  .setMessage("Could not confirm best peer {} had pivot block {}, {}")
+                  .addArgument(bestPeer.getLoggableId())
+                  .addArgument(pivotBlockHeader.getNumber())
+                  .addArgument(error)
+                  .log();
+              bestPeer.disconnect(DisconnectReason.USELESS_PEER_CANNOT_CONFIRM_PIVOT_BLOCK);
               return Optional.empty();
             });
   }
