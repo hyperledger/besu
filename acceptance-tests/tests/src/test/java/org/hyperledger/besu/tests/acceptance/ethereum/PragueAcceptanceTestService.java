@@ -31,7 +31,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.web3j.protocol.core.methods.response.EthBlock;
 
-public class PostMergeAcceptanceTestService {
+public class PragueAcceptanceTestService {
   protected static final MediaType MEDIA_TYPE_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
@@ -42,7 +42,7 @@ public class PostMergeAcceptanceTestService {
 
   private long blockTimeStamp = 0;
 
-  PostMergeAcceptanceTestService(final BesuNode besuNode, final EthTransactions ethTransactions) {
+  PragueAcceptanceTestService(final BesuNode besuNode, final EthTransactions ethTransactions) {
     this.besuNode = besuNode;
     this.ethTransactions = ethTransactions;
     httpClient = new OkHttpClient();

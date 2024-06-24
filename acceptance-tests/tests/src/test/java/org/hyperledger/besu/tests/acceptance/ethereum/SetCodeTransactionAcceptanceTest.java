@@ -37,14 +37,14 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
           Address.fromHexStringStrict("1a3f5c0744c80ba7a9df07f88e456acf9fa327b8"));
 
   private BesuNode besuNode;
-  private PostMergeAcceptanceTestService testService;
+  private PragueAcceptanceTestService testService;
 
   @BeforeEach
   void setUp() throws IOException {
     besuNode = besu.createExecutionEngineGenesisNode("besuNode", GENESIS_FILE);
     cluster.start(besuNode);
 
-    testService = new PostMergeAcceptanceTestService(besuNode, ethTransactions);
+    testService = new PragueAcceptanceTestService(besuNode, ethTransactions);
   }
 
   @Test
