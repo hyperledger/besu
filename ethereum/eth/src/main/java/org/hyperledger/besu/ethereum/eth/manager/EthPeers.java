@@ -584,17 +584,17 @@ public class EthPeers {
     enforceConnectionLimits();
     final boolean added = completeConnections.containsKey(id);
     if (added) {
-        LOG.atTrace()
-                .setMessage("Added peer {} with connection {} to completeConnections")
-                .addArgument(id)
-                .addArgument(connection)
-                .log();
+      LOG.atTrace()
+          .setMessage("Added peer {} with connection {} to completeConnections")
+          .addArgument(id)
+          .addArgument(connection)
+          .log();
     } else {
-        LOG.atTrace()
-                .setMessage("Did not add peer {} with connection {} to completeConnections")
-                .addArgument(id)
-                .addArgument(connection)
-                .log();
+      LOG.atTrace()
+          .setMessage("Did not add peer {} with connection {} to completeConnections")
+          .addArgument(id)
+          .addArgument(connection)
+          .log();
     }
     return added;
   }
