@@ -115,7 +115,7 @@ public class FastSyncActionsTest {
     setUp(storageFormat);
     for (int i = 0; i < syncConfig.getSyncMinimumPeerCount(); i++) {
       EthProtocolManagerTestUtil.createPeer(
-          ethProtocolManager, syncConfig.getFastSyncPivotDistance() + i + 1);
+          ethProtocolManager, syncConfig.getSyncPivotDistance() + i + 1);
     }
     final CompletableFuture<FastSyncState> result =
         fastSyncActions.selectPivotBlock(FastSyncState.EMPTY_SYNC_STATE);
@@ -234,7 +234,7 @@ public class FastSyncActionsTest {
         createFastSyncActions(
             syncConfig,
             new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
-    final long minPivotHeight = syncConfig.getFastSyncPivotDistance() + 1L;
+    final long minPivotHeight = syncConfig.getSyncPivotDistance() + 1L;
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     // Create peers without chain height estimates
@@ -267,7 +267,7 @@ public class FastSyncActionsTest {
     final long bestPeerHeight = minPivotHeight + 1;
     peers.get(minPeers - 1).getEthPeer().chainState().updateHeightEstimate(bestPeerHeight);
     final FastSyncState expected =
-        new FastSyncState(bestPeerHeight - syncConfig.getFastSyncPivotDistance());
+        new FastSyncState(bestPeerHeight - syncConfig.getSyncPivotDistance());
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     assertThat(result).isCompletedWithValue(expected);
   }
@@ -285,7 +285,7 @@ public class FastSyncActionsTest {
         createFastSyncActions(
             syncConfig,
             new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
-    final long minPivotHeight = syncConfig.getFastSyncPivotDistance() + 1L;
+    final long minPivotHeight = syncConfig.getSyncPivotDistance() + 1L;
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     // Create peers that are not validated
@@ -319,7 +319,7 @@ public class FastSyncActionsTest {
     bestPeer.chainState().updateHeightEstimate(bestPeerHeight);
     bestPeer.markValidated(validator);
     final FastSyncState expected =
-        new FastSyncState(bestPeerHeight - syncConfig.getFastSyncPivotDistance());
+        new FastSyncState(bestPeerHeight - syncConfig.getSyncPivotDistance());
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     assertThat(result).isCompletedWithValue(expected);
   }
@@ -357,7 +357,7 @@ public class FastSyncActionsTest {
         createFastSyncActions(
             syncConfig,
             new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
-    final long minPivotHeight = syncConfig.getFastSyncPivotDistance() + 1L;
+    final long minPivotHeight = syncConfig.getSyncPivotDistance() + 1L;
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
 
     // Create peers without chain height estimates
@@ -392,7 +392,7 @@ public class FastSyncActionsTest {
     final long expectedBestChainHeight =
         peers.get(1).getEthPeer().chainState().getEstimatedHeight();
     final FastSyncState expected =
-        new FastSyncState(expectedBestChainHeight - syncConfig.getFastSyncPivotDistance());
+        new FastSyncState(expectedBestChainHeight - syncConfig.getSyncPivotDistance());
     EthProtocolManagerTestUtil.runPendingFutures(ethProtocolManager);
     assertThat(result).isCompletedWithValue(expected);
   }
@@ -409,7 +409,7 @@ public class FastSyncActionsTest {
         createFastSyncActions(
             syncConfig,
             new PivotSelectorFromPeers(ethContext, syncConfig, syncState, metricsSystem));
-    final long pivotDistance = syncConfig.getFastSyncPivotDistance();
+    final long pivotDistance = syncConfig.getSyncPivotDistance();
 
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, pivotDistance - 1);
@@ -432,7 +432,7 @@ public class FastSyncActionsTest {
   public void selectPivotBlockShouldRetryIfBestPeerChainIsEqualToPivotDistance(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
-    final long pivotDistance = syncConfig.getFastSyncPivotDistance();
+    final long pivotDistance = syncConfig.getSyncPivotDistance();
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     // Create peers with chains that are too short
     for (int i = 0; i < syncConfig.getSyncMinimumPeerCount(); i++) {

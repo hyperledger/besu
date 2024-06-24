@@ -19,7 +19,6 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
@@ -77,6 +76,10 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
     LOG.info("Creating pivot block selector for BFT node");
   }
 
+  protected boolean weAreAValidator(final ValidatorProvider validatorProvider) {
+    return validatorProvider.nodeIsValidator(nodeKey);
+  }
+
   @Override
   public Optional<FastSyncState> selectNewPivotBlock() {
 
@@ -97,21 +100,17 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
 
       return bestPeer.flatMap(this::fromBestPeer);
     } else {
-      final boolean weAreAValidator =
-          validatorProvider
-              .getValidatorsAtHead()
-              .contains(Util.publicKeyToAddress(nodeKey.getPublicKey()));
-
       // Treat us being the only validator as a special case. We are the only node that can produce
       // blocks so we won't wait to sync with a non-validator node that may or may not exist
-      if (weAreAValidator && validatorProvider.getValidatorsAtHead().size() == 1) {
+      if (weAreAValidator(validatorProvider)
+          && validatorProvider.getValidatorsAtHead().size() == 1) {
         LOG.info("This node is the only BFT validator, exiting sync process");
         throw new NoSyncRequiredException();
       }
 
       // Treat the case where we are at block 0 and don't yet have any validator peers with a chain
       // height estimate as potentially a new QBFT chain. Check if any of the other peers have the
-      // same block hash as our genesis block. Note, if we have a non-validator peer
+      // same block hash as our genesis block.
       if (blockHeader.getNumber() == 0) {
         final AtomicInteger peerValidatorCount = new AtomicInteger();
         final AtomicBoolean peerAtOurGenesisBlock = new AtomicBoolean();
@@ -136,7 +135,7 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
                   }
                 });
 
-        if (weAreAValidator
+        if (weAreAValidator(validatorProvider)
             && peerValidatorCount.get() >= syncConfig.getSyncMinimumPeerCount()
             && peerAtOurGenesisBlock.get()) {
           // We have sync-min-peers x validators connected, all of whom have no head estimate. We'll
