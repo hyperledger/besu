@@ -142,7 +142,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    evmConfiguration.evmStackSize(), 
+                    evmConfiguration.evmStackSize(),
                     new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(feeMarket -> MainnetBlockHeaderValidator.create())
@@ -783,53 +783,53 @@ public abstract class MainnetProtocolSpecs {
   private record DaoBlockProcessor(BlockProcessor wrapped) implements BlockProcessor {
 
     @Override
-      public BlockProcessingResult processBlock(
-          final Blockchain blockchain,
-          final MutableWorldState worldState,
-          final BlockHeader blockHeader,
-          final List<Transaction> transactions,
-          final List<BlockHeader> ommers,
-          final Optional<List<Withdrawal>> withdrawals,
-          final PrivateMetadataUpdater privateMetadataUpdater) {
-        updateWorldStateForDao(worldState);
-        return wrapped.processBlock(
-            blockchain,
-            worldState,
-            blockHeader,
-            transactions,
-            ommers,
-            withdrawals,
-            privateMetadataUpdater);
-      }
+    public BlockProcessingResult processBlock(
+        final Blockchain blockchain,
+        final MutableWorldState worldState,
+        final BlockHeader blockHeader,
+        final List<Transaction> transactions,
+        final List<BlockHeader> ommers,
+        final Optional<List<Withdrawal>> withdrawals,
+        final PrivateMetadataUpdater privateMetadataUpdater) {
+      updateWorldStateForDao(worldState);
+      return wrapped.processBlock(
+          blockchain,
+          worldState,
+          blockHeader,
+          transactions,
+          ommers,
+          withdrawals,
+          privateMetadataUpdater);
+    }
 
-      private static final Address DAO_REFUND_CONTRACT_ADDRESS =
-          Address.fromHexString("0xbf4ed7b27f1d666546e30d74d50d173d20bca754");
+    private static final Address DAO_REFUND_CONTRACT_ADDRESS =
+        Address.fromHexString("0xbf4ed7b27f1d666546e30d74d50d173d20bca754");
 
-      private void updateWorldStateForDao(final MutableWorldState worldState) {
-        try {
-          final JsonArray json =
-              new JsonArray(
-                  Resources.toString(
-                      Objects.requireNonNull(this.getClass().getResource("/daoAddresses.json")),
-                      StandardCharsets.UTF_8));
-          final List<Address> addresses =
-              IntStream.range(0, json.size())
-                  .mapToObj(json::getString)
-                  .map(Address::fromHexString)
-                  .toList();
-          final WorldUpdater worldUpdater = worldState.updater();
-          final MutableAccount daoRefundContract =
-              worldUpdater.getOrCreate(DAO_REFUND_CONTRACT_ADDRESS);
-          for (final Address address : addresses) {
-            final MutableAccount account = worldUpdater.getOrCreate(address);
-            final Wei balance = account.getBalance();
-            account.decrementBalance(balance);
-            daoRefundContract.incrementBalance(balance);
-          }
-          worldUpdater.commit();
-        } catch (final IOException e) {
-          throw new IllegalStateException(e);
+    private void updateWorldStateForDao(final MutableWorldState worldState) {
+      try {
+        final JsonArray json =
+            new JsonArray(
+                Resources.toString(
+                    Objects.requireNonNull(this.getClass().getResource("/daoAddresses.json")),
+                    StandardCharsets.UTF_8));
+        final List<Address> addresses =
+            IntStream.range(0, json.size())
+                .mapToObj(json::getString)
+                .map(Address::fromHexString)
+                .toList();
+        final WorldUpdater worldUpdater = worldState.updater();
+        final MutableAccount daoRefundContract =
+            worldUpdater.getOrCreate(DAO_REFUND_CONTRACT_ADDRESS);
+        for (final Address address : addresses) {
+          final MutableAccount account = worldUpdater.getOrCreate(address);
+          final Wei balance = account.getBalance();
+          account.decrementBalance(balance);
+          daoRefundContract.incrementBalance(balance);
         }
+        worldUpdater.commit();
+      } catch (final IOException e) {
+        throw new IllegalStateException(e);
       }
     }
+  }
 }
