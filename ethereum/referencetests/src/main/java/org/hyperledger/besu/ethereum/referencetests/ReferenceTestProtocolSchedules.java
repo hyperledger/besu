@@ -17,10 +17,13 @@ package org.hyperledger.besu.ethereum.referencetests;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -101,6 +104,16 @@ public class ReferenceTestProtocolSchedules {
 
   public ProtocolSchedule getByName(final String name) {
     return schedules.get(name);
+  }
+
+  public ProtocolSpec geSpecByName(final String name) {
+    ProtocolSchedule schedule = getByName(name);
+    if (schedule == null) {
+      return null;
+    }
+    BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(Long.MAX_VALUE).number(Long.MAX_VALUE).buildHeader();
+    return schedule.getByBlockHeader(header);
   }
 
   private static ProtocolSchedule createSchedule(final GenesisConfigOptions options) {

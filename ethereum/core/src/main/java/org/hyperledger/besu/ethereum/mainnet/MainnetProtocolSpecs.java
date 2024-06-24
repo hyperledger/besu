@@ -48,7 +48,6 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.contractvalidation.EOFValidationCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -76,7 +75,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
-import java.util.OptionalInt;
 import java.util.Set;
 import java.util.stream.IntStream;
 
@@ -85,11 +83,6 @@ import io.vertx.core.json.JsonArray;
 
 /** Provides the various {@link ProtocolSpec}s on mainnet hard forks. */
 public abstract class MainnetProtocolSpecs {
-
-  public static final int FRONTIER_CONTRACT_SIZE_LIMIT = Integer.MAX_VALUE;
-
-  public static final int SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT = 24576;
-  public static final int SHANGHAI_INIT_CODE_SIZE_LIMIT = 2 * SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT;
 
   private static final Address RIPEMD160_PRECOMPILE =
       Address.fromHexString("0x0000000000000000000000000000000000000003");
@@ -108,12 +101,7 @@ public abstract class MainnetProtocolSpecs {
 
   private MainnetProtocolSpecs() {}
 
-  public static ProtocolSpecBuilder frontierDefinition(
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final EvmConfiguration evmConfiguration) {
-    final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
-    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
+  public static ProtocolSpecBuilder frontierDefinition(final EvmConfiguration evmConfiguration) {
     return new ProtocolSpecBuilder()
         .gasCalculator(FrontierGasCalculator::new)
         .gasLimitCalculatorBuilder(feeMarket -> new FrontierTargetingGasLimitCalculator())
@@ -121,17 +109,13 @@ public abstract class MainnetProtocolSpecs {
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::frontier)
         .messageCallProcessorBuilder(MessageCallProcessor::new)
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            evm ->
                 new ContractCreationProcessor(
-                    gasCalculator,
-                    evm,
-                    false,
-                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
-                    0))
+                    evm, false, Collections.singletonList(MaxCodeSizeRule.from(evm)), 0))
         .transactionValidatorFactoryBuilder(
-            (gasCalculator, gasLimitCalculator, feeMarket) ->
+            (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
-                    gasCalculator, gasLimitCalculator, false, Optional.empty()))
+                    evm.getGasCalculator(), gasLimitCalculator, false, Optional.empty()))
         .transactionProcessorBuilder(
             (gasCalculator,
                 feeMarket,
@@ -145,7 +129,7 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     false,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
@@ -158,7 +142,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(feeMarket -> MainnetBlockHeaderValidator.create())
@@ -189,35 +173,25 @@ public abstract class MainnetProtocolSpecs {
     return MainnetBlockValidator::new;
   }
 
-  public static ProtocolSpecBuilder homesteadDefinition(
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final EvmConfiguration evmConfiguration) {
-    final int contractSizeLimit = configContractSizeLimit.orElse(FRONTIER_CONTRACT_SIZE_LIMIT);
-    return frontierDefinition(configContractSizeLimit, configStackSizeLimit, evmConfiguration)
+  public static ProtocolSpecBuilder homesteadDefinition(final EvmConfiguration evmConfiguration) {
+    return frontierDefinition(evmConfiguration)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEVMs::homestead)
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            evm ->
                 new ContractCreationProcessor(
-                    gasCalculator,
-                    evm,
-                    true,
-                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
-                    0))
+                    evm, true, Collections.singletonList(MaxCodeSizeRule.from(evm)), 0))
         .transactionValidatorFactoryBuilder(
-            (gasCalculator, gasLimitCalculator, feeMarket) ->
+            (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
-                    gasCalculator, gasLimitCalculator, true, Optional.empty()))
+                    evm.getGasCalculator(), gasLimitCalculator, true, Optional.empty()))
         .difficultyCalculator(MainnetDifficultyCalculators.HOMESTEAD)
         .name("Homestead");
   }
 
   public static ProtocolSpecBuilder daoRecoveryInitDefinition(
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final EvmConfiguration evmConfiguration) {
-    return homesteadDefinition(contractSizeLimit, configStackSizeLimit, evmConfiguration)
+    return homesteadDefinition(evmConfiguration)
         .blockHeaderValidatorBuilder(feeMarket -> MainnetBlockHeaderValidator.createDaoValidator())
         .blockProcessorBuilder(
             (transactionProcessor,
@@ -238,33 +212,22 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder daoRecoveryTransitionDefinition(
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final EvmConfiguration evmConfiguration) {
-    return daoRecoveryInitDefinition(contractSizeLimit, configStackSizeLimit, evmConfiguration)
+    return daoRecoveryInitDefinition(evmConfiguration)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
 
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final EvmConfiguration evmConfiguration) {
-    return homesteadDefinition(contractSizeLimit, configStackSizeLimit, evmConfiguration)
+    return homesteadDefinition(evmConfiguration)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
   }
 
   public static ProtocolSpecBuilder spuriousDragonDefinition(
-      final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
-      final EvmConfiguration evmConfiguration) {
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-
-    return tangerineWhistleDefinition(OptionalInt.empty(), configStackSizeLimit, evmConfiguration)
+      final Optional<BigInteger> chainId, final EvmConfiguration evmConfiguration) {
+    return tangerineWhistleDefinition(evmConfiguration)
         .isReplayProtectionSupported(true)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
@@ -275,17 +238,17 @@ public abstract class MainnetProtocolSpecs {
                     precompileContractRegistry,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            evm ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
-                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    Collections.singletonList(MaxCodeSizeRule.from(evm)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .transactionValidatorFactoryBuilder(
-            (gasCalculator, gasLimitCalculator, feeMarket) ->
-                new TransactionValidatorFactory(gasCalculator, gasLimitCalculator, true, chainId))
+            (evm, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(
+                    evm.getGasCalculator(), gasLimitCalculator, true, chainId))
         .transactionProcessorBuilder(
             (gasCalculator,
                 feeMarket,
@@ -299,7 +262,7 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.frontier()))
         .name("SpuriousDragon");
@@ -307,13 +270,9 @@ public abstract class MainnetProtocolSpecs {
 
   public static ProtocolSpecBuilder byzantiumDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
-    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-    return spuriousDragonDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, evmConfiguration)
+    return spuriousDragonDefinition(chainId, evmConfiguration)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEVMs::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -334,19 +293,16 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     privateTransactionValidator))
         .name("Byzantium");
   }
 
   public static ProtocolSpecBuilder constantinopleDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
-    return byzantiumDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
+    return byzantiumDefinition(chainId, enableRevertReason, evmConfiguration)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
@@ -356,30 +312,18 @@ public abstract class MainnetProtocolSpecs {
 
   public static ProtocolSpecBuilder petersburgDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
-    return constantinopleDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
+    return constantinopleDefinition(chainId, enableRevertReason, evmConfiguration)
         .gasCalculator(PetersburgGasCalculator::new)
         .name("Petersburg");
   }
 
   public static ProtocolSpecBuilder istanbulDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    return petersburgDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            evmConfiguration)
+    return petersburgDefinition(chainId, enableRevertReason, evmConfiguration)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -387,12 +331,11 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::istanbul)
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            evm ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
-                    Collections.singletonList(MaxCodeSizeRule.of(contractSizeLimit)),
+                    Collections.singletonList(MaxCodeSizeRule.from(evm)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .name("Istanbul");
@@ -400,29 +343,23 @@ public abstract class MainnetProtocolSpecs {
 
   static ProtocolSpecBuilder muirGlacierDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
-    return istanbulDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
+    return istanbulDefinition(chainId, enableRevertReason, evmConfiguration)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
   }
 
   static ProtocolSpecBuilder berlinDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt contractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
-    return muirGlacierDefinition(
-            chainId, contractSizeLimit, configStackSizeLimit, enableRevertReason, evmConfiguration)
+    return muirGlacierDefinition(chainId, enableRevertReason, evmConfiguration)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorFactoryBuilder(
-            (gasCalculator, gasLimitCalculator, feeMarket) ->
+            (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
-                    gasCalculator,
+                    evm.getGasCalculator(),
                     gasLimitCalculator,
                     true,
                     chainId,
@@ -436,15 +373,10 @@ public abstract class MainnetProtocolSpecs {
 
   static ProtocolSpecBuilder londonDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
-    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber =
         genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
     final BaseFeeMarket londonFeeMarket;
@@ -458,13 +390,7 @@ public abstract class MainnetProtocolSpecs {
       londonFeeMarket =
           FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
     }
-
-    return berlinDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            evmConfiguration)
+    return berlinDefinition(chainId, enableRevertReason, evmConfiguration)
         .feeMarket(londonFeeMarket)
         .gasCalculator(LondonGasCalculator::new)
         .gasLimitCalculatorBuilder(
@@ -472,9 +398,9 @@ public abstract class MainnetProtocolSpecs {
                 new LondonTargetingGasLimitCalculator(
                     londonForkBlockNumber, (BaseFeeMarket) feeMarket))
         .transactionValidatorFactoryBuilder(
-            (gasCalculator, gasLimitCalculator, feeMarket) ->
+            (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
-                    gasCalculator,
+                    evm.getGasCalculator(),
                     gasLimitCalculator,
                     feeMarket,
                     true,
@@ -497,16 +423,15 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            evm ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
-                    List.of(MaxCodeSizeRule.of(contractSizeLimit), PrefixCodeRule.of()),
+                    List.of(MaxCodeSizeRule.from(evm), PrefixCodeRule.of()),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         .evmBuilder(
@@ -527,61 +452,37 @@ public abstract class MainnetProtocolSpecs {
 
   static ProtocolSpecBuilder arrowGlacierDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
     return londonDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         .difficultyCalculator(MainnetDifficultyCalculators.ARROW_GLACIER)
         .name("ArrowGlacier");
   }
 
   static ProtocolSpecBuilder grayGlacierDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
     return arrowGlacierDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         .difficultyCalculator(MainnetDifficultyCalculators.GRAY_GLACIER)
         .name("GrayGlacier");
   }
 
   static ProtocolSpecBuilder parisDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
 
     return grayGlacierDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
@@ -595,24 +496,12 @@ public abstract class MainnetProtocolSpecs {
 
   static ProtocolSpecBuilder shanghaiDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-
-    // extra variables need to support flipping the warm coinbase flag.
-    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-
     return parisDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         // gas calculator has new code to support EIP-3860 limit and meter initcode
         .gasCalculator(ShanghaiGasCalculator::new)
         // EVM has a new operation for EIP-3855 PUSH0 instruction
@@ -634,14 +523,14 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     true,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
         .transactionValidatorFactoryBuilder(
-            (gasCalculator, gasLimitCalculator, feeMarket) ->
+            (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
-                    gasCalculator,
+                    evm.getGasCalculator(),
                     gasLimitCalculator,
                     feeMarket,
                     true,
@@ -650,7 +539,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
+                    evm.getEvmVersion().getMaxInitcodeSize()))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .name("Shanghai");
@@ -658,14 +547,10 @@ public abstract class MainnetProtocolSpecs {
 
   static ProtocolSpecBuilder cancunDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-
-    final int stackSizeLimit = configStackSizeLimit.orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
     final BaseFeeMarket cancunFeeMarket;
     if (genesisConfigOptions.isZeroBaseFee()) {
@@ -680,13 +565,7 @@ public abstract class MainnetProtocolSpecs {
     }
 
     return shanghaiDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         .feeMarket(cancunFeeMarket)
         // gas calculator for EIP-4844 blob gas
         .gasCalculator(CancunGasCalculator::new)
@@ -714,14 +593,14 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     true,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
-            (gasCalculator, gasLimitCalculator, feeMarket) ->
+            (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
-                    gasCalculator,
+                    evm.getGasCalculator(),
                     gasLimitCalculator,
                     feeMarket,
                     true,
@@ -731,7 +610,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
                         TransactionType.BLOB),
-                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
+                    evm.getEvmVersion().getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
         .blockHashProcessor(new CancunBlockHashProcessor())
@@ -740,32 +619,19 @@ public abstract class MainnetProtocolSpecs {
 
   static ProtocolSpecBuilder cancunEOFDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
 
     ProtocolSpecBuilder protocolSpecBuilder =
         cancunDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters);
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder, contractSizeLimit)
-        .name("CancunEOF");
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("CancunEOF");
   }
 
   static ProtocolSpecBuilder pragueDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
@@ -775,13 +641,7 @@ public abstract class MainnetProtocolSpecs {
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
     return cancunDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         // EIP-3074 AUTH and AUTCALL gas
         .gasCalculator(PragueGasCalculator::new)
         // EIP-3074 AUTH and AUTCALL
@@ -793,9 +653,9 @@ public abstract class MainnetProtocolSpecs {
         // EIP-2537 BLS12-381 precompiles
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
 
-        // EIP-7002 Withdrawls / EIP-6610 Deposits / EIP-7685 Requests
+        // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestsValidator(pragueRequestsValidator(depositContractAddress))
-        // EIP-7002 Withdrawls / EIP-6610 Deposits / EIP-7685 Requests
+        // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
 
         // EIP-2935 Blockhash processor
@@ -805,33 +665,21 @@ public abstract class MainnetProtocolSpecs {
 
   static ProtocolSpecBuilder pragueEOFDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
 
     ProtocolSpecBuilder protocolSpecBuilder =
         pragueDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters);
-    return addEOF(chainId, evmConfiguration, protocolSpecBuilder, contractSizeLimit)
-        .name("PragueEOF");
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("PragueEOF");
   }
 
   private static ProtocolSpecBuilder addEOF(
       final Optional<BigInteger> chainId,
       final EvmConfiguration evmConfiguration,
-      final ProtocolSpecBuilder protocolSpecBuilder,
-      final int contractSizeLimit) {
+      final ProtocolSpecBuilder protocolSpecBuilder) {
     return protocolSpecBuilder
         // EIP-7692 EOF v1 Gas calculator
         .gasCalculator(PragueEOFGasCalculator::new)
@@ -842,34 +690,23 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         // EIP-7698 EOF v1 creation transaction
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            evm ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
-                    List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
+                    List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES));
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-    final int contractSizeLimit =
-        configContractSizeLimit.orElse(SPURIOUS_DRAGON_CONTRACT_SIZE_LIMIT);
     return pragueEOFDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         // Use Future EIP configured EVM
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -877,12 +714,11 @@ public abstract class MainnetProtocolSpecs {
                     gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
         // change contract call creator to accept EOF code
         .contractCreationProcessorBuilder(
-            (gasCalculator, evm) ->
+            evm ->
                 new ContractCreationProcessor(
-                    gasCalculator,
                     evm,
                     true,
-                    List.of(MaxCodeSizeRule.of(contractSizeLimit), EOFValidationCodeRule.of(1)),
+                    List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
         // use future configured precompiled contracts
@@ -892,21 +728,13 @@ public abstract class MainnetProtocolSpecs {
 
   static ProtocolSpecBuilder experimentalEipsDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
 
     return futureEipsDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.experimentalEips(
@@ -973,13 +801,7 @@ public abstract class MainnetProtocolSpecs {
         transactionProcessingResult.getRevertReason());
   }
 
-  private static class DaoBlockProcessor implements BlockProcessor {
-
-    private final BlockProcessor wrapped;
-
-    public DaoBlockProcessor(final BlockProcessor wrapped) {
-      this.wrapped = wrapped;
-    }
+  private record DaoBlockProcessor(BlockProcessor wrapped) implements BlockProcessor {
 
     @Override
     public BlockProcessingResult processBlock(
