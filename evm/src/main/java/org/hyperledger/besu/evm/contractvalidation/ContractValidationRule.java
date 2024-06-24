@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.contractvalidation;
 
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -30,7 +31,8 @@ public interface ContractValidationRule {
    *
    * @param contractCode the contract code to validate
    * @param frame the message frame to use for context
+   * @param evm the EVM against which the validation rule should be considered
    * @return the optional halt reason
    */
-  Optional<ExceptionalHaltReason> validate(Bytes contractCode, MessageFrame frame);
+  Optional<ExceptionalHaltReason> validate(Bytes contractCode, MessageFrame frame, EVM evm);
 }
