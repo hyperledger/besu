@@ -369,6 +369,18 @@ public class SnapServerTest {
   }
 
   @Test
+  public void assertAccountTrieRequest_invalidEmptyPath() {
+    insertTestAccounts(acct1);
+    var partialPathToAcct1 = Bytes.fromHexString("0x01"); // first nibble is 1
+    var trieNodeRequest =
+        requestTrieNodes(
+            storageTrie.getRootHash(), List.of(List.of(), List.of(partialPathToAcct1)));
+    assertThat(trieNodeRequest).isNotNull();
+    List<Bytes> trieNodes = trieNodeRequest.nodes(false);
+    assertThat(trieNodes.isEmpty()).isTrue();
+  }
+
+  @Test
   public void assertAccountTrieLimitRequest() {
     insertTestAccounts(acct1, acct2, acct3, acct4);
     final int accountNodeSize = 147;
