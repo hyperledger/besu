@@ -44,15 +44,19 @@ import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import com.google.common.collect.Iterables;
 
 public class SparseTransactions extends AbstractTransactionsLayer {
+  /**
+   * Order sparse tx by priority flag and sequence asc, so that we pick for eviction txs that have
+   * no priority and with the lowest sequence number (oldest) first.
+   */
   private final NavigableSet<PendingTransaction> sparseEvictionOrder =
       new TreeSet<>(
           Comparator.comparing(PendingTransaction::hasPriority)
               .thenComparing(PendingTransaction::getSequence));
+
   private final Map<Address, Integer> gapBySender = new HashMap<>();
   private final List<SendersByPriority> orderByGap;
 
@@ -220,7 +224,8 @@ public class SparseTransactions extends AbstractTransactionsLayer {
   }
 
   @Override
-  public void remove(final PendingTransaction invalidatedTx, final RemovalReason reason) {
+  public synchronized void remove(
+      final PendingTransaction invalidatedTx, final RemovalReason reason) {
 
     final var senderTxs = txsBySender.get(invalidatedTx.getSender());
     if (senderTxs != null && senderTxs.containsKey(invalidatedTx.getNonce())) {
@@ -312,9 +317,27 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     return false;
   }
 
+  /**
+   * Return the full content of this layer, organized as a list of sender pending txs. For each
+   * sender the collection pending txs is ordered by nonce asc.
+   *
+   * <p>Returned sender list order detail: first the sender of the tx that will be evicted as last.
+   * So for example if the same sender has the first and the last txs in the eviction order, it will
+   * be the first in the returned list, since we give precedence to tx that will be evicted later.
+   *
+   * @return a list of sender pending txs
+   */
   @Override
-  public Stream<PendingTransaction> stream() {
-    return sparseEvictionOrder.descendingSet().stream();
+  public List<SenderPendingTransactions> getBySender() {
+    final var sendersToAdd = new HashSet<>(txsBySender.keySet());
+    return sparseEvictionOrder.descendingSet().stream()
+        .map(PendingTransaction::getSender)
+        .filter(sendersToAdd::remove)
+        .map(
+            sender ->
+                new SenderPendingTransactions(
+                    sender, List.copyOf(txsBySender.get(sender).values())))
+        .toList();
   }
 
   @Override

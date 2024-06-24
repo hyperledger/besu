@@ -88,6 +88,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionSubnet;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
@@ -146,6 +147,7 @@ import com.google.common.base.Strings;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -192,6 +194,7 @@ public class RunnerBuilder {
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
+  private List<SubnetInfo> allowedSubnets = new ArrayList<>();
 
   /** Instantiates a new Runner builder. */
   public RunnerBuilder() {}
@@ -590,6 +593,17 @@ public class RunnerBuilder {
   }
 
   /**
+   * Add subnet configuration
+   *
+   * @param allowedSubnets the allowedSubnets
+   * @return the runner builder
+   */
+  public RunnerBuilder allowedSubnets(final List<SubnetInfo> allowedSubnets) {
+    this.allowedSubnets = allowedSubnets;
+    return this;
+  }
+
+  /**
    * Build Runner instance.
    *
    * @return the runner
@@ -648,6 +662,10 @@ public class RunnerBuilder {
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);
 
+    PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(allowedSubnets);
+    final PeerPermissions defaultPeerPermissions =
+        PeerPermissions.combine(peerPermissionSubnet, bannedNodes);
+
     final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();
 
     final Synchronizer synchronizer = besuController.getSynchronizer();
@@ -667,8 +685,8 @@ public class RunnerBuilder {
     final PeerPermissions peerPermissions =
         nodePermissioningController
             .map(nodePC -> new PeerPermissionsAdapter(nodePC, bootnodes, context.getBlockchain()))
-            .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
-            .orElse(bannedNodes);
+            .map(nodePerms -> PeerPermissions.combine(nodePerms, defaultPeerPermissions))
+            .orElse(defaultPeerPermissions);
 
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;

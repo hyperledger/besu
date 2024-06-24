@@ -20,7 +20,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
-import static org.hyperledger.besu.cli.options.unstable.NetworkingOptions.PEER_LOWER_BOUND_FLAG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -43,6 +42,7 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfileName;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
+import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
@@ -243,6 +243,7 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -527,6 +528,15 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
       return autoDiscoveredDefaultIP;
     }
+
+    @Option(
+        names = {"--net-restrict"},
+        arity = "1..*",
+        split = ",",
+        converter = SubnetInfoConverter.class,
+        description =
+            "Comma-separated list of allowed IP subnets (e.g., '192.168.1.0/24,10.0.0.0/8').")
+    private List<SubnetInfo> allowedSubnets;
   }
 
   @Option(
@@ -1648,9 +1658,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     maxPeers = p2PDiscoveryOptionGroup.maxPeers;
     final Boolean isLimitRemoteWireConnectionsEnabled =
         p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled;
-    if (isOptionSet(commandLine, PEER_LOWER_BOUND_FLAG)) {
-      logger.warn(PEER_LOWER_BOUND_FLAG + " is deprecated and will be removed soon.");
-    }
     if (isLimitRemoteWireConnectionsEnabled) {
       final float fraction =
           Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
@@ -2320,6 +2327,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
+            .allowedSubnets(p2PDiscoveryOptionGroup.allowedSubnets)
             .build();
 
     addShutdownHook(runner);

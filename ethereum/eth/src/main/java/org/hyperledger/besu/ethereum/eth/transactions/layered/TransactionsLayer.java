@@ -41,8 +41,6 @@ public interface TransactionsLayer {
 
   boolean contains(Transaction transaction);
 
-  List<PendingTransaction> getAll();
-
   TransactionAddedResult add(PendingTransaction pendingTransaction, int gap);
 
   void remove(PendingTransaction pendingTransaction, RemovalReason reason);
@@ -51,6 +49,10 @@ public interface TransactionsLayer {
       FeeMarket feeMarket,
       BlockHeader blockHeader,
       final Map<Address, Long> maxConfirmedNonceBySender);
+
+  List<PendingTransaction> getAll();
+
+  List<PendingTransaction> getAllFor(Address sender);
 
   List<Transaction> getAllLocal();
 
@@ -92,8 +94,6 @@ public interface TransactionsLayer {
   String logStats();
 
   String logSender(Address sender);
-
-  List<PendingTransaction> getAllFor(Address sender);
 
   enum RemovalReason {
     CONFIRMED,
