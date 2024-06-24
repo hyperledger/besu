@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.SetCodeTransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -33,8 +34,12 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SetCodeTransactionProcessor {
+  private static final Logger LOG = LoggerFactory.getLogger(SetCodeTransactionProcessor.class);
+
   private static final Bytes MAGIC = Bytes.of(0x05);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
@@ -58,16 +63,21 @@ public class SetCodeTransactionProcessor {
               recoverAuthority(payload)
                   .ifPresent(
                       authorityAddress -> {
+                        LOG.trace("Adding authority: {}", authorityAddress);
+
                         if (!chainId.equals(BigInteger.ZERO)
                             && !payload.chainId().equals(BigInteger.ZERO)
                             && !chainId.equals(payload.chainId())) {
-                          return;
+                          ;
                         }
 
-                        final MutableAccount account = worldUpdater.getAccount(authorityAddress);
+                        final Optional<MutableAccount> maybeAccount =
+                            Optional.ofNullable(worldUpdater.getAccount(authorityAddress));
+                        final long accountNonce =
+                            maybeAccount.map(AccountState::getNonce).orElse(0L);
 
                         if (payload.nonces().size() == 1
-                            && !payload.nonces().getFirst().equals(account.getNonce())) {
+                            && !payload.nonces().getFirst().equals(accountNonce)) {
                           return;
                         }
 
