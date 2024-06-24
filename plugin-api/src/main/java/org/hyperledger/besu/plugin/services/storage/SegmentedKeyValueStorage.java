@@ -47,7 +47,10 @@ public interface SegmentedKeyValueStorage extends Closeable {
    * @return Optional of NearestKeyValue-wrapped matched key and corresponding value.
    * @throws StorageException the storage exception
    */
-  Optional<NearestKeyValue> getNearestTo(final SegmentIdentifier segmentIdentifier, Bytes key)
+  Optional<NearestKeyValue> getNearestBefore(final SegmentIdentifier segmentIdentifier, Bytes key)
+      throws StorageException;
+
+  Optional<NearestKeyValue> getNearestAfter(final SegmentIdentifier segmentIdentifier, Bytes key)
       throws StorageException;
 
   /**
