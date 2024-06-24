@@ -53,25 +53,6 @@ public class Pipe<T> implements ReadPipe<T>, WritePipe<T> {
    * @param inputCounter the input counter
    * @param outputCounter the output counter
    * @param abortedItemCounter the aborted item counter
-   */
-  public Pipe(
-      final int capacity,
-      final Counter inputCounter,
-      final Counter outputCounter,
-      final Counter abortedItemCounter) {
-    queue = new ArrayBlockingQueue<>(capacity);
-    this.inputCounter = inputCounter;
-    this.outputCounter = outputCounter;
-    this.abortedItemCounter = abortedItemCounter;
-  }
-
-  /**
-   * Instantiates a new Pipe.
-   *
-   * @param capacity the capacity
-   * @param inputCounter the input counter
-   * @param outputCounter the output counter
-   * @param abortedItemCounter the aborted item counter
    * @param pipeName the name of the pipe
    */
   public Pipe(

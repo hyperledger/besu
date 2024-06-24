@@ -76,6 +76,12 @@ public class BFTPivotSelectorFromPeers extends PivotSelectorFromPeers {
     LOG.info("Creating pivot block selector for BFT node");
   }
 
+  /**
+   * Determine if our node is a BFT validator node
+   *
+   * @param validatorProvider the validator provider
+   * @return true if we are a validator
+   */
   protected boolean weAreAValidator(final ValidatorProvider validatorProvider) {
     return validatorProvider.nodeIsValidator(nodeKey);
   }
