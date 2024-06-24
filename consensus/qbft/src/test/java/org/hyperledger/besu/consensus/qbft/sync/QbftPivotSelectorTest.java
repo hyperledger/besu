@@ -114,7 +114,7 @@ public class QbftPivotSelectorTest {
 
     try {
       Optional<FastSyncState> pivotState = pivotSelector.selectNewPivotBlock();
-      fail("blah");
+      fail("Expected NoSyncRequiredException but none thrown");
     } catch (NoSyncRequiredException e) {
       // Ignore - just make sure we get here
     }
