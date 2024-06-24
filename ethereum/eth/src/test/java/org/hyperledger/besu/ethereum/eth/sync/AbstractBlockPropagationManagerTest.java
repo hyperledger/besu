@@ -118,7 +118,7 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     // for tests use simple peer comparator
     final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
-    ethPeers.setBestChainComparator(EthPeers.HEAVIEST_CHAIN);
+    ethPeers.setBestPeerComparator(EthPeers.HEAVIEST_CHAIN);
 
     syncState = new SyncState(blockchain, ethPeers);
     blockBroadcaster = mock(BlockBroadcaster.class);
@@ -996,7 +996,7 @@ public abstract class AbstractBlockPropagationManagerTest {
             25,
             25,
             false);
-    ethPeers.setBestChainComparator(EthPeers.HEAVIEST_CHAIN);
+    ethPeers.setBestPeerComparator(EthPeers.HEAVIEST_CHAIN);
     return ethPeers;
   }
 }

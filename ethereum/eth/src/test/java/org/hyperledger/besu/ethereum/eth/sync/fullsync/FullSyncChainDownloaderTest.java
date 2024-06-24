@@ -104,7 +104,7 @@ public class FullSyncChainDownloaderTest {
             EthProtocolConfiguration.defaultConfig());
     ethContext = ethProtocolManager.ethContext();
     // for tests use the heaviest chain comparator
-    ethContext.getEthPeers().setBestChainComparator(EthPeers.HEAVIEST_CHAIN);
+    ethContext.getEthPeers().setBestPeerComparator(EthPeers.HEAVIEST_CHAIN);
     syncState = new SyncState(protocolContext.getBlockchain(), ethContext.getEthPeers());
   }
 
