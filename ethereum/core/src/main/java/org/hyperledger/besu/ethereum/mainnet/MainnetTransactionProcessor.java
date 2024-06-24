@@ -386,7 +386,7 @@ public class MainnetTransactionProcessor {
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
       } else if (transaction.setCodeTransactionPayloads().isPresent()) {
         setCodeAuthorities.addAll(
-            setCodeTransactionProcessor.addContractToAuthority(worldUpdater, transaction));
+            setCodeTransactionProcessor.addContractToAuthority(worldState, transaction));
         addressList.addAll(setCodeAuthorities);
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
@@ -499,7 +499,7 @@ public class MainnetTransactionProcessor {
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       coinbase.incrementBalance(coinbaseWeiDelta);
-      setCodeTransactionProcessor.removeCodeFromAuthorities(worldUpdater, setCodeAuthorities);
+      setCodeTransactionProcessor.removeCodeFromAuthorities(worldState, setCodeAuthorities);
 
       operationTracer.traceEndTransaction(
           worldUpdater,
