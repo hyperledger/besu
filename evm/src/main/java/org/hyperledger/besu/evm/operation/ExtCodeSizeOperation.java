@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.operation;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -28,6 +29,8 @@ import org.apache.tuweni.bytes.Bytes;
 
 /** The Ext code size operation. */
 public class ExtCodeSizeOperation extends AbstractOperation {
+
+  static final Bytes EOF_SIZE = Bytes.of(2);
 
   /**
    * Instantiates a new Ext code size operation.
@@ -62,8 +65,18 @@ public class ExtCodeSizeOperation extends AbstractOperation {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
         final Account account = frame.getWorldUpdater().get(address);
-        frame.pushStackItem(
-            account == null ? Bytes.EMPTY : Words.intBytes(account.getCode().size()));
+        Bytes codeSize;
+        if (account == null) {
+          codeSize = Bytes.EMPTY;
+        } else {
+          final Bytes code = account.getCode();
+          if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
+            codeSize = EOF_SIZE;
+          } else {
+            codeSize = Words.intBytes(code.size());
+          }
+        }
+        frame.pushStackItem(codeSize);
         return new OperationResult(cost, null);
       }
     } catch (final UnderflowException ufe) {

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
@@ -138,13 +139,14 @@ public class PrivateTransactionProcessor {
             privacyGroupId);
 
         final Bytes initCodeBytes = transaction.getPayload();
+        Code code = contractCreationProcessor.getCodeFromEVMForCreation(initCodeBytes);
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.CONTRACT_CREATION)
                 .address(privateContractAddress)
                 .contract(privateContractAddress)
-                .inputData(Bytes.EMPTY)
-                .code(contractCreationProcessor.getCodeFromEVMUncached(initCodeBytes))
+                .inputData(initCodeBytes.slice(code.getSize()))
+                .code(code)
                 .build();
       } else {
         final Address to = transaction.getTo().get();

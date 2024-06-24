@@ -57,6 +57,7 @@ dependencies {
   implementation 'org.jetbrains.kotlin:kotlin-stdlib'
   implementation 'org.owasp.encoder:encoder'
   implementation 'org.xerial.snappy:snappy-java'
+  implementation 'commons-net:commons-net'
 
   annotationProcessor "org.immutables:value"
   implementation "org.immutables:value-annotations"

@@ -105,7 +105,8 @@ public class ProposalPayloadValidatorTest {
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL)))
+            eq(HeaderValidationMode.FULL),
+            eq(false)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
@@ -129,7 +130,8 @@ public class ProposalPayloadValidatorTest {
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL)))
+            eq(HeaderValidationMode.FULL),
+            eq(false)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isTrue();
@@ -152,7 +154,8 @@ public class ProposalPayloadValidatorTest {
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL)))
+            eq(HeaderValidationMode.FULL),
+            eq(false)))
         .thenReturn(new BlockProcessingResult("Failed"));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
@@ -228,7 +231,8 @@ public class ProposalPayloadValidatorTest {
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL)))
+            eq(HeaderValidationMode.FULL),
+            eq(false)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
 
     assertThat(payloadValidator.validate(proposal.getSignedPayload())).isFalse();
@@ -262,7 +266,8 @@ public class ProposalPayloadValidatorTest {
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL)))
+            eq(HeaderValidationMode.FULL),
+            eq(false)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
     when(cmsValidator.validate(eq(cms), eq(hashWithoutCms))).thenReturn(false);
 
@@ -297,7 +302,8 @@ public class ProposalPayloadValidatorTest {
             eq(protocolContext),
             eq(block),
             eq(HeaderValidationMode.LIGHT),
-            eq(HeaderValidationMode.FULL)))
+            eq(HeaderValidationMode.FULL),
+            eq(false)))
         .thenReturn(new BlockProcessingResult(Optional.empty()));
     when(cmsValidator.validate(eq(cms), eq(hashWithoutCms))).thenReturn(true);
 

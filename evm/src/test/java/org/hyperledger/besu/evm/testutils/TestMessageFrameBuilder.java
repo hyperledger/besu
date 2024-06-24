@@ -56,6 +56,7 @@ public class TestMessageFrameBuilder {
   private final List<Bytes> stackItems = new ArrayList<>();
   private Optional<BlockHashLookup> blockHashLookup = Optional.empty();
   private Bytes memory = Bytes.EMPTY;
+  private boolean isStatic = false;
 
   public TestMessageFrameBuilder worldUpdater(final WorldUpdater worldUpdater) {
     this.worldUpdater = Optional.of(worldUpdater);
@@ -102,7 +103,7 @@ public class TestMessageFrameBuilder {
     return this;
   }
 
-  TestMessageFrameBuilder inputData(final Bytes inputData) {
+  public TestMessageFrameBuilder inputData(final Bytes inputData) {
     this.inputData = inputData;
     return this;
   }
@@ -142,6 +143,11 @@ public class TestMessageFrameBuilder {
     return this;
   }
 
+  public TestMessageFrameBuilder isStatic(final boolean isStatic) {
+    this.isStatic = isStatic;
+    return this;
+  }
+
   public MessageFrame build() {
     final MessageFrame frame =
         MessageFrame.builder()
@@ -163,6 +169,7 @@ public class TestMessageFrameBuilder {
             .miningBeneficiary(Address.ZERO)
             .blockHashLookup(blockHashLookup.orElse(number -> Hash.hash(Words.longBytes(number))))
             .maxStackSize(maxStackSize)
+            .isStatic(isStatic)
             .build();
     frame.setPC(pc);
     frame.setSection(section);
