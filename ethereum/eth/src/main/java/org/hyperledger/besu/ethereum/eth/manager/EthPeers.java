@@ -604,7 +604,7 @@ public class EthPeers {
       streamAvailablePeers()
           .filter(p -> p.getConnection().inboundInitiated())
           .filter(p -> !canExceedPeerLimits(p.getId()))
-          .min(getBestChainComparator())
+          .min(getBestPeerComparator())
           .ifPresent(
               peer -> {
                 LOG.atDebug()
