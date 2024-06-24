@@ -130,11 +130,7 @@ public class MainnetProtocolSpecFactory {
 
   public ProtocolSpecBuilder cancunEOFDefinition(final GenesisConfigOptions genesisConfigOptions) {
     return MainnetProtocolSpecs.cancunEOFDefinition(
-        chainId,
-        isRevertReasonEnabled,
-        genesisConfigOptions,
-        evmConfiguration,
-        miningParameters);
+        chainId, isRevertReasonEnabled, genesisConfigOptions, evmConfiguration, miningParameters);
   }
 
   public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
