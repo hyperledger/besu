@@ -48,7 +48,6 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.contractvalidation.EOFValidationCodeRule;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -103,8 +102,6 @@ public abstract class MainnetProtocolSpecs {
   private MainnetProtocolSpecs() {}
 
   public static ProtocolSpecBuilder frontierDefinition(final EvmConfiguration evmConfiguration) {
-    final int stackSizeLimit =
-        evmConfiguration.evmStackSizeOverride().orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return new ProtocolSpecBuilder()
         .gasCalculator(FrontierGasCalculator::new)
         .gasLimitCalculatorBuilder(feeMarket -> new FrontierTargetingGasLimitCalculator())
@@ -132,7 +129,7 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     false,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier()))
         .privateTransactionProcessorBuilder(
@@ -145,7 +142,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(), 
                     new PrivateTransactionValidator(Optional.empty())))
         .difficultyCalculator(MainnetDifficultyCalculators.FRONTIER)
         .blockHeaderValidatorBuilder(feeMarket -> MainnetBlockHeaderValidator.create())
@@ -230,9 +227,6 @@ public abstract class MainnetProtocolSpecs {
 
   public static ProtocolSpecBuilder spuriousDragonDefinition(
       final Optional<BigInteger> chainId, final EvmConfiguration evmConfiguration) {
-
-    final int stackSizeLimit =
-        evmConfiguration.evmStackSizeOverride().orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return tangerineWhistleDefinition(evmConfiguration)
         .isReplayProtectionSupported(true)
         .gasCalculator(SpuriousDragonGasCalculator::new)
@@ -268,7 +262,7 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.frontier()))
         .name("SpuriousDragon");
@@ -278,8 +272,6 @@ public abstract class MainnetProtocolSpecs {
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final EvmConfiguration evmConfiguration) {
-    final int stackSizeLimit =
-        evmConfiguration.evmStackSizeOverride().orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return spuriousDragonDefinition(chainId, evmConfiguration)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEVMs::byzantium)
@@ -301,7 +293,7 @@ public abstract class MainnetProtocolSpecs {
                     contractCreationProcessor,
                     messageCallProcessor,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     privateTransactionValidator))
         .name("Byzantium");
   }
@@ -385,8 +377,6 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-    final int stackSizeLimit =
-        evmConfiguration.evmStackSizeOverride().orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber =
         genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
     final BaseFeeMarket londonFeeMarket;
@@ -433,7 +423,7 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         .contractCreationProcessorBuilder(
@@ -510,11 +500,6 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-
-    // extra variables need to support flipping the warm coinbase flag.
-    final int stackSizeLimit =
-        evmConfiguration.evmStackSizeOverride().orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
-
     return parisDefinition(
             chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         // gas calculator has new code to support EIP-3860 limit and meter initcode
@@ -538,7 +523,7 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     true,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
@@ -566,9 +551,6 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
-
-    final int stackSizeLimit =
-        evmConfiguration.evmStackSizeOverride().orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
     final BaseFeeMarket cancunFeeMarket;
     if (genesisConfigOptions.isZeroBaseFee()) {
@@ -611,7 +593,7 @@ public abstract class MainnetProtocolSpecs {
                     messageCallProcessor,
                     true,
                     true,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559()))
         // change to check for max blob gas per block for EIP-4844
@@ -658,9 +640,9 @@ public abstract class MainnetProtocolSpecs {
         // EIP-2537 BLS12-381 precompiles
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::prague)
 
-        // EIP-7002 Withdrawls / EIP-6610 Deposits / EIP-7685 Requests
+        // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestsValidator(pragueRequestsValidator(depositContractAddress))
-        // EIP-7002 Withdrawls / EIP-6610 Deposits / EIP-7685 Requests
+        // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
 
         // EIP-2935 Blockhash processor
@@ -798,62 +780,56 @@ public abstract class MainnetProtocolSpecs {
         transactionProcessingResult.getRevertReason());
   }
 
-  private static class DaoBlockProcessor implements BlockProcessor {
-
-    private final BlockProcessor wrapped;
-
-    public DaoBlockProcessor(final BlockProcessor wrapped) {
-      this.wrapped = wrapped;
-    }
+  private record DaoBlockProcessor(BlockProcessor wrapped) implements BlockProcessor {
 
     @Override
-    public BlockProcessingResult processBlock(
-        final Blockchain blockchain,
-        final MutableWorldState worldState,
-        final BlockHeader blockHeader,
-        final List<Transaction> transactions,
-        final List<BlockHeader> ommers,
-        final Optional<List<Withdrawal>> withdrawals,
-        final PrivateMetadataUpdater privateMetadataUpdater) {
-      updateWorldStateForDao(worldState);
-      return wrapped.processBlock(
-          blockchain,
-          worldState,
-          blockHeader,
-          transactions,
-          ommers,
-          withdrawals,
-          privateMetadataUpdater);
-    }
+      public BlockProcessingResult processBlock(
+          final Blockchain blockchain,
+          final MutableWorldState worldState,
+          final BlockHeader blockHeader,
+          final List<Transaction> transactions,
+          final List<BlockHeader> ommers,
+          final Optional<List<Withdrawal>> withdrawals,
+          final PrivateMetadataUpdater privateMetadataUpdater) {
+        updateWorldStateForDao(worldState);
+        return wrapped.processBlock(
+            blockchain,
+            worldState,
+            blockHeader,
+            transactions,
+            ommers,
+            withdrawals,
+            privateMetadataUpdater);
+      }
 
-    private static final Address DAO_REFUND_CONTRACT_ADDRESS =
-        Address.fromHexString("0xbf4ed7b27f1d666546e30d74d50d173d20bca754");
+      private static final Address DAO_REFUND_CONTRACT_ADDRESS =
+          Address.fromHexString("0xbf4ed7b27f1d666546e30d74d50d173d20bca754");
 
-    private void updateWorldStateForDao(final MutableWorldState worldState) {
-      try {
-        final JsonArray json =
-            new JsonArray(
-                Resources.toString(
-                    Objects.requireNonNull(this.getClass().getResource("/daoAddresses.json")),
-                    StandardCharsets.UTF_8));
-        final List<Address> addresses =
-            IntStream.range(0, json.size())
-                .mapToObj(json::getString)
-                .map(Address::fromHexString)
-                .toList();
-        final WorldUpdater worldUpdater = worldState.updater();
-        final MutableAccount daoRefundContract =
-            worldUpdater.getOrCreate(DAO_REFUND_CONTRACT_ADDRESS);
-        for (final Address address : addresses) {
-          final MutableAccount account = worldUpdater.getOrCreate(address);
-          final Wei balance = account.getBalance();
-          account.decrementBalance(balance);
-          daoRefundContract.incrementBalance(balance);
+      private void updateWorldStateForDao(final MutableWorldState worldState) {
+        try {
+          final JsonArray json =
+              new JsonArray(
+                  Resources.toString(
+                      Objects.requireNonNull(this.getClass().getResource("/daoAddresses.json")),
+                      StandardCharsets.UTF_8));
+          final List<Address> addresses =
+              IntStream.range(0, json.size())
+                  .mapToObj(json::getString)
+                  .map(Address::fromHexString)
+                  .toList();
+          final WorldUpdater worldUpdater = worldState.updater();
+          final MutableAccount daoRefundContract =
+              worldUpdater.getOrCreate(DAO_REFUND_CONTRACT_ADDRESS);
+          for (final Address address : addresses) {
+            final MutableAccount account = worldUpdater.getOrCreate(address);
+            final Wei balance = account.getBalance();
+            account.decrementBalance(balance);
+            daoRefundContract.incrementBalance(balance);
+          }
+          worldUpdater.commit();
+        } catch (final IOException e) {
+          throw new IllegalStateException(e);
         }
-        worldUpdater.commit();
-      } catch (final IOException e) {
-        throw new IllegalStateException(e);
       }
     }
-  }
 }

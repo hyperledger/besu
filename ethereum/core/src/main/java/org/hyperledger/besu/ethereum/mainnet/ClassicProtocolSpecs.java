@@ -26,7 +26,6 @@ import org.hyperledger.besu.evm.ClassicEVMs;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
-import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.DieHardGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -125,8 +124,6 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration) {
-    final int stackSizeLimit =
-        evmConfiguration.evmStackSizeOverride().orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return gothamDefinition(chainId, ecip1017EraRounds, evmConfiguration)
         .evmBuilder(MainnetEVMs::byzantium)
         .evmConfiguration(evmConfiguration)
@@ -156,7 +153,7 @@ public class ClassicProtocolSpecs {
                     messageCallProcessor,
                     true,
                     false,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.frontier()))
         .name("Atlantis");
@@ -268,8 +265,6 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration) {
-    final int stackSizeLimit =
-        evmConfiguration.evmStackSizeOverride().orElse(MessageFrame.DEFAULT_MAX_STACK_SIZE);
     return mystiqueDefinition(chainId, enableRevertReason, ecip1017EraRounds, evmConfiguration)
         // EIP-3860
         .gasCalculator(ShanghaiGasCalculator::new)
@@ -292,7 +287,7 @@ public class ClassicProtocolSpecs {
                     messageCallProcessor,
                     true,
                     true,
-                    stackSizeLimit,
+                    evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.frontier()))
         .name("Spiral");
