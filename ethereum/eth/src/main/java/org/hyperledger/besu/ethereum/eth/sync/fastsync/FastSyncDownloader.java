@@ -94,7 +94,7 @@ public class FastSyncDownloader<REQUEST> {
           onBonsai.clearFlatDatabase();
           onBonsai.clearTrieLog();
         });
-    LOG.info("Start fast sync with initial sync state {}", fastSyncState);
+    LOG.debug("Start fast sync with initial sync state {}", fastSyncState);
     return findPivotBlock(fastSyncState, fss -> downloadChainAndWorldState(fastSyncActions, fss));
   }
 
@@ -119,12 +119,12 @@ public class FastSyncDownloader<REQUEST> {
     } else if (rootCause instanceof SyncException) {
       return CompletableFuture.failedFuture(error);
     } else if (rootCause instanceof StalledDownloadException) {
-      LOG.info("Stalled sync re-pivoting to newer block.");
+      LOG.debug("Stalled sync re-pivoting to newer block.");
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else if (rootCause instanceof CancellationException) {
       return CompletableFuture.failedFuture(error);
     } else if (rootCause instanceof MaxRetriesReachedException) {
-      LOG.info(
+      LOG.debug(
           "A download operation reached the max number of retries, re-pivoting to newer block");
       return start(FastSyncState.EMPTY_SYNC_STATE);
     } else {
