@@ -103,6 +103,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
+      addTemporaryCodeToAccount(existing);
       return existing;
     }
     if (deletedAccounts.contains(address)) {
@@ -110,16 +111,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     final A account = getForMutation(address);
-
-    if (temporaryEOACode.containsKey(address)) {
-      try {
-        ((MutableAccount) account).setCode(temporaryEOACode.get(address));
-      } catch (ClassCastException e) {
-        LOG.warn(
-            "Tried to set code on an EOA account {}, but account is not a mutable account",
-            address);
-      }
-    }
+    addTemporaryCodeToAccount((MutableAccount) account);
 
     return account;
   }
@@ -232,5 +224,19 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
           "Tried to reset code on a EOA account {}, but the account is not a mutable", address);
     }
     temporaryEOACode.remove(address);
+  }
+
+  private void addTemporaryCodeToAccount(final MutableAccount account) {
+    final Address address = account.getAddress();
+
+    if (temporaryEOACode.containsKey(address)) {
+      try {
+        account.setCode(temporaryEOACode.get(address));
+      } catch (ClassCastException e) {
+        LOG.warn(
+            "Tried to set code on an EOA account {}, but account is not a mutable account",
+            address);
+      }
+    }
   }
 }
