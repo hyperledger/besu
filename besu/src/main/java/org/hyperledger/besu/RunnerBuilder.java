@@ -790,7 +790,8 @@ public class RunnerBuilder {
       LOG.debug("added ethash observer: {}", stratumServer.get());
     }
 
-    sanitizePeers(network, staticNodes)
+    // Make sure Besu maintains connections to static nodes and bootnodes, including retries periodically
+    Stream.concat(sanitizePeers(network, staticNodes), sanitizePeers(network, bootnodes))
         .map(DefaultPeer::fromEnodeURL)
         .forEach(peerNetwork::addMaintainedConnectionPeer);
 
