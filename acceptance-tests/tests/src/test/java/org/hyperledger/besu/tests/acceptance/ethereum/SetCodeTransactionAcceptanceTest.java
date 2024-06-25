@@ -71,8 +71,6 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
    * given address. The transaction sponsor created a 7702 transaction with it and sends all the ETH
    * from the authorizer to itself. The authorizer balance should be 0 and the transaction sponsor
    * balance should be greater than 170000 ETH.
-   *
-   * @throws IOException
    */
   @Test
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
