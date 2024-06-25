@@ -710,8 +710,8 @@ public class RunnerBuilder {
               .blockchain(context.getBlockchain())
               .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
               .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
-              .allConnectionsSupplier(ethPeers::getAllConnections)
-              .allActiveConnectionsSupplier(ethPeers::getAllActiveConnections)
+              .allConnectionsSupplier(ethPeers::streamAllConnections)
+              .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
               .maxPeers(ethPeers.getMaxPeers())
               .build();
         };

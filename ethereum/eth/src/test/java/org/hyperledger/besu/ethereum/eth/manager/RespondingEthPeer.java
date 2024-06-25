@@ -138,6 +138,7 @@ public class RespondingEthPeer {
     estimatedHeight.ifPresent(height -> peer.chainState().update(chainHeadHash, height));
     if (addToEthPeers) {
       peer.registerStatusSent(peerConnection);
+      ethPeers.addPeerToEthPeers(peer);
       while (ethPeers.peerCount()
           <= before) { // this is needed to make sure that the peer is added to the active
         // connections

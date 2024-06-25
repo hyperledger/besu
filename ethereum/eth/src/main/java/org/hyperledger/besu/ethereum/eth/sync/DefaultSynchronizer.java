@@ -191,7 +191,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
         () -> getSyncStatus().isPresent() ? 0 : 1);
   }
 
-  private TrailingPeerRequirements calculateTrailingPeerRequirements() {
+  public TrailingPeerRequirements calculateTrailingPeerRequirements() {
     return fastSyncDownloader
         .flatMap(FastSyncDownloader::calculateTrailingPeerRequirements)
         .orElse(

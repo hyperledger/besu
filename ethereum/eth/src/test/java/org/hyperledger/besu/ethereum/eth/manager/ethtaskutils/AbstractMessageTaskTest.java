@@ -124,7 +124,7 @@ public abstract class AbstractMessageTaskTest<T, R> {
                 MAX_PEERS,
                 MAX_PEERS,
                 false,
-                SyncMode.X_SNAP,
+                SyncMode.FAST,
                 new ForkIdManager(
                     blockchain, Collections.emptyList(), Collections.emptyList(), false)));
 

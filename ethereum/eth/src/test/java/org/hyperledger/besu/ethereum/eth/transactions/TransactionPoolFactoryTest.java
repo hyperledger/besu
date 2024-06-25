@@ -122,7 +122,7 @@ public class TransactionPoolFactoryTest {
             25,
             25,
             false,
-            SyncMode.X_SNAP,
+            SyncMode.SNAP,
             new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     when(ethContext.getEthMessages()).thenReturn(ethMessages);
     when(ethContext.getEthPeers()).thenReturn(ethPeers);

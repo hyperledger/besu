@@ -631,7 +631,7 @@ public abstract class AbstractBlockPropagationManagerTest {
                 25,
                 25,
                 false,
-                SyncMode.X_SNAP,
+                SyncMode.SNAP,
                 new ForkIdManager(
                     blockchain, Collections.emptyList(), Collections.emptyList(), false)),
             new EthMessages(),
@@ -772,7 +772,7 @@ public abstract class AbstractBlockPropagationManagerTest {
                 25,
                 25,
                 false,
-                SyncMode.X_SNAP,
+                SyncMode.SNAP,
                 new ForkIdManager(
                     blockchain, Collections.emptyList(), Collections.emptyList(), false)),
             new EthMessages(),

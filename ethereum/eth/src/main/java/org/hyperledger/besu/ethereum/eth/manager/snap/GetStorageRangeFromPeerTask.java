@@ -76,17 +76,19 @@ public class GetStorageRangeFromPeerTask
           @Override
           public RequestManager.ResponseStream sendRequest(final EthPeer peer)
               throws PeerConnection.PeerNotConnected {
-            LOG.trace(
-                "Requesting storage range [{} ,{}] for {} accounts from peer {} .",
-                startKeyHash,
-                endKeyHash,
-                accountHashes.size(),
-                peer);
+            LOG.atTrace()
+                .setMessage("Requesting storage range [{} ,{}] for {} accounts from peer {} .")
+                .addArgument(startKeyHash)
+                .addArgument(endKeyHash)
+                .addArgument(accountHashes.size())
+                .addArgument(peer)
+                .log();
             if (!peer.isServingSnap()) {
-              LOG.debug(
-                  "EthPeer that is not serving snap called in {}, {}",
-                  GetAccountRangeFromPeerTask.class,
-                  peer);
+              LOG.atDebug()
+                  .setMessage("EthPeer that is not serving snap called in {}, peer: {}")
+                  .addArgument(GetAccountRangeFromPeerTask.class)
+                  .addArgument(peer)
+                  .log();
               throw new RuntimeException(
                   "EthPeer that is not serving snap called in "
                       + GetAccountRangeFromPeerTask.class);

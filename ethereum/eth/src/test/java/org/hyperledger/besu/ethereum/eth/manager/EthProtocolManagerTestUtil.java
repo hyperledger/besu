@@ -94,7 +94,7 @@ public class EthProtocolManagerTestUtil {
             25,
             25,
             false,
-            SyncMode.X_SNAP,
+            SyncMode.FAST,
             new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
 
     final ChainHeadTracker chainHeadTrackerMock = getChainHeadTrackerMock();
@@ -221,7 +221,7 @@ public class EthProtocolManagerTestUtil {
             25,
             25,
             false,
-            SyncMode.X_SNAP,
+            SyncMode.FAST,
             new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     final EthMessages messages = new EthMessages();
 
@@ -272,7 +272,7 @@ public class EthProtocolManagerTestUtil {
             25,
             25,
             false,
-            SyncMode.X_SNAP,
+            SyncMode.FAST,
             new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
     final EthMessages messages = new EthMessages();
 
@@ -304,7 +304,7 @@ public class EthProtocolManagerTestUtil {
             25,
             25,
             false,
-            SyncMode.X_SNAP,
+            SyncMode.FAST,
             new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
 
     final ChainHeadTracker chainHeadTrackerMock = getChainHeadTrackerMock();

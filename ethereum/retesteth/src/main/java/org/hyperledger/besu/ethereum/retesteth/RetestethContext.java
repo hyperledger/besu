@@ -243,7 +243,7 @@ public class RetestethContext {
             MAX_PEERS,
             MAX_PEERS,
             false,
-            SyncMode.X_SNAP,
+            SyncMode.FAST,
             new ForkIdManager(blockchain, List.of(), List.of(), false));
     final SyncState syncState = new SyncState(blockchain, ethPeers);
 

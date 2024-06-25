@@ -45,7 +45,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
@@ -695,7 +694,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         createPivotSelector(
             protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
 
-    final Synchronizer synchronizer =
+    final DefaultSynchronizer synchronizer =
         createSynchronizer(
             protocolSchedule,
             worldStateStorageCoordinator,
@@ -704,6 +703,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             ethProtocolManager,
             pivotBlockSelector);
+
+    ethPeers.setTrailingPeerRequirementsSupplier(synchronizer::calculateTrailingPeerRequirements);
 
     if (SyncMode.isSnapSync(syncConfig.getSyncMode())
         || SyncMode.isCheckpointSync(syncConfig.getSyncMode())) {
@@ -825,7 +826,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param pivotBlockSelector the pivot block selector
    * @return the synchronizer
    */
-  protected Synchronizer createSynchronizer(
+  protected DefaultSynchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,

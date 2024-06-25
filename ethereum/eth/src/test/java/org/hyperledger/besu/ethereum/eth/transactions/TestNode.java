@@ -160,7 +160,7 @@ public class TestNode implements Closeable {
             25,
             25,
             false,
-            SyncMode.X_SNAP,
+            SyncMode.SNAP,
             new ForkIdManager(blockchain, Collections.emptyList(), Collections.emptyList(), false));
 
     final ChainHeadTracker mockCHT = getChainHeadTracker();
@@ -213,8 +213,8 @@ public class TestNode implements Closeable {
                         .blockchain(blockchain)
                         .blockNumberForks(Collections.emptyList())
                         .timestampForks(Collections.emptyList())
-                        .allConnectionsSupplier(ethPeers::getAllConnections)
-                        .allActiveConnectionsSupplier(ethPeers::getAllActiveConnections)
+                        .allConnectionsSupplier(ethPeers::streamAllConnections)
+                        .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
                         .build())
             .metricsSystem(new NoOpMetricsSystem())
             .build();

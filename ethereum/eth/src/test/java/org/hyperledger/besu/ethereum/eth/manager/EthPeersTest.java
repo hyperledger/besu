@@ -406,7 +406,7 @@ public class EthPeersTest {
   }
 
   @Test
-  public void snapServersNotPreferedWhenInSync() {
+  public void snapServersNotPreferredWhenInSync() {
 
     ethPeers.snapServerPeersNeeded(false);
 

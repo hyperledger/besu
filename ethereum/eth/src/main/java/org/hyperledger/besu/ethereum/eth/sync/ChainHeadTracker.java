@@ -38,7 +38,6 @@ public class ChainHeadTracker {
 
   private final EthContext ethContext;
   private final ProtocolSchedule protocolSchedule;
-  private final TrailingPeerLimiter trailingPeerLimiter;
   private final MetricsSystem metricsSystem;
 
   public ChainHeadTracker(
@@ -48,7 +47,6 @@ public class ChainHeadTracker {
       final MetricsSystem metricsSystem) {
     this.ethContext = ethContext;
     this.protocolSchedule = protocolSchedule;
-    this.trailingPeerLimiter = trailingPeerLimiter;
     this.metricsSystem = metricsSystem;
   }
 
@@ -79,7 +77,6 @@ public class ChainHeadTracker {
           if (peerResult != null && !peerResult.getResult().isEmpty()) {
             final BlockHeader chainHeadHeader = peerResult.getResult().get(0);
             peer.chainState().update(chainHeadHeader);
-            trailingPeerLimiter.enforceTrailingPeerLimit();
             future.complete(chainHeadHeader);
             LOG.atDebug()
                 .setMessage("Retrieved chain head info {} from {}...")
@@ -91,7 +88,7 @@ public class ChainHeadTracker {
             LOG.atDebug()
                 .setMessage("Failed to retrieve chain head info. Disconnecting {}... {}")
                 .addArgument(peer::getLoggableId)
-                .addArgument(error)
+                .addArgument(error != null ? error : "Empty Response")
                 .log();
             peer.disconnect(
                 DisconnectMessage.DisconnectReason.USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_HEAD);

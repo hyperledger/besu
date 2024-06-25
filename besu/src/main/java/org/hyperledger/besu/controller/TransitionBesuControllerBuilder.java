@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -215,7 +214,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected Synchronizer createSynchronizer(
+  protected DefaultSynchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
@@ -225,15 +224,14 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final PivotBlockSelector pivotBlockSelector) {
 
     DefaultSynchronizer sync =
-        (DefaultSynchronizer)
-            super.createSynchronizer(
-                protocolSchedule,
-                worldStateStorageCoordinator,
-                protocolContext,
-                ethContext,
-                syncState,
-                ethProtocolManager,
-                pivotBlockSelector);
+        super.createSynchronizer(
+            protocolSchedule,
+            worldStateStorageCoordinator,
+            protocolContext,
+            ethContext,
+            syncState,
+            ethProtocolManager,
+            pivotBlockSelector);
 
     if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(

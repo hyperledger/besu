@@ -79,7 +79,11 @@ public class GetTrieNodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes, 
           @Override
           public RequestManager.ResponseStream sendRequest(final EthPeer peer)
               throws PeerConnection.PeerNotConnected {
-            LOG.trace("Requesting {} trie nodes from peer {}", paths.size(), peer);
+            LOG.atTrace()
+                .setMessage("Requesting {} trie nodes from peer {}")
+                .addArgument(paths.size())
+                .addArgument(peer)
+                .log();
             if (!peer.isServingSnap()) {
               LOG.debug(
                   "EthPeer that is not serving snap called in {}, {}",

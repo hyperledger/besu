@@ -71,17 +71,19 @@ public class GetAccountRangeFromPeerTask
           @Override
           public RequestManager.ResponseStream sendRequest(final EthPeer peer)
               throws PeerConnection.PeerNotConnected {
-            LOG.debug(
-                "Requesting account range [{} ,{}] for state root {} from peer {} .",
-                startKeyHash,
-                endKeyHash,
-                blockHeader.getStateRoot(),
-                peer);
+            LOG.atTrace()
+                .setMessage("Requesting account range [{} ,{}] for state root {} from peer {} .")
+                .addArgument(startKeyHash)
+                .addArgument(endKeyHash)
+                .addArgument(blockHeader)
+                .addArgument(peer)
+                .log();
             if (!peer.isServingSnap()) {
-              LOG.debug(
-                  "EthPeer that is not serving snap called in {}, {}",
-                  GetAccountRangeFromPeerTask.class,
-                  peer);
+              LOG.atDebug()
+                  .setMessage("EthPeer that is not serving snap called in {}, peer: {}")
+                  .addArgument(GetAccountRangeFromPeerTask.class)
+                  .addArgument(peer)
+                  .log();
               throw new RuntimeException(
                   "EthPeer that is not serving snap called in "
                       + GetAccountRangeFromPeerTask.class);

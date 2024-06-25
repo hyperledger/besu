@@ -73,12 +73,17 @@ public class GetBytecodeFromPeerTask extends AbstractPeerRequestTask<Map<Bytes32
           @Override
           public RequestManager.ResponseStream sendRequest(final EthPeer peer)
               throws PeerConnection.PeerNotConnected {
-            LOG.trace("Requesting {} Bytecodes from {} .", codeHashes.size(), peer);
+            LOG.atTrace()
+                .setMessage("Requesting {} Bytecodes from {} .")
+                .addArgument(codeHashes.size())
+                .addArgument(peer)
+                .log();
             if (!peer.isServingSnap()) {
-              LOG.debug(
-                  "EthPeer that is not serving snap called in {}, {}",
-                  GetAccountRangeFromPeerTask.class,
-                  peer);
+              LOG.atDebug()
+                  .setMessage("EthPeer that is not serving snap called in {}, peer: {}")
+                  .addArgument(GetAccountRangeFromPeerTask.class)
+                  .addArgument(peer)
+                  .log();
               throw new RuntimeException(
                   "EthPeer that is not serving snap called in "
                       + GetAccountRangeFromPeerTask.class);
