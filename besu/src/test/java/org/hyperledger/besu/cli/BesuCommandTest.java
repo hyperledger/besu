@@ -22,6 +22,7 @@ import static org.hyperledger.besu.cli.config.NetworkName.DEV;
 import static org.hyperledger.besu.cli.config.NetworkName.EXPERIMENTAL_EIPS;
 import static org.hyperledger.besu.cli.config.NetworkName.FUTURE_EIPS;
 import static org.hyperledger.besu.cli.config.NetworkName.HOLESKY;
+import static org.hyperledger.besu.cli.config.NetworkName.LUKSO;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.config.NetworkName.MORDOR;
 import static org.hyperledger.besu.cli.config.NetworkName.SEPOLIA;
@@ -1087,8 +1088,8 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void syncMode_full() {
-    parseCommand("--sync-mode", "FULL");
+  public void syncMode_full_requires_bonsaiLimitTrieLogsToBeDisabled() {
+    parseCommand("--sync-mode", "FULL", "--bonsai-limit-trie-logs-enabled=false");
     verify(mockControllerBuilder).synchronizerConfiguration(syncConfigurationCaptor.capture());
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
@@ -1218,6 +1219,28 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void netRestrictParsedCorrectly() {
+    final String subnet1 = "127.0.0.1/24";
+    final String subnet2 = "10.0.0.1/24";
+    parseCommand("--net-restrict", String.join(",", subnet1, subnet2));
+    verify(mockRunnerBuilder).allowedSubnets(allowedSubnetsArgumentCaptor.capture());
+    assertThat(allowedSubnetsArgumentCaptor.getValue().size()).isEqualTo(2);
+    assertThat(allowedSubnetsArgumentCaptor.getValue().get(0).getCidrSignature())
+        .isEqualTo(subnet1);
+    assertThat(allowedSubnetsArgumentCaptor.getValue().get(1).getCidrSignature())
+        .isEqualTo(subnet2);
+  }
+
+  @Test
+  public void netRestrictInvalidShouldFail() {
+    final String subnet = "127.0.0.1/abc";
+    parseCommand("--net-restrict", subnet);
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Invalid value for option '--net-restrict'");
+  }
+
+  @Test
   public void ethStatsOptionIsParsedCorrectly() {
     final String url = "besu-node:secret@host:443";
     parseCommand("--ethstats", url);
@@ -1244,8 +1267,37 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesValidBonsaiTrieLimitBackLayersOption() {
-    parseCommand("--data-storage-format", "BONSAI", "--bonsai-historical-block-limit", "11");
+  public void bonsaiLimitTrieLogsEnabledByDefault() {
+    parseCommand();
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isTrue();
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidDefaultBonsaiLimitTrieLogsWhenFullSyncEnabled() {
+    parseCommand("--sync-mode=FULL");
+
+    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("Cannot enable --bonsai-limit-trie-logs-enabled with sync-mode FULL");
+  }
+
+  @Test
+  public void parsesValidBonsaiHistoricalBlockLimitOption() {
+    parseCommand(
+        "--bonsai-limit-trie-logs-enabled=false",
+        "--data-storage-format",
+        "BONSAI",
+        "--bonsai-historical-block-limit",
+        "11");
     verify(mockControllerBuilder)
         .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
 
@@ -1258,7 +1310,7 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesInvalidBonsaiTrieLimitBackLayersOption() {
+  public void parsesInvalidBonsaiHistoricalBlockLimitOption() {
 
     parseCommand("--data-storage-format", "BONSAI", "--bonsai-maximum-back-layers-to-load", "ten");
 
@@ -1694,6 +1746,22 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
 
     verify(mockLogger, never()).warn(contains("Holesky is deprecated and will be shutdown"));
+  }
+
+  @Test
+  public void luksoValuesAreUsed() {
+    parseCommand("--network", "lukso");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    assertThat(networkArg.getValue()).isEqualTo(EthNetworkConfig.getNetworkConfig(LUKSO));
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test

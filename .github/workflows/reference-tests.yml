@@ -34,8 +34,8 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
-          distribution: adopt-openj9
-          java-version: 17
+          distribution: semeru # IBM Semeru with OpenJ9
+          java-version: 21
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:

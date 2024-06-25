@@ -17,20 +17,20 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 /** The general state test operation testing framework entry point. */
 public class %%TESTS_NAME%% {
 
-  private static final String[] TEST_CONFIG_FILE_DIR_PATH = new String[] {%%TESTS_FILE%%};
+  private static final String[] TEST_CONFIG_FILE_DIR_PATH =
+      new String[] {
+        %%TESTS_FILE%%
+      };
 
   public static Stream<Arguments> getTestParametersForConfig() {
-    return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH).stream().map(params ->
-        Arguments.of(params[0], params[1], params[2])
-        );
+    return generateTestParametersForConfig(TEST_CONFIG_FILE_DIR_PATH).stream()
+        .map(params -> Arguments.of(params[0], params[1], params[2]));
   }
 
   @ParameterizedTest(name = "Name: {0}")
   @MethodSource("getTestParametersForConfig")
   public void execution(
-      final String name,
-      final GeneralStateTestCaseEipSpec spec,
-      final boolean runTest) {
+      final String name, final GeneralStateTestCaseEipSpec spec, final boolean runTest) {
     assumeTrue(runTest, "Test " + name + " was ignored");
     executeTest(spec);
   }

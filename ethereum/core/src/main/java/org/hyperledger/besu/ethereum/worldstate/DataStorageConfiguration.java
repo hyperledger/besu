@@ -23,6 +23,9 @@ import org.immutables.value.Value;
 public interface DataStorageConfiguration {
 
   long DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD = 512;
+  boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = true;
+  long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+  int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 30_000;
   boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = false;
 
   DataStorageConfiguration DEFAULT_CONFIG =
@@ -58,6 +61,16 @@ public interface DataStorageConfiguration {
   Long getBonsaiMaxLayersToLoad();
 
   @Value.Default
+  default boolean getBonsaiLimitTrieLogsEnabled() {
+    return DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
+  }
+
+  @Value.Default
+  default int getBonsaiTrieLogPruningWindowSize() {
+    return DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+  }
+
+  @Value.Default
   default boolean getReceiptCompactionEnabled() {
     return DEFAULT_RECEIPT_COMPACTION_ENABLED;
   }
@@ -70,9 +83,6 @@ public interface DataStorageConfiguration {
   @Value.Immutable
   interface Unstable {
 
-    boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = false;
-    long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
-    int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 30_000;
     boolean DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED = true;
     boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = true;
 
@@ -81,16 +91,6 @@ public interface DataStorageConfiguration {
 
     DataStorageConfiguration.Unstable DEFAULT_PARTIAL =
         ImmutableDataStorageConfiguration.Unstable.builder().bonsaiFullFlatDbEnabled(false).build();
-
-    @Value.Default
-    default boolean getBonsaiLimitTrieLogsEnabled() {
-      return DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
-    }
-
-    @Value.Default
-    default int getBonsaiTrieLogPruningWindowSize() {
-      return DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
-    }
 
     @Value.Default
     default boolean getBonsaiFullFlatDbEnabled() {

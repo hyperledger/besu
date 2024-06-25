@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 
@@ -42,12 +42,12 @@ public class EngineGetPayloadResultV4 {
       final BlockHeader header,
       final List<String> transactions,
       final Optional<List<Withdrawal>> withdrawals,
-      final Optional<List<Deposit>> deposits,
+      final Optional<List<DepositRequest>> depositRequests,
       final Optional<List<WithdrawalRequest>> withdrawalRequests,
       final String blockValue,
       final BlobsBundleV1 blobsBundle) {
     this.executionPayload =
-        new PayloadResult(header, transactions, withdrawals, deposits, withdrawalRequests);
+        new PayloadResult(header, transactions, withdrawals, depositRequests, withdrawalRequests);
     this.blockValue = blockValue;
     this.blobsBundle = blobsBundle;
     this.shouldOverrideBuilder = false;
@@ -94,14 +94,14 @@ public class EngineGetPayloadResultV4 {
 
     protected final List<String> transactions;
     private final List<WithdrawalParameter> withdrawals;
-    private final List<DepositParameter> deposits;
+    private final List<DepositRequestParameter> depositRequests;
     private final List<WithdrawalRequestParameter> withdrawalRequests;
 
     public PayloadResult(
         final BlockHeader header,
         final List<String> transactions,
         final Optional<List<Withdrawal>> withdrawals,
-        final Optional<List<Deposit>> deposits,
+        final Optional<List<DepositRequest>> depositRequests,
         final Optional<List<WithdrawalRequest>> withdrawalRequests) {
       this.blockNumber = Quantity.create(header.getNumber());
       this.blockHash = header.getHash().toString();
@@ -125,10 +125,13 @@ public class EngineGetPayloadResultV4 {
                           .map(WithdrawalParameter::fromWithdrawal)
                           .collect(Collectors.toList()))
               .orElse(null);
-      this.deposits =
-          deposits
+      this.depositRequests =
+          depositRequests
               .map(
-                  ds -> ds.stream().map(DepositParameter::fromDeposit).collect(Collectors.toList()))
+                  ds ->
+                      ds.stream()
+                          .map(DepositRequestParameter::fromDeposit)
+                          .collect(Collectors.toList()))
               .orElse(null);
       this.withdrawalRequests =
           withdrawalRequests
@@ -216,8 +219,8 @@ public class EngineGetPayloadResultV4 {
     }
 
     @JsonGetter(value = "depositRequests")
-    public List<DepositParameter> getDeposits() {
-      return deposits;
+    public List<DepositRequestParameter> getDepositRequests() {
+      return depositRequests;
     }
 
     @JsonGetter(value = "withdrawalRequests")

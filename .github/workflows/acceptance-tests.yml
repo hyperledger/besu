@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GRADLE_OPTS: "-Xmx6g"
-  total-runners: 10
+  total-runners: 12
 
 jobs:
   acceptanceTestEthereum:
@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        runner_index: [0,1,2,3,4,5,6,7,8,9]
+        runner_index: [0,1,2,3,4,5,6,7,8,9,10,11]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -34,7 +34,7 @@ jobs:
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: Install required packages
         run:  sudo apt-get install -y xmlstarlet
       - name: setup gradle
@@ -45,15 +45,6 @@ jobs:
         run: ./gradlew acceptanceTestNotPrivacy --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
       - name: Extract current test list
         run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTestNotPrivacy'" | tee tmp/currentTests.list
-      - name: Get acceptance test reports (Support transition) # can be removed after PR is merged
-        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
-        continue-on-error: true
-        with:
-          branch: main
-          name_is_regexp: true
-          name: 'acceptance-node-\d+-test-results'
-          path: tmp/junit-xml-reports-downloaded
-          if_no_artifact_found: true
       - name: Get acceptance test reports
         uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
         continue-on-error: true
