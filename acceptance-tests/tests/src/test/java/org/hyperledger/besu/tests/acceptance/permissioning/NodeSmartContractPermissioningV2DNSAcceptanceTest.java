@@ -25,8 +25,10 @@ import java.net.UnknownHostException;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled("test is flaky #7191")
 public class NodeSmartContractPermissioningV2DNSAcceptanceTest
     extends NodeSmartContractPermissioningV2AcceptanceTestBase {
 
