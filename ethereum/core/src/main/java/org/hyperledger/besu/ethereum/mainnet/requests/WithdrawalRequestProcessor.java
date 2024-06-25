@@ -26,6 +26,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.SystemCallProcessor;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -64,17 +65,22 @@ public class WithdrawalRequestProcessor implements RequestProcessor {
       final BlockHashOperation.BlockHashLookup blockHashLookup,
       final OperationTracer operationTracer) {
 
+    WorldUpdater updater = mutableWorldState.updater();
+    if (updater.get(WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS) == null) {
+      return Optional.empty();
+    }
+
     SystemCallProcessor systemCallProcessor =
         new SystemCallProcessor(protocolSpec.getTransactionProcessor());
     Bytes systemCallOutput =
         systemCallProcessor.process(
             WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS,
-            mutableWorldState.updater(),
+            updater,
             blockHeader,
             operationTracer,
             blockHashLookup);
     List<WithdrawalRequest> withdrawalRequests = parseWithdrawalRequests(systemCallOutput);
-    return Optional.of(withdrawalRequests);
+    return Optional.ofNullable(withdrawalRequests);
   }
 
   /**
@@ -84,8 +90,11 @@ public class WithdrawalRequestProcessor implements RequestProcessor {
    * @return A list of parsed {@link WithdrawalRequest} objects.
    */
   private List<WithdrawalRequest> parseWithdrawalRequests(final Bytes bytes) {
+    if (bytes == null) {
+      return null;
+    }
     final List<WithdrawalRequest> withdrawalRequests = new ArrayList<>();
-    if (bytes == null || bytes.isEmpty()) {
+    if (bytes.isEmpty()) {
       return withdrawalRequests;
     }
     int count = bytes.size() / WITHDRAWAL_REQUEST_BYTES_SIZE;

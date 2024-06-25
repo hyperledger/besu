@@ -53,8 +53,7 @@ public class SystemCallProcessor {
    * @param blockHeader the current block header.
    * @param operationTracer the operation tracer for tracing EVM operations.
    * @param blockHashLookup the block hash lookup function.
-   * @return the output data from the call, or an empty byte array if the call did not complete
-   *     successfully.
+   * @return the output data from the call
    */
   public Bytes process(
       final Address callAddress,
@@ -63,12 +62,18 @@ public class SystemCallProcessor {
       final OperationTracer operationTracer,
       final BlockHashOperation.BlockHashLookup blockHashLookup) {
 
+    // if no code exists at CALL_ADDRESS, the call must fail silently
+    final Account maybeContract = worldState.get(callAddress);
+    if (maybeContract == null) {
+      return null;
+    }
+
     final AbstractMessageProcessor messageProcessor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
     final MessageFrame initialFrame =
         createCallFrame(callAddress, worldState, blockHeader, blockHashLookup);
 
-    return processFrame(initialFrame, messageProcessor, operationTracer, worldState.updater());
+    return processFrame(initialFrame, messageProcessor, operationTracer, worldState);
   }
 
   private Bytes processFrame(
@@ -78,7 +83,7 @@ public class SystemCallProcessor {
       final WorldUpdater updater) {
 
     if (!frame.getCode().isValid()) {
-      return Bytes.EMPTY;
+      throw new RuntimeException("System the call did not execute to completion");
     }
 
     Deque<MessageFrame> stack = frame.getMessageFrameStack();
@@ -91,23 +96,23 @@ public class SystemCallProcessor {
       return frame.getOutputData();
     }
 
-    return Bytes.EMPTY;
+    // the call must execute to completion
+    throw new RuntimeException("System the call did not execute to completion");
   }
 
   private MessageFrame createCallFrame(
       final Address callAddress,
-      final WorldUpdater worldState,
+      final WorldUpdater worldUpdater,
       final ProcessableBlockHeader blockHeader,
       final BlockHashOperation.BlockHashLookup blockHashLookup) {
 
-    final WorldUpdater updater = worldState.updater();
-    final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(callAddress));
+    final Optional<Account> maybeContract = Optional.ofNullable(worldUpdater.get(callAddress));
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
 
     return MessageFrame.builder()
         .maxStackSize(DEFAULT_MAX_STACK_SIZE)
-        .worldUpdater(updater)
+        .worldUpdater(worldUpdater)
         .initialGas(30_000_000L)
         .originator(SYSTEM_ADDRESS)
         .gasPrice(Wei.ZERO)
