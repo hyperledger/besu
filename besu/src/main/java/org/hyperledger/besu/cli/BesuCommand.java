@@ -20,7 +20,6 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
-import static org.hyperledger.besu.cli.options.unstable.NetworkingOptions.PEER_LOWER_BOUND_FLAG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -1515,6 +1514,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (genesisConfigOptionsSupplier.get().getCancunTime().isPresent()
+        || genesisConfigOptionsSupplier.get().getCancunEOFTime().isPresent()
         || genesisConfigOptionsSupplier.get().getPragueTime().isPresent()
         || genesisConfigOptionsSupplier.get().getPragueEOFTime().isPresent()) {
       if (kzgTrustedSetupFile != null) {
@@ -1659,9 +1659,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     maxPeers = p2PDiscoveryOptionGroup.maxPeers;
     final Boolean isLimitRemoteWireConnectionsEnabled =
         p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled;
-    if (isOptionSet(commandLine, PEER_LOWER_BOUND_FLAG)) {
-      logger.warn(PEER_LOWER_BOUND_FLAG + " is deprecated and will be removed soon.");
-    }
     if (isLimitRemoteWireConnectionsEnabled) {
       final float fraction =
           Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
