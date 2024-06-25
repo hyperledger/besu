@@ -1281,13 +1281,18 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesInvalidDefaultBonsaiLimitTrieLogsWhenFullSyncEnabled() {
+  public void parsesChangesDefaultBonsaiLimitTrieLogsWhenFullSyncEnabled() {
     parseCommand("--sync-mode=FULL");
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isFalse();
+
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Cannot enable --bonsai-limit-trie-logs-enabled with sync-mode FULL");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test
