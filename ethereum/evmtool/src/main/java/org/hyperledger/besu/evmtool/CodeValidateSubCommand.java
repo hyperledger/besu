@@ -17,9 +17,12 @@ package org.hyperledger.besu.evmtool;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.hyperledger.besu.evmtool.CodeValidateSubCommand.COMMAND_NAME;
 
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeFactory;
-import org.hyperledger.besu.evm.code.CodeV1Validation;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.util.LogConfigurator;
 
@@ -27,9 +30,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.PrintStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,7 +38,9 @@ import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
+import picocli.CommandLine.ParentCommand;
 
+@SuppressWarnings({"ConstantValue", "DataFlowIssue"})
 @CommandLine.Command(
     name = COMMAND_NAME,
     description = "Validates EVM code for fuzzing",
@@ -45,8 +48,10 @@ import picocli.CommandLine;
     versionProvider = VersionProvider.class)
 public class CodeValidateSubCommand implements Runnable {
   public static final String COMMAND_NAME = "code-validate";
-  private final InputStream input;
-  private final PrintStream output;
+
+  @ParentCommand EvmToolCommand parentCommand;
+
+  private final EVM evm;
 
   @CommandLine.Option(
       names = {"--file"},
@@ -60,41 +65,46 @@ public class CodeValidateSubCommand implements Runnable {
   @SuppressWarnings("unused")
   public CodeValidateSubCommand() {
     // PicoCLI requires this
-    this(System.in, System.out);
+    this(null);
   }
 
-  CodeValidateSubCommand(final InputStream input, final PrintStream output) {
-    this.input = input;
-    this.output = output;
+  CodeValidateSubCommand(final EvmToolCommand parentCommand) {
+    this.parentCommand = parentCommand;
+    String fork = EvmSpecVersion.PRAGUE.getName();
+    if (parentCommand != null && parentCommand.hasFork()) {
+      fork = parentCommand.getFork();
+    }
+    ProtocolSpec protocolSpec = ReferenceTestProtocolSchedules.create().geSpecByName(fork);
+    evm = protocolSpec.getEvm();
   }
 
   @Override
   public void run() {
     LogConfigurator.setLevel("", "OFF");
     if (cliCode.isEmpty() && codeFile == null) {
-      try (BufferedReader in = new BufferedReader(new InputStreamReader(input, UTF_8))) {
+      try (BufferedReader in = new BufferedReader(new InputStreamReader(parentCommand.in, UTF_8))) {
+        checkCodeFromBufferedReader(in);
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    } else if (codeFile != null) {
+      try (BufferedReader in = new BufferedReader(new FileReader(codeFile, UTF_8))) {
         checkCodeFromBufferedReader(in);
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
     } else {
-      if (codeFile != null) {
-        try (BufferedReader in = new BufferedReader(new FileReader(codeFile, UTF_8))) {
-          checkCodeFromBufferedReader(in);
-        } catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
       for (String code : cliCode) {
-        output.print(considerCode(code));
+        parentCommand.out.print(considerCode(code));
       }
     }
+    parentCommand.out.flush();
   }
 
   private void checkCodeFromBufferedReader(final BufferedReader in) {
     try {
       for (String code = in.readLine(); code != null; code = in.readLine()) {
-        output.print(considerCode(code));
+        parentCommand.out.print(considerCode(code));
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -114,24 +124,22 @@ public class CodeValidateSubCommand implements Runnable {
       return "";
     }
 
-    EOFLayout layout = EOFLayout.parseEOF(codeBytes);
+    EOFLayout layout = evm.parseEOF(codeBytes);
     if (!layout.isValid()) {
       return "err: layout - " + layout.invalidReason() + "\n";
     }
 
-    String error = CodeV1Validation.validate(layout);
-    if (error != null) {
-      return "err: " + error + "\n";
+    Code code = evm.getCodeUncached(codeBytes);
+    if (code instanceof CodeInvalid codeInvalid) {
+      return "err: " + codeInvalid.getInvalidReason();
+    } else {
+      return "OK "
+          + IntStream.range(0, code.getCodeSectionCount())
+              .mapToObj(code::getCodeSection)
+              .map(cs -> code.getBytes().slice(cs.getEntryPoint(), cs.getLength()))
+              .map(Bytes::toUnprefixedHexString)
+              .collect(Collectors.joining(","))
+          + "\n";
     }
-
-    Code code = CodeFactory.createCode(codeBytes, 1);
-
-    return "OK "
-        + IntStream.range(0, code.getCodeSectionCount())
-            .mapToObj(code::getCodeSection)
-            .map(cs -> layout.container().slice(cs.getEntryPoint(), cs.getLength()))
-            .map(Bytes::toUnprefixedHexString)
-            .collect(Collectors.joining(","))
-        + "\n";
   }
 }

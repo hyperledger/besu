@@ -141,7 +141,7 @@ public class BlockTimerTest {
     assertThat(eventQueue.size()).isEqualTo(1);
     final BftEvent queuedEvent = eventQueue.poll(0, TimeUnit.SECONDS);
     assertThat(queuedEvent).isInstanceOf(BlockTimerExpiry.class);
-    assertThat(((BlockTimerExpiry) queuedEvent).getRoundIndentifier())
+    assertThat(((BlockTimerExpiry) queuedEvent).getRoundIdentifier())
         .usingRecursiveComparison()
         .isEqualTo(round);
   }
@@ -171,7 +171,7 @@ public class BlockTimerTest {
     verify(mockQueue).add(bftEventCaptor.capture());
 
     assertThat(bftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
-    assertThat(((BlockTimerExpiry) bftEventCaptor.getValue()).getRoundIndentifier())
+    assertThat(((BlockTimerExpiry) bftEventCaptor.getValue()).getRoundIdentifier())
         .usingRecursiveComparison()
         .isEqualTo(round);
   }
@@ -201,7 +201,7 @@ public class BlockTimerTest {
     verify(mockQueue).add(bftEventCaptor.capture());
 
     assertThat(bftEventCaptor.getValue() instanceof BlockTimerExpiry).isTrue();
-    assertThat(((BlockTimerExpiry) bftEventCaptor.getValue()).getRoundIndentifier())
+    assertThat(((BlockTimerExpiry) bftEventCaptor.getValue()).getRoundIdentifier())
         .usingRecursiveComparison()
         .isEqualTo(round);
   }
