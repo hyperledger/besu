@@ -246,6 +246,7 @@ public class ProtocolScheduleBuilder {
     // Begin timestamp forks
     lastForkBlock = validateForkOrder("Shanghai", config.getShanghaiTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Cancun", config.getCancunTime(), lastForkBlock);
+    lastForkBlock = validateForkOrder("CancunEOF", config.getCancunEOFTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("Prague", config.getPragueTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("PragueEOF", config.getPragueEOFTime(), lastForkBlock);
     lastForkBlock = validateForkOrder("FutureEips", config.getFutureEipsTime(), lastForkBlock);
@@ -326,6 +327,7 @@ public class ProtocolScheduleBuilder {
         // Timestamp Forks
         timestampMilestone(config.getShanghaiTime(), specFactory.shanghaiDefinition(config)),
         timestampMilestone(config.getCancunTime(), specFactory.cancunDefinition(config)),
+        timestampMilestone(config.getCancunEOFTime(), specFactory.cancunEOFDefinition(config)),
         timestampMilestone(config.getPragueTime(), specFactory.pragueDefinition(config)),
         timestampMilestone(config.getPragueEOFTime(), specFactory.pragueEOFDefinition(config)),
         timestampMilestone(config.getFutureEipsTime(), specFactory.futureEipsDefinition(config)),
