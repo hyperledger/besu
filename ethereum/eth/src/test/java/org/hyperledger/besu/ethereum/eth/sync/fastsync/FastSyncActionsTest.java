@@ -153,7 +153,7 @@ public class FastSyncActionsTest {
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final int minPeers = 1;
-    syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
+    syncConfigBuilder.syncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
     fastSyncActions =
         createFastSyncActions(
@@ -174,7 +174,7 @@ public class FastSyncActionsTest {
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final int minPeers = 1;
-    syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
+    syncConfigBuilder.syncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
     fastSyncActions =
         createFastSyncActions(
@@ -197,7 +197,7 @@ public class FastSyncActionsTest {
     setUp(storageFormat);
     EthProtocolManagerTestUtil.disableEthSchedulerAutoRun(ethProtocolManager);
     final int minPeers = 2;
-    syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
+    syncConfigBuilder.syncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
     fastSyncActions =
         createFastSyncActions(
@@ -228,7 +228,7 @@ public class FastSyncActionsTest {
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final int minPeers = 3;
-    syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
+    syncConfigBuilder.syncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
     fastSyncActions =
         createFastSyncActions(
@@ -279,7 +279,7 @@ public class FastSyncActionsTest {
     setUp(storageFormat);
     final int minPeers = 3;
     final PeerValidator validator = mock(PeerValidator.class);
-    syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
+    syncConfigBuilder.syncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
     fastSyncActions =
         createFastSyncActions(
@@ -351,7 +351,7 @@ public class FastSyncActionsTest {
       final boolean bestMissingHeight, final boolean bestNotValidated) {
     final int minPeers = 3;
     final int peerCount = minPeers + 1;
-    syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
+    syncConfigBuilder.syncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
     fastSyncActions =
         createFastSyncActions(
@@ -403,7 +403,7 @@ public class FastSyncActionsTest {
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
     final int minPeers = 1;
-    syncConfigBuilder.fastSyncMinimumPeerCount(minPeers);
+    syncConfigBuilder.syncMinimumPeerCount(minPeers);
     syncConfig = syncConfigBuilder.build();
     fastSyncActions =
         createFastSyncActions(
@@ -467,7 +467,7 @@ public class FastSyncActionsTest {
   public void downloadPivotBlockHeaderShouldRetrievePivotBlockHeader(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
-    syncConfig = SynchronizerConfiguration.builder().fastSyncMinimumPeerCount(1).build();
+    syncConfig = SynchronizerConfiguration.builder().syncMinimumPeerCount(1).build();
     fastSyncActions =
         createFastSyncActions(
             syncConfig,
@@ -489,7 +489,7 @@ public class FastSyncActionsTest {
   public void downloadPivotBlockHeaderShouldRetrievePivotBlockHash(
       final DataStorageFormat storageFormat) {
     setUp(storageFormat);
-    syncConfig = SynchronizerConfiguration.builder().fastSyncMinimumPeerCount(1).build();
+    syncConfig = SynchronizerConfiguration.builder().syncMinimumPeerCount(1).build();
     GenesisConfigOptions genesisConfig = mock(GenesisConfigOptions.class);
     when(genesisConfig.getTerminalBlockNumber()).thenReturn(OptionalLong.of(10L));
 

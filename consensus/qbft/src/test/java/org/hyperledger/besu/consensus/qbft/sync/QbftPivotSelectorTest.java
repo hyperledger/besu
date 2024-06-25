@@ -48,7 +48,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 public class QbftPivotSelectorTest {
   private final SynchronizerConfiguration.Builder syncConfigBuilder =
-      new SynchronizerConfiguration.Builder().syncMode(SyncMode.SNAP).fastSyncMinimumPeerCount(1);
+      new SynchronizerConfiguration.Builder().syncMode(SyncMode.SNAP).syncMinimumPeerCount(1);
   private final SynchronizerConfiguration syncConfig = syncConfigBuilder.build();
   @Mock private NodeKey nodeKey;
   @Mock private BlockHeader blockHeader;
