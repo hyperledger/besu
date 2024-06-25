@@ -147,7 +147,8 @@ def eofReferenceTests = tasks.register("eofReferenceTests") {
     file("src/reference-test/templates/EOFReferenceTest.java.template"),
     "EOFTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
-    "EOFReferenceTest"
+    "EOFReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.eof"
     )
 }
 
@@ -267,13 +268,13 @@ following commands:
 processResources.dependsOn('validateReferenceTestSubmodule')
 
 def generateTestFiles(
-        FileTree jsonPath,
-        File templateFile,
-        String pathstrip,
-        String destination,
-        String namePrefix,
-        String packageString,
-        String ... excludedPath) {
+  FileTree jsonPath,
+  File templateFile,
+  String pathstrip,
+  String destination,
+  String namePrefix,
+  String packageString,
+  String ... excludedPath) {
   mkdir(destination)
   def referenceTestTemplate = templateFile.text
 

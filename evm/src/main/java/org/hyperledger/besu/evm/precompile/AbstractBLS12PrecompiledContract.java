@@ -18,13 +18,13 @@ import static java.nio.charset.StandardCharsets.UTF_8;
 
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 
 import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import com.sun.jna.ptr.IntByReference;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP2537;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,7 +83,6 @@ public abstract class AbstractBLS12PrecompiledContract implements PrecompiledCon
         new IntByReference(LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_RESULT_BYTES);
     final IntByReference err_len =
         new IntByReference(LibGnarkEIP2537.EIP2537_PREALLOCATE_FOR_ERROR_BYTES);
-
 
     final int inputSize = Math.min(inputLimit, input.size());
     final int errorNo =
