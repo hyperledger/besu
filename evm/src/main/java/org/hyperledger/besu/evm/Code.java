@@ -40,6 +40,13 @@ public interface Code {
   int getDataSize();
 
   /**
+   * Declared size of the data in bytes. For containers with aux data this may be larger.
+   *
+   * @return the declared data size
+   */
+  int getDeclaredDataSize();
+
+  /**
    * Get the bytes for the entire container, for example what EXTCODECOPY would want. For V0 it is
    * the same as getCodeBytes, for V1 it is the entire container, not just the data section.
    *
@@ -107,9 +114,10 @@ public interface Code {
    * @param index the index in the container to return
    * @param auxData any Auxiliary data to append to the subcontainer code. If fetching an initcode
    *     container, pass null.
+   * @param evm the EVM in which we are instantiating the code
    * @return Either the subcontainer, or empty.
    */
-  Optional<Code> getSubContainer(final int index, final Bytes auxData);
+  Optional<Code> getSubContainer(final int index, final Bytes auxData, EVM evm);
 
   /**
    * Loads data from the appropriate data section
