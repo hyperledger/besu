@@ -40,8 +40,6 @@ import org.slf4j.LoggerFactory;
 public class SetCodeTransactionProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(SetCodeTransactionProcessor.class);
 
-  private static final Bytes MAGIC = Bytes.of(0x05);
-
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -63,7 +61,7 @@ public class SetCodeTransactionProcessor {
               recoverAuthority(payload)
                   .ifPresent(
                       authorityAddress -> {
-                        LOG.trace("Adding authority: {}", authorityAddress);
+                        LOG.trace("Set code authority: {}", authorityAddress);
 
                         if (!chainId.equals(BigInteger.ZERO)
                             && !payload.chainId().equals(BigInteger.ZERO)
@@ -92,9 +90,9 @@ public class SetCodeTransactionProcessor {
 
   private Optional<Address> recoverAuthority(final SetCodeAuthorization authorization) {
     BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    SetCodeTransactionEncoder.encodeSingleSetCode(authorization, rlpOutput);
+    SetCodeTransactionEncoder.encodeSingleSetCodeWithoutSignature(authorization, rlpOutput);
 
-    final Hash hash = Hash.hash(MAGIC.or(rlpOutput.encoded()));
+    final Hash hash = Hash.hash(Bytes.concatenate(SetCodeAuthorization.MAGIC, rlpOutput.encoded()));
 
     return SIGNATURE_ALGORITHM
         .get()

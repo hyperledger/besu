@@ -38,17 +38,29 @@ public class SetCodeTransactionEncoder {
     rlpOutput.endList();
   }
 
-  public static void encodeSingleSetCode(
+  public static void encodeSingleSetCodeWithoutSignature(
       final SetCodeAuthorization payload, final RLPOutput rlpOutput) {
     rlpOutput.startList();
+    encodeAuthorizationDetails(payload, rlpOutput);
+    rlpOutput.endList();
+  }
+
+  private static void encodeSingleSetCode(
+      final SetCodeAuthorization payload, final RLPOutput rlpOutput) {
+    rlpOutput.startList();
+    encodeAuthorizationDetails(payload, rlpOutput);
+    rlpOutput.writeIntScalar(payload.signature().getRecId());
+    rlpOutput.writeBigIntegerScalar(payload.signature().getR());
+    rlpOutput.writeBigIntegerScalar(payload.signature().getS());
+    rlpOutput.endList();
+  }
+
+  private static void encodeAuthorizationDetails(
+      final SetCodeAuthorization payload, final RLPOutput rlpOutput) {
     rlpOutput.writeBigIntegerScalar(payload.chainId());
     rlpOutput.writeBytes(payload.address().copy());
     rlpOutput.startList();
     payload.nonces().forEach(rlpOutput::writeLongScalar);
-    rlpOutput.endList();
-    rlpOutput.writeIntScalar(payload.signature().getRecId());
-    rlpOutput.writeBigIntegerScalar(payload.signature().getR());
-    rlpOutput.writeBigIntegerScalar(payload.signature().getS());
     rlpOutput.endList();
   }
 
