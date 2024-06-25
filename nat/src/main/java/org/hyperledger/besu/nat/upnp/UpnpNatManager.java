@@ -466,7 +466,7 @@ public class UpnpNatManager extends AbstractNatManager {
       futures.add(future);
     }
 
-    // return a future that completes succeessfully only when each of our port delete requests
+    // return a future that completes successfully only when each of our port delete requests
     // complete
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]));
   }

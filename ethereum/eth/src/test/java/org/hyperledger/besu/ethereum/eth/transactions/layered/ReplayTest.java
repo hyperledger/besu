@@ -129,7 +129,7 @@ public class ReplayTest {
       final AbstractPrioritizedTransactions prioritizedTransactions =
           createLayers(poolConfig, txPoolMetrics, baseFeeMarket);
       final LayeredPendingTransactions pendingTransactions =
-          new LayeredPendingTransactions(poolConfig, prioritizedTransactions);
+          new LayeredPendingTransactions(poolConfig, prioritizedTransactions, ethScheduler);
       br.lines()
           .forEach(
               line -> {

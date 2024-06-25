@@ -30,7 +30,6 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
@@ -78,7 +77,7 @@ class AbstractCreateOperationTest {
   public static final Bytes INVALID_EOF =
       Bytes.fromHexString(
           "0x"
-              + "73EF99010100040200010001030000000000000000" // PUSH20 contract
+              + "73EF00990100040200010001030000000000000000" // PUSH20 contract
               + "6000" // PUSH1 0x00
               + "52" // MSTORE
               + "6014" // PUSH1 20
@@ -104,7 +103,7 @@ class AbstractCreateOperationTest {
      * @param maxInitcodeSize Maximum init code size
      */
     public FakeCreateOperation(final GasCalculator gasCalculator, final int maxInitcodeSize) {
-      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, maxInitcodeSize);
+      super(0xEF, "FAKECREATE", 3, 1, gasCalculator, maxInitcodeSize, 0);
     }
 
     @Override
@@ -172,7 +171,7 @@ class AbstractCreateOperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 0, true))
+            .code(evm.getCodeUncached(SIMPLE_CREATE))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
@@ -203,7 +202,7 @@ class AbstractCreateOperationTest {
     operation.execute(messageFrame, evm);
     final MessageFrame createFrame = messageFrameStack.peek();
     final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
+        new ContractCreationProcessor(evm, false, List.of(), 0, List.of());
     ccp.process(createFrame, OperationTracer.NO_TRACING);
   }
 
