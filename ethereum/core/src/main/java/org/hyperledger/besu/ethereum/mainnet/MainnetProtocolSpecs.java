@@ -665,9 +665,9 @@ public abstract class MainnetProtocolSpecs {
 
         // change to accept EIP-7702 transactions
         .transactionValidatorFactoryBuilder(
-            (gasCalculator, gasLimitCalculator, feeMarket) ->
+            (evm, gasLimitCalculator, feeMarket) ->
                 new TransactionValidatorFactory(
-                    gasCalculator,
+                    evm.getGasCalculator(),
                     gasLimitCalculator,
                     feeMarket,
                     true,
@@ -678,7 +678,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.EIP1559,
                         TransactionType.BLOB,
                         TransactionType.SET_CODE),
-                    SHANGHAI_INIT_CODE_SIZE_LIMIT))
+                    evm.getEvmVersion().getMaxInitcodeSize()))
 
         // EIP-2935 Blockhash processor
         .blockHashProcessor(new PragueBlockHashProcessor())
