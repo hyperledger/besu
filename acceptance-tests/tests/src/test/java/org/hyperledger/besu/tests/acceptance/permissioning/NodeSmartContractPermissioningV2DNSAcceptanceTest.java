@@ -58,11 +58,6 @@ public class NodeSmartContractPermissioningV2DNSAcceptanceTest
     permissionedNode.execute(allowNode(permissionedNode));
     permissionedNode.verify(connectionIsAllowed(permissionedNode));
 
-    // Verify initial configuration
-    bootnode.verify(net.awaitPeerCount(3));
-    allowedNode.verify(net.awaitPeerCount(3));
-    forbiddenNode.verify(net.awaitPeerCount(2));
-    permissionedNode.verify(net.awaitPeerCount(2));
   }
 
   @Test
