@@ -68,36 +68,75 @@ public record SetCodeAuthorization(
         chainId, address, nonces, SIGNATURE_ALGORITHM.get().createSignature(r, s, v));
   }
 
+  /**
+   * Create set code authorization with a builder.
+   *
+   * @return SetCodeAuthorization.Builder
+   */
   public static Builder builder() {
     return new Builder();
   }
 
+  /** Builder for SetCodeAuthorization. */
   public static class Builder {
     private BigInteger chainId = BigInteger.ZERO;
     private Address address;
     private List<Long> nonces = List.of();
     private SECPSignature signature;
 
+    /** Create a new builder. */
+    protected Builder() {}
+
+    /**
+     * Set the optional chain id.
+     *
+     * @param chainId the chain id
+     * @return this builder
+     */
     public Builder chainId(final BigInteger chainId) {
       this.chainId = chainId;
       return this;
     }
 
+    /**
+     * Set the address of the authorized smart contract.
+     *
+     * @param address the address
+     * @return this builder
+     */
     public Builder address(final Address address) {
       this.address = address;
       return this;
     }
 
+    /**
+     * Set the list of optional nonces.
+     *
+     * @param nonces the list of nonces. Only the first nonce will be used.
+     * @return this builder
+     */
     public Builder nonces(final List<Long> nonces) {
       this.nonces = nonces;
       return this;
     }
 
+    /**
+     * Set the signature of the authorizer account.
+     *
+     * @param signature the signature
+     * @return this builder
+     */
     public Builder signature(final SECPSignature signature) {
       this.signature = signature;
       return this;
     }
 
+    /**
+     * Sign the authorization with the given key pair and return the authorization.
+     *
+     * @param keyPair the key pair
+     * @return SetCodeAuthorization
+     */
     public SetCodeAuthorization signAndBuild(final KeyPair keyPair) {
       final BytesValueRLPOutput output = new BytesValueRLPOutput();
       output.startList();
@@ -115,6 +154,11 @@ public record SetCodeAuthorization(
       return build();
     }
 
+    /**
+     * Build the authorization.
+     *
+     * @return SetCodeAuthorization
+     */
     public SetCodeAuthorization build() {
       if (address == null) {
         throw new IllegalStateException("Address must be set");
