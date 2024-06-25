@@ -57,7 +57,6 @@ public class NodeSmartContractPermissioningV2DNSAcceptanceTest
 
     permissionedNode.execute(allowNode(permissionedNode));
     permissionedNode.verify(connectionIsAllowed(permissionedNode));
-
   }
 
   @Test
