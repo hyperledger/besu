@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
-import java.io.PrintStream;
+import java.io.PrintWriter;
 
 import org.junit.jupiter.api.Test;
 import picocli.CommandLine;
@@ -44,8 +44,8 @@ class CodeValidationSubCommandTest {
   void testSingleValidViaInput() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(CODE_STOP_ONLY.getBytes(UTF_8));
-    final CodeValidateSubCommand codeValidateSubCommand =
-        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     codeValidateSubCommand.run();
     assertThat(baos.toString(UTF_8)).contains("OK 00\n");
   }
@@ -54,8 +54,8 @@ class CodeValidationSubCommandTest {
   void testSingleInvalidViaInput() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(CODE_BAD_MAGIC.getBytes(UTF_8));
-    final CodeValidateSubCommand codeValidateSubCommand =
-        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     codeValidateSubCommand.run();
     assertThat(baos.toString(UTF_8)).contains("err: layout - EOF header byte 1 incorrect\n");
   }
@@ -64,8 +64,8 @@ class CodeValidationSubCommandTest {
   void testMultipleViaInput() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(CODE_MULTIPLE.getBytes(UTF_8));
-    final CodeValidateSubCommand codeValidateSubCommand =
-        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     codeValidateSubCommand.run();
     assertThat(baos.toString(UTF_8))
         .contains(
@@ -80,8 +80,8 @@ class CodeValidationSubCommandTest {
   void testSingleValidViaCli() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);
-    final CodeValidateSubCommand codeValidateSubCommand =
-        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(codeValidateSubCommand);
     cmd.parseArgs(CODE_STOP_ONLY);
     codeValidateSubCommand.run();
@@ -92,8 +92,8 @@ class CodeValidationSubCommandTest {
   void testSingleInvalidViaCli() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);
-    final CodeValidateSubCommand codeValidateSubCommand =
-        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(codeValidateSubCommand);
     cmd.parseArgs(CODE_BAD_MAGIC);
     codeValidateSubCommand.run();
@@ -104,8 +104,8 @@ class CodeValidationSubCommandTest {
   void testMultipleViaCli() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);
-    final CodeValidateSubCommand codeValidateSubCommand =
-        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(codeValidateSubCommand);
     cmd.parseArgs(CODE_STOP_ONLY, CODE_BAD_MAGIC, CODE_RETURN_ONLY);
     codeValidateSubCommand.run();
@@ -122,8 +122,8 @@ class CodeValidationSubCommandTest {
   void testCliEclipsesInput() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(CODE_STOP_ONLY.getBytes(UTF_8));
-    final CodeValidateSubCommand codeValidateSubCommand =
-        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(codeValidateSubCommand);
     cmd.parseArgs(CODE_RETURN_ONLY);
     codeValidateSubCommand.run();
@@ -134,8 +134,8 @@ class CodeValidationSubCommandTest {
   void testInteriorCommentsSkipped() {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais = new ByteArrayInputStream(new byte[0]);
-    final CodeValidateSubCommand codeValidateSubCommand =
-        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     final CommandLine cmd = new CommandLine(codeValidateSubCommand);
     cmd.parseArgs(CODE_INTERIOR_COMMENTS);
     codeValidateSubCommand.run();
@@ -147,8 +147,8 @@ class CodeValidationSubCommandTest {
     final ByteArrayOutputStream baos = new ByteArrayOutputStream();
     final ByteArrayInputStream bais =
         new ByteArrayInputStream(("# comment\n\n#blank line\n\n" + CODE_MULTIPLE).getBytes(UTF_8));
-    final CodeValidateSubCommand codeValidateSubCommand =
-        new CodeValidateSubCommand(bais, new PrintStream(baos));
+    EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
+    final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     codeValidateSubCommand.run();
     assertThat(baos.toString(UTF_8))
         .isEqualTo(

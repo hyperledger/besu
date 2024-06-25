@@ -18,17 +18,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
@@ -46,7 +43,8 @@ class JumpOperationTest {
 
   private static final int CURRENT_PC = 1;
 
-  private Address address;
+  private final Address address =
+      Address.fromHexString("0xc0dec0dec0dec0dec0dec0dec0dec0dec0dec0de");
   private EVM evm;
 
   private TestMessageFrameBuilder createMessageFrameBuilder(final long initialGas) {
@@ -59,12 +57,7 @@ class JumpOperationTest {
 
   @BeforeEach
   void init() {
-    address = Address.fromHexString("0x18675309");
-
-    final OperationRegistry registry = new OperationRegistry();
-    registry.put(new JumpOperation(gasCalculator));
-    registry.put(new JumpDestOperation(gasCalculator));
-    evm = new EVM(registry, gasCalculator, EvmConfiguration.DEFAULT, EvmSpecVersion.PARIS);
+    evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
   }
 
   @Test
@@ -74,7 +67,7 @@ class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(CodeFactory.createCode(jumpBytes, 0))
+            .code(evm.getCodeUncached(jumpBytes))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -89,7 +82,7 @@ class JumpOperationTest {
     final MessageFrame frame =
         createMessageFrameBuilder(10_000L)
             .pushStackItem(UInt256.fromHexString("0x03"))
-            .code(CodeFactory.createCode(jumpBytes, 0))
+            .code(evm.getCodeUncached(jumpBytes))
             .build();
     frame.setPC(CURRENT_PC);
 
@@ -104,7 +97,7 @@ class JumpOperationTest {
     final MessageFrame frameDestinationGreaterThanCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0xFFFFFFFF"))
-            .code(CodeFactory.createCode(jumpBytes, 0))
+            .code(evm.getCodeUncached(jumpBytes))
             .build();
     frameDestinationGreaterThanCodeSize.setPC(CURRENT_PC);
 
@@ -114,7 +107,7 @@ class JumpOperationTest {
     final MessageFrame frameDestinationEqualsToCodeSize =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x04"))
-            .code(CodeFactory.createCode(badJump, 0))
+            .code(evm.getCodeUncached(badJump))
             .build();
     frameDestinationEqualsToCodeSize.setPC(CURRENT_PC);
 
@@ -132,7 +125,7 @@ class JumpOperationTest {
     final MessageFrame longContract =
         createMessageFrameBuilder(100L)
             .pushStackItem(UInt256.fromHexString("0x12c"))
-            .code(CodeFactory.createCode(longCode, 0))
+            .code(evm.getCodeUncached(longCode))
             .build();
     longContract.setPC(255);
 

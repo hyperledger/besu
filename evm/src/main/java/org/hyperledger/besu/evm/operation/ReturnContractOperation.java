@@ -64,9 +64,15 @@ public class ReturnContractOperation extends AbstractOperation {
     }
 
     Bytes auxData = frame.readMemory(from, length);
-    Optional<Code> newCode = code.getSubContainer(index, auxData);
+    if (code.getDataSize() + auxData.size() > evm.getEvmVersion().getMaxCodeSize()) {
+      return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+    }
+    if (code.getDataSize() + auxData.size() < code.getDeclaredDataSize()) {
+      return new OperationResult(cost, ExceptionalHaltReason.DATA_TOO_SMALL);
+    }
+    Optional<Code> newCode = code.getSubContainer(index, auxData, evm);
     if (newCode.isEmpty()) {
-      return new OperationResult(cost, ExceptionalHaltReason.NONEXISTENT_CONTAINER);
+      return new OperationResult(cost, ExceptionalHaltReason.INVALID_CONTAINER);
     }
 
     frame.setCreatedCode(newCode.get());
