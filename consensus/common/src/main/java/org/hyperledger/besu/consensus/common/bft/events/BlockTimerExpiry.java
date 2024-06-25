@@ -41,9 +41,9 @@ public final class BlockTimerExpiry implements BftEvent {
   /**
    * Gets round identifier.
    *
-   * @return the round indentifier
+   * @return the round Identifier
    */
-  public ConsensusRoundIdentifier getRoundIndentifier() {
+  public ConsensusRoundIdentifier getRoundIdentifier() {
     return roundIdentifier;
   }
 

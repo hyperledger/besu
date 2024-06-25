@@ -323,7 +323,7 @@ public record EOFLayout(
       }
       Bytes subcontainer = container.slice(pos, subcontianerSize);
       pos += subcontianerSize;
-      EOFLayout subLayout = EOFLayout.parseEOF(subcontainer);
+      EOFLayout subLayout = EOFLayout.parseEOF(subcontainer, false);
       if (!subLayout.isValid()) {
         String invalidSubReason = subLayout.invalidReason;
         return invalidLayout(
@@ -348,6 +348,10 @@ public record EOFLayout(
       }
     } else {
       completeContainer = container;
+    }
+    if (strictSize && dataSize != data.size()) {
+      return invalidLayout(
+          container, version, "Truncated data section when a complete section was required");
     }
 
     return new EOFLayout(completeContainer, version, codeSections, subContainers, dataSize, data);

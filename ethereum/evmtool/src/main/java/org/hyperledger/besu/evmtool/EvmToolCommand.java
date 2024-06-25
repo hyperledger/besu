@@ -322,6 +322,14 @@ public class EvmToolCommand implements Runnable {
     subCommandLine.setHelpSectionKeys(keys);
   }
 
+  public String getFork() {
+    return daggerOptions.provideFork().orElse(EvmSpecVersion.defaultVersion().getName());
+  }
+
+  public boolean hasFork() {
+    return daggerOptions.provideFork().isPresent();
+  }
+
   @Override
   public void run() {
     LogConfigurator.setLevel("", "OFF");
@@ -340,8 +348,7 @@ public class EvmToolCommand implements Runnable {
               .build();
 
       int remainingIters = this.repeat;
-      final ProtocolSpec protocolSpec =
-          component.getProtocolSpec().apply(BlockHeaderBuilder.createDefault().buildBlockHeader());
+      final ProtocolSpec protocolSpec = component.getProtocolSpec();
       final Transaction tx =
           new Transaction.Builder()
               .nonce(0)

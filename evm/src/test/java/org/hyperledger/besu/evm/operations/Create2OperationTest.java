@@ -29,7 +29,6 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
@@ -58,7 +57,7 @@ public class Create2OperationTest {
   private MessageFrame messageFrame;
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
-  private final EVM evm = mock(EVM.class);
+  private final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
   private final MutableAccount newAccount = mock(MutableAccount.class);
 
   private final Create2Operation operation =
@@ -154,7 +153,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(sender))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(codeBytes, 0))
+            .code(evm.getCodeUncached(codeBytes))
             .completer(__ -> {})
             .address(Address.fromHexString(sender))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
@@ -175,8 +174,6 @@ public class Create2OperationTest {
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
-    when(evm.getCode(any(), any()))
-        .thenAnswer(invocation -> CodeFactory.createCode(invocation.getArgument(1), 0));
   }
 
   @ParameterizedTest
@@ -190,7 +187,7 @@ public class Create2OperationTest {
     setUp(sender, salt, code);
     final Address targetContractAddress =
         operation.targetContractAddress(
-            messageFrame, CodeFactory.createCode(Bytes.fromHexString(code), 0));
+            messageFrame, evm.getCodeUncached(Bytes.fromHexString(code)));
     assertThat(targetContractAddress).isEqualTo(Address.fromHexString(expectedAddress));
   }
 
@@ -224,11 +221,11 @@ public class Create2OperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = maxInitCodeOperation.execute(messageFrame, evm);
+    final EVM myEVM = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = maxInitCodeOperation.execute(messageFrame, myEVM);
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
+        new ContractCreationProcessor(myEVM, false, List.of(), 0, List.of());
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
@@ -268,7 +265,7 @@ public class Create2OperationTest {
             .sender(Address.fromHexString(SENDER))
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SIMPLE_CREATE, 0))
+            .code(evm.getCodeUncached(SIMPLE_CREATE))
             .completer(__ -> {})
             .address(Address.fromHexString(SENDER))
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
@@ -298,7 +295,7 @@ public class Create2OperationTest {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
 
-    Code eofCode = CodeFactory.createCode(SIMPLE_EOF, 1);
+    Code eofCode = evm.getCodeUncached(SIMPLE_EOF);
     assertThat(eofCode.isValid()).isTrue();
 
     final MessageFrame messageFrame =
@@ -315,7 +312,6 @@ public class Create2OperationTest {
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
 
-    final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
     var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isEqualTo(INVALID_OPERATION);
     assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);

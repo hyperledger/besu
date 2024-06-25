@@ -18,7 +18,6 @@ import static org.hyperledger.besu.evmtool.BenchmarkSubCommand.COMMAND_NAME;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.BesuInfo;
-import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evmtool.benchmarks.AltBN128Benchmark;
 import org.hyperledger.besu.evmtool.benchmarks.BenchmarkExecutor;
 import org.hyperledger.besu.evmtool.benchmarks.ECRecoverBenchmark;
@@ -64,12 +63,6 @@ public class BenchmarkSubCommand implements Runnable {
       negatable = true)
   Boolean nativeCode;
 
-  @Option(
-      names = {"--fork"},
-      paramLabel = "<String>",
-      description = "Fork to evaluate, when it impacts gas costing.")
-  String fork = EvmSpecVersion.defaultVersion().getName();
-
   @Parameters(description = "One or more of ${COMPLETION-CANDIDATES}.")
   EnumSet<Benchmark> benchmarks = EnumSet.noneOf(Benchmark.class);
 
@@ -91,7 +84,7 @@ public class BenchmarkSubCommand implements Runnable {
     var benchmarksToRun = benchmarks.isEmpty() ? EnumSet.allOf(Benchmark.class) : benchmarks;
     for (var benchmark : benchmarksToRun) {
       System.out.println("Benchmarks for " + benchmark);
-      benchmark.benchmarkExecutor.runBenchmark(output, nativeCode, fork);
+      benchmark.benchmarkExecutor.runBenchmark(output, nativeCode, parentCommand.getFork());
     }
   }
 }

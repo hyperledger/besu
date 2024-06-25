@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.evmtool;
 
-import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.EVM;
 
-import java.util.function.Function;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -30,7 +30,17 @@ public class ProtocolModule {
 
   @Provides
   @Singleton
-  Function<BlockHeader, ProtocolSpec> getProtocolSpec(final ProtocolSchedule protocolSchedule) {
-    return protocolSchedule::getByBlockHeader;
+  ProtocolSpec getProtocolSpec(final ProtocolSchedule protocolSchedule) {
+    return protocolSchedule.getByBlockHeader(
+        BlockHeaderBuilder.createDefault()
+            .timestamp(Long.MAX_VALUE)
+            .number(Long.MAX_VALUE)
+            .buildBlockHeader());
+  }
+
+  @Provides
+  @Singleton
+  EVM getEVM(final ProtocolSpec protocolSpec) {
+    return protocolSpec.getEvm();
   }
 }

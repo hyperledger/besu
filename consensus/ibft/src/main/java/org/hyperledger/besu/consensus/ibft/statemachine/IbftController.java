@@ -46,7 +46,7 @@ public class IbftController extends BaseBftController {
    * @param gossiper the gossiper
    * @param duplicateMessageTracker the duplicate message tracker
    * @param futureMessageBuffer the future message buffer
-   * @param sychronizerUpdater the synchronizer updater
+   * @param synchronizerUpdater the synchronizer updater
    */
   public IbftController(
       final Blockchain blockchain,
@@ -55,7 +55,7 @@ public class IbftController extends BaseBftController {
       final Gossiper gossiper,
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer futureMessageBuffer,
-      final SynchronizerUpdater sychronizerUpdater) {
+      final SynchronizerUpdater synchronizerUpdater) {
 
     super(
         blockchain,
@@ -63,7 +63,7 @@ public class IbftController extends BaseBftController {
         gossiper,
         duplicateMessageTracker,
         futureMessageBuffer,
-        sychronizerUpdater);
+        synchronizerUpdater);
     this.ibftBlockHeightManagerFactory = ibftBlockHeightManagerFactory;
   }
 

@@ -16,14 +16,14 @@ package org.hyperledger.besu.evm.tracing;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -40,8 +40,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 @ExtendWith(MockitoExtension.class)
 class ExtendedOperationTracerTest {
 
-  @Mock GasCalculator gasCalculator;
-  @Mock EVM evm;
   @Mock MessageFrame frame;
   @Mock WorldUpdater worldUpdater;
   @Mock MutableAccount mutableAccount;
@@ -49,7 +47,6 @@ class ExtendedOperationTracerTest {
   @BeforeEach
   void setUp() {
     when(frame.getOutputData()).thenReturn(Bytes.EMPTY);
-    when(gasCalculator.codeDepositGasCost(anyInt())).thenReturn(0L);
     when(frame.getRemainingGas()).thenReturn(1L);
 
     when(frame.getWorldUpdater()).thenReturn(worldUpdater);
@@ -58,8 +55,9 @@ class ExtendedOperationTracerTest {
 
   @Test
   void shouldCallTraceAccountCreationResultIfIsExtendedTracing() {
+    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
     final ContractCreationProcessor contractCreationProcessor =
-        new ContractCreationProcessor(gasCalculator, evm, false, Collections.emptyList(), 0);
+        new ContractCreationProcessor(evm, false, Collections.emptyList(), 0);
 
     final ExtendedOperationTracer tracer = new ExtendedOperationTracer();
     contractCreationProcessor.codeSuccess(frame, tracer);
@@ -71,8 +69,9 @@ class ExtendedOperationTracerTest {
 
   @Test
   void shouldNotCallTraceAccountCreationResultIfIsNotExtendedTracing() {
+    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
     final ContractCreationProcessor contractCreationProcessor =
-        new ContractCreationProcessor(gasCalculator, evm, false, Collections.emptyList(), 0);
+        new ContractCreationProcessor(evm, false, Collections.emptyList(), 0);
 
     final DefaultOperationTracer tracer = new DefaultOperationTracer();
     contractCreationProcessor.codeSuccess(frame, tracer);

@@ -194,8 +194,7 @@ public class EvmToyCommand implements Runnable {
               .build();
 
       final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);
-      final ContractCreationProcessor ccp =
-          new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0);
+      final ContractCreationProcessor ccp = new ContractCreationProcessor(evm, false, List.of(), 0);
       stopwatch.start();
       Deque<MessageFrame> messageFrameStack = initialMessageFrame.getMessageFrameStack();
       while (!messageFrameStack.isEmpty()) {

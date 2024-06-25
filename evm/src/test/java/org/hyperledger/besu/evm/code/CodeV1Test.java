@@ -15,8 +15,6 @@
 package org.hyperledger.besu.evm.code;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.evm.code.CodeV1Validation.validateCode;
-import static org.hyperledger.besu.evm.code.CodeV1Validation.validateStack;
 
 import java.util.Arrays;
 import java.util.List;
@@ -72,7 +70,8 @@ class CodeV1Test {
       final Bytes codeBytes,
       final CodeSection thisCodeSection,
       final EOFLayout eofLayout) {
-    final String validationError = validateCode(codeBytes, thisCodeSection, eofLayout);
+    CodeV1Validation validator = new CodeV1Validation(0xc000);
+    final String validationError = validator.validateCode(codeBytes, thisCodeSection, eofLayout);
     if (error == null) {
       assertThat(validationError).isNull();
     } else {
@@ -85,8 +84,8 @@ class CodeV1Test {
     String codeHex =
         "0xEF0001 01000C 020003 000b 0002 0008 040000 00 00800000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
     final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
-
-    String validationError = validateCode(layout);
+    CodeV1Validation validator = new CodeV1Validation(0xc000);
+    String validationError = validator.validateCode(layout);
 
     assertThat(validationError).isNull();
   }
@@ -96,8 +95,8 @@ class CodeV1Test {
     String codeHex =
         "0xEF0001 01000C 020003 000b 0002 0008 040000 00 00000000 02010001 01000002 60016002e30001e30002f3 01e4 60005360106000e4";
     final EOFLayout layout = EOFLayout.parseEOF(Bytes.fromHexString(codeHex.replace(" ", "")));
-
-    String validationError = validateCode(layout);
+    CodeV1Validation validator = new CodeV1Validation(0xc000);
+    String validationError = validator.validateCode(layout);
 
     assertThat(validationError)
         .isEqualTo(
@@ -475,8 +474,9 @@ class CodeV1Test {
             + codeData;
 
     EOFLayout eofLayout = EOFLayout.parseEOF(Bytes.fromHexString(sb));
+    CodeV1Validation validator = new CodeV1Validation(0xc000);
 
-    assertThat(validateStack(sectionToTest, eofLayout, new WorkList(sectionCount)))
+    assertThat(validator.validateStack(sectionToTest, eofLayout, new WorkList(sectionCount)))
         .isEqualTo(expectedError);
   }
 

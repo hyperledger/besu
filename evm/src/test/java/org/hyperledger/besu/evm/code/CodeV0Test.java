@@ -24,15 +24,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.evm.operation.JumpDestOperation;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.operation.OperationRegistry;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import javax.annotation.Nonnull;
@@ -45,24 +42,19 @@ import org.mockito.Mockito;
 
 class CodeV0Test {
 
-  private static final IstanbulGasCalculator gasCalculator = new IstanbulGasCalculator();
-
   private static final int CURRENT_PC = 1;
   private EVM evm;
 
   @BeforeEach
   void startUp() {
-    final OperationRegistry registry = new OperationRegistry();
-    registry.put(new JumpOperation(gasCalculator));
-    registry.put(new JumpDestOperation(gasCalculator));
-    evm = new EVM(registry, gasCalculator, EvmConfiguration.DEFAULT, EvmSpecVersion.PARIS);
+    evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
   }
 
   @Test
   void shouldReuseJumpDestMap() {
-    final JumpOperation operation = new JumpOperation(gasCalculator);
+    final JumpOperation operation = new JumpOperation(evm.getGasCalculator());
     final Bytes jumpBytes = Bytes.fromHexString("0x6003565b00");
-    final CodeV0 getsCached = (CodeV0) spy(CodeFactory.createCode(jumpBytes, 0));
+    final CodeV0 getsCached = (CodeV0) spy(evm.getCodeUncached(jumpBytes));
     MessageFrame frame = createJumpFrame(getsCached);
 
     OperationResult result = operation.execute(frame, evm);

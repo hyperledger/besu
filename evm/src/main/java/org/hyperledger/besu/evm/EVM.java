@@ -20,6 +20,7 @@ import static org.hyperledger.besu.evm.operation.SwapOperation.SWAP_BASE;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
@@ -87,6 +88,7 @@ public class EVM {
   private final OperationRegistry operations;
   private final GasCalculator gasCalculator;
   private final Operation endOfScriptStop;
+  private final CodeFactory codeFactory;
   private final CodeCache codeCache;
   private final EvmConfiguration evmConfiguration;
   private final EvmSpecVersion evmSpecVersion;
@@ -113,6 +115,11 @@ public class EVM {
     this.evmConfiguration = evmConfiguration;
     this.codeCache = new CodeCache(evmConfiguration);
     this.evmSpecVersion = evmSpecVersion;
+
+    codeFactory =
+        new CodeFactory(
+            evmSpecVersion.maxEofVersion,
+            evmConfiguration.maxInitcodeSizeOverride().orElse(evmSpecVersion.maxInitcodeSize));
 
     enableShanghai = EvmSpecVersion.SHANGHAI.ordinal() <= evmSpecVersion.ordinal();
   }
@@ -365,7 +372,7 @@ public class EVM {
    * @return the code
    */
   public Code getCodeUncached(final Bytes codeBytes) {
-    return CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion());
+    return codeFactory.createCode(codeBytes);
   }
 
   /**
@@ -375,6 +382,16 @@ public class EVM {
    * @return the code
    */
   public Code getCodeForCreation(final Bytes codeBytes) {
-    return CodeFactory.createCode(codeBytes, evmSpecVersion.getMaxEofVersion(), false, true);
+    return codeFactory.createCode(codeBytes, true);
+  }
+
+  /**
+   * Parse the EOF Layout of a byte-stream. No Code or stack validation is performed.
+   *
+   * @param bytes the bytes to parse
+   * @return an EOF layout represented by they byte-stream.
+   */
+  public EOFLayout parseEOF(final Bytes bytes) {
+    return EOFLayout.parseEOF(bytes, true);
   }
 }

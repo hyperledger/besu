@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.contractvalidation;
 
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -41,7 +43,7 @@ public class MaxCodeSizeRule implements ContractValidationRule {
 
   @Override
   public Optional<ExceptionalHaltReason> validate(
-      final Bytes contractCode, final MessageFrame frame) {
+      final Bytes contractCode, final MessageFrame frame, final EVM evm) {
     final int contractCodeSize = contractCode.size();
     if (contractCodeSize <= maxCodeSize) {
       return Optional.empty();
@@ -55,12 +57,34 @@ public class MaxCodeSizeRule implements ContractValidationRule {
   }
 
   /**
-   * Instantiate ContractValidationRule.
+   * Fluent MaxCodeSizeRule constructor of an explicit size.
    *
    * @param maxCodeSize the max code size
    * @return the contract validation rule
+   * @deprecated use {@link #from(EVM)}
    */
+  @Deprecated(forRemoval = true, since = "24.6.1")
   public static ContractValidationRule of(final int maxCodeSize) {
     return new MaxCodeSizeRule(maxCodeSize);
+  }
+
+  /**
+   * Fluent MaxCodeSizeRule from the EVM it is working with.
+   *
+   * @param evm The evm to get the size rules from.
+   * @return the contract validation rule
+   */
+  public static ContractValidationRule from(final EVM evm) {
+    return from(evm.getEvmVersion());
+  }
+
+  /**
+   * Fluent MaxCodeSizeRule from the EVM it is working with.
+   *
+   * @param evmspec The evm spec version to get the size rules from.
+   * @return the contract validation rule
+   */
+  public static ContractValidationRule from(final EvmSpecVersion evmspec) {
+    return new MaxCodeSizeRule(evmspec.getMaxCodeSize());
   }
 }

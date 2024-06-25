@@ -29,7 +29,6 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -63,7 +62,8 @@ class EofCreateOperationTest {
 
   @Test
   void innerContractIsCorrect() {
-    Code code = CodeFactory.createCode(INNER_CONTRACT, 1);
+    final EVM evm = MainnetEVMs.cancunEOF(EvmConfiguration.DEFAULT);
+    Code code = evm.getCodeUncached(INNER_CONTRACT);
     assertThat(code.isValid()).isTrue();
 
     final MessageFrame messageFrame = testMemoryFrame(code, CALL_DATA);
@@ -78,11 +78,10 @@ class EofCreateOperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     assertThat(createFrame).isNotNull();
     final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
+        new ContractCreationProcessor(evm, false, List.of(), 0, List.of());
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
@@ -93,8 +92,9 @@ class EofCreateOperationTest {
   @Test
   void eofCreatePassesInCallData() {
     Bytes outerContract = EOF_CREATE_CONTRACT;
+    final EVM evm = MainnetEVMs.cancunEOF(EvmConfiguration.DEFAULT);
 
-    Code code = CodeFactory.createCode(outerContract, 1);
+    Code code = evm.getCodeUncached(outerContract);
     if (!code.isValid()) {
       System.out.println(outerContract);
       fail(((CodeInvalid) code).getInvalidReason());
@@ -112,13 +112,12 @@ class EofCreateOperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
     var precompiles = MainnetPrecompiledContracts.prague(evm.getGasCalculator());
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     assertThat(createFrame).isNotNull();
     final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompiles);
     final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm.getGasCalculator(), evm, false, List.of(), 0, List.of());
+        new ContractCreationProcessor(evm, false, List.of(), 0, List.of());
     while (!createFrame.getMessageFrameStack().isEmpty()) {
       var frame = createFrame.getMessageFrameStack().peek();
       assert frame != null;

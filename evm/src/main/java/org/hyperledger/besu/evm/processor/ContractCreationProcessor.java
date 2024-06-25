@@ -22,7 +22,6 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.contractvalidation.ContractValidationRule;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Collection;
@@ -41,8 +40,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
 
   private final boolean requireCodeDepositToSucceed;
 
-  private final GasCalculator gasCalculator;
-
   private final long initialContractNonce;
 
   private final List<ContractValidationRule> contractValidationRules;
@@ -50,7 +47,6 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   /**
    * Instantiates a new Contract creation processor.
    *
-   * @param gasCalculator the gas calculator
    * @param evm the evm
    * @param requireCodeDepositToSucceed the require code deposit to succeed
    * @param contractValidationRules the contract validation rules
@@ -58,14 +54,12 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
    * @param forceCommitAddresses the force commit addresses
    */
   public ContractCreationProcessor(
-      final GasCalculator gasCalculator,
       final EVM evm,
       final boolean requireCodeDepositToSucceed,
       final List<ContractValidationRule> contractValidationRules,
       final long initialContractNonce,
       final Collection<Address> forceCommitAddresses) {
     super(evm, forceCommitAddresses);
-    this.gasCalculator = gasCalculator;
     this.requireCodeDepositToSucceed = requireCodeDepositToSucceed;
     this.contractValidationRules = contractValidationRules;
     this.initialContractNonce = initialContractNonce;
@@ -74,25 +68,17 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
   /**
    * Instantiates a new Contract creation processor.
    *
-   * @param gasCalculator the gas calculator
    * @param evm the evm
    * @param requireCodeDepositToSucceed the require code deposit to succeed
    * @param contractValidationRules the contract validation rules
    * @param initialContractNonce the initial contract nonce
    */
   public ContractCreationProcessor(
-      final GasCalculator gasCalculator,
       final EVM evm,
       final boolean requireCodeDepositToSucceed,
       final List<ContractValidationRule> contractValidationRules,
       final long initialContractNonce) {
-    this(
-        gasCalculator,
-        evm,
-        requireCodeDepositToSucceed,
-        contractValidationRules,
-        initialContractNonce,
-        Set.of());
+    this(evm, requireCodeDepositToSucceed, contractValidationRules, initialContractNonce, Set.of());
   }
 
   private static boolean accountExists(final Account account) {
@@ -140,7 +126,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     final Bytes contractCode =
         frame.getCreatedCode() == null ? frame.getOutputData() : frame.getCreatedCode().getBytes();
 
-    final long depositFee = gasCalculator.codeDepositGasCost(contractCode.size());
+    final long depositFee = evm.getGasCalculator().codeDepositGasCost(contractCode.size());
 
     if (frame.getRemainingGas() < depositFee) {
       LOG.trace(
@@ -161,7 +147,7 @@ public class ContractCreationProcessor extends AbstractMessageProcessor {
     } else {
       final var invalidReason =
           contractValidationRules.stream()
-              .map(rule -> rule.validate(contractCode, frame))
+              .map(rule -> rule.validate(contractCode, frame, evm))
               .filter(Optional::isPresent)
               .findFirst();
       if (invalidReason.isEmpty()) {

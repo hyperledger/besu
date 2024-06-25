@@ -23,11 +23,12 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.AbstractExtCallOperation;
 import org.hyperledger.besu.evm.operation.ExtStaticCallOperation;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
@@ -45,11 +46,11 @@ public class ExtStaticCallOperationTest {
 
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
-  private final EVM evm = mock(EVM.class);
+  private static final EVM EOF_EVM = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
   public static final Code SIMPLE_EOF =
-      CodeFactory.createCode(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"), 1);
+      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000000"));
   public static final Code INVALID_EOF =
-      CodeFactory.createCode(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"), 1);
+      EOF_EVM.getCodeUncached(Bytes.fromHexString("0xEF00010100040200010001040000000080000023"));
   private static final Address CONTRACT_ADDRESS = Address.fromHexString("0xc0de");
 
   static Iterable<Arguments> data() {
@@ -130,12 +131,13 @@ public class ExtStaticCallOperationTest {
       messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     }
     when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getCodeHash()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getCodeHash());
+    when(account.getCode()).thenReturn((validCode ? SIMPLE_EOF : INVALID_EOF).getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
-    when(evm.getCode(any(), any())).thenReturn(validCode ? SIMPLE_EOF : INVALID_EOF);
 
-    var result = operation.execute(messageFrame, evm);
+    var result = operation.execute(messageFrame, EOF_EVM);
 
     assertThat(result.getGasCost()).isEqualTo(chargedGas);
     assertThat(result.getHaltReason()).isEqualTo(haltReason);
@@ -162,15 +164,16 @@ public class ExtStaticCallOperationTest {
             .build();
     messageFrame.warmUpAddress(CONTRACT_ADDRESS);
     when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(account.getCodeHash()).thenReturn(SIMPLE_EOF.getCodeHash());
+    when(account.getCode()).thenReturn(SIMPLE_EOF.getBytes());
     when(worldUpdater.get(any())).thenReturn(account);
     when(worldUpdater.getAccount(any())).thenReturn(account);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
-    when(evm.getCode(any(), any())).thenReturn(SIMPLE_EOF);
     while (messageFrame.getDepth() < 1024) {
       messageFrame.getMessageFrameStack().add(messageFrame);
     }
 
-    var result = operation.execute(messageFrame, evm);
+    var result = operation.execute(messageFrame, EOF_EVM);
 
     assertThat(result.getGasCost()).isEqualTo(100);
     assertThat(result.getHaltReason()).isNull();
