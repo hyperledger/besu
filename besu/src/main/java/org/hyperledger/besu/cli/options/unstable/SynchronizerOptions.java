@@ -400,7 +400,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.downloaderParallelism(downloaderParallelism);
     builder.transactionsParallelism(transactionsParallelism);
     builder.computationParallelism(computationParallelism);
-    builder.fastSyncPivotDistance(fastSyncPivotDistance);
+    builder.syncPivotDistance(fastSyncPivotDistance);
     builder.fastSyncFullValidationRate(fastSyncFullValidationRate);
     builder.worldStateHashCountPerRequest(worldStateHashCountPerRequest);
     builder.worldStateRequestParallelism(worldStateRequestParallelism);

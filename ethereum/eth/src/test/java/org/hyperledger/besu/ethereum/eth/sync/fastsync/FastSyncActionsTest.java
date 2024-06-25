@@ -62,7 +62,7 @@ import org.junit.jupiter.params.provider.ArgumentsSource;
 public class FastSyncActionsTest {
 
   private final SynchronizerConfiguration.Builder syncConfigBuilder =
-      new SynchronizerConfiguration.Builder().syncMode(SyncMode.FAST).fastSyncPivotDistance(1000);
+      new SynchronizerConfiguration.Builder().syncMode(SyncMode.FAST).syncPivotDistance(1000);
 
   private final WorldStateStorageCoordinator worldStateStorageCoordinator =
       mock(WorldStateStorageCoordinator.class);

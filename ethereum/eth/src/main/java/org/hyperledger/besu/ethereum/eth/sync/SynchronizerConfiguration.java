@@ -272,7 +272,7 @@ public class SynchronizerConfiguration {
     private int downloaderParallelism = DEFAULT_DOWNLOADER_PARALLELISM;
     private int transactionsParallelism = DEFAULT_TRANSACTIONS_PARALLELISM;
     private int computationParallelism = DEFAULT_COMPUTATION_PARALLELISM;
-    private int fastSyncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
+    private int syncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
     private float fastSyncFullValidationRate = DEFAULT_FULL_VALIDATION_RATE;
     private int worldStateHashCountPerRequest = DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST;
     private int worldStateRequestParallelism = DEFAULT_WORLD_STATE_REQUEST_PARALLELISM;
@@ -285,8 +285,8 @@ public class SynchronizerConfiguration {
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
     private boolean checkpointPostMergeEnabled = DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
-    public Builder fastSyncPivotDistance(final int distance) {
-      fastSyncPivotDistance = distance;
+    public Builder syncPivotDistance(final int distance) {
+      syncPivotDistance = distance;
       return this;
     }
 
@@ -359,8 +359,8 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder fastSyncMinimumPeerCount(final int fastSyncMinimumPeerCount) {
-      this.syncMinimumPeerCount = fastSyncMinimumPeerCount;
+    public Builder syncMinimumPeerCount(final int syncMinimumPeerCount) {
+      this.syncMinimumPeerCount = syncMinimumPeerCount;
       return this;
     }
 
@@ -408,7 +408,7 @@ public class SynchronizerConfiguration {
 
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
-          fastSyncPivotDistance,
+          syncPivotDistance,
           fastSyncFullValidationRate,
           syncMinimumPeerCount,
           worldStateHashCountPerRequest,
