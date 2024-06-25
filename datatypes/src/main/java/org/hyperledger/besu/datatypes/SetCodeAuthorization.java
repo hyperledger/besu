@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.datatypes;
 
+import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -25,6 +27,7 @@ import java.util.function.Supplier;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Suppliers;
+import org.apache.tuweni.bytes.Bytes;
 
 /**
  * An access list entry as defined in EIP-7702
@@ -39,6 +42,8 @@ public record SetCodeAuthorization(
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+
+  public static final Bytes MAGIC = Bytes.fromHexString("05");
 
   /**
    * Create access list entry.
@@ -61,5 +66,65 @@ public record SetCodeAuthorization(
       @JsonProperty("s") final BigInteger s) {
     return new SetCodeAuthorization(
         chainId, address, nonces, SIGNATURE_ALGORITHM.get().createSignature(r, s, v));
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private BigInteger chainId = BigInteger.ZERO;
+    private Address address;
+    private List<Long> nonces = List.of();
+    private SECPSignature signature;
+
+    public Builder chainId(final BigInteger chainId) {
+      this.chainId = chainId;
+      return this;
+    }
+
+    public Builder address(final Address address) {
+      this.address = address;
+      return this;
+    }
+
+    public Builder nonces(final List<Long> nonces) {
+      this.nonces = nonces;
+      return this;
+    }
+
+    public Builder signature(final SECPSignature signature) {
+      this.signature = signature;
+      return this;
+    }
+
+    public SetCodeAuthorization signAndBuild(final KeyPair keyPair) {
+      final BytesValueRLPOutput output = new BytesValueRLPOutput();
+      output.startList();
+      output.writeBigIntegerScalar(chainId);
+      output.writeBytes(address);
+      output.startList();
+      nonces.forEach(output::writeLongScalar);
+      output.endList();
+      output.endList();
+
+      signature(
+          SIGNATURE_ALGORITHM
+              .get()
+              .sign(Hash.hash(Bytes.concatenate(MAGIC, output.encoded())), keyPair));
+      return build();
+    }
+
+    public SetCodeAuthorization build() {
+      if (address == null) {
+        throw new IllegalStateException("Address must be set");
+      }
+
+      if (signature == null) {
+        throw new IllegalStateException("Signature must be set");
+      }
+
+      return new SetCodeAuthorization(chainId, address, nonces, signature);
+    }
   }
 }

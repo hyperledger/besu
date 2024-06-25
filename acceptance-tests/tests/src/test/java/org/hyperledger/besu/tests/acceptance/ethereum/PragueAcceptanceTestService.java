@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.util.Optional;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import okhttp3.Call;
 import okhttp3.MediaType;
 import okhttp3.OkHttpClient;
@@ -57,10 +58,10 @@ public class PragueAcceptanceTestService {
         createEngineCall(createForkChoiceRequest(block.getHash(), blockTimeStamp));
 
     final String payloadId;
-    try (final Response newPayloadResponse = buildBlockRequest.execute()) {
+    try (final Response buildBlockResponse = buildBlockRequest.execute()) {
       payloadId =
           mapper
-              .readTree(newPayloadResponse.body().string())
+              .readTree(buildBlockResponse.body().string())
               .get("result")
               .get("payloadId")
               .asText();
@@ -72,19 +73,30 @@ public class PragueAcceptanceTestService {
 
     final Call getPayloadRequest = createEngineCall(createGetPayloadRequest(payloadId));
 
+    final ObjectNode executionPayload;
     final String newBlockHash;
+    final String parentBeaconBlockRoot;
     try (final Response getPayloadResponse = getPayloadRequest.execute()) {
       assertThat(getPayloadResponse.code()).isEqualTo(200);
 
-      newBlockHash =
-          mapper
-              .readTree(getPayloadResponse.body().string())
-              .get("result")
-              .get("executionPayload")
-              .get("blockHash")
-              .asText();
+      executionPayload =
+          (ObjectNode)
+              mapper
+                  .readTree(getPayloadResponse.body().string())
+                  .get("result")
+                  .get("executionPayload");
+
+      newBlockHash = executionPayload.get("blockHash").asText();
+      parentBeaconBlockRoot = executionPayload.remove("parentBeaconBlockRoot").asText();
 
       assertThat(newBlockHash).isNotEmpty();
+    }
+
+    final Call newPayloadRequest =
+        createEngineCall(
+            createNewPayloadRequest(executionPayload.toString(), parentBeaconBlockRoot));
+    try (final Response newPayloadResponse = newPayloadRequest.execute()) {
+      assertThat(newPayloadResponse.code()).isEqualTo(200);
     }
 
     final Call moveChainAheadRequest = createEngineCall(createForkChoiceRequest(newBlockHash));
@@ -151,6 +163,22 @@ public class PragueAcceptanceTestService {
         + "  \"params\": [\""
         + payloadId
         + "\"],"
+        + "  \"id\": 67"
+        + "}";
+  }
+
+  private String createNewPayloadRequest(
+      final String executionPayload, final String parentBeaconBlockRoot) {
+    return "{"
+        + "  \"jsonrpc\": \"2.0\","
+        + "  \"method\": \"engine_newPayloadV4\","
+        + "  \"params\": ["
+        + executionPayload
+        + ",[],"
+        + "\""
+        + parentBeaconBlockRoot
+        + "\""
+        + "],"
         + "  \"id\": 67"
         + "}";
   }

@@ -103,17 +103,14 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
-      addTemporaryCodeToAccount(existing);
-      return existing;
+      return addTemporaryCodeToAccount(existing, address);
     }
     if (deletedAccounts.contains(address)) {
       return null;
     }
 
     final A account = getForMutation(address);
-    addTemporaryCodeToAccount((MutableAccount) account);
-
-    return account;
+    return addTemporaryCodeToAccount((MutableAccount) account, address);
   }
 
   @Override
@@ -218,7 +215,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     try {
-      ((MutableAccount) get(address)).setCode(temporaryEOACode.get(address));
+      ((MutableAccount) get(address)).setCode(Bytes.EMPTY);
     } catch (ClassCastException e) {
       LOG.warn(
           "Tried to reset code on a EOA account {}, but the account is not a mutable", address);
@@ -226,17 +223,15 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     temporaryEOACode.remove(address);
   }
 
-  private void addTemporaryCodeToAccount(final MutableAccount account) {
-    final Address address = account.getAddress();
-
-    if (temporaryEOACode.containsKey(address)) {
-      try {
-        account.setCode(temporaryEOACode.get(address));
-      } catch (ClassCastException e) {
-        LOG.warn(
-            "Tried to set code on an EOA account {}, but account is not a mutable account",
-            address);
-      }
+  private MutableAccount addTemporaryCodeToAccount(
+      final MutableAccount account, final Address address) {
+    if (!temporaryEOACode.containsKey(address)) {
+      return account;
     }
+
+    final MutableAccount accountWithCode = account != null ? account : createAccount(address);
+    account.setCode(temporaryEOACode.get(address));
+
+    return accountWithCode;
   }
 }
