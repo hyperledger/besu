@@ -160,6 +160,7 @@ public class EVMExecutor {
       case PARIS -> paris(chainId, evmConfiguration);
       case SHANGHAI -> shanghai(chainId, evmConfiguration);
       case CANCUN -> cancun(chainId, evmConfiguration);
+      case CANCUN_EOF -> cancunEOF(chainId, evmConfiguration);
       case PRAGUE -> prague(chainId, evmConfiguration);
       case PRAGUE_EOF -> pragueEOF(chainId, evmConfiguration);
       case OSAKA -> osaka(chainId, evmConfiguration);
@@ -488,6 +489,21 @@ public class EVMExecutor {
   public static EVMExecutor cancun(
       final BigInteger chainId, final EvmConfiguration evmConfiguration) {
     final EVMExecutor executor = new EVMExecutor(MainnetEVMs.cancun(chainId, evmConfiguration));
+    executor.precompileContractRegistry =
+        MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
+    return executor;
+  }
+
+  /**
+   * Instantiate Cancun EOF evm executor.
+   *
+   * @param chainId the chain ID
+   * @param evmConfiguration the evm configuration
+   * @return the evm executor
+   */
+  public static EVMExecutor cancunEOF(
+      final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    final EVMExecutor executor = new EVMExecutor(MainnetEVMs.cancunEOF(chainId, evmConfiguration));
     executor.precompileContractRegistry =
         MainnetPrecompiledContracts.cancun(executor.evm.getGasCalculator());
     return executor;
