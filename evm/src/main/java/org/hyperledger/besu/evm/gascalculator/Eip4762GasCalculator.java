@@ -174,7 +174,7 @@ public class Eip4762GasCalculator extends PragueGasCalculator {
       final long codeOffset,
       final long readSize,
       final long codeSize) {
-    long gasCost = copyWordsToMemoryGasCost(frame, 0L, COPY_WORD_GAS_COST, memOffset, readSize);
+    long gasCost = extCodeCopyOperationGasCost(frame, memOffset, readSize);
 
     long statelessGas =
         frame

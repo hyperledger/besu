@@ -170,14 +170,16 @@ public class LayeredPendingTransactionsTest extends BaseTransactionPoolTest {
     senderLimitedLayers = createLayers(senderLimitedConfig);
     smallLayers = createLayers(smallPoolConfig);
 
-    pendingTransactions = new LayeredPendingTransactions(poolConf, layers.prioritizedTransactions);
+    pendingTransactions =
+        new LayeredPendingTransactions(poolConf, layers.prioritizedTransactions, ethScheduler);
 
     senderLimitedTransactions =
         new LayeredPendingTransactions(
-            senderLimitedConfig, senderLimitedLayers.prioritizedTransactions);
+            senderLimitedConfig, senderLimitedLayers.prioritizedTransactions, ethScheduler);
 
     smallPendingTransactions =
-        new LayeredPendingTransactions(smallPoolConfig, smallLayers.prioritizedTransactions);
+        new LayeredPendingTransactions(
+            smallPoolConfig, smallLayers.prioritizedTransactions, ethScheduler);
   }
 
   @Test

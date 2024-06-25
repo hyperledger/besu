@@ -51,13 +51,15 @@ public class ReturnDataCopyOperation extends AbstractOperation {
     final Bytes returnData = frame.getReturnData();
     final int returnDataLength = returnData.size();
 
-    try {
-      final long end = Math.addExact(sourceOffset, numBytes);
-      if (end > returnDataLength) {
-        return INVALID_RETURN_DATA_BUFFER_ACCESS;
+    if (frame.getCode().getEofVersion() < 1) {
+      try {
+        final long end = Math.addExact(sourceOffset, numBytes);
+        if (end > returnDataLength) {
+          return INVALID_RETURN_DATA_BUFFER_ACCESS;
+        }
+      } catch (final ArithmeticException ae) {
+        return OUT_OF_BOUNDS;
       }
-    } catch (final ArithmeticException ae) {
-      return OUT_OF_BOUNDS;
     }
 
     final long cost = gasCalculator().dataCopyOperationGasCost(frame, memOffset, numBytes);

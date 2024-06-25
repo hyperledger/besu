@@ -206,6 +206,13 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
   // defined in Frontier, but re-implemented with no base cost.
   @Override
   public long extCodeCopyOperationGasCost(
+      final MessageFrame frame, final long memOffset, final long readSize) {
+    return copyWordsToMemoryGasCost(frame, 0L, COPY_WORD_GAS_COST, memOffset, readSize);
+  }
+
+  // defined in Frontier, but re-implemented with no base cost.
+  @Override
+  public long extCodeCopyOperationGasCost(
       final MessageFrame frame,
       final Address address,
       final boolean accountIsWarm,
@@ -214,7 +221,7 @@ public class BerlinGasCalculator extends IstanbulGasCalculator {
       final long readSize,
       final long codeSize) {
     return clampedAdd(
-        copyWordsToMemoryGasCost(frame, 0L, COPY_WORD_GAS_COST, memOffset, readSize),
+        extCodeCopyOperationGasCost(frame, memOffset, readSize),
         accountIsWarm ? getWarmStorageReadCost() : getColdAccountAccessCost());
   }
 

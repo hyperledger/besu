@@ -1,0 +1,25 @@
+{
+  "cli": [
+    "--notime",
+    "--json",
+    "--create",
+    "--code",
+    "ef00010100040200010009030001001404000000008000035f355f5fa15f5fee00ef00010100040200010001040000000080000000c0de471fe5",
+    "--coinbase",
+    "4444588443C3A91288C5002483449ABA1054192B",
+    "--fork",
+    "pragueeof"
+  ],
+  "stdin": "",
+  "stdout": [
+    {"pc":0,"section":0,"op":95,"gas":"0x2540be400","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":1,"section":0,"op":53,"gas":"0x2540be3fe","gasCost":"0x3","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"CALLDATALOAD"},
+    {"pc":2,"section":0,"op":95,"gas":"0x2540be3fb","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000"],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":3,"section":0,"op":95,"gas":"0x2540be3f9","gasCost":"0x2","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":4,"section":0,"op":161,"gas":"0x2540be3f7","gasCost":"0x2ee","memSize":0,"stack":["0xc0de471fe5000000000000000000000000000000000000000000000000000000","0x0","0x0"],"depth":1,"refund":0,"opName":"LOG1"},
+    {"pc":5,"section":0,"op":95,"gas":"0x2540be109","gasCost":"0x2","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":6,"section":0,"op":95,"gas":"0x2540be107","gasCost":"0x2","memSize":0,"stack":["0x0"],"depth":1,"refund":0,"opName":"PUSH0"},
+    {"pc":7,"section":0,"op":238,"immediate":"0x00","gas":"0x2540be105","gasCost":"0x0","memSize":0,"stack":["0x0","0x0"],"depth":1,"refund":0,"opName":"RETURNCONTRACT"},
+    {"gasUser":"0x129b","gasTotal":"0x129b","output":"0x"}
+  ]
+}

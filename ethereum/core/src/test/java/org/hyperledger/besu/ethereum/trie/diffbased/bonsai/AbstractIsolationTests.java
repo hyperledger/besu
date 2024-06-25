@@ -136,7 +136,8 @@ public abstract class AbstractIsolationTests {
               txPoolMetrics,
               transactionReplacementTester,
               new BlobCache(),
-              MiningParameters.newDefault()));
+              MiningParameters.newDefault()),
+          ethScheduler);
 
   protected final List<GenesisAccount> accounts =
       GenesisConfigFile.fromResource("/dev.json")
