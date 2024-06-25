@@ -69,7 +69,7 @@ public class LayeredKeyValueStorageTest extends AbstractSegmentedKeyValueStorage
       assertThat(val1).isPresent();
       assertThat(val1.get().key()).isEqualTo(Bytes.fromHexString("010B"));
 
-      // assert parent 010A is closest to 010A (
+      // assert parent 010A is closest to 010A
       var val2 =
           lastKeyValueStorage.getNearestBefore(SEGMENT_IDENTIFIER, Bytes.fromHexString("010A"));
       assertThat(val2).isPresent();

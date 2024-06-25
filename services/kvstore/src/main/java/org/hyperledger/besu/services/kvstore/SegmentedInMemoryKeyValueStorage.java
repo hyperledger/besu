@@ -15,6 +15,7 @@
 package org.hyperledger.besu.services.kvstore;
 
 import static java.util.stream.Collectors.toUnmodifiableSet;
+import static org.hyperledger.besu.services.kvstore.KeyComparator.compareKeyLeftToRight;
 
 import org.hyperledger.besu.plugin.services.exception.StorageException;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
@@ -149,9 +150,9 @@ public class SegmentedInMemoryKeyValueStorage
     return getNearest(
         segmentIdentifier,
         e ->
-            compareBytesLeftToRight(e.getKey(), key) <= 0
+            compareKeyLeftToRight(e.getKey(), key) <= 0
                 && e.getKey().commonPrefixLength(key) >= e.getKey().size(),
-        e -> compareBytesLeftToRight(e.getKey(), key) < 0,
+        e -> compareKeyLeftToRight(e.getKey(), key) < 0,
         false);
   }
 
@@ -161,21 +162,10 @@ public class SegmentedInMemoryKeyValueStorage
     return getNearest(
         segmentIdentifier,
         e ->
-            compareBytesLeftToRight(e.getKey(), key) >= 0
+            compareKeyLeftToRight(e.getKey(), key) >= 0
                 && e.getKey().commonPrefixLength(key) >= e.getKey().size(),
-        e -> compareBytesLeftToRight(e.getKey(), key) >= 0,
+        e -> compareKeyLeftToRight(e.getKey(), key) >= 0,
         true);
-  }
-
-  private int compareBytesLeftToRight(final Bytes b1, final Bytes b2) {
-    int minLength = Math.min(b1.size(), b2.size());
-    for (int i = 0; i < minLength; i++) {
-      int compare = Byte.compareUnsigned(b1.get(i), b2.get(i));
-      if (compare != 0) {
-        return compare;
-      }
-    }
-    return Integer.compare(b1.size(), b2.size());
   }
 
   private Optional<NearestKeyValue> getNearest(
@@ -214,8 +204,8 @@ public class SegmentedInMemoryKeyValueStorage
       if (withSamePrefix.isPresent()) {
         return withSamePrefix;
       }
-      // If no matching entry with common prefix is found, attempt to find a key-value pair using
-      // the fallbackPredicate
+      // If a matching entry with a common prefix is not found, the next step is to search for the
+      // nearest key that comes after or before the requested one.
       return findNearest.apply(fallbackPredicate);
     } finally {
       // Ensure the lock is released in all cases

@@ -33,6 +33,7 @@ import java.util.Spliterators;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.locks.Lock;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import java.util.stream.StreamSupport;
@@ -103,67 +104,67 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
   @Override
   public Optional<NearestKeyValue> getNearestBefore(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
-    Optional<NearestKeyValue> ourNearest = super.getNearestBefore(segmentIdentifier, key);
-    Optional<NearestKeyValue> parentNearest = parent.getNearestBefore(segmentIdentifier, key);
-    if (ourNearest.isPresent() && parentNearest.isPresent()) {
-      // Both are present, return the one closer to the key
-      final int ourDistance = ourNearest.get().key().compareTo(key);
-      final int parentDistance = parentNearest.get().key().compareTo(key);
-      if (ourDistance == 0) {
-        return ourNearest;
-      } else if (parentDistance == 0) {
-        return parentNearest;
-      } else {
-        final int ourCommonPrefixLength = ourNearest.get().key().commonPrefixLength(key);
-        final int parentCommonPrefixLength = parentNearest.get().key().commonPrefixLength(key);
-        if (ourCommonPrefixLength != parentCommonPrefixLength) {
-          return ourCommonPrefixLength > parentCommonPrefixLength ? ourNearest : parentNearest;
-        } else if (ourNearest.get().key().compareTo(parentNearest.get().key()) > 0) {
-          return ourNearest;
-        } else {
-          return parentNearest;
-        }
-      }
-    } else if (ourNearest.isPresent()) {
-      // Only ourNearest is present
-      return ourNearest;
-    } else {
-      // return parentNearest, which may be an empty Optional
-      return parentNearest;
-    }
+    return getNearest(
+        key,
+        k -> super.getNearestBefore(segmentIdentifier, k),
+        k -> parent.getNearestBefore(segmentIdentifier, k),
+        false);
   }
 
   @Override
   public Optional<NearestKeyValue> getNearestAfter(
       final SegmentIdentifier segmentIdentifier, final Bytes key) throws StorageException {
-    Optional<NearestKeyValue> ourNearest = super.getNearestAfter(segmentIdentifier, key);
-    Optional<NearestKeyValue> parentNearest = parent.getNearestAfter(segmentIdentifier, key);
+    return getNearest(
+        key,
+        k -> super.getNearestAfter(segmentIdentifier, k),
+        k -> parent.getNearestAfter(segmentIdentifier, k),
+        true);
+  }
+
+  private Optional<NearestKeyValue> getNearest(
+      final Bytes key,
+      final Function<Bytes, Optional<NearestKeyValue>> ourNearestFunction,
+      final Function<Bytes, Optional<NearestKeyValue>> parentNearestFunction,
+      final boolean isAfter)
+      throws StorageException {
+
+    Optional<NearestKeyValue> ourNearest = ourNearestFunction.apply(key);
+    Optional<NearestKeyValue> parentNearest = parentNearestFunction.apply(key);
 
     if (ourNearest.isPresent() && parentNearest.isPresent()) {
-      // Both are present, return the one closer to the key
-      final int ourDistance = ourNearest.get().key().compareTo(key);
-      final int parentDistance = parentNearest.get().key().compareTo(key);
-      if (ourDistance == 0) {
-        return ourNearest;
-      } else if (parentDistance == 0) {
-        return parentNearest;
-      } else {
-        final int ourCommonPrefixLength = ourNearest.get().key().commonPrefixLength(key);
-        final int parentCommonPrefixLength = parentNearest.get().key().commonPrefixLength(key);
-        if (ourCommonPrefixLength != parentCommonPrefixLength) {
-          return ourCommonPrefixLength > parentCommonPrefixLength ? ourNearest : parentNearest;
-        } else if (ourNearest.get().key().compareTo(parentNearest.get().key()) < 0) {
-          return ourNearest;
-        } else {
-          return parentNearest;
-        }
-      }
+      // Both are present, return the one closer to the key or based on common prefix length
+      return compareNearest(ourNearest, parentNearest, key, isAfter);
     } else if (ourNearest.isPresent()) {
       // Only ourNearest is present
       return ourNearest;
     } else {
-      // return parentNearest, which may be an empty Optional
+      // Return parentNearest, which may be an empty Optional
       return parentNearest;
+    }
+  }
+
+  private Optional<NearestKeyValue> compareNearest(
+      final Optional<NearestKeyValue> ourNearest,
+      final Optional<NearestKeyValue> parentNearest,
+      final Bytes key,
+      final boolean isAfter) {
+
+    final int ourDistance = ourNearest.get().key().compareTo(key);
+    final int parentDistance = parentNearest.get().key().compareTo(key);
+    if (ourDistance == 0) {
+      return ourNearest;
+    } else if (parentDistance == 0) {
+      return parentNearest;
+    } else {
+      final int ourCommonPrefixLength = ourNearest.get().key().commonPrefixLength(key);
+      final int parentCommonPrefixLength = parentNearest.get().key().commonPrefixLength(key);
+      if (ourCommonPrefixLength != parentCommonPrefixLength) {
+        return ourCommonPrefixLength > parentCommonPrefixLength ? ourNearest : parentNearest;
+      } else {
+        return (isAfter ^ (ourNearest.get().key().compareTo(parentNearest.get().key()) > 0))
+            ? ourNearest
+            : parentNearest;
+      }
     }
   }
 
