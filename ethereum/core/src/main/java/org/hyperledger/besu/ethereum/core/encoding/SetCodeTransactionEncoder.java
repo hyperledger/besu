@@ -45,7 +45,7 @@ public class SetCodeTransactionEncoder {
     rlpOutput.endList();
   }
 
-  private static void encodeSingleSetCode(
+  public static void encodeSingleSetCode(
       final SetCodeAuthorization payload, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     encodeAuthorizationDetails(payload, rlpOutput);
