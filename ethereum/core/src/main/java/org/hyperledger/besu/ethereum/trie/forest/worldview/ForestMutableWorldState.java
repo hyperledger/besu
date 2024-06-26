@@ -458,50 +458,7 @@ public class ForestMutableWorldState implements MutableWorldState {
       final ForestMutableWorldState wrapped = wrappedWorldView();
 
       for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
-
-        final WorldStateAccount origin = updated.getWrappedAccount();
-
-        // Save the code in key-value storage ...
-        Hash codeHash = origin == null ? Hash.EMPTY : origin.getCodeHash();
-        if (updated.codeWasUpdated()) {
-
-          codeHash = Hash.hash(updated.getCode());
-          wrapped.updatedAccountCode.put(updated.getAddress(), updated.getCode());
-        }
-        // ...and storage in the account trie first.
-        final boolean freshState = origin == null || updated.getStorageWasCleared();
-        Hash storageRoot = freshState ? Hash.EMPTY_TRIE_HASH : origin.getStorageRoot();
-        if (freshState) {
-
-          wrapped.updatedStorageTries.remove(updated.getAddress());
-        }
-        final Map<UInt256, UInt256> updatedStorage = updated.getUpdatedStorage();
-        if (!updatedStorage.isEmpty()) {
-
-          // Apply any storage updates
-          final MerkleTrie<Bytes32, Bytes> storageTrie =
-              freshState
-                  ? wrapped.newAccountStorageTrie(Hash.EMPTY_TRIE_HASH)
-                  : origin.storageTrie();
-          wrapped.updatedStorageTries.put(updated.getAddress(), storageTrie);
-
-          final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-              new TreeSet<>(Map.Entry.comparingByKey());
-          entries.addAll(updatedStorage.entrySet());
-
-          for (final Map.Entry<UInt256, UInt256> entry : entries) {
-            final UInt256 value = entry.getValue();
-            final Hash keyHash = Hash.hash(entry.getKey());
-            if (value.isZero()) {
-              storageTrie.remove(keyHash);
-            } else {
-              wrapped.newStorageKeyPreimages.put(keyHash, entry.getKey());
-              storageTrie.put(
-                  keyHash, RLP.encode(out -> out.writeBytes(entry.getValue().toMinimalBytes())));
-            }
-          }
-          storageRoot = Hash.wrap(storageTrie.getRootHash());
-        }
+        wrapped.updatedStorageTries.remove(updated.getAddress());
 
         // Save address preimage
         wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
@@ -518,9 +475,9 @@ public class ForestMutableWorldState implements MutableWorldState {
         final Bytes account =
             serializeAccount(
                 updated.getNonce(),
-                previousAccount.map(StateTrieAccountValue::getBalance).orElse(updated.getBalance()),
-                storageRoot,
-                codeHash);
+                previousAccount.map(StateTrieAccountValue::getBalance).orElse(Wei.ZERO),
+                Hash.EMPTY_TRIE_HASH,
+                Hash.EMPTY);
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
