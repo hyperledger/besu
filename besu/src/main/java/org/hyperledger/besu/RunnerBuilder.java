@@ -790,18 +790,19 @@ public class RunnerBuilder {
       LOG.debug("added ethash observer: {}", stratumServer.get());
     }
 
+    final Stream<EnodeURL> maintainedPeers;
     if (besuController.getGenesisConfigOptions().isPoa()) {
       // In a permissioned chain Besu should maintain connections to both static nodes and
       // bootnodes, which includes retries periodically
-      Stream.concat(sanitizePeers(network, staticNodes), sanitizePeers(network, bootnodes))
-          .map(DefaultPeer::fromEnodeURL)
-          .forEach(peerNetwork::addMaintainedConnectionPeer);
+      maintainedPeers =
+          Stream.concat(sanitizePeers(network, staticNodes), sanitizePeers(network, bootnodes));
     } else {
       // In a public chain only maintain connections to static nodes
-      sanitizePeers(network, staticNodes)
-          .map(DefaultPeer::fromEnodeURL)
-          .forEach(peerNetwork::addMaintainedConnectionPeer);
+      maintainedPeers = sanitizePeers(network, staticNodes);
     }
+    maintainedPeers
+        .map(DefaultPeer::fromEnodeURL)
+        .forEach(peerNetwork::addMaintainedConnectionPeer);
 
     final Optional<NodeLocalConfigPermissioningController> nodeLocalConfigPermissioningController =
         nodePermissioningController.flatMap(NodePermissioningController::localConfigController);
