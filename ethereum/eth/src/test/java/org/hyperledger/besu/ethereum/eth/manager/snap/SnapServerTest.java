@@ -535,6 +535,24 @@ public class SnapServerTest {
   }
 
   @Test
+  public void assertStorageTrieShortAccountHashPathRequest() {
+    Bytes accountShortHash = Bytes.fromHexStringLenient("0x40");
+    Hash accountFullHash = Hash.wrap(Bytes32.leftPad(accountShortHash));
+    SnapTestAccount testAccount = createTestContractAccount(accountFullHash, inMemoryStorage);
+    insertTestAccounts(testAccount);
+    var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
+    var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
+    var trieNodeRequest =
+        requestTrieNodes(
+            storageTrie.getRootHash(),
+            List.of(List.of(accountShortHash, pathToSlot11, pathToSlot12)));
+    assertThat(trieNodeRequest).isNotNull();
+    List<Bytes> trieNodes = trieNodeRequest.nodes(false);
+    assertThat(trieNodes).isNotNull();
+    assertThat(trieNodes.size()).isEqualTo(2);
+  }
+
+  @Test
   public void assertStorageTrieLimitRequest() {
     insertTestAccounts(acct1, acct2, acct3, acct4);
     final int trieNodeSize = 69;
@@ -671,7 +689,12 @@ public class SnapServerTest {
 
   static SnapTestAccount createTestContractAccount(
       final String hexAddr, final BonsaiWorldStateKeyValueStorage storage) {
-    Hash acctHash = Hash.wrap(Bytes32.rightPad(Bytes.fromHexString(hexAddr)));
+    final Hash acctHash = Hash.wrap(Bytes32.rightPad(Bytes.fromHexString(hexAddr)));
+    return createTestContractAccount(acctHash, storage);
+  }
+
+  static SnapTestAccount createTestContractAccount(
+      final Hash acctHash, final BonsaiWorldStateKeyValueStorage storage) {
     MerkleTrie<Bytes32, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
             (loc, hash) -> storage.getAccountStorageTrieNode(acctHash, loc, hash),
