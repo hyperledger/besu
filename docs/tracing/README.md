@@ -18,7 +18,7 @@ Try interacting with the JSON-RPC API. Here is a simple example using cURL:
 
 Open the Zipkin UI by browsing to http://localhost:9411/
 
-You will be able to see the detail of your traces.
+You will be able to see the details of your traces.
 
 References:
 * [OpenTelemetry Environment Variable Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/sdk-environment-variables.md)
