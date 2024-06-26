@@ -505,7 +505,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   private void checkIfWebSocketEndpointIsAvailable(final String url) {
     final WebSocketClient webSocketClient = new WebSocketClient(URI.create(url));
-    // Web3j implementation always invoke the listener (even when one hasn't been set). We are using
+    // Web3j implementation always invokes the listener (even when one hasn't been set). We are using
     // this stub implementation to avoid a NullPointerException.
     webSocketClient.setListener(
         new WebSocketListener() {
