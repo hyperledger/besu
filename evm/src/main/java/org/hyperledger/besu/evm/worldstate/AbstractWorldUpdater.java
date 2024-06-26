@@ -110,7 +110,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
 
     final A account = getForMutation(address);
-    return addTemporaryCodeToAccount((MutableAccount) account, address);
+    return addTemporaryCodeToAccount(account, address);
   }
 
   @Override
@@ -223,14 +223,20 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     temporaryEOACode.remove(address);
   }
 
-  private MutableAccount addTemporaryCodeToAccount(
-      final MutableAccount account, final Address address) {
+  private Account addTemporaryCodeToAccount(final Account account, final Address address) {
     if (!temporaryEOACode.containsKey(address)) {
       return account;
     }
 
-    final MutableAccount accountWithCode = account != null ? account : createAccount(address);
-    account.setCode(temporaryEOACode.get(address));
+    final MutableAccount accountWithCode;
+    try {
+      accountWithCode = account != null ? (MutableAccount) account : createAccount(address);
+      accountWithCode.setCode(temporaryEOACode.get(address));
+    } catch (ClassCastException ex) {
+      LOG.error(
+          "Cannot inject code from EIP-7702 transaction into non-mutable account. {}", account);
+      throw ex;
+    }
 
     return accountWithCode;
   }
