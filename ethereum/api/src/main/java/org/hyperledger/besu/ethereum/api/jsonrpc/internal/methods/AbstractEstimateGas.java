@@ -76,7 +76,7 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
   }
 
   /**
-   * Estimate gas by adding minimum gas remaining for some operation and the necessary gas for sub
+   * Estimate gas by adding minimum gas remaining for some operations and the necessary gas for sub
    * calls
    *
    * @param result transaction simulator result
