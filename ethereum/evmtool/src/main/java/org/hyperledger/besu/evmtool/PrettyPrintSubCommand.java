@@ -16,7 +16,11 @@ package org.hyperledger.besu.evmtool;
 
 import static org.hyperledger.besu.evmtool.PrettyPrintSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.evm.code.CodeV1Validation;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.EvmSpecVersion;
+import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.util.LogConfigurator;
 
@@ -63,14 +67,20 @@ public class PrettyPrintSubCommand implements Runnable {
             "Pretty printing of legacy EVM is not supported. Patches welcome!");
 
       } else {
-        EOFLayout layout = EOFLayout.parseEOF(container);
+        String fork = EvmSpecVersion.PRAGUE.getName();
+        if (parentCommand.hasFork()) {
+          fork = parentCommand.getFork();
+        }
+        ProtocolSpec protocolSpec = ReferenceTestProtocolSchedules.create().geSpecByName(fork);
+        EVM evm = protocolSpec.getEvm();
+        EOFLayout layout = evm.parseEOF(container);
         if (layout.isValid()) {
-          String validation = CodeV1Validation.validate(layout);
-          if (validation == null || force) {
+          var validatedCode = evm.getCodeUncached(container);
+          if (validatedCode.isValid() || force) {
             layout.prettyPrint(parentCommand.out);
           }
-          if (validation != null) {
-            parentCommand.out.println("EOF code is invalid - " + validation);
+          if (validatedCode instanceof CodeInvalid codeInvalid) {
+            parentCommand.out.println("EOF code is invalid - " + codeInvalid.getInvalidReason());
           }
         } else {
           parentCommand.out.println("EOF layout is invalid - " + layout.invalidReason());

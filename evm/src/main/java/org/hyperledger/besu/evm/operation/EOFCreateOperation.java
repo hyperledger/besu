@@ -74,7 +74,7 @@ public class EOFCreateOperation extends AbstractCreateOperation {
     int startIndex = frame.getPC() + 1;
     final int initContainerIndex = code.readU8(startIndex);
 
-    return code.getSubContainer(initContainerIndex, null).orElse(null);
+    return code.getSubContainer(initContainerIndex, null, evm).orElse(null);
   }
 
   @Override

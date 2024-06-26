@@ -52,12 +52,20 @@ import javax.annotation.Nullable;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Code V1 Validation */
-public final class CodeV1Validation {
+public class CodeV1Validation implements EOFValidator {
 
   static final int MAX_STACK_HEIGHT = 1024;
 
-  private CodeV1Validation() {
-    // to prevent instantiation
+  /** Maximum size of the code stream that can be produced, including all header bytes. */
+  protected final int maxContainerSize;
+
+  /**
+   * Create a new container, with a configurable maximim container size.
+   *
+   * @param maxContainerSize the maximum size of any container.
+   */
+  public CodeV1Validation(final int maxContainerSize) {
+    this.maxContainerSize = maxContainerSize;
   }
 
   /**
@@ -69,7 +77,12 @@ public final class CodeV1Validation {
    */
   @SuppressWarnings(
       "ReferenceEquality") // comparison `container != layout` is deliberate and correct
-  public static String validate(final EOFLayout layout) {
+  @Override
+  public String validate(final EOFLayout layout) {
+    if (layout.container().size() > maxContainerSize) {
+      return "EOF container is larger than maximum size of " + maxContainerSize;
+    }
+
     Queue<EOFLayout> workList = new ArrayDeque<>(layout.getSubcontainerCount());
     workList.add(layout);
 
@@ -87,12 +100,12 @@ public final class CodeV1Validation {
                 : " in container #" + layout.indexOfSubcontainer(container));
       }
 
-      final String codeValidationError = CodeV1Validation.validateCode(container);
+      final String codeValidationError = validateCode(container);
       if (codeValidationError != null) {
         return codeValidationError;
       }
 
-      final String stackValidationError = CodeV1Validation.validateStack(container);
+      final String stackValidationError = validateStack(container);
       if (stackValidationError != null) {
         return stackValidationError;
       }
@@ -107,13 +120,14 @@ public final class CodeV1Validation {
    * @param eofLayout The EOF Layout
    * @return validation code, null otherwise.
    */
-  public static String validateCode(final EOFLayout eofLayout) {
+  @Override
+  public String validateCode(final EOFLayout eofLayout) {
     if (!eofLayout.isValid()) {
       return "Invalid EOF container - " + eofLayout.invalidReason();
     }
     for (CodeSection cs : eofLayout.codeSections()) {
       var validation =
-          CodeV1Validation.validateCode(
+          validateCode(
               eofLayout.container().slice(cs.getEntryPoint(), cs.getLength()), cs, eofLayout);
       if (validation != null) {
         return validation;
@@ -128,7 +142,7 @@ public final class CodeV1Validation {
    * @param code the code section code
    * @return null if valid, otherwise a string containing an error reason.
    */
-  static String validateCode(
+  String validateCode(
       final Bytes code, final CodeSection thisCodeSection, final EOFLayout eofLayout) {
     final int size = code.size();
     final BitSet rjumpdests = new BitSet(size);
@@ -359,12 +373,13 @@ public final class CodeV1Validation {
   }
 
   @Nullable
-  static String validateStack(final EOFLayout eofLayout) {
+  @Override
+  public String validateStack(final EOFLayout eofLayout) {
     WorkList workList = new WorkList(eofLayout.getCodeSectionCount());
     workList.put(0);
     int sectionToValidatie = workList.take();
     while (sectionToValidatie >= 0) {
-      var validation = CodeV1Validation.validateStack(sectionToValidatie, eofLayout, workList);
+      var validation = validateStack(sectionToValidatie, eofLayout, workList);
       if (validation != null) {
         return validation;
       }
@@ -388,7 +403,7 @@ public final class CodeV1Validation {
    * @return null if valid, otherwise an error string providing the validation error.
    */
   @Nullable
-  static String validateStack(
+  String validateStack(
       final int codeSectionToValidate, final EOFLayout eofLayout, final WorkList workList) {
     if (!eofLayout.isValid()) {
       return "EOF Layout invalid - " + eofLayout.invalidReason();

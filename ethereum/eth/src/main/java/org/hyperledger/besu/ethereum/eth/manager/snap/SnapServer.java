@@ -521,6 +521,12 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     }
 
                   } else {
+                    // There must be at least one element in the path otherwise it is invalid
+                    if (triePath.isEmpty()) {
+                      LOGGER.debug("returned empty trie nodes message due to invalid path");
+                      return EMPTY_TRIE_NODES_MESSAGE;
+                    }
+
                     // otherwise the first element should be account hash, and subsequent paths
                     // are compact encoded account storage paths
 
