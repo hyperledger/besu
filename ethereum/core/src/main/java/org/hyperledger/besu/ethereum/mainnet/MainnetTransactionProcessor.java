@@ -338,8 +338,8 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long setCodeGas = 0;
-      gasCalculator.setCodeListGasCost(transaction.setCodeTransactionPayloadSize());
+      final long setCodeGas =
+          gasCalculator.setCodeListGasCost(transaction.setCodeTransactionPayloadSize());
       final long gasAvailable =
           transaction.getGasLimit() - intrinsicGas - accessListGas - setCodeGas;
       LOG.trace(
