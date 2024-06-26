@@ -181,20 +181,19 @@ public class SegmentedInMemoryKeyValueStorage
       final Map<Bytes, Optional<byte[]>> segmentMap =
           this.hashValueStore.computeIfAbsent(segmentIdentifier, s -> newSegmentMap());
 
-      // Define a function to find the nearest key-value pair based on a given predicate
       final Function<Predicate<Map.Entry<Bytes, Optional<byte[]>>>, Optional<NearestKeyValue>>
           findNearest =
               (predicate) -> {
-                // Filter the segment map's entries based on the predicate
                 final Stream<Map.Entry<Bytes, Optional<byte[]>>> filteredStream =
                     segmentMap.entrySet().stream().filter(predicate);
                 // Depending on the useMin flag, find either the minimum or maximum entry according
                 // to key order
                 final Optional<Map.Entry<Bytes, Optional<byte[]>>> sortedStream =
                     useMin
-                        ? filteredStream.min(Map.Entry.comparingByKey())
-                        : filteredStream.max(Map.Entry.comparingByKey());
-                // Map the found entry to a NearestKeyValue object
+                        ? filteredStream.min(
+                            (t1, t2) -> compareKeyLeftToRight(t1.getKey(), t2.getKey()))
+                        : filteredStream.max(
+                            (t1, t2) -> compareKeyLeftToRight(t1.getKey(), t2.getKey()));
                 return sortedStream.map(
                     entry -> new NearestKeyValue(entry.getKey(), entry.getValue()));
               };
@@ -208,7 +207,6 @@ public class SegmentedInMemoryKeyValueStorage
       // nearest key that comes after or before the requested one.
       return findNearest.apply(fallbackPredicate);
     } finally {
-      // Ensure the lock is released in all cases
       lock.unlock();
     }
   }

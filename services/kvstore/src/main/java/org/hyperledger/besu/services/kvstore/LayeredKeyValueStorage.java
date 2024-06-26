@@ -128,17 +128,14 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       final boolean isAfter)
       throws StorageException {
 
-    Optional<NearestKeyValue> ourNearest = ourNearestFunction.apply(key);
-    Optional<NearestKeyValue> parentNearest = parentNearestFunction.apply(key);
+    final Optional<NearestKeyValue> ourNearest = ourNearestFunction.apply(key);
+    final Optional<NearestKeyValue> parentNearest = parentNearestFunction.apply(key);
 
     if (ourNearest.isPresent() && parentNearest.isPresent()) {
-      // Both are present, return the one closer to the key or based on common prefix length
       return compareNearest(ourNearest, parentNearest, key, isAfter);
     } else if (ourNearest.isPresent()) {
-      // Only ourNearest is present
       return ourNearest;
     } else {
-      // Return parentNearest, which may be an empty Optional
       return parentNearest;
     }
   }
@@ -161,9 +158,17 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
       if (ourCommonPrefixLength != parentCommonPrefixLength) {
         return ourCommonPrefixLength > parentCommonPrefixLength ? ourNearest : parentNearest;
       } else {
-        return (isAfter ^ (ourNearest.get().key().compareTo(parentNearest.get().key()) > 0))
-            ? ourNearest
-            : parentNearest;
+        // When searching for a key, if isAfter is true, we choose the next smallest key after our
+        // target because both found keys are after it.
+        // If isAfter is false, meaning we're doing a seekForPrev, we select the largest key that
+        // comes before our target, as it's the nearest one.
+        // For example : if the searched key is 0x0101 and we found 0x0001 and 0x0100 when isAfter
+        // == false we will take 0x0100
+        if (ourNearest.get().key().compareTo(parentNearest.get().key()) > 0) {
+          return isAfter ? parentNearest : ourNearest;
+        } else {
+          return isAfter ? ourNearest : parentNearest;
+        }
       }
     }
   }
