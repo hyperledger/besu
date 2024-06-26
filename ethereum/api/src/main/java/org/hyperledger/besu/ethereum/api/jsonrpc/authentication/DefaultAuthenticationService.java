@@ -84,7 +84,7 @@ public class DefaultAuthenticationService implements AuthenticationService {
   /**
    * Creates a ready for use set of authentication providers if authentication is enabled
    *
-   * @param vertx The vertx instance that will be providing requests that this set of authentication
+   * @param vertx The vertx instance that will be providing requests for this set of authentication
    *     providers will be handling
    * @param config The {{@link WebSocketConfiguration}} that describes this rpc setup
    * @return Optionally an authentication service. If empty then authentication isn't to be enabled
