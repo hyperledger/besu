@@ -357,15 +357,6 @@ public class BonsaiWorldState extends DiffBasedWorldState {
   }
 
   @Override
-  public Hash frontierRootHash() {
-    return calculateRootHash(
-        Optional.of(
-            new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
-        accumulator.copy());
-  }
-
-  @Override
   public Account get(final Address address) {
     return getWorldStateStorage()
         .getAccount(address.addressHash())
@@ -454,6 +445,15 @@ public class BonsaiWorldState extends DiffBasedWorldState {
   protected Hash hashAndSavePreImage(final Bytes value) {
     // by default do not save has preImages
     return Hash.hash(value);
+  }
+
+  @Override
+  public Hash frontierRootHash() {
+    return calculateRootHash(
+        Optional.of(
+            new BonsaiWorldStateKeyValueStorage.Updater(
+                noOpSegmentedTx, noOpTx, worldStateKeyValueStorage.getFlatDbStrategy())),
+        accumulator.copy());
   }
 
   @Override

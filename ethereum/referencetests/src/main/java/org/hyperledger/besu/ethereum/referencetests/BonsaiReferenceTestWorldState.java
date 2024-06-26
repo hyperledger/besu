@@ -36,6 +36,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.Map;
@@ -264,7 +265,7 @@ public class BonsaiReferenceTestWorldState extends BonsaiWorldState
         CacheBuilder.newBuilder().maximumSize(5).build();
 
     public ReferenceTestsInMemoryTrieLogManager() {
-      super(null, null, 0, null);
+      super(null, DataStorageFormat.BONSAI, null, 0, null);
     }
 
     @Override

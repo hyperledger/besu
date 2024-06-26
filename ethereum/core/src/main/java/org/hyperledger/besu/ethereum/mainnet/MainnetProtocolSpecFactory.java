@@ -134,8 +134,12 @@ public class MainnetProtocolSpecFactory {
   }
 
   public ProtocolSpecBuilder pragueDefinition(final GenesisConfigOptions genesisConfigOptions) {
-    return MainnetProtocolSpecs.pragueDefinition(
+    // TODO: this is for VERKLE devnet
+    return MainnetProtocolSpecs.eip4762Definition(
         chainId, isRevertReasonEnabled, genesisConfigOptions, evmConfiguration, miningParameters);
+    // return MainnetProtocolSpecs.pragueDefinition(
+    //        chainId, isRevertReasonEnabled, genesisConfigOptions, evmConfiguration,
+    // miningParameters);
   }
 
   public ProtocolSpecBuilder pragueEOFDefinition(final GenesisConfigOptions genesisConfigOptions) {

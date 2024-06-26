@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.ExecutionWitnessValidatorProvider.getExecutionWitnessValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getDepositRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getWithdrawalRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ExecutionWitnessParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -55,6 +57,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.encoding.EncodingContext;
 import org.hyperledger.besu.ethereum.core.encoding.TransactionDecoder;
+import org.hyperledger.besu.ethereum.core.witness.ExecutionWitness;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
@@ -104,7 +107,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     engineCallListener.executionEngineCalled();
-
+    // LOG.info("NewPayload param" + Arrays.toString(requestContext.getRequest().getParams()));
     final EnginePayloadParameter blockParam =
         requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
 
@@ -185,6 +188,16 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal request"));
     }
 
+    final Optional<ExecutionWitness> maybeExecutionWitness =
+        Optional.ofNullable(blockParam.getExecutionWitness())
+            .map(ExecutionWitnessParameter::toExecutionWitness);
+    if (!getExecutionWitnessValidator(
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
+        .validateExecutionWitness(maybeExecutionWitness)) {
+      return new JsonRpcErrorResponse(
+          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid executionWitness"));
+    }
+
     Optional<List<Request>> maybeRequests =
         RequestUtil.combine(maybeDepositRequests, maybeWithdrawalRequests);
 
@@ -256,6 +269,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
                 : BlobGas.fromHexString(blockParam.getExcessBlobGas()),
             maybeParentBeaconBlockRoot.orElse(null),
             maybeRequests.map(BodyValidation::requestsRoot).orElse(null),
+            maybeExecutionWitness.orElse(null),
             headerFunctions);
 
     // ensure the block hash matches the blockParam hash
@@ -348,6 +362,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
               .mapToInt(List::size)
               .sum(),
           (System.currentTimeMillis() - startTimeMs) / 1000.0);
+      // TODO Added this line to accelerate block import, should be removed later
+      mergeCoordinator.updateForkChoice(
+          newBlockHeader, newBlockHeader.getBlockHash(), newBlockHeader.getBlockHash());
       return respondWith(reqId, blockParam, newBlockHeader.getHash(), VALID);
     } else {
       if (executionResult.causedBy().isPresent()) {

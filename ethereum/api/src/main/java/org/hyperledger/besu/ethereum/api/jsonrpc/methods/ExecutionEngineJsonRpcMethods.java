@@ -30,9 +30,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineG
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV4;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV1;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV3;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV4;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineNewPayloadV6800;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EnginePreparePayloadDebug;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineQosTimer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
@@ -106,7 +105,7 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   mergeCoordinator.get(),
                   ethPeers,
                   engineQosTimer),
-              new EngineNewPayloadV2(
+              new EngineNewPayloadV6800( // TODO replaced for verkle test
                   consensusEngineServer,
                   protocolSchedule,
                   protocolContext,
@@ -169,15 +168,6 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                 blockResultFactory,
                 engineQosTimer,
                 protocolSchedule));
-
-        executionEngineApisSupported.add(
-            new EngineNewPayloadV4(
-                consensusEngineServer,
-                protocolSchedule,
-                protocolContext,
-                mergeCoordinator.get(),
-                ethPeers,
-                engineQosTimer));
       }
 
       return mapOf(executionEngineApisSupported);

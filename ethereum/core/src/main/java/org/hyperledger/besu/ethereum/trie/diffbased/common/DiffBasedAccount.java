@@ -112,6 +112,35 @@ public abstract class DiffBasedAccount implements MutableAccount, AccountValue {
     this.immutable = !mutable;
   }
 
+  public DiffBasedAccount(
+      final DiffBasedWorldView context,
+      final Address address,
+      final AccountValue stateTrieAccount,
+      final boolean mutable) {
+    this(
+        context,
+        address,
+        address.addressHash(),
+        stateTrieAccount.getNonce(),
+        stateTrieAccount.getBalance(),
+        stateTrieAccount.getCodeHash(),
+        mutable);
+  }
+
+  public DiffBasedAccount(
+      final DiffBasedAccount toCopy, final DiffBasedWorldView context, final boolean mutable) {
+    this.context = context;
+    this.address = toCopy.address;
+    this.addressHash = toCopy.addressHash;
+    this.nonce = toCopy.nonce;
+    this.balance = toCopy.balance;
+    this.codeHash = toCopy.codeHash;
+    this.code = toCopy.code;
+    updatedStorage.putAll(toCopy.updatedStorage);
+
+    this.immutable = !mutable;
+  }
+
   @Override
   public Address getAddress() {
     return address;

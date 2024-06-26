@@ -21,6 +21,7 @@ import org.hyperledger.besu.collections.trie.BytesTrieSet;
 import org.hyperledger.besu.collections.undo.UndoScalar;
 import org.hyperledger.besu.collections.undo.UndoSet;
 import org.hyperledger.besu.collections.undo.UndoTable;
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -246,6 +247,8 @@ public class MessageFrame {
   /** The mark of the undoable collections at the creation of this message frame */
   private final long undoMark;
 
+  private final AccessWitness accessWitness;
+
   /**
    * Builder builder.
    *
@@ -270,7 +273,8 @@ public class MessageFrame {
       final Consumer<MessageFrame> completer,
       final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
-      final TxValues txValues) {
+      final TxValues txValues,
+      final AccessWitness accessWitness) {
 
     this.txValues = txValues;
     this.type = type;
@@ -292,6 +296,7 @@ public class MessageFrame {
     this.revertReason = revertReason;
 
     this.undoMark = txValues.transientStorage().mark();
+    this.accessWitness = accessWitness;
   }
 
   /**
@@ -1314,6 +1319,15 @@ public class MessageFrame {
     return txValues.versionedHashes();
   }
 
+  /**
+   * Accessor for accessWitness
+   *
+   * @return the access witness
+   */
+  public AccessWitness getAccessWitness() {
+    return accessWitness;
+  }
+
   /** Reset. */
   public void reset() {
     maybeUpdatedMemory = Optional.empty();
@@ -1349,6 +1363,8 @@ public class MessageFrame {
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
 
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
+
+    private AccessWitness accessWitness = null;
 
     /** Instantiates a new Builder. */
     public Builder() {
@@ -1631,6 +1647,17 @@ public class MessageFrame {
       return this;
     }
 
+    /**
+     * Sets access witness.
+     *
+     * @param accessWitness the access witness
+     * @return the builder
+     */
+    public Builder accessWitness(final AccessWitness accessWitness) {
+      this.accessWitness = accessWitness;
+      return this;
+    }
+
     private void validate() {
       if (parentMessageFrame == null) {
         checkState(worldUpdater != null, "Missing message frame world updater");
@@ -1706,7 +1733,8 @@ public class MessageFrame {
               completer,
               contextVariables == null ? Map.of() : contextVariables,
               reason,
-              newTxValues);
+              newTxValues,
+              accessWitness);
       newTxValues.messageFrameStack().addFirst(messageFrame);
       messageFrame.warmUpAddress(sender);
       messageFrame.warmUpAddress(contract);

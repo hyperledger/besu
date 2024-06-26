@@ -33,8 +33,8 @@ import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinato
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -152,14 +152,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 blockHeader.getHash().toHexString(),
                 transaction.getHash().toHexString());
         LOG.info(errorMessage);
-        if (worldState instanceof BonsaiWorldState) {
-          ((BonsaiWorldStateUpdateAccumulator) worldStateUpdater).reset();
+        if (worldState instanceof DiffBasedWorldState) {
+          ((DiffBasedWorldStateUpdateAccumulator<?>) worldStateUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
       }
       worldStateUpdater.commit();
 
       currentGasUsed += transaction.getGasLimit() - result.getGasRemaining();
+
       if (transaction.getVersionedHashes().isPresent()) {
         currentBlobGasUsed +=
             (transaction.getVersionedHashes().get().size() * CancunGasCalculator.BLOB_GAS_PER_BLOB);
@@ -202,8 +203,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
       // no need to log, rewardCoinbase logs the error.
-      if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+      if (worldState instanceof DiffBasedWorldState) {
+        ((DiffBasedWorldStateUpdateAccumulator<?>) worldState.updater()).reset();
       }
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
@@ -212,8 +213,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       worldState.persist(blockHeader);
     } catch (MerkleTrieException e) {
       LOG.trace("Merkle trie exception during Transaction processing ", e);
-      if (worldState instanceof BonsaiWorldState) {
-        ((BonsaiWorldStateUpdateAccumulator) worldState.updater()).reset();
+      if (worldState instanceof DiffBasedWorldState) {
+        ((DiffBasedWorldStateUpdateAccumulator<?>) worldState.updater()).reset();
       }
       throw e;
     } catch (Exception e) {

@@ -17,12 +17,13 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.trielog.TrieLogFactoryImpl;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.services.TrieLogService;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogFactory;
@@ -51,13 +52,14 @@ public class TrieLogManager {
 
   public TrieLogManager(
       final Blockchain blockchain,
+      final DataStorageFormat dataStorageFormat,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final long maxLayersToLoad,
       final BesuContext pluginContext) {
     this.blockchain = blockchain;
     this.rootWorldStateStorage = worldStateKeyValueStorage;
     this.maxLayersToLoad = maxLayersToLoad;
-    this.trieLogFactory = setupTrieLogFactory(pluginContext);
+    this.trieLogFactory = setupTrieLogFactory(dataStorageFormat, pluginContext);
   }
 
   public synchronized void saveTrieLog(
@@ -133,7 +135,8 @@ public class TrieLogManager {
     trieLogObservers.unsubscribe(id);
   }
 
-  private TrieLogFactory setupTrieLogFactory(final BesuContext pluginContext) {
+  private TrieLogFactory setupTrieLogFactory(
+      final DataStorageFormat dataStorageFormat, final BesuContext pluginContext) {
     // if we have a TrieLogService from pluginContext, use it.
     var trieLogServicez =
         Optional.ofNullable(pluginContext)
@@ -152,8 +155,12 @@ public class TrieLogManager {
         return trieLogService.getTrieLogFactory().get();
       }
     }
-    // Otherwise default to TrieLogFactoryImpl
-    return new TrieLogFactoryImpl();
+    // Otherwise default to VERKLE TrieLogFactoryImpl
+    if (dataStorageFormat.equals(DataStorageFormat.VERKLE)) {
+      return new TrieLogFactoryImpl();
+    }
+    // or default to BONSAI TrieLogFactoryImpl
+    return new org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog.TrieLogFactoryImpl();
   }
 
   private TrieLogProvider getTrieLogProvider() {

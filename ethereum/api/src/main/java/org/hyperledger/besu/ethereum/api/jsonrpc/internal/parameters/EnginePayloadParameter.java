@@ -46,6 +46,8 @@ public class EnginePayloadParameter {
   private final List<DepositRequestParameter> depositRequests;
   private final List<WithdrawalRequestParameter> withdrawalRequests;
 
+  private final ExecutionWitnessParameter executionWitness;
+
   /**
    * Creates an instance of EnginePayloadParameter.
    *
@@ -68,6 +70,7 @@ public class EnginePayloadParameter {
    * @param excessBlobGas QUANTITY, 64 Bits
    * @param depositRequests List of deposit parameters.
    * @param withdrawalRequestParameters List of withdrawal requests parameters.
+   * @param executionWitness OBJECT executionWitness.
    */
   @JsonCreator
   public EnginePayloadParameter(
@@ -90,7 +93,8 @@ public class EnginePayloadParameter {
       @JsonProperty("excessBlobGas") final String excessBlobGas,
       @JsonProperty("depositRequests") final List<DepositRequestParameter> depositRequests,
       @JsonProperty("withdrawalRequests")
-          final List<WithdrawalRequestParameter> withdrawalRequestParameters) {
+          final List<WithdrawalRequestParameter> withdrawalRequestParameters,
+      @JsonProperty("executionWitness") final ExecutionWitnessParameter executionWitness) {
     this.blockHash = blockHash;
     this.parentHash = parentHash;
     this.feeRecipient = feeRecipient;
@@ -110,6 +114,7 @@ public class EnginePayloadParameter {
     this.excessBlobGas = excessBlobGas;
     this.depositRequests = depositRequests;
     this.withdrawalRequests = withdrawalRequestParameters;
+    this.executionWitness = executionWitness;
   }
 
   public Hash getBlockHash() {
@@ -186,5 +191,9 @@ public class EnginePayloadParameter {
 
   public List<WithdrawalRequestParameter> getWithdrawalRequests() {
     return withdrawalRequests;
+  }
+
+  public ExecutionWitnessParameter getExecutionWitness() {
+    return executionWitness;
   }
 }

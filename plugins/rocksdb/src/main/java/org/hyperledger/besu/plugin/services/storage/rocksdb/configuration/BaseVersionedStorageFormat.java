@@ -44,7 +44,20 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
    * Current Bonsai version, with receipts using compaction, in order to make Receipts use less disk
    * space
    */
-  BONSAI_WITH_RECEIPT_COMPACTION(DataStorageFormat.BONSAI, 3);
+  BONSAI_WITH_RECEIPT_COMPACTION(DataStorageFormat.BONSAI, 3),
+
+  /** Original Verkle version, not used since replace by VERKLE_WITH_VARIABLES */
+  VERKLE_ORIGINAL(DataStorageFormat.VERKLE, 1),
+  /**
+   * Current Verkle version, with blockchain variables in a dedicated column family, in order to
+   * make BlobDB more effective
+   */
+  VERKLE_WITH_VARIABLES(DataStorageFormat.VERKLE, 2),
+  /**
+   * Current Verkle version, with receipts using compaction, in order to make Receipts use less disk
+   * space
+   */
+  VERKLE_WITH_RECEIPT_COMPACTION(DataStorageFormat.VERKLE, 3);
 
   private final DataStorageFormat format;
   private final int version;
@@ -71,6 +84,10 @@ public enum BaseVersionedStorageFormat implements VersionedStorageFormat {
           configuration.getReceiptCompactionEnabled()
               ? BONSAI_WITH_RECEIPT_COMPACTION
               : BONSAI_WITH_VARIABLES;
+      case VERKLE ->
+          configuration.getReceiptCompactionEnabled()
+              ? VERKLE_WITH_RECEIPT_COMPACTION
+              : VERKLE_WITH_VARIABLES;
     };
   }
 

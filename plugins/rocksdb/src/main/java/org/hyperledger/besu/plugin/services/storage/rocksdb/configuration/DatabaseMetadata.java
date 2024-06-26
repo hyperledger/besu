@@ -163,6 +163,7 @@ public class DatabaseMetadata {
           switch (v1.version()) {
             case 1 -> BaseVersionedStorageFormat.FOREST_WITH_VARIABLES;
             case 2 -> BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
+            case 3 -> BaseVersionedStorageFormat.VERKLE_WITH_VARIABLES;
             default -> throw new StorageException("Unsupported db version: " + v1.version());
           };
     } else {
@@ -249,6 +250,8 @@ public class DatabaseMetadata {
                         "Unsupported database with format BONSAI and version "
                             + versionedStorageFormat.getVersion());
               };
+          case VERKLE ->
+              throw new RuntimeException("invalid storage format for privacy configuration");
         });
   }
 

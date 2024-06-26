@@ -58,6 +58,7 @@ public class QbftBesuControllerBuilderTest extends AbstractBftBesuControllerBuil
         (ObjectNode)
             objectMapper.readTree(
                 """
+
                                 {"qbft": [
                                   {
                                             "block": 2,

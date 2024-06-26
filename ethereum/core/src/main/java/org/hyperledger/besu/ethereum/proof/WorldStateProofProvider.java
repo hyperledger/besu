@@ -50,9 +50,8 @@ import org.slf4j.LoggerFactory;
  * interacts with the underlying storage and trie data structures to generate proofs.
  */
 public class WorldStateProofProvider {
-
-  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
   private static final Logger LOG = LoggerFactory.getLogger(WorldStateProofProvider.class);
+  private final WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   public WorldStateProofProvider(final WorldStateStorageCoordinator worldStateStorageCoordinator) {
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;

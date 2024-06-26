@@ -139,6 +139,9 @@ public class IbftRoundTest {
     lenient().when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
 
+    lenient().when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
+    lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
+
     lenient()
         .when(blockImporter.importBlock(any(), any(), any()))
         .thenReturn(new BlockImportResult(BlockImportResult.BlockImportStatus.IMPORTED));

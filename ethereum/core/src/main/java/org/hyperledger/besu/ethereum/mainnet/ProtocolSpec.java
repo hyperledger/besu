@@ -81,6 +81,9 @@ public class ProtocolSpec {
   private final RequestsValidatorCoordinator requestsValidatorCoordinator;
   private final Optional<RequestProcessorCoordinator> requestProcessorCoordinator;
   private final BlockHashProcessor blockHashProcessor;
+
+  private final ExecutionWitnessValidator executionWitnessValidator;
+
   private final boolean isPoS;
   private final boolean isReplayProtectionSupported;
 
@@ -116,6 +119,7 @@ public class ProtocolSpec {
    * @param isPoS indicates whether the current spec is PoS
    * @param isReplayProtectionSupported indicates whether the current spec supports replay
    *     protection
+   * @param executionWitnessValidator the witness validator to use
    */
   public ProtocolSpec(
       final String name,
@@ -146,7 +150,8 @@ public class ProtocolSpec {
       final Optional<RequestProcessorCoordinator> requestProcessorCoordinator,
       final BlockHashProcessor blockHashProcessor,
       final boolean isPoS,
-      final boolean isReplayProtectionSupported) {
+      final boolean isReplayProtectionSupported,
+      final ExecutionWitnessValidator executionWitnessValidator) {
     this.name = name;
     this.evm = evm;
     this.transactionValidatorFactory = transactionValidatorFactory;
@@ -176,6 +181,7 @@ public class ProtocolSpec {
     this.blockHashProcessor = blockHashProcessor;
     this.isPoS = isPoS;
     this.isReplayProtectionSupported = isReplayProtectionSupported;
+    this.executionWitnessValidator = executionWitnessValidator;
   }
 
   /**
@@ -385,6 +391,10 @@ public class ProtocolSpec {
 
   public BlockHashProcessor getBlockHashProcessor() {
     return blockHashProcessor;
+  }
+
+  public ExecutionWitnessValidator getExecutionWitnessValidator() {
+    return executionWitnessValidator;
   }
 
   /**

@@ -72,6 +72,7 @@ public enum PrivacyVersionedStorageFormat implements VersionedStorageFormat {
           configuration.getReceiptCompactionEnabled()
               ? BONSAI_WITH_RECEIPT_COMPACTION
               : BONSAI_WITH_VARIABLES;
+      case VERKLE -> throw new RuntimeException("invalid storage format for privacy configuration");
     };
   }
 

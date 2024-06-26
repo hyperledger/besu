@@ -92,7 +92,8 @@ public class NoRewardProtocolScheduleWrapper implements ProtocolSchedule {
         original.getRequestProcessorCoordinator(),
         original.getBlockHashProcessor(),
         original.isPoS(),
-        original.isReplayProtectionSupported());
+        original.isReplayProtectionSupported(),
+        original.getExecutionWitnessValidator());
   }
 
   @Override

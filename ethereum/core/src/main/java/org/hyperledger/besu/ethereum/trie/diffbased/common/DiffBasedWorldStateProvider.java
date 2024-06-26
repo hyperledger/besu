@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
 
 import java.util.ArrayList;
@@ -58,6 +59,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   protected final DiffBasedWorldStateConfig defaultWorldStateConfig;
 
   public DiffBasedWorldStateProvider(
+      final DataStorageFormat dataStorageFormat,
       final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage,
       final Blockchain blockchain,
       final Optional<Long> maxLayersToLoad,
@@ -68,6 +70,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     this.trieLogManager =
         new TrieLogManager(
             blockchain,
+            dataStorageFormat,
             worldStateKeyValueStorage,
             maxLayersToLoad.orElse(DiffBasedCachedWorldStorageManager.RETAINED_LAYERS),
             pluginContext);
@@ -150,6 +153,19 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   @Override
   public synchronized Optional<MutableWorldState> getMutable(
       final Hash rootHash, final Hash blockHash) {
+
+    /*Optional<BlockHeader> blockHeader = blockchain.getBlockHeader(blockHash);
+    if(blockHeader.isPresent()){
+      Optional<BlockHeader> parentHeader = blockchain.getBlockHeader(blockHeader.get().getParentHash());
+      if(parentHeader.isPresent()){
+        Optional<MutableWorldState> worldState = rollMutableStateToBlockHash(persistedState, parentHeader.get().getBlockHash());
+        if(worldState.isEmpty()){
+          System.out.println("failed rollback to "+parentHeader.get().getNumber());
+          throw new RuntimeException("invalid trielog");
+        }
+        System.out.println("rollback to "+parentHeader.get().getNumber());
+      }
+    }*/
     return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
@@ -319,5 +335,9 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     } catch (Exception e) {
       // no op
     }
+  }
+
+  protected DiffBasedWorldStateConfig cloneBonsaiWorldStateConfig() {
+    return new DiffBasedWorldStateConfig(defaultWorldStateConfig);
   }
 }

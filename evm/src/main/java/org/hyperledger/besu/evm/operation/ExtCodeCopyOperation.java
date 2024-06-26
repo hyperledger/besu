@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -47,21 +46,25 @@ public class ExtCodeCopyOperation extends AbstractOperation {
    * Cost of Ext Code Copy operation.
    *
    * @param frame the frame
+   * @param address to use
    * @param memOffset the mem offset
-   * @param length the length
-   * @param accountIsWarm the account is warm
+   * @param sourceOffset the code offset
+   * @param codeSize the size of the code <<<<<<< HEAD
+   * @param accountIsWarm the account is warm =======
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @return the long
    */
   protected long cost(
       final MessageFrame frame,
+      final Address address,
       final long memOffset,
-      final long length,
+      final long sourceOffset,
+      final long readSize,
+      final long codeSize,
       final boolean accountIsWarm) {
-    return clampedAdd(
-        gasCalculator().extCodeCopyOperationGasCost(frame, memOffset, length),
-        accountIsWarm
-            ? gasCalculator().getWarmStorageReadCost()
-            : gasCalculator().getColdAccountAccessCost());
+    return gasCalculator()
+        .extCodeCopyOperationGasCost(
+            frame, address, accountIsWarm, memOffset, sourceOffset, readSize, codeSize);
   }
 
   @Override
@@ -69,23 +72,25 @@ public class ExtCodeCopyOperation extends AbstractOperation {
     final Address address = Words.toAddress(frame.popStackItem());
     final long memOffset = clampedToLong(frame.popStackItem());
     final long sourceOffset = clampedToLong(frame.popStackItem());
-    final long numBytes = clampedToLong(frame.popStackItem());
+    final long readSize = clampedToLong(frame.popStackItem());
 
-    final boolean accountIsWarm =
-        frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-    final long cost = cost(frame, memOffset, numBytes, accountIsWarm);
+    final boolean isPrecompiled = gasCalculator().isPrecompile(address);
+    final boolean accountIsWarm = frame.warmUpAddress(address) || isPrecompiled;
 
+    final Account account = frame.getWorldUpdater().get(address);
+    // TODO get account and get code before cost checking only for verkle ? maybe move this call
+    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
+
+    final long cost =
+        cost(frame, address, memOffset, sourceOffset, readSize, code.size(), accountIsWarm);
     if (frame.getRemainingGas() < cost) {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final Account account = frame.getWorldUpdater().get(address);
-    final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
-
     if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
-      frame.writeMemory(memOffset, sourceOffset, numBytes, EOF_REPLACEMENT_CODE);
+      frame.writeMemory(memOffset, sourceOffset, readSize, EOF_REPLACEMENT_CODE);
     } else {
-      frame.writeMemory(memOffset, sourceOffset, numBytes, code);
+      frame.writeMemory(memOffset, sourceOffset, readSize, code);
     }
 
     return new OperationResult(cost, null);

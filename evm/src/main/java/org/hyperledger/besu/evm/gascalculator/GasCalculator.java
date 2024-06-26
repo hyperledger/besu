@@ -15,10 +15,14 @@
 package org.hyperledger.besu.evm.gascalculator;
 
 import org.hyperledger.besu.datatypes.AccessListEntry;
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.operation.ExpOperation;
@@ -40,6 +44,7 @@ import org.hyperledger.besu.evm.precompile.SHA256PrecompiledContract;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -241,6 +246,8 @@ public interface GasCalculator {
    */
   long gasAvailableForChildCall(MessageFrame frame, long stipend, boolean transfersValue);
 
+  long completedCreateContractGasCost(final MessageFrame frame);
+
   /**
    * For EXT*CALL, the minimum amount of gas the parent must retain. First described in EIP-7069
    *
@@ -302,6 +309,11 @@ public interface GasCalculator {
    */
   long initcodeCost(final int initCodeLength);
 
+  default long initcodeStatelessCost(
+      final MessageFrame frame, final Address address, final Wei value) {
+    return 0;
+  }
+
   /**
    * Returns the amount of gas parent will provide its child CREATE.
    *
@@ -317,10 +329,25 @@ public interface GasCalculator {
    *
    * @param frame The current frame
    * @param offset The offset in memory to copy the data to
-   * @param length The length of the data being copied into memory
+   * @param readSize The length of the data being copied into memory
    * @return the amount of gas consumed by the data copy operation
    */
-  long dataCopyOperationGasCost(MessageFrame frame, long offset, long length);
+  long dataCopyOperationGasCost(MessageFrame frame, long offset, long readSize);
+
+  /**
+   * Returns the amount of gas consumed by the code copy operation.
+   *
+   * @param frame The current frame
+   * @param memOffset The offset in memory to copy the code to
+   * @param codeOffset The starting offset within the code from which to begin copying
+   * @param readSize The length of the code being copied into memory
+   * @param codeSize The size of the code to copy
+   * @return the amount of gas consumed by the code copy operation
+   */
+  long codeCopyOperationGasCost(
+      MessageFrame frame, long memOffset, long codeOffset, long readSize, final long codeSize);
+
+  long pushOperationGasCost(MessageFrame frame, long codeOffset, long readSize, long codeSize);
 
   /**
    * Returns the cost of expanding memory for the specified access.
@@ -337,9 +364,13 @@ public interface GasCalculator {
   /**
    * Returns the cost for executing a {@link BalanceOperation}.
    *
+   * @param frame The current frame
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
+   * @param maybeAddress targeted address
    * @return the cost for executing the balance operation
    */
-  long getBalanceOperationGasCost();
+  long getBalanceOperationGasCost(
+      MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress);
 
   /**
    * Returns the cost for executing a {@link BlockHashOperation}.
@@ -360,25 +391,54 @@ public interface GasCalculator {
    * Returns the cost for executing a {@link ExtCodeCopyOperation}.
    *
    * @param frame The current frame
-   * @param offset The offset in memory to external code copy the data to
-   * @param length The length of the code being copied into memory
+   * @param memOffset The offset in memory to external code copy the data to
+   * @param readSize The length of the code being copied into memory
    * @return the cost for executing the external code size operation
    */
-  long extCodeCopyOperationGasCost(MessageFrame frame, long offset, long length);
+  long extCodeCopyOperationGasCost(MessageFrame frame, long memOffset, long readSize);
+
+  /**
+   * Returns the cost for executing a {@link ExtCodeCopyOperation}.
+   *
+   * @param frame The current frame
+   * @param address The address to use for the gas cost computation
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
+   * @param memOffset The offset in memory to external code copy the data to
+   * @param codeOffset The starting offset within the code from which to begin copying
+   * @param readSize The length of the code being copied into memory
+   * @param codeSize The size of the code to copy
+   * @return the cost for executing the external code size operation
+   */
+  long extCodeCopyOperationGasCost(
+      MessageFrame frame,
+      Address address,
+      boolean accountIsWarm,
+      long memOffset,
+      long codeOffset,
+      long readSize,
+      long codeSize);
 
   /**
    * Returns the cost for executing a {@link ExtCodeHashOperation}.
    *
+   * @param frame The current frame
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
+   * @param maybeAddress targeted address
    * @return the cost for executing the external code hash operation
    */
-  long extCodeHashOperationGasCost();
+  long extCodeHashOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, Optional<Address> maybeAddress);
 
   /**
    * Returns the cost for executing a {@link ExtCodeSizeOperation}.
    *
+   * @param frame The current frame
+   * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
+   * @param maybeAddress targeted address
    * @return the cost for executing the external code size operation
    */
-  long getExtCodeSizeOperationGasCost();
+  long getExtCodeSizeOperationGasCost(
+      MessageFrame frame, final boolean accountIsWarm, Optional<Address> maybeAddress);
 
   /**
    * Returns the cost for executing a {@link JumpDestOperation}.
@@ -428,11 +488,19 @@ public interface GasCalculator {
   /**
    * Returns the cost for executing a {@link SelfDestructOperation}.
    *
+   * @param frame The current frame
    * @param recipient The recipient of the self destructed inheritance (may be null)
+   * @param recipientAddress The address of the self destructed account
    * @param inheritance The amount the recipient will receive
+   * @param originatorAddress The address of the self destructing account
    * @return the cost for executing the self destruct operation
    */
-  long selfDestructOperationGasCost(Account recipient, Wei inheritance);
+  long selfDestructOperationGasCost(
+      MessageFrame frame,
+      Account recipient,
+      final Address recipientAddress,
+      Wei inheritance,
+      Address originatorAddress);
 
   /**
    * Returns the cost for executing a {@link Keccak256Operation}.
@@ -449,18 +517,24 @@ public interface GasCalculator {
    *
    * @return the cost for executing the storage load operation
    */
-  long getSloadOperationGasCost();
+  long getSloadOperationGasCost(MessageFrame frame, UInt256 key, final boolean slotIsWarm);
 
   /**
    * Returns the cost for an SSTORE operation.
    *
+   * @param frame the current frame
+   * @param key the slot key
    * @param newValue the new value to be stored
    * @param currentValue the supplier of the current value
    * @param originalValue the supplier of the original value
    * @return the gas cost for the SSTORE operation
    */
   long calculateStorageCost(
-      UInt256 newValue, Supplier<UInt256> currentValue, Supplier<UInt256> originalValue);
+      MessageFrame frame,
+      UInt256 key,
+      UInt256 newValue,
+      Supplier<UInt256> currentValue,
+      Supplier<UInt256> originalValue);
 
   /**
    * Returns the refund amount for an SSTORE operation.
@@ -532,10 +606,11 @@ public interface GasCalculator {
   /**
    * Returns the cost for a {@link AbstractMessageProcessor} to deposit the code in storage
    *
+   * @param frame The current frame
    * @param codeSize The size of the code in bytes
    * @return the code deposit cost
    */
-  long codeDepositGasCost(int codeSize);
+  long codeDepositGasCost(MessageFrame frame, int codeSize);
 
   /**
    * Returns the intrinsic gas cost of a transaction payload, i.e. the cost deriving from its
@@ -644,5 +719,22 @@ public interface GasCalculator {
    */
   default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
     return 0L;
+  }
+
+  /**
+   * Compute access events cost of a transaction
+   *
+   * @param transaction transaction
+   * @return gas cost after computing all access events
+   */
+  default long computeBaseAccessEventsCost(
+      final AccessWitness accessWitness,
+      final Transaction transaction,
+      final MutableAccount sender) {
+    return 0L;
+  }
+
+  default AccessWitness newAccessWitness() {
+    return new NoopAccessWitness();
   }
 }

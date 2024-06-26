@@ -24,11 +24,11 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.patricia.StoredMerklePatriciaTrie;
 import org.hyperledger.besu.ethereum.worldstate.StateTrieAccountValue;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.plugin.BesuContext;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.util.HashSet;
 import java.util.Optional;
@@ -52,7 +52,12 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader,
       final BesuContext pluginContext,
       final EvmConfiguration evmConfiguration) {
-    super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
+    super(
+        DataStorageFormat.BONSAI,
+        worldStateKeyValueStorage,
+        blockchain,
+        maxLayersToLoad,
+        pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
     provideCachedWorldStorageManager(
         new BonsaiCachedWorldStorageManager(
@@ -146,9 +151,5 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
     updater.commit();
 
     getBonsaiWorldStateKeyValueStorage().downgradeToPartialFlatDbMode();
-  }
-
-  private DiffBasedWorldStateConfig cloneBonsaiWorldStateConfig() {
-    return new DiffBasedWorldStateConfig(defaultWorldStateConfig);
   }
 }

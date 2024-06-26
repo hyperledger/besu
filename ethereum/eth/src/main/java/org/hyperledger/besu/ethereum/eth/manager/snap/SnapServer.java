@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.plugin.services.BesuEvents;
@@ -157,7 +158,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                 .map(ProtocolContext::getWorldStateArchive)
                 .map(BonsaiWorldStateProvider.class::cast);
         var cachedStorageManagerOpt =
-            bonsaiArchive.map(archive -> archive.getCachedWorldStorageManager());
+            bonsaiArchive.map(DiffBasedWorldStateProvider::getCachedWorldStorageManager);
 
         if (cachedStorageManagerOpt.isPresent()) {
           var cachedStorageManager = cachedStorageManagerOpt.get();

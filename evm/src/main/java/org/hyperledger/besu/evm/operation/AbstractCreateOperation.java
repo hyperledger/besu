@@ -120,11 +120,15 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
       if (!code.isValid()) {
         fail(frame);
       } else {
+        final Wei contractValue = Wei.wrap(frame.getStackItem(0));
+        final Address contractAddress = targetContractAddress(frame, code);
+        frame.decrementRemainingGas(statelessCost(frame, contractAddress, contractValue));
         frame.decrementRemainingGas(cost);
-        spawnChildMessage(frame, code, evm);
+        spawnChildMessage(frame, contractAddress, contractValue, code, evm);
         frame.incrementRemainingGas(cost);
       }
     }
+
     return new OperationResult(cost, null, getPcIncrement());
   }
 
@@ -145,6 +149,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @return the long
    */
   protected abstract long cost(final MessageFrame frame, Supplier<Code> codeSupplier);
+
+  protected abstract long statelessCost(
+      final MessageFrame frame, final Address contractAddress, final Wei value);
 
   /**
    * Target contract address.
@@ -172,10 +179,12 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
   }
 
-  private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
-    final Wei value = Wei.wrap(parent.getStackItem(0));
-
-    final Address contractAddress = targetContractAddress(parent, code);
+  private void spawnChildMessage(
+      final MessageFrame parent,
+      final Address contractAddress,
+      final Wei contractValue,
+      final Code code,
+      final EVM evm) {
     final Bytes inputData = getInputData(parent);
 
     final long childGasStipend =
@@ -191,9 +200,10 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         .contract(contractAddress)
         .inputData(inputData)
         .sender(parent.getRecipientAddress())
-        .value(value)
-        .apparentValue(value)
+        .value(contractValue)
+        .apparentValue(contractValue)
         .code(code)
+        .accessWitness(parent.getAccessWitness())
         .completer(child -> complete(parent, child, evm))
         .build();
 

@@ -31,6 +31,7 @@ dependencies {
   implementation project(':crypto:algorithms')
   implementation project(':ethereum:rlp')
   implementation project(':ethereum:trie')
+  implementation project(':datatypes')
 
   implementation "org.immutables:value-annotations"
   implementation 'com.google.guava:guava'
@@ -38,7 +39,11 @@ dependencies {
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
   implementation 'org.bouncycastle:bcprov-jdk18on'
-  implementation 'org.hyperledger.besu:ipa-multipoint'
+
+  implementation ('org.hyperledger.besu:besu-verkle-trie') {
+    exclude group: 'org.hyperledger.besu.internal'
+    exclude group: 'org.apache.tuweni'
+  }
 
   annotationProcessor "org.immutables:value"
 

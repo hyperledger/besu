@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.witness.ExecutionWitness;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
@@ -65,6 +66,7 @@ public class BlockHeader extends SealableBlockHeader
       final BlobGas excessBlobGas,
       final Bytes32 parentBeaconBlockRoot,
       final Hash requestsRoot,
+      final ExecutionWitness executionWitness,
       final BlockHeaderFunctions blockHeaderFunctions) {
     super(
         parentHash,
@@ -86,7 +88,8 @@ public class BlockHeader extends SealableBlockHeader
         blobGasUsed,
         excessBlobGas,
         parentBeaconBlockRoot,
-        requestsRoot);
+        requestsRoot,
+        executionWitness);
     this.nonce = nonce;
     this.hash = Suppliers.memoize(() -> blockHeaderFunctions.hash(this));
     this.parsedExtraData = Suppliers.memoize(() -> blockHeaderFunctions.parseExtraData(this));
@@ -164,16 +167,23 @@ public class BlockHeader extends SealableBlockHeader
     if (withdrawalsRoot != null) {
       out.writeBytes(withdrawalsRoot);
     }
-    if (excessBlobGas != null && blobGasUsed != null) {
-      out.writeLongScalar(blobGasUsed);
-      out.writeUInt64Scalar(excessBlobGas);
-    }
-    if (parentBeaconBlockRoot != null) {
-      out.writeBytes(parentBeaconBlockRoot);
-    }
-    if (requestsRoot != null) {
-      out.writeBytes(requestsRoot);
-    }
+    /*if (excessBlobGas != null && blobGasUsed != null) {
+          out.writeLongScalar(blobGasUsed);
+          out.writeUInt64Scalar(excessBlobGas);
+        }
+        if (parentBeaconBlockRoot != null) {
+          out.writeBytes(parentBeaconBlockRoot);
+        }
+    <<<<<<< HEAD
+        if (depositsRoot != null) {
+          out.writeBytes(depositsRoot);
+        }
+        if (exitsRoot != null) {
+          out.writeBytes(exitsRoot);
+        }
+        if (requestsRoot != null) {
+          out.writeBytes(requestsRoot);
+        }*/
     out.endList();
   }
 
@@ -200,11 +210,21 @@ public class BlockHeader extends SealableBlockHeader
         !(input.isEndOfCurrentList() || input.isZeroLengthString())
             ? Hash.wrap(input.readBytes32())
             : null;
-    final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
-    final BlobGas excessBlobGas =
-        !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
-    final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
-    final Hash requestsRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+
+    // TODO REACTIVATE
+    /*final Long blobGasUsed = !input.isEndOfCurrentList() ? input.readLongScalar() : null;
+        final BlobGas excessBlobGas =
+            !input.isEndOfCurrentList() ? BlobGas.of(input.readUInt64Scalar()) : null;
+        final Bytes32 parentBeaconBlockRoot = !input.isEndOfCurrentList() ? input.readBytes32() : null;
+    <<<<<<< HEAD
+        final Hash depositHashRoot =
+            !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+        final Hash exitsHashRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+        final Hash requestsRoot = !input.isEndOfCurrentList() ? Hash.wrap(input.readBytes32()) : null;
+        */
+
+    final ExecutionWitness executionWitness =
+        !input.isEndOfCurrentList() ? ExecutionWitness.readFrom(input) : null;
     input.leaveList();
     return new BlockHeader(
         parentHash,
@@ -224,10 +244,11 @@ public class BlockHeader extends SealableBlockHeader
         mixHashOrPrevRandao,
         nonce,
         withdrawalHashRoot,
-        blobGasUsed,
-        excessBlobGas,
-        parentBeaconBlockRoot,
-        requestsRoot,
+        null,
+        null,
+        null,
+        null,
+        executionWitness,
         blockHeaderFunctions);
   }
 
@@ -315,11 +336,12 @@ public class BlockHeader extends SealableBlockHeader
             .getRequestsRoot()
             .map(h -> Hash.fromHexString(h.toHexString()))
             .orElse(null),
+        (ExecutionWitness) pluginBlockHeader.getExecutionWitness().orElse(null),
         blockHeaderFunctions);
   }
 
   @Override
   public String toLogString() {
-    return getNumber() + " (" + getHash() + ")";
+    return getNumber() + " (" + getHash() + " " + getParentHash() + ")";
   }
 }

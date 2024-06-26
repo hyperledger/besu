@@ -33,6 +33,8 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.ClearEmptyAccount;
+import org.hyperledger.besu.ethereum.mainnet.ClearEmptyAccountStrategy.NotClearEmptyAccount;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder.BlockValidatorBuilder;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.CancunBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
@@ -52,6 +54,7 @@ import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.Eip4762GasCalculator;
 import org.hyperledger.besu.evm.gascalculator.FrontierGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
@@ -127,7 +130,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    false,
+                    new NotClearEmptyAccount(),
                     false,
                     evmConfiguration.evmStackSize(),
                     FeeMarket.legacy(),
@@ -260,7 +263,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    new ClearEmptyAccount(),
                     false,
                     evmConfiguration.evmStackSize(),
                     feeMarket,
@@ -421,7 +424,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    new ClearEmptyAccount(),
                     false,
                     evmConfiguration.evmStackSize(),
                     feeMarket,
@@ -500,6 +503,9 @@ public abstract class MainnetProtocolSpecs {
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
+
+    final ClearEmptyAccountStrategy clearEmptyAccountStrategy = new ClearEmptyAccount();
+
     return parisDefinition(
             chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         // gas calculator has new code to support EIP-3860 limit and meter initcode
@@ -521,7 +527,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidatorFactory,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    clearEmptyAccountStrategy,
                     true,
                     evmConfiguration.evmStackSize(),
                     feeMarket,
@@ -540,8 +546,9 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
                     evm.getEvmVersion().getMaxInitcodeSize()))
-        .withdrawalsProcessor(new WithdrawalsProcessor())
+        .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
+        .executionWitnessValidator(new ExecutionWitnessValidator.AllowedExecutionWitness())
         .name("Shanghai");
   }
 
@@ -591,7 +598,7 @@ public abstract class MainnetProtocolSpecs {
                     transactionValidator,
                     contractCreationProcessor,
                     messageCallProcessor,
-                    true,
+                    new ClearEmptyAccount(),
                     true,
                     evmConfiguration.evmStackSize(),
                     feeMarket,
@@ -697,6 +704,44 @@ public abstract class MainnetProtocolSpecs {
                     List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
                     1,
                     SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES));
+  }
+
+  static ProtocolSpecBuilder eip4762Definition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
+
+    final ClearEmptyAccountStrategy clearEmptyAccountStrategy =
+        new ClearEmptyAccountStrategy.ClearEmptyAccountWithException(
+            List.of(PragueBlockHashProcessor.HISTORY_STORAGE_ADDRESS));
+    return shanghaiDefinition(
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+        .gasCalculator(Eip4762GasCalculator::new)
+        .evmBuilder(
+            (gasCalculator, jdCacheConfig) ->
+                MainnetEVMs.eip4762(
+                    gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
+        .transactionProcessorBuilder(
+            (gasCalculator,
+                feeMarket,
+                transactionValidatorFactory,
+                contractCreationProcessor,
+                messageCallProcessor) ->
+                new MainnetTransactionProcessor(
+                    gasCalculator,
+                    transactionValidatorFactory,
+                    contractCreationProcessor,
+                    messageCallProcessor,
+                    clearEmptyAccountStrategy,
+                    true,
+                    evmConfiguration.evmStackSize(),
+                    feeMarket,
+                    CoinbaseFeePriceCalculator.eip1559()))
+        .withdrawalsProcessor(new WithdrawalsProcessor(clearEmptyAccountStrategy))
+        .blockHashProcessor(new PragueBlockHashProcessor())
+        .name("eip4762");
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(

@@ -24,6 +24,8 @@ import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
 
+import java.util.Optional;
+
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Balance operation. */
@@ -41,23 +43,29 @@ public class BalanceOperation extends AbstractOperation {
   /**
    * Gets Balance operation Gas Cost plus warm storage read cost or cold account access cost.
    *
+   * @param frame current frame
+   * @param maybeAddress to use for get balance
    * @param accountIsWarm true to add warm storage read cost, false to add cold account access cost
    * @return the long
    */
-  protected long cost(final boolean accountIsWarm) {
-    return gasCalculator().getBalanceOperationGasCost()
-        + (accountIsWarm
-            ? gasCalculator().getWarmStorageReadCost()
-            : gasCalculator().getColdAccountAccessCost());
+  protected long cost(
+      final MessageFrame frame, final Optional<Address> maybeAddress, final boolean accountIsWarm) {
+    return gasCalculator().getBalanceOperationGasCost(frame, accountIsWarm, maybeAddress);
   }
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    final Address address;
     try {
-      final Address address = Words.toAddress(frame.popStackItem());
+      address = Words.toAddress(frame.popStackItem());
+    } catch (final UnderflowException ufe) {
+      return new OperationResult(
+          cost(frame, Optional.empty(), true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
+    }
+    try {
       final boolean accountIsWarm =
           frame.warmUpAddress(address) || gasCalculator().isPrecompile(address);
-      final long cost = cost(accountIsWarm);
+      final long cost = cost(frame, Optional.of(address), accountIsWarm);
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
       } else {
@@ -65,10 +73,9 @@ public class BalanceOperation extends AbstractOperation {
         frame.pushStackItem(account == null ? Bytes.EMPTY : account.getBalance());
         return new OperationResult(cost, null);
       }
-    } catch (final UnderflowException ufe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {
-      return new OperationResult(cost(true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
+      return new OperationResult(
+          cost(frame, Optional.of(address), true), ExceptionalHaltReason.TOO_MANY_STACK_ITEMS);
     }
   }
 }

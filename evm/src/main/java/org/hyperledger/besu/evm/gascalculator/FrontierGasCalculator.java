@@ -26,6 +26,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.ExpOperation;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -152,7 +153,7 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long codeDepositGasCost(final int codeSize) {
+  public long codeDepositGasCost(final MessageFrame frame, final int codeSize) {
     return CODE_DEPOSIT_BYTE_COST * codeSize;
   }
 
@@ -225,6 +226,12 @@ public class FrontierGasCalculator implements GasCalculator {
   @Override
   public long newAccountGasCost() {
     return NEW_ACCOUNT_GAS_COST;
+  }
+
+  @Override
+  public long pushOperationGasCost(
+      final MessageFrame frame, final long codeOffset, final long readSize, final long codeSize) {
+    return getVeryLowTierGasCost();
   }
 
   @SuppressWarnings("removal")
@@ -314,6 +321,11 @@ public class FrontierGasCalculator implements GasCalculator {
     return 0;
   }
 
+  @Override
+  public long completedCreateContractGasCost(final MessageFrame frame) {
+    return 0;
+  }
+
   /**
    * Returns the amount of gas the CREATE operation will consume.
    *
@@ -374,9 +386,19 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long dataCopyOperationGasCost(
-      final MessageFrame frame, final long offset, final long length) {
+      final MessageFrame frame, final long offset, final long readSize) {
     return copyWordsToMemoryGasCost(
-        frame, VERY_LOW_TIER_GAS_COST, COPY_WORD_GAS_COST, offset, length);
+        frame, VERY_LOW_TIER_GAS_COST, COPY_WORD_GAS_COST, offset, readSize);
+  }
+
+  @Override
+  public long codeCopyOperationGasCost(
+      final MessageFrame frame,
+      final long memOffset,
+      final long codeOffset,
+      final long readSize,
+      final long codeSize) {
+    return dataCopyOperationGasCost(frame, memOffset, readSize);
   }
 
   @Override
@@ -392,7 +414,8 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
@@ -426,19 +449,33 @@ public class FrontierGasCalculator implements GasCalculator {
 
   @Override
   public long extCodeCopyOperationGasCost(
-      final MessageFrame frame, final long offset, final long length) {
+      final MessageFrame frame, final long memOffset, final long readSize) {
     return copyWordsToMemoryGasCost(
-        frame, extCodeBaseGasCost(), COPY_WORD_GAS_COST, offset, length);
+        frame, extCodeBaseGasCost(), COPY_WORD_GAS_COST, memOffset, readSize);
   }
 
   @Override
-  public long extCodeHashOperationGasCost() {
+  public long extCodeCopyOperationGasCost(
+      final MessageFrame frame,
+      final Address address,
+      final boolean accountIsWarm,
+      final long memOffset,
+      final long codeOffset,
+      final long readSize,
+      final long codeSize) {
+    return extCodeCopyOperationGasCost(frame, memOffset, readSize);
+  }
+
+  @Override
+  public long extCodeHashOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> address) {
     throw new UnsupportedOperationException(
         "EXTCODEHASH not supported by " + getClass().getSimpleName());
   }
 
   @Override
-  public long getExtCodeSizeOperationGasCost() {
+  public long getExtCodeSizeOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return extCodeBaseGasCost();
   }
 
@@ -475,7 +512,12 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long selfDestructOperationGasCost(final Account recipient, final Wei inheritance) {
+  public long selfDestructOperationGasCost(
+      final MessageFrame frame,
+      final Account recipient,
+      final Address recipientAddress,
+      final Wei inheritance,
+      final Address originatorAddress) {
     return SELFDESTRUCT_OPERATION_GAS_COST;
   }
 
@@ -491,12 +533,15 @@ public class FrontierGasCalculator implements GasCalculator {
   }
 
   @Override
-  public long getSloadOperationGasCost() {
+  public long getSloadOperationGasCost(
+      final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
     return SLOAD_OPERATION_GAS_COST;
   }
 
   @Override
   public long calculateStorageCost(
+      final MessageFrame frame,
+      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {

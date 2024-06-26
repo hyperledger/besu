@@ -23,6 +23,9 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.NoOpTrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.cache.VerkleNoOpCachedWorldStorageManager;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldState;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -47,6 +50,9 @@ public class GenesisWorldStateProvider {
     if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
         == DataStorageFormat.BONSAI) {
       return createGenesisBonsaiWorldState();
+    } else if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
+        == DataStorageFormat.VERKLE) {
+      return createGenesisVerkleWorldState();
     } else {
       return createGenesisForestWorldState();
     }
@@ -72,6 +78,22 @@ public class GenesisWorldStateProvider {
         bonsaiWorldStateKeyValueStorage,
         bonsaiCachedMerkleTrieLoader,
         new NoOpBonsaiCachedWorldStorageManager(bonsaiWorldStateKeyValueStorage),
+        new NoOpTrieLogManager(),
+        EvmConfiguration.DEFAULT,
+        new DiffBasedWorldStateConfig());
+  }
+
+  private static MutableWorldState createGenesisVerkleWorldState() {
+    final VerkleWorldStateKeyValueStorage verkleWorldStateKeyValueStorage =
+        new VerkleWorldStateKeyValueStorage(
+            new KeyValueStorageProvider(
+                segmentIdentifiers -> new SegmentedInMemoryKeyValueStorage(),
+                new InMemoryKeyValueStorage(),
+                new NoOpMetricsSystem()),
+            new NoOpMetricsSystem());
+    return new VerkleWorldState(
+        verkleWorldStateKeyValueStorage,
+        new VerkleNoOpCachedWorldStorageManager(verkleWorldStateKeyValueStorage),
         new NoOpTrieLogManager(),
         EvmConfiguration.DEFAULT,
         new DiffBasedWorldStateConfig());

@@ -547,7 +547,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       final Address address,
       final AccountValue expectedValue,
       final AccountValue replacementValue) {
-    if (Objects.equals(expectedValue, replacementValue)) {
+    if (shouldIgnoreIdenticalValuesDuringAccountRollingUpdate()
+        && Objects.equals(expectedValue, replacementValue)) {
       // non-change, a cached read.
       return;
     }
@@ -811,4 +812,9 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
 
   protected abstract void assertCloseEnoughForDiffing(
       final ACCOUNT source, final AccountValue account, final String context);
+
+  protected abstract Optional<UInt256> getStorageValueByStorageSlotKey(
+      DiffBasedWorldState worldState, Address address, StorageSlotKey storageSlotKey);
+
+  protected abstract boolean shouldIgnoreIdenticalValuesDuringAccountRollingUpdate();
 }

@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkNotNull;
 import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.collections.trie.BytesTrieSet;
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -32,6 +33,7 @@ import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -85,6 +87,8 @@ public class EVMExecutor {
   private MessageCallProcessor messageCallProcessor = null;
   private ContractCreationProcessor contractCreationProcessor = null;
   private MessageFrame.Type messageFrameType = MessageFrame.Type.MESSAGE_CALL;
+
+  private final AccessWitness accessWitness = new NoopAccessWitness();
 
   private EVMExecutor(final EVM evm) {
     checkNotNull(evm, "evm must not be null");
@@ -742,6 +746,7 @@ public class EVMExecutor {
             .blockHashLookup(blockHashLookup)
             .accessListWarmAddresses(accessListWarmAddresses)
             .accessListWarmStorage(accessListWarmStorage)
+            .accessWitness(accessWitness)
             .versionedHashes(versionedHashes)
             .completer(c -> {})
             .build();

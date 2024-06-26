@@ -146,7 +146,6 @@ public class QbftRoundTest {
 
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     when(protocolSpec.getBlockImporter()).thenReturn(blockImporter);
-
     when(blockImporter.importBlock(any(), any(), any()))
         .thenReturn(new BlockImportResult(BlockImportResult.BlockImportStatus.IMPORTED));
 

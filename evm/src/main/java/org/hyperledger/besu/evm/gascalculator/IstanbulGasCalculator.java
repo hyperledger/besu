@@ -14,6 +14,10 @@
  */
 package org.hyperledger.besu.evm.gascalculator;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.evm.frame.MessageFrame;
+
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -60,6 +64,8 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-2200
   public long calculateStorageCost(
+      final MessageFrame frame,
+      final UInt256 key,
       final UInt256 newValue,
       final Supplier<UInt256> currentValue,
       final Supplier<UInt256> originalValue) {
@@ -121,19 +127,22 @@ public class IstanbulGasCalculator extends PetersburgGasCalculator {
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
-  public long getSloadOperationGasCost() {
+  public long getSloadOperationGasCost(
+      final MessageFrame frame, final UInt256 key, final boolean slotIsWarm) {
     return SLOAD_GAS;
   }
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
-  public long getBalanceOperationGasCost() {
+  public long getBalanceOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> maybeAddress) {
     return BALANCE_OPERATION_GAS_COST;
   }
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-1884
-  public long extCodeHashOperationGasCost() {
+  public long extCodeHashOperationGasCost(
+      final MessageFrame frame, final boolean accountIsWarm, final Optional<Address> address) {
     return EXTCODE_HASH_COST;
   }
 
