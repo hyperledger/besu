@@ -1198,6 +1198,7 @@ public class Transaction
       this.chainId = toCopy.chainId;
       this.versionedHashes = toCopy.versionedHashes.orElse(null);
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
+      this.setCodeTransactionPayloads = toCopy.maybeSetCodeTransactionPayloads;
       return this;
     }
 
