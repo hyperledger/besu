@@ -58,10 +58,10 @@ public class QbftValidatorContractConfigFactory {
             .collect(toList());
 
     final Map<String, String> storageValues = new LinkedHashMap<>();
-    // zero location is size of array
+    // zero location is the size of array
     storageValues.put(padZero(0), padZero(addresses.size()));
 
-    // further locations are allocation of addresses to array
+    // further locations are the allocation of addresses to array
     for (int i = 0; i < addresses.size(); i++) {
       final BigInteger varStorage = ARRAY_ADDR.add(BigInteger.valueOf(i));
       storageValues.put(varStorage.toString(16), addresses.get(i));
