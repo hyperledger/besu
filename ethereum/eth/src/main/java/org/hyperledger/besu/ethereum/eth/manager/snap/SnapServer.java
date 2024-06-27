@@ -456,8 +456,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         } else {
           Optional<Bytes> optCode = worldStateStorageCoordinator.getCode(Hash.wrap(codeHash), null);
           if (optCode.isPresent()) {
-            if (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes
-                || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST) {
+            if (!codeBytes.isEmpty()
+                && (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes
+                    || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
               break;
             }
             codeBytes.add(optCode.get());
@@ -511,8 +512,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     var optStorage =
                         storage.getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)));
                     if (optStorage.isPresent()) {
-                      if (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes
-                          || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST) {
+                      if (!trieNodes.isEmpty()
+                          && (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes
+                              || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
                         break;
                       }
                       trieNodes.add(optStorage.get());
@@ -528,7 +530,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     // otherwise the first element should be account hash, and subsequent paths
                     // are compact encoded account storage paths
 
-                    final Bytes accountPrefix = triePath.get(0);
+                    final Bytes accountPrefix = Bytes32.leftPad(triePath.getFirst());
 
                     List<Bytes> storagePaths = triePath.subList(1, triePath.size());
                     for (var path : storagePaths) {
@@ -536,7 +538,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                           storage.getTrieNodeUnsafe(
                               Bytes.concatenate(accountPrefix, CompactEncoding.decode(path)));
                       if (optStorage.isPresent()) {
-                        if (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes) {
+                        if (!trieNodes.isEmpty()
+                            && sumListBytes(trieNodes) + optStorage.get().size()
+                                > maxResponseBytes) {
                           break;
                         }
                         trieNodes.add(optStorage.get());
@@ -614,11 +618,14 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         return false;
       }
 
+      var hasNoRecords = recordLimit.get() == 0;
       var underRecordLimit = recordLimit.addAndGet(1) <= MAX_ENTRIES_PER_REQUEST;
       var underByteLimit =
           byteLimit.accumulateAndGet(0, (cur, __) -> cur + encodingSizeAccumulator.apply(pair))
               < maxResponseBytesFudgeFactor;
-      if (underRecordLimit && underByteLimit) {
+      // Only enforce limits when we have at least 1 record as the snapsync spec
+      // requires at least 1 record must be returned
+      if (hasNoRecords || (underRecordLimit && underByteLimit)) {
         return true;
       } else {
         shouldContinue.set(false);
