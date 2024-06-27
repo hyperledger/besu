@@ -100,19 +100,45 @@ public class RoundChangeManager {
   @VisibleForTesting
   final Map<ConsensusRoundIdentifier, RoundChangeStatus> roundChangeCache = Maps.newHashMap();
 
+  /** A summary of the latest round each validator is on, for diagnostic purposes only */
+  private final Map<Address, ConsensusRoundIdentifier> roundSummary = Maps.newHashMap();
+
   private final long quorum;
   private final RoundChangeMessageValidator roundChangeMessageValidator;
+  private final Address localAddress;
 
   /**
    * Instantiates a new Round change manager.
    *
    * @param quorum the quorum
    * @param roundChangeMessageValidator the round change message validator
+   * @param localAddress this node's address
    */
   public RoundChangeManager(
-      final long quorum, final RoundChangeMessageValidator roundChangeMessageValidator) {
+      final long quorum,
+      final RoundChangeMessageValidator roundChangeMessageValidator,
+      final Address localAddress) {
     this.quorum = quorum;
     this.roundChangeMessageValidator = roundChangeMessageValidator;
+    this.localAddress = localAddress;
+  }
+
+  public void logRoundChangeSummary(final RoundChange message) {
+    roundSummary.put(message.getAuthor(), message.getRoundIdentifier());
+    if (roundChangeCache.keySet().stream()
+            .findFirst()
+            .orElse(new ConsensusRoundIdentifier(0, 0))
+            .getRoundNumber()
+        >= 2) {
+      LOG.info("BFT round summary (quorum = {})", quorum);
+      for (Map.Entry<Address, ConsensusRoundIdentifier> nextEntry : roundSummary.entrySet()) {
+        LOG.info(
+            "Address: {}  Round: {} {}",
+            nextEntry.getKey(),
+            nextEntry.getValue().getRoundNumber(),
+            nextEntry.getKey().equals(localAddress) ? "(Local node)" : "");
+      }
+    }
   }
 
   /**

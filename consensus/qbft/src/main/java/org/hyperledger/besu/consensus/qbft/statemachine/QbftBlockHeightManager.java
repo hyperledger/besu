@@ -274,17 +274,25 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
   @Override
   public void handleRoundChangePayload(final RoundChange message) {
     final ConsensusRoundIdentifier targetRound = message.getRoundIdentifier();
-    LOG.trace("Received a RoundChange Payload for {}", targetRound);
+
+    LOG.debug(
+        "Round change from {}: block {}, round {}",
+        message.getAuthor(),
+        message.getRoundIdentifier().getSequenceNumber(),
+        message.getRoundIdentifier().getRoundNumber());
+
+    roundChangeManager.logRoundChangeSummary(message);
 
     final MessageAge messageAge =
         determineAgeOfPayload(message.getRoundIdentifier().getRoundNumber());
     if (messageAge == MessageAge.PRIOR_ROUND) {
-      LOG.trace("Received RoundChange Payload for a prior round. targetRound={}", targetRound);
+      LOG.debug("Received RoundChange Payload for a prior round. targetRound={}", targetRound);
       return;
     }
 
     final Optional<Collection<RoundChange>> result =
         roundChangeManager.appendRoundChangeMessage(message);
+
     if (result.isPresent()) {
       LOG.debug(
           "Received sufficient RoundChange messages to change round to targetRound={}",
