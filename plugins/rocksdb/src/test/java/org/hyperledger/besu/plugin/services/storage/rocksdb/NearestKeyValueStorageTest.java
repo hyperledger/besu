@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.plugin.services;
+package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
@@ -26,15 +26,13 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.BesuConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage.NearestKeyValue;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBKeyValueStorageFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
-import org.hyperledger.besu.plugin.services.storage.rocksdb.Utils;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.RocksDBFactoryConfiguration;
 import org.hyperledger.besu.services.kvstore.LayeredKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
@@ -80,7 +78,7 @@ public class NearestKeyValueStorageTest {
   }
 
   @Test
-  public void testInMemoryKeyValueStorageNearest() {
+  public void testNearestRocksdbWithInMemoryKeyValueStorage() {
     final SegmentedKeyValueStorage rockdDBKeyValueStorage =
         getRocksDBKeyValueStorage(TRIE_BRANCH_STORAGE);
     final SegmentedKeyValueStorageTransaction rocksDbTransaction =
@@ -175,7 +173,7 @@ public class NearestKeyValueStorageTest {
   }
 
   @Test
-  public void testLayeredKeyValueStorageNearest() {
+  public void testNearestRocksdbWithLayeredKeyValueStorage() {
     final SegmentedKeyValueStorage rockdDBKeyValueStorage =
         getRocksDBKeyValueStorage(TRIE_BRANCH_STORAGE);
     final SegmentedKeyValueStorageTransaction rocksDbTransaction =
