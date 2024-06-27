@@ -30,6 +30,7 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.Optional;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
 public class VerkleWorldStateUpdateAccumulator
@@ -39,8 +40,9 @@ public class VerkleWorldStateUpdateAccumulator
       final DiffBasedWorldView world,
       final Consumer<DiffBasedValue<VerkleAccount>> accountPreloader,
       final Consumer<StorageSlotKey> storagePreloader,
+      final Consumer<Bytes> codePreloader,
       final EvmConfiguration evmConfiguration) {
-    super(world, accountPreloader, storagePreloader, evmConfiguration);
+    super(world, accountPreloader, storagePreloader, codePreloader, evmConfiguration);
   }
 
   @Override
@@ -50,6 +52,7 @@ public class VerkleWorldStateUpdateAccumulator
             wrappedWorldView(),
             getAccountPreloader(),
             getStoragePreloader(),
+            getCodePreloader(),
             getEvmConfiguration());
     copy.cloneFromUpdater(this);
     return copy;
