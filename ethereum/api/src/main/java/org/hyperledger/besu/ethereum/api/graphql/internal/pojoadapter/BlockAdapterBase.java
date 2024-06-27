@@ -399,7 +399,7 @@ public class BlockAdapterBase extends AdapterBase {
    * @param environment the DataFetchingEnvironment
    * @return the raw data of the block
    */
-   Bytes getRaw(final DataFetchingEnvironment environment) {
+  Bytes getRaw(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     return query
         .getBlockchain()
