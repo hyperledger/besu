@@ -281,7 +281,8 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
         message.getRoundIdentifier().getSequenceNumber(),
         message.getRoundIdentifier().getRoundNumber());
 
-    roundChangeManager.logRoundChangeSummary(message);
+    // Diagnostic logging (only logs anything if the chain has stalled)
+    roundChangeManager.storeAndLogRoundChangeSummary(message);
 
     final MessageAge messageAge =
         determineAgeOfPayload(message.getRoundIdentifier().getRoundNumber());

@@ -123,7 +123,13 @@ public class RoundChangeManager {
     this.localAddress = localAddress;
   }
 
-  public void logRoundChangeSummary(final RoundChange message) {
+  /**
+   * Store the latest round for a node, and if chain is stalled log a summary of which round each
+   * address is on
+   *
+   * @param message the round-change message that has just been received
+   */
+  public void storeAndLogRoundChangeSummary(final RoundChange message) {
     roundSummary.put(message.getAuthor(), message.getRoundIdentifier());
     if (roundChangeCache.keySet().stream()
             .findFirst()
