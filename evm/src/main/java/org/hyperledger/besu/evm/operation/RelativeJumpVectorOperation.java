@@ -14,8 +14,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
-import static org.hyperledger.besu.evm.internal.Words.readBigEndianI16;
-
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -39,36 +38,42 @@ public class RelativeJumpVectorOperation extends AbstractFixedCostOperation {
 
   @Override
   protected OperationResult executeFixedCostOperation(final MessageFrame frame, final EVM evm) {
-    final Bytes code = frame.getCode().getBytes();
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
     int offsetCase;
     try {
-      offsetCase = frame.popStackItem().toInt();
+      offsetCase = frame.popStackItem().trimLeadingZeros().toInt();
       if (offsetCase < 0) {
         offsetCase = Integer.MAX_VALUE;
       }
     } catch (ArithmeticException | IllegalArgumentException ae) {
       offsetCase = Integer.MAX_VALUE;
     }
-    final int vectorSize = getVectorSize(code, frame.getPC() + 1);
+    final int vectorSize = getVectorSize(code.getBytes(), frame.getPC() + 1);
+    int jumpDelta =
+        (offsetCase < vectorSize)
+            ? code.readBigEndianI16(
+                frame.getPC() + 2 + offsetCase * 2) // lookup delta if offset is in vector
+            : 0; // if offsetCase is outside the vector the jump delta is zero / next opcode.
     return new OperationResult(
         gasCost,
         null,
-        1
-            + 2 * vectorSize
-            + ((offsetCase >= vectorSize)
-                ? 0
-                : readBigEndianI16(frame.getPC() + 2 + offsetCase * 2, code.toArrayUnsafe()))
-            + 1);
+        2 // Opcode + length immediate
+            + 2 * vectorSize // vector size
+            + jumpDelta);
   }
 
   /**
-   * Gets vector size.
+   * Gets vector size. Vector size is one greater than length immediate, because (a) zero length
+   * tables are useless and (b) it allows for 256 byte tables
    *
    * @param code the code
    * @param offsetCountByteIndex the offset count byte index
    * @return the vector size
    */
   public static int getVectorSize(final Bytes code, final int offsetCountByteIndex) {
-    return code.get(offsetCountByteIndex) & 0xff;
+    return (code.toArrayUnsafe()[offsetCountByteIndex] & 0xff) + 1;
   }
 }

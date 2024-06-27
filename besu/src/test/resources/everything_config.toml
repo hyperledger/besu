@@ -51,6 +51,7 @@ engine-jwt-disabled=true
 engine-jwt-secret="/tmp/jwt.hex"
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org"
+net-restrict=["none"]
 
 # chain
 network="MAINNET"
@@ -214,6 +215,8 @@ ethstats-cacert-file="./root.cert"
 # Data storage
 data-storage-format="BONSAI"
 bonsai-historical-block-limit=512
+bonsai-limit-trie-logs-enabled=true
+bonsai-trie-logs-pruning-window-size=100_000
 receipt-compaction-enabled=true
 
 # feature flags

@@ -109,6 +109,7 @@ public enum RpcMethod {
   ETH_GET_FILTER_CHANGES("eth_getFilterChanges"),
   ETH_GET_FILTER_LOGS("eth_getFilterLogs"),
   ETH_GET_LOGS("eth_getLogs"),
+  ETH_GET_MAX_PRIORITY_FEE_PER_GAS("eth_maxPriorityFeePerGas"),
   ETH_GET_MINER_DATA_BY_BLOCK_HASH("eth_getMinerDataByBlockHash"),
   ETH_GET_MINER_DATA_BY_BLOCK_NUMBER("eth_getMinerDataByBlockNumber"),
   ETH_GET_PROOF("eth_getProof"),

@@ -117,6 +117,7 @@ import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.JsonObject;
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.commons.text.StringEscapeUtils;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -261,6 +262,7 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<ApiConfiguration> apiConfigurationCaptor;
 
   @Captor protected ArgumentCaptor<EthstatsOptions> ethstatsOptionsArgumentCaptor;
+  @Captor protected ArgumentCaptor<List<SubnetInfo>> allowedSubnetsArgumentCaptor;
 
   @BeforeEach
   public void initMocks() throws Exception {
@@ -354,6 +356,7 @@ public abstract class CommandTestAbstract {
     when(mockRunnerBuilder.legacyForkId(anyBoolean())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.apiConfiguration(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.enodeDnsConfiguration(any())).thenReturn(mockRunnerBuilder);
+    when(mockRunnerBuilder.allowedSubnets(any())).thenReturn(mockRunnerBuilder);
     when(mockRunnerBuilder.build()).thenReturn(mockRunner);
 
     final SignatureAlgorithm signatureAlgorithm = SignatureAlgorithmFactory.getInstance();

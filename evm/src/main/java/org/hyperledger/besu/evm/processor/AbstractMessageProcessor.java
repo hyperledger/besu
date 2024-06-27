@@ -71,7 +71,7 @@ public abstract class AbstractMessageProcessor {
   // List of addresses to force delete when they are touched but empty
   // when the state changes in the message are were not meant to be committed.
   private final Collection<? super Address> forceDeleteAccountsWhenEmpty;
-  private final EVM evm;
+  final EVM evm;
 
   /**
    * Instantiates a new Abstract message processor.
@@ -188,13 +188,10 @@ public abstract class AbstractMessageProcessor {
     if (operationTracer != null) {
       if (frame.getState() == MessageFrame.State.NOT_STARTED) {
         operationTracer.traceContextEnter(frame);
+        start(frame, operationTracer);
       } else {
         operationTracer.traceContextReEnter(frame);
       }
-    }
-
-    if (frame.getState() == MessageFrame.State.NOT_STARTED) {
-      start(frame, operationTracer);
     }
 
     if (frame.getState() == MessageFrame.State.CODE_EXECUTING) {
@@ -243,12 +240,12 @@ public abstract class AbstractMessageProcessor {
   }
 
   /**
-   * Gets code from evm, skipping the code cache
+   * Gets code from evm, with handling for EOF code plus calldata
    *
    * @param codeBytes the code bytes
    * @return the code from evm
    */
-  public Code getCodeFromEVMUncached(final Bytes codeBytes) {
-    return evm.getCodeUncached(codeBytes);
+  public Code getCodeFromEVMForCreation(final Bytes codeBytes) {
+    return evm.getCodeForCreation(codeBytes);
   }
 }

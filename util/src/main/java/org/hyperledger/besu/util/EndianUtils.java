@@ -18,6 +18,7 @@ package org.hyperledger.besu.util;
 public class EndianUtils {
   // next two methods adopted from:
   // https://github.com/bcgit/bc-java/blob/master/core/src/main/java/org/bouncycastle/util/Pack.java
+  private EndianUtils() {}
 
   /**
    * Long to big endian.

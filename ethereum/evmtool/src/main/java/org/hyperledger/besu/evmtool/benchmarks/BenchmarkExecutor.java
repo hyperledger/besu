@@ -31,6 +31,7 @@ import org.hyperledger.besu.evm.gascalculator.HomesteadGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.LondonGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
@@ -112,12 +113,12 @@ public abstract class BenchmarkExecutor {
     }
     timer.stop();
 
-    if (executions < 1) {
+    if (executions > 0) {
+      final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
+      return elapsed / executions;
+    } else {
       return Double.NaN;
     }
-
-    final double elapsed = timer.elapsed(TimeUnit.NANOSECONDS) / 1.0e9D;
-    return elapsed / executions;
   }
 
   /**
@@ -131,6 +132,8 @@ public abstract class BenchmarkExecutor {
     return switch (EvmSpecVersion.valueOf(fork.toUpperCase(Locale.ROOT))) {
       case HOMESTEAD -> new HomesteadGasCalculator();
       case FRONTIER -> new FrontierGasCalculator();
+      case TANGERINE_WHISTLE -> null;
+      case SPURIOUS_DRAGON -> null;
       case BYZANTIUM -> new ByzantiumGasCalculator();
       case CONSTANTINOPLE -> new ConstantinopleGasCalculator();
       case PETERSBURG -> new PetersburgGasCalculator();
@@ -139,7 +142,17 @@ public abstract class BenchmarkExecutor {
       case LONDON, PARIS -> new LondonGasCalculator();
       case SHANGHAI -> new ShanghaiGasCalculator();
       case CANCUN -> new CancunGasCalculator();
-      default -> new PragueGasCalculator();
+      case PRAGUE -> new PragueGasCalculator();
+      case CANCUN_EOF,
+              PRAGUE_EOF,
+              OSAKA,
+              AMSTERDAM,
+              BOGOTA,
+              POLIS,
+              BANGKOK,
+              FUTURE_EIPS,
+              EXPERIMENTAL_EIPS ->
+          new PragueEOFGasCalculator();
     };
   }
 

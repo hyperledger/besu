@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
@@ -146,8 +145,8 @@ public class TransitionContext implements MergeContext {
   }
 
   @Override
-  public Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId) {
-    return postMergeContext.retrieveBlockById(payloadId);
+  public Optional<PayloadWrapper> retrievePayloadById(final PayloadIdentifier payloadId) {
+    return postMergeContext.retrievePayloadById(payloadId);
   }
 
   @Override

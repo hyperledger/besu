@@ -19,11 +19,11 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 21
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
@@ -60,8 +60,8 @@ jobs:
       - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
-          distribution: adopt
-          java-version: 17
+          distribution: temurin
+          java-version: 21
       - name: Download zip
         uses: actions/download-artifact@eaceaf801fd36c7dee90939fad912460b18a1ffe
         with:
@@ -79,7 +79,7 @@ jobs:
 
   publish:
     runs-on: ubuntu-22.04
-    needs: [testWindows]
+    needs: [testWindows, artifacts]
     permissions:
       contents: write
     steps:
@@ -108,11 +108,11 @@ jobs:
     steps:
       - name: checkout
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
-      - name: Set up JDK 17
+      - name: Set up Java
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
-          distribution: 'temurin'
-          java-version: '17'
+          distribution: temurin
+          java-version: 21
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
@@ -132,7 +132,7 @@ jobs:
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
@@ -151,7 +151,7 @@ jobs:
       matrix:
         platform:
           - ubuntu-22.04
-          - [self-hosted, ARM64]
+          - besu-arm64
     runs-on: ${{ matrix.platform }}
     steps:
       - name: Prepare
@@ -174,7 +174,7 @@ jobs:
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
@@ -214,7 +214,7 @@ jobs:
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
@@ -248,8 +248,8 @@ jobs:
       - uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
       - uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
-          distribution: 'temurin' # See 'Supported distributions' for available options
-          java-version: '17'
+          distribution: temurin
+          java-version: 21
           cache: gradle
       - name: login to ${{ env.registry }}
         uses: docker/login-action@343f7c4344506bcbf9b4de18042ae17996df046d
@@ -265,3 +265,17 @@ jobs:
         run: ./gradlew "-Prelease.releaseVersion=${{ github.event.release.name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" dockerUploadRelease
       - name: Docker manifest
         run: ./gradlew "-Prelease.releaseVersion=${{ github.event.release.name }}" "-PdockerOrgName=${{ env.registry }}/${{ secrets.DOCKER_ORG }}" manifestDockerRelease
+
+  verifyContainer:
+    needs: dockerPromoteX64
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: read
+      actions: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
+      - name: Trigger container verify
+        run: echo '{"version":"${{ github.event.release.name }}","verify-latest-version":"true"}' | gh workflow run container-verify.yml --json
+        env:
+          GH_TOKEN: ${{ github.token }}

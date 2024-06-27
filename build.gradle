@@ -47,8 +47,8 @@ sonarqube {
 
 project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
-if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-  throw new GradleException("Java 17 or later is required to build Besu.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
+  throw new GradleException("Java 21 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -125,7 +125,7 @@ allprojects {
   version = calculateVersion()
 
   jacoco {
-    toolVersion = '0.8.8'
+    toolVersion = '0.8.11'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -144,8 +144,8 @@ allprojects {
   tasks.build {
     dependsOn 'javadoc'
   }
-  sourceCompatibility = 17
-  targetCompatibility = 17
+  sourceCompatibility = 21
+  targetCompatibility = 21
 
   repositories {
     maven {
@@ -366,9 +366,7 @@ allprojects {
       '-org.hyperledger.besu.tests.acceptance.*,' +
       '-org.hyperledger.besu.tests.web3j.generated,' +
       // TODO: these are temporary disabled (ethereum and sub modules), it should be removed in a future PR.
-      '-org.hyperledger.besu.ethereum,' +
       '-org.hyperledger.besu.ethereum.*,' +
-      '-org.hyperledger.besu.ethstats.*,' +
       '-org.hyperledger.besu.evmtool',
       true)
     options.addStringOption('Xmaxerrs','65535')
@@ -386,7 +384,7 @@ task checkMavenCoordinateCollisions {
     getAllprojects().forEach {
       if (it.properties.containsKey('publishing') && it.jar?.enabled) {
         def coordinate = it.publishing?.publications[0].coordinates
-        if (coordinates.containsKey(coordinate)) {
+        if (coordinate.toString().startsWith("org") && coordinates.containsKey(coordinate)) {
           throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
           "both ${coordinates[coordinate]} and ${it.path}.\n" +
           "Please add a `publishing` script block to one or both subprojects.")
@@ -634,7 +632,9 @@ startScripts {
   defaultJvmOpts = applicationDefaultJvmArgs + [
     "-XX:G1ConcRefinementThreads=2",
     "-XX:G1HeapWastePercent=15",
-    "-XX:MaxGCPauseMillis=100"
+    "-XX:MaxGCPauseMillis=100",
+    "-XX:StartFlightRecording,dumponexit=true,settings=default.jfc",
+    "-Xlog:jfr*=off"
   ]
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
@@ -932,6 +932,10 @@ def calculateVersion() {
   def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
 
   if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
+    if (project.hasProperty('versionappendcommit') && project.versionappendcommit == "true") {
+      def gitDetails = getGitCommitDetails(7) // Adjust length as needed
+      return "${project.version}-${gitDetails.hash}"
+    }
     return "${project.version}"
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
