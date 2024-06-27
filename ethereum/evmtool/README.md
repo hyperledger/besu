@@ -55,8 +55,8 @@ manage the graalVM install, homebrew has issues with native attributes
 and code signing.
 
 ```zsh
-sdk install java 22.3.r17-grl 
-sdk use java 22.3.r17-grl
+sdk install java 21.0.3-graal 
+sdk use java 21.0.3-graal
 ```
 
 You can also manually install GraalVM from
