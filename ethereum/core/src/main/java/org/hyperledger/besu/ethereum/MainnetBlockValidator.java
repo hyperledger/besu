@@ -36,14 +36,36 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The MainnetBlockValidator class implements the BlockValidator interface for the Mainnet Ethereum
+ * network. It validates and processes blocks according to the rules of the Mainnet Ethereum
+ * network.
+ */
 public class MainnetBlockValidator implements BlockValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetBlockValidator.class);
+
+  /** The BlockHeaderValidator used to validate block headers. */
   protected final BlockHeaderValidator blockHeaderValidator;
+
+  /** The BlockBodyValidator used to validate block bodies. */
   protected final BlockBodyValidator blockBodyValidator;
+
+  /** The BlockProcessor used to process blocks. */
   protected final BlockProcessor blockProcessor;
+
+  /** The BadBlockManager used to manage bad blocks. */
   protected final BadBlockManager badBlockManager;
 
+  /**
+   * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
+   * BlockProcessor, and BadBlockManager.
+   *
+   * @param blockHeaderValidator the BlockHeaderValidator used to validate block headers
+   * @param blockBodyValidator the BlockBodyValidator used to validate block bodies
+   * @param blockProcessor the BlockProcessor used to process blocks
+   * @param badBlockManager the BadBlockManager used to manage bad blocks
+   */
   public MainnetBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
