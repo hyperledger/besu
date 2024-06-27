@@ -102,7 +102,7 @@ public class XmlExtensionConfiguration extends XmlConfiguration {
                     dim("%t"),
                     colorize("%-5level"),
                     dim("%c{1}"),
-                    colorize("%msg%n%throwable")))
+                    colorize("%msgc%n%throwable")))
             .build();
     final ConsoleAppender consoleAppender =
         ConsoleAppender.newBuilder().setName("Console").setLayout(patternLayout).build();
