@@ -404,24 +404,26 @@ allprojects {
       // evmtool module
       '-org.hyperledger.besu.evmtool,' +
       // p2p module
-      '-org.hyperledger.besu.p2p.*,' +
+      '-org.hyperledger.besu.ethereum.p2p,' +
+      '-org.hyperledger.besu.ethereum.p2p.*,' +
       // permissioning module
-      '-org.hyperledger.besu.permissioning,' +
-      '-org.hyperledger.besu.permissioning.account.*,' +
-      '-org.hyperledger.besu.permissioning.node.*,' +
+      '-org.hyperledger.besu.ethereum.permissioning,' +
+      '-org.hyperledger.besu.ethereum.permissioning.*,' +
+      // referencetests module
+      '-org.hyperledger.besu.ethereum.referencetests,' +
       // retesteth module
-      '-org.hyperledger.besu.retesteth.*,' +
-      '-org.hyperledger.besu.retesteth,' +
+      '-org.hyperledger.besu.ethereum.retesteth.methods,' +
+      '-org.hyperledger.besu.ethereum.retesteth,' +
       //rlp module
       '-org.hyperledger.besu.ethereum.rlp,' +
       // stratum module
-      '-org.hyperledger.besu.ethereum.stratum.*,' +
+      '-org.hyperledger.besu.ethereum.stratum,' +
       // trie module
       '-org.hyperledger.besu.ethereum.trie.*,' +
       '-org.hyperledger.besu.ethereum.trie,' +
       // verkle trie module
-      '-org.hyperledger.besu.ethereum.trie,' +
-      '-org.hyperledger.besu.ethereum.trie.*',
+      '-org.hyperledger.besu.ethereum.verkletrie,' +
+      '-org.hyperledger.besu.ethereum.verkletrie.*',
       true)
     options.addStringOption('Xmaxerrs','65535')
     options.addStringOption('Xmaxwarns','65535')
