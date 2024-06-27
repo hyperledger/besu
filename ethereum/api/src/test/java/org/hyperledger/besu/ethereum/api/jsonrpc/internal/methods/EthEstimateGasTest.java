@@ -361,7 +361,7 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeDisabled() {
+  public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeEnabled() {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO, true));
     mockTransientProcessorResultGasEstimate(1L, false, true);
