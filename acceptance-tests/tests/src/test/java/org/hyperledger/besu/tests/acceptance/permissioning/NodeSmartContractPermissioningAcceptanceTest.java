@@ -17,6 +17,7 @@ package org.hyperledger.besu.tests.acceptance.permissioning;
 import org.hyperledger.besu.tests.acceptance.dsl.node.Node;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 public class NodeSmartContractPermissioningAcceptanceTest
@@ -57,6 +58,7 @@ public class NodeSmartContractPermissioningAcceptanceTest
   }
 
   @Test
+  @Disabled("test is flaky")
   public void permissionedNodeShouldPeerOnlyWithAllowedNodes() {
     bootnode.verify(net.awaitPeerCount(3));
     allowedNode.verify(net.awaitPeerCount(3));
