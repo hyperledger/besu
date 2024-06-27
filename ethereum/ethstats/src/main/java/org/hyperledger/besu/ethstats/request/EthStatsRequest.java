@@ -101,15 +101,34 @@ public class EthStatsRequest {
 
   /** The enum Type represents the type of the request. */
   public enum Type {
+    /** Represents the 'hello' type of the request. */
     HELLO("hello"),
+
+    /** Represents the 'ready' type of the request. */
     READY("ready"),
+
+    /** Represents the 'node-ping' type of the request. */
     NODE_PING("node-ping"),
+
+    /** Represents the 'node-pong' type of the request. */
     NODE_PONG("node-pong"),
+
+    /** Represents the 'latency' type of the request. */
     LATENCY("latency"),
+
+    /** Represents the 'block' type of the request. */
     BLOCK("block"),
+
+    /** Represents the 'history' type of the request. */
     HISTORY("history"),
+
+    /** Represents the 'pending' type of the request. */
     PENDING("pending"),
+
+    /** Represents the 'stats' type of the request. */
     STATS("stats"),
+
+    /** Represents an unknown type of the request. */
     UNKNOWN("");
 
     String value;

@@ -24,6 +24,8 @@ public final class PrimusHeartBeatsHelper {
   /** The constant PRIMUS_PING_REGEX. */
   public static final Pattern PRIMUS_PING_REGEX = Pattern.compile("primus::ping::([\\d]+)");
 
+  private PrimusHeartBeatsHelper() {}
+
   /**
    * Checks if the given request is a heartbeat request.
    *
