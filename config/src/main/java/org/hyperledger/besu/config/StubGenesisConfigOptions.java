@@ -48,6 +48,7 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private OptionalLong mergeNetSplitBlockNumber = OptionalLong.empty();
   private OptionalLong shanghaiTime = OptionalLong.empty();
   private OptionalLong cancunTime = OptionalLong.empty();
+  private OptionalLong cancunEOFTime = OptionalLong.empty();
   private OptionalLong pragueTime = OptionalLong.empty();
   private OptionalLong pragueEOFTime = OptionalLong.empty();
   private OptionalLong futureEipsTime = OptionalLong.empty();
@@ -82,7 +83,9 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   private boolean fixedBaseFee = false;
 
   /** Default constructor. */
-  public StubGenesisConfigOptions() {}
+  public StubGenesisConfigOptions() {
+    // Explicit default constructor because of JavaDoc linting
+  }
 
   @Override
   public StubGenesisConfigOptions clone() {
@@ -236,6 +239,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   @Override
   public OptionalLong getCancunTime() {
     return cancunTime;
+  }
+
+  @Override
+  public OptionalLong getCancunEOFTime() {
+    return cancunEOFTime;
   }
 
   @Override
@@ -627,6 +635,17 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
    */
   public StubGenesisConfigOptions cancunTime(final long timestamp) {
     cancunTime = OptionalLong.of(timestamp);
+    return this;
+  }
+
+  /**
+   * Cancun EOF time.
+   *
+   * @param timestamp the timestamp
+   * @return the stub genesis config options
+   */
+  public StubGenesisConfigOptions cancunEOFTime(final long timestamp) {
+    cancunEOFTime = OptionalLong.of(timestamp);
     return this;
   }
 

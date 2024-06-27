@@ -617,6 +617,19 @@ public abstract class MainnetProtocolSpecs {
         .name("Cancun");
   }
 
+  static ProtocolSpecBuilder cancunEOFDefinition(
+      final Optional<BigInteger> chainId,
+      final boolean enableRevertReason,
+      final GenesisConfigOptions genesisConfigOptions,
+      final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters) {
+
+    ProtocolSpecBuilder protocolSpecBuilder =
+        cancunDefinition(
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("CancunEOF");
+  }
+
   static ProtocolSpecBuilder pragueDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
@@ -657,8 +670,17 @@ public abstract class MainnetProtocolSpecs {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
 
-    return pragueDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+    ProtocolSpecBuilder protocolSpecBuilder =
+        pragueDefinition(
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters);
+    return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("PragueEOF");
+  }
+
+  private static ProtocolSpecBuilder addEOF(
+      final Optional<BigInteger> chainId,
+      final EvmConfiguration evmConfiguration,
+      final ProtocolSpecBuilder protocolSpecBuilder) {
+    return protocolSpecBuilder
         // EIP-7692 EOF v1 Gas calculator
         .gasCalculator(PragueEOFGasCalculator::new)
         // EIP-7692 EOF v1 EVM and opcodes
@@ -674,8 +696,7 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     List.of(MaxCodeSizeRule.from(evm), EOFValidationCodeRule.from(evm)),
                     1,
-                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES))
-        .name("PragueEOF");
+                    SPURIOUS_DRAGON_FORCE_DELETE_WHEN_EMPTY_ADDRESSES));
   }
 
   static ProtocolSpecBuilder futureEipsDefinition(

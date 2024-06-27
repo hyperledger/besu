@@ -20,24 +20,43 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+/** Contains the outputs of processing a block. */
 public class BlockProcessingResult extends BlockValidationResult {
 
   private final Optional<BlockProcessingOutputs> yield;
   private final boolean isPartial;
 
+  /** A result indicating that processing failed. */
   public static final BlockProcessingResult FAILED = new BlockProcessingResult("processing failed");
 
+  /**
+   * A result indicating that processing was successful but incomplete.
+   *
+   * @param yield the outputs of processing a block
+   */
   public BlockProcessingResult(final Optional<BlockProcessingOutputs> yield) {
     this.yield = yield;
     this.isPartial = false;
   }
 
+  /**
+   * A result indicating that processing was successful but incomplete.
+   *
+   * @param yield the outputs of processing a block
+   * @param isPartial whether the processing was incomplete
+   */
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield, final boolean isPartial) {
     this.yield = yield;
     this.isPartial = isPartial;
   }
 
+  /**
+   * A result indicating that processing was successful but incomplete.
+   *
+   * @param yield the outputs of processing a block
+   * @param errorMessage the error message if any
+   */
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield, final String errorMessage) {
     super(errorMessage);
@@ -45,6 +64,12 @@ public class BlockProcessingResult extends BlockValidationResult {
     this.isPartial = false;
   }
 
+  /**
+   * A result indicating that processing was successful but incomplete.
+   *
+   * @param yield the outputs of processing a block
+   * @param cause the cause of the error if any
+   */
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield, final Throwable cause) {
     super(cause.getLocalizedMessage(), cause);
@@ -52,6 +77,13 @@ public class BlockProcessingResult extends BlockValidationResult {
     this.isPartial = false;
   }
 
+  /**
+   * A result indicating that processing was successful but incomplete.
+   *
+   * @param yield the outputs of processing a block
+   * @param errorMessage the error message if any
+   * @param isPartial whether the processing was incomplete
+   */
   public BlockProcessingResult(
       final Optional<BlockProcessingOutputs> yield,
       final String errorMessage,
@@ -61,20 +93,40 @@ public class BlockProcessingResult extends BlockValidationResult {
     this.isPartial = isPartial;
   }
 
+  /**
+   * A result indicating that processing failed.
+   *
+   * @param errorMessage the error message
+   */
   public BlockProcessingResult(final String errorMessage) {
     super(errorMessage);
     this.isPartial = false;
     this.yield = Optional.empty();
   }
 
+  /**
+   * Gets the block processing outputs of the result.
+   *
+   * @return the block processing outputs of the result
+   */
   public Optional<BlockProcessingOutputs> getYield() {
     return yield;
   }
 
+  /**
+   * Checks if the processing was incomplete.
+   *
+   * @return true if the processing was incomplete, false otherwise
+   */
   public boolean isPartial() {
     return isPartial;
   }
 
+  /**
+   * Gets the transaction receipts of the result.
+   *
+   * @return the transaction receipts of the result
+   */
   public List<TransactionReceipt> getReceipts() {
     if (yield.isEmpty()) {
       return new ArrayList<>();
