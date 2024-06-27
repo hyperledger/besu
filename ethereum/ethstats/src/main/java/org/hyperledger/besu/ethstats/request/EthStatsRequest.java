@@ -23,10 +23,16 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
+/**
+ * This class represents an Ethereum statistics request. It provides methods to get the type of the
+ * request and the parameters associated with it.
+ */
 public class EthStatsRequest {
 
+  /** The constant MAPPER. */
   public static final ObjectMapper MAPPER = new ObjectMapper();
 
+  /** The constant EMIT_FIELD. */
   public static final String EMIT_FIELD = "emit";
 
   @JsonProperty(EMIT_FIELD)
@@ -34,11 +40,22 @@ public class EthStatsRequest {
 
   private EthStatsRequest() {}
 
+  /**
+   * Constructs a new EthStatsRequest with the given type and parameters.
+   *
+   * @param type the type of the request
+   * @param parameters the parameters of the request
+   */
   public EthStatsRequest(final Type type, final Object... parameters) {
     this.emit =
         Stream.concat(Stream.of(type.value), Stream.of(parameters)).collect(Collectors.toList());
   }
 
+  /**
+   * Gets the type of the request.
+   *
+   * @return the type of the request
+   */
   @JsonIgnore
   public Type getType() {
     return getEmit().stream()
@@ -49,14 +66,31 @@ public class EthStatsRequest {
         .orElse(Type.UNKNOWN);
   }
 
+  /**
+   * Gets the parameters of the request.
+   *
+   * @return the parameters of the request
+   */
   public List<Object> getEmit() {
     return emit;
   }
 
+  /**
+   * Generates a command string from the request.
+   *
+   * @return the command string
+   * @throws JsonProcessingException if there is an error processing the JSON
+   */
   public String generateCommand() throws JsonProcessingException {
     return MAPPER.writeValueAsString(this);
   }
 
+  /**
+   * Creates an EthStatsRequest from a response string.
+   *
+   * @param value the response string
+   * @return the EthStatsRequest
+   */
   public static EthStatsRequest fromResponse(final String value) {
     try {
       return MAPPER.readValue(value, EthStatsRequest.class);
@@ -65,6 +99,7 @@ public class EthStatsRequest {
     }
   }
 
+  /** The enum Type represents the type of the request. */
   public enum Type {
     HELLO("hello"),
     READY("ready"),
@@ -83,10 +118,21 @@ public class EthStatsRequest {
       this.value = value;
     }
 
+    /**
+     * Gets the value of the type.
+     *
+     * @return the value of the type
+     */
     public String getValue() {
       return value;
     }
 
+    /**
+     * Gets the type from a value string.
+     *
+     * @param value the value string
+     * @return the type
+     */
     public static Type fromValue(final String value) {
       for (Type type : values()) {
         if (type.value.equalsIgnoreCase(value)) {

@@ -368,7 +368,7 @@ allprojects {
       // TODO: these are temporary disabled (ethereum and sub modules), it should be removed in a future PR.
       '-org.hyperledger.besu.ethereum,' +
       '-org.hyperledger.besu.ethereum.*,' +
-      '-org.hyperledger.besu.ethstats.*,' +
+      //'-org.hyperledger.besu.ethstats.*,' +
       '-org.hyperledger.besu.evmtool',
       true)
     options.addStringOption('Xmaxerrs','65535')
