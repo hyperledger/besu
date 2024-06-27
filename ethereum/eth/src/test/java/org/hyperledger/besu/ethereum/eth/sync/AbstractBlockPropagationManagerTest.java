@@ -58,6 +58,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -114,7 +115,12 @@ public abstract class AbstractBlockPropagationManagerTest {
             blockchainUtil.getTransactionPool(),
             EthProtocolConfiguration.defaultConfig());
     syncConfig = SynchronizerConfiguration.builder().blockPropagationRange(-3, 5).build();
-    syncState = new SyncState(blockchain, ethProtocolManager.ethContext().getEthPeers());
+
+    // for tests use simple peer comparator
+    final EthPeers ethPeers = ethProtocolManager.ethContext().getEthPeers();
+    ethPeers.setBestPeerComparator(EthPeers.HEAVIEST_CHAIN);
+
+    syncState = new SyncState(blockchain, ethPeers);
     blockBroadcaster = mock(BlockBroadcaster.class);
     blockPropagationManager =
         new BlockPropagationManager(
@@ -557,6 +563,8 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     blockPropagationManager.start();
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 2);
     final NewBlockMessage blockAnnouncementMsg =
         NewBlockMessage.create(blockToPurge, Difficulty.ZERO);
 
@@ -568,6 +576,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     // Check that we pushed our block into the pending collection
     assertThat(blockchain.contains(blockToPurge.getHash())).isFalse();
     assertThat(pendingBlocksManager.contains(blockToPurge.getHash())).isTrue();
+    secondPeer.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
 
     // Import blocks until we bury the target block far enough to be cleaned up
     for (int i = 0; i < oldBlocksToImport; i++) {
@@ -618,20 +627,7 @@ public abstract class AbstractBlockPropagationManagerTest {
     when(ethScheduler.scheduleSyncWorkerTask(any(Supplier.class)))
         .thenReturn(new CompletableFuture<>());
     final EthContext ethContext =
-        new EthContext(
-            new EthPeers(
-                "eth",
-                () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-                TestClock.fixed(),
-                metricsSystem,
-                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-                Collections.emptyList(),
-                Bytes.random(64),
-                25,
-                25,
-                false),
-            new EthMessages(),
-            ethScheduler);
+        new EthContext(setupEthPeersWithHeaviestChainComparator(), new EthMessages(), ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
@@ -756,20 +752,7 @@ public abstract class AbstractBlockPropagationManagerTest {
             });
 
     final EthContext ethContext =
-        new EthContext(
-            new EthPeers(
-                "eth",
-                () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
-                TestClock.fixed(),
-                metricsSystem,
-                EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
-                Collections.emptyList(),
-                Bytes.random(64),
-                25,
-                25,
-                false),
-            new EthMessages(),
-            ethScheduler);
+        new EthContext(setupEthPeersWithHeaviestChainComparator(), new EthMessages(), ethScheduler);
     final BlockPropagationManager blockPropagationManager =
         new BlockPropagationManager(
             syncConfig,
@@ -967,6 +950,10 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     final RespondingEthPeer firstPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
+    // second peer responds
+    final RespondingEthPeer secondPeer =
+        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 2);
+
     final NewBlockHashesMessage nextAnnouncement =
         NewBlockHashesMessage.create(
             Collections.singletonList(
@@ -979,9 +966,6 @@ public abstract class AbstractBlockPropagationManagerTest {
 
     assertThat(blockchain.contains(nextBlock.getHash())).isFalse();
 
-    // second peer responds
-    final RespondingEthPeer secondPeer =
-        EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 0);
     final Responder goodResponder = RespondingEthPeer.blockchainResponder(getFullBlockchain());
 
     secondPeer.respondWhile(goodResponder, secondPeer::hasOutstandingRequests);
@@ -997,5 +981,22 @@ public abstract class AbstractBlockPropagationManagerTest {
 
   private BlockHeader blockHeader(final long number) {
     return new BlockHeaderTestFixture().number(number).buildHeader();
+  }
+
+  private EthPeers setupEthPeersWithHeaviestChainComparator() {
+    final EthPeers ethPeers =
+        new EthPeers(
+            "eth",
+            () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader()),
+            TestClock.fixed(),
+            metricsSystem,
+            EthProtocolConfiguration.DEFAULT_MAX_MESSAGE_SIZE,
+            Collections.emptyList(),
+            Bytes.random(64),
+            25,
+            25,
+            false);
+    ethPeers.setBestPeerComparator(EthPeers.HEAVIEST_CHAIN);
+    return ethPeers;
   }
 }

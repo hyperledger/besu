@@ -132,12 +132,13 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   }
 
   private void refreshPeers() {
+    // TODO this duplicates EthPeers.disconnectWorst
     final EthPeers peers = getEthContext().getEthPeers();
     // If we are at max connections, then refresh peers disconnecting one of the failed peers,
     // or the least useful
 
     if (peers.peerCount() >= peers.getMaxPeers()) {
-      failedPeers.stream().filter(peer -> !peer.isDisconnected()).findAny().stream()
+      failedPeers.stream()
           .min(EthPeers.MOST_USEFUL_PEER)
           .or(() -> peers.streamAvailablePeers().min(EthPeers.MOST_USEFUL_PEER))
           .ifPresent(

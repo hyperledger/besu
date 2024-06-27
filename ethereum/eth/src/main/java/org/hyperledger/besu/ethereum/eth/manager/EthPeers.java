@@ -115,7 +115,7 @@ public class EthPeers {
     this.clock = clock;
     this.permissioningProviders = permissioningProviders;
     this.maxMessageSize = maxMessageSize;
-    this.bestPeerComparator = HEAVIEST_CHAIN;
+    this.bestPeerComparator = MOST_USEFUL_PEER;
     this.localNodeId = localNodeId;
     this.peerUpperBound = peerUpperBound;
     this.maxRemotelyInitiatedConnections = maxRemotelyInitiatedConnections;
@@ -338,7 +338,7 @@ public class EthPeers {
   }
 
   public void setBestPeerComparator(final Comparator<EthPeer> comparator) {
-    LOG.info("Updating the default best peer comparator");
+    LOG.info("Updating the default best peer comparator to {}", comparator);
     bestPeerComparator = comparator;
   }
 
@@ -366,13 +366,6 @@ public class EthPeers {
 
   public boolean shouldConnect(final Peer peer, final boolean inbound) {
     final Bytes id = peer.getId();
-    if (peerCount() >= peerUpperBound && !canExceedPeerLimits(id)) {
-      LOG.atTrace()
-          .setMessage("not connecting to peer {} - too many peers")
-          .addArgument(peer.getLoggableId())
-          .log();
-      return false;
-    }
     final EthPeer ethPeer = completeConnections.get(id);
     if (ethPeer != null && !ethPeer.isDisconnected()) {
       LOG.atTrace()
@@ -395,20 +388,44 @@ public class EthPeers {
     return true;
   }
 
-  public void disconnectWorstUselessPeer() {
-    streamAvailablePeers()
-        .min(getBestPeerComparator())
-        .ifPresent(
-            peer -> {
-              LOG.atDebug()
-                  .setMessage(
-                      "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
-                  .addArgument(peer::getLoggableId)
-                  .addArgument(this::peerCount)
-                  .addArgument(this::getMaxPeers)
-                  .log();
-              peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
-            });
+  public void disconnectWorstUselessPeerIfAtCapacityIncludingConnectingPeer(
+      final EthPeer connectingPeer) {
+    if (peerCount() >= getMaxPeers()) {
+      streamAvailablePeers()
+          .filter(p -> !canExceedPeerLimits(p.getId()))
+          .min(getBestPeerComparator())
+          .ifPresent(
+              worstCurrentlyConnectedPeer -> {
+                // TODO remove this debug log
+                LOG.atDebug()
+                    .setMessage("comparing worstCurrentPeer {} with connectingPeer {}")
+                    .addArgument(worstCurrentlyConnectedPeer)
+                    .addArgument(connectingPeer)
+                    .log();
+                if (getBestPeerComparator().compare(worstCurrentlyConnectedPeer, connectingPeer)
+                    < 0) {
+
+                  LOG.atDebug()
+                      .setMessage(
+                          "disconnecting current peer {}. Waiting for better peers. Current {} of max {}")
+                      .addArgument(worstCurrentlyConnectedPeer::getLoggableId)
+                      .addArgument(this::peerCount)
+                      .addArgument(this::getMaxPeers)
+                      .log();
+                  worstCurrentlyConnectedPeer.disconnect(
+                      DisconnectMessage.DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
+                } else {
+                  LOG.atDebug()
+                      .setMessage(
+                          "disconnecting connecting peer {}. Waiting for better peers. Current {} of max {}")
+                      .addArgument(connectingPeer::getLoggableId)
+                      .addArgument(this::peerCount)
+                      .addArgument(this::getMaxPeers)
+                      .log();
+                  connectingPeer.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
+                }
+              });
+    }
   }
 
   @FunctionalInterface
@@ -512,22 +529,8 @@ public class EthPeers {
             });
   }
 
-  private boolean remoteConnectionLimitReached() {
-    return shouldLimitRemoteConnections()
-        && countUntrustedRemotelyInitiatedConnections() >= maxRemotelyInitiatedConnections;
-  }
-
   private boolean shouldLimitRemoteConnections() {
     return maxRemotelyInitiatedConnections < peerUpperBound;
-  }
-
-  private long countUntrustedRemotelyInitiatedConnections() {
-    return completeConnections.values().stream()
-        .map(ep -> ep.getConnection())
-        .filter(c -> c.inboundInitiated())
-        .filter(c -> !c.isDisconnected())
-        .filter(conn -> !canExceedPeerLimits(conn.getPeer().getId()))
-        .count();
   }
 
   private void onCacheRemoval(
@@ -550,51 +553,70 @@ public class EthPeers {
     }
     final PeerConnection connection = peer.getConnection();
     final Bytes id = peer.getId();
-    if (!randomPeerPriority) {
-      // Disconnect if too many peers
-      if (!canExceedPeerLimits(id) && peerCount() >= peerUpperBound) {
-        LOG.atTrace()
-            .setMessage("Too many peers. Disconnect connection: {}, max connections {}")
-            .addArgument(connection)
-            .addArgument(peerUpperBound)
-            .log();
-        connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
-        return false;
-      }
-      // Disconnect if too many remotely-initiated connections
-      if (connection.inboundInitiated()
-          && !canExceedPeerLimits(id)
-          && remoteConnectionLimitReached()) {
-        LOG.atTrace()
-            .setMessage(
-                "Too many remotely-initiated connections. Disconnect incoming connection: {}, maxRemote={}")
-            .addArgument(connection)
-            .addArgument(maxRemotelyInitiatedConnections)
-            .log();
-        connection.disconnect(DisconnectMessage.DisconnectReason.TOO_MANY_PEERS);
-        return false;
-      }
-      final boolean added = (completeConnections.putIfAbsent(id, peer) == null);
-      if (added) {
-        LOG.atTrace()
-            .setMessage("Added peer {} with connection {} to completeConnections")
-            .addArgument(id)
-            .addArgument(connection)
-            .log();
-      } else {
-        LOG.atTrace()
-            .setMessage("Did not add peer {} with connection {} to completeConnections")
-            .addArgument(id)
-            .addArgument(connection)
-            .log();
-      }
-      return added;
-    } else {
+    if (randomPeerPriority || canExceedPeerLimits(id)) {
+      // either the incoming peer is a static peer, or
       // randomPeerPriority! Add the peer and if there are too many connections fix it
-      completeConnections.putIfAbsent(id, peer);
-      enforceRemoteConnectionLimits();
-      enforceConnectionLimits();
-      return completeConnections.containsKey(id);
+      return addPeerAndEnforceConnectionLimits(peer, id, connection);
+    }
+    // otherwise, we need to compare the incoming peer to existing peers
+
+    // Disconnect if too many peers
+    if (peerCount() >= peerUpperBound) {
+      // If too many peers, disconnect one (could be the connecting peer if it does not compare
+      // favourably
+      disconnectWorstUselessPeerIfAtCapacityIncludingConnectingPeer(peer);
+    }
+    return addPeerAndEnforceConnectionLimits(peer, id, connection);
+  }
+
+  /**
+   * Returns true if this specific peer was added, after connection limits were checked
+   *
+   * @param peer the peer to add
+   * @param id the peer's id
+   * @param connection the peer's connection
+   * @return whether the peer remains added after connection limits are enforced
+   */
+  private boolean addPeerAndEnforceConnectionLimits(
+      final EthPeer peer, final Bytes id, final PeerConnection connection) {
+    completeConnections.putIfAbsent(id, peer);
+    enforceRemoteConnectionLimits();
+    enforceConnectionLimits();
+    final boolean added = completeConnections.containsKey(id);
+    if (added) {
+      LOG.atTrace()
+          .setMessage("Added peer {} with connection {} to completeConnections")
+          .addArgument(id)
+          .addArgument(connection)
+          .log();
+    } else {
+      LOG.atTrace()
+          .setMessage("Did not add peer {} with connection {} to completeConnections")
+          .addArgument(id)
+          .addArgument(connection)
+          .log();
+    }
+    return added;
+  }
+
+  public void disconnectWorstIncomingUselessPeer() {
+    if (peerCount() >= getMaxPeers()) {
+      streamAvailablePeers()
+          .filter(p -> p.getConnection().inboundInitiated())
+          .filter(p -> !canExceedPeerLimits(p.getId()))
+          .min(getBestPeerComparator())
+          .ifPresent(
+              peer -> {
+                LOG.atDebug()
+                    .setMessage(
+                        "disconnecting peer {}. Waiting for better peers. Current {} of max {}")
+                    .addArgument(peer::getLoggableId)
+                    .addArgument(this::peerCount)
+                    .addArgument(this::getMaxPeers)
+                    .log();
+                peer.disconnect(
+                    DisconnectMessage.DisconnectReason.USELESS_PEER_BY_CHAIN_COMPARATOR);
+              });
     }
   }
 }

@@ -63,7 +63,6 @@ import org.slf4j.LoggerFactory;
 
 public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   private static final Logger LOG = LoggerFactory.getLogger(EthProtocolManager.class);
-
   private final EthScheduler scheduler;
   private final CountDownLatch shutdown;
   private final AtomicBoolean stopped = new AtomicBoolean(false);
@@ -405,9 +404,7 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .setMessage("ForkId OK or not available for peer {}")
           .addArgument(peer::getLoggableId)
           .log();
-      if (ethPeers.shouldConnect(peer, incoming)) {
-        return true;
-      }
+      return (ethPeers.shouldConnect(peer, incoming));
     } else {
       LOG.atDebug()
           .setMessage("ForkId check failed for peer {} our fork id {} theirs {}")
@@ -417,7 +414,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
           .log();
       return false;
     }
-    return false;
   }
 
   @Override
