@@ -92,8 +92,7 @@ public class PrivateGroupRehydrationBlockProcessor {
       final Block block,
       final BlockHashLookup blockHashLookup,
       final Map<Hash, PrivateTransaction> forExecution,
-      final List<BlockHeader> ommers,
-      final boolean isIncrementPrivateNonceEnabled) {
+      final List<BlockHeader> ommers) {
     long gasUsed = 0;
     final List<TransactionReceipt> receipts = new ArrayList<>();
 
@@ -152,8 +151,7 @@ public class PrivateGroupRehydrationBlockProcessor {
                 miningBeneficiary,
                 OperationTracer.NO_TRACING,
                 blockHashLookup,
-                privateTransaction.getPrivacyGroupId().get(),
-                isIncrementPrivateNonceEnabled);
+                privateTransaction.getPrivacyGroupId().get());
 
         privateWorldStateUpdater.commit();
         disposablePrivateState.persist(null);

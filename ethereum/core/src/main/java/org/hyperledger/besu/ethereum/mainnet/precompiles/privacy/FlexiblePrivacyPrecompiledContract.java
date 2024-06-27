@@ -239,8 +239,7 @@ public class FlexiblePrivacyPrecompiledContract extends PrivacyPrecompiledContra
             disposablePrivateState,
             privateWorldStateUpdater,
             privateWorldStateArchive,
-            privateTransactionProcessor,
-            incrementPrivateNonce);
+            privateTransactionProcessor);
 
     final boolean isAddingParticipant = isAddingParticipant(privateTransaction);
     final boolean isContractLocked = isContractLocked(flexiblePrivacyGroupContract, privacyGroupId);

@@ -84,8 +84,7 @@ public class PrivateTransactionProcessor {
       final Address miningBeneficiary,
       final OperationTracer operationTracer,
       final BlockHashLookup blockHashLookup,
-      final Bytes privacyGroupId,
-      final boolean incrementPrivateNonce) {
+      final Bytes privacyGroupId) {
     try {
       LOG.trace("Starting private execution of {}", transaction);
 
@@ -173,10 +172,6 @@ public class PrivateTransactionProcessor {
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         mutablePrivateWorldStateUpdater.commit();
-      } else if (incrementPrivateNonce) {
-        privateWorldState.createAccount(
-            sender.getAddress(), sender.getNonce(), sender.getBalance());
-        mutablePrivateWorldStateUpdater.commitPrivateNonce();
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {

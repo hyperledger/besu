@@ -367,8 +367,7 @@ public class ProtocolSpecBuilder {
               privacyParameters.getPrivateStateStorage(),
               privacyParameters.getPrivateWorldStateArchive(),
               privacyParameters.getPrivateStateRootResolver(),
-              privacyParameters.getPrivateStateGenesisAllocator(),
-              privacyParameters.isPrivateNonceIncrementationEnabled());
+              privacyParameters.getPrivateStateGenesisAllocator());
     }
 
     final BlockValidator blockValidator =

@@ -58,7 +58,6 @@ public class PrivacyBlockProcessor implements BlockProcessor {
   private final WorldStateArchive privateWorldStateArchive;
   private final PrivateStateRootResolver privateStateRootResolver;
   private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
-  private final boolean isIncrementPrivateNonceEnabled;
   private WorldStateArchive publicWorldStateArchive;
 
   public PrivacyBlockProcessor(
@@ -68,8 +67,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
       final PrivateStateStorage privateStateStorage,
       final WorldStateArchive privateWorldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
-      final PrivateStateGenesisAllocator privateStateGenesisAllocator,
-      final boolean isIncrementPrivateNonceEnabled) {
+      final PrivateStateGenesisAllocator privateStateGenesisAllocator) {
     this.blockProcessor = blockProcessor;
     this.protocolSchedule = protocolSchedule;
     this.enclave = enclave;
@@ -77,7 +75,6 @@ public class PrivacyBlockProcessor implements BlockProcessor {
     this.privateWorldStateArchive = privateWorldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
     this.privateStateGenesisAllocator = privateStateGenesisAllocator;
-    this.isIncrementPrivateNonceEnabled = isIncrementPrivateNonceEnabled;
   }
 
   public void setPublicWorldStateArchive(final WorldStateArchive publicWorldStateArchive) {
@@ -158,8 +155,7 @@ public class PrivacyBlockProcessor implements BlockProcessor {
                           publicWorldStateArchive,
                           privateWorldStateArchive,
                           privateStateRootResolver,
-                          privateStateGenesisAllocator,
-                          isIncrementPrivateNonceEnabled);
+                          privateStateGenesisAllocator);
                   privateStateRehydration.rehydrate(actualListToRehydrate);
                   privateStateStorage
                       .updater()

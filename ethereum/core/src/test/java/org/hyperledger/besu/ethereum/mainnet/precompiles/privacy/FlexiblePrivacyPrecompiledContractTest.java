@@ -96,8 +96,7 @@ public class FlexiblePrivacyPrecompiledContractTest {
             nullable(Address.class),
             nullable(OperationTracer.class),
             nullable(BlockHashLookup.class),
-            nullable(Bytes.class),
-            nullable(Boolean.class)))
+            nullable(Bytes.class)))
         .thenReturn(result);
 
     return mockPrivateTransactionProcessor;
