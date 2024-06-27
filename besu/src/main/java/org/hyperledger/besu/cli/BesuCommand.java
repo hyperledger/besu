@@ -142,7 +142,6 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -2242,19 +2241,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private DataStorageConfiguration getDataStorageConfiguration() {
     if (dataStorageConfiguration == null) {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
-
-      final ImmutableDataStorageConfiguration.Builder dataStorageConfigBuilder =
-          ImmutableDataStorageConfiguration.builder().from(dataStorageConfiguration);
-
-      // If FULL sync mode + Bonsai DB we disable bonsai-limit-trie-logs-enabled and
-      // log a warning
-      if (syncMode == SyncMode.FULL
-          && dataStorageOptions.toDomainObject().getDataStorageFormat()
-              == DataStorageFormat.BONSAI) {
-        logger.warn("Forcing bonsai-limit-trie-logs-enabled to false, since sync mode is FULL");
-        dataStorageConfigBuilder.bonsaiLimitTrieLogsEnabled(false);
-      }
-      dataStorageConfiguration = dataStorageConfigBuilder.build();
     }
     return dataStorageConfiguration;
   }
