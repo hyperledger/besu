@@ -62,7 +62,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
   @Test
   public void permissionedNodeShouldDisconnectFromNodeNotPermittedAnymore() {
-    permissionedNode.verify(admin.addPeer(bootnode));
+    permissionedNode.verify(admin.hasPeer(bootnode));
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 
@@ -74,7 +74,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
   @Test
   public void permissionedNodeShouldConnectToNewlyPermittedNode() {
-    permissionedNode.verify(admin.addPeer(bootnode));
+    permissionedNode.verify(admin.hasPeer(bootnode));
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 
@@ -89,7 +89,7 @@ public class NodeSmartContractPermissioningV2AcceptanceTest
 
   @Test
   public void permissioningUpdatesPropagateThroughNetwork() {
-    permissionedNode.verify(admin.addPeer(bootnode));
+    permissionedNode.verify(admin.hasPeer(bootnode));
     permissionedNode.verify(admin.addPeer(allowedNode));
     permissionedNode.verify(net.awaitPeerCount(2));
 
