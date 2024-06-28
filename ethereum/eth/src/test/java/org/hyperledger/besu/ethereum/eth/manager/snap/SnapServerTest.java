@@ -436,6 +436,22 @@ public class SnapServerTest {
   }
 
   @Test
+  public void assertAccountTriePathRequest_accountNotPresent() {
+    var partialPathToAcct2 = CompactEncoding.bytesToPath(acct2.addressHash).slice(0, 1);
+    var partialPathToAcct1 = Bytes.fromHexString("0x01"); // first nibble is 1
+    var trieNodeRequest =
+        requestTrieNodes(
+            storageTrie.getRootHash(),
+            List.of(List.of(partialPathToAcct2), List.of(partialPathToAcct1)));
+    assertThat(trieNodeRequest).isNotNull();
+    List<Bytes> trieNodes = trieNodeRequest.nodes(false);
+    assertThat(trieNodes).isNotNull();
+    assertThat(trieNodes.size()).isEqualTo(2);
+    assertThat(trieNodes.get(0)).isEqualTo(Bytes.EMPTY);
+    assertThat(trieNodes.get(1)).isEqualTo(Bytes.EMPTY);
+  }
+
+  @Test
   public void assertAccountTrieRequest_invalidEmptyPath() {
     insertTestAccounts(acct1);
     var partialPathToAcct1 = Bytes.fromHexString("0x01"); // first nibble is 1
@@ -531,7 +547,28 @@ public class SnapServerTest {
     assertThat(trieNodeRequest).isNotNull();
     List<Bytes> trieNodes = trieNodeRequest.nodes(false);
     assertThat(trieNodes).isNotNull();
-    assertThat(trieNodes.size()).isEqualTo(4);
+    assertThat(trieNodes.size()).isEqualTo(6);
+    assertThat(trieNodes.get(2)).isEqualTo(Bytes.EMPTY);
+    assertThat(trieNodes.get(5)).isEqualTo(Bytes.EMPTY);
+  }
+
+  @Test
+  public void assertStorageTriePathRequest_accountNotPresent() {
+    insertTestAccounts(acct1, acct2, acct4);
+    var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
+    var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
+    var pathToSlot1a = CompactEncoding.encode(Bytes.fromHexStringLenient("0x010A")); // not present
+    var trieNodeRequest =
+        requestTrieNodes(
+            storageTrie.getRootHash(),
+            List.of(
+                List.of(acct3.addressHash, pathToSlot11, pathToSlot12, pathToSlot1a),
+                List.of(acct4.addressHash, pathToSlot11, pathToSlot12, pathToSlot1a)));
+    assertThat(trieNodeRequest).isNotNull();
+    List<Bytes> trieNodes = trieNodeRequest.nodes(false);
+    assertThat(trieNodes).isNotNull();
+    assertThat(trieNodes.size()).isEqualTo(3);
+    assertThat(trieNodes.get(2)).isEqualTo(Bytes.EMPTY);
   }
 
   @Test
@@ -582,8 +619,7 @@ public class SnapServerTest {
     assertThat(trieNodeRequest).isNotNull();
     List<Bytes> trieNodes = trieNodeRequest.nodes(false);
     assertThat(trieNodes).isNotNull();
-    // TODO: adjust this assertion after sorting out the request fudge factor
-    assertThat(trieNodes.size()).isEqualTo(trieNodeLimit * 90 / 100);
+    assertThat(trieNodes.size()).isEqualTo(3);
   }
 
   @Test

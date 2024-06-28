@@ -509,17 +509,16 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                   // first element in paths is account
                   if (triePath.size() == 1) {
                     // if there is only one path, presume it should be compact encoded account path
-                    var optStorage =
-                        storage.getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)));
-                    if (optStorage.isPresent()) {
-                      if (!trieNodes.isEmpty()
-                          && (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes
-                              || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
-                        break;
-                      }
-                      trieNodes.add(optStorage.get());
+                    var trieNode =
+                        storage
+                            .getTrieNodeUnsafe(CompactEncoding.decode(triePath.getFirst()))
+                            .orElse(Bytes.EMPTY);
+                    if (!trieNodes.isEmpty()
+                        && (sumListBytes(trieNodes) + trieNode.size() > maxResponseBytes
+                            || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
+                      break;
                     }
-
+                    trieNodes.add(trieNode);
                   } else {
                     // There must be at least one element in the path otherwise it is invalid
                     if (triePath.isEmpty()) {
@@ -530,21 +529,24 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     // otherwise the first element should be account hash, and subsequent paths
                     // are compact encoded account storage paths
 
-                    final Bytes accountPrefix = Bytes32.leftPad(triePath.getFirst());
+                    final Bytes32 accountPrefix = Bytes32.leftPad(triePath.getFirst());
+                    var optAccount = storage.getAccount(Hash.wrap(accountPrefix));
+                    if (optAccount.isEmpty()) {
+                      continue;
+                    }
 
                     List<Bytes> storagePaths = triePath.subList(1, triePath.size());
                     for (var path : storagePaths) {
-                      var optStorage =
-                          storage.getTrieNodeUnsafe(
-                              Bytes.concatenate(accountPrefix, CompactEncoding.decode(path)));
-                      if (optStorage.isPresent()) {
-                        if (!trieNodes.isEmpty()
-                            && sumListBytes(trieNodes) + optStorage.get().size()
-                                > maxResponseBytes) {
-                          break;
-                        }
-                        trieNodes.add(optStorage.get());
+                      var trieNode =
+                          storage
+                              .getTrieNodeUnsafe(
+                                  Bytes.concatenate(accountPrefix, CompactEncoding.decode(path)))
+                              .orElse(Bytes.EMPTY);
+                      if (!trieNodes.isEmpty()
+                          && sumListBytes(trieNodes) + trieNode.size() > maxResponseBytes) {
+                        break;
                       }
+                      trieNodes.add(trieNode);
                     }
                   }
                 }
