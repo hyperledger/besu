@@ -31,7 +31,7 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
 import org.junit.jupiter.api.Test;
 
-class DepositRequestRequestDecoderTest {
+class DepositRequestDecoderTest {
   @Test
   void shouldDecodeDeposit() {
     final DepositRequest expectedDepositRequest =
