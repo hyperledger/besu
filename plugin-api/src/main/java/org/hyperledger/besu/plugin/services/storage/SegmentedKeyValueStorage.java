@@ -39,15 +39,35 @@ public interface SegmentedKeyValueStorage extends Closeable {
   Optional<byte[]> get(SegmentIdentifier segment, byte[] key) throws StorageException;
 
   /**
-   * Find the key and corresponding value "nearest to" the specified key. Nearest is defined as
-   * either matching the supplied key or the key lexicographically prior to it.
+   * Finds the key and corresponding value that is "nearest before" the specified key. "Nearest
+   * before" is defined as the closest key that is either exactly matching the supplied key or
+   * lexicographically before it.
    *
-   * @param segmentIdentifier segment to scan
-   * @param key key for which we are searching for the nearest match.
-   * @return Optional of NearestKeyValue-wrapped matched key and corresponding value.
-   * @throws StorageException the storage exception
+   * @param segmentIdentifier The segment to scan for the nearest key.
+   * @param key The key for which we are searching for the nearest match before it.
+   * @return An Optional of NearestKeyValue, wrapping the matched key and its corresponding value,
+   *     if found.
+   * @throws StorageException If an error occurs during the retrieval process.
    */
-  Optional<NearestKeyValue> getNearestTo(final SegmentIdentifier segmentIdentifier, Bytes key)
+  Optional<NearestKeyValue> getNearestBefore(final SegmentIdentifier segmentIdentifier, Bytes key)
+      throws StorageException;
+
+  /**
+   * Finds the key and corresponding value that is "nearest after" the specified key. "Nearest
+   * after" is defined as the closest key that is either exactly matching the supplied key or
+   * lexicographically after it.
+   *
+   * <p>This method aims to find the next key in sequence after the provided key, considering the
+   * order of keys within the specified segment. It is particularly useful for iterating over keys
+   * in a sorted manner starting from a given key.
+   *
+   * @param segmentIdentifier The segment to scan for the nearest key.
+   * @param key The key for which we are searching for the nearest match after it.
+   * @return An Optional of NearestKeyValue, wrapping the matched key and its corresponding value,
+   *     if found.
+   * @throws StorageException If an error occurs during the retrieval process.
+   */
+  Optional<NearestKeyValue> getNearestAfter(final SegmentIdentifier segmentIdentifier, Bytes key)
       throws StorageException;
 
   /**
