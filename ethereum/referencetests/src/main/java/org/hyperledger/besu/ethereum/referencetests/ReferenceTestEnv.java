@@ -83,6 +83,8 @@ public class ReferenceTestEnv extends BlockHeader {
 
   private final Bytes32 beaconRoot;
 
+  private final boolean isStateTest;
+
   /**
    * Public constructor.
    *
@@ -120,7 +122,8 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("parentGasLimit") final String parentGasLimit,
       @JsonProperty("parentGasUsed") final String parentGasUsed,
       @JsonProperty("parentTimestamp") final String parentTimestamp,
-      @JsonProperty("parentUncleHash") final String _parentUncleHash) {
+      @JsonProperty("parentUncleHash") final String _parentUncleHash,
+      @JsonProperty("isStateTest") final String isStateTest) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY_LIST_HASH, // ommersHash
@@ -164,10 +167,16 @@ public class ReferenceTestEnv extends BlockHeader {
                         Map.entry(
                             Long.decode(entry.getKey()), Hash.fromHexString(entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    this.beaconRoot =
-        beaconRoot == null
-            ? (currentBeaconRoot == null ? null : Hash.fromHexString(currentBeaconRoot))
-            : Hash.fromHexString(beaconRoot);
+    if (beaconRoot == null) {
+      if (currentBeaconRoot == null) {
+        this.beaconRoot = null;
+      } else {
+        this.beaconRoot = Hash.fromHexString(currentBeaconRoot);
+      }
+    } else {
+      this.beaconRoot = Hash.fromHexString(beaconRoot);
+    }
+    this.isStateTest = Boolean.parseBoolean(isStateTest);
   }
 
   @Override
@@ -237,6 +246,10 @@ public class ReferenceTestEnv extends BlockHeader {
 
   public Map<Long, Hash> getBlockHashes() {
     return blockHashes;
+  }
+
+  public boolean isStateTest() {
+    return isStateTest;
   }
 
   @Override

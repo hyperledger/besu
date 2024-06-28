@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
@@ -296,9 +297,11 @@ public class T8nExecutor {
             .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, blockHeader));
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
 
-    protocolSpec
-        .getBlockHashProcessor()
-        .processBlockHashes(blockchain, worldState, referenceTestEnv);
+    if (!referenceTestEnv.isStateTest()) {
+      protocolSpec
+          .getBlockHashProcessor()
+          .processBlockHashes(blockchain, worldState, referenceTestEnv);
+    }
 
     final WorldUpdater rootWorldStateUpdater = worldState.updater();
     List<TransactionReceipt> receipts = new ArrayList<>();
@@ -349,13 +352,12 @@ public class T8nExecutor {
       timer.stop();
 
       if (shouldClearEmptyAccounts(fork)) {
-        final Account coinbase = worldStateUpdater.getOrCreate(blockHeader.getCoinbase());
-        if (coinbase != null && coinbase.isEmpty()) {
-          worldStateUpdater.deleteAccount(coinbase.getAddress());
-        }
-        final Account txSender = worldStateUpdater.getAccount(transaction.getSender());
-        if (txSender != null && txSender.isEmpty()) {
-          worldStateUpdater.deleteAccount(txSender.getAddress());
+        var entries = new ArrayList<>(worldState.getAccumulator().getAccountsToUpdate().entrySet());
+        for (var entry : entries) {
+          DiffBasedAccount updated = entry.getValue().getUpdated();
+          if (updated != null && updated.isEmpty()) {
+            worldState.getAccumulator().deleteAccount(entry.getKey());
+          }
         }
       }
       if (result.isInvalid()) {
@@ -428,7 +430,9 @@ public class T8nExecutor {
 
     // block reward
     // The max production reward was 5 Eth, longs can hold over 18 Eth.
-    if (!validTransactions.isEmpty() && (rewardString == null || Long.decode(rewardString) > 0)) {
+    if (!referenceTestEnv.isStateTest()
+        && !validTransactions.isEmpty()
+        && (rewardString == null || Long.decode(rewardString) > 0)) {
       Wei reward =
           (rewardString == null)
               ? protocolSpec.getBlockReward()
@@ -439,15 +443,24 @@ public class T8nExecutor {
     }
 
     rootWorldStateUpdater.commit();
-    // Invoke the withdrawal processor to handle CL withdrawals.
-    if (!referenceTestEnv.getWithdrawals().isEmpty()) {
-      try {
-        protocolSpec
-            .getWithdrawalsProcessor()
-            .ifPresent(
-                p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldState.updater()));
-      } catch (RuntimeException re) {
-        resultObject.put("exception", re.getMessage());
+
+    if (referenceTestEnv.isStateTest()) {
+      if (!referenceTestEnv.getWithdrawals().isEmpty()) {
+        resultObject.put("exception", "withdrawals are not supported in state tests");
+      }
+    } else {
+      // Invoke the withdrawal processor to handle CL withdrawals.
+      if (!referenceTestEnv.getWithdrawals().isEmpty()) {
+        try {
+          protocolSpec
+              .getWithdrawalsProcessor()
+              .ifPresent(
+                  p ->
+                      p.processWithdrawals(
+                          referenceTestEnv.getWithdrawals(), worldState.updater()));
+        } catch (RuntimeException re) {
+          resultObject.put("exception", re.getMessage());
+        }
       }
     }
 
