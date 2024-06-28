@@ -2,6 +2,13 @@
 
 ## Next Release
 
+### Upcoming Breaking Changes
+- Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
+- PKI-backed QBFT will be removed in a future version of Besu. Other forms of QBFT will remain unchanged.
+- --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
+- --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
+- `besu storage x-trie-log` subcommand is deprecated, use `besu storage trie-log` instead
+
 ### Breaking Changes
 - `Xp2p-peer-lower-bound` has been removed. [#7247](https://github.com/hyperledger/besu/pull/7247)
 
@@ -16,6 +23,7 @@
 - Add LUKSO as predefined network name [#7223](https://github.com/hyperledger/besu/pull/7223)
 - Refactored how code, initcode, and max stack size are configured in forks. [#7245](https://github.com/hyperledger/besu/pull/7245)
 - Nodes in a permissioned chain maintain (and retry) connections to bootnodes [#7257](https://github.com/hyperledger/besu/pull/7257)
+- Promote experimental `besu storage x-trie-log` subcommand to production-ready [#7278](https://github.com/hyperledger/besu/pull/7278)
 
 ### Bug fixes
 - Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)
