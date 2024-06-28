@@ -38,9 +38,10 @@ public class NodeSmartContractPermissioningAcceptanceTest
     permissionedCluster.start(bootnode, forbiddenNode, allowedNode, permissionedNode);
 
     // updating permissioning smart contract with allowed nodes
-
+    permissionedNode.verify(nodeIsForbidden(bootnode));
     permissionedNode.execute(allowNode(bootnode));
     permissionedNode.verify(nodeIsAllowed(bootnode));
+    permissionedNode.verify(admin.hasPeer(bootnode));
 
     permissionedNode.execute(allowNode(allowedNode));
     permissionedNode.verify(nodeIsAllowed(allowedNode));
@@ -48,7 +49,6 @@ public class NodeSmartContractPermissioningAcceptanceTest
     permissionedNode.execute(allowNode(permissionedNode));
     permissionedNode.verify(nodeIsAllowed(permissionedNode));
 
-    permissionedNode.verify(admin.addPeer(bootnode));
     permissionedNode.verify(admin.addPeer(allowedNode));
 
     allowedNode.verify(eth.syncingStatus(false));
