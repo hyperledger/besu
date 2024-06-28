@@ -31,7 +31,6 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -47,12 +46,12 @@ class WithdrawalRequestContractHelperTest {
   private MutableAccount contract;
 
   @BeforeEach
-  public void setUp() {
+  void setUp() {
     worldState = createInMemoryWorldStateArchive().getMutable();
   }
 
   @Test
-  public void popWithdrawalRequestsFromQueue_ReadWithdrawalRequestsCorrectly() {
+  void popWithdrawalRequestsFromQueue_ReadWithdrawalRequestsCorrectly() {
     final List<WithdrawalRequest> validatorWithdrawalRequests =
         List.of(createExit(), createExit(), createExit());
     loadContractStorage(worldState, validatorWithdrawalRequests);
@@ -64,7 +63,7 @@ class WithdrawalRequestContractHelperTest {
   }
 
   @Test
-  public void
+  void
       popWithdrawalRequestsFromQueue_whenContractCodeIsEmpty_ReturnsEmptyListOfWithdrawalRequests() {
     // Create account with empty code
     final WorldUpdater updater = worldState.updater();
@@ -76,10 +75,10 @@ class WithdrawalRequestContractHelperTest {
   }
 
   @Test
-  public void popWithdrawalRequestsFromQueue_WhenMoreWithdrawalRequests_UpdatesQueuePointers() {
+  void popWithdrawalRequestsFromQueue_WhenMoreWithdrawalRequests_UpdatesQueuePointers() {
     // Loading contract with more than 16 WithdrawalRequests
     final List<WithdrawalRequest> validatorWithdrawalRequests =
-        IntStream.range(0, 30).mapToObj(__ -> createExit()).collect(Collectors.toList());
+        IntStream.range(0, 30).mapToObj(__ -> createExit()).toList();
     loadContractStorage(worldState, validatorWithdrawalRequests);
     // After loading the contract, the WithdrawalRequests count since last block should match the
     // size of the list
@@ -102,7 +101,7 @@ class WithdrawalRequestContractHelperTest {
   }
 
   @Test
-  public void popWithdrawalRequestsFromQueue_WhenNoMoreWithdrawalRequests_ZeroQueuePointers() {
+  void popWithdrawalRequestsFromQueue_WhenNoMoreWithdrawalRequests_ZeroQueuePointers() {
     final List<WithdrawalRequest> withdrawalRequests =
         List.of(createExit(), createExit(), createExit());
     loadContractStorage(worldState, withdrawalRequests);
@@ -126,7 +125,7 @@ class WithdrawalRequestContractHelperTest {
   }
 
   @Test
-  public void popWithdrawalRequestsFromQueue_WhenNoWithdrawalRequests_DoesNothing() {
+  void popWithdrawalRequestsFromQueue_WhenNoWithdrawalRequests_DoesNothing() {
     // Loading contract with 0 WithdrawalRequests
     loadContractStorage(worldState, List.of());
     // After loading storage, we have the WithdrawalRequests count as zero because no
@@ -135,7 +134,7 @@ class WithdrawalRequestContractHelperTest {
 
     final List<WithdrawalRequest> poppedWithdrawalRequests =
         WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
-    assertThat(poppedWithdrawalRequests).hasSize(0);
+    assertThat(poppedWithdrawalRequests).isEmpty();
 
     // Check that queue pointers are correct (head and tail are zero)
     assertContractStorageValue(WITHDRAWAL_REQUEST_QUEUE_HEAD_STORAGE_SLOT, 0);
@@ -186,14 +185,13 @@ class WithdrawalRequestContractHelperTest {
                   Bytes.fromHexString("0x000000000000000000000000"), request.getSourceAddress())));
       // validator_pubkey
       contract.setStorageValue(
-          UInt256.valueOf(offset++),
-          UInt256.fromBytes(request.getValidatorPublicKey().slice(0, 32)));
+          UInt256.valueOf(offset++), UInt256.fromBytes(request.getValidatorPubkey().slice(0, 32)));
       contract.setStorageValue(
           // set public key to slot, with 16 bytes padding on the right
           UInt256.valueOf(offset++),
           UInt256.fromBytes(
               Bytes.concatenate(
-                  request.getValidatorPublicKey().slice(32, 16),
+                  request.getValidatorPubkey().slice(32, 16),
                   request.getAmount().toBytes(), // 8 bytes for amount
                   Bytes.fromHexString("0x0000000000000000"))));
     }

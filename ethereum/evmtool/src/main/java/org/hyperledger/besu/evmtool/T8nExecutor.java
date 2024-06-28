@@ -110,7 +110,9 @@ public class T8nExecutor {
    * Default constructor for the T8nExecutor class. This constructor does not perform any
    * operations.
    */
-  public T8nExecutor() {}
+  public T8nExecutor() {
+    // Default constructor required for Javadoc linting
+  }
 
   /**
    * Extracts transactions from a given JSON iterator and adds them to the provided transactions
@@ -531,7 +533,7 @@ public class T8nExecutor {
               wr -> {
                 var obj = withdrawlRequests.addObject();
                 obj.put("sourceAddress", wr.getSourceAddress().toHexString());
-                obj.put("validatorPublicKey", wr.getValidatorPublicKey().toHexString());
+                obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
                 obj.put("amount", wr.getAmount().toHexString());
               });
     }
