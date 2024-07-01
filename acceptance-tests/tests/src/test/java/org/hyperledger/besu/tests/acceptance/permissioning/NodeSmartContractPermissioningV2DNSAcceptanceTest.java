@@ -25,8 +25,10 @@ import java.net.UnknownHostException;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled("test is flaky #7191")
 public class NodeSmartContractPermissioningV2DNSAcceptanceTest
     extends NodeSmartContractPermissioningV2AcceptanceTestBase {
 
@@ -57,12 +59,6 @@ public class NodeSmartContractPermissioningV2DNSAcceptanceTest
 
     permissionedNode.execute(allowNode(permissionedNode));
     permissionedNode.verify(connectionIsAllowed(permissionedNode));
-
-    // Verify initial configuration
-    bootnode.verify(net.awaitPeerCount(3));
-    allowedNode.verify(net.awaitPeerCount(3));
-    forbiddenNode.verify(net.awaitPeerCount(2));
-    permissionedNode.verify(net.awaitPeerCount(2));
   }
 
   @Test

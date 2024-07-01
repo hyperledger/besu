@@ -21,9 +21,22 @@ import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/**
+ * Represents an empty account in the Ethereum blockchain. This class is used when an account does
+ * not exist at a specific address. It provides default values for the account's properties. It
+ * extends the {@link org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.AccountAdapter}
+ * class.
+ *
+ * @see org.hyperledger.besu.ethereum.api.graphql.internal.pojoadapter.AccountAdapter
+ */
 public class EmptyAccountAdapter extends AccountAdapter {
   private final Address address;
 
+  /**
+   * Constructs a new EmptyAccountAdapter.
+   *
+   * @param address the address of the account
+   */
   public EmptyAccountAdapter(final Address address) {
     super(null);
     this.address = address;

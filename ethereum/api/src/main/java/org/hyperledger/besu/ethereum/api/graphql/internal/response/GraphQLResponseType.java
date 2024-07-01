@@ -16,8 +16,15 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
 /** Various types of responses that the JSON-RPC component may produce. */
 public enum GraphQLResponseType {
+  /** Represents a response type where there is no content. */
   NONE,
+
+  /** Represents a successful response type. */
   SUCCESS,
+
+  /** Represents an error response type. */
   ERROR,
+
+  /** Represents an unauthorized response type. */
   UNAUTHORIZED
 }

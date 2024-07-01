@@ -80,8 +80,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * This class describes the behaviour of the EthStats service. This class is used to report pending
- * transactions, blocks, and several node-related information to a netstats server.
+ * This class describes the behaviour of the EthStatsService. This class is used to report pending
+ * transactions, blocks, and several node-related information to an ethstats server.
  */
 public class EthStatsService {
 
@@ -112,18 +112,18 @@ public class EthStatsService {
   private long pingTimestamp;
 
   /**
-   * Instantiates a new EthStats service.
+   * Instantiates a new EthStatsService.
    *
-   * @param ethStatsConnectOptions the netstats url
+   * @param ethStatsConnectOptions the ethstats options
    * @param blockchainQueries the blockchain queries
    * @param protocolManager the protocol manager
    * @param transactionPool the transaction pool
    * @param miningCoordinator the mining coordinator
-   * @param syncState the sync state
-   * @param vertx the vertx
+   * @param syncState the SyncState
+   * @param vertx the vertx instance
    * @param clientVersion the client version
    * @param genesisConfigOptions the genesis config options
-   * @param p2PNetwork the p 2 p network
+   * @param p2PNetwork the p2p network
    */
   public EthStatsService(
       final EthStatsConnectOptions ethStatsConnectOptions,

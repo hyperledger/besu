@@ -51,6 +51,11 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
+/**
+ * This class implements the Runnable interface and represents the B11rSubCommand. It is responsible
+ * for handling the block builder subcommand in the EVM tool. It provides methods to read headers,
+ * move fields, and run the command.
+ */
 @Command(
     name = COMMAND_NAME,
     aliases = {COMMAND_ALIAS},
@@ -138,12 +143,18 @@ public class B11rSubCommand implements Runnable {
     }
   }
 
+  /** Default constructor for the B11rSubCommand class. This is required by PicoCLI. */
   @SuppressWarnings("unused")
   public B11rSubCommand() {
     // PicoCLI requires this
     parentCommand = null;
   }
 
+  /**
+   * Constructs a new B11rSubCommand with the given parent command.
+   *
+   * @param parentCommand the parent command of this subcommand
+   */
   @SuppressWarnings("unused")
   public B11rSubCommand(final EvmToolCommand parentCommand) {
     // PicoCLI requires this too

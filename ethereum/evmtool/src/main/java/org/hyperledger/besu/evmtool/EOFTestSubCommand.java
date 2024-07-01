@@ -45,13 +45,16 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
+/** A PicoCli annotated command for running EOF validation reference tests. */
 @CommandLine.Command(
     name = COMMAND_NAME,
     description = "Runs EOF validation reference tests",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class EOFTestSubCommand implements Runnable {
+  /** The name of the EOF validation reference test command. */
   public static final String COMMAND_NAME = "eof-test";
+
   @CommandLine.ParentCommand private final EvmToolCommand parentCommand;
 
   // picocli does it magically
@@ -65,10 +68,16 @@ public class EOFTestSubCommand implements Runnable {
   EVM evm;
   String fork = null;
 
+  /** Default constructor for the EOFTestSubCommand class. Sets the parent command to null. */
   public EOFTestSubCommand() {
     this(null);
   }
 
+  /**
+   * Constructor for the EOFTestSubCommand class with a parent command.
+   *
+   * @param parentCommand The parent command for this sub command.
+   */
   public EOFTestSubCommand(final EvmToolCommand parentCommand) {
     this.parentCommand = parentCommand;
   }
@@ -199,6 +208,12 @@ public class EOFTestSubCommand implements Runnable {
     }
   }
 
+  /**
+   * Considers the given hexadecimal code string for EOF validation.
+   *
+   * @param hexCode The hexadecimal string representation of the code to be considered.
+   * @return The result of the EOF validation test.
+   */
   public TestResult considerCode(final String hexCode) {
     Bytes codeBytes;
     try {

@@ -19,18 +19,37 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
+/**
+ * This interface represents the authentication data. It provides methods to get the id, info, and
+ * secret of the authentication data.
+ */
 @Value.Immutable
 @JsonSerialize(as = ImmutableAuthenticationData.class)
 @JsonDeserialize(as = ImmutableAuthenticationData.class)
 @Value.Style(allParameters = true)
 public interface AuthenticationData {
 
+  /**
+   * Gets the id of the authentication data.
+   *
+   * @return the id of the authentication data.
+   */
   @JsonProperty("id")
   String getId();
 
+  /**
+   * Gets the info of the authentication data.
+   *
+   * @return the info of the authentication data.
+   */
   @JsonProperty("info")
   NodeInfo getInfo();
 
+  /**
+   * Gets the secret of the authentication data.
+   *
+   * @return the secret of the authentication data.
+   */
   @JsonProperty("secret")
   String getSecret();
 }

@@ -20,8 +20,14 @@ import java.util.Optional;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** Class for starting and keeping organised round timers */
 public class RoundTimer {
+
+  private static final Logger LOG = LoggerFactory.getLogger(RoundTimer.class);
+
   private final BftExecutors bftExecutors;
   private Optional<ScheduledFuture<?>> currentTimerTask;
   private final BftEventQueue queue;
@@ -71,6 +77,16 @@ public class RoundTimer {
 
     final ScheduledFuture<?> newTimerTask =
         bftExecutors.scheduleTask(newTimerRunnable, expiryTime, TimeUnit.MILLISECONDS);
+
+    // Once we are up to round 2 start logging round expiries
+    if (round.getRoundNumber() >= 2) {
+      LOG.info(
+          "QBFT round {} expired. Moved to round {} which will expire in {} seconds",
+          round.getRoundNumber() - 1,
+          round.getRoundNumber(),
+          (expiryTime / 1000));
+    }
+
     currentTimerTask = Optional.of(newTimerTask);
   }
 }
