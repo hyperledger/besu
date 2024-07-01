@@ -16,8 +16,8 @@ package org.hyperledger.besu.ethereum.eth.sync.checkpointsync;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.BlockReceipts;
 import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBlockFromPeerTask;
@@ -71,10 +71,11 @@ public class CheckpointDownloadBlockStep {
         .run()
         .thenCompose(
             receiptTaskResult -> {
-              final Optional<List<TransactionReceipt>> transactionReceipts =
+              final Optional<BlockReceipts> transactionReceipts =
                   Optional.ofNullable(receiptTaskResult.getResult().get(block.getHeader()));
               return CompletableFuture.completedFuture(
-                  transactionReceipts.map(receipts -> new BlockWithReceipts(block, receipts)));
+                  transactionReceipts.map(
+                      receipts -> new BlockWithReceipts(block, receipts.getReceipts())));
             })
         .exceptionally(throwable -> Optional.empty());
   }
