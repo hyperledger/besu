@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,12 +18,11 @@ import org.hyperledger.besu.datatypes.Address;
 
 public interface PrivateState {
 
-
-    /**
-     * Commits the changes made to this updater to the underlying {@link WorldView} this is an updater
-     * even if transaction failed.
-     *
-     * @param senderAddress address of the transaction sender
-     */
-    void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress);
+  /**
+   * Commits the changes made to this updater to the underlying {@link WorldView} this is an updater
+   * even if transaction failed.
+   *
+   * @param senderAddress address of the transaction sender
+   */
+  void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress);
 }
