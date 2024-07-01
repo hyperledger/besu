@@ -325,7 +325,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 updatedAccount = tracked.getWrappedAccount();
                 updatedAccount.setBalance(tracked.getBalance());
                 updatedAccount.setNonce(tracked.getNonce());
-
                 if (tracked.codeWasUpdated()) {
                   updatedAccount.setCode(tracked.getCode());
                 }
