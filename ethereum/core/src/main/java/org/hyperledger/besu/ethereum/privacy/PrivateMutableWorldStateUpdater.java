@@ -106,8 +106,8 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public void commitPrivateNonce() {
+  public void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress) {
 
-    privateWorldUpdater.commitPrivateNonce();
+    privateWorldUpdater.incrementAndCommitPrivateNonceForRevertedTransaction(senderAddress);
   }
 }

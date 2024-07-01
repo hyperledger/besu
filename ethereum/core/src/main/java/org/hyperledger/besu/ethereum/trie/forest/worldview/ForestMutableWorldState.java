@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
@@ -454,33 +455,37 @@ public class ForestMutableWorldState implements MutableWorldState {
     }
 
     @Override
-    public void commitPrivateNonce() {
+    public void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress) {
+      final MutableAccount maybePrivateSender = getAccount(senderAddress);
+
+      final MutableAccount sender =
+          maybePrivateSender != null
+              ? maybePrivateSender
+              : createAccount(senderAddress, 0, Wei.ZERO);
+      sender.incrementNonce();
+
       final ForestMutableWorldState wrapped = wrappedWorldView();
 
-      for (final UpdateTrackingAccount<WorldStateAccount> updated : getUpdatedAccounts()) {
-        wrapped.updatedStorageTries.remove(updated.getAddress());
+      // Save address preimage
+      wrapped.newAccountKeyPreimages.put(sender.getAddressHash(), sender.getAddress());
+      // Lastly, save the new account.
+      Optional<StateTrieAccountValue> previousAccount =
+          wrapped
+              .accountStateTrie
+              .get(sender.getAddressHash())
+              .map(
+                  previousState ->
+                      StateTrieAccountValue.readFrom(
+                          new BytesValueRLPInput(previousState, false, true)));
 
-        // Save address preimage
-        wrapped.newAccountKeyPreimages.put(updated.getAddressHash(), updated.getAddress());
-        // Lastly, save the new account.
-        Optional<StateTrieAccountValue> previousAccount =
-            wrapped
-                .accountStateTrie
-                .get(updated.getAddressHash())
-                .map(
-                    previousState ->
-                        StateTrieAccountValue.readFrom(
-                            new BytesValueRLPInput(previousState, false, true)));
+      final Bytes account =
+          serializeAccount(
+              sender.getNonce(),
+              previousAccount.map(StateTrieAccountValue::getBalance).orElse(Wei.ZERO),
+              Hash.EMPTY_TRIE_HASH,
+              Hash.EMPTY);
 
-        final Bytes account =
-            serializeAccount(
-                updated.getNonce(),
-                previousAccount.map(StateTrieAccountValue::getBalance).orElse(Wei.ZERO),
-                Hash.EMPTY_TRIE_HASH,
-                Hash.EMPTY);
-
-        wrapped.accountStateTrie.put(updated.getAddressHash(), account);
-      }
+      wrapped.accountStateTrie.put(sender.getAddressHash(), account);
     }
 
     private static Bytes serializeAccount(

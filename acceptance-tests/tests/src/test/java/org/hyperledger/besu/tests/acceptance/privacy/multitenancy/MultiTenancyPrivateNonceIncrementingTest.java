@@ -105,14 +105,11 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
   @Test
   public void validateUnsuccessfulPrivateTransactionsNonceIncrementation()
       throws JsonProcessingException {
-
     executePrivateFailingTransaction(0, 0, 1);
-
     executePrivateValidTransaction(1, 1, 2);
-
     executePrivateFailingTransaction(2, 2, 3);
-
-    executePrivateValidTransaction(3, 3, 4);
+    executePrivateFailingTransaction(3, 3, 4);
+    executePrivateValidTransaction(4, 4, 5);
   }
 
   private void executePrivateValidTransaction(

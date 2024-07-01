@@ -400,7 +400,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   }
 
   @Override
-  public void commitPrivateNonce() {}
+  public void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress) {}
 
   @Override
   public Optional<Bytes> getCode(final Address address, final Hash codeHash) {

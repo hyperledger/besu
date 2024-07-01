@@ -129,7 +129,7 @@ public class SimpleWorld implements WorldUpdater {
   }
 
   @Override
-  public void commitPrivateNonce() {}
+  public void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress) {}
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {

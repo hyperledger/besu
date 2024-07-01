@@ -21,7 +21,6 @@ import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMP
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.EnclaveConfigurationException;
@@ -42,7 +41,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -190,16 +188,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     if (!result.isSuccessful() && incrementPrivateNonce) {
       final Address senderAddress = privateTransaction.getSender();
-      final MutableAccount maybePrivateSender = privateWorldStateUpdater.getAccount(senderAddress);
-      final MutableAccount sender =
-          maybePrivateSender != null
-              ? maybePrivateSender
-              : privateWorldStateUpdater.createAccount(senderAddress, 0, Wei.ZERO);
-
-      sender.incrementNonce();
-      privateWorldStateUpdater.createAccount(
-          sender.getAddress(), sender.getNonce(), sender.getBalance());
-      privateWorldStateUpdater.commitPrivateNonce();
+      privateWorldStateUpdater.incrementAndCommitPrivateNonceForRevertedTransaction(senderAddress);
       disposablePrivateState.persist(null);
 
       storePrivateMetadata(
