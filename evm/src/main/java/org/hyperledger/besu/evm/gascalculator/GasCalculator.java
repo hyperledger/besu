@@ -645,4 +645,14 @@ public interface GasCalculator {
   default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
     return 0L;
   }
+
+  /**
+   * Returns the upfront gas cost for EIP 7702 operation.
+   *
+   * @param authorizationListLength The length of the authorization list
+   * @return the gas cost
+   */
+  default long setCodeListGasCost(final int authorizationListLength) {
+    return 0L;
+  }
 }

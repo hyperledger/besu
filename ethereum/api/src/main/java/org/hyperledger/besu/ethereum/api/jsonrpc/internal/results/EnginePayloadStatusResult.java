@@ -19,7 +19,9 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 
 import java.util.Optional;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({"status", "latestValidHash", "validationError"})
@@ -28,10 +30,11 @@ public class EnginePayloadStatusResult {
   Optional<Hash> latestValidHash;
   Optional<String> validationError;
 
+  @JsonCreator
   public EnginePayloadStatusResult(
-      final EngineStatus status,
-      final Hash latestValidHash,
-      final Optional<String> validationError) {
+      @JsonProperty("status") final EngineStatus status,
+      @JsonProperty("latestValidHash") final Hash latestValidHash,
+      @JsonProperty("errorMessage") final Optional<String> validationError) {
     this.status = status;
     this.latestValidHash = Optional.ofNullable(latestValidHash);
     this.validationError = validationError;

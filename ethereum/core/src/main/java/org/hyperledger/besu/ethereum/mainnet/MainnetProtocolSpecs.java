@@ -131,7 +131,8 @@ public abstract class MainnetProtocolSpecs {
                     false,
                     evmConfiguration.evmStackSize(),
                     FeeMarket.legacy(),
-                    CoinbaseFeePriceCalculator.frontier()))
+                    CoinbaseFeePriceCalculator.frontier(),
+                    new SetCodeTransactionProcessor(BigInteger.ZERO)))
         .privateTransactionProcessorBuilder(
             (transactionValidatorFactory,
                 contractCreationProcessor,
@@ -264,7 +265,8 @@ public abstract class MainnetProtocolSpecs {
                     false,
                     evmConfiguration.evmStackSize(),
                     feeMarket,
-                    CoinbaseFeePriceCalculator.frontier()))
+                    CoinbaseFeePriceCalculator.frontier(),
+                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
         .name("SpuriousDragon");
   }
 
@@ -425,7 +427,8 @@ public abstract class MainnetProtocolSpecs {
                     false,
                     evmConfiguration.evmStackSize(),
                     feeMarket,
-                    CoinbaseFeePriceCalculator.eip1559()))
+                    CoinbaseFeePriceCalculator.eip1559(),
+                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
         .contractCreationProcessorBuilder(
             evm ->
                 new ContractCreationProcessor(
@@ -525,7 +528,8 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     evmConfiguration.evmStackSize(),
                     feeMarket,
-                    CoinbaseFeePriceCalculator.eip1559()))
+                    CoinbaseFeePriceCalculator.eip1559(),
+                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -595,7 +599,8 @@ public abstract class MainnetProtocolSpecs {
                     true,
                     evmConfiguration.evmStackSize(),
                     feeMarket,
-                    CoinbaseFeePriceCalculator.eip1559()))
+                    CoinbaseFeePriceCalculator.eip1559(),
+                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -657,6 +662,23 @@ public abstract class MainnetProtocolSpecs {
         .requestsValidator(pragueRequestsValidator(depositContractAddress))
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(pragueRequestsProcessors(depositContractAddress))
+
+        // change to accept EIP-7702 transactions
+        .transactionValidatorFactoryBuilder(
+            (evm, gasLimitCalculator, feeMarket) ->
+                new TransactionValidatorFactory(
+                    evm.getGasCalculator(),
+                    gasLimitCalculator,
+                    feeMarket,
+                    true,
+                    chainId,
+                    Set.of(
+                        TransactionType.FRONTIER,
+                        TransactionType.ACCESS_LIST,
+                        TransactionType.EIP1559,
+                        TransactionType.BLOB,
+                        TransactionType.SET_CODE),
+                    evm.getEvmVersion().getMaxInitcodeSize()))
 
         // EIP-2935 Blockhash processor
         .blockHashProcessor(new PragueBlockHashProcessor())
