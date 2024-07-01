@@ -39,6 +39,7 @@ public interface DataStorageConfiguration {
       ImmutableDataStorageConfiguration.builder()
           .dataStorageFormat(DataStorageFormat.BONSAI)
           .bonsaiMaxLayersToLoad(DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD)
+          .unstable(Unstable.DEFAULT)
           .build();
 
   DataStorageConfiguration DEFAULT_BONSAI_PARTIAL_DB_CONFIG =
