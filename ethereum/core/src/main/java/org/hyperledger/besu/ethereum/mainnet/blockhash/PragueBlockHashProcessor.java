@@ -36,7 +36,7 @@ public class PragueBlockHashProcessor extends CancunBlockHashProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(PragueBlockHashProcessor.class);
 
   public static final Address HISTORY_STORAGE_ADDRESS =
-      Address.fromHexString("0x25a219378dad9b3503c8268c9ca836a52427a4fb");
+      Address.fromHexString("0x0aae40965e6800cd9b1f4b05ff21581047e3f91e");
 
   /** The HISTORY_SERVE_WINDOW */
   public static final long HISTORY_SERVE_WINDOW = 8192;
