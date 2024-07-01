@@ -530,7 +530,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     // otherwise the first element should be account hash, and subsequent paths
                     // are compact encoded account storage paths
 
-                    final Bytes accountPrefix = triePath.get(0);
+                    final Bytes accountPrefix = Bytes32.leftPad(triePath.getFirst());
 
                     List<Bytes> storagePaths = triePath.subList(1, triePath.size());
                     for (var path : storagePaths) {

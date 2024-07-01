@@ -31,6 +31,8 @@ jar {
 dependencies {
   api 'org.slf4j:slf4j-api'
 
+  annotationProcessor 'org.apache.logging.log4j:log4j-core'
+
   implementation 'com.google.guava:guava'
   implementation 'net.java.dev.jna:jna'
   implementation 'org.apache.commons:commons-lang3'
