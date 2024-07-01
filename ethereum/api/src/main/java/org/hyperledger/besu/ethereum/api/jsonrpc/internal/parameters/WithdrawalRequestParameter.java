@@ -45,7 +45,7 @@ public class WithdrawalRequestParameter {
       final WithdrawalRequest withdrawalRequest) {
     return new WithdrawalRequestParameter(
         withdrawalRequest.getSourceAddress().toHexString(),
-        withdrawalRequest.getValidatorPublicKey().toHexString(),
+        withdrawalRequest.getValidatorPubkey().toHexString(),
         withdrawalRequest.getAmount().toShortHexString());
   }
 
