@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.worldstate;
 
 import org.hyperledger.besu.datatypes.Address;
 
+/** The interface for Private State actions. */
 public interface PrivateState {
 
   /**
