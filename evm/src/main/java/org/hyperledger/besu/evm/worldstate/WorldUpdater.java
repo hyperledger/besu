@@ -86,6 +86,12 @@ public interface WorldUpdater extends MutableWorldView {
     return account;
   }
 
+  /**
+   * Check this and parent updaters to see if an address has been deleted since the last persist
+   *
+   * @param address address to check
+   * @return true if any updaters have marked the address as deleted.
+   */
   default boolean isDeleted(final Address address) {
     if (getDeletedAccountAddresses().contains(address)) {
       return true;
