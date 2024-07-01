@@ -44,10 +44,7 @@ dependencies {
   implementation 'io.tmio:tuweni-units'
   implementation 'org.hyperledger.besu:arithmetic'
   implementation 'org.hyperledger.besu:bls12-381'
-  // TODO remove tuweni exclude - use besu-native 0.9.1
-  implementation('org.hyperledger.besu:gnark') {
-    exclude group: 'org.apache.tuweni', module: 'tuweni-bytes'
-  }
+  implementation'org.hyperledger.besu:gnark'
   implementation 'tech.pegasys:jc-kzg-4844'
 
   compileOnly 'com.fasterxml.jackson.core:jackson-databind'
