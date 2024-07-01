@@ -116,9 +116,6 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   }
 
   @Override
-  public void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress) {}
-
-  @Override
   public Optional<WorldUpdater> parentUpdater() {
     return Optional.of(parentWorld);
   }

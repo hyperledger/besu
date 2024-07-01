@@ -140,14 +140,6 @@ public interface WorldUpdater extends MutableWorldView {
   void commit();
 
   /**
-   * Commits the changes made to this updater to the underlying {@link WorldView} this is an updater
-   * even if transaction failed.
-   *
-   * @param senderAddress address of the transaction sender
-   */
-  void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress);
-
-  /**
    * The parent updater (if it exists).
    *
    * @return The parent WorldUpdater if this wraps another one, empty otherwise

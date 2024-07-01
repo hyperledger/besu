@@ -104,10 +104,4 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
   public Optional<WorldUpdater> parentUpdater() {
     return privateWorldUpdater.parentUpdater();
   }
-
-  @Override
-  public void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress) {
-
-    privateWorldUpdater.incrementAndCommitPrivateNonceForRevertedTransaction(senderAddress);
-  }
 }

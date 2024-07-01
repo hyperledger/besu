@@ -129,9 +129,6 @@ public class SimpleWorld implements WorldUpdater {
   }
 
   @Override
-  public void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress) {}
-
-  @Override
   public Optional<WorldUpdater> parentUpdater() {
     return Optional.ofNullable(parent);
   }

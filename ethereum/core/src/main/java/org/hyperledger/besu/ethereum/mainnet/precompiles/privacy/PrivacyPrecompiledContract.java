@@ -46,6 +46,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.PrivateState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Base64;
@@ -188,7 +189,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     if (!result.isSuccessful() && incrementPrivateNonce) {
       final Address senderAddress = privateTransaction.getSender();
-      privateWorldStateUpdater.incrementAndCommitPrivateNonceForRevertedTransaction(senderAddress);
+      ((PrivateState) privateWorldStateUpdater)
+          .incrementAndCommitPrivateNonceForRevertedTransaction(senderAddress);
       disposablePrivateState.persist(null);
 
       storePrivateMetadata(

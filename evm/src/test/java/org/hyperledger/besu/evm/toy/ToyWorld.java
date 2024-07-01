@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.toy;
 
+import org.apache.tuweni.bytes.Bytes;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
@@ -25,8 +26,6 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
-
-import org.apache.tuweni.bytes.Bytes;
 
 public class ToyWorld implements WorldUpdater {
 
@@ -123,9 +122,6 @@ public class ToyWorld implements WorldUpdater {
       parent.accounts.putAll(accounts);
     }
   }
-
-  @Override
-  public void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress) {}
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {
