@@ -302,6 +302,7 @@ public class PrivacyPrecompiledContractTest {
             worldStateArchive,
             privateStateRootResolver,
             privateStateGenesisAllocator,
+            false,
             "RestrictedPrivacyTest");
 
     contract.setPrivateTransactionProcessor(
@@ -328,7 +329,7 @@ public class PrivacyPrecompiledContractTest {
   @Test
   public void testSimulatedPublicTransactionIsSkipped() {
     final PrivacyPrecompiledContract emptyContract =
-        new PrivacyPrecompiledContract(null, null, null, null, null, null);
+        new PrivacyPrecompiledContract(null, null, null, null, null, false, null);
 
     // A simulated public transaction doesn't contain a PrivateMetadataUpdater
     final MessageFrame frame = mock(MessageFrame.class);
@@ -355,6 +356,7 @@ public class PrivacyPrecompiledContractTest {
         worldStateArchive,
         privateStateRootResolver,
         privateStateGenesisAllocator,
+        false,
         "PrivacyTests");
   }
 }

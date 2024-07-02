@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_PRIVAT
 import static org.hyperledger.besu.ethereum.mainnet.PrivateStateUtils.KEY_TRANSACTION_HASH;
 import static org.hyperledger.besu.ethereum.privacy.PrivateStateRootResolver.EMPTY_ROOT_HASH;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.enclave.Enclave;
 import org.hyperledger.besu.enclave.EnclaveClientException;
@@ -45,6 +46,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.PrivateState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Base64;
@@ -61,6 +63,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   final WorldStateArchive privateWorldStateArchive;
   final PrivateStateRootResolver privateStateRootResolver;
   private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
+  final boolean incrementPrivateNonce;
   PrivateTransactionProcessor privateTransactionProcessor;
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPrecompiledContract.class);
@@ -79,6 +82,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
         privacyParameters.getPrivateStateGenesisAllocator(),
+        privacyParameters.isPrivateNonceIncrementationEnabled(),
         name);
   }
 
@@ -88,12 +92,14 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final WorldStateArchive worldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
       final PrivateStateGenesisAllocator privateStateGenesisAllocator,
+      final boolean incrementPrivateNonce,
       final String name) {
     super(name, gasCalculator);
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
     this.privateStateGenesisAllocator = privateStateGenesisAllocator;
+    this.incrementPrivateNonce = incrementPrivateNonce;
   }
 
   public void setPrivateTransactionProcessor(
@@ -181,14 +187,25 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
+    if (!result.isSuccessful() && incrementPrivateNonce) {
+      final Address senderAddress = privateTransaction.getSender();
+      ((PrivateState) privateWorldStateUpdater)
+          .incrementAndCommitPrivateNonceForRevertedTransaction(senderAddress);
+      disposablePrivateState.persist(null);
+
+      storePrivateMetadata(
+          pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
+    }
+
     if (result.isInvalid() || !result.isSuccessful()) {
       LOG.error(
           "Failed to process private transaction {}: {}",
           pmtHash,
           result.getValidationResult().getErrorMessage());
-
-      privateMetadataUpdater.putTransactionReceipt(pmtHash, new PrivateTransactionReceipt(result));
-
+      if (!incrementPrivateNonce) {
+        privateMetadataUpdater.putTransactionReceipt(
+            pmtHash, new PrivateTransactionReceipt(result));
+      }
       return NO_RESULT;
     }
 

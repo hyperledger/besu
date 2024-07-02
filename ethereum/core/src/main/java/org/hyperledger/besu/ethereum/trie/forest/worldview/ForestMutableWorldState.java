@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
@@ -30,8 +31,10 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
+import org.hyperledger.besu.evm.worldstate.PrivateState;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -356,7 +359,8 @@ public class ForestMutableWorldState implements MutableWorldState {
   }
 
   protected static class Updater
-      extends AbstractWorldUpdater<ForestMutableWorldState, WorldStateAccount> {
+      extends AbstractWorldUpdater<ForestMutableWorldState, WorldStateAccount>
+      implements PrivateState {
 
     protected Updater(
         final ForestMutableWorldState world, final EvmConfiguration evmConfiguration) {
@@ -450,6 +454,40 @@ public class ForestMutableWorldState implements MutableWorldState {
 
         wrapped.accountStateTrie.put(updated.getAddressHash(), account);
       }
+    }
+
+    @Override
+    public void incrementAndCommitPrivateNonceForRevertedTransaction(final Address senderAddress) {
+      final MutableAccount maybePrivateSender = getAccount(senderAddress);
+
+      final MutableAccount sender =
+          maybePrivateSender != null
+              ? maybePrivateSender
+              : createAccount(senderAddress, 0, Wei.ZERO);
+      sender.incrementNonce();
+
+      final ForestMutableWorldState wrapped = wrappedWorldView();
+
+      // Save address preimage
+      wrapped.newAccountKeyPreimages.put(sender.getAddressHash(), sender.getAddress());
+      // Lastly, save the new account.
+      Optional<StateTrieAccountValue> previousAccount =
+          wrapped
+              .accountStateTrie
+              .get(sender.getAddressHash())
+              .map(
+                  previousState ->
+                      StateTrieAccountValue.readFrom(
+                          new BytesValueRLPInput(previousState, false, true)));
+
+      final Bytes account =
+          serializeAccount(
+              sender.getNonce(),
+              previousAccount.map(StateTrieAccountValue::getBalance).orElse(Wei.ZERO),
+              Hash.EMPTY_TRIE_HASH,
+              Hash.EMPTY);
+
+      wrapped.accountStateTrie.put(sender.getAddressHash(), account);
     }
 
     private static Bytes serializeAccount(
