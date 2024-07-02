@@ -97,7 +97,7 @@ public class SystemCallProcessor {
     }
 
     // the call must execute to completion
-    throw new RuntimeException("System the call did not execute to completion");
+    throw new RuntimeException("System call did not execute to completion");
   }
 
   private MessageFrame createCallFrame(
