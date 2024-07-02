@@ -14,8 +14,10 @@
  */
 package org.hyperledger.besu.consensus.common.validator;
 
+import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Util;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -66,5 +68,15 @@ public interface ValidatorProvider {
    */
   default Optional<VoteProvider> getVoteProviderAfterBlock(final BlockHeader header) {
     return getVoteProviderAtHead();
+  }
+
+  /**
+   * Determines if this node is a validator
+   *
+   * @param nodekey our node key
+   * @return true if this node is a validator
+   */
+  default boolean nodeIsValidator(final NodeKey nodekey) {
+    return this.getValidatorsAtHead().contains(Util.publicKeyToAddress(nodekey.getPublicKey()));
   }
 }
