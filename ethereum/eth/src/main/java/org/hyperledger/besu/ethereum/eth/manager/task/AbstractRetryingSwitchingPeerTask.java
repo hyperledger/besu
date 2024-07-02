@@ -95,7 +95,6 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
                   .addArgument(peerToUse)
                   .addArgument(this::getRetryCount)
                   .log();
-              result.complete(peerResult);
               return peerResult;
             });
   }

@@ -21,7 +21,8 @@ import static org.hyperledger.besu.datatypes.Hash.EMPTY_TRIE_HASH;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingMessageTaskTest;
+import org.hyperledger.besu.ethereum.eth.manager.RespondingEthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.ethtaskutils.RetryingSwitchingPeerMessageTaskTest;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 
 import java.util.ArrayList;
@@ -33,7 +34,7 @@ import com.google.common.collect.ImmutableMap;
 import org.junit.jupiter.api.Test;
 
 public class GetReceiptsForHeadersTaskTest
-    extends RetryingMessageTaskTest<Map<BlockHeader, List<TransactionReceipt>>> {
+    extends RetryingSwitchingPeerMessageTaskTest<Map<BlockHeader, List<TransactionReceipt>>> {
 
   @Override
   protected Map<BlockHeader, List<TransactionReceipt>> generateDataToBeRequested() {
@@ -65,6 +66,9 @@ public class GetReceiptsForHeadersTaskTest
 
     final Map<BlockHeader, List<TransactionReceipt>> expected =
         ImmutableMap.of(header1, emptyList(), header2, emptyList(), header3, emptyList());
+
+    // just needs any peer added, as it is not used!
+    RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
 
     assertThat(createTask(expected).run()).isCompletedWithValue(expected);
   }

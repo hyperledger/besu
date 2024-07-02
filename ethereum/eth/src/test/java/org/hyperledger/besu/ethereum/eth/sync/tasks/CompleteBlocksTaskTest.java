@@ -82,6 +82,9 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
 
   @Test
   public void shouldCompleteWithoutPeersWhenAllBlocksAreEmpty() {
+    // just needs any peer added, as it is not used!
+    RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
+
     final BlockHeader header1 = new BlockHeaderTestFixture().number(1).buildHeader();
     final BlockHeader header2 = new BlockHeaderTestFixture().number(2).buildHeader();
     final BlockHeader header3 = new BlockHeaderTestFixture().number(3).buildHeader();
@@ -112,6 +115,9 @@ public class CompleteBlocksTaskTest extends RetryingMessageTaskTest<List<Block>>
     when(mockProtocolSchedule.getByBlockHeader((eq(header2)))).thenReturn(mockShanghaiSpec);
     when(mockShanghaiSpec.getWithdrawalsProcessor())
         .thenReturn(Optional.of(mockWithdrawalsProcessor));
+
+    // just needs any peer added, as it is not used!
+    RespondingEthPeer.builder().ethProtocolManager(ethProtocolManager).build();
 
     final Block block1 =
         new Block(

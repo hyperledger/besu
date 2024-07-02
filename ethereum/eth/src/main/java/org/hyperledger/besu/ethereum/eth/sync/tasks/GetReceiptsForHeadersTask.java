@@ -24,14 +24,13 @@ import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetReceiptsFromPeerTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -40,7 +39,7 @@ import org.slf4j.LoggerFactory;
 
 /** Given a set of headers, repeatedly requests the receipts for those blocks. */
 public class GetReceiptsForHeadersTask
-    extends AbstractRetryingPeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
+    extends AbstractRetryingSwitchingPeerTask<Map<BlockHeader, List<TransactionReceipt>>> {
   private static final Logger LOG = LoggerFactory.getLogger(GetReceiptsForHeadersTask.class);
   private static final int DEFAULT_RETRIES = 5;
 
@@ -55,8 +54,8 @@ public class GetReceiptsForHeadersTask
       final List<BlockHeader> headers,
       final int maxRetries,
       final MetricsSystem metricsSystem) {
-    super(ethContext, maxRetries, Map::isEmpty, metricsSystem);
-    checkArgument(headers.size() > 0, "Must supply a non-empty headers list");
+    super(ethContext, metricsSystem, Map::isEmpty, maxRetries);
+    checkArgument(!headers.isEmpty(), "Must supply a non-empty headers list");
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
 
@@ -87,13 +86,13 @@ public class GetReceiptsForHeadersTask
   }
 
   @Override
-  protected CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
-    return requestReceipts(assignedPeer).thenCompose(this::processResponse);
+  protected CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> executeTaskOnCurrentPeer(
+      final EthPeer peer) {
+    return requestReceipts(peer).thenCompose(this::processResponse);
   }
 
   private CompletableFuture<Map<BlockHeader, List<TransactionReceipt>>> requestReceipts(
-      final Optional<EthPeer> assignedPeer) {
+      final EthPeer assignedPeer) {
     final List<BlockHeader> incompleteHeaders = incompleteHeaders();
     if (incompleteHeaders.isEmpty()) {
       return CompletableFuture.completedFuture(emptyMap());
@@ -106,7 +105,7 @@ public class GetReceiptsForHeadersTask
         () -> {
           final GetReceiptsFromPeerTask task =
               GetReceiptsFromPeerTask.forHeaders(ethContext, incompleteHeaders, metricsSystem);
-          assignedPeer.ifPresent(task::assignPeer);
+          task.assignPeer(assignedPeer);
           return task.run().thenApply(PeerTaskResult::getResult);
         });
   }
