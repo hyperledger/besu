@@ -83,7 +83,7 @@ public class SystemCallProcessor {
       final WorldUpdater updater) {
 
     if (!frame.getCode().isValid()) {
-      throw new RuntimeException("System the call did not execute to completion");
+      throw new RuntimeException("System call did not execute to completion - opcode invalid");
     }
 
     Deque<MessageFrame> stack = frame.getMessageFrameStack();
