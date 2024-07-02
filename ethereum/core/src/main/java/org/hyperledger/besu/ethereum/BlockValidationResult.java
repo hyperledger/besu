@@ -16,38 +16,78 @@ package org.hyperledger.besu.ethereum;
 
 import java.util.Optional;
 
+/**
+ * Represents the result of a block validation. This class holds the success status, error message,
+ * and cause of the validation.
+ */
 public class BlockValidationResult {
 
+  /** The error message of the failed validation, if any. */
   public final Optional<String> errorMessage;
+
+  /** The cause of the failed validation, if any. */
   public final Optional<Throwable> cause;
+
+  /**
+   * The success status of the validation. True if the validation was successful, false otherwise.
+   */
   public final boolean success;
 
+  /** Constructs a new BlockValidationResult indicating a successful validation. */
   public BlockValidationResult() {
     this.success = true;
     this.errorMessage = Optional.empty();
     this.cause = Optional.empty();
   }
 
+  /**
+   * Constructs a new BlockValidationResult indicating a failed validation with the given error
+   * message.
+   *
+   * @param errorMessage the error message of the failed validation
+   */
   public BlockValidationResult(final String errorMessage) {
     this.success = false;
     this.errorMessage = Optional.of(errorMessage);
     this.cause = Optional.empty();
   }
 
+  /**
+   * Constructs a new BlockValidationResult indicating a failed validation with the given error
+   * message and cause.
+   *
+   * @param errorMessage the error message of the failed validation
+   * @param cause the cause of the failed validation
+   */
   public BlockValidationResult(final String errorMessage, final Throwable cause) {
     this.success = false;
     this.errorMessage = Optional.of(errorMessage);
     this.cause = Optional.of(cause);
   }
 
+  /**
+   * Checks if the validation was successful.
+   *
+   * @return true if the validation was successful, false otherwise
+   */
   public boolean isSuccessful() {
     return this.success;
   }
 
+  /**
+   * Checks if the validation failed.
+   *
+   * @return true if the validation failed, false otherwise
+   */
   public boolean isFailed() {
     return !isSuccessful();
   }
 
+  /**
+   * Gets the cause of the failed validation.
+   *
+   * @return the cause of the failed validation
+   */
   public Optional<Throwable> causedBy() {
     return cause;
   }
