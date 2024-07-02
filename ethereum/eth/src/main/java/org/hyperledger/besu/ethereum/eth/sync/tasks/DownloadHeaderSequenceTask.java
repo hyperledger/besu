@@ -27,7 +27,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractGetHeadersFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetHeadersFromPeerByHashTask;
 import org.hyperledger.besu.ethereum.eth.sync.ValidationPolicy;
@@ -54,7 +54,8 @@ import org.slf4j.LoggerFactory;
  * Retrieves a sequence of headers, sending out requests repeatedly until all headers are fulfilled.
  * Validates headers as they are received.
  */
-public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<BlockHeader>> {
+public class DownloadHeaderSequenceTask
+    extends AbstractRetryingSwitchingPeerTask<List<BlockHeader>> {
   private static final Logger LOG = LoggerFactory.getLogger(DownloadHeaderSequenceTask.class);
   private static final int DEFAULT_RETRIES = 5;
 
@@ -80,7 +81,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
       final int maxRetries,
       final ValidationPolicy validationPolicy,
       final MetricsSystem metricsSystem) {
-    super(ethContext, maxRetries, Collection::isEmpty, metricsSystem);
+    super(ethContext, metricsSystem, Collection::isEmpty, maxRetries);
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
     this.ethContext = ethContext;
@@ -135,12 +136,11 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
   }
 
   @Override
-  protected CompletableFuture<List<BlockHeader>> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
+  protected CompletableFuture<List<BlockHeader>> executeTaskOnCurrentPeer(final EthPeer peer) {
     LOG.debug(
         "Downloading headers from {} to {}.", startingBlockNumber, referenceHeader.getNumber());
     final CompletableFuture<List<BlockHeader>> task =
-        downloadHeaders(assignedPeer).thenCompose(this::processHeaders);
+        downloadHeaders(peer).thenCompose(this::processHeaders);
     return task.whenComplete(
         (r, t) -> {
           // We're done if we've filled all requested headers
@@ -155,7 +155,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
   }
 
   private CompletableFuture<PeerTaskResult<List<BlockHeader>>> downloadHeaders(
-      final Optional<EthPeer> assignedPeer) {
+      final EthPeer assignedPeer) {
     // Figure out parameters for our headers request
     final boolean partiallyFilled = lastFilledHeaderIndex < segmentLength;
     final BlockHeader referenceHeaderForNextRequest =
@@ -174,7 +174,7 @@ public class DownloadHeaderSequenceTask extends AbstractRetryingPeerTask<List<Bl
                   referenceHeaderForNextRequest.getNumber(),
                   count + 1,
                   metricsSystem);
-          assignedPeer.ifPresent(headersTask::assignPeer);
+          headersTask.assignPeer(assignedPeer);
           return headersTask.run();
         });
   }

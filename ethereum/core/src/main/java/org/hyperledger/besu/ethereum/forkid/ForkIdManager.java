@@ -58,7 +58,11 @@ public class ForkIdManager {
     checkNotNull(blockchain);
     checkNotNull(blockNumberForks);
     this.chainHeadSupplier = blockchain::getChainHeadHeader;
-    this.genesisHash = blockchain.getGenesisBlock().getHash();
+    try {
+      this.genesisHash = blockchain.getGenesisBlock().getHash();
+    } catch (Exception e) {
+      throw new RuntimeException(e);
+    }
     this.blockNumbersForkIds = new ArrayList<>();
     this.timestampsForkIds = new ArrayList<>();
     this.legacyEth64 = legacyEth64;

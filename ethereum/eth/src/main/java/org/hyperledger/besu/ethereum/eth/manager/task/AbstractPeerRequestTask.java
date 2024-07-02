@@ -36,7 +36,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractPeerRequestTask.class);
-  private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(5);
+  private static final Duration DEFAULT_TIMEOUT = Duration.ofSeconds(6);
 
   private Duration timeout = DEFAULT_TIMEOUT;
   private final int requestCode;

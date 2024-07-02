@@ -86,6 +86,7 @@ public class PendingPeerRequest {
         : ethPeers
             .streamAvailablePeers()
             .filter(peer -> peer.chainState().getEstimatedHeight() >= minimumBlockNumber)
+            .filter(request::isEthPeerSuitable)
             .min(EthPeers.LEAST_TO_MOST_BUSY);
   }
 

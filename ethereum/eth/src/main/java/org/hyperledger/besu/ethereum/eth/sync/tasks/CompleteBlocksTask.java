@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractPeerTask.PeerTaskResult;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.GetBodiesFromPeerTask;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -47,7 +47,7 @@ import org.slf4j.LoggerFactory;
  * Given a set of headers, "completes" them by repeatedly requesting additional data (bodies) needed
  * to create the blocks that correspond to the supplied headers.
  */
-public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
+public class CompleteBlocksTask extends AbstractRetryingSwitchingPeerTask<List<Block>> {
   private static final Logger LOG = LoggerFactory.getLogger(CompleteBlocksTask.class);
 
   private static final int MIN_SIZE_INCOMPLETE_LIST = 1;
@@ -66,8 +66,8 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
       final List<BlockHeader> headers,
       final int maxRetries,
       final MetricsSystem metricsSystem) {
-    super(ethContext, maxRetries, Collection::isEmpty, metricsSystem);
-    checkArgument(headers.size() > 0, "Must supply a non-empty headers list");
+    super(ethContext, metricsSystem, Collection::isEmpty, maxRetries);
+    checkArgument(!headers.isEmpty(), "Must supply a non-empty headers list");
     this.protocolSchedule = protocolSchedule;
     this.ethContext = ethContext;
     this.metricsSystem = metricsSystem;
@@ -130,11 +130,11 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
   }
 
   @Override
-  protected CompletableFuture<List<Block>> executePeerTask(final Optional<EthPeer> assignedPeer) {
-    return requestBodies(assignedPeer).thenCompose(this::processBodiesResult);
+  protected CompletableFuture<List<Block>> executeTaskOnCurrentPeer(final EthPeer peer) {
+    return requestBodies(peer).thenCompose(this::processBodiesResult);
   }
 
-  private CompletableFuture<List<Block>> requestBodies(final Optional<EthPeer> assignedPeer) {
+  private CompletableFuture<List<Block>> requestBodies(final EthPeer assignedPeer) {
     final List<BlockHeader> incompleteHeaders = incompleteHeaders();
     if (incompleteHeaders.isEmpty()) {
       return completedFuture(emptyList());
@@ -148,7 +148,7 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
           final GetBodiesFromPeerTask task =
               GetBodiesFromPeerTask.forHeaders(
                   protocolSchedule, ethContext, incompleteHeaders, metricsSystem);
-          assignedPeer.ifPresent(task::assignPeer);
+          task.assignPeer(assignedPeer);
           return task.run().thenApply(PeerTaskResult::getResult);
         });
   }
@@ -157,8 +157,7 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
     blocksResult.forEach((block) -> blocks.put(block.getHeader().getNumber(), block));
 
     if (incompleteHeaders().isEmpty()) {
-      result.complete(
-          headers.stream().map(h -> blocks.get(h.getNumber())).collect(Collectors.toList()));
+      result.complete(headers.stream().map(h -> blocks.get(h.getNumber())).toList());
     }
 
     return completedFuture(blocksResult);

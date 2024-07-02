@@ -528,7 +528,7 @@ public final class EthProtocolManagerTest {
 
   private MockPeerConnection setupPeer(
       final EthProtocolManager ethManager, final PeerSendHandler onSend) {
-    final MockPeerConnection peer = setupPeerWithoutStatusExchange(ethManager, onSend);
+    final MockPeerConnection peerConnection = setupPeerWithoutStatusExchange(ethManager, onSend);
     final StatusMessage statusMessage =
         StatusMessage.create(
             EthProtocolVersion.V63,
@@ -536,8 +536,11 @@ public final class EthProtocolManagerTest {
             blockchain.getChainHead().getTotalDifficulty(),
             blockchain.getChainHeadHash(),
             blockchain.getBlockHeader(BlockHeader.GENESIS_BLOCK_NUMBER).get().getHash());
-    ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peer, statusMessage));
-    return peer;
+    ethManager.processMessage(EthProtocol.ETH63, new DefaultMessage(peerConnection, statusMessage));
+    final EthPeers ethPeers = ethManager.ethContext().getEthPeers();
+    final EthPeer ethPeer = ethPeers.peer(peerConnection);
+    ethPeers.addPeerToEthPeers(ethPeer);
+    return peerConnection;
   }
 
   private MockPeerConnection setupPeerWithoutStatusExchange(
