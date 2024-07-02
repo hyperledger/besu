@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.processing;
 
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.evm.log.Log;
@@ -48,6 +49,8 @@ public class TransactionProcessingResult
   private final List<Log> logs;
 
   private final Bytes output;
+
+  private Wei miningBenef;
 
   private final ValidationResult<TransactionInvalidReason> validationResult;
   private final Optional<Bytes> revertReason;
@@ -104,6 +107,14 @@ public class TransactionProcessingResult
     this.output = output;
     this.validationResult = validationResult;
     this.revertReason = revertReason;
+  }
+
+  public void setMiningBenef(final Wei miningBenef) {
+    this.miningBenef = miningBenef;
+  }
+
+  public Wei getMiningBenef() {
+    return miningBenef;
   }
 
   /**

@@ -92,7 +92,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     this.evmConfiguration = evmConfiguration;
   }
 
-  protected void cloneFromUpdater(final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+  public void cloneFromUpdater(final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
     storageToClear.addAll(source.storageToClear);
@@ -110,7 +110,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     return storagePreloader;
   }
 
-  protected EvmConfiguration getEvmConfiguration() {
+  public EvmConfiguration getEvmConfiguration() {
     return evmConfiguration;
   }
 

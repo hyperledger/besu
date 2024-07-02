@@ -461,7 +461,6 @@ public class MainnetTransactionProcessor {
           0L);
 
       // update the coinbase
-      final var coinbase = worldState.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
       final CoinbaseFeePriceCalculator coinbaseCalculator;
       if (blockHeader.getBaseFee().isPresent()) {
@@ -483,8 +482,6 @@ public class MainnetTransactionProcessor {
       final Wei coinbaseWeiDelta =
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
-      coinbase.incrementBalance(coinbaseWeiDelta);
-
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
       if (clearEmptyAccounts) {
@@ -492,12 +489,15 @@ public class MainnetTransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        return TransactionProcessingResult.successful(
-            initialFrame.getLogs(),
-            gasUsedByTransaction,
-            refundedGas,
-            initialFrame.getOutputData(),
-            validationResult);
+        TransactionProcessingResult successful =
+            TransactionProcessingResult.successful(
+                initialFrame.getLogs(),
+                gasUsedByTransaction,
+                refundedGas,
+                initialFrame.getOutputData(),
+                validationResult);
+        successful.setMiningBenef(coinbaseWeiDelta);
+        return successful;
       } else {
         if (initialFrame.getExceptionalHaltReason().isPresent()) {
           LOG.debug(
@@ -511,8 +511,14 @@ public class MainnetTransactionProcessor {
               transaction.getHash(),
               initialFrame.getRevertReason().get());
         }
-        return TransactionProcessingResult.failed(
-            gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
+        TransactionProcessingResult failed =
+            TransactionProcessingResult.failed(
+                gasUsedByTransaction,
+                refundedGas,
+                validationResult,
+                initialFrame.getRevertReason());
+        failed.setMiningBenef(coinbaseWeiDelta);
+        return failed;
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(
