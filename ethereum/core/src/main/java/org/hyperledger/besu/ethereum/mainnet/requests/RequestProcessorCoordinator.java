@@ -16,8 +16,12 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.RequestType;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -40,10 +44,22 @@ public class RequestProcessorCoordinator {
   }
 
   public Optional<List<Request>> process(
-      final MutableWorldState mutableWorldState, final List<TransactionReceipt> receipts) {
+      final ProcessableBlockHeader blockHeader,
+      final MutableWorldState mutableWorldState,
+      final ProtocolSpec protocolSpec,
+      final List<TransactionReceipt> transactionReceipts,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
+      final OperationTracer operationTrace) {
     List<Request> requests = null;
     for (RequestProcessor requestProcessor : processors.values()) {
-      var r = requestProcessor.process(mutableWorldState, receipts);
+      var r =
+          requestProcessor.process(
+              blockHeader,
+              mutableWorldState,
+              protocolSpec,
+              transactionReceipts,
+              blockHashLookup,
+              operationTrace);
       if (r.isPresent()) {
         if (requests == null) {
           requests = new ArrayList<>();

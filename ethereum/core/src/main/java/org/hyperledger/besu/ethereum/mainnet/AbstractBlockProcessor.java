@@ -107,6 +107,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
     protocolSpec.getBlockHashProcessor().processBlockHashes(blockchain, worldState, blockHeader);
+    final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
 
     for (final Transaction transaction : transactions) {
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
@@ -115,7 +116,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       final WorldUpdater worldStateUpdater = worldState.updater();
 
-      final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
       final Address miningBeneficiary =
           miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
@@ -197,7 +197,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getRequestProcessorCoordinator();
     Optional<List<Request>> maybeRequests = Optional.empty();
     if (requestProcessor.isPresent()) {
-      maybeRequests = requestProcessor.get().process(worldState, receipts);
+      maybeRequests =
+          requestProcessor
+              .get()
+              .process(
+                  blockHeader,
+                  worldState,
+                  protocolSpec,
+                  receipts,
+                  blockHashLookup,
+                  OperationTracer.NO_TRACING);
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {

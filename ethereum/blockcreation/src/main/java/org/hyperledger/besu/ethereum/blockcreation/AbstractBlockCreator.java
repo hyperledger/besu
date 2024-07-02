@@ -51,6 +51,7 @@ import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -244,7 +245,14 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       Optional<List<Request>> maybeRequests =
           requestProcessor.flatMap(
               processor ->
-                  processor.process(disposableWorldState, transactionResults.getReceipts()));
+                  processor.process(
+                      processableBlockHeader,
+                      disposableWorldState,
+                      newProtocolSpec,
+                      transactionResults.getReceipts(),
+                      new CachingBlockHashLookup(
+                          processableBlockHeader, protocolContext.getBlockchain()),
+                      operationTracer));
 
       throwIfStopped();
 
