@@ -55,6 +55,7 @@ import org.hyperledger.besu.ethereum.eth.messages.NewBlockMessage;
 import org.hyperledger.besu.ethereum.eth.sync.BlockPropagationManager.ProcessingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.PendingBlocksManager;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -629,7 +630,10 @@ public abstract class AbstractBlockPropagationManagerTest {
                 Bytes.random(64),
                 25,
                 25,
-                false),
+                false,
+                SyncMode.SNAP,
+                new ForkIdManager(
+                    blockchain, Collections.emptyList(), Collections.emptyList(), false)),
             new EthMessages(),
             ethScheduler);
     final BlockPropagationManager blockPropagationManager =
@@ -767,7 +771,10 @@ public abstract class AbstractBlockPropagationManagerTest {
                 Bytes.random(64),
                 25,
                 25,
-                false),
+                false,
+                SyncMode.SNAP,
+                new ForkIdManager(
+                    blockchain, Collections.emptyList(), Collections.emptyList(), false)),
             new EthMessages(),
             ethScheduler);
     final BlockPropagationManager blockPropagationManager =

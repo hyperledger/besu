@@ -33,7 +33,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -49,6 +48,7 @@ import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -156,7 +156,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final ForkIdManager forkIdManager) {
     return mergeBesuControllerBuilder.createEthProtocolManager(
         protocolContext,
         synchronizerConfiguration,
@@ -167,7 +168,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
         ethMessages,
         scheduler,
         peerValidators,
-        mergePeerFilter);
+        mergePeerFilter,
+        forkIdManager);
   }
 
   @Override
@@ -212,7 +214,7 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  protected Synchronizer createSynchronizer(
+  protected DefaultSynchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
@@ -222,15 +224,14 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
       final PivotBlockSelector pivotBlockSelector) {
 
     DefaultSynchronizer sync =
-        (DefaultSynchronizer)
-            super.createSynchronizer(
-                protocolSchedule,
-                worldStateStorageCoordinator,
-                protocolContext,
-                ethContext,
-                syncState,
-                ethProtocolManager,
-                pivotBlockSelector);
+        super.createSynchronizer(
+            protocolSchedule,
+            worldStateStorageCoordinator,
+            protocolContext,
+            ethContext,
+            syncState,
+            ethProtocolManager,
+            pivotBlockSelector);
 
     if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
