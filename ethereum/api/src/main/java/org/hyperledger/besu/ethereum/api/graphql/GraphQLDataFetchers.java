@@ -61,10 +61,34 @@ import graphql.schema.DataFetcher;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
+/**
+ * This class contains data fetchers for GraphQL queries.
+ *
+ * <p>Data fetchers are responsible for fetching data for a specific field. Each field in the schema
+ * is associated with a data fetcher. When the field is being processed during a query, the
+ * associated data fetcher is invoked to get the data for that field.
+ *
+ * <p>This class contains data fetchers for various fields such as protocol version, syncing state,
+ * pending state, gas price, chain ID, max priority fee per gas, range block, block, account, logs,
+ * and transaction.
+ *
+ * <p>Each data fetcher is a method that returns a `DataFetcher` object. The `DataFetcher` object
+ * defines how to fetch the data for the field. It takes a `DataFetchingEnvironment` object as input
+ * which contains all the context needed to fetch the data.
+ */
 public class GraphQLDataFetchers {
 
   private final Integer highestEthVersion;
 
+  /**
+   * Constructs a new GraphQLDataFetchers instance.
+   *
+   * <p>This constructor takes a set of supported capabilities and determines the highest Ethereum
+   * protocol version supported by these capabilities. This version is then stored and can be
+   * fetched using the getProtocolVersionDataFetcher method.
+   *
+   * @param supportedCapabilities a set of capabilities supported by the Ethereum node
+   */
   public GraphQLDataFetchers(final Set<Capability> supportedCapabilities) {
     final OptionalInt version =
         supportedCapabilities.stream()
@@ -74,10 +98,30 @@ public class GraphQLDataFetchers {
     highestEthVersion = version.isPresent() ? version.getAsInt() : null;
   }
 
+  /**
+   * Returns a DataFetcher that fetches the highest Ethereum protocol version supported by the node.
+   *
+   * <p>The DataFetcher is a functional interface. It has a single method that takes a
+   * DataFetchingEnvironment object as input and returns the highest Ethereum protocol version as an
+   * Optional<Integer>.
+   *
+   * @return a DataFetcher that fetches the highest Ethereum protocol version
+   */
   DataFetcher<Optional<Integer>> getProtocolVersionDataFetcher() {
     return dataFetchingEnvironment -> Optional.of(highestEthVersion);
   }
 
+  /**
+   * Returns a DataFetcher that fetches the result of sending a raw transaction.
+   *
+   * <p>The DataFetcher is a functional interface. It has a single method that takes a
+   * DataFetchingEnvironment object as input and returns the hash of the transaction if it is valid
+   * and added to the transaction pool. If the transaction is invalid, it throws a GraphQLException
+   * with the invalid reason. If the raw transaction data cannot be read, it throws a
+   * GraphQLException with INVALID_PARAMS error.
+   *
+   * @return a DataFetcher that fetches the result of sending a raw transaction
+   */
   DataFetcher<Optional<Bytes32>> getSendRawTransactionDataFetcher() {
     return dataFetchingEnvironment -> {
       try {
@@ -99,6 +143,19 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Returns a DataFetcher that fetches the syncing state of the Ethereum node.
+   *
+   * <p>The DataFetcher is a functional interface. It has a single method that takes a
+   * DataFetchingEnvironment object as input and returns the syncing state as an
+   * Optional<SyncStateAdapter>.
+   *
+   * <p>The SyncStateAdapter is a wrapper around the SyncStatus of the Ethereum node. It provides
+   * information about the current syncing state of the node such as the current block, highest
+   * block, and starting block.
+   *
+   * @return a DataFetcher that fetches the syncing state of the Ethereum node
+   */
   DataFetcher<Optional<SyncStateAdapter>> getSyncingDataFetcher() {
     return dataFetchingEnvironment -> {
       final Synchronizer synchronizer =
@@ -125,6 +182,15 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Returns a DataFetcher that fetches the chain ID of the Ethereum node.
+   *
+   * <p>The DataFetcher is a functional interface. It has a single method that takes a
+   * DataFetchingEnvironment object as input and returns the chain ID as an {@code
+   * Optional<BigInteger>}.
+   *
+   * @return a DataFetcher that fetches the chain ID of the Ethereum node
+   */
   public DataFetcher<Optional<BigInteger>> getChainIdDataFetcher() {
     return dataFetchingEnvironment -> {
       final GraphQLContext graphQLContext = dataFetchingEnvironment.getGraphQlContext();
@@ -132,6 +198,15 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Returns a DataFetcher that fetches the maximum priority fee per gas of the Ethereum node.
+   *
+   * <p>The DataFetcher is a functional interface. It has a single method that takes a
+   * DataFetchingEnvironment object as input and returns the maximum priority fee per gas as a Wei
+   * object. If the maximum priority fee per gas is not available, it returns Wei.ZERO.
+   *
+   * @return a DataFetcher that fetches the maximum priority fee per gas of the Ethereum node
+   */
   public DataFetcher<Wei> getMaxPriorityFeePerGasDataFetcher() {
     return dataFetchingEnvironment -> {
       final BlockchainQueries blockchainQuery =
@@ -167,6 +242,20 @@ public class GraphQLDataFetchers {
     };
   }
 
+  /**
+   * Returns a DataFetcher that fetches a specific block in the Ethereum blockchain.
+   *
+   * <p>The DataFetcher is a functional interface. It has a single method that takes a
+   * DataFetchingEnvironment object as input. This method fetches a block based on either a block
+   * number or a block hash. If both a block number and a block hash are provided, it throws a
+   * GraphQLException with INVALID_PARAMS error. If neither a block number nor a block hash is
+   * provided, it fetches the latest block.
+   *
+   * <p>The fetched block is then wrapped in a {@link NormalBlockAdapter} and returned as an {@code
+   * Optional<NormalBlockAdapter>}.
+   *
+   * @return a DataFetcher that fetches a specific block in the Ethereum blockchain
+   */
   public DataFetcher<Optional<NormalBlockAdapter>> getBlockDataFetcher() {
 
     return dataFetchingEnvironment -> {

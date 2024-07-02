@@ -55,6 +55,19 @@ import io.vertx.core.http.HttpServerRequest;
 import picocli.CommandLine;
 import picocli.CommandLine.ParentCommand;
 
+/**
+ * The T8nServerSubCommand class is responsible for running an Ethereum State Test server. It reads
+ * the initial state, transactions, and environment from input files or stdin, executes the
+ * transactions in the Ethereum Virtual Machine (EVM), and writes the final state, transaction
+ * results, and traces to output files or stdout.
+ *
+ * <p>The class uses the Vert.x library for handling HTTP requests and the picocli library for
+ * command line argument parsing. It includes options for specifying the host and port to bind to,
+ * and the base directory for output.
+ *
+ * <p>The class also includes a TracerManager for managing OperationTracer instances, which are used
+ * to trace EVM operations when the --json flag is specified.
+ */
 @SuppressWarnings("java:S106") // using standard output is the point of this class
 @CommandLine.Command(
     name = "t8n-server",
@@ -80,6 +93,10 @@ public class T8nServerSubCommand implements Runnable {
 
   @ParentCommand private final EvmToolCommand parentCommand;
 
+  /**
+   * Default constructor for the T8nServerSubCommand class. This constructor is required by PicoCLI
+   * and assigns null to parentCommand.
+   */
   @SuppressWarnings("unused")
   public T8nServerSubCommand() {
     // PicoCLI requires this

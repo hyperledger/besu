@@ -16,15 +16,35 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
 import java.util.Objects;
 
+/**
+ * Represents a GraphQL response. This abstract class provides a structure for different types of
+ * GraphQL responses.
+ */
 public abstract class GraphQLResponse {
-  public abstract GraphQLResponseType getType();
 
   private final Object result;
 
+  /**
+   * Constructs a new GraphQLResponse with the specified result.
+   *
+   * @param result the result to be included in the response.
+   */
   GraphQLResponse(final Object result) {
     this.result = result;
   }
 
+  /**
+   * Returns the type of this GraphQL response.
+   *
+   * @return the type of this GraphQL response as a GraphQLResponseType.
+   */
+  public abstract GraphQLResponseType getType();
+
+  /**
+   * Returns the result of this GraphQL response.
+   *
+   * @return the result of this GraphQL response as an Object.
+   */
   public Object getResult() {
     return result;
   }

@@ -38,11 +38,28 @@ import javax.annotation.Nonnull;
 import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * The TransactionAdapter class provides methods to retrieve the transaction details.
+ *
+ * <p>This class is used to adapt a TransactionWithMetadata object into a format that can be used by
+ * GraphQL. The TransactionWithMetadata object is provided at construction time.
+ *
+ * <p>The class provides methods to retrieve the hash, type, nonce, index, from, to, value, gas
+ * price, max fee per gas, max priority fee per gas, max fee per blob gas, effective tip, gas, input
+ * data, block, status, gas used, cumulative gas used, effective gas price, blob gas used, blob gas
+ * price, created contract, logs, R, S, V, Y parity, access list, raw, raw receipt, and blob
+ * versioned hashes of the transaction.
+ */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class TransactionAdapter extends AdapterBase {
   private final TransactionWithMetadata transactionWithMetadata;
   private Optional<TransactionReceiptWithMetadata> transactionReceiptWithMetadata;
 
+  /**
+   * Constructs a new TransactionAdapter object.
+   *
+   * @param transactionWithMetadata the TransactionWithMetadata object to adapt.
+   */
   public TransactionAdapter(final @Nonnull TransactionWithMetadata transactionWithMetadata) {
     this.transactionWithMetadata = transactionWithMetadata;
   }
@@ -65,22 +82,53 @@ public class TransactionAdapter extends AdapterBase {
     return transactionReceiptWithMetadata;
   }
 
+  /**
+   * Returns the hash of the transaction.
+   *
+   * @return the hash of the transaction.
+   */
   public Hash getHash() {
     return transactionWithMetadata.getTransaction().getHash();
   }
 
+  /**
+   * Returns the type of the transaction.
+   *
+   * @return the type of the transaction.
+   */
   public Optional<Integer> getType() {
     return Optional.of(transactionWithMetadata.getTransaction().getType().ordinal());
   }
 
+  /**
+   * Returns the nonce of the transaction.
+   *
+   * @return the nonce of the transaction.
+   */
   public Long getNonce() {
     return transactionWithMetadata.getTransaction().getNonce();
   }
 
+  /**
+   * Returns the index of the transaction.
+   *
+   * @return the index of the transaction.
+   */
   public Optional<Integer> getIndex() {
     return transactionWithMetadata.getTransactionIndex();
   }
 
+  /**
+   * Retrieves the sender of the transaction.
+   *
+   * <p>This method uses the BlockchainQueries to get the block number and then retrieves the sender
+   * of the transaction. It then uses the getAndMapWorldState method to get the state of the
+   * sender's account at the given block number.
+   *
+   * @param environment the data fetching environment.
+   * @return an AccountAdapter object representing the sender's account state at the given block
+   *     number.
+   */
   public AccountAdapter getFrom(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Long blockNumber =
@@ -96,6 +144,18 @@ public class TransactionAdapter extends AdapterBase {
         .orElse(new EmptyAccountAdapter(addr));
   }
 
+  /**
+   * Retrieves the recipient of the transaction.
+   *
+   * <p>This method uses the BlockchainQueries to get the block number and then retrieves the
+   * recipient of the transaction. It then uses the getAndMapWorldState method to get the state of
+   * the recipient's account at the given block number.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing an AccountAdapter object representing the recipient's account
+   *     state at the given block number, or an empty Optional if the transaction does not have a
+   *     recipient (i.e., it is a contract creation transaction).
+   */
   public Optional<AccountAdapter> getTo(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Long blockNumber =
@@ -115,39 +175,95 @@ public class TransactionAdapter extends AdapterBase {
                     .or(() -> Optional.of(new EmptyAccountAdapter(address))));
   }
 
+  /**
+   * Retrieves the value of the transaction.
+   *
+   * @return a Wei object representing the value of the transaction.
+   */
   public Wei getValue() {
     return transactionWithMetadata.getTransaction().getValue();
   }
 
+  /**
+   * Retrieves the gas price of the transaction.
+   *
+   * @return a Wei object representing the gas price of the transaction. If the transaction does not
+   *     specify a gas price, this method returns zero.
+   */
   public Wei getGasPrice() {
     return transactionWithMetadata.getTransaction().getGasPrice().orElse(Wei.ZERO);
   }
 
+  /**
+   * Retrieves the maximum fee per gas of the transaction.
+   *
+   * @return an Optional containing a Wei object representing the maximum fee per gas of the
+   *     transaction, or an empty Optional if the transaction does not specify a maximum fee per
+   *     gas.
+   */
   public Optional<Wei> getMaxFeePerGas() {
     return transactionWithMetadata.getTransaction().getMaxFeePerGas();
   }
 
+  /**
+   * Retrieves the maximum priority fee per gas of the transaction.
+   *
+   * @return an Optional containing a Wei object representing the maximum priority fee per gas of
+   *     the transaction, or an empty Optional if the transaction does not specify a maximum
+   *     priority fee per gas.
+   */
   public Optional<Wei> getMaxPriorityFeePerGas() {
     return transactionWithMetadata.getTransaction().getMaxPriorityFeePerGas();
   }
 
+  /**
+   * Retrieves the maximum fee per blob gas of the transaction.
+   *
+   * @return an Optional containing a Wei object representing the maximum fee per blob gas of the
+   *     transaction, or an empty Optional if the transaction does not specify a maximum fee per
+   *     blob gas.
+   */
   public Optional<Wei> getMaxFeePerBlobGas() {
     return transactionWithMetadata.getTransaction().getMaxFeePerBlobGas();
   }
 
+  /**
+   * Retrieves the effective tip of the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Wei object representing the effective tip of the transaction,
+   *     or an empty Optional if the transaction does not specify an effective tip.
+   */
   public Optional<Wei> getEffectiveTip(final DataFetchingEnvironment environment) {
     return getReceipt(environment)
         .map(rwm -> rwm.getTransaction().getEffectivePriorityFeePerGas(rwm.getBaseFee()));
   }
 
+  /**
+   * Retrieves the gas limit of the transaction.
+   *
+   * @return a Long object representing the gas limit of the transaction.
+   */
   public Long getGas() {
     return transactionWithMetadata.getTransaction().getGasLimit();
   }
 
+  /**
+   * Retrieves the input data of the transaction.
+   *
+   * @return a Bytes object representing the input data of the transaction.
+   */
   public Bytes getInputData() {
     return transactionWithMetadata.getTransaction().getPayload();
   }
 
+  /**
+   * Retrieves the block of the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a NormalBlockAdapter object representing the block of the
+   *     transaction, or an empty Optional if the transaction does not specify a block.
+   */
   public Optional<NormalBlockAdapter> getBlock(final DataFetchingEnvironment environment) {
     return transactionWithMetadata
         .getBlockHash()
@@ -155,6 +271,17 @@ public class TransactionAdapter extends AdapterBase {
         .map(NormalBlockAdapter::new);
   }
 
+  /**
+   * Retrieves the status of the transaction.
+   *
+   * <p>This method uses the getReceipt method to get the receipt of the transaction. It then checks
+   * the status of the receipt. If the status is -1, it returns an empty Optional. Otherwise, it
+   * returns an Optional containing the status of the receipt.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Long object representing the status of the transaction, or an
+   *     empty Optional if the status of the receipt is -1.
+   */
   public Optional<Long> getStatus(final DataFetchingEnvironment environment) {
     return getReceipt(environment)
         .map(TransactionReceiptWithMetadata::getReceipt)
@@ -165,27 +292,87 @@ public class TransactionAdapter extends AdapterBase {
                     : Optional.of((long) receipt.getStatus()));
   }
 
+  /**
+   * Retrieves the gas used by the transaction.
+   *
+   * <p>This method uses the getReceipt method to get the receipt of the transaction. It then
+   * returns an Optional containing the gas used by the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Long object representing the gas used by the transaction.
+   */
   public Optional<Long> getGasUsed(final DataFetchingEnvironment environment) {
     return getReceipt(environment).map(TransactionReceiptWithMetadata::getGasUsed);
   }
 
+  /**
+   * Retrieves the cumulative gas used by the transaction.
+   *
+   * <p>This method uses the getReceipt method to get the receipt of the transaction. It then
+   * returns an Optional containing the cumulative gas used by the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Long object representing the cumulative gas used by the
+   *     transaction.
+   */
   public Optional<Long> getCumulativeGasUsed(final DataFetchingEnvironment environment) {
     return getReceipt(environment).map(rpt -> rpt.getReceipt().getCumulativeGasUsed());
   }
 
+  /**
+   * Retrieves the effective gas price of the transaction.
+   *
+   * <p>This method uses the getReceipt method to get the receipt of the transaction. It then
+   * returns an Optional containing the effective gas price of the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Wei object representing the effective gas price of the
+   *     transaction.
+   */
   public Optional<Wei> getEffectiveGasPrice(final DataFetchingEnvironment environment) {
     return getReceipt(environment)
         .map(rwm -> rwm.getTransaction().getEffectiveGasPrice(rwm.getBaseFee()));
   }
 
+  /**
+   * Retrieves the blob gas used by the transaction.
+   *
+   * <p>This method uses the getReceipt method to get the receipt of the transaction. It then
+   * returns an Optional containing the blob gas used by the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Long object representing the blob gas used by the transaction.
+   */
   public Optional<Long> getBlobGasUsed(final DataFetchingEnvironment environment) {
     return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasUsed);
   }
 
+  /**
+   * Retrieves the blob gas price of the transaction.
+   *
+   * <p>This method uses the getReceipt method to get the receipt of the transaction. It then
+   * returns an Optional containing the blob gas price of the transaction.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Wei object representing the blob gas price of the transaction.
+   */
   public Optional<Wei> getBlobGasPrice(final DataFetchingEnvironment environment) {
     return getReceipt(environment).flatMap(TransactionReceiptWithMetadata::getBlobGasPrice);
   }
 
+  /**
+   * Retrieves the contract created by the transaction.
+   *
+   * <p>This method checks if the transaction is a contract creation transaction. If it is, it
+   * retrieves the address of the created contract. It then uses the BlockchainQueries to get the
+   * block number and then retrieves the state of the created contract's account at the given block
+   * number.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing an AccountAdapter object representing the created contract's
+   *     account state at the given block number, or an empty Optional if the transaction is not a
+   *     contract creation transaction or if the block number is not specified.
+   */
   public Optional<AccountAdapter> getCreatedContract(final DataFetchingEnvironment environment) {
     final boolean contractCreated = transactionWithMetadata.getTransaction().isContractCreation();
     if (contractCreated) {
@@ -208,6 +395,17 @@ public class TransactionAdapter extends AdapterBase {
     return Optional.empty();
   }
 
+  /**
+   * Retrieves the logs of the transaction.
+   *
+   * <p>This method uses the BlockchainQueries to get the block header and the receipt of the
+   * transaction. It then retrieves the logs of the transaction and adapts them into a format that
+   * can be used by GraphQL.
+   *
+   * @param environment the data fetching environment.
+   * @return a List of LogAdapter objects representing the logs of the transaction. If the
+   *     transaction does not have a receipt, this method returns an empty list.
+   */
   public List<LogAdapter> getLogs(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final ProtocolSchedule protocolSchedule =
@@ -240,14 +438,34 @@ public class TransactionAdapter extends AdapterBase {
     return results;
   }
 
+  /**
+   * Retrieves the R component of the transaction's signature.
+   *
+   * @return a BigInteger object representing the R component of the transaction's signature.
+   */
   public BigInteger getR() {
     return transactionWithMetadata.getTransaction().getR();
   }
 
+  /**
+   * Retrieves the S component of the transaction's signature.
+   *
+   * @return a BigInteger object representing the S component of the transaction's signature.
+   */
   public BigInteger getS() {
     return transactionWithMetadata.getTransaction().getS();
   }
 
+  /**
+   * Retrieves the V component of the transaction's signature.
+   *
+   * <p>If the transaction type is less than the BLOB transaction type and V is null, it returns the
+   * Y parity of the transaction. Otherwise, it returns V.
+   *
+   * @return an Optional containing a BigInteger object representing the V component of the
+   *     transaction's signature, or an Optional containing the Y parity of the transaction if V is
+   *     null and the transaction type is less than the BLOB transaction type.
+   */
   public Optional<BigInteger> getV() {
     BigInteger v = transactionWithMetadata.getTransaction().getV();
     return Optional.ofNullable(
@@ -258,10 +476,22 @@ public class TransactionAdapter extends AdapterBase {
             : v);
   }
 
+  /**
+   * Retrieves the Y parity of the transaction's signature.
+   *
+   * @return an Optional containing a BigInteger object representing the Y parity of the
+   *     transaction's signature.
+   */
   public Optional<BigInteger> getYParity() {
     return Optional.ofNullable(transactionWithMetadata.getTransaction().getYParity());
   }
 
+  /**
+   * Retrieves the access list of the transaction.
+   *
+   * @return a List of AccessListEntryAdapter objects representing the access list of the
+   *     transaction.
+   */
   public List<AccessListEntryAdapter> getAccessList() {
     return transactionWithMetadata
         .getTransaction()
@@ -270,12 +500,30 @@ public class TransactionAdapter extends AdapterBase {
         .orElse(List.of());
   }
 
+  /**
+   * Retrieves the raw transaction data.
+   *
+   * <p>This method uses the writeTo method of the transaction to write the transaction data to a
+   * BytesValueRLPOutput object. It then encodes the BytesValueRLPOutput object and returns it.
+   *
+   * @return an Optional containing a Bytes object representing the raw transaction data.
+   */
   public Optional<Bytes> getRaw() {
     final BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
     transactionWithMetadata.getTransaction().writeTo(rlpOutput);
     return Optional.of(rlpOutput.encoded());
   }
 
+  /**
+   * Retrieves the raw receipt of the transaction.
+   *
+   * <p>This method uses the getReceipt method to get the receipt of the transaction. It then writes
+   * the receipt data to a BytesValueRLPOutput object using the writeToForNetwork method of the
+   * receipt. It then encodes the BytesValueRLPOutput object and returns it.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing a Bytes object representing the raw receipt of the transaction.
+   */
   public Optional<Bytes> getRawReceipt(final DataFetchingEnvironment environment) {
     return getReceipt(environment)
         .map(
@@ -286,6 +534,11 @@ public class TransactionAdapter extends AdapterBase {
             });
   }
 
+  /**
+   * Retrieves the versioned hashes of the transaction.
+   *
+   * @return a List of VersionedHash objects representing the versioned hashes of the transaction.
+   */
   public List<VersionedHash> getBlobVersionedHashes() {
     return transactionWithMetadata.getTransaction().getVersionedHashes().orElse(List.of());
   }

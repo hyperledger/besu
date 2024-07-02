@@ -128,7 +128,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   public void setWrappedAccount(final A account) {
     if (this.account == null) {
       this.account = account;
-      storageWasCleared = false;
     } else {
       throw new IllegalStateException("Already tracking a wrapped account");
     }

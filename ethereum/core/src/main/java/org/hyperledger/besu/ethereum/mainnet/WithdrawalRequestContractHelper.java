@@ -153,7 +153,7 @@ public class WithdrawalRequestContractHelper {
               queueHeadIndex.plus(i).multiply(WITHDRAWAL_REQUEST_STORAGE_SLOT_SIZE));
       final Address sourceAddress =
           Address.wrap(account.getStorageValue(queueStorageSlot).toBytes().slice(12, 20));
-      final BLSPublicKey validatorPublicKey =
+      final BLSPublicKey validatorPubkey =
           BLSPublicKey.wrap(
               Bytes.concatenate(
                   account
@@ -165,7 +165,7 @@ public class WithdrawalRequestContractHelper {
           UInt64.fromBytes(account.getStorageValue(queueStorageSlot.plus(2)).slice(16, 8));
 
       withdrawalRequests.add(
-          new WithdrawalRequest(sourceAddress, validatorPublicKey, GWei.of(amount)));
+          new WithdrawalRequest(sourceAddress, validatorPubkey, GWei.of(amount)));
     }
 
     return withdrawalRequests;

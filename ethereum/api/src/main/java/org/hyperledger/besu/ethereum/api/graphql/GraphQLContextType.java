@@ -14,14 +14,33 @@
  */
 package org.hyperledger.besu.ethereum.api.graphql;
 
-/** Internal GraphQL Context */
+/**
+ * Enum representing various context types for GraphQL.
+ *
+ * <p>These context types are used internally by GraphQL to manage different aspects of the system.
+ */
 public enum GraphQLContextType {
+  /** Represents blockchain queries context. */
   BLOCKCHAIN_QUERIES,
+
+  /** Represents protocol schedule context. */
   PROTOCOL_SCHEDULE,
+
+  /** Represents transaction pool context. */
   TRANSACTION_POOL,
+
+  /** Represents mining coordinator context. */
   MINING_COORDINATOR,
+
+  /** Represents synchronizer context. */
   SYNCHRONIZER,
+
+  /** Represents is alive handler context. */
   IS_ALIVE_HANDLER,
+
+  /** Represents chain ID context. */
   CHAIN_ID,
+
+  /** Represents gas cap context. */
   GAS_CAP
 }

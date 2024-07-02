@@ -28,6 +28,10 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * The AccountAdapter class extends the AdapterBase class. It provides methods to get the account
+ * details such as address, balance, transaction count, code, and storage.
+ */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class AccountAdapter extends AdapterBase {
 
@@ -35,18 +39,42 @@ public class AccountAdapter extends AdapterBase {
   private final Address address;
   private final Optional<Long> blockNumber;
 
+  /**
+   * Constructs a new AccountAdapter with the given Account.
+   *
+   * @param account the Account to be adapted
+   */
   public AccountAdapter(final Account account) {
     this(account == null ? null : account.getAddress(), account, Optional.empty());
   }
 
+  /**
+   * Constructs a new AccountAdapter with the given Account and block number.
+   *
+   * @param account the Account to be adapted
+   * @param blockNumber the block number associated with the account
+   */
   public AccountAdapter(final Account account, final Optional<Long> blockNumber) {
     this(account == null ? null : account.getAddress(), account, blockNumber);
   }
 
+  /**
+   * Constructs a new AccountAdapter with the given address and Account.
+   *
+   * @param address the address of the account
+   * @param account the Account to be adapted
+   */
   public AccountAdapter(final Address address, final Account account) {
     this(address, account, Optional.empty());
   }
 
+  /**
+   * Constructs a new AccountAdapter with the given address, Account, and block number.
+   *
+   * @param address the address of the account
+   * @param account the Account to be adapted
+   * @param blockNumber the block number associated with the account
+   */
   public AccountAdapter(
       final Address address, final Account account, final Optional<Long> blockNumber) {
     this.account = Optional.ofNullable(account);
@@ -54,18 +82,39 @@ public class AccountAdapter extends AdapterBase {
     this.blockNumber = blockNumber;
   }
 
+  /**
+   * Returns the address of the account.
+   *
+   * @return the address of the account
+   */
   public Address getAddress() {
     return address;
   }
 
+  /**
+   * Returns the balance of the account.
+   *
+   * @return the balance of the account
+   */
   public Wei getBalance() {
     return account.map(AccountState::getBalance).orElse(Wei.ZERO);
   }
 
+  /**
+   * Returns the transaction count of the account.
+   *
+   * @return the transaction count of the account
+   */
   public Long getTransactionCount() {
     return account.map(AccountState::getNonce).orElse(0L);
   }
 
+  /**
+   * Returns the code of the account.
+   *
+   * @param environment the DataFetchingEnvironment
+   * @return the code of the account
+   */
   public Bytes getCode(final DataFetchingEnvironment environment) {
 
     if (account.get() instanceof BonsaiAccount) {
@@ -80,6 +129,12 @@ public class AccountAdapter extends AdapterBase {
     }
   }
 
+  /**
+   * Returns the storage of the account.
+   *
+   * @param environment the DataFetchingEnvironment
+   * @return the storage of the account
+   */
   public Bytes32 getStorage(final DataFetchingEnvironment environment) {
     final BlockchainQueries query = getBlockchainQueries(environment);
     final Bytes32 slot = environment.getArgument("slot");

@@ -55,6 +55,11 @@ public final class MockNetwork {
   private final Map<Peer, MockNetwork.MockP2PNetwork> nodes = new HashMap<>();
   private final List<Capability> capabilities;
 
+  /**
+   * Constructs a new MockNetwork with the specified capabilities.
+   *
+   * @param capabilities a list of capabilities that the mock network should have.
+   */
   public MockNetwork(final List<Capability> capabilities) {
     this.capabilities = capabilities;
   }

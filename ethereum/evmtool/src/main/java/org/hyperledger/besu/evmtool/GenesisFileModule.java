@@ -36,11 +36,26 @@ import dagger.Module;
 import dagger.Provides;
 import io.vertx.core.json.JsonObject;
 
+/**
+ * This class, GenesisFileModule, is a Dagger module that provides dependencies for the GenesisFile.
+ * It contains options for setting up the GenesisFile, such as the genesis configuration, genesis
+ * state, block header functions, and the genesis block.
+ *
+ * <p>The class uses Dagger annotations to define these options, which can be provided via the
+ * command line when running the EVM tool. Each option has a corresponding provider method that
+ * Dagger uses to inject the option's value where needed.
+ */
 @Module
 public class GenesisFileModule {
 
   private final String genesisConfig;
 
+  /**
+   * Constructs a new GenesisFileModule with the specified genesis configuration.
+   *
+   * @param genesisConfig The configuration for the genesis file. This is typically a JSON string
+   *     that specifies various parameters for the genesis block of the blockchain.
+   */
   protected GenesisFileModule(final String genesisConfig) {
     this.genesisConfig = genesisConfig;
   }

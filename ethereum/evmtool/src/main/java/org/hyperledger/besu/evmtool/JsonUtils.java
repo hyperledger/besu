@@ -24,6 +24,12 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * Utility class for JSON related operations. This class provides a method to create an ObjectMapper
+ * with standard configurations needed for evmtool. The ObjectMapper is configured to match the
+ * standard JSON output of Go, and it does not auto close the source. It also registers serializers
+ * for Address and Bytes classes. This class is not meant to be instantiated.
+ */
 public class JsonUtils {
 
   private JsonUtils() {}

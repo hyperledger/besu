@@ -36,19 +36,41 @@ import graphql.schema.DataFetchingEnvironment;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * This class represents the pending state of transactions in the Ethereum network.
+ *
+ * <p>It extends the AdapterBase class and provides methods to interact with the transaction pool.
+ */
 @SuppressWarnings("unused") // reflected by GraphQL
 public class PendingStateAdapter extends AdapterBase {
 
   private final TransactionPool transactionPool;
 
+  /**
+   * Constructor for PendingStateAdapter.
+   *
+   * <p>It initializes the transactionPool field with the provided argument.
+   *
+   * @param transactionPool the transaction pool to be used.
+   */
   public PendingStateAdapter(final TransactionPool transactionPool) {
     this.transactionPool = transactionPool;
   }
 
+  /**
+   * Returns the count of transactions in the transaction pool.
+   *
+   * @return the count of transactions in the transaction pool.
+   */
   public Integer getTransactionCount() {
     return transactionPool.count();
   }
 
+  /**
+   * Returns a list of TransactionAdapter objects for the transactions in the transaction pool.
+   *
+   * @return a list of TransactionAdapter objects for the transactions in the transaction pool.
+   */
   public List<TransactionAdapter> getTransactions() {
     return transactionPool.getPendingTransactions().stream()
         .map(PendingTransaction::getTransaction)
@@ -57,9 +79,17 @@ public class PendingStateAdapter extends AdapterBase {
         .toList();
   }
 
-  // until the miner can expose the current "proposed block" we have no
-  // speculative environment, so estimate against latest.
+  /**
+   * Returns an AccountAdapter object for the account associated with the provided address.
+   *
+   * <p>The account state is estimated against the latest block.
+   *
+   * @param dataFetchingEnvironment the data fetching environment.
+   * @return an AccountAdapter object for the account associated with the provided address.
+   */
   public AccountAdapter getAccount(final DataFetchingEnvironment dataFetchingEnvironment) {
+    // until the miner can expose the current "proposed block" we have no
+    // speculative environment, so estimate against latest.
     final BlockchainQueries blockchainQuery =
         dataFetchingEnvironment.getGraphQlContext().get(GraphQLContextType.BLOCKCHAIN_QUERIES);
     final Address addr = dataFetchingEnvironment.getArgument("address");
@@ -71,16 +101,39 @@ public class PendingStateAdapter extends AdapterBase {
         .orElseGet(() -> new AccountAdapter(null));
   }
 
-  // until the miner can expose the current "proposed block" we have no
-  // speculative environment, so estimate against latest.
+  /**
+   * Estimates the gas required for a transaction.
+   *
+   * <p>This method calls the getCall method to simulate the transaction and then retrieves the gas
+   * used by the transaction. The gas estimation is done against the latest block as there is
+   * currently no way to expose the current "proposed block" for a speculative environment.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing the estimated gas for the transaction, or an empty Optional if
+   *     the transaction simulation was not successful.
+   */
   public Optional<Long> getEstimateGas(final DataFetchingEnvironment environment) {
+    // until the miner can expose the current "proposed block" we have no
+    // speculative environment, so estimate against latest.
     final Optional<CallResult> result = getCall(environment);
     return result.map(CallResult::getGasUsed);
   }
 
-  // until the miner can expose the current "proposed block" we have no
-  // speculative environment, so estimate against latest.
+  /**
+   * Simulates the execution of a transaction.
+   *
+   * <p>This method retrieves the transaction parameters from the data fetching environment, creates
+   * a CallParameter object, and then uses a TransactionSimulator to simulate the execution of the
+   * transaction. The simulation is done against the latest block as there is currently no way to
+   * expose the current "proposed block" for a speculative environment.
+   *
+   * @param environment the data fetching environment.
+   * @return an Optional containing the result of the transaction simulation, or an empty Optional
+   *     if the transaction simulation was not successful.
+   */
   public Optional<CallResult> getCall(final DataFetchingEnvironment environment) {
+    // until the miner can expose the current "proposed block" we have no
+    // speculative environment, so estimate against latest.
     final Map<String, Object> callData = environment.getArgument("data");
     final Address from = (Address) callData.get("from");
     final Address to = (Address) callData.get("to");
