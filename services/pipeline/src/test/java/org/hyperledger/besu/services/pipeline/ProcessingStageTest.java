@@ -34,9 +34,9 @@ import org.mockito.junit.jupiter.MockitoExtension;
 public class ProcessingStageTest {
 
   private final Pipe<String> inputPipe =
-      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
+      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER, "input_pipe");
   private final Pipe<String> outputPipe =
-      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
+      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER, "output_pipe");
   @Mock private Processor<String, String> singleStep;
   private ProcessingStage<String, String> stage;
 

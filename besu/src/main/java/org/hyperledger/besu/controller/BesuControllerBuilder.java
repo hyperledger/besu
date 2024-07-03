@@ -22,6 +22,7 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.UnverifiedForkchoiceSupplier;
+import org.hyperledger.besu.consensus.qbft.BFTPivotSelectorFromPeers;
 import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
@@ -106,6 +107,7 @@ import java.time.Clock;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -683,7 +685,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
-            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem);
+            protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
 
     final Synchronizer synchronizer =
         createSynchronizer(
@@ -837,9 +839,22 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final ProtocolContext protocolContext,
       final EthContext ethContext,
       final SyncState syncState,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final Blockchain blockchain) {
 
-    if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
+    if (genesisConfigOptions.isQbft() || genesisConfigOptions.isIbft2()) {
+      LOG.info(
+          "{} is configured, creating initial sync for BFT",
+          genesisConfigOptions.getConsensusEngine().toUpperCase(Locale.ROOT));
+      return new BFTPivotSelectorFromPeers(
+          ethContext,
+          syncConfig,
+          syncState,
+          metricsSystem,
+          protocolContext,
+          nodeKey,
+          blockchain.getChainHeadHeader());
+    } else if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info("TTD difficulty is present, creating initial sync for PoS");
 
       final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
