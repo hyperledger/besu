@@ -31,6 +31,7 @@ public class RetryingGetAccountRangeFromPeerTask
     extends AbstractRetryingPeerTask<AccountRangeMessage.AccountRangeData> {
 
   public static final int MAX_RETRIES = 4;
+
   private final EthContext ethContext;
   private final Bytes32 startKeyHash;
   private final Bytes32 endKeyHash;
@@ -78,5 +79,10 @@ public class RetryingGetAccountRangeFromPeerTask
               result.complete(peerResult.getResult());
               return peerResult.getResult();
             });
+  }
+
+  @Override
+  protected boolean isSuitablePeer(final EthPeer peer) {
+    return peer.isServingSnap();
   }
 }
