@@ -28,8 +28,10 @@ import org.junit.jupiter.api.Test;
 
 public class FlatMapProcessorTest {
 
-  private final Pipe<String> input = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
-  private final Pipe<String> output = new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
+  private final Pipe<String> input =
+      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER, "input_pipe");
+  private final Pipe<String> output =
+      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER, "output_pipe");
 
   @SuppressWarnings("unchecked")
   private final Function<String, Stream<String>> mapper = mock(Function.class);

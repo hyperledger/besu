@@ -58,12 +58,12 @@ public class AccountRangeDataRequest extends SnapDataRequest {
 
   private static final Logger LOG = LoggerFactory.getLogger(AccountRangeDataRequest.class);
 
-  private final Bytes32 startKeyHash;
-  private final Bytes32 endKeyHash;
-  private final Optional<Bytes32> startStorageRange;
-  private final Optional<Bytes32> endStorageRange;
+  protected final Bytes32 startKeyHash;
+  protected final Bytes32 endKeyHash;
+  protected final Optional<Bytes32> startStorageRange;
+  protected final Optional<Bytes32> endStorageRange;
 
-  private final StackTrie stackTrie;
+  protected final StackTrie stackTrie;
   private Optional<Boolean> isProofValid;
 
   protected AccountRangeDataRequest(
@@ -170,6 +170,12 @@ public class AccountRangeDataRequest extends SnapDataRequest {
       } else {
         stackTrie.addElement(startKeyHash, proofs, accounts);
         isProofValid = Optional.of(true);
+        LOG.atDebug()
+            .setMessage("{} accounts received during sync for account range {} {}")
+            .addArgument(accounts.size())
+            .addArgument(startKeyHash)
+            .addArgument(endKeyHash)
+            .log();
       }
     }
   }

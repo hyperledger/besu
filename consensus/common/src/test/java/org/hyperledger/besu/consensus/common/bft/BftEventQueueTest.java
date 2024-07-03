@@ -32,23 +32,53 @@ public class BftEventQueueTest {
   private static class DummyBftEvent implements BftEvent {
     @Override
     public BftEvents.Type getType() {
-      return null;
+      return BftEvents.Type.MESSAGE;
+    }
+  }
+
+  private static class DummyRoundExpiryBftEvent implements BftEvent {
+    @Override
+    public BftEvents.Type getType() {
+      return BftEvents.Type.ROUND_EXPIRY;
+    }
+  }
+
+  private static class DummyNewChainHeadBftEvent implements BftEvent {
+    @Override
+    public BftEvents.Type getType() {
+      return BftEvents.Type.NEW_CHAIN_HEAD;
+    }
+  }
+
+  private static class DummyBlockTimerExpiryBftEvent implements BftEvent {
+    @Override
+    public BftEvents.Type getType() {
+      return BftEvents.Type.BLOCK_TIMER_EXPIRY;
     }
   }
 
   @Test
   public void addPoll() throws InterruptedException {
     final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
+    queue.start();
 
     assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
-    final DummyBftEvent dummyEvent = new DummyBftEvent();
-    queue.add(dummyEvent);
-    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isEqualTo(dummyEvent);
+    final DummyBftEvent dummyMessageEvent = new DummyBftEvent();
+    final DummyRoundExpiryBftEvent dummyRoundTimerEvent = new DummyRoundExpiryBftEvent();
+    final DummyNewChainHeadBftEvent dummyNewChainHeadEvent = new DummyNewChainHeadBftEvent();
+    queue.add(dummyMessageEvent);
+    queue.add(dummyRoundTimerEvent);
+    queue.add(dummyNewChainHeadEvent);
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isEqualTo(dummyMessageEvent);
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isEqualTo(dummyRoundTimerEvent);
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isEqualTo(dummyNewChainHeadEvent);
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
   }
 
   @Test
   public void queueOrdering() throws InterruptedException {
     final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
+    queue.start();
 
     final DummyBftEvent dummyEvent1 = new DummyBftEvent();
     final DummyBftEvent dummyEvent2 = new DummyBftEvent();
@@ -69,6 +99,7 @@ public class BftEventQueueTest {
   @Test
   public void addSizeLimit() throws InterruptedException {
     final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
+    queue.start();
 
     for (int i = 0; i <= 1000; i++) {
       final DummyBftEvent dummyEvent = new DummyBftEvent();
@@ -84,5 +115,35 @@ public class BftEventQueueTest {
     }
     assertThat(drain).doesNotContainNull();
     assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
+  }
+
+  @Test
+  public void doNotAddUntilStarted() throws InterruptedException {
+    final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
+
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
+    final DummyBftEvent dummyMessageEvent = new DummyBftEvent();
+    final DummyRoundExpiryBftEvent dummyRoundTimerEvent = new DummyRoundExpiryBftEvent();
+    final DummyNewChainHeadBftEvent dummyNewChainHeadEvent = new DummyNewChainHeadBftEvent();
+
+    // BFT event queue needs starting before it will queue up most types of event. This prevents
+    // the queue filling with irrelevant messages until BFT mining has started
+    queue.add(dummyMessageEvent);
+    queue.add(dummyRoundTimerEvent);
+    queue.add(dummyNewChainHeadEvent);
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
+  }
+
+  @Test
+  public void alwaysAddBlockTimerExpiryEvents() throws InterruptedException {
+    final BftEventQueue queue = new BftEventQueue(MAX_QUEUE_SIZE);
+
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isNull();
+    final DummyBlockTimerExpiryBftEvent dummyBlockTimerEvent = new DummyBlockTimerExpiryBftEvent();
+
+    // Block expiry events need processing in order for the mining coordinator to start,
+    // so those should be handled regardless of whether the queue has been started
+    queue.add(dummyBlockTimerEvent);
+    assertThat(queue.poll(0, TimeUnit.MICROSECONDS)).isEqualTo(dummyBlockTimerEvent);
   }
 }

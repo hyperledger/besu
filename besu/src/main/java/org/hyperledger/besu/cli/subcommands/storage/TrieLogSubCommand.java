@@ -49,7 +49,8 @@ import picocli.CommandLine.ParentCommand;
 
 /** The Trie Log subcommand. */
 @Command(
-    name = "x-trie-log",
+    name = "trie-log",
+    aliases = "x-trie-log",
     description = "Manipulate trie logs",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,

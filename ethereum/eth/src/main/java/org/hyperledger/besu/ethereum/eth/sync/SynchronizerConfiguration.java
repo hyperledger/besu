@@ -29,7 +29,7 @@ public class SynchronizerConfiguration {
 
   public static final int DEFAULT_PIVOT_DISTANCE_FROM_HEAD = 50;
   public static final float DEFAULT_FULL_VALIDATION_RATE = .1f;
-  public static final int DEFAULT_FAST_SYNC_MINIMUM_PEERS = 5;
+  public static final int DEFAULT_SYNC_MINIMUM_PEERS = 5;
   public static final int DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST = 384;
   public static final int DEFAULT_WORLD_STATE_REQUEST_PARALLELISM = 10;
   public static final int DEFAULT_WORLD_STATE_MAX_REQUESTS_WITHOUT_PROGRESS = 1000;
@@ -53,9 +53,9 @@ public class SynchronizerConfiguration {
   public static final boolean DEFAULT_CHECKPOINT_POST_MERGE_ENABLED = false;
 
   // Fast sync config
-  private final int fastSyncPivotDistance;
+  private final int syncPivotDistance;
   private final float fastSyncFullValidationRate;
-  private final int fastSyncMinimumPeerCount;
+  private final int syncMinimumPeerCount;
   private final int worldStateHashCountPerRequest;
   private final int worldStateRequestParallelism;
   private final int worldStateMaxRequestsWithoutProgress;
@@ -87,9 +87,9 @@ public class SynchronizerConfiguration {
   private final long propagationManagerGetBlockTimeoutMillis;
 
   private SynchronizerConfiguration(
-      final int fastSyncPivotDistance,
+      final int syncPivotDistance,
       final float fastSyncFullValidationRate,
-      final int fastSyncMinimumPeerCount,
+      final int syncMinimumPeerCount,
       final int worldStateHashCountPerRequest,
       final int worldStateRequestParallelism,
       final int worldStateMaxRequestsWithoutProgress,
@@ -109,9 +109,9 @@ public class SynchronizerConfiguration {
       final int maxTrailingPeers,
       final long propagationManagerGetBlockTimeoutMillis,
       final boolean checkpointPostMergeEnabled) {
-    this.fastSyncPivotDistance = fastSyncPivotDistance;
+    this.syncPivotDistance = syncPivotDistance;
     this.fastSyncFullValidationRate = fastSyncFullValidationRate;
-    this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
+    this.syncMinimumPeerCount = syncMinimumPeerCount;
     this.worldStateHashCountPerRequest = worldStateHashCountPerRequest;
     this.worldStateRequestParallelism = worldStateRequestParallelism;
     this.worldStateMaxRequestsWithoutProgress = worldStateMaxRequestsWithoutProgress;
@@ -171,12 +171,14 @@ public class SynchronizerConfiguration {
   }
 
   /**
-   * The distance from the chain head at which we should switch from fast sync to full sync.
+   * The distance from the chain head at which we should switch from fast, snap, or checkpoint sync
+   * to full sync.
    *
-   * @return distance from the chain head at which we should switch from fast sync to full sync.
+   * @return distance from the chain head at which we should switch from fast, snap or checkpoint
+   *     sync to full sync.
    */
-  public int getFastSyncPivotDistance() {
-    return fastSyncPivotDistance;
+  public int getSyncPivotDistance() {
+    return syncPivotDistance;
   }
 
   public long getDownloaderChangeTargetThresholdByHeight() {
@@ -222,8 +224,8 @@ public class SynchronizerConfiguration {
     return fastSyncFullValidationRate;
   }
 
-  public int getFastSyncMinimumPeerCount() {
-    return fastSyncMinimumPeerCount;
+  public int getSyncMinimumPeerCount() {
+    return syncMinimumPeerCount;
   }
 
   public int getWorldStateHashCountPerRequest() {
@@ -256,7 +258,7 @@ public class SynchronizerConfiguration {
 
   public static class Builder {
     private SyncMode syncMode = SyncMode.FULL;
-    private int fastSyncMinimumPeerCount = DEFAULT_FAST_SYNC_MINIMUM_PEERS;
+    private int syncMinimumPeerCount = DEFAULT_SYNC_MINIMUM_PEERS;
     private int maxTrailingPeers = Integer.MAX_VALUE;
     private Range<Long> blockPropagationRange = DEFAULT_BLOCK_PROPAGATION_RANGE;
     private long downloaderChangeTargetThresholdByHeight =
@@ -270,7 +272,7 @@ public class SynchronizerConfiguration {
     private int downloaderParallelism = DEFAULT_DOWNLOADER_PARALLELISM;
     private int transactionsParallelism = DEFAULT_TRANSACTIONS_PARALLELISM;
     private int computationParallelism = DEFAULT_COMPUTATION_PARALLELISM;
-    private int fastSyncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
+    private int syncPivotDistance = DEFAULT_PIVOT_DISTANCE_FROM_HEAD;
     private float fastSyncFullValidationRate = DEFAULT_FULL_VALIDATION_RATE;
     private int worldStateHashCountPerRequest = DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST;
     private int worldStateRequestParallelism = DEFAULT_WORLD_STATE_REQUEST_PARALLELISM;
@@ -283,8 +285,8 @@ public class SynchronizerConfiguration {
         DEFAULT_PROPAGATION_MANAGER_GET_BLOCK_TIMEOUT_MILLIS;
     private boolean checkpointPostMergeEnabled = DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
-    public Builder fastSyncPivotDistance(final int distance) {
-      fastSyncPivotDistance = distance;
+    public Builder syncPivotDistance(final int distance) {
+      syncPivotDistance = distance;
       return this;
     }
 
@@ -357,8 +359,8 @@ public class SynchronizerConfiguration {
       return this;
     }
 
-    public Builder fastSyncMinimumPeerCount(final int fastSyncMinimumPeerCount) {
-      this.fastSyncMinimumPeerCount = fastSyncMinimumPeerCount;
+    public Builder syncMinimumPeerCount(final int syncMinimumPeerCount) {
+      this.syncMinimumPeerCount = syncMinimumPeerCount;
       return this;
     }
 
@@ -406,9 +408,9 @@ public class SynchronizerConfiguration {
 
     public SynchronizerConfiguration build() {
       return new SynchronizerConfiguration(
-          fastSyncPivotDistance,
+          syncPivotDistance,
           fastSyncFullValidationRate,
-          fastSyncMinimumPeerCount,
+          syncMinimumPeerCount,
           worldStateHashCountPerRequest,
           worldStateRequestParallelism,
           worldStateMaxRequestsWithoutProgress,
