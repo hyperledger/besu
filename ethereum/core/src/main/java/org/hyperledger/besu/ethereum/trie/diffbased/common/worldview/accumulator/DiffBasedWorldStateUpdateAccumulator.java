@@ -391,7 +391,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts()
+    getUpdatedAccounts().parallelStream()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
