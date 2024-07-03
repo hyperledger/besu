@@ -59,8 +59,8 @@ public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
   public Optional<InputStream> getFromOption(
       final CommandLine.ParseResult parseResult, final CommandLine commandLine) {
     try {
-      final Path profileName = parseResult.matchedOption(PROFILE_OPTION_NAME).getter().get();
-      return getProfile(profileName.toString(), commandLine);
+      final String profileName = parseResult.matchedOption(PROFILE_OPTION_NAME).getter().get();
+      return getProfile(profileName, commandLine);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -113,7 +113,12 @@ public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
    * @return Set of external profile names
    */
   public static Set<String> getExternalProfileNames() {
-    try (Stream<Path> pathStream = Files.list(defaultProfilesDir())) {
+    final Path profilesDir = defaultProfilesDir();
+    if (!Files.exists(profilesDir)) {
+      return Set.of();
+    }
+
+    try (Stream<Path> pathStream = Files.list(profilesDir)) {
       return pathStream
           .filter(Files::isRegularFile)
           .filter(path -> path.toString().endsWith(".toml"))

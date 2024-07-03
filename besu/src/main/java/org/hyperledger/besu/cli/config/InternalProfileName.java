@@ -16,6 +16,8 @@ package org.hyperledger.besu.cli.config;
 
 import java.util.Arrays;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.apache.commons.lang3.StringUtils;
 
@@ -47,6 +49,18 @@ public enum InternalProfileName {
     return Arrays.stream(values())
         .filter(profile -> profile.name().equalsIgnoreCase(name))
         .findFirst();
+  }
+
+  /**
+   * Returns the set of internal profile names as lowercase.
+   *
+   * @return Set of internal profile names
+   */
+  public static Set<String> getInternalProfileNames() {
+    return Arrays.stream(InternalProfileName.values())
+        .map(InternalProfileName::name)
+        .map(String::toLowerCase)
+        .collect(Collectors.toSet());
   }
 
   /**

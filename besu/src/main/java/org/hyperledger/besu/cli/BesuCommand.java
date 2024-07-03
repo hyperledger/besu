@@ -568,7 +568,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       completionCandidates = ProfilesCompletionCandidates.class,
       description =
           "Overwrite default settings. Possible values are ${COMPLETION-CANDIDATES}. (default: none)")
-  private final Path profile = null;
+  private String profile = null; // don't set it as final due to picocli completion candidates
 
   @Option(
       names = {"--nat-method"},
@@ -2764,6 +2764,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (profile != null) {
+      // TODO: Do we need to convert _ to spaces?
       builder.setProfile(profile);
     }
 

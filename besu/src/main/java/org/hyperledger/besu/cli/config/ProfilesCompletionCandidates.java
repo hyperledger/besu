@@ -14,14 +14,28 @@
  */
 package org.hyperledger.besu.cli.config;
 
-import java.util.Arrays;
+import org.hyperledger.besu.cli.util.ProfileFinder;
+
 import java.util.Iterator;
+import java.util.Set;
+import java.util.TreeSet;
 
 /** Provides a list of profile names that can be used for command line completion. */
 public class ProfilesCompletionCandidates implements Iterable<String> {
+  private final Iterator<String> iterator;
+
+  /**
+   * Create a new instance of ProfilesCompletionCandidates. This will include both internal and
+   * external profiles.
+   */
+  public ProfilesCompletionCandidates() {
+    final Set<String> profileNames = new TreeSet<>(InternalProfileName.getInternalProfileNames());
+    profileNames.addAll(ProfileFinder.getExternalProfileNames());
+    this.iterator = profileNames.iterator();
+  }
 
   @Override
   public Iterator<String> iterator() {
-    return Arrays.stream(InternalProfileName.values()).map(InternalProfileName::name).iterator();
+    return iterator;
   }
 }
