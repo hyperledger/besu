@@ -21,15 +21,18 @@ import static org.assertj.core.api.Assertions.fail;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.eth.messages.NodeDataMessage;
+import org.hyperledger.besu.ethereum.eth.sync.ChainHeadTracker;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 
@@ -37,6 +40,7 @@ import java.util.Collections;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.concurrent.CancellationException;
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -56,6 +60,11 @@ public class EthPeersTest {
     when(peerRequest.sendRequest(any())).thenReturn(responseStream);
     ethProtocolManager = EthProtocolManagerTestUtil.create();
     ethPeers = ethProtocolManager.ethContext().getEthPeers();
+    final ChainHeadTracker mock = mock(ChainHeadTracker.class);
+    final BlockHeader blockHeader = mock(BlockHeader.class);
+    when(mock.getBestHeaderFromPeer(any()))
+        .thenReturn(CompletableFuture.completedFuture(blockHeader));
+    ethPeers.setChainHeadTracker(mock);
   }
 
   @Test
@@ -112,6 +121,9 @@ public class EthPeersTest {
   @Test
   public void shouldExecutePeerRequestImmediatelyWhenPeerIsAvailable() throws Exception {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+
+    when(peerRequest.isEthPeerSuitable(peer.getEthPeer())).thenReturn(true);
+
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 10, Optional.empty());
 
@@ -126,6 +138,8 @@ public class EthPeersTest {
     final RespondingEthPeer workingPeer =
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     useRequestSlot(workingPeer.getEthPeer());
+
+    when(peerRequest.isEthPeerSuitable(any())).thenReturn(true);
 
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 10, Optional.empty());
@@ -146,6 +160,8 @@ public class EthPeersTest {
 
     assertThat(leastRecentlyUsedPeer.getEthPeer().outstandingRequests())
         .isEqualTo(mostRecentlyUsedPeer.getEthPeer().outstandingRequests());
+
+    when(peerRequest.isEthPeerSuitable(any())).thenReturn(true);
 
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 10, Optional.empty());
@@ -180,10 +196,13 @@ public class EthPeersTest {
         EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     useAllAvailableCapacity(suitablePeer.getEthPeer());
 
+    when(peerRequest.isEthPeerSuitable(suitablePeer.getEthPeer())).thenReturn(true);
+
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 200, Optional.empty());
 
-    verifyNoInteractions(peerRequest);
+    verify(peerRequest, times(0)).sendRequest(suitablePeer.getEthPeer());
+
     assertNotDone(pendingRequest);
 
     suitablePeer.disconnect(DisconnectReason.TOO_MANY_PEERS);
@@ -194,6 +213,8 @@ public class EthPeersTest {
   public void shouldFailWithPeerNotConnectedIfPeerRequestThrows() throws Exception {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     when(peerRequest.sendRequest(peer.getEthPeer())).thenThrow(new PeerNotConnected("Oh dear"));
+    when(peerRequest.isEthPeerSuitable(any())).thenReturn(true);
+
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 100, Optional.empty());
 
@@ -205,9 +226,11 @@ public class EthPeersTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     useAllAvailableCapacity(peer.getEthPeer());
 
+    when(peerRequest.isEthPeerSuitable(any())).thenReturn(true);
+
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 100, Optional.empty());
-    verifyNoInteractions(peerRequest);
+    verify(peerRequest, times(0)).sendRequest(peer.getEthPeer());
 
     freeUpCapacity(peer.getEthPeer());
 
@@ -221,11 +244,12 @@ public class EthPeersTest {
     EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 10);
 
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
+    when(peerRequest.isEthPeerSuitable(peer.getEthPeer())).thenReturn(true);
     useAllAvailableCapacity(peer.getEthPeer());
 
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 100, Optional.empty());
-    verifyNoInteractions(peerRequest);
+    verify(peerRequest, times(0)).sendRequest(peer.getEthPeer());
 
     freeUpCapacity(peer.getEthPeer());
 
@@ -238,15 +262,17 @@ public class EthPeersTest {
     final RespondingEthPeer peer = EthProtocolManagerTestUtil.createPeer(ethProtocolManager, 1000);
     useAllAvailableCapacity(peer.getEthPeer());
 
+    when(peerRequest.isEthPeerSuitable(peer.getEthPeer())).thenReturn(true);
+
     final PendingPeerRequest pendingRequest =
         ethPeers.executePeerRequest(peerRequest, 100, Optional.empty());
-    verifyNoInteractions(peerRequest);
+    verify(peerRequest, times(0)).sendRequest(peer.getEthPeer());
 
     pendingRequest.abort();
 
     freeUpCapacity(peer.getEthPeer());
 
-    verifyNoInteractions(peerRequest);
+    verify(peerRequest, times(0)).sendRequest(peer.getEthPeer());
     assertRequestFailure(pendingRequest, CancellationException.class);
   }
 
@@ -347,6 +373,59 @@ public class EthPeersTest {
     ethPeers.registerNewConnection(peerA.getConnection(), Collections.emptyList());
     assertThat(ethPeers.toString()).contains("1 EthPeers {");
     assertThat(ethPeers.toString()).contains(peerA.getLoggableId());
+  }
+
+  @Test
+  public void snapServersPreferredWhileSyncing() {
+
+    ethPeers.snapServerPeersNeeded(true);
+
+    while (ethPeers.peerCount() < ethPeers.getMaxPeers()) {
+      final EthPeer ethPeer =
+          EthProtocolManagerTestUtil.createPeer(
+                  ethProtocolManager, Difficulty.of(50), 20, false, false)
+              .getEthPeer();
+      assertThat(ethPeers.addPeerToEthPeers(ethPeer)).isTrue();
+    }
+
+    final EthPeer nonSnapServingPeer =
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, Difficulty.of(50), 20, false, false)
+            .getEthPeer();
+
+    assertThat(ethPeers.addPeerToEthPeers(nonSnapServingPeer)).isFalse();
+    assertThat(nonSnapServingPeer.getConnection().isDisconnected()).isTrue();
+
+    final EthPeer snapServingPeer =
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, Difficulty.of(50), 20, true, false)
+            .getEthPeer();
+
+    assertThat(ethPeers.addPeerToEthPeers(snapServingPeer)).isTrue();
+    assertThat(ethPeers.peerCount()).isEqualTo(ethPeers.getMaxPeers());
+  }
+
+  @Test
+  public void snapServersNotPreferredWhenInSync() {
+
+    ethPeers.snapServerPeersNeeded(false);
+
+    while (ethPeers.peerCount() < ethPeers.getMaxPeers()) {
+      final EthPeer ethPeer =
+          EthProtocolManagerTestUtil.createPeer(
+                  ethProtocolManager, Difficulty.of(50), 20, false, false)
+              .getEthPeer();
+      assertThat(ethPeers.addPeerToEthPeers(ethPeer)).isTrue();
+    }
+
+    final EthPeer snapServingPeer =
+        EthProtocolManagerTestUtil.createPeer(
+                ethProtocolManager, Difficulty.of(50), 20, true, false)
+            .getEthPeer();
+
+    assertThat(ethPeers.addPeerToEthPeers(snapServingPeer)).isFalse();
+    assertThat(snapServingPeer.getConnection().isDisconnected()).isTrue();
+    assertThat(ethPeers.peerCount()).isEqualTo(ethPeers.getMaxPeers());
   }
 
   private void freeUpCapacity(final EthPeer ethPeer) {
