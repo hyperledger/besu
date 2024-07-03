@@ -16,14 +16,9 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.DepositRequest;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.encoding.DepositRequestDecoder;
-import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.evm.operation.BlockHashOperation;
-import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,17 +38,12 @@ public class DepositRequestProcessor implements RequestProcessor {
   }
 
   @Override
-  public Optional<List<? extends Request>> process(
-      final ProcessableBlockHeader blockHeader,
-      final MutableWorldState mutableWorldState,
-      final ProtocolSpec protocolSpec,
-      final List<TransactionReceipt> transactionReceipts,
-      final BlockHashOperation.BlockHashLookup blockHashLookup,
-      final OperationTracer operationTrace) {
+  public Optional<List<? extends Request>> process(final ProcessRequestContext context) {
     if (depositContractAddress.isEmpty()) {
       return Optional.empty();
     }
-    List<DepositRequest> depositRequests = findDepositRequestsFromReceipts(transactionReceipts);
+    List<DepositRequest> depositRequests =
+        findDepositRequestsFromReceipts(context.transactionReceipts());
     return Optional.of(depositRequests);
   }
 
