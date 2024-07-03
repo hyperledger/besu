@@ -168,6 +168,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                     TransactionValidationParams.processingBlock(),
                     privateMetadataUpdater,
                     blobGasPrice);
+            roundWorldState.getAccumulator().commit();
             transactionConflictChecker.saveParallelizedTransactionProcessingResult(
                 transactionWithLocation, roundWorldState.getAccumulator(), result);
           },
@@ -191,7 +192,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 new TransactionConflictChecker.TransactionWithLocation(i, transaction),
                 transactionAccumulator,
                 blockUpdater)) {
-          transactionAccumulator.commit();
           blockUpdater.cloneFromUpdaterWithPreloader(transactionAccumulator);
           transactionProcessingResult =
               transactionConflictChecker.getResultByTransaction().get((long) i);
