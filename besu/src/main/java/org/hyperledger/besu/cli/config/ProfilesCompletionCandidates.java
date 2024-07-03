@@ -22,20 +22,16 @@ import java.util.TreeSet;
 
 /** Provides a list of profile names that can be used for command line completion. */
 public class ProfilesCompletionCandidates implements Iterable<String> {
-  private final Iterator<String> iterator;
-
   /**
-   * Create a new instance of ProfilesCompletionCandidates. This will include both internal and
-   * external profiles.
+   * Create a new instance of ProfilesCompletionCandidates. This constructor is required for
+   * Picocli.
    */
-  public ProfilesCompletionCandidates() {
-    final Set<String> profileNames = new TreeSet<>(InternalProfileName.getInternalProfileNames());
-    profileNames.addAll(ProfileFinder.getExternalProfileNames());
-    this.iterator = profileNames.iterator();
-  }
+  public ProfilesCompletionCandidates() {}
 
   @Override
   public Iterator<String> iterator() {
-    return iterator;
+    final Set<String> profileNames = new TreeSet<>(InternalProfileName.getInternalProfileNames());
+    profileNames.addAll(ProfileFinder.getExternalProfileNames());
+    return profileNames.iterator();
   }
 }

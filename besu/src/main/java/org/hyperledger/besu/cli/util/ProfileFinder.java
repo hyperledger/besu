@@ -58,12 +58,14 @@ public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
   @Override
   public Optional<InputStream> getFromOption(
       final CommandLine.ParseResult parseResult, final CommandLine commandLine) {
+    final String profileName;
     try {
-      final String profileName = parseResult.matchedOption(PROFILE_OPTION_NAME).getter().get();
-      return getProfile(profileName, commandLine);
-    } catch (Exception e) {
-      throw new RuntimeException(e);
+      profileName = parseResult.matchedOption(PROFILE_OPTION_NAME).getter().get();
+    } catch (final Exception e) {
+      throw new CommandLine.ParameterException(
+          commandLine, "Unexpected error in obtaining value of --profile", e);
     }
+    return getProfile(profileName, commandLine);
   }
 
   @Override
