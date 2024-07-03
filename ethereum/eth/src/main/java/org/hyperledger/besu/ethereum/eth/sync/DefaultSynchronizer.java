@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.sync.checkpointsync.CheckpointDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
+import org.hyperledger.besu.ethereum.eth.sync.fastsync.NoSyncRequiredState;
 import org.hyperledger.besu.ethereum.eth.sync.fastsync.worldstate.FastDownloaderFactory;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.FullSyncDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
@@ -242,16 +243,24 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       // We've been shutdown which will have triggered the fast sync future to complete
       return CompletableFuture.completedFuture(null);
     }
-    fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
-    result
-        .getPivotBlockHeader()
-        .ifPresent(
-            blockHeader -> protocolContext.getWorldStateArchive().resetArchiveStateTo(blockHeader));
-    LOG.info(
-        "Sync completed successfully with pivot block {}",
-        result.getPivotBlockNumber().getAsLong());
-    pivotBlockSelector.close();
-    syncState.markInitialSyncPhaseAsDone();
+
+    if (result instanceof NoSyncRequiredState) {
+      LOG.info("Sync ended (no sync required)");
+      syncState.markInitialSyncPhaseAsDone();
+    } else {
+      fastSyncDownloader.ifPresent(FastSyncDownloader::deleteFastSyncState);
+      result
+          .getPivotBlockHeader()
+          .ifPresent(
+              blockHeader ->
+                  protocolContext.getWorldStateArchive().resetArchiveStateTo(blockHeader));
+      if (result.hasPivotBlockHash())
+        LOG.info(
+            "Sync completed successfully with pivot block {}",
+            result.getPivotBlockNumber().getAsLong());
+      pivotBlockSelector.close();
+      syncState.markInitialSyncPhaseAsDone();
+    }
 
     if (terminationCondition.shouldContinueDownload()) {
       return startFullSync();

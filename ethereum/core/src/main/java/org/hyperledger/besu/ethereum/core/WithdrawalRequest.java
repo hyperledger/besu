@@ -26,13 +26,13 @@ public class WithdrawalRequest extends Request
     implements org.hyperledger.besu.plugin.data.WithdrawalRequest {
 
   private final Address sourceAddress;
-  private final BLSPublicKey validatorPublicKey;
+  private final BLSPublicKey validatorPubkey;
   private final GWei amount;
 
   public WithdrawalRequest(
-      final Address sourceAddress, final BLSPublicKey validatorPublicKey, final GWei amount) {
+      final Address sourceAddress, final BLSPublicKey validatorPubkey, final GWei amount) {
     this.sourceAddress = sourceAddress;
-    this.validatorPublicKey = validatorPublicKey;
+    this.validatorPubkey = validatorPubkey;
     this.amount = amount;
   }
 
@@ -47,8 +47,8 @@ public class WithdrawalRequest extends Request
   }
 
   @Override
-  public PublicKey getValidatorPublicKey() {
-    return validatorPublicKey;
+  public PublicKey getValidatorPubkey() {
+    return validatorPubkey;
   }
 
   @Override
@@ -61,8 +61,8 @@ public class WithdrawalRequest extends Request
     return "WithdrawalRequest{"
         + "sourceAddress="
         + sourceAddress
-        + " validatorPublicKey="
-        + validatorPublicKey
+        + " validatorPubkey="
+        + validatorPubkey
         + " amount="
         + amount
         + '}';
@@ -78,12 +78,12 @@ public class WithdrawalRequest extends Request
     }
     final WithdrawalRequest that = (WithdrawalRequest) o;
     return Objects.equals(sourceAddress, that.sourceAddress)
-        && Objects.equals(validatorPublicKey, that.validatorPublicKey)
+        && Objects.equals(validatorPubkey, that.validatorPubkey)
         && Objects.equals(amount, that.amount);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceAddress, validatorPublicKey, amount);
+    return Objects.hash(sourceAddress, validatorPubkey, amount);
   }
 }
