@@ -95,7 +95,7 @@ public interface PrivateTransaction {
   Address getSender();
 
   /**
-   * An unlimited size byte array specifying the EVM-code for the account // initialisation
+   * An unlimited size byte array specifying the EVM-code for the account initialization
    * procedure.
    *
    * <p>Only present if this is a contract creation transaction, which is only true if {@link
