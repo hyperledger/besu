@@ -26,6 +26,9 @@ import dagger.Provides;
 @Module
 public class BesuPluginContextModule {
 
+  /** Default constructor. */
+  public BesuPluginContextModule() {}
+
   /**
    * Creates a BesuPluginContextImpl, used for plugin service discovery.
    *

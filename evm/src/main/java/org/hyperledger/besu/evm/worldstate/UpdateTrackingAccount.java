@@ -128,7 +128,6 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
   public void setWrappedAccount(final A account) {
     if (this.account == null) {
       this.account = account;
-      storageWasCleared = false;
     } else {
       throw new IllegalStateException("Already tracking a wrapped account");
     }
@@ -292,6 +291,18 @@ public class UpdateTrackingAccount<A extends Account> implements MutableAccount 
     }
     storageWasCleared = true;
     updatedStorage.clear();
+  }
+
+  /**
+   * Does this account have any storage slots that are set to non-zero values?
+   *
+   * @return true if the account has no storage values set to non-zero values. False if any storage
+   *     is set.
+   */
+  @Override
+  public boolean isStorageEmpty() {
+    return updatedStorage.isEmpty()
+        && (storageWasCleared || account == null || account.isStorageEmpty());
   }
 
   @Override

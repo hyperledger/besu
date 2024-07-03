@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.json.HexLongDeserializer;
+import org.hyperledger.besu.ethereum.core.json.GasDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
@@ -45,7 +45,7 @@ public class JsonCallParameter extends CallParameter {
   public JsonCallParameter(
       @JsonProperty("from") final Address from,
       @JsonProperty("to") final Address to,
-      @JsonDeserialize(using = HexLongDeserializer.class) @JsonProperty("gas") final Long gasLimit,
+      @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Long gasLimit,
       @JsonProperty("gasPrice") final Wei gasPrice,
       @JsonProperty("maxPriorityFeePerGas") final Wei maxPriorityFeePerGas,
       @JsonProperty("maxFeePerGas") final Wei maxFeePerGas,

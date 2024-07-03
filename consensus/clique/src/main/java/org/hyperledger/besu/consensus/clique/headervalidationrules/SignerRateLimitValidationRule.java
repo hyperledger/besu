@@ -28,6 +28,9 @@ public class SignerRateLimitValidationRule implements AttachedBlockHeaderValidat
 
   private static final Logger LOG = LoggerFactory.getLogger(SignerRateLimitValidationRule.class);
 
+  /** Default constructor. */
+  public SignerRateLimitValidationRule() {}
+
   @Override
   public boolean validate(
       final BlockHeader header, final BlockHeader parent, final ProtocolContext protocolContext) {

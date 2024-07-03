@@ -15,7 +15,6 @@
 package org.hyperledger.besu.controller;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.consensus.merge.PostMergeContext;
 import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
@@ -232,9 +231,8 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                 syncState,
                 ethProtocolManager,
                 pivotBlockSelector);
-    final GenesisConfigOptions maybeForTTD = configOptionsSupplier.get();
 
-    if (maybeForTTD.getTerminalTotalDifficulty().isPresent()) {
+    if (genesisConfigOptions.getTerminalTotalDifficulty().isPresent()) {
       LOG.info(
           "TTD present, creating DefaultSynchronizer that stops propagating after finalization");
       protocolContext
@@ -381,13 +379,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
     super.isRevertReasonEnabled(isRevertReasonEnabled);
     return propagateConfig(z -> z.isRevertReasonEnabled(isRevertReasonEnabled));
-  }
-
-  @Override
-  public BesuControllerBuilder genesisConfigOverrides(
-      final Map<String, String> genesisConfigOverrides) {
-    super.genesisConfigOverrides(genesisConfigOverrides);
-    return propagateConfig(z -> z.genesisConfigOverrides(genesisConfigOverrides));
   }
 
   @Override

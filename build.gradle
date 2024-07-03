@@ -23,11 +23,11 @@ import java.text.SimpleDateFormat
 import java.util.regex.Pattern
 
 plugins {
-  id 'com.diffplug.spotless' version '6.23.3'
-  id 'com.github.ben-manes.versions' version '0.50.0'
-  id 'com.github.jk1.dependency-license-report' version '2.5'
-  id 'com.jfrog.artifactory' version '5.1.11'
-  id 'io.spring.dependency-management' version '1.1.4'
+  id 'com.diffplug.spotless' version '6.25.0'
+  id 'com.github.ben-manes.versions' version '0.51.0'
+  id 'com.github.jk1.dependency-license-report' version '2.7'
+  id 'com.jfrog.artifactory' version '5.2.0'
+  id 'io.spring.dependency-management' version '1.1.5'
   id 'me.champeau.jmh' version '0.7.2' apply false
   id 'net.ltgt.errorprone' version '3.1.0'
   id 'maven-publish'
@@ -47,8 +47,8 @@ sonarqube {
 
 project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
-if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
-  throw new GradleException("Java 17 or later is required to build Besu.\n" +
+if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
+  throw new GradleException("Java 21 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
 }
 
@@ -125,7 +125,7 @@ allprojects {
   version = calculateVersion()
 
   jacoco {
-    toolVersion = '0.8.8'
+    toolVersion = '0.8.11'
     if (project.tasks.findByName('referenceTests')) {
       applyTo referenceTests
     }
@@ -144,8 +144,8 @@ allprojects {
   tasks.build {
     dependsOn 'javadoc'
   }
-  sourceCompatibility = 17
-  targetCompatibility = 17
+  sourceCompatibility = 21
+  targetCompatibility = 21
 
   repositories {
     maven {
@@ -208,21 +208,35 @@ allprojects {
       trimTrailingWhitespace()
       endWithNewline()
       // apply appropriate license header files.
-      // TODO: Remove checkSpdxLicense task and buildSrc when all files are formatted and updated via multiple PRs
-      // TODO: Uncomment following when all files are formatted and updated via multiple PRs
-      // licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license").named("older").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
       licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license").named("older.year").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
-      // licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
     }
+    // spotless check applied to build.gradle (groovy) files
     groovyGradle {
       target '*.gradle'
-      greclipse('4.21').configFile(rootProject.file('gradle/formatter.properties'))
+      greclipse('4.31').configFile(rootProject.file('gradle/spotless/greclipse.properties'))
       endWithNewline()
     }
     // Below this line are currently only license header tasks
-    format 'groovy', { target '**/src/*/grovy/**/*.groovy' }
-    format 'bash', { target '**/*.sh' }
-    format 'sol', { target '**/*.sol' }
+    format 'ShellScripts', {
+      target '**/*.sh'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+      trimTrailingWhitespace()
+      endWithNewline()
+
+      licenseHeaderFile("${rootDir}/gradle/spotless/sh.license","^(?!##).+").skipLinesMatching("^#!.+?\$")
+    }
+    format 'Solidity', {
+      target '**/*.sol'
+      targetExclude '**/src/reference-test/**', '**/src/main/generated/**', '**/src/test/generated/**', '**/src/jmh/generated/**'
+      trimTrailingWhitespace()
+      endWithNewline()
+
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.license","^pragma solidity.+?").named("former").onlyIfContentMatches("^/\\*\\r?\\n.*Copyright ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.former.date.license","^pragma solidity.+?").named("former.date").onlyIfContentMatches("^/\\*\\r?\\n.* Copyright \\d{4} ConsenSys AG\\.")
+      licenseHeaderFile("${rootDir}/gradle/spotless/java.current.license","^pragma solidity.+?").named("current").onlyIfContentMatches("^(?!/\\*\\r?\\n \\*.*ConsenSys AG\\.)")
+    }
   }
 
   tasks.withType(JavaCompile).configureEach {
@@ -351,11 +365,63 @@ allprojects {
     options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,' +
       '-org.hyperledger.besu.tests.acceptance.*,' +
       '-org.hyperledger.besu.tests.web3j.generated,' +
-      // TODO: these are temporary disabled (ethereum and sub modules), it should be removed in a future PR.
-      '-org.hyperledger.besu.ethereum,' +
-      '-org.hyperledger.besu.ethereum.*,' +
-      '-org.hyperledger.besu.ethstats.*,' +
-      '-org.hyperledger.besu.evmtool',
+      // TODO: these are temporary excluded from lint (ethereum sub modules), it should be removed in a future PR.
+      // ethereum api module
+      '-org.hyperledger.besu.ethereum.api.handlers,' +
+      '-org.hyperledger.besu.ethereum.api.jsonrpc,' +
+      '-org.hyperledger.besu.ethereum.api.jsonrpc.*,' +
+      '-org.hyperledger.besu.ethereum.api.query,' +
+      '-org.hyperledger.besu.ethereum.api.query.*,' +
+      '-org.hyperledger.besu.ethereum.api.tls,' +
+      '-org.hyperledger.besu.ethereum.api.util,' +
+      // ethereum blockcreation module
+      '-org.hyperledger.besu.ethereum.blockcreation,' +
+      '-org.hyperledger.besu.ethereum.blockcreation.*,' +
+      // ethereum core module
+      '-org.hyperledger.besu.ethereum.chain,' +
+      '-org.hyperledger.besu.ethereum.core,' +
+      '-org.hyperledger.besu.ethereum.core.*,' +
+      '-org.hyperledger.besu.ethereum.debug,' +
+      '-org.hyperledger.besu.ethereum.difficulty.fixed,' +
+      '-org.hyperledger.besu.ethereum.forkid,' +
+      '-org.hyperledger.besu.ethereum.mainnet,' +
+      '-org.hyperledger.besu.ethereum.mainnet.*,' +
+      '-org.hyperledger.besu.ethereum.privacy,' +
+      '-org.hyperledger.besu.ethereum.privacy.*,' +
+      '-org.hyperledger.besu.ethereum.processing,' +
+      '-org.hyperledger.besu.ethereum.proof,' +
+      '-org.hyperledger.besu.ethereum.storage,' +
+      '-org.hyperledger.besu.ethereum.storage.*,' +
+      '-org.hyperledger.besu.ethereum.transaction,' +
+      '-org.hyperledger.besu.ethereum.trie.*,' +
+      '-org.hyperledger.besu.ethereum.util,' +
+      '-org.hyperledger.besu.ethereum.vm,' +
+      '-org.hyperledger.besu.ethereum.worldstate,' +
+      // ethereum eth module
+      '-org.hyperledger.besu.ethereum.eth.*,' +
+      '-org.hyperledger.besu.ethereum.eth,' +
+      '-org.hyperledger.besu.consensus.merge,' +
+      // p2p module
+      '-org.hyperledger.besu.ethereum.p2p,' +
+      '-org.hyperledger.besu.ethereum.p2p.*,' +
+      // permissioning module
+      '-org.hyperledger.besu.ethereum.permissioning,' +
+      '-org.hyperledger.besu.ethereum.permissioning.*,' +
+      // referencetests module
+      '-org.hyperledger.besu.ethereum.referencetests,' +
+      // retesteth module
+      '-org.hyperledger.besu.ethereum.retesteth.methods,' +
+      '-org.hyperledger.besu.ethereum.retesteth,' +
+      //rlp module
+      '-org.hyperledger.besu.ethereum.rlp,' +
+      // stratum module
+      '-org.hyperledger.besu.ethereum.stratum,' +
+      // trie module
+      '-org.hyperledger.besu.ethereum.trie.*,' +
+      '-org.hyperledger.besu.ethereum.trie,' +
+      // verkle trie module
+      '-org.hyperledger.besu.ethereum.verkletrie,' +
+      '-org.hyperledger.besu.ethereum.verkletrie.*',
       true)
     options.addStringOption('Xmaxerrs','65535')
     options.addStringOption('Xmaxwarns','65535')
@@ -372,7 +438,7 @@ task checkMavenCoordinateCollisions {
     getAllprojects().forEach {
       if (it.properties.containsKey('publishing') && it.jar?.enabled) {
         def coordinate = it.publishing?.publications[0].coordinates
-        if (coordinates.containsKey(coordinate)) {
+        if (coordinate.toString().startsWith("org") && coordinates.containsKey(coordinate)) {
           throw new GradleException("Duplicate maven coordinates detected, ${coordinate} is used by " +
           "both ${coordinates[coordinate]} and ${it.path}.\n" +
           "Please add a `publishing` script block to one or both subprojects.")
@@ -620,7 +686,9 @@ startScripts {
   defaultJvmOpts = applicationDefaultJvmArgs + [
     "-XX:G1ConcRefinementThreads=2",
     "-XX:G1HeapWastePercent=15",
-    "-XX:MaxGCPauseMillis=100"
+    "-XX:MaxGCPauseMillis=100",
+    "-XX:StartFlightRecording,dumponexit=true,settings=default.jfc",
+    "-Xlog:jfr*=off"
   ]
   unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/unixStartScript.txt")
   windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/besu/src/main/scripts/windowsStartScript.txt")
@@ -771,7 +839,6 @@ task testDocker {
       executable shell
       args "-c", "./test.sh ${image}"
     }
-
   }
 }
 
@@ -886,27 +953,6 @@ task manifestDockerRelease {
 
 def sep = Pattern.quote(File.separator)
 
-task checkSpdxHeader(type: CheckSpdxHeader) {
-  apply plugin: 'groovy'
-
-  rootPath = "${projectDir}"
-  spdxHeader = "* SPDX-License-Identifier: Apache-2.0"
-  filesRegex = "(.*.java)|(.*.groovy)"
-  excludeRegex = [
-    "(.*${sep}generalstate${sep}GeneralStateRegressionReferenceTest.*)",
-    "(.*${sep}generalstate${sep}GeneralStateReferenceTest.*)",
-    "(.*${sep}generalstate${sep}LegacyGeneralStateReferenceTest.*)",
-    "(.*${sep}blockchain${sep}BlockchainReferenceTest.*)",
-    "(.*${sep}blockchain${sep}LegacyBlockchainReferenceTest.*)",
-    "(.*${sep}.gradle${sep}.*)",
-    "(.*${sep}.idea${sep}.*)",
-    "(.*${sep}out${sep}.*)",
-    "(.*${sep}bin${sep}.*)",
-    "(.*${sep}build${sep}.*)",
-    "(.*${sep}src${sep}[^${sep}]+${sep}generated${sep}.*)"
-  ].join("|")
-}
-
 jacocoTestReport {
   reports {
     xml.required = true
@@ -940,6 +986,10 @@ def calculateVersion() {
   def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
 
   if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
+    if (project.hasProperty('versionappendcommit') && project.versionappendcommit == "true") {
+      def gitDetails = getGitCommitDetails(7) // Adjust length as needed
+      return "${project.version}-${gitDetails.hash}"
+    }
     return "${project.version}"
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
@@ -1044,12 +1094,11 @@ distributions {
       from("build/reports/license/license-dependency.html") { into "." }
       from("./docs/GettingStartedBinaries.md") { into "." }
       from("./docs/DocsArchive0.8.0.html") { into "." }
-      from("build/besu.autocomplete.sh") { into "." }
+      from(autocomplete) { into "." }
     }
   }
 }
 
-check.dependsOn checkSpdxHeader
 build.dependsOn verifyDistributions
 artifactoryPublish.dependsOn verifyDistributions
 artifactoryPublish.mustRunAfter(distTar)

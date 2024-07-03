@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.when;
@@ -33,6 +34,8 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
@@ -67,6 +70,8 @@ public class AdminNodeInfoTest {
   @Mock private BlockchainQueries blockchainQueries;
   @Mock private NatService natService;
   @Mock private BlockHeader blockHeader;
+  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock private ProtocolSpec protocolSpec;
 
   private AdminNodeInfo method;
 
@@ -93,6 +98,8 @@ public class AdminNodeInfoTest {
     when(blockchainQueries.getBlockHashByNumber(anyLong())).thenReturn(Optional.of(Hash.EMPTY));
     when(blockchain.getChainHead()).thenReturn(testChainHead);
     when(natService.queryExternalIPAddress(anyString())).thenReturn("1.2.3.4");
+    when(protocolSpec.getName()).thenReturn("London");
+    when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
     method =
         new AdminNodeInfo(
             "testnet/1.0/this/that",
@@ -100,7 +107,8 @@ public class AdminNodeInfoTest {
             genesisConfigOptions,
             p2pNetwork,
             blockchainQueries,
-            natService);
+            natService,
+            protocolSchedule);
   }
 
   @Test
@@ -110,6 +118,7 @@ public class AdminNodeInfoTest {
     final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
+    expected.put("activeFork", "London");
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@1.2.3.4:30303?discport=7890");
@@ -161,6 +170,7 @@ public class AdminNodeInfoTest {
     final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
+    expected.put("activeFork", "London");
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@3.4.5.6:8081?discport=8080");
@@ -207,6 +217,7 @@ public class AdminNodeInfoTest {
     final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
+    expected.put("activeFork", "London");
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@1.2.3.4:0");
@@ -253,6 +264,7 @@ public class AdminNodeInfoTest {
     final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
+    expected.put("activeFork", "London");
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@1.2.3.4:0?discport=7890");
@@ -299,6 +311,7 @@ public class AdminNodeInfoTest {
     final JsonRpcRequestContext request = adminNodeInfo();
 
     final Map<String, Object> expected = new HashMap<>();
+    expected.put("activeFork", "London");
     expected.put(
         "enode",
         "enode://0f1b319e32017c3fcb221841f0f978701b4e9513fe6a567a2db43d43381a9c7e3dfe7cae13cbc2f56943400bacaf9082576ab087cd51983b17d729ae796f6807@1.2.3.4:7890?discport=0");
@@ -387,7 +400,8 @@ public class AdminNodeInfoTest {
             genesisClassicConfigOptions,
             p2pNetwork,
             blockchainQueries,
-            natService);
+            natService,
+            protocolSchedule);
 
     final JsonRpcRequestContext request = adminNodeInfo();
 

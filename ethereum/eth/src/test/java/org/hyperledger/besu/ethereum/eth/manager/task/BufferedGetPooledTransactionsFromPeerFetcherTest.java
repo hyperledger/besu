@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.PeerTransactionTracker;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -57,6 +58,7 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   @Mock TransactionPool transactionPool;
   @Mock EthContext ethContext;
   @Mock EthScheduler ethScheduler;
+  @Mock EthPeers ethPeers;
 
   private final BlockDataGenerator generator = new BlockDataGenerator();
 
@@ -67,7 +69,8 @@ public class BufferedGetPooledTransactionsFromPeerFetcherTest {
   @BeforeEach
   public void setup() {
     metricsSystem = new StubMetricsSystem();
-    transactionTracker = new PeerTransactionTracker();
+    when(ethContext.getEthPeers()).thenReturn(ethPeers);
+    transactionTracker = new PeerTransactionTracker(ethPeers);
     when(ethContext.getScheduler()).thenReturn(ethScheduler);
     ScheduledFuture<?> mock = mock(ScheduledFuture.class);
     fetcher =

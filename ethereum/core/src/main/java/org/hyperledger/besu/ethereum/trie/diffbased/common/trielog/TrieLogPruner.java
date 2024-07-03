@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -100,7 +99,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
     }
   }
 
-  public void addToPruneQueue(final long blockNumber, final Hash blockHash) {
+  public synchronized void addToPruneQueue(final long blockNumber, final Hash blockHash) {
     LOG.atTrace()
         .setMessage("adding trie log to queue for later pruning blockNumber {}; blockHash {}")
         .addArgument(blockNumber)
@@ -109,7 +108,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
     trieLogBlocksAndForksByDescendingBlockNumber.put(blockNumber, blockHash);
   }
 
-  public int pruneFromQueue() {
+  public synchronized int pruneFromQueue() {
     final long retainAboveThisBlock = blockchain.getChainHeadBlockNumber() - numBlocksToRetain;
     final Optional<Hash> finalized = blockchain.getFinalized();
     if (requireFinalizedBlock && finalized.isEmpty()) {

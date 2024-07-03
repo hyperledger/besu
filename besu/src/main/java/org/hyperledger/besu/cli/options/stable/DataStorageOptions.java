@@ -14,15 +14,17 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.DEFAULT_RECEIPT_COMPACTION_ENABLED;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
 import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
-import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT;
+import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.Unstable.DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED;
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
+import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -56,10 +58,34 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       paramLabel = "<LONG>",
       description =
           "Limit of historical layers that can be loaded with BONSAI (default: ${DEFAULT-VALUE}). When using "
-              + Unstable.BONSAI_LIMIT_TRIE_LOGS_ENABLED
+              + BONSAI_LIMIT_TRIE_LOGS_ENABLED
               + " it will also be used as the number of layers of trie logs to retain.",
       arity = "1")
   private Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
+
+  private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
+
+  /** The bonsai trie logs pruning window size. */
+  public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
+      "--bonsai-trie-logs-pruning-window-size";
+
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
+  @CommandLine.Option(
+      names = {
+        BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+        "--Xbonsai-limit-trie-logs-enabled",
+        "--Xbonsai-trie-log-pruning-enabled"
+      },
+      fallbackValue = "true",
+      description = "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
+  private Boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
+
+  @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
+  @CommandLine.Option(
+      names = {BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE, "--Xbonsai-trie-logs-pruning-window-size"},
+      description =
+          "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
+  private Integer bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
   @Option(
       names = "--receipt-compaction-enabled",
@@ -70,28 +96,23 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @CommandLine.ArgGroup(validate = false)
   private final DataStorageOptions.Unstable unstableOptions = new Unstable();
 
+  /** Default Constructor. */
+  DataStorageOptions() {}
+
   /** The unstable options for data storage. */
   public static class Unstable {
-    private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED =
-        "--Xbonsai-limit-trie-logs-enabled";
 
-    /** The bonsai trie logs pruning window size. */
-    public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
-        "--Xbonsai-trie-logs-pruning-window-size";
-
+    // TODO: --Xsnapsync-synchronizer-flat-db-healing-enabled is deprecated, remove it in a future
+    // release
     @CommandLine.Option(
         hidden = true,
-        names = {BONSAI_LIMIT_TRIE_LOGS_ENABLED, "--Xbonsai-trie-log-pruning-enabled"},
-        description =
-            "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
-    private boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
-
-    @CommandLine.Option(
-        hidden = true,
-        names = {BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE},
-        description =
-            "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
-    private int bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
+        names = {
+          "--Xbonsai-full-flat-db-enabled",
+          "--Xsnapsync-synchronizer-flat-db-healing-enabled"
+        },
+        arity = "1",
+        description = "Enables bonsai full flat database strategy. (default: ${DEFAULT-VALUE})")
+    private Boolean bonsaiFullFlatDbEnabled = DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED;
 
     @CommandLine.Option(
         hidden = true,
@@ -100,6 +121,9 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         description =
             "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
+
+    /** Default Constructor. */
+    Unstable() {}
   }
 
   /**
@@ -115,9 +139,17 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * Validates the data storage options
    *
    * @param commandLine the full commandLine to check all the options specified by the user
+   * @param syncMode the sync mode
    */
-  public void validate(final CommandLine commandLine) {
-    if (unstableOptions.bonsaiLimitTrieLogsEnabled) {
+  public void validate(final CommandLine commandLine, final SyncMode syncMode) {
+    if (DataStorageFormat.BONSAI == dataStorageFormat && bonsaiLimitTrieLogsEnabled) {
+      if (SyncMode.FULL == syncMode) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            String.format(
+                "Cannot enable " + BONSAI_LIMIT_TRIE_LOGS_ENABLED + " with sync-mode %s",
+                syncMode));
+      }
       if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
         throw new CommandLine.ParameterException(
             commandLine,
@@ -125,22 +157,22 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
                 BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
                 MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
       }
-      if (unstableOptions.bonsaiTrieLogPruningWindowSize <= 0) {
+      if (bonsaiTrieLogPruningWindowSize <= 0) {
         throw new CommandLine.ParameterException(
             commandLine,
             String.format(
-                Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
-                unstableOptions.bonsaiTrieLogPruningWindowSize));
+                BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+                bonsaiTrieLogPruningWindowSize));
       }
-      if (unstableOptions.bonsaiTrieLogPruningWindowSize <= bonsaiMaxLayersToLoad) {
+      if (bonsaiTrieLogPruningWindowSize <= bonsaiMaxLayersToLoad) {
         throw new CommandLine.ParameterException(
             commandLine,
             String.format(
-                Unstable.BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+                BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
                     + "=%d must be greater than "
                     + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
                     + "=%d",
-                unstableOptions.bonsaiTrieLogPruningWindowSize,
+                bonsaiTrieLogPruningWindowSize,
                 bonsaiMaxLayersToLoad));
       }
     }
@@ -157,10 +189,11 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     dataStorageOptions.dataStorageFormat = domainObject.getDataStorageFormat();
     dataStorageOptions.bonsaiMaxLayersToLoad = domainObject.getBonsaiMaxLayersToLoad();
     dataStorageOptions.receiptCompactionEnabled = domainObject.getReceiptCompactionEnabled();
-    dataStorageOptions.unstableOptions.bonsaiLimitTrieLogsEnabled =
-        domainObject.getUnstable().getBonsaiLimitTrieLogsEnabled();
-    dataStorageOptions.unstableOptions.bonsaiTrieLogPruningWindowSize =
-        domainObject.getUnstable().getBonsaiTrieLogPruningWindowSize();
+    dataStorageOptions.bonsaiLimitTrieLogsEnabled = domainObject.getBonsaiLimitTrieLogsEnabled();
+    dataStorageOptions.bonsaiTrieLogPruningWindowSize =
+        domainObject.getBonsaiTrieLogPruningWindowSize();
+    dataStorageOptions.unstableOptions.bonsaiFullFlatDbEnabled =
+        domainObject.getUnstable().getBonsaiFullFlatDbEnabled();
     dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
         domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
 
@@ -173,10 +206,11 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         .dataStorageFormat(dataStorageFormat)
         .bonsaiMaxLayersToLoad(bonsaiMaxLayersToLoad)
         .receiptCompactionEnabled(receiptCompactionEnabled)
+        .bonsaiLimitTrieLogsEnabled(bonsaiLimitTrieLogsEnabled)
+        .bonsaiTrieLogPruningWindowSize(bonsaiTrieLogPruningWindowSize)
         .unstable(
             ImmutableDataStorageConfiguration.Unstable.builder()
-                .bonsaiLimitTrieLogsEnabled(unstableOptions.bonsaiLimitTrieLogsEnabled)
-                .bonsaiTrieLogPruningWindowSize(unstableOptions.bonsaiTrieLogPruningWindowSize)
+                .bonsaiFullFlatDbEnabled(unstableOptions.bonsaiFullFlatDbEnabled)
                 .bonsaiCodeStoredByCodeHashEnabled(unstableOptions.bonsaiCodeUsingCodeHashEnabled)
                 .build())
         .build();

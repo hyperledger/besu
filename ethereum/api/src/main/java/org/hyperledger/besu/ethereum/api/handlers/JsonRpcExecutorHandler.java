@@ -58,11 +58,13 @@ public class JsonRpcExecutorHandler {
                   } catch (IOException e) {
                     final String method = executor.getRpcMethodName(ctx);
                     LOG.error("{} - Error streaming JSON-RPC response", method, e);
-                    throw new RuntimeException(e);
+                    handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
                   }
                 },
                 () -> handleJsonRpcError(ctx, null, RpcErrorType.PARSE_ERROR));
       } catch (final RuntimeException e) {
+        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
+        LOG.error("Unhandled exception in JSON-RPC executor for method {}", method, e);
         handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
       }
     };

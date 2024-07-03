@@ -17,7 +17,6 @@ package org.hyperledger.besu.controller;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyMap;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
@@ -31,7 +30,6 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordina
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
@@ -69,7 +67,7 @@ public class ConsensusScheduleBesuControllerBuilderTest {
   private @Mock ProtocolSchedule protocolSchedule1;
   private @Mock ProtocolSchedule protocolSchedule2;
   private @Mock ProtocolSchedule protocolSchedule3;
-  private @Mock NoopMiningCoordinator miningCoordinator1;
+  private @Mock MiningCoordinator miningCoordinator1;
   private @Mock BftMiningCoordinator miningCoordinator2;
 
   @Test
@@ -101,11 +99,11 @@ public class ConsensusScheduleBesuControllerBuilderTest {
 
     final StubGenesisConfigOptions genesisConfigOptions = new StubGenesisConfigOptions();
     genesisConfigOptions.chainId(BigInteger.TEN);
-    when(genesisConfigFile.getConfigOptions(anyMap())).thenReturn(genesisConfigOptions);
 
     final ConsensusScheduleBesuControllerBuilder consensusScheduleBesuControllerBuilder =
         new ConsensusScheduleBesuControllerBuilder(
             besuControllerBuilderSchedule, combinedProtocolScheduleFactory);
+    when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     consensusScheduleBesuControllerBuilder.genesisConfigFile(genesisConfigFile);
     consensusScheduleBesuControllerBuilder.createProtocolSchedule();
 

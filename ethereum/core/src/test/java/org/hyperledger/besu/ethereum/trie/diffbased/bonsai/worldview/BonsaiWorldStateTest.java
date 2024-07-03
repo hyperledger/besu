@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview;
 
 import static org.mockito.Mockito.verify;
@@ -25,6 +24,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedValue;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.HashMap;
@@ -62,7 +62,8 @@ class BonsaiWorldStateTest {
         new BonsaiWorldState(
             InMemoryKeyValueStorageProvider.createBonsaiInMemoryWorldStateArchive(blockchain),
             bonsaiWorldStateKeyValueStorage,
-            EvmConfiguration.DEFAULT);
+            EvmConfiguration.DEFAULT,
+            new DiffBasedWorldStateConfig());
   }
 
   @ParameterizedTest

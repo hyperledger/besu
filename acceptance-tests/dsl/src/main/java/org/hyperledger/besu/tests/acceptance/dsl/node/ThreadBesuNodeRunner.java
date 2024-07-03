@@ -74,7 +74,6 @@ import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import java.io.File;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -181,11 +180,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .from(node.getMiningParameters())
             .transactionSelectionService(transactionSelectionServiceImpl)
             .build();
-    commonPluginConfiguration.init(
-        dataDir,
-        dataDir.resolve(DATABASE_PATH),
-        node.getDataStorageConfiguration(),
-        miningParameters);
+    commonPluginConfiguration
+        .init(dataDir, dataDir.resolve(DATABASE_PATH), node.getDataStorageConfiguration())
+        .withMiningParameters(miningParameters);
+
     final BesuPluginContextImpl besuPluginContext =
         besuPluginContextMap.computeIfAbsent(
             node,
@@ -213,14 +211,16 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     final EthNetworkConfig.Builder networkConfigBuilder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network))
             .setBootNodes(bootnodes);
-    node.getConfiguration().getGenesisConfig().ifPresent(networkConfigBuilder::setGenesisConfig);
+    node.getConfiguration()
+        .getGenesisConfig()
+        .map(GenesisConfigFile::fromConfig)
+        .ifPresent(networkConfigBuilder::setGenesisConfigFile);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
     final SynchronizerConfiguration synchronizerConfiguration =
         new SynchronizerConfiguration.Builder().build();
     final BesuControllerBuilder builder =
         new BesuController.Builder()
-            .fromEthNetworkConfig(
-                ethNetworkConfig, Collections.emptyMap(), synchronizerConfiguration.getSyncMode());
+            .fromEthNetworkConfig(ethNetworkConfig, synchronizerConfiguration.getSyncMode());
 
     final KeyValueStorageProvider storageProvider =
         new KeyValueStorageProviderBuilder()

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -26,6 +24,12 @@ import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
 import org.apache.tuweni.bytes.Bytes;
 
+/**
+ * Utility class for JSON related operations. This class provides a method to create an ObjectMapper
+ * with standard configurations needed for evmtool. The ObjectMapper is configured to match the
+ * standard JSON output of Go, and it does not auto close the source. It also registers serializers
+ * for Address and Bytes classes. This class is not meant to be instantiated.
+ */
 public class JsonUtils {
 
   private JsonUtils() {}

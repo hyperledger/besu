@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -77,17 +76,6 @@ public class ForkIdsNetworkConfigTest {
               new ForkId(Bytes.ofUnsignedInt(0xfd4f016bL), 1707305664L),
               new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L),
               new ForkId(Bytes.ofUnsignedInt(0x9b192ad0L), 0L))
-        },
-        new Object[] {
-          NetworkName.GOERLI,
-          List.of(
-              new ForkId(Bytes.ofUnsignedInt(0xa3f5ab08L), 1561651L),
-              new ForkId(Bytes.ofUnsignedInt(0xc25efa5cL), 4460644L),
-              new ForkId(Bytes.ofUnsignedInt(0x757a1c47L), 5062605L),
-              new ForkId(Bytes.ofUnsignedInt(0xb8c6299dL), 1678832736L),
-              new ForkId(Bytes.ofUnsignedInt(0xf9843abfL), 1705473120),
-              new ForkId(Bytes.ofUnsignedInt(0x70cc14e2L), 0L),
-              new ForkId(Bytes.ofUnsignedInt(0x70cc14e2L), 0L))
         },
         new Object[] {
           NetworkName.MAINNET,
@@ -149,7 +137,7 @@ public class ForkIdsNetworkConfigTest {
   @MethodSource("parameters")
   public void testForkId(final NetworkName chainName, final List<ForkId> expectedForkIds) {
     final GenesisConfigFile genesisConfigFile =
-        GenesisConfigFile.fromConfig(EthNetworkConfig.jsonConfig(chainName));
+        GenesisConfigFile.fromResource(chainName.getGenesisFile());
     final MilestoneStreamingTransitionProtocolSchedule schedule = createSchedule(genesisConfigFile);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);

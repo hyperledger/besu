@@ -39,9 +39,17 @@ import dagger.Module;
 import dagger.Provides;
 import org.apache.tuweni.bytes.Bytes32;
 
+/**
+ * This class is a Dagger module that provides dependencies related to the blockchain. It includes
+ * the GenesisFileModule and DataStoreModule for providing the genesis block and data store
+ * respectively. The class is annotated with {@code @Module} to indicate that it is a Dagger module.
+ */
 @SuppressWarnings("WeakerAccess")
 @Module(includes = {GenesisFileModule.class, DataStoreModule.class})
 public class BlockchainModule {
+
+  /** Default constructor for the BlockchainModule class. */
+  public BlockchainModule() {}
 
   @Singleton
   @Provides

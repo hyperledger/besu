@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
+import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.eth.manager.MockPeerConnection;
 import org.hyperledger.besu.ethereum.eth.messages.EthPV65;
 import org.hyperledger.besu.ethereum.eth.messages.NewPooledTransactionHashesMessage;
@@ -47,6 +48,7 @@ import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 
 public class NewPooledTransactionHashesMessageSenderTest {
+  private final EthPeers ethPeers = mock(EthPeers.class);
 
   private final EthPeer peer1 = mock(EthPeer.class);
   private final EthPeer peer2 = mock(EthPeer.class);
@@ -63,7 +65,7 @@ public class NewPooledTransactionHashesMessageSenderTest {
 
   @BeforeEach
   public void setUp() {
-    transactionTracker = new PeerTransactionTracker();
+    transactionTracker = new PeerTransactionTracker(ethPeers);
     messageSender = new NewPooledTransactionHashesMessageSender(transactionTracker);
     final Transaction tx = mock(Transaction.class);
     pendingTransactions = mock(PendingTransactions.class);

@@ -19,12 +19,14 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
-import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 
 import java.util.HashSet;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes32;
@@ -49,10 +51,11 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
+      final Optional<List<Request>> requests,
       final Hash worldStateRootHash,
       final HeaderValidationMode ommerValidationMode) {
 
-    if (!validateBodyLight(context, block, receipts, ommerValidationMode)) {
+    if (!validateBodyLight(context, block, receipts, requests, ommerValidationMode)) {
       return false;
     }
 
@@ -73,6 +76,7 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
+      final Optional<List<Request>> requests,
       final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
     final BlockBody body = block.getBody();
@@ -105,16 +109,9 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
       return false;
     }
 
-    if (!validateDeposits(block, receipts)) {
+    if (!validateRequests(block, requests, receipts)) {
       return false;
     }
-
-    if (body.getWithdrawalRequests().isPresent()) {
-      if (!validateWithdrawalRequests(block, body.getWithdrawalRequests().get())) {
-        return false;
-      }
-    }
-
     return true;
   }
 
@@ -316,25 +313,12 @@ public class MainnetBlockBodyValidator implements BlockBodyValidator {
     return true;
   }
 
-  private boolean validateDeposits(final Block block, final List<TransactionReceipt> receipts) {
-    final DepositsValidator depositsValidator =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getDepositsValidator();
-
-    if (!depositsValidator.validateDeposits(block, receipts)) {
-      return false;
-    }
-
-    if (!depositsValidator.validateDepositsRoot(block)) {
-      return false;
-    }
-
-    return true;
-  }
-
-  private boolean validateWithdrawalRequests(
-      final Block block, final List<WithdrawalRequest> withdrawalRequests) {
-    final WithdrawalRequestValidator withdrawalRequestValidator =
-        protocolSchedule.getByBlockHeader(block.getHeader()).getWithdrawalRequestValidator();
-    return withdrawalRequestValidator.validateWithdrawalRequestsInBlock(block, withdrawalRequests);
+  private boolean validateRequests(
+      final Block block,
+      final Optional<List<Request>> requests,
+      final List<TransactionReceipt> receipts) {
+    final RequestsValidatorCoordinator requestValidator =
+        protocolSchedule.getByBlockHeader(block.getHeader()).getRequestsValidatorCoordinator();
+    return requestValidator.validate(block, requests, receipts);
   }
 }

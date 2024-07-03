@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -23,28 +24,33 @@ import org.hyperledger.besu.ethereum.BlockProcessingOutputs;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.Deposit;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.LazyBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
+import java.text.MessageFormat;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executor;
+import java.util.concurrent.Executors;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -77,6 +83,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
+  private static final Executor executor = Executors.newFixedThreadPool(4);
+
   protected AbstractBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
       final TransactionReceiptFactory transactionReceiptFactory,
@@ -101,7 +109,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final List<Transaction> transactions,
       final List<BlockHeader> ommers,
       final Optional<List<Withdrawal>> maybeWithdrawals,
-      final Optional<List<Deposit>> maybeDeposits,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final List<TransactionReceipt> receipts = new ArrayList<>();
     long currentGasUsed = 0;
@@ -109,17 +116,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
-    if (blockHeader.getParentBeaconBlockRoot().isPresent()) {
-      final WorldUpdater updater = worldState.updater();
-      ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-          updater, blockHeader.getTimestamp(), blockHeader.getParentBeaconBlockRoot().get());
-    }
+    protocolSpec.getBlockHashProcessor().processBlockHashes(blockchain, worldState, blockHeader);
 
     final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
     TransactionConflictChecker transactionConflictChecker = new TransactionConflictChecker();
-    transactionConflictChecker.findParallelTransactions(miningBeneficiary, transactions);
 
     Optional<BlockHeader> maybeParentHeader =
         blockchain.getBlockHeader(blockHeader.getParentHash());
@@ -134,38 +136,54 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                             calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
             .orElse(Wei.ZERO);
 
-    transactionConflictChecker.getParallelizedTransactions().parallelStream()
-        .forEach(
-            transaction -> {
-              BonsaiWorldState roundWorldState =
-                  new BonsaiWorldState((BonsaiWorldState) worldState);
-              WorldUpdater roundWorldStateUpdater = roundWorldState.updater();
+    final BonsaiWorldStateUpdateAccumulator blockUpdater =
+        (BonsaiWorldStateUpdateAccumulator) worldState.updater();
 
-              final TransactionProcessingResult result =
-                  transactionProcessor.processTransaction(
-                      roundWorldStateUpdater,
-                      blockHeader,
-                      transaction.transaction(),
-                      miningBeneficiary,
-                      OperationTracer.NO_TRACING,
-                      blockHashLookup,
-                      true,
-                      TransactionValidationParams.processingBlock(),
-                      privateMetadataUpdater,
-                      blobGasPrice);
-              roundWorldStateUpdater.commit();
-              transactionConflictChecker.saveParallelizedTransactionProcessingResult(
-                  transaction, roundWorldState.getAccumulator(), result);
-            });
+    // load withdrawal addresses in the cache in background
+    maybeWithdrawals.ifPresent(
+        withdrawals ->
+            CompletableFuture.runAsync(
+                () ->
+                    withdrawals.forEach(withdrawal -> blockUpdater.get(withdrawal.getAddress()))));
+
+    final long time = System.currentTimeMillis();
+
+    for (int i = 0; i < transactions.size(); i++) {
+      final TransactionConflictChecker.TransactionWithLocation transactionWithLocation =
+          new TransactionConflictChecker.TransactionWithLocation(i, transactions.get(i));
+      CompletableFuture.runAsync(
+          () -> {
+            BonsaiWorldState roundWorldState =
+                new BonsaiWorldState(
+                    (BonsaiWorldState) worldState, new LazyBonsaiCachedMerkleTrieLoader());
+            WorldUpdater roundWorldStateUpdater = roundWorldState.updater();
+
+            final TransactionProcessingResult result =
+                transactionProcessor.processTransaction(
+                    roundWorldStateUpdater,
+                    blockHeader,
+                    transactionWithLocation.transaction(),
+                    miningBeneficiary,
+                    OperationTracer.NO_TRACING,
+                    blockHashLookup,
+                    true,
+                    TransactionValidationParams.processingBlock(),
+                    privateMetadataUpdater,
+                    blobGasPrice);
+            transactionConflictChecker.saveParallelizedTransactionProcessingResult(
+                transactionWithLocation, roundWorldState.getAccumulator(), result);
+          },
+          executor);
+    }
+
+    System.out.println("preload " + (System.currentTimeMillis() - time));
 
     int confirmedParallelizedTransaction = 0;
+    int conflictingButCachedTransaction = 0;
     try {
-      final BonsaiWorldStateUpdateAccumulator blockUpdater =
-          (BonsaiWorldStateUpdateAccumulator) worldState.updater();
       for (int i = 0; i < transactions.size(); i++) {
         Transaction transaction = transactions.get(i);
         final TransactionProcessingResult transactionProcessingResult;
-
         final DiffBasedWorldStateUpdateAccumulator<BonsaiAccount> transactionAccumulator =
             (DiffBasedWorldStateUpdateAccumulator<BonsaiAccount>)
                 transactionConflictChecker.getAccumulatorByTransaction().get((long) i);
@@ -175,13 +193,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 new TransactionConflictChecker.TransactionWithLocation(i, transaction),
                 transactionAccumulator,
                 blockUpdater)) {
-          blockUpdater.cloneFromUpdater(
-              (DiffBasedWorldStateUpdateAccumulator<BonsaiAccount>)
-                  transactionConflictChecker.getAccumulatorByTransaction().get((long) i));
+          transactionAccumulator.commit();
+          blockUpdater.cloneFromUpdaterWithPreloader(transactionAccumulator);
           transactionProcessingResult =
               transactionConflictChecker.getResultByTransaction().get((long) i);
+
           confirmedParallelizedTransaction++;
         } else {
+          if (transactionAccumulator != null) {
+            blockUpdater.clonePriorFromUpdater(transactionAccumulator);
+            conflictingButCachedTransaction++;
+          }
           transactionProcessingResult =
               transactionProcessor.processTransaction(
                   blockUpdater,
@@ -195,10 +217,25 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                   privateMetadataUpdater,
                   blobGasPrice);
         }
+        if (transactionProcessingResult.isInvalid()) {
+          String errorMessage =
+              MessageFormat.format(
+                  "Block processing error: transaction invalid {0}. Block {1} Transaction {2}",
+                  transactionProcessingResult.getValidationResult().getErrorMessage(),
+                  blockHeader.getHash().toHexString(),
+                  transaction.getHash().toHexString());
+          LOG.info(errorMessage);
+          if (worldState instanceof BonsaiWorldState) {
+            blockUpdater.reset();
+          }
+          return new BlockProcessingResult(Optional.empty(), errorMessage);
+        }
+
         final var coinbase = blockUpdater.getOrCreate(miningBeneficiary);
         if (transactionProcessingResult.getMiningBenef() != null) {
           coinbase.incrementBalance(transactionProcessingResult.getMiningBenef());
         }
+
         blockUpdater.commit();
 
         currentGasUsed += transaction.getGasLimit() - transactionProcessingResult.getGasRemaining();
@@ -212,6 +249,8 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                 transaction.getType(), transactionProcessingResult, worldState, currentGasUsed);
         receipts.add(transactionReceipt);
       }
+
+      System.out.println("conflictingButCachedTransaction " + conflictingButCachedTransaction);
       System.out.println("confirmedParallelizedTransaction " + confirmedParallelizedTransaction);
     } catch (Throwable e) {
       e.printStackTrace();
@@ -240,10 +279,12 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
     }
 
-    final WithdrawalRequestValidator exitsValidator = protocolSpec.getWithdrawalRequestValidator();
-    if (exitsValidator.allowWithdrawalRequests()) {
-      // Performing system-call logic
-      WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(worldState);
+    // EIP-7685: process EL requests
+    final Optional<RequestProcessorCoordinator> requestProcessor =
+        protocolSpec.getRequestProcessorCoordinator();
+    Optional<List<Request>> maybeRequests = Optional.empty();
+    if (requestProcessor.isPresent()) {
+      maybeRequests = requestProcessor.get().process(worldState, receipts);
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
@@ -253,8 +294,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
       return new BlockProcessingResult(Optional.empty(), "ommer too old");
     }
-
-    System.out.println(worldState.updater().get(miningBeneficiary).getBalance());
     try {
       worldState.persist(blockHeader);
     } catch (MerkleTrieException e) {

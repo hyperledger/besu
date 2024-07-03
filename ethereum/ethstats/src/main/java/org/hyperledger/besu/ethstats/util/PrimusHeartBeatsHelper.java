@@ -18,14 +18,29 @@ import java.util.regex.Pattern;
 
 import io.vertx.core.http.WebSocket;
 
+/** This class provides helper methods for handling Primus heartbeats. */
 public final class PrimusHeartBeatsHelper {
 
+  /** The constant PRIMUS_PING_REGEX. */
   public static final Pattern PRIMUS_PING_REGEX = Pattern.compile("primus::ping::([\\d]+)");
 
+  private PrimusHeartBeatsHelper() {}
+
+  /**
+   * Checks if the given request is a heartbeat request.
+   *
+   * @param request the request to check
+   * @return true if the request is a heartbeat request, false otherwise
+   */
   public static boolean isHeartBeatsRequest(final String request) {
     return PRIMUS_PING_REGEX.matcher(request).find();
   }
 
+  /**
+   * Sends a heartbeat response through the given WebSocket.
+   *
+   * @param webSocket the WebSocket to send the response through
+   */
   public static void sendHeartBeatsResponse(final WebSocket webSocket) {
     if (webSocket != null) {
       webSocket.writeTextMessage(String.format("\"primus::pong::%d\"", System.currentTimeMillis()));

@@ -12,7 +12,7 @@ concurrency:
 
 env:
   GRADLE_OPTS: "-Xmx6g"
-  total-runners: 16
+  total-runners: 12
 
 jobs:
   acceptanceTestEthereum:
@@ -24,7 +24,7 @@ jobs:
     strategy:
       fail-fast: true
       matrix:
-        runner_index: [0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15]
+        runner_index: [0,1,2,3,4,5,6,7,8,9,10,11]
     steps:
       - name: Checkout Repo
         uses: actions/checkout@b4ffde65f46336ab88eb53be808477a3936bae11
@@ -34,27 +34,31 @@ jobs:
         uses: actions/setup-java@387ac29b308b003ca37ba93a6cab5eb57c8f5f93
         with:
           distribution: temurin
-          java-version: 17
+          java-version: 21
       - name: Install required packages
         run:  sudo apt-get install -y xmlstarlet
-      - name: get acceptance test report
-        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
-        with:
-          branch: main
-          name_is_regexp: true
-          name: 'acceptance-node-\d*\d-test-results'
-          path: tmp/junit-xml-reports-downloaded
-          if_no_artifact_found: true
       - name: setup gradle
         uses: gradle/actions/setup-gradle@9e899d11ad247ec76be7a60bc1cf9d3abbb9e7f1
         with:
           cache-disabled: true
-      - name: Compile acceptance tests
-        run: ./gradlew :acceptance-tests:tests:testClasses
-      - name: List acceptance tests
-        run: ./gradlew :acceptance-tests:tests:listAcceptanceTestNotPrivacy -Dorg.gradle.caching=true | fgrep org.hyperledger.besu.tests.acceptance > tmp/currentTests.list
+      - name: List unit tests
+        run: ./gradlew acceptanceTestNotPrivacy --test-dry-run -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+      - name: Extract current test list
+        run: mkdir tmp; find . -type f -name TEST-*.xml | xargs -I{} bash -c "xmlstarlet sel -t -v '/testsuite/@name' '{}'; echo ' acceptanceTestNotPrivacy'" | tee tmp/currentTests.list
+      - name: Get acceptance test reports
+        uses: dawidd6/action-download-artifact@e7466d1a7587ed14867642c2ca74b5bcc1e19a2d
+        continue-on-error: true
+        with:
+          branch: main
+          workflow: update-test-reports.yml
+          name: acceptance-test-results
+          path: tmp/junit-xml-reports-downloaded
+          if_no_artifact_found: ignore
       - name: Split tests
-        run: .github/workflows/splitTestsByTime.sh tmp/junit-xml-reports-downloaded ${{env.total-runners}} ${{ matrix.runner_index }} > testList.txt
+        run: .github/workflows/splitTestsByTime.sh tmp/junit-xml-reports-downloaded "tmp/junit-xml-reports-downloaded/acceptance-node-.*-test-results" "TEST-" ${{env.total-runners}} ${{ matrix.runner_index }} > testList.txt
+      - name: format gradle args
+        # we do not need the module task here
+        run:  cat testList.txt | cut -f 2- -d ' ' | tee gradleArgs.txt
       - name: Upload Timing
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         if: matrix.runner_index == 0
@@ -67,13 +71,15 @@ jobs:
         with:
           name: acceptance-tests-lists
           path: 'tmp/*.list'
-      - name: format gradle args
-        # insert --tests option between each.
-        run:  cat testList.txt | sed -e 's/^\| / --tests /g' | tee gradleArgs.txt
+      - name: Upload gradle test tasks
+        uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
+        with:
+          name: test-args-${{ matrix.runner_index }}.txt
+          path: '*.txt'
       - name: run acceptance tests
         run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
-      - name: cleanup tempfiles
-        run: rm testList.txt gradleArgs.txt
+      - name: Remove downloaded test results
+        run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Acceptance Test Results
         uses: actions/upload-artifact@5d5d22a31266ced268874388b861e4b58bb5c2f3
         with:

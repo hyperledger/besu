@@ -21,6 +21,9 @@ package org.hyperledger.besu.evm.internal;
  */
 public class OverflowException extends RuntimeException {
 
+  /** Default constructor. */
+  public OverflowException() {}
+
   /**
    * Overload the stack trace fill in so no stack is filled in. This is done for performance reasons
    * as this exception signals an expected corner case not a debuggable failure.

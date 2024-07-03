@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.sync.fullsync.SyncTerminationCondition;
+import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage;
 
 import java.time.Duration;
 import java.util.ArrayDeque;
@@ -39,12 +40,13 @@ import org.slf4j.LoggerFactory;
 public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
   private static final Logger LOG = LoggerFactory.getLogger(SyncTargetRangeSource.class);
   private static final Duration RETRY_DELAY_DURATION = Duration.ofSeconds(2);
+  public static final int DEFAULT_TIME_TO_WAIT_IN_SECONDS = 6;
 
   private final RangeHeadersFetcher fetcher;
   private final SyncTargetChecker syncTargetChecker;
   private final EthPeer peer;
   private final EthScheduler ethScheduler;
-  private final int rangeTimeoutsPermitted;
+  private final int retriesPermitted;
   private final Duration newHeaderWaitDuration;
   private final SyncTerminationCondition terminationCondition;
 
@@ -52,7 +54,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
   private BlockHeader lastRangeEnd;
   private boolean reachedEndOfRanges = false;
   private Optional<CompletableFuture<List<BlockHeader>>> pendingRequests = Optional.empty();
-  private int requestFailureCount = 0;
+  private int retryCount = 0;
 
   public SyncTargetRangeSource(
       final RangeHeadersFetcher fetcher,
@@ -60,7 +62,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       final EthScheduler ethScheduler,
       final EthPeer peer,
       final BlockHeader commonAncestor,
-      final int rangeTimeoutsPermitted,
+      final int retriesPermitted,
       final SyncTerminationCondition terminationCondition) {
     this(
         fetcher,
@@ -68,8 +70,8 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
         ethScheduler,
         peer,
         commonAncestor,
-        rangeTimeoutsPermitted,
-        Duration.ofSeconds(5),
+        retriesPermitted,
+        Duration.ofSeconds(DEFAULT_TIME_TO_WAIT_IN_SECONDS),
         terminationCondition);
   }
 
@@ -79,7 +81,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
       final EthScheduler ethScheduler,
       final EthPeer peer,
       final BlockHeader commonAncestor,
-      final int rangeTimeoutsPermitted,
+      final int retriesPermitted,
       final Duration newHeaderWaitDuration,
       final SyncTerminationCondition terminationCondition) {
     this.fetcher = fetcher;
@@ -87,7 +89,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
     this.ethScheduler = ethScheduler;
     this.peer = peer;
     this.lastRangeEnd = commonAncestor;
-    this.rangeTimeoutsPermitted = rangeTimeoutsPermitted;
+    this.retriesPermitted = retriesPermitted;
     this.newHeaderWaitDuration = newHeaderWaitDuration;
     this.terminationCondition = terminationCondition;
   }
@@ -96,7 +98,7 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
   public boolean hasNext() {
     return terminationCondition.shouldContinueDownload()
         && (!retrievedRanges.isEmpty()
-            || (requestFailureCount < rangeTimeoutsPermitted
+            || (retryCount < retriesPermitted
                 && syncTargetChecker.shouldContinueDownloadingFromSyncTarget(peer, lastRangeEnd)
                 && !reachedEndOfRanges));
   }
@@ -148,24 +150,40 @@ public class SyncTargetRangeSource implements Iterator<SyncTargetRange> {
           pendingRequest.get(newHeaderWaitDuration.toMillis(), MILLISECONDS);
       this.pendingRequests = Optional.empty();
       if (newHeaders.isEmpty()) {
-        requestFailureCount++;
+        retryCount++;
+        if (retryCount >= retriesPermitted) {
+          LOG.atDebug()
+              .setMessage(
+                  "Disconnecting target peer {} for providing useless or empty range headers.")
+              .addArgument(peer)
+              .log();
+          peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
+        }
       } else {
-        requestFailureCount = 0;
-      }
-      for (final BlockHeader header : newHeaders) {
-        retrievedRanges.add(new SyncTargetRange(peer, lastRangeEnd, header));
-        lastRangeEnd = header;
+        retryCount = 0;
+        for (final BlockHeader header : newHeaders) {
+          retrievedRanges.add(new SyncTargetRange(peer, lastRangeEnd, header));
+          lastRangeEnd = header;
+        }
       }
       return retrievedRanges.poll();
     } catch (final InterruptedException e) {
       LOG.trace("Interrupted while waiting for new range headers", e);
       return null;
-    } catch (final ExecutionException e) {
-      LOG.debug("Failed to retrieve new range headers", e);
-      this.pendingRequests = Optional.empty();
-      requestFailureCount++;
-      return null;
-    } catch (final TimeoutException e) {
+    } catch (final ExecutionException | TimeoutException e) {
+      if (e instanceof ExecutionException) {
+        this.pendingRequests = Optional.empty();
+      }
+      retryCount++;
+      if (retryCount >= retriesPermitted) {
+        LOG.atDebug()
+            .setMessage(
+                "Disconnecting target peer {} for not providing useful range headers: Exception: {}.")
+            .addArgument(peer)
+            .addArgument(e)
+            .log();
+        peer.disconnect(DisconnectMessage.DisconnectReason.USELESS_PEER_USELESS_RESPONSES);
+      }
       return null;
     }
   }

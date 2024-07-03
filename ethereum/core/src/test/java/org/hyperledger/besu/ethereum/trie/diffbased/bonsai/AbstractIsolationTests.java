@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 
@@ -21,7 +20,7 @@ import static org.mockito.Mockito.RETURNS_DEEP_STUBS;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.config.GenesisAllocation;
+import org.hyperledger.besu.config.GenesisAccount;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SECPPrivateKey;
@@ -86,7 +85,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.BiFunction;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -99,17 +97,17 @@ public abstract class AbstractIsolationTests {
   protected ProtocolContext protocolContext;
   protected EthContext ethContext;
   protected EthScheduler ethScheduler = new DeterministicEthScheduler();
-  final Function<String, KeyPair> asKeyPair =
+  final Function<Bytes32, KeyPair> asKeyPair =
       key ->
           SignatureAlgorithmFactory.getInstance()
-              .createKeyPair(SECPPrivateKey.create(Bytes32.fromHexString(key), "ECDSA"));
+              .createKeyPair(SECPPrivateKey.create(key, "ECDSA"));
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
-          GenesisConfigFile.development().getConfigOptions(),
+          GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
           MiningParameters.MINING_DISABLED,
           new BadBlockManager());
   protected final GenesisState genesisState =
-      GenesisState.fromConfig(GenesisConfigFile.development(), protocolSchedule);
+      GenesisState.fromConfig(GenesisConfigFile.fromResource("/dev.json"), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
 
   protected final TransactionPoolConfiguration poolConfiguration =
@@ -133,19 +131,21 @@ public abstract class AbstractIsolationTests {
           poolConfiguration,
           new GasPricePrioritizedTransactions(
               poolConfiguration,
+              ethScheduler,
               new EndLayer(txPoolMetrics),
               txPoolMetrics,
               transactionReplacementTester,
               new BlobCache(),
-              MiningParameters.newDefault()));
+              MiningParameters.newDefault()),
+          ethScheduler);
 
-  protected final List<GenesisAllocation> accounts =
-      GenesisConfigFile.development()
+  protected final List<GenesisAccount> accounts =
+      GenesisConfigFile.fromResource("/dev.json")
           .streamAllocations()
-          .filter(ga -> ga.getPrivateKey().isPresent())
-          .collect(Collectors.toList());
+          .filter(ga -> ga.privateKey() != null)
+          .toList();
 
-  KeyPair sender1 = asKeyPair.apply(accounts.get(0).getPrivateKey().get());
+  KeyPair sender1 = Optional.ofNullable(accounts.get(0).privateKey()).map(asKeyPair).orElseThrow();
   TransactionPool transactionPool;
 
   @TempDir private Path tempData;
@@ -153,8 +153,11 @@ public abstract class AbstractIsolationTests {
   @BeforeEach
   public void createStorage() {
     worldStateKeyValueStorage =
+        // FYI: BonsaiSnapshoIsolationTests  work with frozen/cached worldstates, using PARTIAL
+        // flat db strategy allows the tests to make account assertions based on trie
+        // (whereas a full db strategy will not, since the worldstates are frozen/cached)
         createKeyValueStorageProvider()
-            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_CONFIG);
+            .createWorldStateStorage(DataStorageConfiguration.DEFAULT_BONSAI_PARTIAL_DB_CONFIG);
     archive =
         new BonsaiWorldStateProvider(
             (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage,
@@ -195,6 +198,16 @@ public abstract class AbstractIsolationTests {
                 RocksDBMetricsFactory.PUBLIC_ROCKS_DB_METRICS))
         .withCommonConfiguration(
             new BesuConfiguration() {
+
+              @Override
+              public Optional<String> getRpcHttpHost() {
+                return Optional.empty();
+              }
+
+              @Override
+              public Optional<Integer> getRpcHttpPort() {
+                return Optional.empty();
+              }
 
               @Override
               public Path getStoragePath() {
@@ -254,7 +267,6 @@ public abstract class AbstractIsolationTests {
           protocolContext,
           protocolSchedule,
           parentHeader,
-          Optional.empty(),
           ethScheduler);
     }
 

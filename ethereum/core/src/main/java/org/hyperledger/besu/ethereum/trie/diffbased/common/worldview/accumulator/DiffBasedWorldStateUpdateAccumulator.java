@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator;
 
 import org.hyperledger.besu.datatypes.AccountValue;
@@ -46,7 +45,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -99,6 +97,100 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
+    this.isAccumulatorStateChanged = true;
+  }
+
+  @SuppressWarnings("UseBulkOperation")
+  public void cloneFromUpdaterWithPreloader(
+      final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+
+    source
+        .getAccountsToUpdate()
+        .forEach(
+            (address, diffBasedValue) -> {
+              ACCOUNT copyPrior =
+                  diffBasedValue.getPrior() != null
+                      ? copyAccount(diffBasedValue.getPrior(), this, false)
+                      : null;
+              ACCOUNT copyUpdated =
+                  diffBasedValue.getUpdated() != null
+                      ? copyAccount(diffBasedValue.getUpdated(), this, true)
+                      : null;
+              accountsToUpdate.put(address, new DiffBasedValue<>(copyPrior, copyUpdated));
+            });
+    source
+        .getCodeToUpdate()
+        .forEach(
+            (address, diffBasedValue) -> {
+              codeToUpdate.put(
+                  address,
+                  new DiffBasedValue<>(diffBasedValue.getPrior(), diffBasedValue.getUpdated()));
+            });
+    source
+        .getStorageToUpdate()
+        .forEach(
+            (address, slots) -> {
+              StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageConsumingMap =
+                  storageToUpdate.computeIfAbsent(
+                      address,
+                      k ->
+                          new StorageConsumingMap<>(
+                              address, new ConcurrentHashMap<>(), storagePreloader));
+              slots.forEach(
+                  (storageSlotKey, uInt256DiffBasedValue) -> {
+                    storageConsumingMap.put(
+                        storageSlotKey,
+                        new DiffBasedValue<>(
+                            uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getUpdated()));
+                  });
+            });
+    source.storageToClear.forEach(storageToClear::add);
+
+    this.isAccumulatorStateChanged = true;
+  }
+
+  public void clonePriorFromUpdater(final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+
+    source
+        .getAccountsToUpdate()
+        .forEach(
+            (address, diffBasedValue) -> {
+              ACCOUNT copyPrior =
+                  diffBasedValue.getPrior() != null
+                      ? copyAccount(diffBasedValue.getPrior(), this, false)
+                      : null;
+              ACCOUNT copyUpdated =
+                  diffBasedValue.getPrior() != null
+                      ? copyAccount(diffBasedValue.getPrior(), this, true)
+                      : null;
+              accountsToUpdate.putIfAbsent(address, new DiffBasedValue<>(copyPrior, copyUpdated));
+            });
+    source
+        .getCodeToUpdate()
+        .forEach(
+            (address, diffBasedValue) -> {
+              codeToUpdate.putIfAbsent(
+                  address,
+                  new DiffBasedValue<>(diffBasedValue.getPrior(), diffBasedValue.getPrior()));
+            });
+    source
+        .getStorageToUpdate()
+        .forEach(
+            (address, slots) -> {
+              StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageConsumingMap =
+                  storageToUpdate.computeIfAbsent(
+                      address,
+                      k ->
+                          new StorageConsumingMap<>(
+                              address, new ConcurrentHashMap<>(), storagePreloader));
+              slots.forEach(
+                  (storageSlotKey, uInt256DiffBasedValue) -> {
+                    storageConsumingMap.putIfAbsent(
+                        storageSlotKey,
+                        new DiffBasedValue<>(
+                            uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getPrior()));
+                  });
+            });
     this.isAccumulatorStateChanged = true;
   }
 
@@ -234,6 +326,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   @Override
   public void commit() {
     this.isAccumulatorStateChanged = true;
+
     for (final Address deletedAddress : getDeletedAccounts()) {
       final DiffBasedValue<ACCOUNT> accountValue =
           accountsToUpdate.computeIfAbsent(
@@ -298,25 +391,19 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts().parallelStream()
+    getUpdatedAccounts()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
               final ACCOUNT updatedAccount;
               final DiffBasedValue<ACCOUNT> updatedAccountValue =
                   accountsToUpdate.get(updatedAddress);
-
               final Map<StorageSlotKey, DiffBasedValue<UInt256>> pendingStorageUpdates =
                   storageToUpdate.computeIfAbsent(
                       updatedAddress,
                       k ->
                           new StorageConsumingMap<>(
                               updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
-
-              if (tracked.getStorageWasCleared()) {
-                storageToClear.add(updatedAddress);
-                pendingStorageUpdates.clear();
-              }
 
               if (tracked.getWrappedAccount() == null) {
                 updatedAccount = createAccount(this, tracked);
@@ -359,33 +446,39 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 pendingCode.setUpdated(updatedAccount.getCode());
               }
 
+              if (tracked.getStorageWasCleared()) {
+                storageToClear.add(updatedAddress);
+                pendingStorageUpdates.clear();
+              }
+
               // This is especially to avoid unnecessary computation for withdrawals and
               // self-destruct beneficiaries
               if (updatedAccount.getUpdatedStorage().isEmpty()) {
                 return;
               }
 
-              final TreeSet<Map.Entry<UInt256, UInt256>> entries =
-                  new TreeSet<>(Map.Entry.comparingByKey());
-              entries.addAll(updatedAccount.getUpdatedStorage().entrySet());
-
               // parallel stream here may cause database corruption
-              entries.forEach(
-                  storageUpdate -> {
-                    final UInt256 keyUInt = storageUpdate.getKey();
-                    final StorageSlotKey slotKey =
-                        new StorageSlotKey(hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
-                    final UInt256 value = storageUpdate.getValue();
-                    final DiffBasedValue<UInt256> pendingValue = pendingStorageUpdates.get(slotKey);
-                    if (pendingValue == null) {
-                      pendingStorageUpdates.put(
-                          slotKey,
-                          new DiffBasedValue<>(
-                              updatedAccount.getOriginalStorageValue(keyUInt), value));
-                    } else {
-                      pendingValue.setUpdated(value);
-                    }
-                  });
+              updatedAccount
+                  .getUpdatedStorage()
+                  .entrySet()
+                  .forEach(
+                      storageUpdate -> {
+                        final UInt256 keyUInt = storageUpdate.getKey();
+                        final StorageSlotKey slotKey =
+                            new StorageSlotKey(
+                                hashAndSaveSlotPreImage(keyUInt), Optional.of(keyUInt));
+                        final UInt256 value = storageUpdate.getValue();
+                        final DiffBasedValue<UInt256> pendingValue =
+                            pendingStorageUpdates.get(slotKey);
+                        if (pendingValue == null) {
+                          pendingStorageUpdates.put(
+                              slotKey,
+                              new DiffBasedValue<>(
+                                  updatedAccount.getOriginalStorageValue(keyUInt), value));
+                        } else {
+                          pendingValue.setUpdated(value);
+                        }
+                      });
 
               updatedAccount.getUpdatedStorage().clear();
 

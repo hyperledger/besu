@@ -288,7 +288,7 @@ public class PivotBlockRetrieverTest {
 
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
     peerA.respond(responder);
-    peerB.respondTimes(emptyResponder, 2);
+    peerB.respondTimes(emptyResponder, 3);
 
     // PeerA should have responded, while peerB is being retried, peerC shouldn't have been queried
     // yet

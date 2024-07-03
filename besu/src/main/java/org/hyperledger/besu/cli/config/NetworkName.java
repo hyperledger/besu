@@ -26,10 +26,10 @@ public enum NetworkName {
   MAINNET("/mainnet.json", BigInteger.valueOf(1)),
   /** Sepolia network name. */
   SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
-  /** Goerli network name. */
-  GOERLI("/goerli.json", BigInteger.valueOf(5)),
   /** Holešky network name. */
   HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
+  /** LUKSO mainnet network name. */
+  LUKSO("/lukso.json", BigInteger.valueOf(42)),
 
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),

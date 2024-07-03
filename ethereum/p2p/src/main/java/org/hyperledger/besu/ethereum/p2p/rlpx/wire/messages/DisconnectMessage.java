@@ -131,6 +131,7 @@ public final class DisconnectMessage extends AbstractMessageData {
     USELESS_PEER_MISMATCHED_PIVOT_BLOCK((byte) 0x03, "Mismatched pivot block"),
     USELESS_PEER_FAILED_TO_RETRIEVE_CHAIN_STATE(
         (byte) 0x03, "Failed to retrieve header for chain state"),
+    USELESS_PEER_CANNOT_CONFIRM_PIVOT_BLOCK((byte) 0x03, "Peer failed to confirm pivot block"),
     USELESS_PEER_BY_REPUTATION((byte) 0x03, "Lowest reputation score"),
     USELESS_PEER_BY_CHAIN_COMPARATOR((byte) 0x03, "Lowest by chain height comparator"),
     TOO_MANY_PEERS((byte) 0x04),

@@ -18,6 +18,9 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Message;
 
 /** Static helper functions for producing and working with BftEvent objects */
 public class BftEvents {
+  /** Default constructor. */
+  private BftEvents() {}
+
   /**
    * Instantiate BftEvent From message.
    *

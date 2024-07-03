@@ -21,6 +21,8 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 
 /** The Clique block header functions. */
 public class CliqueBlockHeaderFunctions implements BlockHeaderFunctions {
+  /** Default constructor. */
+  public CliqueBlockHeaderFunctions() {}
 
   @Override
   public Hash hash(final BlockHeader header) {

@@ -1,4 +1,5 @@
-sync-mode="FAST"
+sync-mode="FULL"
+data-storage-format="FOREST"
 sync-min-peers=1
 remote-connections-limit-enabled=false
 tx-pool="SEQUENCED"
@@ -6,3 +7,4 @@ tx-pool-no-local-priority=true
 tx-pool-limit-by-account-percentage=0.15
 rpc-http-max-active-connections=300
 min-gas-price=0
+bonsai-limit-trie-logs-enabled=false

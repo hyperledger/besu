@@ -49,7 +49,8 @@ import picocli.CommandLine.ParentCommand;
 
 /** The Trie Log subcommand. */
 @Command(
-    name = "x-trie-log",
+    name = "trie-log",
+    aliases = "x-trie-log",
     description = "Manipulate trie logs",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class,
@@ -70,6 +71,9 @@ public class TrieLogSubCommand implements Runnable {
   @SuppressWarnings("unused")
   @CommandLine.Spec
   private CommandLine.Model.CommandSpec spec; // Picocli injects reference to command spec
+
+  /** Default Constructor. */
+  TrieLogSubCommand() {}
 
   @Override
   public void run() {

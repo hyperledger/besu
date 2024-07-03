@@ -51,7 +51,7 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
   private static final Logger LOG = LoggerFactory.getLogger(CompleteBlocksTask.class);
 
   private static final int MIN_SIZE_INCOMPLETE_LIST = 1;
-  private static final int DEFAULT_RETRIES = 4;
+  private static final int DEFAULT_RETRIES = 5;
 
   private final EthContext ethContext;
   private final ProtocolSchedule protocolSchedule;
@@ -94,7 +94,6 @@ public class CompleteBlocksTask extends AbstractRetryingPeerTask<List<Block>> {
         isWithdrawalsEnabled(protocolSchedule, header)
             ? Optional.of(Collections.emptyList())
             : Optional.empty(),
-        Optional.empty(),
         Optional.empty());
   }
 

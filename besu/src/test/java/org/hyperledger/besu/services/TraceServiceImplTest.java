@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.worldstate.WorldView;
@@ -74,7 +75,12 @@ class TraceServiceImplTest {
     blockchainSetupUtil.importAllBlocks();
     blockchain = blockchainSetupUtil.getBlockchain();
     worldStateArchive = blockchainSetupUtil.getWorldArchive();
-    blockchainQueries = new BlockchainQueries(blockchain, worldStateArchive);
+    blockchainQueries =
+        new BlockchainQueries(
+            blockchainSetupUtil.getProtocolSchedule(),
+            blockchain,
+            worldStateArchive,
+            MiningParameters.newDefault());
     traceService =
         new TraceServiceImpl(blockchainQueries, blockchainSetupUtil.getProtocolSchedule());
   }
@@ -119,7 +125,7 @@ class TraceServiceImplTest {
               verify(opTracer).traceStartTransaction(any(), eq(tx));
               verify(opTracer)
                   .traceEndTransaction(
-                      any(), eq(tx), anyBoolean(), any(), any(), anyLong(), anyLong());
+                      any(), eq(tx), anyBoolean(), any(), any(), anyLong(), any(), anyLong());
             });
 
     verify(opTracer).traceEndBlock(tracedBlock.getHeader(), tracedBlock.getBody());
@@ -167,7 +173,14 @@ class TraceServiceImplTest {
                         verify(opTracer).traceStartTransaction(any(), eq(tx));
                         verify(opTracer)
                             .traceEndTransaction(
-                                any(), eq(tx), anyBoolean(), any(), any(), anyLong(), anyLong());
+                                any(),
+                                eq(tx),
+                                anyBoolean(),
+                                any(),
+                                any(),
+                                anyLong(),
+                                any(),
+                                anyLong());
                       });
 
               verify(opTracer).traceEndBlock(tracedBlock.getHeader(), tracedBlock.getBody());
@@ -216,6 +229,7 @@ class TraceServiceImplTest {
     assertThat(txStartEndTracer.txEndStatus).isTrue();
     assertThat(txStartEndTracer.txEndOutput).isEqualTo(Bytes.fromHexString("0x"));
     assertThat(txStartEndTracer.txEndGasUsed).isEqualTo(24303);
+    assertThat(txStartEndTracer.txEndSelfDestructs).isEmpty();
     assertThat(txStartEndTracer.txEndTimeNs).isNotNull();
 
     assertThat(txStartEndTracer.txEndLogs).isNotEmpty();
@@ -257,6 +271,7 @@ class TraceServiceImplTest {
     public Bytes txEndOutput;
     public List<Log> txEndLogs;
     public long txEndGasUsed;
+    public Set<Address> txEndSelfDestructs;
     public Long txEndTimeNs;
 
     private final Set<Transaction> traceStartTxCalled = new HashSet<>();
@@ -281,6 +296,7 @@ class TraceServiceImplTest {
         final Bytes output,
         final List<Log> logs,
         final long gasUsed,
+        final Set<Address> selfDestructs,
         final long timeNs) {
       if (!traceEndTxCalled.add(transaction)) {
         fail("traceEndTransaction already called for tx " + transaction);
@@ -291,6 +307,7 @@ class TraceServiceImplTest {
       txEndOutput = output;
       txEndLogs = logs;
       txEndGasUsed = gasUsed;
+      txEndSelfDestructs = selfDestructs;
       txEndTimeNs = timeNs;
     }
 

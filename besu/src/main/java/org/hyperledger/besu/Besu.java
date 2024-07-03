@@ -26,6 +26,8 @@ import picocli.CommandLine.RunLast;
 
 /** Besu bootstrap class. */
 public final class Besu {
+  /** Default constructor. */
+  public Besu() {}
 
   /**
    * The main entrypoint to Besu application

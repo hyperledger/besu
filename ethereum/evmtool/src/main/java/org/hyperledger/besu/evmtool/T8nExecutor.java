@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
@@ -31,16 +30,19 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
+import org.hyperledger.besu.ethereum.core.DepositRequest;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
 import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
-import org.hyperledger.besu.ethereum.mainnet.ParentBeaconBlockRootHelper;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.referencetests.ReferenceTestEnv;
@@ -49,12 +51,14 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestWorldState;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evmtool.exception.UnsupportedForkException;
+import org.hyperledger.besu.evmtool.t8n.T8nBlockchain;
 
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -64,10 +68,12 @@ import java.util.Comparator;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.Optional;
+import java.util.Set;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.StreamSupport;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -80,10 +86,45 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * The T8nExecutor class is responsible for executing transactions in the context of the Ethereum
+ * Virtual Machine (EVM). It extracts transactions from a given input, runs tests on them, and
+ * generates results including stateRoot, txRoot, receiptsRoot, and logsHash. It also handles block
+ * rewards and withdrawal processing. This class is part of the EVM tooling within the Hyperledger
+ * Besu project.
+ */
 public class T8nExecutor {
 
+  private static final Set<Address> EMPTY_ADDRESS_SET = Set.of();
+
+  /**
+   * A record that represents a transaction that has been rejected. It contains the index of the
+   * transaction and the error message explaining why it was rejected.
+   *
+   * @param index The index of the rejected transaction.
+   * @param error The error message explaining why the transaction was rejected.
+   */
   public record RejectedTransaction(int index, String error) {}
 
+  /**
+   * Default constructor for the T8nExecutor class. This constructor does not perform any
+   * operations.
+   */
+  public T8nExecutor() {
+    // Default constructor required for Javadoc linting
+  }
+
+  /**
+   * Extracts transactions from a given JSON iterator and adds them to the provided transactions
+   * list. If a transaction cannot be parsed or is invalid, it is added to the rejections list with
+   * its index and error message.
+   *
+   * @param out PrintWriter used for outputting information or errors.
+   * @param it Iterator over JSON nodes, each representing a transaction.
+   * @param transactions List of transactions to which parsed transactions are added.
+   * @param rejections List of RejectedTransaction records to which rejected transactions are added.
+   * @return The updated list of transactions after parsing and validation.
+   */
   protected static List<Transaction> extractTransactions(
       final PrintWriter out,
       final Iterator<JsonNode> it,
@@ -161,7 +202,8 @@ public class T8nExecutor {
                             false)
                         .map(JsonNode::textValue)
                         .toList();
-                var accessListEntry = AccessListEntry.createAccessListEntry(address, storageKeys);
+                AccessListEntry accessListEntry =
+                    AccessListEntry.createAccessListEntry(address, storageKeys);
                 entries.add(accessListEntry);
               }
               builder.accessList(entries);
@@ -247,31 +289,33 @@ public class T8nExecutor {
       throw new UnsupportedForkException(fork);
     }
 
-    ProtocolSpec protocolSpec =
-        protocolSchedule.getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
-    final BlockHeader blockHeader = referenceTestEnv.updateFromParentValues(protocolSpec);
+    ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(referenceTestEnv);
+    Blockchain blockchain = new T8nBlockchain(referenceTestEnv, protocolSpec);
+    final BlockHeader blockHeader = referenceTestEnv.parentBlockHeader(protocolSpec);
     final MainnetTransactionProcessor processor = protocolSpec.getTransactionProcessor();
-    final WorldUpdater worldStateUpdater = worldState.updater();
     final Wei blobGasPrice =
         protocolSpec
             .getFeeMarket()
             .blobGasPricePerGas(calculateExcessBlobGasForParent(protocolSpec, blockHeader));
     long blobGasLimit = protocolSpec.getGasLimitCalculator().currentBlobGasLimit();
-    referenceTestEnv
-        .getParentBeaconBlockRoot()
-        .ifPresent(
-            bytes32 ->
-                ParentBeaconBlockRootHelper.storeParentBeaconBlockRoot(
-                    worldStateUpdater.updater(), referenceTestEnv.getTimestamp(), bytes32));
 
+    if (!referenceTestEnv.isStateTest()) {
+      protocolSpec
+          .getBlockHashProcessor()
+          .processBlockHashes(blockchain, worldState, referenceTestEnv);
+    }
+
+    final WorldUpdater rootWorldStateUpdater = worldState.updater();
     List<TransactionReceipt> receipts = new ArrayList<>();
     List<RejectedTransaction> invalidTransactions = new ArrayList<>(rejections);
     List<Transaction> validTransactions = new ArrayList<>();
     ArrayNode receiptsArray = objectMapper.createArrayNode();
     long gasUsed = 0;
     long blobGasUsed = 0;
-    for (int i = 0; i < transactions.size(); i++) {
-      Transaction transaction = transactions.get(i);
+    final WorldUpdater worldStateUpdater = rootWorldStateUpdater.updater();
+    for (int transactionIndex = 0; transactionIndex < transactions.size(); transactionIndex++) {
+      worldStateUpdater.markTransactionBoundary();
+      Transaction transaction = transactions.get(transactionIndex);
       final Stopwatch timer = Stopwatch.createStarted();
 
       GasCalculator gasCalculator = protocolSpec.getGasCalculator();
@@ -280,7 +324,7 @@ public class T8nExecutor {
       if (blobGasUsed > blobGasLimit) {
         invalidTransactions.add(
             new RejectedTransaction(
-                i,
+                transactionIndex,
                 String.format(
                     "blob gas (%d) would exceed block maximum %d", blobGasUsed, blobGasLimit)));
         continue;
@@ -289,7 +333,7 @@ public class T8nExecutor {
 
       final TransactionProcessingResult result;
       try {
-        tracer = tracerManager.getManagedTracer(i, transaction.getHash());
+        tracer = tracerManager.getManagedTracer(transactionIndex, transaction.getHash());
         tracer.tracePrepareTransaction(worldStateUpdater, transaction);
         tracer.traceStartTransaction(worldStateUpdater, transaction);
         result =
@@ -298,7 +342,7 @@ public class T8nExecutor {
                 blockHeader,
                 transaction,
                 blockHeader.getCoinbase(),
-                blockNumber -> referenceTestEnv.getBlockhashByNumber(blockNumber).orElse(Hash.ZERO),
+                number -> referenceTestEnv.getBlockhashByNumber(number).orElse(Hash.ZERO),
                 false,
                 TransactionValidationParams.processingBlock(),
                 tracer,
@@ -310,18 +354,18 @@ public class T8nExecutor {
       timer.stop();
 
       if (shouldClearEmptyAccounts(fork)) {
-        final Account coinbase = worldStateUpdater.getOrCreate(blockHeader.getCoinbase());
-        if (coinbase != null && coinbase.isEmpty()) {
-          worldStateUpdater.deleteAccount(coinbase.getAddress());
-        }
-        final Account txSender = worldStateUpdater.getAccount(transaction.getSender());
-        if (txSender != null && txSender.isEmpty()) {
-          worldStateUpdater.deleteAccount(txSender.getAddress());
+        var entries = new ArrayList<>(worldState.getAccumulator().getAccountsToUpdate().entrySet());
+        for (var entry : entries) {
+          DiffBasedAccount updated = entry.getValue().getUpdated();
+          if (updated != null && updated.isEmpty()) {
+            worldState.getAccumulator().deleteAccount(entry.getKey());
+          }
         }
       }
       if (result.isInvalid()) {
         invalidTransactions.add(
-            new RejectedTransaction(i, result.getValidationResult().getErrorMessage()));
+            new RejectedTransaction(
+                transactionIndex, result.getValidationResult().getErrorMessage()));
         continue;
       }
       validTransactions.add(transaction);
@@ -343,6 +387,7 @@ public class T8nExecutor {
           result.getOutput(),
           result.getLogs(),
           gasUsed - intrinsicGas,
+          EMPTY_ADDRESS_SET,
           timer.elapsed(TimeUnit.NANOSECONDS));
       Bytes gasUsedInTransaction = Bytes.ofUnsignedLong(transactionGasUsed);
       receipts.add(receipt);
@@ -357,8 +402,20 @@ public class T8nExecutor {
         receiptObject.putNull("logs");
       } else {
         ArrayNode logsArray = receiptObject.putArray("logs");
-        for (Log log : result.getLogs()) {
-          logsArray.addPOJO(log);
+        List<Log> logs = result.getLogs();
+        for (int logIndex = 0; logIndex < logs.size(); logIndex++) {
+          Log log = logs.get(logIndex);
+          var obj = logsArray.addObject();
+          obj.put("address", log.getLogger().toHexString());
+          var topics = obj.putArray("topics");
+          log.getTopics().forEach(topic -> topics.add(topic.toHexString()));
+          obj.put("data", log.getData().toHexString());
+          obj.put("blockNumber", blockHeader.getNumber());
+          obj.put("transactionHash", transaction.getHash().toHexString());
+          obj.put("transactionIndex", String.format("0x%x", transactionIndex));
+          obj.put("blockHash", blockHeader.getHash().toHexString());
+          obj.put("logIndex", String.format("0x%x", logIndex));
+          obj.put("removed", "false");
         }
       }
       receiptObject.put("transactionHash", transaction.getHash().toHexString());
@@ -366,33 +423,46 @@ public class T8nExecutor {
           "contractAddress", transaction.contractAddress().orElse(Address.ZERO).toHexString());
       receiptObject.put("gasUsed", gasUsedInTransaction.toQuantityHexString());
       receiptObject.put("blockHash", Hash.ZERO.toHexString());
-      receiptObject.put("transactionIndex", Bytes.ofUnsignedLong(i).toQuantityHexString());
+      receiptObject.put(
+          "transactionIndex", Bytes.ofUnsignedLong(transactionIndex).toQuantityHexString());
+      worldStateUpdater.commit();
     }
 
     final ObjectNode resultObject = objectMapper.createObjectNode();
 
     // block reward
     // The max production reward was 5 Eth, longs can hold over 18 Eth.
-    if (!validTransactions.isEmpty() && (rewardString == null || Long.decode(rewardString) > 0)) {
+    if (!referenceTestEnv.isStateTest()
+        && !validTransactions.isEmpty()
+        && (rewardString == null || Long.decode(rewardString) > 0)) {
       Wei reward =
           (rewardString == null)
               ? protocolSpec.getBlockReward()
               : Wei.of(Long.decode(rewardString));
-      worldStateUpdater
+      rootWorldStateUpdater
           .getOrCreateSenderAccount(blockHeader.getCoinbase())
           .incrementBalance(reward);
     }
 
-    worldStateUpdater.commit();
-    // Invoke the withdrawal processor to handle CL withdrawals.
-    if (!referenceTestEnv.getWithdrawals().isEmpty()) {
-      try {
-        protocolSpec
-            .getWithdrawalsProcessor()
-            .ifPresent(
-                p -> p.processWithdrawals(referenceTestEnv.getWithdrawals(), worldState.updater()));
-      } catch (RuntimeException re) {
-        resultObject.put("exception", re.getMessage());
+    rootWorldStateUpdater.commit();
+
+    if (referenceTestEnv.isStateTest()) {
+      if (!referenceTestEnv.getWithdrawals().isEmpty()) {
+        resultObject.put("exception", "withdrawals are not supported in state tests");
+      }
+    } else {
+      // Invoke the withdrawal processor to handle CL withdrawals.
+      if (!referenceTestEnv.getWithdrawals().isEmpty()) {
+        try {
+          protocolSpec
+              .getWithdrawalsProcessor()
+              .ifPresent(
+                  p ->
+                      p.processWithdrawals(
+                          referenceTestEnv.getWithdrawals(), worldState.updater()));
+        } catch (RuntimeException re) {
+          resultObject.put("exception", re.getMessage());
+        }
       }
     }
 
@@ -428,19 +498,45 @@ public class T8nExecutor {
     blockHeader
         .getWithdrawalsRoot()
         .ifPresent(wr -> resultObject.put("withdrawalsRoot", wr.toHexString()));
-    AtomicLong bgHolder = new AtomicLong(blobGasUsed);
-    blockHeader
-        .getExcessBlobGas()
-        .ifPresent(
-            ebg -> {
-              resultObject.put(
-                  "currentExcessBlobGas",
-                  calculateExcessBlobGasForParent(protocolSpec, blockHeader)
-                      .toBytes()
-                      .toQuantityHexString());
-              resultObject.put(
-                  "blobGasUsed", Bytes.ofUnsignedLong(bgHolder.longValue()).toQuantityHexString());
-            });
+    var maybeExcessBlobGas = blockHeader.getExcessBlobGas();
+    if (maybeExcessBlobGas.isPresent()) {
+      resultObject.put(
+          "currentExcessBlobGas",
+          calculateExcessBlobGasForParent(protocolSpec, blockHeader)
+              .toBytes()
+              .toQuantityHexString());
+      resultObject.put("blobGasUsed", Bytes.ofUnsignedLong(blobGasUsed).toQuantityHexString());
+    }
+
+    var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
+    if (requestProcessorCoordinator.isPresent()) {
+      var rpc = requestProcessorCoordinator.get();
+      Optional<List<Request>> maybeRequests = rpc.process(worldState, receipts);
+      Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
+
+      resultObject.put("requestsRoot", requestRoot.toHexString());
+      var deposits = resultObject.putArray("depositRequests");
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
+          .forEach(
+              deposit -> {
+                var obj = deposits.addObject();
+                obj.put("pubkey", deposit.getPubkey().toHexString());
+                obj.put("withdrawalCredentials", deposit.getWithdrawalCredentials().toHexString());
+                obj.put("amount", deposit.getAmount().toHexString());
+                obj.put("signature", deposit.getSignature().toHexString());
+                obj.put("index", deposit.getIndex().toHexString());
+              });
+
+      var withdrawlRequests = resultObject.putArray("withdrawalRequests");
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), WithdrawalRequest.class)
+          .forEach(
+              wr -> {
+                var obj = withdrawlRequests.addObject();
+                obj.put("sourceAddress", wr.getSourceAddress().toHexString());
+                obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
+                obj.put("amount", wr.getAmount().toHexString());
+              });
+    }
 
     ObjectNode allocObject = objectMapper.createObjectNode();
     worldState
@@ -448,12 +544,12 @@ public class T8nExecutor {
         .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
         .forEach(
             a -> {
-              var account = worldState.get(a.getAddress().get());
+              Account account = worldState.get(a.getAddress().get());
               ObjectNode accountObject = allocObject.putObject(account.getAddress().toHexString());
               if (account.getCode() != null && !account.getCode().isEmpty()) {
                 accountObject.put("code", account.getCode().toHexString());
               }
-              var storageEntries =
+              List<Entry<UInt256, UInt256>> storageEntries =
                   account.storageEntriesFrom(Bytes32.ZERO, Integer.MAX_VALUE).values().stream()
                       .map(
                           e ->
@@ -484,12 +580,45 @@ public class T8nExecutor {
     return new T8nResult(allocObject, bodyBytes, resultObject);
   }
 
-  interface TracerManager {
+  /**
+   * The TracerManager interface provides methods for managing OperationTracer instances. It is used
+   * in the context of Ethereum Virtual Machine (EVM) execution to trace operations.
+   *
+   * <p>The interface defines two methods: - getManagedTracer: This method is used to get a managed
+   * OperationTracer instance for a specific transaction. - disposeTracer: This method is used to
+   * dispose of an OperationTracer instance when it is no longer needed.
+   */
+  public interface TracerManager {
+
+    /**
+     * Retrieves a managed OperationTracer instance for a specific transaction.
+     *
+     * @param txIndex The index of the transaction for which the tracer is to be retrieved.
+     * @param txHash The hash of the transaction for which the tracer is to be retrieved.
+     * @return The managed OperationTracer instance.
+     * @throws Exception If an error occurs while retrieving the tracer.
+     */
     OperationTracer getManagedTracer(int txIndex, Hash txHash) throws Exception;
 
+    /**
+     * Disposes of an OperationTracer instance when it is no longer needed.
+     *
+     * @param tracer The OperationTracer instance to be disposed.
+     * @throws IOException If an error occurs while disposing the tracer.
+     */
     void disposeTracer(OperationTracer tracer) throws IOException;
   }
 
+  /**
+   * A record that represents the result of a transaction test run in the Ethereum Virtual Machine
+   * (EVM). It contains the final state of the accounts (allocObject), the raw bytes of the
+   * transactions (bodyBytes), and the result of the test run (resultObject).
+   *
+   * @param allocObject The final state of the accounts after the test run.
+   * @param bodyBytes The raw bytes of the transactions that were run.
+   * @param resultObject The result of the test run, including stateRoot, txRoot, receiptsRoot,
+   *     logsHash, and other details.
+   */
   @SuppressWarnings("unused")
   record T8nResult(ObjectNode allocObject, TextNode bodyBytes, ObjectNode resultObject) {}
 }
