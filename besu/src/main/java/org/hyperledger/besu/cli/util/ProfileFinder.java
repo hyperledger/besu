@@ -91,7 +91,7 @@ public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
         }
       } else {
         throw new CommandLine.ParameterException(
-            commandLine, "Profile does not exist: " + profileName);
+            commandLine, "Unable to load external profile: " + profileName);
       }
     }
   }
@@ -135,6 +135,11 @@ public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
     }
   }
 
+  /**
+   * Return default profiles directory location
+   *
+   * @return Path to default profiles directory
+   */
   private static Path defaultProfilesDir() {
     final String profilesDir = System.getProperty("besu.profiles.dir");
     if (profilesDir == null) {
