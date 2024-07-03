@@ -68,7 +68,7 @@ public interface DefaultCommandValues {
   String PROFILE_OPTION_NAME = "--profile";
 
   /** The constant PROFILE_FORMAT_HELP. */
-  String PROFILE_FORMAT_HELP = "<PROFILE>";
+  String PROFILE_FORMAT_HELP = "<PROFILE NAME | PATH>";
 
   /** The constant MANDATORY_NODE_ID_FORMAT_HELP. */
   String MANDATORY_NODE_ID_FORMAT_HELP = "<NODEID>";

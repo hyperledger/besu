@@ -16,11 +16,19 @@ package org.hyperledger.besu.cli.util;
 
 import static org.hyperledger.besu.cli.DefaultCommandValues.PROFILE_OPTION_NAME;
 
-import org.hyperledger.besu.cli.config.ProfileName;
+import org.hyperledger.besu.cli.config.InternalProfileName;
 
+import java.io.IOException;
 import java.io.InputStream;
+import java.io.UncheckedIOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import picocli.CommandLine;
 
@@ -51,7 +59,8 @@ public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
   public Optional<InputStream> getFromOption(
       final CommandLine.ParseResult parseResult, final CommandLine commandLine) {
     try {
-      return getProfile(parseResult.matchedOption(PROFILE_OPTION_NAME).getter().get(), commandLine);
+      final Path profileName = parseResult.matchedOption(PROFILE_OPTION_NAME).getter().get();
+      return getProfile(profileName.toString(), commandLine);
     } catch (Exception e) {
       throw new RuntimeException(e);
     }
@@ -60,20 +69,71 @@ public class ProfileFinder extends AbstractConfigurationFinder<InputStream> {
   @Override
   public Optional<InputStream> getFromEnvironment(
       final Map<String, String> environment, final CommandLine commandLine) {
-    return getProfile(ProfileName.valueOf(environment.get(PROFILE_ENV_NAME)), commandLine);
+    return getProfile(environment.get(PROFILE_ENV_NAME), commandLine);
   }
 
   private static Optional<InputStream> getProfile(
-      final ProfileName profileName, final CommandLine commandLine) {
-    return Optional.of(getTomlFile(commandLine, profileName.getConfigFile()));
+      final String profileName, final CommandLine commandLine) {
+    final Optional<String> internalProfileConfigPath =
+        InternalProfileName.valueOfIgnoreCase(profileName).map(InternalProfileName::getConfigFile);
+    if (internalProfileConfigPath.isPresent()) {
+      return Optional.of(getTomlFileFromClasspath(internalProfileConfigPath.get()));
+    } else {
+      final Path externalProfileFile = defaultProfilesDir().resolve(profileName + ".toml");
+      if (Files.exists(externalProfileFile)) {
+        try {
+          return Optional.of(Files.newInputStream(externalProfileFile));
+        } catch (IOException e) {
+          throw new CommandLine.ParameterException(
+              commandLine, "Error reading external profile: " + profileName);
+        }
+      } else {
+        throw new CommandLine.ParameterException(
+            commandLine, "Profile does not exist: " + profileName);
+      }
+    }
   }
 
-  private static InputStream getTomlFile(final CommandLine commandLine, final String file) {
-    InputStream resourceUrl = ProfileFinder.class.getClassLoader().getResourceAsStream(file);
+  private static InputStream getTomlFileFromClasspath(final String profileConfigFile) {
+    InputStream resourceUrl =
+        ProfileFinder.class.getClassLoader().getResourceAsStream(profileConfigFile);
+    // this is not meant to happen, because for each InternalProfileName there is a corresponding
+    // TOML file in resources
     if (resourceUrl == null) {
-      throw new CommandLine.ParameterException(
-          commandLine, String.format("TOML file %s not found", file));
+      throw new IllegalStateException(
+          String.format("Internal Profile TOML %s not found", profileConfigFile));
     }
     return resourceUrl;
+  }
+
+  /**
+   * Returns the external profile names which are file names without extension in the default
+   * profiles directory.
+   *
+   * @return Set of external profile names
+   */
+  public static Set<String> getExternalProfileNames() {
+    try (Stream<Path> pathStream = Files.list(defaultProfilesDir())) {
+      return pathStream
+          .filter(Files::isRegularFile)
+          .filter(path -> path.toString().endsWith(".toml"))
+          .map(
+              path ->
+                  path.getFileName()
+                      .toString()
+                      .substring(0, path.getFileName().toString().length() - 5))
+          .collect(Collectors.toSet());
+    } catch (IOException e) {
+      throw new UncheckedIOException(e);
+    }
+  }
+
+  private static Path defaultProfilesDir() {
+    final String profilesDir = System.getProperty("besu.profiles.dir");
+    if (profilesDir == null) {
+      return Paths.get(System.getProperty("besu.home", "."), "profiles");
+    } else {
+      return Paths.get(profilesDir);
+    }
   }
 }

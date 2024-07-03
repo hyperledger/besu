@@ -17,7 +17,7 @@ package org.hyperledger.besu.cli;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.cli.config.ProfileName;
+import org.hyperledger.besu.cli.config.InternalProfileName;
 
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
@@ -26,10 +26,11 @@ public class ProfilesTest extends CommandTestAbstract {
 
   /** Test if besu will validate the combination of options within the given profile. */
   @ParameterizedTest
-  @EnumSource(ProfileName.class)
-  public void testProfileWithNoOverrides_doesNotError(final ProfileName profileName) {
+  @EnumSource(InternalProfileName.class)
+  public void testProfileWithNoOverrides_doesNotError(
+      final InternalProfileName internalProfileName) {
 
-    parseCommand("--profile", profileName.name());
+    parseCommand("--profile", internalProfileName.name());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
