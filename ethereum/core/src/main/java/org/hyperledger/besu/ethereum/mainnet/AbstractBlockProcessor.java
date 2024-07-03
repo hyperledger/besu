@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.LazyBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -277,14 +278,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         LOG.error("failed processing withdrawals", e);
         return new BlockProcessingResult(Optional.empty(), e);
       }
-    }
-
-    // EIP-7685: process EL requests
-    final Optional<RequestProcessorCoordinator> requestProcessor =
-        protocolSpec.getRequestProcessorCoordinator();
-    Optional<List<Request>> maybeRequests = Optional.empty();
-    if (requestProcessor.isPresent()) {
-      maybeRequests = requestProcessor.get().process(worldState, receipts);
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {
