@@ -78,6 +78,7 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
       assignedPeer = Optional.of(peer);
       return true;
     } else {
+      assignedPeer = Optional.empty();
       return false;
     }
   }
