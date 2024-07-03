@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Added `block-test` subcommand to the evmtool which runs blockchain reference tests [#7293](https://github.com/hyperledger/besu/pull/7293)
 
 ### Bug fixes
 
