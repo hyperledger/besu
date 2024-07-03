@@ -28,17 +28,17 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 @JsonPropertyOrder({
-  "action",
-  "blockHash",
-  "blockNumber",
-  "result",
-  "error",
-  "revertReason",
-  "subtraces",
-  "traceAddress",
-  "transactionHash",
-  "transactionPosition",
-  "type"
+        "action",
+        "blockHash",
+        "blockNumber",
+        "result",
+        "error",
+        "revertReason",
+        "subtraces",
+        "traceAddress",
+        "transactionHash",
+        "transactionPosition",
+        "type"
 })
 public class FlatTrace implements Trace {
   private final Action action;
@@ -54,68 +54,68 @@ public class FlatTrace implements Trace {
   private final String type;
 
   protected FlatTrace(
-      final Action.Builder actionBuilder,
-      final Result.Builder resultBuilder,
-      final int subtraces,
-      final List<Integer> traceAddress,
-      final String type,
-      final Long blockNumber,
-      final String blockHash,
-      final Integer transactionPosition,
-      final String transactionHash,
-      final Optional<String> error) {
+          final Action.Builder actionBuilder,
+          final Result.Builder resultBuilder,
+          final int subtraces,
+          final List<Integer> traceAddress,
+          final String type,
+          final Long blockNumber,
+          final String blockHash,
+          final Integer transactionPosition,
+          final String transactionHash,
+          final Optional<String> error) {
     this(
-        actionBuilder != null ? actionBuilder.build() : null,
-        resultBuilder != null ? resultBuilder.build() : null,
-        subtraces,
-        traceAddress,
-        type,
-        blockNumber,
-        blockHash,
-        transactionPosition,
-        transactionHash,
-        error,
-        null);
+            actionBuilder != null ? actionBuilder.build() : null,
+            resultBuilder != null ? resultBuilder.build() : null,
+            subtraces,
+            traceAddress,
+            type,
+            blockNumber,
+            blockHash,
+            transactionPosition,
+            transactionHash,
+            error,
+            null);
   }
 
   protected FlatTrace(
-      final Action.Builder actionBuilder,
-      final Result.Builder resultBuilder,
-      final int subtraces,
-      final List<Integer> traceAddress,
-      final String type,
-      final Long blockNumber,
-      final String blockHash,
-      final Integer transactionPosition,
-      final String transactionHash,
-      final Optional<String> error,
-      final String revertReason) {
+          final Action.Builder actionBuilder,
+          final Result.Builder resultBuilder,
+          final int subtraces,
+          final List<Integer> traceAddress,
+          final String type,
+          final Long blockNumber,
+          final String blockHash,
+          final Integer transactionPosition,
+          final String transactionHash,
+          final Optional<String> error,
+          final String revertReason) {
     this(
-        actionBuilder != null ? actionBuilder.build() : null,
-        resultBuilder != null ? resultBuilder.build() : null,
-        subtraces,
-        traceAddress,
-        type,
-        blockNumber,
-        blockHash,
-        transactionPosition,
-        transactionHash,
-        error,
-        revertReason);
+            actionBuilder != null ? actionBuilder.build() : null,
+            resultBuilder != null ? resultBuilder.build() : null,
+            subtraces,
+            traceAddress,
+            type,
+            blockNumber,
+            blockHash,
+            transactionPosition,
+            transactionHash,
+            error,
+            revertReason);
   }
 
   protected FlatTrace(
-      final Action action,
-      final Result result,
-      final int subtraces,
-      final List<Integer> traceAddress,
-      final String type,
-      final Long blockNumber,
-      final String blockHash,
-      final Integer transactionPosition,
-      final String transactionHash,
-      final Optional<String> error,
-      final String revertReason) {
+          final Action action,
+          final Result result,
+          final int subtraces,
+          final List<Integer> traceAddress,
+          final String type,
+          final Long blockNumber,
+          final String blockHash,
+          final Integer transactionPosition,
+          final String transactionHash,
+          final Optional<String> error,
+          final String revertReason) {
     this.action = action;
     this.result = result;
     this.subtraces = subtraces;
@@ -131,8 +131,8 @@ public class FlatTrace implements Trace {
 
   static Builder freshBuilder(final TransactionTrace transactionTrace) {
     return FlatTrace.builder()
-        .resultBuilder(Result.builder())
-        .actionBuilder(Action.Builder.from(transactionTrace));
+            .resultBuilder(Result.builder())
+            .actionBuilder(Action.Builder.from(transactionTrace));
   }
 
   public Action getAction() {
@@ -349,17 +349,17 @@ public class FlatTrace implements Trace {
 
     public FlatTrace build() {
       return new FlatTrace(
-          actionBuilder,
-          resultBuilder,
-          subtraces,
-          traceAddress,
-          type,
-          blockNumber,
-          blockHash,
-          transactionPosition,
-          transactionHash,
-          error,
-          revertReason);
+              actionBuilder,
+              resultBuilder,
+              subtraces,
+              traceAddress,
+              type,
+              blockNumber,
+              blockHash,
+              transactionPosition,
+              transactionHash,
+              error,
+              revertReason);
     }
 
     public Result.Builder getResultBuilder() {
