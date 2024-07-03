@@ -31,8 +31,11 @@ import java.util.Deque;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class SystemCallProcessor {
+  private static final Logger LOG = LoggerFactory.getLogger(SystemCallProcessor.class);
 
   /** The system address */
   static final Address SYSTEM_ADDRESS =
@@ -65,6 +68,7 @@ public class SystemCallProcessor {
     // if no code exists at CALL_ADDRESS, the call must fail silently
     final Account maybeContract = worldState.get(callAddress);
     if (maybeContract == null) {
+      LOG.trace("System call address not found {}", callAddress);
       return null;
     }
 
