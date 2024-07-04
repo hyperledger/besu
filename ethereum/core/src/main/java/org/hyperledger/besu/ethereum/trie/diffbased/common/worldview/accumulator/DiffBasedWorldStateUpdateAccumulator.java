@@ -490,6 +490,18 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 tracked.setStorageWasCleared(false); // storage already cleared for this transaction
               }
             });
+
+    System.out.println("account " + accountsToUpdate.size());
+    System.out.println("storage " + storageToUpdate.size());
+    System.out.println("code " + codeToUpdate.size());
+    storageToUpdate.forEach(
+        (address, storageSlotKeyDiffBasedValueStorageConsumingMap) -> {
+          System.out.println(
+              "storage map size for "
+                  + address
+                  + " "
+                  + storageSlotKeyDiffBasedValueStorageConsumingMap.size());
+        });
   }
 
   @Override
