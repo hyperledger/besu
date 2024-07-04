@@ -69,4 +69,9 @@ public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Ma
               return peerResult.getResult();
             });
   }
+
+  @Override
+  protected boolean isSuitablePeer(final EthPeer peer) {
+    return peer.isServingSnap();
+  }
 }

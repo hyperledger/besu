@@ -46,7 +46,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.EthProtocol;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.SnapProtocol;
@@ -77,6 +76,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
@@ -604,6 +604,12 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     final int maxMessageSize = ethereumWireProtocolConfiguration.getMaxMessageSize();
     final Supplier<ProtocolSpec> currentProtocolSpecSupplier =
         () -> protocolSchedule.getByBlockHeader(blockchain.getChainHeadHeader());
+    final ForkIdManager forkIdManager =
+        new ForkIdManager(
+            blockchain,
+            genesisConfigOptions.getForkBlockNumbers(),
+            genesisConfigOptions.getForkBlockTimestamps(),
+            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled());
     final EthPeers ethPeers =
         new EthPeers(
             getSupportedProtocol(),
@@ -615,7 +621,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             nodeKey.getPublicKey().getEncodedBytes(),
             maxPeers,
             maxRemotelyInitiatedPeers,
-            randomPeerPriority);
+            randomPeerPriority,
+            syncConfig.getSyncMode(),
+            forkIdManager);
 
     final EthMessages ethMessages = new EthMessages();
     final EthMessages snapMessages = new EthMessages();
@@ -681,13 +689,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             ethMessages,
             scheduler,
             peerValidators,
-            Optional.empty());
+            Optional.empty(),
+            forkIdManager);
 
     final PivotBlockSelector pivotBlockSelector =
         createPivotSelector(
             protocolSchedule, protocolContext, ethContext, syncState, metricsSystem, blockchain);
 
-    final Synchronizer synchronizer =
+    final DefaultSynchronizer synchronizer =
         createSynchronizer(
             protocolSchedule,
             worldStateStorageCoordinator,
@@ -696,6 +705,16 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             syncState,
             ethProtocolManager,
             pivotBlockSelector);
+
+    ethPeers.setTrailingPeerRequirementsSupplier(synchronizer::calculateTrailingPeerRequirements);
+
+    if (SyncMode.isSnapSync(syncConfig.getSyncMode())
+        || SyncMode.isCheckpointSync(syncConfig.getSyncMode())) {
+      synchronizer.subscribeInSync((b) -> ethPeers.snapServerPeersNeeded(!b));
+      ethPeers.snapServerPeersNeeded(true);
+    } else {
+      ethPeers.snapServerPeersNeeded(false);
+    }
 
     protocolContext.setSynchronizer(Optional.of(synchronizer));
 
@@ -809,7 +828,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param pivotBlockSelector the pivot block selector
    * @return the synchronizer
    */
-  protected Synchronizer createSynchronizer(
+  protected DefaultSynchronizer createSynchronizer(
       final ProtocolSchedule protocolSchedule,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final ProtocolContext protocolContext,
@@ -1000,6 +1019,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
    * @param scheduler the scheduler
    * @param peerValidators the peer validators
    * @param mergePeerFilter the merge peer filter
+   * @param forkIdManager the fork id manager
    * @return the eth protocol manager
    */
   protected EthProtocolManager createEthProtocolManager(
@@ -1012,7 +1032,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final ForkIdManager forkIdManager) {
     return new EthProtocolManager(
         protocolContext.getBlockchain(),
         networkId,
@@ -1026,8 +1047,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
         mergePeerFilter,
         synchronizerConfiguration,
         scheduler,
-        genesisConfigOptions.getForkBlockNumbers(),
-        genesisConfigOptions.getForkBlockTimestamps());
+        forkIdManager);
   }
 
   /**
