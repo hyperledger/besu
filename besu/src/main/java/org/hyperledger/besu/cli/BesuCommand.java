@@ -2765,7 +2765,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (profile != null) {
-      // TODO: Do we need to convert _ to spaces?
       builder.setProfile(profile);
     }
 
