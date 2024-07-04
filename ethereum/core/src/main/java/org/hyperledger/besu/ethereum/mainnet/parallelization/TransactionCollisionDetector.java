@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet;
+package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -21,12 +21,11 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 
 import java.util.HashSet;
 import java.util.Map;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
-public class TransactionConflictChecker {
+public class TransactionCollisionDetector {
 
   private final Map<Long, DiffBasedWorldStateUpdateAccumulator<?>>
       accumulatorByParallelizedTransaction = new ConcurrentHashMap<>();
@@ -35,16 +34,16 @@ public class TransactionConflictChecker {
       new ConcurrentHashMap<>();
 
   public void saveParallelizedTransactionProcessingResult(
-      final TransactionWithLocation transaction,
+      final long transactionIndex,
       final DiffBasedWorldStateUpdateAccumulator<?> accumulator,
       final TransactionProcessingResult result) {
-    accumulatorByParallelizedTransaction.put(transaction.getLocation(), accumulator);
-    resultByParallelizedTransaction.put(transaction.getLocation(), result);
+    accumulatorByParallelizedTransaction.put(transactionIndex, accumulator);
+    resultByParallelizedTransaction.put(transactionIndex, result);
   }
 
   public boolean checkConflicts(
       final Address producer,
-      final TransactionWithLocation transaction,
+      final Transaction transaction,
       final DiffBasedWorldStateUpdateAccumulator<?> trxAccumulator,
       final DiffBasedWorldStateUpdateAccumulator<?> blockAccumulator) {
     final Set<Address> addressesTouchedByTransaction =
@@ -60,7 +59,7 @@ public class TransactionConflictChecker {
   }
 
   private Set<Address> getAddressesTouchedByTransaction(
-      final TransactionWithLocation transaction,
+      final Transaction transaction,
       final Optional<DiffBasedWorldStateUpdateAccumulator<?>> accumulator) {
     HashSet<Address> addresses = new HashSet<>();
     addresses.add(transaction.getSender());
@@ -71,14 +70,7 @@ public class TransactionConflictChecker {
         diffBasedWorldStateUpdateAccumulator -> {
           diffBasedWorldStateUpdateAccumulator
               .getAccountsToUpdate()
-              .forEach(
-                  (address, diffBasedValue) -> {
-                    addresses.add(address);
-                    /*System.out.println("update "+diffBasedValue.getPrior()+" "+diffBasedValue.getUpdated());
-                    diffBasedWorldStateUpdateAccumulator.getTouchedAccounts().stream().forEach(account -> {
-                      System.out.println(account);
-                    });*/
-                  });
+              .forEach((address, diffBasedValue) -> addresses.add(address));
           addresses.addAll(diffBasedWorldStateUpdateAccumulator.getDeletedAccountAddresses());
         });
     return addresses;
@@ -108,44 +100,5 @@ public class TransactionConflictChecker {
 
   public Map<Long, TransactionProcessingResult> getResultByTransaction() {
     return resultByParallelizedTransaction;
-  }
-
-  public static final class TransactionWithLocation {
-    private final long location;
-    private final Transaction transaction;
-
-    public TransactionWithLocation(final long location, final Transaction transaction) {
-      this.location = location;
-      this.transaction = transaction;
-    }
-
-    public long getLocation() {
-      return location;
-    }
-
-    public Transaction transaction() {
-      return transaction;
-    }
-
-    public Address getSender() {
-      return transaction.getSender();
-    }
-
-    public Optional<Address> getTo() {
-      return transaction.getTo();
-    }
-
-    @Override
-    public boolean equals(final Object o) {
-      if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
-      TransactionWithLocation that = (TransactionWithLocation) o;
-      return location == that.location;
-    }
-
-    @Override
-    public int hashCode() {
-      return Objects.hash(location);
-    }
   }
 }
