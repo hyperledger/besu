@@ -451,12 +451,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                 pendingStorageUpdates.clear();
               }
 
-              // This is especially to avoid unnecessary computation for withdrawals and
-              // self-destruct beneficiaries
-              if (updatedAccount.getUpdatedStorage().isEmpty()) {
-                return;
-              }
-
               // parallel stream here may cause database corruption
               updatedAccount
                   .getUpdatedStorage()
