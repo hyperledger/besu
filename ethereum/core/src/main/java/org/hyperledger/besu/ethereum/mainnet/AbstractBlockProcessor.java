@@ -137,13 +137,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     final BonsaiWorldStateUpdateAccumulator blockUpdater =
         (BonsaiWorldStateUpdateAccumulator) worldState.updater();
 
-    // load withdrawal addresses in the cache in background
-    maybeWithdrawals.ifPresent(
-        withdrawals ->
-            CompletableFuture.runAsync(
-                () ->
-                    withdrawals.forEach(withdrawal -> blockUpdater.get(withdrawal.getAddress()))));
-
     final long time = System.currentTimeMillis();
 
     for (int i = 0; i < transactions.size(); i++) {
