@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.SystemCallProcessor;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -37,32 +36,24 @@ public abstract class AbstractSystemCallRequestProcessor<T extends Request>
    * Processes a system call and converts the result into requests of type T.
    *
    * @param context The request context being processed.
-   * @return An {@link Optional} containing a list of {@link T} objects if any are found, or an
-   *     empty {@link Optional} if none are found.
+   * @return An {@link Optional} containing a list of {@link T} objects if any are found
    */
   @Override
   public Optional<List<? extends Request>> process(final ProcessRequestContext context) {
-    WorldUpdater updater = context.mutableWorldState().updater();
 
-    // Check if the system call address is deployed
-    if (updater.get(getCallAddress()) == null) {
-      String error = String.format("System call address %s is not deployed", getCallAddress());
-      throw new RuntimeException(error);
-    }
-
-    // Process the system call
     SystemCallProcessor systemCallProcessor =
         new SystemCallProcessor(context.protocolSpec().getTransactionProcessor());
+
     Bytes systemCallOutput =
         systemCallProcessor.process(
             getCallAddress(),
-            updater,
+            context.mutableWorldState().updater(),
             context.blockHeader(),
             context.operationTracer(),
             context.blockHashLookup());
 
-    // Parse the system call output into requests
-    return Optional.ofNullable(parseRequests(systemCallOutput));
+    List<T> requests = parseRequests(systemCallOutput);
+    return Optional.ofNullable(requests);
   }
 
   /**
