@@ -15,9 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
 import org.hyperledger.besu.datatypes.RequestType;
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,11 +37,10 @@ public class RequestProcessorCoordinator {
     this.processors = processors;
   }
 
-  public Optional<List<Request>> process(
-      final MutableWorldState mutableWorldState, final List<TransactionReceipt> receipts) {
+  public Optional<List<Request>> process(final ProcessRequestContext context) {
     List<Request> requests = null;
     for (RequestProcessor requestProcessor : processors.values()) {
-      var r = requestProcessor.process(mutableWorldState, receipts);
+      var r = requestProcessor.process(context);
       if (r.isPresent()) {
         if (requests == null) {
           requests = new ArrayList<>();
