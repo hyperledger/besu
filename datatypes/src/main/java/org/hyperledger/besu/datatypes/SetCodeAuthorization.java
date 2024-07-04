@@ -57,7 +57,7 @@ public record SetCodeAuthorization(
    * @return SetCodeTransactionEntry
    */
   @JsonCreator
-  public static SetCodeAuthorization createAccessListEntry(
+  public static SetCodeAuthorization createSetCodeAuthorizationEntry(
       @JsonProperty("chainId") final BigInteger chainId,
       @JsonProperty("address") final Address address,
       @JsonProperty("nonce") final List<Long> nonces,

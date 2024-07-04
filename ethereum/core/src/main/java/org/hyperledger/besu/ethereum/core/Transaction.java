@@ -940,7 +940,7 @@ public class Transaction
               SetCodeTransactionEncoder.encodeSetCodeInner(setCodePayloads, rlpOutput);
               rlpOutput.endList();
             });
-    return Bytes.concatenate(Bytes.of(TransactionType.BLOB.getSerializedType()), encoded);
+    return Bytes.concatenate(Bytes.of(TransactionType.SET_CODE.getSerializedType()), encoded);
   }
 
   @Override

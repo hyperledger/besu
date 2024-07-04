@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.SetCodeTransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -79,8 +80,12 @@ public class SetCodeTransactionProcessor {
                           return;
                         }
 
+                        final Optional<Account> maybeCodeOriginAccount =
+                            Optional.ofNullable(worldUpdater.getAccount(payload.address()));
                         worldUpdater.addCodeToEOA(
-                            authorityAddress, worldUpdater.getAccount(payload.address()).getCode());
+                            authorityAddress,
+                            maybeCodeOriginAccount.map(Account::getCode).orElse(Bytes.EMPTY));
+
                         authorityList.add(authorityAddress);
                       });
             });

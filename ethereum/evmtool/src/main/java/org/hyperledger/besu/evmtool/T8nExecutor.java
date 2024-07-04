@@ -27,6 +27,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -209,6 +210,68 @@ public class T8nExecutor {
               builder.accessList(entries);
             }
 
+            if (txNode.has("authorizationList")) {
+              JsonNode authorizationList = txNode.get("authorizationList");
+
+              if (!authorizationList.isArray()) {
+                out.printf(
+                    "TX json node unparseable: expected authorizationList to be an array - %s%n",
+                    txNode);
+                continue;
+              }
+
+              List<SetCodeAuthorization> authorizations = new ArrayList<>(authorizationList.size());
+              for (JsonNode entryAsJson : authorizationList) {
+                final BigInteger authorizationChainId =
+                    Bytes.fromHexStringLenient(entryAsJson.get("chainId").textValue())
+                        .toUnsignedBigInteger();
+                final Address authorizationAddress =
+                    Address.fromHexString(entryAsJson.get("address").textValue());
+
+                JsonNode nonces = txNode.get("nonce");
+
+                if (nonces == null) {
+                  out.printf(
+                      "TX json node unparseable: expected nonce field to be provided - %s%n",
+                      txNode);
+                  continue;
+                }
+
+                List<Long> authorizationNonces;
+                if (nonces.isArray()) {
+                  authorizationNonces = new ArrayList<>(nonces.size());
+                  for (JsonNode nonceAsJson : nonces) {
+                    authorizationNonces.add(
+                        Bytes.fromHexStringLenient(nonceAsJson.textValue()).toLong());
+                  }
+                } else {
+                  authorizationNonces =
+                      List.of(Bytes.fromHexStringLenient(nonces.textValue()).toLong());
+                }
+
+                final byte authorizationV =
+                    Bytes.fromHexStringLenient(entryAsJson.get("v").textValue())
+                        .toUnsignedBigInteger()
+                        .byteValueExact();
+                final BigInteger authorizationR =
+                    Bytes.fromHexStringLenient(entryAsJson.get("r").textValue())
+                        .toUnsignedBigInteger();
+                final BigInteger authorizationS =
+                    Bytes.fromHexStringLenient(entryAsJson.get("s").textValue())
+                        .toUnsignedBigInteger();
+
+                authorizations.add(
+                    SetCodeAuthorization.createSetCodeAuthorizationEntry(
+                        authorizationChainId,
+                        authorizationAddress,
+                        authorizationNonces,
+                        authorizationV,
+                        authorizationR,
+                        authorizationS));
+              }
+              builder.setCodeTransactionPayloads(authorizations);
+            }
+
             if (txNode.has("blobVersionedHashes")) {
               JsonNode blobVersionedHashes = txNode.get("blobVersionedHashes");
               if (!blobVersionedHashes.isArray()) {
@@ -252,7 +315,22 @@ public class T8nExecutor {
                           Bytes.fromHexStringLenient(txNode.get("s").textValue())
                               .toUnsignedBigInteger(),
                           v.byteValueExact()));
-              transactions.add(builder.build());
+
+              final Transaction tx = builder.build();
+
+              if (txNode.has("sender")) {
+                final Address senderAddress =
+                    Address.fromHexString(txNode.get("sender").textValue());
+
+                if (!tx.getSender().equals(senderAddress)) {
+                  out.printf(
+                      "TX json node unparseable: sender address does not match signature - %s%n",
+                      txNode);
+                  continue;
+                }
+              }
+
+              transactions.add(tx);
             }
           }
         } else {
