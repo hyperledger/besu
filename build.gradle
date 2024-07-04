@@ -401,8 +401,6 @@ allprojects {
       '-org.hyperledger.besu.ethereum.eth.*,' +
       '-org.hyperledger.besu.ethereum.eth,' +
       '-org.hyperledger.besu.consensus.merge,' +
-      // evmtool module
-      '-org.hyperledger.besu.evmtool,' +
       // p2p module
       '-org.hyperledger.besu.ethereum.p2p,' +
       '-org.hyperledger.besu.ethereum.p2p.*,' +

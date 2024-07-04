@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
@@ -52,6 +53,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
@@ -86,12 +88,45 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * The T8nExecutor class is responsible for executing transactions in the context of the Ethereum
+ * Virtual Machine (EVM). It extracts transactions from a given input, runs tests on them, and
+ * generates results including stateRoot, txRoot, receiptsRoot, and logsHash. It also handles block
+ * rewards and withdrawal processing. This class is part of the EVM tooling within the Hyperledger
+ * Besu project.
+ */
 public class T8nExecutor {
 
   private static final Set<Address> EMPTY_ADDRESS_SET = Set.of();
 
+  /**
+   * A record that represents a transaction that has been rejected. It contains the index of the
+   * transaction and the error message explaining why it was rejected.
+   *
+   * @param index The index of the rejected transaction.
+   * @param error The error message explaining why the transaction was rejected.
+   */
   public record RejectedTransaction(int index, String error) {}
 
+  /**
+   * Default constructor for the T8nExecutor class. This constructor does not perform any
+   * operations.
+   */
+  public T8nExecutor() {
+    // Default constructor required for Javadoc linting
+  }
+
+  /**
+   * Extracts transactions from a given JSON iterator and adds them to the provided transactions
+   * list. If a transaction cannot be parsed or is invalid, it is added to the rejections list with
+   * its index and error message.
+   *
+   * @param out PrintWriter used for outputting information or errors.
+   * @param it Iterator over JSON nodes, each representing a transaction.
+   * @param transactions List of transactions to which parsed transactions are added.
+   * @param rejections List of RejectedTransaction records to which rejected transactions are added.
+   * @return The updated list of transactions after parsing and validation.
+   */
   protected static List<Transaction> extractTransactions(
       final PrintWriter out,
       final Iterator<JsonNode> it,
@@ -478,7 +513,15 @@ public class T8nExecutor {
     var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
     if (requestProcessorCoordinator.isPresent()) {
       var rpc = requestProcessorCoordinator.get();
-      Optional<List<Request>> maybeRequests = rpc.process(worldState, receipts);
+      ProcessRequestContext context =
+          new ProcessRequestContext(
+              blockHeader,
+              worldState,
+              protocolSpec,
+              receipts,
+              new CachingBlockHashLookup(blockHeader, blockchain),
+              OperationTracer.NO_TRACING);
+      Optional<List<Request>> maybeRequests = rpc.process(context);
       Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
 
       resultObject.put("requestsRoot", requestRoot.toHexString());
@@ -500,7 +543,7 @@ public class T8nExecutor {
               wr -> {
                 var obj = withdrawlRequests.addObject();
                 obj.put("sourceAddress", wr.getSourceAddress().toHexString());
-                obj.put("validatorPublicKey", wr.getValidatorPublicKey().toHexString());
+                obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
                 obj.put("amount", wr.getAmount().toHexString());
               });
     }
@@ -547,12 +590,45 @@ public class T8nExecutor {
     return new T8nResult(allocObject, bodyBytes, resultObject);
   }
 
-  interface TracerManager {
+  /**
+   * The TracerManager interface provides methods for managing OperationTracer instances. It is used
+   * in the context of Ethereum Virtual Machine (EVM) execution to trace operations.
+   *
+   * <p>The interface defines two methods: - getManagedTracer: This method is used to get a managed
+   * OperationTracer instance for a specific transaction. - disposeTracer: This method is used to
+   * dispose of an OperationTracer instance when it is no longer needed.
+   */
+  public interface TracerManager {
+
+    /**
+     * Retrieves a managed OperationTracer instance for a specific transaction.
+     *
+     * @param txIndex The index of the transaction for which the tracer is to be retrieved.
+     * @param txHash The hash of the transaction for which the tracer is to be retrieved.
+     * @return The managed OperationTracer instance.
+     * @throws Exception If an error occurs while retrieving the tracer.
+     */
     OperationTracer getManagedTracer(int txIndex, Hash txHash) throws Exception;
 
+    /**
+     * Disposes of an OperationTracer instance when it is no longer needed.
+     *
+     * @param tracer The OperationTracer instance to be disposed.
+     * @throws IOException If an error occurs while disposing the tracer.
+     */
     void disposeTracer(OperationTracer tracer) throws IOException;
   }
 
+  /**
+   * A record that represents the result of a transaction test run in the Ethereum Virtual Machine
+   * (EVM). It contains the final state of the accounts (allocObject), the raw bytes of the
+   * transactions (bodyBytes), and the result of the test run (resultObject).
+   *
+   * @param allocObject The final state of the accounts after the test run.
+   * @param bodyBytes The raw bytes of the transactions that were run.
+   * @param resultObject The result of the test run, including stateRoot, txRoot, receiptsRoot,
+   *     logsHash, and other details.
+   */
   @SuppressWarnings("unused")
   record T8nResult(ObjectNode allocObject, TextNode bodyBytes, ObjectNode resultObject) {}
 }
