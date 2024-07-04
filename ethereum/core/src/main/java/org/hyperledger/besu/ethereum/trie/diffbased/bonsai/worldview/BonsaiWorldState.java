@@ -155,11 +155,7 @@ public class BonsaiWorldState extends DiffBasedWorldState {
     // that we can get the storage state hash
     Stream<Map.Entry<Address, StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>>>>
         storageStream = worldStateUpdater.getStorageToUpdate().entrySet().stream();
-    if (maybeStateUpdater.isEmpty()) {
-      storageStream =
-          storageStream
-              .parallel(); // if we are not updating the state updater we can use parallel stream
-    }
+
     storageStream.forEach(
         addressMapEntry ->
             updateAccountStorageState(maybeStateUpdater, worldStateUpdater, addressMapEntry));
