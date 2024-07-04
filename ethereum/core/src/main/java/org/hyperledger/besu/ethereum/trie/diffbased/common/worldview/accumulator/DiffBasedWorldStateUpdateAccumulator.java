@@ -72,9 +72,9 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   // enumerate the old storage and delete it.  Those are trie stored by hashed key by spec and the
   // alternative was to keep a giant pre-image cache of the entire trie.
   private final Map<Address, StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>>>
-      storageToUpdate = new ConcurrentHashMap<>();
+      storageToUpdate = new ConcurrentHashMap<>(1000);
 
-  private final Map<UInt256, Hash> storageKeyHashLookup = new ConcurrentHashMap<>();
+  private final Map<UInt256, Hash> storageKeyHashLookup = new ConcurrentHashMap<>(1000);
   protected boolean isAccumulatorStateChanged;
 
   public DiffBasedWorldStateUpdateAccumulator(
@@ -83,7 +83,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       final Consumer<StorageSlotKey> storagePreloader,
       final EvmConfiguration evmConfiguration) {
     super(world, evmConfiguration);
-    this.accountsToUpdate = new AccountConsumingMap<>(new ConcurrentHashMap<>(), accountPreloader);
+    this.accountsToUpdate =
+        new AccountConsumingMap<>(new ConcurrentHashMap<>(1000), accountPreloader);
     this.accountPreloader = accountPreloader;
     this.storagePreloader = storagePreloader;
     this.isAccumulatorStateChanged = false;
@@ -135,7 +136,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                       address,
                       k ->
                           new StorageConsumingMap<>(
-                              address, new ConcurrentHashMap<>(), storagePreloader));
+                              address, new ConcurrentHashMap<>(100), storagePreloader));
               slots.forEach(
                   (storageSlotKey, uInt256DiffBasedValue) -> {
                     storageConsumingMap.put(
@@ -182,7 +183,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                       address,
                       k ->
                           new StorageConsumingMap<>(
-                              address, new ConcurrentHashMap<>(), storagePreloader));
+                              address, new ConcurrentHashMap<>(100), storagePreloader));
               slots.forEach(
                   (storageSlotKey, uInt256DiffBasedValue) -> {
                     storageConsumingMap.putIfAbsent(
@@ -356,7 +357,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
               deletedAddress,
               k ->
                   new StorageConsumingMap<>(
-                      deletedAddress, new ConcurrentHashMap<>(), storagePreloader));
+                      deletedAddress, new ConcurrentHashMap<>(100), storagePreloader));
       final Iterator<Map.Entry<StorageSlotKey, DiffBasedValue<UInt256>>> iter =
           deletedStorageUpdates.entrySet().iterator();
       while (iter.hasNext()) {
@@ -391,7 +392,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       accountValue.setUpdated(null);
     }
 
-    getUpdatedAccounts().stream()
+    getUpdatedAccounts().parallelStream()
         .forEach(
             tracked -> {
               final Address updatedAddress = tracked.getAddress();
@@ -403,7 +404,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                       updatedAddress,
                       k ->
                           new StorageConsumingMap<>(
-                              updatedAddress, new ConcurrentHashMap<>(), storagePreloader));
+                              updatedAddress, new ConcurrentHashMap<>(100), storagePreloader));
 
               if (tracked.getWrappedAccount() == null) {
                 updatedAccount = createAccount(this, tracked);
@@ -528,7 +529,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
           .computeIfAbsent(
               address,
               key ->
-                  new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader))
+                  new StorageConsumingMap<>(
+                      address, new ConcurrentHashMap<>(100), storagePreloader))
           .put(
               storageSlotKey, new DiffBasedValue<>(valueUInt.orElse(null), valueUInt.orElse(null)));
       return valueUInt;
@@ -752,7 +754,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       final Map<StorageSlotKey, DiffBasedValue<UInt256>> storageMap, final Address address) {
     if (storageMap == null) {
       final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> newMap =
-          new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader);
+          new StorageConsumingMap<>(address, new ConcurrentHashMap<>(100), storagePreloader);
       storageToUpdate.put(address, newMap);
       return newMap;
     } else {
@@ -784,7 +786,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
             .computeIfAbsent(
                 address,
                 k ->
-                    new StorageConsumingMap<>(address, new ConcurrentHashMap<>(), storagePreloader))
+                    new StorageConsumingMap<>(
+                        address, new ConcurrentHashMap<>(100), storagePreloader))
             .put(storageSlotKey, slotValue);
       }
     }
