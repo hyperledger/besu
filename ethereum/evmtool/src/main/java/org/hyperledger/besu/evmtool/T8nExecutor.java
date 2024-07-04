@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
@@ -52,6 +53,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
@@ -511,7 +513,15 @@ public class T8nExecutor {
     var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
     if (requestProcessorCoordinator.isPresent()) {
       var rpc = requestProcessorCoordinator.get();
-      Optional<List<Request>> maybeRequests = rpc.process(worldState, receipts);
+      ProcessRequestContext context =
+          new ProcessRequestContext(
+              blockHeader,
+              worldState,
+              protocolSpec,
+              receipts,
+              new CachingBlockHashLookup(blockHeader, blockchain),
+              OperationTracer.NO_TRACING);
+      Optional<List<Request>> maybeRequests = rpc.process(context);
       Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
 
       resultObject.put("requestsRoot", requestRoot.toHexString());
