@@ -41,12 +41,12 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.PrivateState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Base64;
@@ -176,6 +176,11 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
+    final MutableAccount mutableAccount =
+        privateWorldStateUpdater.getOrCreate(privateTransaction.getSender());
+
+    System.out.println("NONCE BEFORE: " + mutableAccount.getNonce());
+
     maybeApplyGenesisToPrivateWorldState(
         lastRootHash,
         disposablePrivateState,
@@ -187,15 +192,25 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
+    System.out.println("NONCE AFTER PROCESS: " + mutableAccount.getNonce());
+    System.out.println(
+        "RESULT: " + result.getStatus() + "\nRECEIPT: " + new PrivateTransactionReceipt(result));
+
     if (!result.isSuccessful() && incrementPrivateNonce) {
       final Address senderAddress = privateTransaction.getSender();
-      ((PrivateState) privateWorldStateUpdater)
-          .incrementAndCommitPrivateNonceForRevertedTransaction(senderAddress);
+      final MutableAccount senderAccount = privateWorldStateUpdater.getOrCreate(senderAddress);
+      senderAccount.incrementNonce();
+      // we can safely commit the updater here, because it is only changed if the transaction is
+      // successful,
+      // so we can be sure that the only change is the incremented nonce
+      privateWorldStateUpdater.commit();
       disposablePrivateState.persist(null);
 
       storePrivateMetadata(
           pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
     }
+
+    System.out.println("NONCE AFTER INCR: " + mutableAccount.getNonce());
 
     if (result.isInvalid() || !result.isSuccessful()) {
       LOG.error(
