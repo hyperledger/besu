@@ -38,6 +38,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
+/**
+ * Optimizes transaction processing by executing transactions in parallel within a given block.
+ * Transactions are executed optimistically in a non-blocking manner. After execution, the class
+ * checks for potential conflicts among transactions to ensure data integrity before applying the
+ * results to the world state.
+ */
 @SuppressWarnings({"unchecked", "rawtypes", "unused"})
 public class PreloadConcurrentTransactionProcessor {
 
@@ -53,12 +59,34 @@ public class PreloadConcurrentTransactionProcessor {
   int confirmedParallelizedTransaction = 0;
   int conflictingButCachedTransaction = 0;
 
+  /**
+   * Constructs a PreloadConcurrentTransactionProcessor with a specified transaction processor. This
+   * processor is responsible for the individual processing of transactions.
+   *
+   * @param transactionProcessor The transaction processor for processing individual transactions.
+   */
   public PreloadConcurrentTransactionProcessor(
       final MainnetTransactionProcessor transactionProcessor) {
     this.transactionProcessor = transactionProcessor;
     this.transactionCollisionDetector = new TransactionCollisionDetector();
   }
 
+  /**
+   * Initiates the parallel and optimistic execution of transactions within a block by creating a
+   * copy of the world state for each transaction. This method processes transactions in a
+   * non-blocking manner. Transactions are executed against their respective copies of the world
+   * state, ensuring that the original world state passed as a parameter remains unmodified during
+   * this process.
+   *
+   * @param worldState Mutable world state intended for applying transaction results. This world
+   *     state is not modified directly; instead, copies are made for transaction execution.
+   * @param blockHeader Header of the current block containing the transactions.
+   * @param transactions List of transactions to be processed.
+   * @param miningBeneficiary Address of the beneficiary to receive mining rewards.
+   * @param blockHashLookup Function for block hash lookup.
+   * @param blobGasPrice Gas price for blob transactions.
+   * @param privateMetadataUpdater Updater for private transaction metadata.
+   */
   public void runAsyncPreloadBlock(
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
@@ -71,7 +99,10 @@ public class PreloadConcurrentTransactionProcessor {
     conflictingButCachedTransaction = 0;
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
-      final int transactionIndex = i;
+      final int transactionLocation = i;
+      /*
+       * All transactions are executed in the background by copying the world state of the block on which the transactions need to be executed, ensuring that each one has its own accumulator.
+       */
       CompletableFuture.runAsync(
           () -> {
             DiffBasedWorldState roundWorldState =
@@ -93,6 +124,12 @@ public class PreloadConcurrentTransactionProcessor {
                           final WorldView worldView,
                           final org.hyperledger.besu.datatypes.Transaction tx,
                           final Wei miningReward) {
+                        /*
+                         * This part checks if the mining beneficiary's account was accessed before increasing its balance for rewards.
+                         * Indeed, if the transaction has interacted with the address to read or modify it,
+                         * it means that the value is necessary for the proper execution of the transaction and will therefore be considered in collision detection.
+                         * If this is not the case, we can ignore this address during conflict detection.
+                         */
                         if (transactionCollisionDetector
                             .getAddressesTouchedByTransaction(
                                 transaction, Optional.of(roundWorldStateUpdater))
@@ -108,7 +145,7 @@ public class PreloadConcurrentTransactionProcessor {
                     privateMetadataUpdater,
                     blobGasPrice);
 
-            // commit the accumulator
+            // commit the accumulator in order to apply all the modifications
             roundWorldState.getAccumulator().commit();
 
             contextBuilder
@@ -120,29 +157,50 @@ public class PreloadConcurrentTransactionProcessor {
             if (!parallelizedTransactionContext
                 .isMiningBeneficiaryTouchedPreRewardByTransaction()) {
               /*
-               *If the address of the mining beneficiary has been touched only for adding rewards,
-               *we remove it from the accumulator to avoid a false positive collision.
+               * If the address of the mining beneficiary has been touched only for adding rewards,
+               * we remove it from the accumulator to avoid a false positive collision.
                * The balance will be increased during the sequential processing.
                */
               roundWorldStateUpdater.getAccountsToUpdate().remove(miningBeneficiary);
             }
             parallelizedTransactionContextByLocation.put(
-                transactionIndex, parallelizedTransactionContext);
+                transactionLocation, parallelizedTransactionContext);
           },
           executor);
     }
   }
 
+  /**
+   * Applies the results of preloaded transactions to the world state after checking for conflicts.
+   *
+   * <p>If a transaction was executed optimistically without any detected conflicts, its result is
+   * directly applied to the world state. If there is a conflict, this method does not apply the
+   * transaction's modifications directly to the world state. Instead, it caches the data read from
+   * the database during the transaction's execution. This cached data is then used to optimize the
+   * replay of the transaction by reducing the need for additional reads from the disk, thereby
+   * making the replay process faster. This approach ensures that the integrity of the world state
+   * is maintained while optimizing the performance of transaction processing.
+   *
+   * @param worldState Mutable world state intended for applying transaction results.
+   * @param miningBeneficiary Address of the beneficiary for mining rewards.
+   * @param transaction Transaction for which the result is to be applied.
+   * @param transactionLocation Index of the transaction within the block.
+   * @return Optional containing the transaction processing result if applied, or empty if the
+   *     transaction needs to be replayed due to a conflict.
+   */
   public Optional<TransactionProcessingResult> applyPreloadBlockResult(
       final MutableWorldState worldState,
       final Address miningBeneficiary,
       final Transaction transaction,
-      final int transactionIndex) {
+      final int transactionLocation) {
     final DiffBasedWorldState diffBasedWorldState = (DiffBasedWorldState) worldState;
     final DiffBasedWorldStateUpdateAccumulator blockAccumulator =
         (DiffBasedWorldStateUpdateAccumulator) diffBasedWorldState.updater();
     final ParallelizedTransactionContext parallelizedTransactionContext =
-        parallelizedTransactionContextByLocation.get(transactionIndex);
+        parallelizedTransactionContextByLocation.get(transactionLocation);
+    /*
+     * If `parallelizedTransactionContext` is not null, it means that the transaction had time to complete in the background.
+     */
     if (parallelizedTransactionContext != null) {
       final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator =
           parallelizedTransactionContext.transactionAccumulator();
@@ -163,6 +221,8 @@ public class PreloadConcurrentTransactionProcessor {
       } else {
         blockAccumulator.clonePriorFromUpdater(transactionAccumulator);
         conflictingButCachedTransaction++;
+        // If there is a conflict, we return an empty result to signal the block processor to
+        // re-execute the transaction.
         return Optional.empty();
       }
     }

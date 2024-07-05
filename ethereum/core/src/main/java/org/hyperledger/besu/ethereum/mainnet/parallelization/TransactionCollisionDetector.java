@@ -24,6 +24,18 @@ import java.util.Set;
 
 public class TransactionCollisionDetector {
 
+  /**
+   * Determines if a transaction has a collision based on the addresses it touches. A collision
+   * occurs if the transaction touches the mining beneficiary address or if there are common
+   * addresses touched by both the transaction and other transactions within the same block.
+   *
+   * @param transaction The transaction to check for collisions.
+   * @param miningBeneficiary The address of the mining beneficiary.
+   * @param parallelizedTransactionContext The context containing the accumulator for the
+   *     transaction.
+   * @param blockAccumulator The accumulator for the block.
+   * @return true if there is a collision; false otherwise.
+   */
   public boolean hasCollision(
       final Transaction transaction,
       final Address miningBeneficiary,
@@ -42,6 +54,15 @@ public class TransactionCollisionDetector {
     return !commonAddresses.isEmpty();
   }
 
+  /**
+   * Retrieves the set of addresses that were touched by a transaction. This includes the sender and
+   * recipient of the transaction, as well as any addresses that were read from or written to by the
+   * transaction's execution.
+   *
+   * @param transaction The transaction to analyze.
+   * @param accumulator An optional accumulator containing state changes made by the transaction.
+   * @return A set of addresses touched by the transaction.
+   */
   public Set<Address> getAddressesTouchedByTransaction(
       final Transaction transaction,
       final Optional<DiffBasedWorldStateUpdateAccumulator<?>> accumulator) {
@@ -60,6 +81,13 @@ public class TransactionCollisionDetector {
     return addresses;
   }
 
+  /**
+   * Retrieves the set of addresses that were touched by all transactions within a block. This
+   * method filters out addresses that were only read and not modified.
+   *
+   * @param accumulator An optional accumulator containing state changes made by the block.
+   * @return A set of addresses that were modified by the block's transactions.
+   */
   private Set<Address> getAddressesTouchedByBlock(
       final Optional<DiffBasedWorldStateUpdateAccumulator<?>> accumulator) {
     HashSet<Address> addresses = new HashSet<>();

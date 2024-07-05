@@ -146,7 +146,6 @@ public class BlockHeader extends SealableBlockHeader
     out.writeBytes(parentHash);
     out.writeBytes(ommersHash);
     out.writeBytes(coinbase);
-
     out.writeBytes(stateRoot);
     out.writeBytes(transactionsRoot);
     out.writeBytes(receiptsRoot);
@@ -175,7 +174,6 @@ public class BlockHeader extends SealableBlockHeader
     if (requestsRoot != null) {
       out.writeBytes(requestsRoot);
     }
-
     out.endList();
   }
 
