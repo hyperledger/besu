@@ -146,7 +146,7 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
     final PrivateTransaction invalidSignedPrivateTransaction =
         getInvalidSignedPrivateTransaction(senderAddress, nonce);
     final String accountAddress = invalidSignedPrivateTransaction.getSender().toHexString();
-    final BytesValueRLPOutput rlpOutputNonce0 = getRLPOutput(invalidSignedPrivateTransaction);
+    final BytesValueRLPOutput invalidTxRlp = getRLPOutput(invalidSignedPrivateTransaction);
 
     processEnclaveStub(invalidSignedPrivateTransaction);
 
@@ -155,7 +155,7 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
             accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountBeforeExecution));
     final Hash invalidTransactionReceipt =
         node.execute(
-            privacyTransactions.sendRawTransaction(rlpOutputNonce0.encoded().toHexString()));
+            privacyTransactions.sendRawTransaction(invalidTxRlp.encoded().toHexString()));
 
     node.verify(priv.getFailedTransactionReceipt(invalidTransactionReceipt));
     node.verify(
@@ -173,7 +173,7 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
   private void retrievePrivacyGroupEnclaveStub() throws JsonProcessingException {
     final String retrieveGroupResponse =
         mapper.writeValueAsString(
-            testPrivacyGroup(
+            createPrivacyGroup(
                 List.of(PARTICIPANT_ENCLAVE_KEY0, PARTICIPANT_ENCLAVE_KEY1),
                 PrivacyGroup.Type.PANTHEON));
     stubFor(post("/retrievePrivacyGroup").willReturn(ok(retrieveGroupResponse)));
@@ -186,7 +186,7 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
   }
 
   private void receiveEnclaveStub(final PrivateTransaction privTx) throws JsonProcessingException {
-    final BytesValueRLPOutput rlpOutput = getRLPOutputForReceiveResponse(privTx);
+    final BytesValueRLPOutput rlpOutput = getRLPOutput(privTx);
     final String senderKey = privTx.getPrivateFrom().toBase64String();
     final String receiveResponse =
         mapper.writeValueAsString(
@@ -195,20 +195,13 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
     stubFor(post("/receive").willReturn(ok(receiveResponse)));
   }
 
-  private BytesValueRLPOutput getRLPOutputForReceiveResponse(
-      final PrivateTransaction privateTransaction) {
-    final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
-    privateTransaction.writeTo(bvrlpo);
-    return bvrlpo;
-  }
-
   private BytesValueRLPOutput getRLPOutput(final PrivateTransaction privateTransaction) {
     final BytesValueRLPOutput bvrlpo = new BytesValueRLPOutput();
     privateTransaction.writeTo(bvrlpo);
     return bvrlpo;
   }
 
-  private PrivacyGroup testPrivacyGroup(
+  private PrivacyGroup createPrivacyGroup(
       final List<String> groupMembers, final PrivacyGroup.Type groupType) {
     return new PrivacyGroup(PRIVACY_GROUP_ID, groupType, "test", "testGroup", groupMembers);
   }

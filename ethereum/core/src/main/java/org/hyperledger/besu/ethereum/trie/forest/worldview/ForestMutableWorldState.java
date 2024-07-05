@@ -32,7 +32,6 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.AbstractWorldUpdater;
-import org.hyperledger.besu.evm.worldstate.PrivateState;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -357,8 +356,7 @@ public class ForestMutableWorldState implements MutableWorldState {
   }
 
   protected static class Updater
-      extends AbstractWorldUpdater<ForestMutableWorldState, WorldStateAccount>
-      implements PrivateState {
+      extends AbstractWorldUpdater<ForestMutableWorldState, WorldStateAccount> {
 
     protected Updater(
         final ForestMutableWorldState world, final EvmConfiguration evmConfiguration) {

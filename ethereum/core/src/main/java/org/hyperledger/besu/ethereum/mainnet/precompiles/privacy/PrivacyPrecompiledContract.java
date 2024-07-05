@@ -176,11 +176,6 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
 
     final WorldUpdater privateWorldStateUpdater = disposablePrivateState.updater();
 
-    final MutableAccount mutableAccount =
-        privateWorldStateUpdater.getOrCreate(privateTransaction.getSender());
-
-    System.out.println("NONCE BEFORE: " + mutableAccount.getNonce());
-
     maybeApplyGenesisToPrivateWorldState(
         lastRootHash,
         disposablePrivateState,
@@ -192,39 +187,30 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
-    System.out.println("NONCE AFTER PROCESS: " + mutableAccount.getNonce());
-    System.out.println(
-        "RESULT: " + result.getStatus() + "\nRECEIPT: " + new PrivateTransactionReceipt(result));
+    final Boolean isPersistingPrivateState = messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false);
 
-    if (!result.isSuccessful() && incrementPrivateNonce) {
-      final Address senderAddress = privateTransaction.getSender();
-      final MutableAccount senderAccount = privateWorldStateUpdater.getOrCreate(senderAddress);
-      senderAccount.incrementNonce();
-      // we can safely commit the updater here, because it is only changed if the transaction is
-      // successful,
-      // so we can be sure that the only change is the incremented nonce
-      privateWorldStateUpdater.commit();
-      disposablePrivateState.persist(null);
-
-      storePrivateMetadata(
-          pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
-    }
-
-    System.out.println("NONCE AFTER INCR: " + mutableAccount.getNonce());
-
-    if (result.isInvalid() || !result.isSuccessful()) {
+    if (!result.isSuccessful()) {
       LOG.error(
           "Failed to process private transaction {}: {}",
           pmtHash,
           result.getValidationResult().getErrorMessage());
-      if (!incrementPrivateNonce) {
-        privateMetadataUpdater.putTransactionReceipt(
-            pmtHash, new PrivateTransactionReceipt(result));
+      if (isPersistingPrivateState && incrementPrivateNonce) {
+        final Address senderAddress = privateTransaction.getSender();
+        final MutableAccount senderAccount = privateWorldStateUpdater.getOrCreate(senderAddress);
+        senderAccount.incrementNonce();
+        // we can safely commit the updater here, because it is only changed if the transaction is
+        // successful,
+        // so we can be sure that the only change is the incremented nonce
+        privateWorldStateUpdater.commit();
+        disposablePrivateState.persist(null);
+
+        storePrivateMetadata(
+                pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
       }
       return NO_RESULT;
     }
 
-    if (messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false)) {
+    if (isPersistingPrivateState) {
       privateWorldStateUpdater.commit();
       disposablePrivateState.persist(null);
 

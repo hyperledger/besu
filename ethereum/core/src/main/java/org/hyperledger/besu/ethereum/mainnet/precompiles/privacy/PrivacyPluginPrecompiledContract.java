@@ -90,6 +90,7 @@ public class PrivacyPluginPrecompiledContract extends PrivacyPrecompiledContract
         privateWorldStateUpdater,
         privacyGroupId,
         messageFrame.getBlockValues().getNumber());
+
     final TransactionProcessingResult result =
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
