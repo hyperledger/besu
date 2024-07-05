@@ -154,8 +154,7 @@ public class MultiTenancyPrivateNonceIncrementingTest extends AcceptanceTestBase
         priv.getTransactionCount(
             accountAddress, PRIVACY_GROUP_ID, expectedTransactionCountBeforeExecution));
     final Hash invalidTransactionReceipt =
-        node.execute(
-            privacyTransactions.sendRawTransaction(invalidTxRlp.encoded().toHexString()));
+        node.execute(privacyTransactions.sendRawTransaction(invalidTxRlp.encoded().toHexString()));
 
     node.verify(priv.getFailedTransactionReceipt(invalidTransactionReceipt));
     node.verify(

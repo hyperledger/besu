@@ -187,7 +187,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         processPrivateTransaction(
             messageFrame, privateTransaction, privacyGroupId, privateWorldStateUpdater);
 
-    final Boolean isPersistingPrivateState = messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false);
+    final Boolean isPersistingPrivateState =
+        messageFrame.getContextVariable(KEY_IS_PERSISTING_PRIVATE_STATE, false);
 
     if (!result.isSuccessful()) {
       LOG.error(
@@ -205,7 +206,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         disposablePrivateState.persist(null);
 
         storePrivateMetadata(
-                pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
+            pmtHash, privacyGroupId, disposablePrivateState, privateMetadataUpdater, result);
       }
       return NO_RESULT;
     }

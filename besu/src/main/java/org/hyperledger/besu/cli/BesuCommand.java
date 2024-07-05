@@ -717,7 +717,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     private final Boolean isFlexiblePrivacyGroupsEnabled = false;
 
     @Option(
-        names = {"--privacy-nonce-incrementation-enabled"},
+        names = {"--privacy-nonce-always-increment"},
         description =
             "Enable private nonce incrementation even if the transaction didn't succeeded (default: ${DEFAULT-VALUE})")
     private final Boolean isPrivateNonceIncrementationEnabled = false;
