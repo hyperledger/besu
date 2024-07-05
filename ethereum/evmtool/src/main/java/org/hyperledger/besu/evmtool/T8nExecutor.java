@@ -468,6 +468,44 @@ public class T8nExecutor {
       }
     }
 
+    var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
+    if (requestProcessorCoordinator.isPresent()) {
+      var rpc = requestProcessorCoordinator.get();
+      ProcessRequestContext context =
+          new ProcessRequestContext(
+              blockHeader,
+              worldState,
+              protocolSpec,
+              receipts,
+              new CachingBlockHashLookup(blockHeader, blockchain),
+              OperationTracer.NO_TRACING);
+      Optional<List<Request>> maybeRequests = rpc.process(context);
+      Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
+
+      resultObject.put("requestsRoot", requestRoot.toHexString());
+      var deposits = resultObject.putArray("depositRequests");
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
+          .forEach(
+              deposit -> {
+                var obj = deposits.addObject();
+                obj.put("pubkey", deposit.getPubkey().toHexString());
+                obj.put("withdrawalCredentials", deposit.getWithdrawalCredentials().toHexString());
+                obj.put("amount", deposit.getAmount().toHexString());
+                obj.put("signature", deposit.getSignature().toHexString());
+                obj.put("index", deposit.getIndex().toHexString());
+              });
+
+      var withdrawlRequests = resultObject.putArray("withdrawalRequests");
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), WithdrawalRequest.class)
+          .forEach(
+              wr -> {
+                var obj = withdrawlRequests.addObject();
+                obj.put("sourceAddress", wr.getSourceAddress().toHexString());
+                obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
+                obj.put("amount", wr.getAmount().toHexString());
+              });
+    }
+
     worldState.persist(blockHeader);
 
     resultObject.put("stateRoot", worldState.rootHash().toHexString());
@@ -508,44 +546,6 @@ public class T8nExecutor {
               .toBytes()
               .toQuantityHexString());
       resultObject.put("blobGasUsed", Bytes.ofUnsignedLong(blobGasUsed).toQuantityHexString());
-    }
-
-    var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
-    if (requestProcessorCoordinator.isPresent()) {
-      var rpc = requestProcessorCoordinator.get();
-      ProcessRequestContext context =
-          new ProcessRequestContext(
-              blockHeader,
-              worldState,
-              protocolSpec,
-              receipts,
-              new CachingBlockHashLookup(blockHeader, blockchain),
-              OperationTracer.NO_TRACING);
-      Optional<List<Request>> maybeRequests = rpc.process(context);
-      Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
-
-      resultObject.put("requestsRoot", requestRoot.toHexString());
-      var deposits = resultObject.putArray("depositRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
-          .forEach(
-              deposit -> {
-                var obj = deposits.addObject();
-                obj.put("pubkey", deposit.getPubkey().toHexString());
-                obj.put("withdrawalCredentials", deposit.getWithdrawalCredentials().toHexString());
-                obj.put("amount", deposit.getAmount().toHexString());
-                obj.put("signature", deposit.getSignature().toHexString());
-                obj.put("index", deposit.getIndex().toHexString());
-              });
-
-      var withdrawlRequests = resultObject.putArray("withdrawalRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), WithdrawalRequest.class)
-          .forEach(
-              wr -> {
-                var obj = withdrawlRequests.addObject();
-                obj.put("sourceAddress", wr.getSourceAddress().toHexString());
-                obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
-                obj.put("amount", wr.getAmount().toHexString());
-              });
     }
 
     ObjectNode allocObject = objectMapper.createObjectNode();
