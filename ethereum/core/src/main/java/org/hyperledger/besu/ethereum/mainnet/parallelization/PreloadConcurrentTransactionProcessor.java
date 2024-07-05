@@ -47,8 +47,8 @@ public class PreloadConcurrentTransactionProcessor {
 
   private final TransactionCollisionDetector transactionCollisionDetector;
 
-  private final Map<Long, ParallelizedTransactionContext> parallelizedTransactionContextByLocation =
-      new ConcurrentHashMap<>();
+  private final Map<Integer, ParallelizedTransactionContext>
+      parallelizedTransactionContextByLocation = new ConcurrentHashMap<>();
 
   int confirmedParallelizedTransaction = 0;
   int conflictingButCachedTransaction = 0;
@@ -71,7 +71,7 @@ public class PreloadConcurrentTransactionProcessor {
     conflictingButCachedTransaction = 0;
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
-      final long transactionIndex = i;
+      final int transactionIndex = i;
       CompletableFuture.runAsync(
           () -> {
             DiffBasedWorldState roundWorldState =
@@ -137,7 +137,7 @@ public class PreloadConcurrentTransactionProcessor {
       final MutableWorldState worldState,
       final Address miningBeneficiary,
       final Transaction transaction,
-      final long transactionIndex) {
+      final int transactionIndex) {
     final DiffBasedWorldState diffBasedWorldState = (DiffBasedWorldState) worldState;
     final DiffBasedWorldStateUpdateAccumulator blockAccumulator =
         (DiffBasedWorldStateUpdateAccumulator) diffBasedWorldState.updater();
