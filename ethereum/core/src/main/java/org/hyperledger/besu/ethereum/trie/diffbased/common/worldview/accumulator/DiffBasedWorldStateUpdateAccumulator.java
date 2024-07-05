@@ -104,7 +104,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   @SuppressWarnings("UseBulkOperation")
   public void cloneFromUpdaterWithPreloader(
       final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
-
     source
         .getAccountsToUpdate()
         .forEach(

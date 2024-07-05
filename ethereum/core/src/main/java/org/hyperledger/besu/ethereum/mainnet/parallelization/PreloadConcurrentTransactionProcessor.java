@@ -23,17 +23,18 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.LazyBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.WorldView;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Executor;
 import java.util.concurrent.Executors;
 
@@ -45,6 +46,9 @@ public class PreloadConcurrentTransactionProcessor {
   private final MainnetTransactionProcessor transactionProcessor;
 
   private final TransactionCollisionDetector transactionCollisionDetector;
+
+  private final Map<Long, ParallelizedTransactionContext> parallelizedTransactionContextByLocation =
+      new ConcurrentHashMap<>();
 
   int confirmedParallelizedTransaction = 0;
   int conflictingButCachedTransaction = 0;
@@ -71,24 +75,59 @@ public class PreloadConcurrentTransactionProcessor {
       CompletableFuture.runAsync(
           () -> {
             DiffBasedWorldState roundWorldState =
-                new BonsaiWorldState(
-                    (BonsaiWorldState) worldState, new LazyBonsaiCachedMerkleTrieLoader());
-            WorldUpdater roundWorldStateUpdater = roundWorldState.updater();
+                new BonsaiWorldState((BonsaiWorldState) worldState);
+
+            final ParallelizedTransactionContext.Builder contextBuilder =
+                new ParallelizedTransactionContext.Builder();
+            final DiffBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
+                (DiffBasedWorldStateUpdateAccumulator<?>) roundWorldState.updater();
             final TransactionProcessingResult result =
                 transactionProcessor.processTransaction(
                     roundWorldStateUpdater,
                     blockHeader,
                     transaction,
                     miningBeneficiary,
-                    OperationTracer.NO_TRACING,
+                    new OperationTracer() {
+                      @Override
+                      public void traceTransactionBeforeMiningReward(
+                          final WorldView worldView,
+                          final org.hyperledger.besu.datatypes.Transaction tx,
+                          final Wei miningReward) {
+                        if (transactionCollisionDetector
+                            .getAddressesTouchedByTransaction(
+                                transaction, Optional.of(roundWorldStateUpdater))
+                            .contains(miningBeneficiary)) {
+                          contextBuilder.isMiningBeneficiaryTouchedPreRewardByTransaction(true);
+                        }
+                        contextBuilder.miningBeneficiaryReward(miningReward);
+                      }
+                    },
                     blockHashLookup,
                     true,
                     TransactionValidationParams.processingBlock(),
                     privateMetadataUpdater,
                     blobGasPrice);
+
+            // commit the accumulator
             roundWorldState.getAccumulator().commit();
-            transactionCollisionDetector.saveParallelizedTransactionProcessingResult(
-                transactionIndex, roundWorldState.getAccumulator(), result);
+
+            contextBuilder
+                .transactionAccumulator(roundWorldState.getAccumulator())
+                .transactionProcessingResult(result);
+
+            final ParallelizedTransactionContext parallelizedTransactionContext =
+                contextBuilder.build();
+            if (!parallelizedTransactionContext
+                .isMiningBeneficiaryTouchedPreRewardByTransaction()) {
+              /*
+               *If the address of the mining beneficiary has been touched only for adding rewards,
+               *we remove it from the accumulator to avoid a false positive collision.
+               * The balance will be increased during the sequential processing.
+               */
+              roundWorldStateUpdater.getAccountsToUpdate().remove(miningBeneficiary);
+            }
+            parallelizedTransactionContextByLocation.put(
+                transactionIndex, parallelizedTransactionContext);
           },
           executor);
     }
@@ -100,29 +139,34 @@ public class PreloadConcurrentTransactionProcessor {
       final Transaction transaction,
       final long transactionIndex) {
     final DiffBasedWorldState diffBasedWorldState = (DiffBasedWorldState) worldState;
-    final DiffBasedWorldStateUpdateAccumulator diffBasedWorldStateUpdateAccumulator =
+    final DiffBasedWorldStateUpdateAccumulator blockAccumulator =
         (DiffBasedWorldStateUpdateAccumulator) diffBasedWorldState.updater();
-    final Optional<TransactionProcessingResult> maybeTransactionProcessingResult;
-    final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator =
-        transactionCollisionDetector.getAccumulatorByTransaction().get(transactionIndex);
-    if (transactionAccumulator != null
-        && !transactionCollisionDetector.checkConflicts(
-            miningBeneficiary,
-            transaction,
-            transactionAccumulator,
-            diffBasedWorldStateUpdateAccumulator)) {
-      diffBasedWorldStateUpdateAccumulator.cloneFromUpdaterWithPreloader(transactionAccumulator);
-      maybeTransactionProcessingResult =
-          Optional.of(transactionCollisionDetector.getResultByTransaction().get(transactionIndex));
-      confirmedParallelizedTransaction++;
-    } else {
-      if (transactionAccumulator != null) {
-        diffBasedWorldStateUpdateAccumulator.clonePriorFromUpdater(transactionAccumulator);
+    final ParallelizedTransactionContext parallelizedTransactionContext =
+        parallelizedTransactionContextByLocation.get(transactionIndex);
+    if (parallelizedTransactionContext != null) {
+      final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator =
+          parallelizedTransactionContext.transactionAccumulator();
+      final TransactionProcessingResult transactionProcessingResult =
+          parallelizedTransactionContext.transactionProcessingResult();
+      final boolean hasCollision =
+          transactionCollisionDetector.hasCollision(
+              transaction, miningBeneficiary, parallelizedTransactionContext, blockAccumulator);
+      if (transactionProcessingResult.isSuccessful() && !hasCollision) {
+        blockAccumulator
+            .getOrCreate(miningBeneficiary)
+            .incrementBalance(parallelizedTransactionContext.miningBeneficiaryReward());
+
+        blockAccumulator.cloneFromUpdaterWithPreloader(transactionAccumulator);
+
+        confirmedParallelizedTransaction++;
+        return Optional.of(transactionProcessingResult);
+      } else {
+        blockAccumulator.clonePriorFromUpdater(transactionAccumulator);
         conflictingButCachedTransaction++;
+        return Optional.empty();
       }
-      maybeTransactionProcessingResult = Optional.empty();
     }
-    return maybeTransactionProcessingResult;
+    return Optional.empty();
   }
 
   public int getConfirmedParallelizedTransaction() {

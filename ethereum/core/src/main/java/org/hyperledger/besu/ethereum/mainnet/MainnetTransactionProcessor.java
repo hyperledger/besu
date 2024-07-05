@@ -483,6 +483,12 @@ public class MainnetTransactionProcessor {
       final Wei coinbaseWeiDelta =
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
+      operationTracer.traceTransactionBeforeMiningReward(
+          worldUpdater, transaction, coinbaseWeiDelta);
+
+      final var coinbase = worldState.getOrCreate(miningBeneficiary);
+      coinbase.incrementBalance(coinbaseWeiDelta);
+
       operationTracer.traceEndTransaction(
           worldUpdater,
           transaction,
@@ -500,15 +506,12 @@ public class MainnetTransactionProcessor {
       }
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-        TransactionProcessingResult successful =
-            TransactionProcessingResult.successful(
-                initialFrame.getLogs(),
-                gasUsedByTransaction,
-                refundedGas,
-                initialFrame.getOutputData(),
-                validationResult);
-        successful.setMiningBenef(coinbaseWeiDelta);
-        return successful;
+        return TransactionProcessingResult.successful(
+            initialFrame.getLogs(),
+            gasUsedByTransaction,
+            refundedGas,
+            initialFrame.getOutputData(),
+            validationResult);
       } else {
         if (initialFrame.getExceptionalHaltReason().isPresent()) {
           LOG.debug(
@@ -522,14 +525,8 @@ public class MainnetTransactionProcessor {
               transaction.getHash(),
               initialFrame.getRevertReason().get());
         }
-        TransactionProcessingResult failed =
-            TransactionProcessingResult.failed(
-                gasUsedByTransaction,
-                refundedGas,
-                validationResult,
-                initialFrame.getRevertReason());
-        failed.setMiningBenef(coinbaseWeiDelta);
-        return failed;
+        return TransactionProcessingResult.failed(
+            gasUsedByTransaction, refundedGas, validationResult, initialFrame.getRevertReason());
       }
     } catch (final MerkleTrieException re) {
       operationTracer.traceEndTransaction(

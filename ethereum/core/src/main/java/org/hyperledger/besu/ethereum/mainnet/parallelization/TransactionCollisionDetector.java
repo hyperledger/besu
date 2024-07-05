@@ -16,39 +16,23 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 
 import java.util.HashSet;
-import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 public class TransactionCollisionDetector {
 
-  private final Map<Long, DiffBasedWorldStateUpdateAccumulator<?>>
-      accumulatorByParallelizedTransaction = new ConcurrentHashMap<>();
-
-  private final Map<Long, TransactionProcessingResult> resultByParallelizedTransaction =
-      new ConcurrentHashMap<>();
-
-  public void saveParallelizedTransactionProcessingResult(
-      final long transactionIndex,
-      final DiffBasedWorldStateUpdateAccumulator<?> accumulator,
-      final TransactionProcessingResult result) {
-    accumulatorByParallelizedTransaction.put(transactionIndex, accumulator);
-    resultByParallelizedTransaction.put(transactionIndex, result);
-  }
-
-  public boolean checkConflicts(
-      final Address producer,
+  public boolean hasCollision(
       final Transaction transaction,
-      final DiffBasedWorldStateUpdateAccumulator<?> trxAccumulator,
+      final Address miningBeneficiary,
+      final ParallelizedTransactionContext parallelizedTransactionContext,
       final DiffBasedWorldStateUpdateAccumulator<?> blockAccumulator) {
     final Set<Address> addressesTouchedByTransaction =
-        getAddressesTouchedByTransaction(transaction, Optional.of(trxAccumulator));
-    if (addressesTouchedByTransaction.contains(producer)) {
+        getAddressesTouchedByTransaction(
+            transaction, Optional.of(parallelizedTransactionContext.transactionAccumulator()));
+    if (addressesTouchedByTransaction.contains(miningBeneficiary)) {
       return true;
     }
     final Set<Address> addressesTouchedByBlock =
@@ -58,7 +42,7 @@ public class TransactionCollisionDetector {
     return !commonAddresses.isEmpty();
   }
 
-  private Set<Address> getAddressesTouchedByTransaction(
+  public Set<Address> getAddressesTouchedByTransaction(
       final Transaction transaction,
       final Optional<DiffBasedWorldStateUpdateAccumulator<?>> accumulator) {
     HashSet<Address> addresses = new HashSet<>();
@@ -92,13 +76,5 @@ public class TransactionCollisionDetector {
           addresses.addAll(diffBasedWorldStateUpdateAccumulator.getDeletedAccountAddresses());
         });
     return addresses;
-  }
-
-  public Map<Long, DiffBasedWorldStateUpdateAccumulator<?>> getAccumulatorByTransaction() {
-    return accumulatorByParallelizedTransaction;
-  }
-
-  public Map<Long, TransactionProcessingResult> getResultByTransaction() {
-    return resultByParallelizedTransaction;
   }
 }

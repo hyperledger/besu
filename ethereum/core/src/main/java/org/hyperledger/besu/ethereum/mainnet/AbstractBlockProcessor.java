@@ -127,6 +127,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                             calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
             .orElse(Wei.ZERO);
 
+    /*
+     * The runAsyncPreloadBlock method is specifically working with BONSAI.
+     * It facilitates the parallel execution of transactions in the background through an optimistic strategy.
+     * Being non-blocking, it permits reading and modifying a majority of slots and accounts while also
+     * allowing transactions to be executed optimistically. This approach preloads most accounts and slots
+     * into the cache, and also reducing the need to replay transactions in the absence of collisions.
+     */
     preloadConcurrentTransactionProcessor.runAsyncPreloadBlock(
         worldState,
         blockHeader,
@@ -143,6 +150,15 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
       final WorldUpdater blockUpdater = worldState.updater();
 
+      /*
+       * This applyPreloadBlockResult is designed to fetch the results of transactions processed by background threads.
+       * If the transactions were successfully executed in the background, their results are applied to the block.
+       * In the absence of collisions, the entire result is applied without re-executing the transaction.
+       * However, in the event of a conflict, only the data we read are added to the block cache,
+       * and the transaction is replayed. This approach minimizes the amount of data that needs to be
+       * fetched from the disk. If a transaction was not processed in time in the background,
+       * it is executed in the usual manner.
+       */
       TransactionProcessingResult transactionProcessingResult =
           preloadConcurrentTransactionProcessor
               .applyPreloadBlockResult(worldState, miningBeneficiary, transaction, i)
@@ -174,11 +190,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
           ((BonsaiWorldStateUpdateAccumulator) blockUpdater).reset();
         }
         return new BlockProcessingResult(Optional.empty(), errorMessage);
-      }
-
-      final var coinbase = blockUpdater.getOrCreate(miningBeneficiary);
-      if (transactionProcessingResult.getMiningBenef() != null) {
-        coinbase.incrementBalance(transactionProcessingResult.getMiningBenef());
       }
 
       blockUpdater.commit();

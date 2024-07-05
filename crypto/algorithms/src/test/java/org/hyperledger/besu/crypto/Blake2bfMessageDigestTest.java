@@ -17,6 +17,13 @@ package org.hyperledger.besu.crypto;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.security.SecureRandom;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.ExecutionException;
+import java.util.stream.IntStream;
+
 import org.bouncycastle.util.Pack;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -28,6 +35,16 @@ import org.junit.jupiter.params.provider.CsvFileSource;
  * https://github.com/keep-network/blake2b/blob/master/compression/f_test.go
  */
 public class Blake2bfMessageDigestTest {
+
+  private static final SecureRandom SECURE_RANDOM;
+
+  static {
+    try {
+      SECURE_RANDOM = SecureRandom.getInstanceStrong();
+    } catch (NoSuchAlgorithmException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   private Blake2bfMessageDigest messageDigest;
 
@@ -122,6 +139,39 @@ public class Blake2bfMessageDigestTest {
               messageDigest.update(update, 0, 214);
             })
         .isInstanceOf(IllegalArgumentException.class);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Test
+  public void testDigestThreadSafety() throws ExecutionException, InterruptedException {
+    final byte[] input = new byte[213];
+    ;
+    SECURE_RANDOM.nextBytes(input);
+    int numberOfHashes = 10;
+
+    CompletableFuture<byte[]>[] futures =
+        IntStream.range(0, numberOfHashes)
+            .mapToObj(
+                i ->
+                    CompletableFuture.supplyAsync(
+                        () -> {
+                          try {
+                            MessageDigest clonedDigest = messageDigest.clone();
+                            clonedDigest.update(input);
+                            byte[] digest = clonedDigest.digest();
+                            return digest;
+                          } catch (CloneNotSupportedException e) {
+                            throw new RuntimeException(e);
+                          }
+                        }))
+            .toArray(CompletableFuture[]::new);
+
+    CompletableFuture.allOf(futures).get();
+
+    byte[] expectedHash = futures[0].get();
+    for (CompletableFuture<byte[]> future : futures) {
+      assertThat(expectedHash).isEqualTo(future.get());
+    }
   }
 
   @ParameterizedTest

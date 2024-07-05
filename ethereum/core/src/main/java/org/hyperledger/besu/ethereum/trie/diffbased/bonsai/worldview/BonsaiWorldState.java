@@ -88,12 +88,10 @@ public class BonsaiWorldState extends DiffBasedWorldState {
         diffBasedWorldStateConfig);
   }
 
-  public BonsaiWorldState(
-      final BonsaiWorldState worldState,
-      final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader) {
+  public BonsaiWorldState(final BonsaiWorldState worldState) {
     this(
         new BonsaiWorldStateLayerStorage(worldState.getWorldStateStorage()),
-        bonsaiCachedMerkleTrieLoader,
+        worldState.bonsaiCachedMerkleTrieLoader,
         worldState.cachedWorldStorageManager,
         worldState.trieLogManager,
         worldState.accumulator.getEvmConfiguration(),
