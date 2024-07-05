@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.LazyBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
@@ -106,7 +107,8 @@ public class PreloadConcurrentTransactionProcessor {
       CompletableFuture.runAsync(
           () -> {
             DiffBasedWorldState roundWorldState =
-                new BonsaiWorldState((BonsaiWorldState) worldState);
+                new BonsaiWorldState(
+                    (BonsaiWorldState) worldState, new LazyBonsaiCachedMerkleTrieLoader());
 
             final ParallelizedTransactionContext.Builder contextBuilder =
                 new ParallelizedTransactionContext.Builder();
