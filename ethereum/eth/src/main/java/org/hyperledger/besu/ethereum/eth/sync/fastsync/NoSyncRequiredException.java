@@ -12,13 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.mainnet.requests;
+package org.hyperledger.besu.ethereum.eth.sync.fastsync;
 
-import org.hyperledger.besu.ethereum.core.Request;
-
-import java.util.List;
-import java.util.Optional;
-
-public interface RequestProcessor {
-  Optional<List<? extends Request>> process(final ProcessRequestContext context);
-}
+public class NoSyncRequiredException extends RuntimeException {}

@@ -1,6 +1,14 @@
 # Changelog
 
-## Next Release
+## Next release
+
+### Breaking Changes
+
+### Additions and Improvements
+
+### Bug fixes
+
+## 24.7.0
 
 ### Upcoming Breaking Changes
 - Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
@@ -25,12 +33,15 @@
 - Nodes in a permissioned chain maintain (and retry) connections to bootnodes [#7257](https://github.com/hyperledger/besu/pull/7257)
 - Promote experimental `besu storage x-trie-log` subcommand to production-ready [#7278](https://github.com/hyperledger/besu/pull/7278)
 - Enhanced BFT round-change diagnostics [#7271](https://github.com/hyperledger/besu/pull/7271)
+- `--Xsnapsync-bft-enabled` option enables experimental support for snap sync with IBFT/QBFT permissioned Bonsai-DB chains [#7140](https://github.com/hyperledger/besu/pull/7140)
 
 ### Bug fixes
 - Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)
 - Fix "Invalid block detected" for BFT chains using Bonsai DB [#7204](https://github.com/hyperledger/besu/pull/7204)
 - Fix "Could not confirm best peer had pivot block" [#7109](https://github.com/hyperledger/besu/issues/7109)
 - Fix "Chain Download Halt" [#6884](https://github.com/hyperledger/besu/issues/6884)
+
+
 
 ## 24.6.0
 

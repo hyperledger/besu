@@ -50,7 +50,9 @@ import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -241,10 +243,18 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
       // EIP-7685: process EL requests
       final Optional<RequestProcessorCoordinator> requestProcessor =
           newProtocolSpec.getRequestProcessorCoordinator();
+
+      ProcessRequestContext context =
+          new ProcessRequestContext(
+              processableBlockHeader,
+              disposableWorldState,
+              newProtocolSpec,
+              transactionResults.getReceipts(),
+              new CachingBlockHashLookup(processableBlockHeader, protocolContext.getBlockchain()),
+              operationTracer);
+
       Optional<List<Request>> maybeRequests =
-          requestProcessor.flatMap(
-              processor ->
-                  processor.process(disposableWorldState, transactionResults.getReceipts()));
+          requestProcessor.flatMap(processor -> processor.process(context));
 
       throwIfStopped();
 

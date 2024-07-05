@@ -32,6 +32,7 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.proof.WorldStateProofProvider;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
+import org.hyperledger.besu.ethereum.trie.MerkleTrie;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
@@ -225,6 +226,9 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
         .addArgument(() -> asLogHash(range.endKeyHash()))
         .log();
     try {
+      if (range.worldStateRootHash().equals(Hash.EMPTY_TRIE_HASH)) {
+        return AccountRangeMessage.create(new HashMap<>(), List.of(MerkleTrie.EMPTY_TRIE_NODE));
+      }
       return worldStateStorageProvider
           .apply(range.worldStateRootHash())
           .map(
@@ -509,8 +513,11 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                   // first element in paths is account
                   if (triePath.size() == 1) {
                     // if there is only one path, presume it should be compact encoded account path
-                    var optStorage =
-                        storage.getTrieNodeUnsafe(CompactEncoding.decode(triePath.get(0)));
+                    final Bytes location = CompactEncoding.decode(triePath.get(0));
+                    var optStorage = storage.getTrieNodeUnsafe(location);
+                    if (optStorage.isEmpty() && location.isEmpty()) {
+                      optStorage = Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+                    }
                     if (optStorage.isPresent()) {
                       if (!trieNodes.isEmpty()
                           && (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes
@@ -534,9 +541,12 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
                     List<Bytes> storagePaths = triePath.subList(1, triePath.size());
                     for (var path : storagePaths) {
+                      final Bytes location = CompactEncoding.decode(path);
                       var optStorage =
-                          storage.getTrieNodeUnsafe(
-                              Bytes.concatenate(accountPrefix, CompactEncoding.decode(path)));
+                          storage.getTrieNodeUnsafe(Bytes.concatenate(accountPrefix, location));
+                      if (optStorage.isEmpty() && location.isEmpty()) {
+                        optStorage = Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+                      }
                       if (optStorage.isPresent()) {
                         if (!trieNodes.isEmpty()
                             && sumListBytes(trieNodes) + optStorage.get().size()

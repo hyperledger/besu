@@ -1558,10 +1558,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateConsensusSyncCompatibilityOptions() {
-    // snap and checkpoint can't be used with BFT but can for clique
-    if (genesisConfigOptionsSupplier.get().isIbftLegacy()
-        || genesisConfigOptionsSupplier.get().isIbft2()
-        || genesisConfigOptionsSupplier.get().isQbft()) {
+    // snap and checkpoint are experimental for BFT
+    if ((genesisConfigOptionsSupplier.get().isIbftLegacy()
+            || genesisConfigOptionsSupplier.get().isIbft2()
+            || genesisConfigOptionsSupplier.get().isQbft())
+        && !unstableSynchronizerOptions.isSnapSyncBftEnabled()) {
       final String errorSuffix = "can't be used with BFT networks";
       if (SyncMode.CHECKPOINT.equals(syncMode) || SyncMode.X_CHECKPOINT.equals(syncMode)) {
         throw new ParameterException(
@@ -2189,7 +2190,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return unstableSynchronizerOptions
         .toDomainObject()
         .syncMode(syncMode)
-        .fastSyncMinimumPeerCount(syncMinPeerCount)
+        .syncMinimumPeerCount(syncMinPeerCount)
         .build();
   }
 
@@ -2202,14 +2203,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .saveFile((dataPath.resolve(txPoolConf.getSaveFile().getPath()).toFile()));
 
     if (genesisConfigOptionsSupplier.get().isZeroBaseFee()) {
-      logger.info(
+      logger.warn(
           "Forcing price bump for transaction replacement to 0, since we are on a zero basefee network");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
     }
 
     if (miningParametersSupplier.get().getMinTransactionGasPrice().equals(Wei.ZERO)
         && !transactionPoolOptions.isPriceBumpSet(commandLine)) {
-      logger.info(
+      logger.warn(
           "Forcing price bump for transaction replacement to 0, since min-gas-price is set to 0");
       txPoolConfBuilder.priceBump(Percentage.ZERO);
     }
@@ -2818,6 +2819,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     builder.setSnapServerEnabled(this.unstableSynchronizerOptions.isSnapsyncServerEnabled());
+    builder.setSnapSyncBftEnabled(this.unstableSynchronizerOptions.isSnapSyncBftEnabled());
 
     builder.setTxPoolImplementation(buildTransactionPoolConfiguration().getTxPoolImplementation());
     builder.setWorldStateUpdateMode(unstableEvmOptions.toDomainObject().worldUpdaterMode());
