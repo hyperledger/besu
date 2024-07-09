@@ -43,7 +43,7 @@ public final class BesuInfo {
    * Generate full Besu version
    *
    * @return Besu version in format such as "besu/v23.1.1-dev-ac23d311/osx-x86_64/graalvm-java-17"
-   *     or "besu/v23.1.0/osx-arch_64/corretto-java-19"
+   *     or "besu/v23.1.0/osx-aarch_64/corretto-java-19"
    */
   public static String version() {
     return String.format("%s/v%s/%s/%s", CLIENT, VERSION, OS, VM);
