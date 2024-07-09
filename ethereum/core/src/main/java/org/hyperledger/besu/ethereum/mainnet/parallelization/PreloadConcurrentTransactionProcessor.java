@@ -48,7 +48,8 @@ import java.util.concurrent.Executors;
 @SuppressWarnings({"unchecked", "rawtypes", "unused"})
 public class PreloadConcurrentTransactionProcessor {
 
-  private static final Executor executor = Executors.newFixedThreadPool(4);
+  private static final int NCPU = Runtime.getRuntime().availableProcessors();
+  private static final Executor executor = Executors.newFixedThreadPool(NCPU);
 
   private final MainnetTransactionProcessor transactionProcessor;
 
