@@ -333,7 +333,8 @@ public class TestContextBuilder {
             IBFT_EXTRA_DATA_ENCODER,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager(), false);
+            new BadBlockManager(),
+            false);
 
     /////////////////////////////////////////////////////////////////////////////////////
     // From here down is BASICALLY taken from IbftBesuController

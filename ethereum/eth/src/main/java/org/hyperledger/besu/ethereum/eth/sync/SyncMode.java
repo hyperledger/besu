@@ -54,4 +54,8 @@ public enum SyncMode {
   public static boolean isCheckpointSync(final SyncMode syncMode) {
     return X_CHECKPOINT.equals(syncMode) || CHECKPOINT.equals(syncMode);
   }
+
+  public static boolean isSnapSync(final SyncMode syncMode) {
+    return X_SNAP.equals(syncMode) || SNAP.equals(syncMode);
+  }
 }

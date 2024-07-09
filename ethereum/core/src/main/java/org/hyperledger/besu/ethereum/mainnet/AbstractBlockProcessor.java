@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelizedConcurrentTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
@@ -113,6 +114,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     protocolSpec.getBlockHashProcessor().processBlockHashes(blockchain, worldState, blockHeader);
     final BlockHashLookup blockHashLookup = new CachingBlockHashLookup(blockHeader, blockchain);
+
     final Address miningBeneficiary = miningBeneficiaryCalculator.calculateBeneficiary(blockHeader);
 
     Optional<BlockHeader> maybeParentHeader =
@@ -133,25 +135,24 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     if (isParallelPreloadTxEnabled) {
       if ((worldState instanceof DiffBasedWorldState)) {
         preloadConcurrentTransactionProcessor =
-                Optional.of(new ParallelizedConcurrentTransactionProcessor(transactionProcessor));
+            Optional.of(new ParallelizedConcurrentTransactionProcessor(transactionProcessor));
         // runAsyncPreloadBlock, if activated, facilitates the  non-blocking parallel execution of
         // transactions in the background through an optimistic strategy.
         preloadConcurrentTransactionProcessor
-                .get()
-                .runAsyncPreloadBlock(
-                        worldState,
-                        blockHeader,
-                        transactions,
-                        miningBeneficiary,
-                        blockHashLookup,
-                        blobGasPrice,
-                        privateMetadataUpdater);
+            .get()
+            .runAsyncPreloadBlock(
+                worldState,
+                blockHeader,
+                transactions,
+                miningBeneficiary,
+                blockHashLookup,
+                blobGasPrice,
+                privateMetadataUpdater);
       }
     }
 
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
-
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
@@ -237,7 +238,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         protocolSpec.getRequestProcessorCoordinator();
     Optional<List<Request>> maybeRequests = Optional.empty();
     if (requestProcessor.isPresent()) {
-      maybeRequests = requestProcessor.get().process(worldState, receipts);
+      ProcessRequestContext context =
+          new ProcessRequestContext(
+              blockHeader,
+              worldState,
+              protocolSpec,
+              receipts,
+              blockHashLookup,
+              OperationTracer.NO_TRACING);
+
+      maybeRequests = requestProcessor.get().process(context);
     }
 
     if (!rewardCoinbase(worldState, blockHeader, ommers, skipZeroBlockRewards)) {

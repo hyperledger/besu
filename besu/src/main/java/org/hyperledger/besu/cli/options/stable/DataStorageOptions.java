@@ -123,13 +123,12 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
 
     @CommandLine.Option(
-            hidden = true,
-            names = {"--Xbonsai-parallel-preload-tx-enabled"},
-            arity = "1",
-            description =
-                    "Enables parallel preloading of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. (default: ${DEFAULT-VALUE})")
+        hidden = true,
+        names = {"--Xbonsai-parallel-preload-tx-enabled"},
+        arity = "1",
+        description =
+            "Enables parallel preloading of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. (default: ${DEFAULT-VALUE})")
     private Boolean isParallelPreloadTxEnabled = false;
-
 
     /** Default Constructor. */
     Unstable() {}
@@ -152,47 +151,49 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    */
   public void validate(final CommandLine commandLine, final SyncMode syncMode) {
     if (DataStorageFormat.BONSAI == dataStorageFormat) {
-      if(bonsaiLimitTrieLogsEnabled) {
+      if (bonsaiLimitTrieLogsEnabled) {
         if (SyncMode.FULL == syncMode) {
           throw new CommandLine.ParameterException(
-                  commandLine,
-                  String.format(
-                          "Cannot enable " + BONSAI_LIMIT_TRIE_LOGS_ENABLED + " with sync-mode %s",
-                          syncMode));
+              commandLine,
+              String.format(
+                  "Cannot enable %s with sync-mode %s. You must set %s or use a different sync-mode",
+                  BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+                  SyncMode.FULL,
+                  BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
         }
         if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
           throw new CommandLine.ParameterException(
-                  commandLine,
-                  String.format(
-                          BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
-                          MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
+              commandLine,
+              String.format(
+                  BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
+                  MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
         }
         if (bonsaiTrieLogPruningWindowSize <= 0) {
           throw new CommandLine.ParameterException(
-                  commandLine,
-                  String.format(
-                          BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
-                          bonsaiTrieLogPruningWindowSize));
+              commandLine,
+              String.format(
+                  BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+                  bonsaiTrieLogPruningWindowSize));
         }
         if (bonsaiTrieLogPruningWindowSize <= bonsaiMaxLayersToLoad) {
           throw new CommandLine.ParameterException(
-                  commandLine,
-                  String.format(
-                          BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
-                                  + "=%d must be greater than "
-                                  + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
-                                  + "=%d",
-                          bonsaiTrieLogPruningWindowSize,
-                          bonsaiMaxLayersToLoad));
+              commandLine,
+              String.format(
+                  BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+                      + "=%d must be greater than "
+                      + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
+                      + "=%d",
+                  bonsaiTrieLogPruningWindowSize,
+                  bonsaiMaxLayersToLoad));
         }
       }
     } else {
-      if(unstableOptions.isParallelPreloadTxEnabled){
-        throw new CommandLine.ParameterException(commandLine,
-                "Transaction parallelization is not supported unless operating in a 'diffbased' mode, such as Bonsai.");
+      if (unstableOptions.isParallelPreloadTxEnabled) {
+        throw new CommandLine.ParameterException(
+            commandLine,
+            "Transaction parallelization is not supported unless operating in a 'diffbased' mode, such as Bonsai.");
       }
     }
-
   }
 
   /**
@@ -214,7 +215,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
     dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
         domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
     dataStorageOptions.unstableOptions.isParallelPreloadTxEnabled =
-            domainObject.getUnstable().isParallelPreloadTxEnabled();
+        domainObject.getUnstable().isParallelPreloadTxEnabled();
 
     return dataStorageOptions;
   }
