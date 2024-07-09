@@ -33,7 +33,6 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayDeque;
 import java.util.ArrayList;
@@ -200,7 +199,7 @@ public class MessageFrame {
   public static final int DEFAULT_MAX_STACK_SIZE = 1024;
 
   // Global data fields.
-  private final WorldUpdater worldUpdater;
+  private final WorldUpdaterService worldUpdaterService;
 
   // Metadata fields.
   private final Type type;
@@ -257,7 +256,7 @@ public class MessageFrame {
 
   private MessageFrame(
       final Type type,
-      final WorldUpdater worldUpdater,
+      final WorldUpdaterService worldUpdaterService,
       final long initialGas,
       final Address recipient,
       final Address contract,
@@ -274,7 +273,7 @@ public class MessageFrame {
 
     this.txValues = txValues;
     this.type = type;
-    this.worldUpdater = worldUpdater;
+    this.worldUpdaterService = worldUpdaterService;
     this.gasRemaining = initialGas;
     this.stack = new OperandStack(txValues.maxStackSize());
     this.returnStack = Suppliers.memoize(ReturnStack::new);
@@ -975,12 +974,12 @@ public class MessageFrame {
   }
 
   /**
-   * Return the world state.
+   * Return the world state service.
    *
-   * @return the world state
+   * @return the world state service
    */
-  public WorldUpdater getWorldUpdater() {
-    return worldUpdater;
+  public WorldUpdaterService getWorldUpdaterService() {
+    return worldUpdaterService;
   }
 
   /**
@@ -1325,7 +1324,7 @@ public class MessageFrame {
 
     private MessageFrame parentMessageFrame;
     private Type type;
-    private WorldUpdater worldUpdater;
+    private WorldUpdaterService worldUpdaterService;
     private Long initialGas;
     private Address address;
     private Address originator;
@@ -1381,11 +1380,11 @@ public class MessageFrame {
     /**
      * Sets World updater.
      *
-     * @param worldUpdater the world updater
+     * @param worldUpdaterService the world updater
      * @return the builder
      */
-    public Builder worldUpdater(final WorldUpdater worldUpdater) {
-      this.worldUpdater = worldUpdater;
+    public Builder worldUpdaterService(final WorldUpdaterService worldUpdaterService) {
+      this.worldUpdaterService = worldUpdaterService;
       return this;
     }
 
@@ -1633,7 +1632,7 @@ public class MessageFrame {
 
     private void validate() {
       if (parentMessageFrame == null) {
-        checkState(worldUpdater != null, "Missing message frame world updater");
+        checkState(worldUpdaterService != null, "Missing message frame world updater service");
         checkState(originator != null, "Missing message frame originator");
         checkState(gasPrice != null, "Missing message frame getGasRemaining price");
         checkState(blobGasPrice != null, "Missing message frame blob gas price");
@@ -1661,7 +1660,7 @@ public class MessageFrame {
     public MessageFrame build() {
       validate();
 
-      WorldUpdater updater;
+      WorldUpdaterService effectiveWorldUpdaterService;
       boolean newStatic;
       TxValues newTxValues;
       if (parentMessageFrame == null) {
@@ -1682,18 +1681,18 @@ public class MessageFrame {
                 UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
                 UndoSet.of(new BytesTrieSet<>(Address.SIZE)),
                 new UndoScalar<>(0L));
-        updater = worldUpdater;
+        effectiveWorldUpdaterService = worldUpdaterService;
         newStatic = isStatic;
       } else {
         newTxValues = parentMessageFrame.txValues;
-        updater = parentMessageFrame.worldUpdater.updater();
+        effectiveWorldUpdaterService = parentMessageFrame.getWorldUpdaterService();
         newStatic = isStatic || parentMessageFrame.isStatic;
       }
 
       MessageFrame messageFrame =
           new MessageFrame(
               type,
-              updater,
+              effectiveWorldUpdaterService,
               initialGas,
               address,
               contract,

@@ -141,7 +141,7 @@ public class StandardJsonTracer implements OperationTracer {
 
     StringBuilder sb = new StringBuilder();
     if (showStorage) {
-      var updater = messageFrame.getWorldUpdater();
+      var updater = messageFrame.getWorldUpdaterService();
       var account = updater.getAccount(messageFrame.getRecipientAddress());
       if (account != null && !account.getUpdatedStorage().isEmpty()) {
         boolean[] shownEntry = {false};

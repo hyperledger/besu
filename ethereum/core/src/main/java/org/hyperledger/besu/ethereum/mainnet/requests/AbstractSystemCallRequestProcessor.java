@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet.requests;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.SystemCallProcessor;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,7 +48,7 @@ public abstract class AbstractSystemCallRequestProcessor<T extends Request>
     Bytes systemCallOutput =
         systemCallProcessor.process(
             getCallAddress(),
-            context.mutableWorldState().updater(),
+            new WorldUpdaterService(context.mutableWorldState().updater()),
             context.blockHeader(),
             context.operationTracer(),
             context.blockHashLookup());

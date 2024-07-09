@@ -44,6 +44,7 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
@@ -197,8 +198,8 @@ public class PrivacyPluginPrecompiledContractTest {
     final PrivateTransactionProcessor mockPrivateTransactionProcessor =
         mock(PrivateTransactionProcessor.class);
     when(mockPrivateTransactionProcessor.processTransaction(
-            nullable(WorldUpdater.class),
-            nullable(WorldUpdater.class),
+            new WorldUpdaterService(nullable(WorldUpdater.class)),
+            new WorldUpdaterService(nullable(WorldUpdater.class)),
             nullable(ProcessableBlockHeader.class),
             nullable((Hash.class)),
             nullable(PrivateTransaction.class),

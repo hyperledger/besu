@@ -30,6 +30,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
@@ -76,8 +77,8 @@ public class PrivateTransactionProcessor {
   }
 
   public TransactionProcessingResult processTransaction(
-      final WorldUpdater publicWorldState,
-      final WorldUpdater privateWorldState,
+      final WorldUpdaterService publicWorldStateService,
+      final WorldUpdaterService privateWorldStateService,
       final ProcessableBlockHeader blockHeader,
       final Hash pmtHash,
       final PrivateTransaction transaction,
@@ -89,11 +90,11 @@ public class PrivateTransactionProcessor {
       LOG.trace("Starting private execution of {}", transaction);
 
       final Address senderAddress = transaction.getSender();
-      final MutableAccount maybePrivateSender = privateWorldState.getAccount(senderAddress);
+      final MutableAccount maybePrivateSender = privateWorldStateService.getAccount(senderAddress);
       final MutableAccount sender =
           maybePrivateSender != null
               ? maybePrivateSender
-              : privateWorldState.createAccount(senderAddress, 0, Wei.ZERO);
+              : privateWorldStateService.createAccount(senderAddress, 0, Wei.ZERO);
 
       final ValidationResult<TransactionInvalidReason> validationResult =
           privateTransactionValidator.validate(transaction, sender.getNonce(), false);
@@ -109,11 +110,11 @@ public class PrivateTransactionProcessor {
           sender.getNonce());
 
       final WorldUpdater mutablePrivateWorldStateUpdater =
-          new PrivateMutableWorldStateUpdater(publicWorldState, privateWorldState);
+          new PrivateMutableWorldStateUpdater(publicWorldStateService, privateWorldStateService);
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
               .maxStackSize(maxStackSize)
-              .worldUpdater(mutablePrivateWorldStateUpdater)
+              .worldUpdaterService(new WorldUpdaterService(mutablePrivateWorldStateUpdater))
               .initialGas(Long.MAX_VALUE)
               .originator(senderAddress)
               .gasPrice(transaction.getGasPrice())

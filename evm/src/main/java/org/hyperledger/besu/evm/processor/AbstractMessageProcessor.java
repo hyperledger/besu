@@ -102,18 +102,18 @@ public abstract class AbstractMessageProcessor {
 
   private void clearAccumulatedStateBesidesGasAndOutput(final MessageFrame frame) {
     ArrayList<Address> addresses =
-        frame.getWorldUpdater().getTouchedAccounts().stream()
+        frame.getWorldUpdaterService().getTouchedAccounts().stream()
             .filter(AccountState::isEmpty)
             .map(Account::getAddress)
             .filter(forceDeleteAccountsWhenEmpty::contains)
             .collect(Collectors.toCollection(ArrayList::new));
 
     // Clear any pending changes.
-    frame.getWorldUpdater().revert();
+    frame.getWorldUpdaterService().revert();
 
     // Force delete any requested accounts and commit the changes.
-    ((Collection<Address>) addresses).forEach(h -> frame.getWorldUpdater().deleteAccount(h));
-    frame.getWorldUpdater().commit();
+    ((Collection<Address>) addresses).forEach(h -> frame.getWorldUpdaterService().deleteAccount(h));
+    frame.getWorldUpdaterService().commit();
 
     frame.clearLogs();
     frame.clearGasRefund();
@@ -149,7 +149,7 @@ public abstract class AbstractMessageProcessor {
    * @param frame The message frame
    */
   private void completedSuccess(final MessageFrame frame) {
-    frame.getWorldUpdater().commit();
+    frame.getWorldUpdaterService().commit();
     frame.getMessageFrameStack().removeFirst();
     frame.notifyCompletion();
   }

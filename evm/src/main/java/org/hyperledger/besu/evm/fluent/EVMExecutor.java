@@ -32,6 +32,7 @@ import org.hyperledger.besu.evm.contractvalidation.MaxCodeSizeRule;
 import org.hyperledger.besu.evm.contractvalidation.PrefixCodeRule;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -725,7 +726,7 @@ public class EVMExecutor {
     final MessageFrame initialMessageFrame =
         MessageFrame.builder()
             .type(messageFrameType)
-            .worldUpdater(worldUpdater.updater())
+            .worldUpdaterService(new WorldUpdaterService(worldUpdater.updater()))
             .initialGas(gas)
             .contract(contract)
             .address(receiver)

@@ -79,7 +79,7 @@ public class ExtCodeCopyOperation extends AbstractOperation {
       return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
     }
 
-    final Account account = frame.getWorldUpdater().get(address);
+    final Account account = frame.getWorldUpdaterService().get(address);
     final Bytes code = account != null ? account.getCode() : Bytes.EMPTY;
 
     if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {

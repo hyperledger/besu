@@ -97,7 +97,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     final Wei value = Wei.wrap(frame.getStackItem(0));
 
     final Address address = frame.getRecipientAddress();
-    final MutableAccount account = frame.getWorldUpdater().getAccount(address);
+    final MutableAccount account = frame.getWorldUpdaterService().getAccount(address);
 
     frame.clearReturnData();
 
@@ -236,7 +236,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         onFailure(frame, childFrame.getExceptionalHaltReason());
       }
     } else {
-      frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
+      frame.getWorldUpdaterService().deleteAccount(childFrame.getRecipientAddress());
       frame.setReturnData(childFrame.getOutputData());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
       onInvalid(frame, (CodeInvalid) outputCode);

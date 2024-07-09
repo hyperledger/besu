@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collection;
@@ -28,32 +29,33 @@ import java.util.Optional;
 // the public world state, but cannot write to it.
 public class PrivateMutableWorldStateUpdater implements WorldUpdater {
 
-  protected final WorldUpdater publicWorldUpdater;
-  protected final WorldUpdater privateWorldUpdater;
+  protected final WorldUpdaterService publicWorldUpdaterService;
+  protected final WorldUpdaterService privateWorldUpdaterService;
 
   public PrivateMutableWorldStateUpdater(
-      final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
-    this.publicWorldUpdater = publicWorldUpdater;
-    this.privateWorldUpdater = privateWorldUpdater;
+      final WorldUpdaterService publicWorldUpdaterService,
+      final WorldUpdaterService privateWorldUpdaterService) {
+    this.publicWorldUpdaterService = publicWorldUpdaterService;
+    this.privateWorldUpdaterService = privateWorldUpdaterService;
   }
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    return privateWorldUpdater.createAccount(address, nonce, balance);
+    return privateWorldUpdaterService.createAccount(address, nonce, balance);
   }
 
   @Override
   public MutableAccount createAccount(final Address address) {
-    return privateWorldUpdater.createAccount(address);
+    return privateWorldUpdaterService.createAccount(address);
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
-    final MutableAccount privateAccount = privateWorldUpdater.getAccount(address);
+    final MutableAccount privateAccount = privateWorldUpdaterService.getAccount(address);
     if (privateAccount != null && !privateAccount.isEmpty()) {
       return privateAccount;
     }
-    final MutableAccount publicAccount = publicWorldUpdater.getAccount(address);
+    final MutableAccount publicAccount = publicWorldUpdaterService.getAccount(address);
     if (publicAccount != null && !publicAccount.isEmpty()) {
       publicAccount.becomeImmutable();
       return publicAccount;
@@ -63,36 +65,36 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
 
   @Override
   public void deleteAccount(final Address address) {
-    privateWorldUpdater.deleteAccount(address);
+    privateWorldUpdaterService.deleteAccount(address);
   }
 
   @Override
   public Collection<? extends Account> getTouchedAccounts() {
-    return privateWorldUpdater.getTouchedAccounts();
+    return privateWorldUpdaterService.getTouchedAccounts();
   }
 
   @Override
   public Collection<Address> getDeletedAccountAddresses() {
-    return privateWorldUpdater.getDeletedAccountAddresses();
+    return privateWorldUpdaterService.getDeletedAccountAddresses();
   }
 
   @Override
   public void revert() {
-    privateWorldUpdater.revert();
+    privateWorldUpdaterService.revert();
   }
 
   @Override
   public void commit() {
-    privateWorldUpdater.commit();
+    privateWorldUpdaterService.commit();
   }
 
   @Override
   public Account get(final Address address) {
-    final Account privateAccount = privateWorldUpdater.get(address);
+    final Account privateAccount = privateWorldUpdaterService.get(address);
     if (privateAccount != null && !privateAccount.isEmpty()) {
       return privateAccount;
     }
-    return publicWorldUpdater.get(address);
+    return publicWorldUpdaterService.get(address);
   }
 
   @Override
@@ -102,6 +104,6 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
 
   @Override
   public Optional<WorldUpdater> parentUpdater() {
-    return privateWorldUpdater.parentUpdater();
+    return privateWorldUpdaterService.parentUpdater();
   }
 }

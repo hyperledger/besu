@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.precompile.AbstractPrecompiledContract;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -244,8 +245,8 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final WorldUpdater privateWorldStateUpdater) {
 
     return privateTransactionProcessor.processTransaction(
-        messageFrame.getWorldUpdater(),
-        privateWorldStateUpdater,
+        messageFrame.getWorldUpdaterService(),
+        new WorldUpdaterService(privateWorldStateUpdater),
         (ProcessableBlockHeader) messageFrame.getBlockValues(),
         messageFrame.getContextVariable(KEY_TRANSACTION_HASH),
         privateTransaction,

@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.toy.ToyWorld;
@@ -152,7 +153,8 @@ public class TestMessageFrameBuilder {
     final MessageFrame frame =
         MessageFrame.builder()
             .type(MessageFrame.Type.MESSAGE_CALL)
-            .worldUpdater(worldUpdater.orElseGet(this::createDefaultWorldUpdater))
+            .worldUpdaterService(
+                new WorldUpdaterService(worldUpdater.orElseGet(this::createDefaultWorldUpdater)))
             .initialGas(initialGas)
             .address(address)
             .originator(originator)

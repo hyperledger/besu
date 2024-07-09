@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
 import java.util.Optional;
@@ -52,7 +52,7 @@ public class SystemCallProcessor {
    * operation tracer, and block hash lookup.
    *
    * @param callAddress the address to call.
-   * @param worldState the current world state.
+   * @param worldUpdaterService the service containing the current world state.
    * @param blockHeader the current block header.
    * @param operationTracer the operation tracer for tracing EVM operations.
    * @param blockHashLookup the block hash lookup function.
@@ -60,13 +60,13 @@ public class SystemCallProcessor {
    */
   public Bytes process(
       final Address callAddress,
-      final WorldUpdater worldState,
+      final WorldUpdaterService worldUpdaterService,
       final ProcessableBlockHeader blockHeader,
       final OperationTracer operationTracer,
       final BlockHashOperation.BlockHashLookup blockHashLookup) {
 
     // if no code exists at CALL_ADDRESS, the call must fail silently
-    final Account maybeContract = worldState.get(callAddress);
+    final Account maybeContract = worldUpdaterService.get(callAddress);
     if (maybeContract == null) {
       LOG.trace("System call address not found {}", callAddress);
       return null;
@@ -75,16 +75,16 @@ public class SystemCallProcessor {
     final AbstractMessageProcessor messageProcessor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
     final MessageFrame initialFrame =
-        createCallFrame(callAddress, worldState, blockHeader, blockHashLookup);
+        createCallFrame(callAddress, worldUpdaterService, blockHeader, blockHashLookup);
 
-    return processFrame(initialFrame, messageProcessor, operationTracer, worldState);
+    return processFrame(initialFrame, messageProcessor, operationTracer, worldUpdaterService);
   }
 
   private Bytes processFrame(
       final MessageFrame frame,
       final AbstractMessageProcessor processor,
       final OperationTracer tracer,
-      final WorldUpdater updater) {
+      final WorldUpdaterService worldUpdaterService) {
 
     if (!frame.getCode().isValid()) {
       throw new RuntimeException("System call did not execute to completion - opcode invalid");
@@ -96,7 +96,7 @@ public class SystemCallProcessor {
     }
 
     if (frame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
-      updater.commit();
+      worldUpdaterService.commit();
       return frame.getOutputData();
     }
 
@@ -106,17 +106,18 @@ public class SystemCallProcessor {
 
   private MessageFrame createCallFrame(
       final Address callAddress,
-      final WorldUpdater worldUpdater,
+      final WorldUpdaterService worldUpdaterService,
       final ProcessableBlockHeader blockHeader,
       final BlockHashOperation.BlockHashLookup blockHashLookup) {
 
-    final Optional<Account> maybeContract = Optional.ofNullable(worldUpdater.get(callAddress));
+    final Optional<Account> maybeContract =
+        Optional.ofNullable(worldUpdaterService.get(callAddress));
     final AbstractMessageProcessor processor =
         mainnetTransactionProcessor.getMessageProcessor(MessageFrame.Type.MESSAGE_CALL);
 
     return MessageFrame.builder()
         .maxStackSize(DEFAULT_MAX_STACK_SIZE)
-        .worldUpdater(worldUpdater)
+        .worldUpdaterService(worldUpdaterService)
         .initialGas(30_000_000L)
         .originator(SYSTEM_ADDRESS)
         .gasPrice(Wei.ZERO)

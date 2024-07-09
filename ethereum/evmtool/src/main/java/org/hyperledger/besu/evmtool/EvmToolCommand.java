@@ -35,6 +35,7 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
@@ -472,7 +473,7 @@ public class EvmToolCommand implements Runnable {
                     createTransaction
                         ? MessageFrame.Type.CONTRACT_CREATION
                         : MessageFrame.Type.MESSAGE_CALL)
-                .worldUpdater(updater.updater())
+                .worldUpdaterService(new WorldUpdaterService(updater.updater()))
                 .initialGas(txGas)
                 .contract(contractAddress)
                 .address(contractAddress)

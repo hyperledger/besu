@@ -18,9 +18,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.internal.MemoryEntry;
 import org.hyperledger.besu.evm.internal.StorageEntry;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Map;
 import java.util.Optional;
@@ -48,7 +48,7 @@ public class TraceFrame {
   private final Optional<Bytes[]> memory;
   private final Optional<Map<UInt256, UInt256>> storage;
 
-  private final WorldUpdater worldUpdater;
+  private final WorldUpdaterService worldUpdaterService;
   private final Optional<Bytes> revertReason;
   private final Optional<Map<Address, Wei>> maybeRefunds;
   private final Optional<Code> maybeCode;
@@ -77,7 +77,7 @@ public class TraceFrame {
       final Optional<Bytes[]> stack,
       final Optional<Bytes[]> memory,
       final Optional<Map<UInt256, UInt256>> storage,
-      final WorldUpdater worldUpdater,
+      final WorldUpdaterService worldUpdaterService,
       final Optional<Bytes> revertReason,
       final Optional<Map<Address, Wei>> maybeRefunds,
       final Optional<Code> maybeCode,
@@ -101,7 +101,7 @@ public class TraceFrame {
     this.stack = stack;
     this.memory = memory;
     this.storage = storage;
-    this.worldUpdater = worldUpdater;
+    this.worldUpdaterService = worldUpdaterService;
     this.revertReason = revertReason;
     this.maybeRefunds = maybeRefunds;
     this.maybeCode = maybeCode;
@@ -177,8 +177,8 @@ public class TraceFrame {
     return storage;
   }
 
-  public WorldUpdater getWorldUpdater() {
-    return worldUpdater;
+  public WorldUpdaterService getWorldUpdaterService() {
+    return worldUpdaterService;
   }
 
   public Optional<Bytes> getRevertReason() {

@@ -118,7 +118,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
 
               Optional<Account> account =
                   transactionTrace.get().getTraceFrames().stream()
-                      .map(traceFrame -> traceFrame.getWorldUpdater().get(address))
+                      .map(traceFrame -> traceFrame.getWorldUpdaterService().get(address))
                       .filter(Objects::nonNull)
                       .filter(a -> a.getAddress().equals(address))
                       .findFirst();

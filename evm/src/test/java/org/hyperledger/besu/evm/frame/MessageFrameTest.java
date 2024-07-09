@@ -42,7 +42,7 @@ class MessageFrameTest {
   void setUp() {
     messageFrameBuilder =
         MessageFrame.builder()
-            .worldUpdater(new ToyWorld())
+            .worldUpdaterService(new WorldUpdaterService(new ToyWorld()))
             .originator(Address.ZERO)
             .gasPrice(Wei.ONE)
             .blobGasPrice(Wei.ONE)

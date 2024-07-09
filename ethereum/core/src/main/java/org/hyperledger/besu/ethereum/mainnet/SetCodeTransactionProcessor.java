@@ -22,15 +22,12 @@ import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.SetCodeTransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 
 import java.math.BigInteger;
-import java.util.HashSet;
 import java.util.Optional;
-import java.util.Set;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -50,9 +47,8 @@ public class SetCodeTransactionProcessor {
     this.chainId = chainId;
   }
 
-  public Set<Address> addContractToAuthority(
-      final WorldUpdater worldUpdater, final Transaction transaction) {
-    final Set<Address> authorityList = new HashSet<>();
+  public void addContractToAuthority(
+      final WorldUpdaterService worldUpdaterService, final Transaction transaction) {
 
     transaction
         .setCodeTransactionPayloads()
@@ -71,7 +67,7 @@ public class SetCodeTransactionProcessor {
                         }
 
                         final Optional<MutableAccount> maybeAccount =
-                            Optional.ofNullable(worldUpdater.getAccount(authorityAddress));
+                            Optional.ofNullable(worldUpdaterService.getAccount(authorityAddress));
                         final long accountNonce =
                             maybeAccount.map(AccountState::getNonce).orElse(0L);
 
@@ -80,17 +76,10 @@ public class SetCodeTransactionProcessor {
                           return;
                         }
 
-                        final Optional<Account> maybeCodeOriginAccount =
-                            Optional.ofNullable(worldUpdater.getAccount(payload.address()));
-                        worldUpdater.addCodeToEOA(
-                            authorityAddress,
-                            maybeCodeOriginAccount.map(Account::getCode).orElse(Bytes.EMPTY));
-
-                        authorityList.add(authorityAddress);
+                        worldUpdaterService.addAuthorizedAccount(
+                            authorityAddress, payload.address());
                       });
             });
-
-    return authorityList;
   }
 
   private Optional<Address> recoverAuthority(final SetCodeAuthorization authorization) {
@@ -103,10 +92,5 @@ public class SetCodeTransactionProcessor {
         .get()
         .recoverPublicKeyFromSignature(hash, authorization.signature())
         .map(Address::extract);
-  }
-
-  public void removeCodeFromAuthorities(
-      final WorldUpdater worldUpdater, final Set<Address> authorities) {
-    authorities.forEach(worldUpdater::removeCodeFromEOA);
   }
 }

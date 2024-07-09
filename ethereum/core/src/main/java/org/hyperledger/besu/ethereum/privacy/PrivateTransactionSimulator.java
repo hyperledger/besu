@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.plugin.data.Restriction;
 
@@ -132,8 +133,8 @@ public class PrivateTransactionSimulator {
 
     final TransactionProcessingResult result =
         privateTransactionProcessor.processTransaction(
-            publicWorldState.updater(),
-            disposablePrivateState.updater(),
+            new WorldUpdaterService(publicWorldState.updater()),
+            new WorldUpdaterService(disposablePrivateState.updater()),
             header,
             Hash.ZERO, // Corresponding PMT hash not needed as this private transaction doesn't
             // exist

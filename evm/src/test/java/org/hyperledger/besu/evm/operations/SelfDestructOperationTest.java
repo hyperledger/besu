@@ -28,12 +28,12 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -53,7 +53,7 @@ public class SelfDestructOperationTest {
           );
 
   private MessageFrame messageFrame;
-  @Mock private WorldUpdater worldUpdater;
+  @Mock private WorldUpdaterService worldUpdaterService;
   @Mock private MutableAccount accountOriginator;
   @Mock private MutableAccount accountBeneficiary;
   private final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
@@ -89,18 +89,18 @@ public class SelfDestructOperationTest {
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100_000L)
-            .worldUpdater(worldUpdater)
+            .worldUpdaterService(worldUpdaterService)
             .build();
     messageFrame.pushStackItem(Bytes.fromHexString(beneficiary));
     if (newContract) {
       messageFrame.addCreate(originatorAddress);
     }
 
-    when(worldUpdater.getAccount(originatorAddress)).thenReturn(accountOriginator);
+    when(worldUpdaterService.getAccount(originatorAddress)).thenReturn(accountOriginator);
     if (!originatorAddress.equals(beneficiaryAddress)) {
-      when(worldUpdater.get(beneficiaryAddress)).thenReturn(accountBeneficiary);
+      when(worldUpdaterService.get(beneficiaryAddress)).thenReturn(accountBeneficiary);
     }
-    when(worldUpdater.getOrCreate(beneficiaryAddress)).thenReturn(accountBeneficiary);
+    when(worldUpdaterService.getOrCreate(beneficiaryAddress)).thenReturn(accountBeneficiary);
     when(accountOriginator.getAddress()).thenReturn(originatorAddress);
     when(accountOriginator.getBalance()).thenReturn(Wei.fromHexString(balanceHex));
 

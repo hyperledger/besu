@@ -21,6 +21,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
@@ -176,7 +177,7 @@ public class EvmToyCommand implements Runnable {
       MessageFrame initialMessageFrame =
           MessageFrame.builder()
               .type(MessageFrame.Type.MESSAGE_CALL)
-              .worldUpdater(worldUpdater.updater())
+              .worldUpdaterService(new WorldUpdaterService(worldUpdater.updater()))
               .initialGas(gas)
               .contract(Address.ZERO)
               .address(receiver)

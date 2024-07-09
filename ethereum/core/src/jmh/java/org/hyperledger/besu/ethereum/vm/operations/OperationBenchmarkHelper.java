@@ -114,7 +114,7 @@ public class OperationBenchmarkHelper {
     return MessageFrame.builder()
         .parentMessageFrame(messageFrame)
         .type(MessageFrame.Type.MESSAGE_CALL)
-        .worldUpdater(messageFrame.getWorldUpdater())
+        .worldUpdaterService(messageFrame.getWorldUpdaterService())
         .initialGas(messageFrame.getRemainingGas())
         .address(messageFrame.getContractAddress())
         .contract(messageFrame.getRecipientAddress())

@@ -40,7 +40,7 @@ import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.debug.TraceFrame;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -70,7 +70,7 @@ class DebugAccountAtTest {
   @Mock private TransactionTrace transactionTrace;
   @Mock private TraceFrame traceFrame;
   @Mock private Transaction transaction;
-  @Mock private WorldUpdater worldUpdater;
+  @Mock private WorldUpdaterService worldUpdaterService;
   @Mock private MutableWorldState worldState;
 
   @Mock private Account account;
@@ -242,8 +242,8 @@ class DebugAccountAtTest {
   private void setupMockAccount() {
     Mockito.when(transactionTrace.getTraceFrames())
         .thenReturn(Collections.singletonList(traceFrame));
-    Mockito.when(traceFrame.getWorldUpdater()).thenReturn(worldUpdater);
-    Mockito.when(worldUpdater.get(any())).thenReturn(account);
+    Mockito.when(traceFrame.getWorldUpdaterService()).thenReturn(worldUpdaterService);
+    Mockito.when(worldUpdaterService.get(any())).thenReturn(account);
     Mockito.when(account.getAddress()).thenReturn(Address.ZERO);
   }
 

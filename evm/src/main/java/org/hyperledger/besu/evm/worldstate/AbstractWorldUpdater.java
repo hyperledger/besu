@@ -199,30 +199,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     deletedAccounts.clear();
   }
 
-  @Override
-  public void addCodeToEOA(final Address address, final Bytes code) {
-    if (temporaryEOACode.containsKey(address)) {
-      return;
-    }
-
-    temporaryEOACode.put(address, code);
-  }
-
-  @Override
-  public void removeCodeFromEOA(final Address address) {
-    if (!temporaryEOACode.containsKey(address)) {
-      return;
-    }
-
-    try {
-      ((MutableAccount) get(address)).setCode(Bytes.EMPTY);
-    } catch (ClassCastException e) {
-      LOG.warn(
-          "Tried to reset code on a EOA account {}, but the account is not a mutable", address);
-    }
-    temporaryEOACode.remove(address);
-  }
-
   private Account addTemporaryCodeToAccount(final Account account, final Address address) {
     if (!temporaryEOACode.containsKey(address)) {
       return account;

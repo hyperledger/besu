@@ -21,11 +21,11 @@ import org.hyperledger.besu.ethereum.debug.TraceOptions;
 import org.hyperledger.besu.evm.ModificationNotAllowedException;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.operation.AbstractCallOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -85,7 +85,7 @@ public class DebugOperationTracer implements OperationTracer {
     final Operation currentOperation = frame.getCurrentOperation();
     final String opcode = currentOperation.getName();
     final int opcodeNumber = (opcode != null) ? currentOperation.getOpcode() : Integer.MAX_VALUE;
-    final WorldUpdater worldUpdater = frame.getWorldUpdater();
+    final WorldUpdaterService worldUpdaterService = frame.getWorldUpdaterService();
     final Bytes outputData = frame.getOutputData();
     final Optional<Bytes[]> memory = captureMemory(frame);
     final Optional<Bytes[]> stackPostExecution = captureStack(frame);
@@ -118,7 +118,7 @@ public class DebugOperationTracer implements OperationTracer {
             preExecutionStack,
             memory,
             storage,
-            worldUpdater,
+            worldUpdaterService,
             frame.getRevertReason(),
             maybeRefunds,
             Optional.ofNullable(frame.getMessageFrameStack().peek()).map(MessageFrame::getCode),
@@ -152,7 +152,7 @@ public class DebugOperationTracer implements OperationTracer {
               Optional.empty(),
               Optional.empty(),
               Optional.empty(),
-              frame.getWorldUpdater(),
+              frame.getWorldUpdaterService(),
               Optional.empty(),
               Optional.ofNullable(frame.getRefunds()),
               Optional.ofNullable(frame.getCode()),
@@ -199,7 +199,7 @@ public class DebugOperationTracer implements OperationTracer {
                     Optional.empty(),
                     Optional.empty(),
                     Optional.empty(),
-                    frame.getWorldUpdater(),
+                    frame.getWorldUpdaterService(),
                     Optional.empty(),
                     Optional.ofNullable(frame.getRefunds()),
                     Optional.ofNullable(frame.getCode()),
@@ -220,7 +220,10 @@ public class DebugOperationTracer implements OperationTracer {
     try {
       final Map<UInt256, UInt256> storageContents =
           new TreeMap<>(
-              frame.getWorldUpdater().getAccount(frame.getRecipientAddress()).getUpdatedStorage());
+              frame
+                  .getWorldUpdaterService()
+                  .getAccount(frame.getRecipientAddress())
+                  .getUpdatedStorage());
 
       return Optional.of(storageContents);
     } catch (final ModificationNotAllowedException e) {
