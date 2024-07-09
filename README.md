@@ -1,6 +1,9 @@
 # Besu Ethereum Client
- [![CircleCI](https://circleci.com/gh/hyperledger/besu/tree/main.svg?style=svg)](https://circleci.com/gh/hyperledger/besu/tree/main)
- [![Documentation Status](https://readthedocs.org/projects/hyperledger-besu/badge/?version=latest)](https://besu.hyperledger.org/en/latest/?badge=latest)
+
+ [![Acceptance Tests](https://github.com/hyperledger/besu/actions/workflows/acceptance-tests.yml/badge.svg?branch=main)](https://github.com/hyperledger/besu/actions/workflows/acceptance-tests.yml/badge.svg?branch=main)
+ [![Integration Tests](https://github.com/hyperledger/besu/actions/workflows/integration-tests.yml/badge.svg?branch=main)](https://github.com/hyperledger/besu/actions/workflows/integration-tests.yml/badge.svg?branch=main)
+ [![Container Security](https://github.com/hyperledger/besu/actions/workflows/container-security-scan.yml/badge.svg)](https://github.com/hyperledger/besu/actions/workflows/container-security-scan.yml/badge.svg)
+
  [![CII Best Practices](https://bestpractices.coreinfrastructure.org/projects/3174/badge)](https://bestpractices.coreinfrastructure.org/projects/3174)
  [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://github.com/hyperledger/besu/blob/main/LICENSE)
  [![Discord](https://img.shields.io/discord/905194001349627914?logo=Hyperledger&style=plastic)](https://discord.gg/hyperledger)
