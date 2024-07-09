@@ -158,7 +158,11 @@ public class RetestethContext {
             JsonUtil.getObjectNode(genesisConfig, "config").get());
     protocolSchedule =
         MainnetProtocolSchedule.fromConfig(
-            jsonGenesisConfigOptions, EvmConfiguration.DEFAULT, miningParameters, badBlockManager);
+            jsonGenesisConfigOptions,
+            EvmConfiguration.DEFAULT,
+            miningParameters,
+            badBlockManager,
+            false);
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
       protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }

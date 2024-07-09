@@ -51,6 +51,7 @@ public class ProtocolSpecBuilder {
   private Function<FeeMarket, GasLimitCalculator> gasLimitCalculatorBuilder;
   private Wei blockReward;
   private boolean skipZeroBlockRewards;
+
   private BlockHeaderFunctions blockHeaderFunctions;
   private AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
   private DifficultyCalculator difficultyCalculator;
@@ -66,9 +67,12 @@ public class ProtocolSpecBuilder {
   private BiFunction<EVM, PrecompileContractRegistry, AbstractMessageProcessor>
       messageCallProcessorBuilder;
   private TransactionProcessorBuilder transactionProcessorBuilder;
+
   private BlockProcessorBuilder blockProcessorBuilder;
   private BlockValidatorBuilder blockValidatorBuilder;
   private BlockImporterBuilder blockImporterBuilder;
+
+  private boolean isParallelPreloadTxEnabled = false;
   private String name;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private PrivacyParameters privacyParameters;
@@ -139,6 +143,11 @@ public class ProtocolSpecBuilder {
   public ProtocolSpecBuilder blockHeaderValidatorBuilder(
       final Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder) {
     this.blockHeaderValidatorBuilder = blockHeaderValidatorBuilder;
+    return this;
+  }
+
+  public ProtocolSpecBuilder isParallelPreloadTxEnabled(final boolean isParallelPreloadTxEnabled) {
+    this.isParallelPreloadTxEnabled = isParallelPreloadTxEnabled;
     return this;
   }
 
@@ -393,6 +402,7 @@ public class ProtocolSpecBuilder {
         miningBeneficiaryCalculator,
         precompileContractRegistry,
         skipZeroBlockRewards,
+        isParallelPreloadTxEnabled,
         gasCalculator,
         gasLimitCalculator,
         feeMarket,
@@ -450,6 +460,7 @@ public class ProtocolSpecBuilder {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
+        isParallelPreloadTxEnabled,
         protocolSchedule);
   }
 
@@ -489,6 +500,7 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
+        final boolean isParallelPreloadTxEnabled,
         ProtocolSchedule protocolSchedule);
   }
 

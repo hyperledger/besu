@@ -36,7 +36,8 @@ public class FixedProtocolScheduleTest {
             GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false);
 
     final BlockHeaderTestFixture headerBuilder = new BlockHeaderTestFixture();
 

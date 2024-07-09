@@ -174,7 +174,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   @Override

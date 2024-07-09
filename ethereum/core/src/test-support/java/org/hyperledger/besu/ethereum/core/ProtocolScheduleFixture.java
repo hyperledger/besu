@@ -39,7 +39,8 @@ public class ProtocolScheduleFixture {
           false,
           EvmConfiguration.DEFAULT,
           MiningParameters.newDefault(),
-          new BadBlockManager());
+          new BadBlockManager(),
+          false);
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     // this method avoids reading all the alloc accounts when all we want is the "config" section

@@ -32,7 +32,8 @@ public class FixedDifficultyProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return new ProtocolScheduleBuilder(
             config,
             ProtocolSpecAdapters.create(
@@ -43,7 +44,8 @@ public class FixedDifficultyProtocolSchedule {
             isRevertReasonEnabled,
             evmConfiguration,
             miningParameters,
-            badBlockManager)
+            badBlockManager,
+            isParallelPreloadTxEnabled)
         .createProtocolSchedule();
   }
 
@@ -52,27 +54,31 @@ public class FixedDifficultyProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
         false,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 }

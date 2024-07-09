@@ -74,7 +74,8 @@ public class CliqueProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -110,7 +111,8 @@ public class CliqueProtocolSchedule {
             isRevertReasonEnabled,
             evmConfiguration,
             miningParameters,
-            badBlockManager)
+            badBlockManager,
+            isParallelPreloadTxEnabled)
         .createProtocolSchedule();
   }
 
@@ -134,7 +136,8 @@ public class CliqueProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return create(
         config,
         forksSchedule,
@@ -143,7 +146,8 @@ public class CliqueProtocolSchedule {
         isRevertReasonEnabled,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(

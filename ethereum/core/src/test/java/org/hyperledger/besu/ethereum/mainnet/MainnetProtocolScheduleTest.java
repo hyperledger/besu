@@ -73,7 +73,8 @@ public class MainnetProtocolScheduleTest {
             GenesisConfigFile.fromConfig("{}").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false);
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1L)).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(Long.MAX_VALUE)).getName())
         .isEqualTo("Frontier");
@@ -88,7 +89,8 @@ public class MainnetProtocolScheduleTest {
             GenesisConfigFile.fromConfig(json).getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false);
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(1)).getName()).isEqualTo("Frontier");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(2)).getName()).isEqualTo("Homestead");
     Assertions.assertThat(sched.getByBlockHeader(blockHeader(3)).getName())
@@ -120,7 +122,8 @@ public class MainnetProtocolScheduleTest {
                     GenesisConfigFile.fromConfig(json).getConfigOptions(),
                     EvmConfiguration.DEFAULT,
                     MiningParameters.MINING_DISABLED,
-                    new BadBlockManager()));
+                    new BadBlockManager(),
+                    false));
   }
 
   private BlockHeader blockHeader(final long number) {

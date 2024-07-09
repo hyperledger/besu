@@ -46,6 +46,8 @@ public class ProtocolScheduleBuilder {
   private final MiningParameters miningParameters;
   private final BadBlockManager badBlockManager;
 
+  private final boolean isParallelPreloadTxEnabled;
+
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final BigInteger defaultChainId,
@@ -54,7 +56,8 @@ public class ProtocolScheduleBuilder {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     this(
         config,
         Optional.of(defaultChainId),
@@ -63,7 +66,8 @@ public class ProtocolScheduleBuilder {
         isRevertReasonEnabled,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   public ProtocolScheduleBuilder(
@@ -73,7 +77,8 @@ public class ProtocolScheduleBuilder {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     this(
         config,
         Optional.empty(),
@@ -82,7 +87,8 @@ public class ProtocolScheduleBuilder {
         isRevertReasonEnabled,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   private ProtocolScheduleBuilder(
@@ -93,7 +99,8 @@ public class ProtocolScheduleBuilder {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
@@ -102,6 +109,7 @@ public class ProtocolScheduleBuilder {
     this.defaultChainId = defaultChainId;
     this.miningParameters = miningParameters;
     this.badBlockManager = badBlockManager;
+    this.isParallelPreloadTxEnabled = isParallelPreloadTxEnabled;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -121,7 +129,8 @@ public class ProtocolScheduleBuilder {
             config.getEcip1017EraRounds(),
             evmConfiguration.overrides(
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
-            miningParameters);
+            miningParameters,
+            isParallelPreloadTxEnabled);
 
     validateForkOrdering();
 
@@ -203,7 +212,8 @@ public class ProtocolScheduleBuilder {
                   protocolSchedule,
                   BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
                   classicBlockNumber,
-                  ClassicProtocolSpecs.classicRecoveryInitDefinition(evmConfiguration),
+                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
+                      evmConfiguration, isParallelPreloadTxEnabled),
                   Function.identity());
               protocolSchedule.putBlockNumberMilestone(
                   classicBlockNumber + 1, originalProtocolSpec);

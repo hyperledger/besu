@@ -61,7 +61,8 @@ public class DefaultProtocolScheduleTest {
             isRevertReasonEnabled,
             evmConfiguration,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false);
   }
 
   @Test

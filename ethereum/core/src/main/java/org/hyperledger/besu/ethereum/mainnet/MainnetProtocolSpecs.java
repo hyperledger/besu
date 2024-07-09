@@ -101,7 +101,8 @@ public abstract class MainnetProtocolSpecs {
 
   private MainnetProtocolSpecs() {}
 
-  public static ProtocolSpecBuilder frontierDefinition(final EvmConfiguration evmConfiguration) {
+  public static ProtocolSpecBuilder frontierDefinition(
+      final EvmConfiguration evmConfiguration, final boolean isParallelPreloadTxEnabled) {
     return new ProtocolSpecBuilder()
         .gasCalculator(FrontierGasCalculator::new)
         .gasLimitCalculatorBuilder(feeMarket -> new FrontierTargetingGasLimitCalculator())
@@ -152,6 +153,7 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
+        .isParallelPreloadTxEnabled(isParallelPreloadTxEnabled)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
@@ -173,8 +175,9 @@ public abstract class MainnetProtocolSpecs {
     return MainnetBlockValidator::new;
   }
 
-  public static ProtocolSpecBuilder homesteadDefinition(final EvmConfiguration evmConfiguration) {
-    return frontierDefinition(evmConfiguration)
+  public static ProtocolSpecBuilder homesteadDefinition(
+      final EvmConfiguration evmConfiguration, final boolean isParallelPreloadTxEnabled) {
+    return frontierDefinition(evmConfiguration, isParallelPreloadTxEnabled)
         .gasCalculator(HomesteadGasCalculator::new)
         .evmBuilder(MainnetEVMs::homestead)
         .contractCreationProcessorBuilder(
@@ -190,8 +193,8 @@ public abstract class MainnetProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder daoRecoveryInitDefinition(
-      final EvmConfiguration evmConfiguration) {
-    return homesteadDefinition(evmConfiguration)
+      final EvmConfiguration evmConfiguration, final boolean isParallelPreloadTxEnabled) {
+    return homesteadDefinition(evmConfiguration, isParallelPreloadTxEnabled)
         .blockHeaderValidatorBuilder(feeMarket -> MainnetBlockHeaderValidator.createDaoValidator())
         .blockProcessorBuilder(
             (transactionProcessor,
@@ -199,6 +202,7 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
+                parallelPreloadTxEnabled,
                 protocolSchedule) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
@@ -207,27 +211,30 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
+                        parallelPreloadTxEnabled,
                         protocolSchedule)))
         .name("DaoRecoveryInit");
   }
 
   public static ProtocolSpecBuilder daoRecoveryTransitionDefinition(
-      final EvmConfiguration evmConfiguration) {
-    return daoRecoveryInitDefinition(evmConfiguration)
+      final EvmConfiguration evmConfiguration, final boolean isParallelPreloadTxEnabled) {
+    return daoRecoveryInitDefinition(evmConfiguration, isParallelPreloadTxEnabled)
         .blockProcessorBuilder(MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
 
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
-      final EvmConfiguration evmConfiguration) {
-    return homesteadDefinition(evmConfiguration)
+      final EvmConfiguration evmConfiguration, final boolean isParallelPreloadTxEnabled) {
+    return homesteadDefinition(evmConfiguration, isParallelPreloadTxEnabled)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .name("TangerineWhistle");
   }
 
   public static ProtocolSpecBuilder spuriousDragonDefinition(
-      final Optional<BigInteger> chainId, final EvmConfiguration evmConfiguration) {
-    return tangerineWhistleDefinition(evmConfiguration)
+      final Optional<BigInteger> chainId,
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return tangerineWhistleDefinition(evmConfiguration, isParallelPreloadTxEnabled)
         .isReplayProtectionSupported(true)
         .gasCalculator(SpuriousDragonGasCalculator::new)
         .skipZeroBlockRewards(true)
@@ -271,8 +278,9 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder byzantiumDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final EvmConfiguration evmConfiguration) {
-    return spuriousDragonDefinition(chainId, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return spuriousDragonDefinition(chainId, evmConfiguration, isParallelPreloadTxEnabled)
         .gasCalculator(ByzantiumGasCalculator::new)
         .evmBuilder(MainnetEVMs::byzantium)
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::byzantium)
@@ -301,8 +309,10 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder constantinopleDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final EvmConfiguration evmConfiguration) {
-    return byzantiumDefinition(chainId, enableRevertReason, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return byzantiumDefinition(
+            chainId, enableRevertReason, evmConfiguration, isParallelPreloadTxEnabled)
         .difficultyCalculator(MainnetDifficultyCalculators.CONSTANTINOPLE)
         .gasCalculator(ConstantinopleGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
@@ -313,8 +323,10 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder petersburgDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final EvmConfiguration evmConfiguration) {
-    return constantinopleDefinition(chainId, enableRevertReason, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return constantinopleDefinition(
+            chainId, enableRevertReason, evmConfiguration, isParallelPreloadTxEnabled)
         .gasCalculator(PetersburgGasCalculator::new)
         .name("Petersburg");
   }
@@ -322,8 +334,10 @@ public abstract class MainnetProtocolSpecs {
   public static ProtocolSpecBuilder istanbulDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final EvmConfiguration evmConfiguration) {
-    return petersburgDefinition(chainId, enableRevertReason, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return petersburgDefinition(
+            chainId, enableRevertReason, evmConfiguration, isParallelPreloadTxEnabled)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -344,8 +358,10 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder muirGlacierDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final EvmConfiguration evmConfiguration) {
-    return istanbulDefinition(chainId, enableRevertReason, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return istanbulDefinition(
+            chainId, enableRevertReason, evmConfiguration, isParallelPreloadTxEnabled)
         .difficultyCalculator(MainnetDifficultyCalculators.MUIR_GLACIER)
         .name("MuirGlacier");
   }
@@ -353,8 +369,10 @@ public abstract class MainnetProtocolSpecs {
   static ProtocolSpecBuilder berlinDefinition(
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
-      final EvmConfiguration evmConfiguration) {
-    return muirGlacierDefinition(chainId, enableRevertReason, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return muirGlacierDefinition(
+            chainId, enableRevertReason, evmConfiguration, isParallelPreloadTxEnabled)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -376,7 +394,8 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
     final long londonForkBlockNumber =
         genesisConfigOptions.getLondonBlockNumber().orElse(Long.MAX_VALUE);
     final BaseFeeMarket londonFeeMarket;
@@ -390,7 +409,8 @@ public abstract class MainnetProtocolSpecs {
       londonFeeMarket =
           FeeMarket.london(londonForkBlockNumber, genesisConfigOptions.getBaseFeePerGas());
     }
-    return berlinDefinition(chainId, enableRevertReason, evmConfiguration)
+    return berlinDefinition(
+            chainId, enableRevertReason, evmConfiguration, isParallelPreloadTxEnabled)
         .feeMarket(londonFeeMarket)
         .gasCalculator(LondonGasCalculator::new)
         .gasLimitCalculatorBuilder(
@@ -455,9 +475,15 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
     return londonDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled)
         .difficultyCalculator(MainnetDifficultyCalculators.ARROW_GLACIER)
         .name("ArrowGlacier");
   }
@@ -467,9 +493,15 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
     return arrowGlacierDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled)
         .difficultyCalculator(MainnetDifficultyCalculators.GRAY_GLACIER)
         .name("GrayGlacier");
   }
@@ -479,10 +511,16 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
 
     return grayGlacierDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.paris(gasCalculator, chainId.orElse(BigInteger.ZERO), evmConfiguration))
@@ -499,9 +537,15 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
     return parisDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled)
         // gas calculator has new code to support EIP-3860 limit and meter initcode
         .gasCalculator(ShanghaiGasCalculator::new)
         // EVM has a new operation for EIP-3855 PUSH0 instruction
@@ -550,7 +594,8 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
     final long londonForkBlockNumber = genesisConfigOptions.getLondonBlockNumber().orElse(0L);
     final BaseFeeMarket cancunFeeMarket;
     if (genesisConfigOptions.isZeroBaseFee()) {
@@ -565,7 +610,12 @@ public abstract class MainnetProtocolSpecs {
     }
 
     return shanghaiDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled)
         .feeMarket(cancunFeeMarket)
         // gas calculator for EIP-4844 blob gas
         .gasCalculator(CancunGasCalculator::new)
@@ -622,11 +672,17 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
 
     ProtocolSpecBuilder protocolSpecBuilder =
         cancunDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters);
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled);
     return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("CancunEOF");
   }
 
@@ -635,13 +691,19 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
 
     final Address depositContractAddress =
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
     return cancunDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled)
         // EIP-3074 AUTH and AUTCALL gas
         .gasCalculator(PragueGasCalculator::new)
         // EIP-3074 AUTH and AUTCALL
@@ -668,11 +730,17 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
 
     ProtocolSpecBuilder protocolSpecBuilder =
         pragueDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters);
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled);
     return addEOF(chainId, evmConfiguration, protocolSpecBuilder).name("PragueEOF");
   }
 
@@ -704,9 +772,15 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
     return pragueEOFDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled)
         // Use Future EIP configured EVM
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
@@ -731,10 +805,16 @@ public abstract class MainnetProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelPreloadTxEnabled) {
 
     return futureEipsDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelPreloadTxEnabled)
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.experimentalEips(

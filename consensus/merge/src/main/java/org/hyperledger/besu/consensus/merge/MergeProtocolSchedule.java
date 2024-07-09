@@ -55,13 +55,15 @@ public class MergeProtocolSchedule {
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   /**
@@ -79,7 +81,8 @@ public class MergeProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -98,7 +101,8 @@ public class MergeProtocolSchedule {
             isRevertReasonEnabled,
             EvmConfiguration.DEFAULT,
             miningParameters,
-            badBlockManager)
+            badBlockManager,
+            isParallelPreloadTxEnabled)
         .createProtocolSchedule();
   }
 

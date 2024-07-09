@@ -60,7 +60,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return new QbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
@@ -70,7 +71,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             bftExtraDataCodec,
             evmConfiguration,
             miningParameters,
-            badBlockManager);
+            badBlockManager,
+            isParallelPreloadTxEnabled);
   }
 
   /**
@@ -90,7 +92,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return create(
         config,
         qbftForksSchedule,
@@ -99,7 +102,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         bftExtraDataCodec,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   /**
@@ -119,7 +123,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return create(
         config,
         qbftForksSchedule,
@@ -128,7 +133,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   @Override

@@ -29,13 +29,14 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.PreloadConcurrentTransactionProcessor;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelizedConcurrentTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -67,6 +68,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   static final int MAX_GENERATION = 6;
 
   protected final MainnetTransactionProcessor transactionProcessor;
+  private final boolean isParallelPreloadTxEnabled;
 
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
@@ -83,8 +85,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
+      final boolean isParallelPreloadTxEnabled,
       final ProtocolSchedule protocolSchedule) {
     this.transactionProcessor = transactionProcessor;
+    this.isParallelPreloadTxEnabled = isParallelPreloadTxEnabled;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
@@ -105,9 +109,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     long currentGasUsed = 0;
     long currentBlobGasUsed = 0;
 
-    final PreloadConcurrentTransactionProcessor preloadConcurrentTransactionProcessor =
-        new PreloadConcurrentTransactionProcessor(transactionProcessor);
-
     final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(blockHeader);
 
     protocolSpec.getBlockHashProcessor().processBlockHashes(blockchain, worldState, blockHeader);
@@ -127,42 +128,46 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                             calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
             .orElse(Wei.ZERO);
 
-    /*
-     * The runAsyncPreloadBlock method is specifically working with BONSAI.
-     * It facilitates the parallel execution of transactions in the background through an optimistic strategy.
-     * Being non-blocking, it permits reading and modifying a majority of slots and accounts while also
-     * allowing transactions to be executed optimistically. This approach preloads most accounts and slots
-     * into the cache, and also reducing the need to replay transactions in the absence of collisions.
-     */
-    preloadConcurrentTransactionProcessor.runAsyncPreloadBlock(
-        worldState,
-        blockHeader,
-        transactions,
-        miningBeneficiary,
-        blockHashLookup,
-        blobGasPrice,
-        privateMetadataUpdater);
+    Optional<ParallelizedConcurrentTransactionProcessor> preloadConcurrentTransactionProcessor =
+        Optional.empty();
+    if (isParallelPreloadTxEnabled) {
+      if ((worldState instanceof DiffBasedWorldState)) {
+        preloadConcurrentTransactionProcessor =
+                Optional.of(new ParallelizedConcurrentTransactionProcessor(transactionProcessor));
+        // runAsyncPreloadBlock, if activated, facilitates the  non-blocking parallel execution of
+        // transactions in the background through an optimistic strategy.
+        preloadConcurrentTransactionProcessor
+                .get()
+                .runAsyncPreloadBlock(
+                        worldState,
+                        blockHeader,
+                        transactions,
+                        miningBeneficiary,
+                        blockHashLookup,
+                        blobGasPrice,
+                        privateMetadataUpdater);
+      }
+    }
 
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
+
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
         return new BlockProcessingResult(Optional.empty(), "provided gas insufficient");
       }
       final WorldUpdater blockUpdater = worldState.updater();
 
-      /*
-       * This applyPreloadBlockResult is designed to fetch the results of transactions processed by background threads.
-       * If the transactions were successfully executed in the background, their results are applied to the block.
-       * In the absence of collisions, the entire result is applied without re-executing the transaction.
-       * However, in the event of a conflict, only the data we read are added to the block cache,
-       * and the transaction is replayed. This approach minimizes the amount of data that needs to be
-       * fetched from the disk. If a transaction was not processed in time in the background,
-       * it is executed in the usual manner.
-       */
-      TransactionProcessingResult transactionProcessingResult =
-          preloadConcurrentTransactionProcessor
-              .applyPreloadBlockResult(worldState, miningBeneficiary, transaction, i)
-              .orElse(null);
+      TransactionProcessingResult transactionProcessingResult = null;
+
+      if (isParallelPreloadTxEnabled && preloadConcurrentTransactionProcessor.isPresent()) {
+        // applyPreloadBlockResult, if activated, fetch the results of transactions processed by
+        // background threads.
+        transactionProcessingResult =
+            preloadConcurrentTransactionProcessor
+                .get()
+                .applyPreloadBlockResult(worldState, miningBeneficiary, transaction, i)
+                .orElse(null);
+      }
 
       if (transactionProcessingResult == null) {
         transactionProcessingResult =
@@ -226,12 +231,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         return new BlockProcessingResult(Optional.empty(), e);
       }
     }
-    System.out.println(
-        "conflictingButCachedTransaction result "
-            + preloadConcurrentTransactionProcessor.getConflictingButCachedTransaction());
-    System.out.println(
-        "confirmedParallelizedTransaction result "
-            + preloadConcurrentTransactionProcessor.getConfirmedParallelizedTransaction());
 
     // EIP-7685: process EL requests
     final Optional<RequestProcessorCoordinator> requestProcessor =

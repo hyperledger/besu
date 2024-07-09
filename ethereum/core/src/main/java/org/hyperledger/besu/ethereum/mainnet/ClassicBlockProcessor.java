@@ -41,6 +41,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
+      final boolean isParallelPreloadTxEnabled,
       final OptionalLong eraLen,
       final ProtocolSchedule protocolSchedule) {
     super(
@@ -49,6 +50,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
+        isParallelPreloadTxEnabled,
         protocolSchedule);
     eraLength = eraLen.orElse(DEFAULT_ERA_LENGTH);
   }

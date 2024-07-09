@@ -142,7 +142,8 @@ public class BlockchainSetupUtil {
         genesisConfigFile.getConfigOptions(),
         EvmConfiguration.DEFAULT,
         MiningParameters.newDefault(),
-        new BadBlockManager());
+        new BadBlockManager(),
+        false);
   }
 
   private static ProtocolContext mainnetProtocolContextProvider(

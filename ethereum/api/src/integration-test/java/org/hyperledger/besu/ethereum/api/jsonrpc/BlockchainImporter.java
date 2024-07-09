@@ -46,7 +46,7 @@ public class BlockchainImporter {
         MainnetProtocolSchedule.fromConfig(
             GenesisConfigFile.fromConfig(genesisJson).getConfigOptions(),
             MiningParameters.newDefault(),
-            new BadBlockManager());
+            new BadBlockManager(), false);
     final BlockHeaderFunctions blockHeaderFunctions =
         ScheduleBasedBlockHeaderFunctions.create(protocolSchedule);
     blocks = new ArrayList<>();

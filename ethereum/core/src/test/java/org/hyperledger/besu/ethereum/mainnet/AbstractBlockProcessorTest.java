@@ -81,6 +81,7 @@ abstract class AbstractBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
+            false,
             protocolSchedule);
   }
 
@@ -141,6 +142,7 @@ abstract class AbstractBlockProcessorTest {
         final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final boolean skipZeroBlockRewards,
+        final boolean isParallelPreloadTxEnabled,
         final ProtocolSchedule protocolSchedule) {
       super(
           transactionProcessor,
@@ -148,6 +150,7 @@ abstract class AbstractBlockProcessorTest {
           blockReward,
           miningBeneficiaryCalculator,
           skipZeroBlockRewards,
+          isParallelPreloadTxEnabled,
           protocolSchedule);
     }
 

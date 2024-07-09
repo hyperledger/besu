@@ -54,16 +54,18 @@ public class ClassicProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder classicRecoveryInitDefinition(
-      final EvmConfiguration evmConfiguration) {
-    return MainnetProtocolSpecs.homesteadDefinition(evmConfiguration)
+      final EvmConfiguration evmConfiguration, final boolean isParallelPreloadTxEnabled) {
+    return MainnetProtocolSpecs.homesteadDefinition(evmConfiguration, isParallelPreloadTxEnabled)
         .blockHeaderValidatorBuilder(
             feeMarket -> MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
   }
 
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
-      final Optional<BigInteger> chainId, final EvmConfiguration evmConfiguration) {
-    return MainnetProtocolSpecs.homesteadDefinition(evmConfiguration)
+      final Optional<BigInteger> chainId,
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return MainnetProtocolSpecs.homesteadDefinition(evmConfiguration, isParallelPreloadTxEnabled)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorFactoryBuilder(
@@ -74,8 +76,10 @@ public class ClassicProtocolSpecs {
   }
 
   public static ProtocolSpecBuilder dieHardDefinition(
-      final Optional<BigInteger> chainId, final EvmConfiguration evmConfiguration) {
-    return tangerineWhistleDefinition(chainId, evmConfiguration)
+      final Optional<BigInteger> chainId,
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return tangerineWhistleDefinition(chainId, evmConfiguration, isParallelPreloadTxEnabled)
         .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
         .name("DieHard");
@@ -84,8 +88,9 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder gothamDefinition(
       final Optional<BigInteger> chainId,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return dieHardDefinition(chainId, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return dieHardDefinition(chainId, evmConfiguration, isParallelPreloadTxEnabled)
         .blockReward(MAX_BLOCK_REWARD)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
         .blockProcessorBuilder(
@@ -94,6 +99,7 @@ public class ClassicProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
+                parallelPreloadTxEnabled,
                 protocolSchedule) ->
                 new ClassicBlockProcessor(
                     transactionProcessor,
@@ -101,6 +107,7 @@ public class ClassicProtocolSpecs {
                     blockReward,
                     miningBeneficiaryCalculator,
                     skipZeroBlockRewards,
+                    parallelPreloadTxEnabled,
                     ecip1017EraRounds,
                     protocolSchedule))
         .name("Gotham");
@@ -109,8 +116,10 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder defuseDifficultyBombDefinition(
       final Optional<BigInteger> chainId,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return gothamDefinition(chainId, ecip1017EraRounds, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return gothamDefinition(
+            chainId, ecip1017EraRounds, evmConfiguration, isParallelPreloadTxEnabled)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -123,8 +132,10 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return gothamDefinition(chainId, ecip1017EraRounds, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return gothamDefinition(
+            chainId, ecip1017EraRounds, evmConfiguration, isParallelPreloadTxEnabled)
         .evmBuilder(MainnetEVMs::byzantium)
         .evmConfiguration(evmConfiguration)
         .gasCalculator(SpuriousDragonGasCalculator::new)
@@ -163,8 +174,14 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return atlantisDefinition(chainId, enableRevertReason, ecip1017EraRounds, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return atlantisDefinition(
+            chainId,
+            enableRevertReason,
+            ecip1017EraRounds,
+            evmConfiguration,
+            isParallelPreloadTxEnabled)
         .evmBuilder(MainnetEVMs::constantinople)
         .gasCalculator(PetersburgGasCalculator::new)
         .evmBuilder(MainnetEVMs::constantinople)
@@ -176,8 +193,14 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return aghartaDefinition(chainId, enableRevertReason, ecip1017EraRounds, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return aghartaDefinition(
+            chainId,
+            enableRevertReason,
+            ecip1017EraRounds,
+            evmConfiguration,
+            isParallelPreloadTxEnabled)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
             (gasCalculator, evmConfig) ->
@@ -191,8 +214,14 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return phoenixDefinition(chainId, enableRevertReason, ecip1017EraRounds, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return phoenixDefinition(
+            chainId,
+            enableRevertReason,
+            ecip1017EraRounds,
+            evmConfiguration,
+            isParallelPreloadTxEnabled)
         .blockHeaderValidatorBuilder(
             feeMarket ->
                 MainnetBlockHeaderValidator.createPgaBlockHeaderValidator(
@@ -228,8 +257,14 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return thanosDefinition(chainId, enableRevertReason, ecip1017EraRounds, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return thanosDefinition(
+            chainId,
+            enableRevertReason,
+            ecip1017EraRounds,
+            evmConfiguration,
+            isParallelPreloadTxEnabled)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -250,8 +285,14 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return magnetoDefinition(chainId, enableRevertReason, ecip1017EraRounds, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return magnetoDefinition(
+            chainId,
+            enableRevertReason,
+            ecip1017EraRounds,
+            evmConfiguration,
+            isParallelPreloadTxEnabled)
         .gasCalculator(LondonGasCalculator::new)
         .contractCreationProcessorBuilder(
             evm ->
@@ -264,8 +305,14 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
-      final EvmConfiguration evmConfiguration) {
-    return mystiqueDefinition(chainId, enableRevertReason, ecip1017EraRounds, evmConfiguration)
+      final EvmConfiguration evmConfiguration,
+      final boolean isParallelPreloadTxEnabled) {
+    return mystiqueDefinition(
+            chainId,
+            enableRevertReason,
+            ecip1017EraRounds,
+            evmConfiguration,
+            isParallelPreloadTxEnabled)
         // EIP-3860
         .gasCalculator(ShanghaiGasCalculator::new)
         // EIP-3855

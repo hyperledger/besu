@@ -48,7 +48,8 @@ public class MainnetProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
           config,
@@ -56,7 +57,8 @@ public class MainnetProtocolSchedule {
           isRevertReasonEnabled,
           evmConfiguration,
           miningParameters,
-          badBlockManager);
+          badBlockManager,
+          isParallelPreloadTxEnabled);
     }
     return new ProtocolScheduleBuilder(
             config,
@@ -66,7 +68,8 @@ public class MainnetProtocolSchedule {
             isRevertReasonEnabled,
             evmConfiguration,
             miningParameters,
-            badBlockManager)
+            badBlockManager,
+            isParallelPreloadTxEnabled)
         .createProtocolSchedule();
   }
 
@@ -86,14 +89,16 @@ public class MainnetProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return fromConfig(
         config,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   /**
@@ -110,14 +115,16 @@ public class MainnetProtocolSchedule {
       final GenesisConfigOptions config,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return fromConfig(
         config,
         PrivacyParameters.DEFAULT,
         false,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   /**
@@ -132,13 +139,15 @@ public class MainnetProtocolSchedule {
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     return fromConfig(
         config,
         PrivacyParameters.DEFAULT,
         false,
         EvmConfiguration.DEFAULT,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 }

@@ -70,12 +70,18 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   public static TransitionProtocolSchedule fromConfig(
       final GenesisConfigOptions genesisConfigOptions,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelPreloadTxEnabled) {
     ProtocolSchedule preMergeProtocolSchedule =
-        MainnetProtocolSchedule.fromConfig(genesisConfigOptions, miningParameters, badBlockManager);
+        MainnetProtocolSchedule.fromConfig(
+            genesisConfigOptions, miningParameters, badBlockManager, isParallelPreloadTxEnabled);
     ProtocolSchedule postMergeProtocolSchedule =
         MergeProtocolSchedule.create(
-            genesisConfigOptions, false, miningParameters, badBlockManager);
+            genesisConfigOptions,
+            false,
+            miningParameters,
+            badBlockManager,
+            isParallelPreloadTxEnabled);
     return new TransitionProtocolSchedule(
         preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
   }

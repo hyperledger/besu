@@ -136,7 +136,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         isRevertReasonEnabled,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelPreloadTxEnabled);
   }
 
   @Override

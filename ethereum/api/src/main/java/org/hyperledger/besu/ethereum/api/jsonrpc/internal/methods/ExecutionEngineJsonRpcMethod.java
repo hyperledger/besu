@@ -106,6 +106,7 @@ public abstract class ExecutionEngineJsonRpcMethod implements JsonRpcMethod {
                                 .addArgument(this.getName())
                                 .addArgument(t.getMessage())
                                 .log();
+                            t.printStackTrace(System.out);
                           }
                           return new JsonRpcErrorResponse(
                               request.getRequest().getId(), RpcErrorType.INVALID_REQUEST);
