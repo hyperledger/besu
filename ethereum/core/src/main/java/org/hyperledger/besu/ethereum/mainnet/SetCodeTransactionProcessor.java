@@ -54,32 +54,31 @@ public class SetCodeTransactionProcessor {
         .setCodeTransactionPayloads()
         .get()
         .forEach(
-            payload -> {
-              recoverAuthority(payload)
-                  .ifPresent(
-                      authorityAddress -> {
-                        LOG.trace("Set code authority: {}", authorityAddress);
+            payload ->
+                recoverAuthority(payload)
+                    .ifPresent(
+                        authorityAddress -> {
+                          LOG.trace("Set code authority: {}", authorityAddress);
 
-                        if (!chainId.equals(BigInteger.ZERO)
-                            && !payload.chainId().equals(BigInteger.ZERO)
-                            && !chainId.equals(payload.chainId())) {
-                          ;
-                        }
+                          if (!chainId.equals(BigInteger.ZERO)
+                              && !payload.chainId().equals(BigInteger.ZERO)
+                              && !chainId.equals(payload.chainId())) {
+                            ;
+                          }
 
-                        final Optional<MutableAccount> maybeAccount =
-                            Optional.ofNullable(worldUpdaterService.getAccount(authorityAddress));
-                        final long accountNonce =
-                            maybeAccount.map(AccountState::getNonce).orElse(0L);
+                          final Optional<MutableAccount> maybeAccount =
+                              Optional.ofNullable(worldUpdaterService.getAccount(authorityAddress));
+                          final long accountNonce =
+                              maybeAccount.map(AccountState::getNonce).orElse(0L);
 
-                        if (payload.nonces().size() == 1
-                            && !payload.nonces().getFirst().equals(accountNonce)) {
-                          return;
-                        }
+                          if (payload.nonces().size() == 1
+                              && !payload.nonces().getFirst().equals(accountNonce)) {
+                            return;
+                          }
 
-                        worldUpdaterService.addAuthorizedAccount(
-                            authorityAddress, payload.address());
-                      });
-            });
+                          worldUpdaterService.addAuthorizedAccount(
+                              authorityAddress, payload.address());
+                        }));
   }
 
   private Optional<Address> recoverAuthority(final SetCodeAuthorization authorization) {

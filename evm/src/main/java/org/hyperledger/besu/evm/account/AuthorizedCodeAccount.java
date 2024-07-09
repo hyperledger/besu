@@ -28,6 +28,7 @@ import org.apache.tuweni.units.bigints.UInt256;
 public class AuthorizedCodeAccount implements Account {
   private final Account wrappedAccount;
   private final Bytes authorizedCode;
+
   /** The hash of the authorized code. */
   protected Hash codeHash = null;
 

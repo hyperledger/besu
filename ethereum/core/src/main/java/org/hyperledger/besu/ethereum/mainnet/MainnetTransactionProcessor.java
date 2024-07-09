@@ -411,7 +411,7 @@ public class MainnetTransactionProcessor {
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
+        final Optional<Account> maybeContract = Optional.ofNullable(worldUpdaterService.get(to));
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.MESSAGE_CALL)
@@ -477,7 +477,7 @@ public class MainnetTransactionProcessor {
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
       // update the coinbase
-      final var coinbase = worldState.getOrCreate(miningBeneficiary);
+      final var coinbase = worldUpdaterService.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
       final CoinbaseFeePriceCalculator coinbaseCalculator;
       if (blockHeader.getBaseFee().isPresent()) {

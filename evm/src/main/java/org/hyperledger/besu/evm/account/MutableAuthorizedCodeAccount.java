@@ -30,6 +30,7 @@ public class MutableAuthorizedCodeAccount implements MutableAccount {
 
   private final MutableAccount wrappedAccount;
   private final Bytes authorizedCode;
+
   /** The hash of the authorized code. */
   protected Hash codeHash = null;
 

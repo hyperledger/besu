@@ -29,6 +29,8 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 
+import org.apache.tuweni.bytes.Bytes;
+
 /**
  * A service that provides a mutable view of the world state.
  *
@@ -38,6 +40,7 @@ import java.util.Set;
 public class WorldUpdaterService {
   private final WorldUpdater worldUpdater;
   private final Map<Address, Address> authorizedAccounts = new HashMap<>();
+  private final Map<Address, Bytes> authorizedCodes = new HashMap<>();
 
   /**
    * Creates a new world updater service.
@@ -100,7 +103,13 @@ public class WorldUpdaterService {
       account = worldUpdater.createAccount(address);
     }
 
-    return new AuthorizedCodeAccount(account, authorizedAccounts.get(address));
+    final Address authorizedCodeAddress = authorizedAccounts.get(address);
+    if (!authorizedCodes.containsKey(authorizedCodeAddress)) {
+      final Account authorizedCodeAccount = worldUpdater.getOrCreate(authorizedCodeAddress);
+      authorizedCodes.put(authorizedCodeAddress, authorizedCodeAccount.getCode());
+    }
+
+    return new AuthorizedCodeAccount(account, authorizedCodes.get(authorizedCodeAddress));
   }
 
   /**
@@ -123,7 +132,7 @@ public class WorldUpdaterService {
       return account;
     }
 
-    return new MutableAuthorizedCodeAccount(account, authorizedAccounts.get(address));
+    return createMutableAuthorizedCodeAccount(account);
   }
 
   /**
@@ -144,7 +153,7 @@ public class WorldUpdaterService {
       return account;
     }
 
-    return new MutableAuthorizedCodeAccount(account, authorizedAccounts.get(address));
+    return createMutableAuthorizedCodeAccount(account);
   }
 
   /**
@@ -162,7 +171,7 @@ public class WorldUpdaterService {
       return account;
     }
 
-    return new MutableAuthorizedCodeAccount(account, authorizedAccounts.get(address));
+    return createMutableAuthorizedCodeAccount(account);
   }
 
   /**
@@ -179,7 +188,7 @@ public class WorldUpdaterService {
       return account;
     }
 
-    return new MutableAuthorizedCodeAccount(account, authorizedAccounts.get(address));
+    return createMutableAuthorizedCodeAccount(account);
   }
 
   /**
@@ -248,5 +257,15 @@ public class WorldUpdaterService {
    */
   public Optional<WorldUpdater> parentUpdater() {
     return worldUpdater.parentUpdater();
+  }
+
+  private MutableAccount createMutableAuthorizedCodeAccount(final MutableAccount account) {
+    final Address authorizedCodeAddress = authorizedAccounts.get(account.getAddress());
+    if (!authorizedCodes.containsKey(authorizedCodeAddress)) {
+      final Account authorizedCodeAccount = worldUpdater.getOrCreate(authorizedCodeAddress);
+      authorizedCodes.put(authorizedCodeAddress, authorizedCodeAccount.getCode());
+    }
+
+    return new MutableAuthorizedCodeAccount(account, authorizedCodes.get(authorizedCodeAddress));
   }
 }
