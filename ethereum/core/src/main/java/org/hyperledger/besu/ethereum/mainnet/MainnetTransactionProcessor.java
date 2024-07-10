@@ -386,7 +386,7 @@ public class MainnetTransactionProcessor {
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
-      } else if (transaction.setCodeTransactionPayloads().isPresent()) {
+      } else if (transaction.getAuthorizationList().isPresent()) {
         setCodeTransactionProcessor.addContractToAuthority(worldUpdaterService, transaction);
         addressList.addAll(worldUpdaterService.getAuthorities());
       } else {

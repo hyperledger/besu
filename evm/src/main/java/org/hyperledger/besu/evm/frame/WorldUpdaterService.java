@@ -268,4 +268,8 @@ public class WorldUpdaterService {
 
     return new MutableAuthorizedCodeAccount(account, authorizedCodes.get(authorizedCodeAddress));
   }
+
+  public boolean hasAuthorization(final Address authority) {
+    return authorizedAccounts.containsKey(authority);
+  }
 }

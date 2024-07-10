@@ -68,6 +68,27 @@ public record SetCodeAuthorization(
         chainId, address, nonces, SIGNATURE_ALGORITHM.get().createSignature(r, s, v));
   }
 
+  @Override
+  @JsonProperty("nonce")
+  public List<Long> nonces() {
+    return nonces;
+  }
+
+  @JsonProperty("v")
+  public byte v() {
+    return signature.getRecId();
+  }
+
+  @JsonProperty("r")
+  public BigInteger r() {
+    return signature.getR();
+  }
+
+  @JsonProperty("s")
+  public BigInteger s() {
+    return signature.getS();
+  }
+
   /**
    * Create set code authorization with a builder.
    *

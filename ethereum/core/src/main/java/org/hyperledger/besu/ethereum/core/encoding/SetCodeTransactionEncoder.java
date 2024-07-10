@@ -77,7 +77,7 @@ public class SetCodeTransactionEncoder {
     writeAccessList(out, transaction.getAccessList());
     encodeSetCodeInner(
         transaction
-            .setCodeTransactionPayloads()
+            .getAuthorizationList()
             .orElseThrow(
                 () ->
                     new IllegalStateException(

@@ -124,7 +124,7 @@ public class Transaction
   private final Optional<List<VersionedHash>> versionedHashes;
 
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
-  private final Optional<List<SetCodeAuthorization>> maybeSetCodeTransactionPayloads;
+  private final Optional<List<SetCodeAuthorization>> maybeAuthorizationList;
 
   public static Builder builder() {
     return new Builder();
@@ -181,7 +181,7 @@ public class Transaction
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
-      final Optional<List<SetCodeAuthorization>> maybeSetCodeTransactionPayloads) {
+      final Optional<List<SetCodeAuthorization>> maybeAuthorizationList) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -220,7 +220,7 @@ public class Transaction
 
       if (transactionType.requiresSetCode()) {
         checkArgument(
-            maybeSetCodeTransactionPayloads.isPresent(),
+            maybeAuthorizationList.isPresent(),
             "Must specify set code transaction payload for set code transaction");
       }
     }
@@ -241,7 +241,7 @@ public class Transaction
     this.chainId = chainId;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
-    this.maybeSetCodeTransactionPayloads = maybeSetCodeTransactionPayloads;
+    this.maybeAuthorizationList = maybeAuthorizationList;
   }
 
   /**
@@ -473,7 +473,7 @@ public class Transaction
               payload,
               maybeAccessList,
               versionedHashes.orElse(null),
-              maybeSetCodeTransactionPayloads,
+              maybeAuthorizationList,
               chainId);
     }
     return hashNoSignature;
@@ -681,13 +681,13 @@ public class Transaction
   }
 
   @Override
-  public Optional<List<SetCodeAuthorization>> setCodeTransactionPayloads() {
-    return maybeSetCodeTransactionPayloads;
+  public Optional<List<SetCodeAuthorization>> getAuthorizationList() {
+    return maybeAuthorizationList;
   }
 
   @Override
   public int setCodeTransactionPayloadSize() {
-    return maybeSetCodeTransactionPayloads.map(List::size).orElse(0);
+    return maybeAuthorizationList.map(List::size).orElse(0);
   }
 
   /**
@@ -714,7 +714,7 @@ public class Transaction
       final Bytes payload,
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
-      final Optional<List<SetCodeAuthorization>> setCodePayloads,
+      final Optional<List<SetCodeAuthorization>> authorizationList,
       final Optional<BigInteger> chainId) {
     if (transactionType.requiresChainId()) {
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
@@ -770,7 +770,7 @@ public class Transaction
                   payload,
                   chainId,
                   accessList,
-                  setCodePayloads.orElseThrow(
+                  authorizationList.orElseThrow(
                       () ->
                           new IllegalStateException(
                               "Developer error: the transaction should be guaranteed to have a set code payload here")));
@@ -921,7 +921,7 @@ public class Transaction
       final Bytes payload,
       final Optional<BigInteger> chainId,
       final Optional<List<AccessListEntry>> accessList,
-      final List<SetCodeAuthorization> setCodePayloads) {
+      final List<SetCodeAuthorization> authorizationList) {
     final Bytes encoded =
         RLP.encode(
             rlpOutput -> {
@@ -937,7 +937,7 @@ public class Transaction
                   chainId,
                   accessList,
                   rlpOutput);
-              SetCodeTransactionEncoder.encodeSetCodeInner(setCodePayloads, rlpOutput);
+              SetCodeTransactionEncoder.encodeSetCodeInner(authorizationList, rlpOutput);
               rlpOutput.endList();
             });
     return Bytes.concatenate(Bytes.of(TransactionType.SET_CODE.getSerializedType()), encoded);
@@ -1111,7 +1111,7 @@ public class Transaction
             chainId,
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
-            maybeSetCodeTransactionPayloads);
+            maybeAuthorizationList);
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1198,7 +1198,7 @@ public class Transaction
       this.chainId = toCopy.chainId;
       this.versionedHashes = toCopy.versionedHashes.orElse(null);
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
-      this.setCodeTransactionPayloads = toCopy.maybeSetCodeTransactionPayloads;
+      this.setCodeTransactionPayloads = toCopy.maybeAuthorizationList;
       return this;
     }
 

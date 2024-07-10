@@ -51,7 +51,7 @@ public class SetCodeTransactionProcessor {
       final WorldUpdaterService worldUpdaterService, final Transaction transaction) {
 
     transaction
-        .setCodeTransactionPayloads()
+        .getAuthorizationList()
         .get()
         .forEach(
             payload ->
@@ -73,6 +73,10 @@ public class SetCodeTransactionProcessor {
 
                           if (payload.nonces().size() == 1
                               && !payload.nonces().getFirst().equals(accountNonce)) {
+                            return;
+                          }
+
+                          if (worldUpdaterService.hasAuthorization(authorityAddress)) {
                             return;
                           }
 

@@ -240,7 +240,7 @@ public interface Transaction {
    *
    * @return the set code transaction payloads
    */
-  Optional<List<SetCodeAuthorization>> setCodeTransactionPayloads();
+  Optional<List<SetCodeAuthorization>> getAuthorizationList();
 
   /**
    * Returns the size of the set code transaction payload list.

@@ -31,6 +31,7 @@ import org.apache.tuweni.bytes.Bytes;
 
 @JsonPropertyOrder({
   "accessList",
+  "authorizationList",
   "blockHash",
   "blockNumber",
   "chainId",
@@ -93,7 +94,7 @@ public class TransactionCompleteResult implements TransactionResult {
   private final List<VersionedHash> versionedHashes;
 
   @JsonInclude(JsonInclude.Include.NON_NULL)
-  private final List<SetCodeAuthorization> setCodeAuthorizationList;
+  private final List<SetCodeAuthorization> authorizationList;
 
   public TransactionCompleteResult(final TransactionWithMetadata tx) {
     final Transaction transaction = tx.getTransaction();
@@ -138,7 +139,7 @@ public class TransactionCompleteResult implements TransactionResult {
     this.r = Quantity.create(transaction.getR());
     this.s = Quantity.create(transaction.getS());
     this.versionedHashes = transaction.getVersionedHashes().orElse(null);
-    this.setCodeAuthorizationList = transaction.setCodeTransactionPayloads().orElse(null);
+    this.authorizationList = transaction.getAuthorizationList().orElse(null);
   }
 
   @JsonGetter(value = "accessList")
@@ -253,8 +254,8 @@ public class TransactionCompleteResult implements TransactionResult {
     return versionedHashes;
   }
 
-  @JsonGetter(value = "setCodeTransactionPayloadList")
-  public List<SetCodeAuthorization> getSetCodeTransactionPayloadList() {
-    return setCodeAuthorizationList;
+  @JsonGetter(value = "authorizationList")
+  public List<SetCodeAuthorization> getAuthorizationList() {
+    return authorizationList;
   }
 }
