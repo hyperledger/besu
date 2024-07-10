@@ -243,9 +243,9 @@ public interface Transaction {
   Optional<List<SetCodeAuthorization>> getAuthorizationList();
 
   /**
-   * Returns the size of the set code transaction payload list.
+   * Returns the size of the authorization list.
    *
-   * @return the size of the set code transaction payload list
+   * @return the size of the authorization list
    */
-  int setCodeTransactionPayloadSize();
+  int authorizationListSize();
 }

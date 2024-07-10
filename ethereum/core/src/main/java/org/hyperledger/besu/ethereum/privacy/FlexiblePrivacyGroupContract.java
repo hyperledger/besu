@@ -35,7 +35,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.Restriction;
@@ -115,8 +114,8 @@ public class FlexiblePrivacyGroupContract {
 
           return Optional.of(
               privateTransactionProcessor.processTransaction(
-                  messageFrame.getWorldUpdaterService(),
-                  new WorldUpdaterService(updater),
+                  messageFrame.getWorldUpdater(),
+                  updater,
                   currentBlockHeader,
                   messageFrame.getContextVariable(PrivateStateUtils.KEY_TRANSACTION_HASH),
                   privateTransaction,

@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -158,12 +157,11 @@ public class MessageFrameTestFixture {
     final Blockchain localBlockchain = this.blockchain.orElseGet(this::createDefaultBlockchain);
     final BlockHeader localBlockHeader =
         this.blockHeader.orElseGet(() -> localBlockchain.getBlockHeader(0).get());
-    final WorldUpdater updater = worldUpdater.orElseGet(this::createDefaultWorldUpdater);
     final MessageFrame frame =
         MessageFrame.builder()
             .parentMessageFrame(parentFrame)
             .type(type)
-            .worldUpdaterService(new WorldUpdaterService(updater))
+            .worldUpdater(worldUpdater.orElseGet(this::createDefaultWorldUpdater))
             .initialGas(initialGas)
             .address(address)
             .originator(originator)

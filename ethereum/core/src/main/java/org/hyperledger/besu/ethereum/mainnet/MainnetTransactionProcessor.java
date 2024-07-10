@@ -39,7 +39,6 @@ import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -337,8 +336,7 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long setCodeGas =
-          gasCalculator.setCodeListGasCost(transaction.setCodeTransactionPayloadSize());
+      final long setCodeGas = gasCalculator.setCodeListGasCost(transaction.authorizationListSize());
       final long gasAvailable =
           transaction.getGasLimit() - intrinsicGas - accessListGas - setCodeGas;
       LOG.trace(
@@ -359,15 +357,12 @@ public class MainnetTransactionProcessor {
         contextVariablesBuilder.put(KEY_PRIVATE_METADATA_UPDATER, privateMetadataUpdater);
       }
 
-      final WorldUpdaterService worldUpdaterService =
-          new WorldUpdaterService(worldUpdater.updater());
-
       operationTracer.traceStartTransaction(worldUpdater, transaction);
 
       final MessageFrame.Builder commonMessageFrameBuilder =
           MessageFrame.builder()
               .maxStackSize(maxStackSize)
-              .worldUpdaterService(worldUpdaterService)
+              .worldUpdater(worldUpdater.updater())
               .initialGas(gasAvailable)
               .originator(senderAddress)
               .gasPrice(transactionGasPrice)
@@ -387,8 +382,8 @@ public class MainnetTransactionProcessor {
         commonMessageFrameBuilder.versionedHashes(
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
       } else if (transaction.getAuthorizationList().isPresent()) {
-        setCodeTransactionProcessor.addContractToAuthority(worldUpdaterService, transaction);
-        addressList.addAll(worldUpdaterService.getAuthorities());
+        setCodeTransactionProcessor.addContractToAuthority(worldUpdater, transaction);
+        addressList.addAll(worldUpdater.getAuthorizedAccountService().getAuthorities());
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
       }
@@ -411,7 +406,7 @@ public class MainnetTransactionProcessor {
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
         final Address to = transaction.getTo().get();
-        final Optional<Account> maybeContract = Optional.ofNullable(worldUpdaterService.get(to));
+        final Optional<Account> maybeContract = Optional.ofNullable(worldState.get(to));
         initialFrame =
             commonMessageFrameBuilder
                 .type(MessageFrame.Type.MESSAGE_CALL)
@@ -477,7 +472,7 @@ public class MainnetTransactionProcessor {
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
       // update the coinbase
-      final var coinbase = worldUpdaterService.getOrCreate(miningBeneficiary);
+      final var coinbase = worldState.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
       final CoinbaseFeePriceCalculator coinbaseCalculator;
       if (blockHeader.getBaseFee().isPresent()) {
@@ -500,7 +495,7 @@ public class MainnetTransactionProcessor {
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       coinbase.incrementBalance(coinbaseWeiDelta);
-      worldUpdaterService.resetAuthorities();
+      worldUpdater.getAuthorizedAccountService().resetAuthorities();
 
       operationTracer.traceEndTransaction(
           worldUpdater,

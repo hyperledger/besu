@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
@@ -98,7 +97,7 @@ public class SystemCallProcessorTest {
     SystemCallProcessor systemCallProcessor = new SystemCallProcessor(mockTransactionProcessor);
     return systemCallProcessor.process(
         CALL_ADDRESS,
-        new WorldUpdaterService(worldState.updater()),
+        worldState.updater(),
         mockBlockHeader,
         OperationTracer.NO_TRACING,
         mockBlockHashLookup);

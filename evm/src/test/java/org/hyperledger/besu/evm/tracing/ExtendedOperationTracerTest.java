@@ -23,9 +23,9 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -41,7 +41,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 class ExtendedOperationTracerTest {
 
   @Mock MessageFrame frame;
-  @Mock WorldUpdaterService worldUpdaterService;
+  @Mock WorldUpdater worldUpdater;
   @Mock MutableAccount mutableAccount;
 
   @BeforeEach
@@ -49,8 +49,8 @@ class ExtendedOperationTracerTest {
     when(frame.getOutputData()).thenReturn(Bytes.EMPTY);
     when(frame.getRemainingGas()).thenReturn(1L);
 
-    when(frame.getWorldUpdaterService()).thenReturn(worldUpdaterService);
-    when(worldUpdaterService.getOrCreate(any())).thenReturn(mutableAccount);
+    when(frame.getWorldUpdater()).thenReturn(worldUpdater);
+    when(worldUpdater.getOrCreate(any())).thenReturn(mutableAccount);
   }
 
   @Test

@@ -41,6 +41,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   final UndoMap<Address, JournaledAccount> accounts;
   final UndoSet<Address> deleted;
   final long undoMark;
+  private final AuthorizedAccountService authorizedAccountService;
 
   /**
    * Instantiates a new Stacked updater.
@@ -66,6 +67,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
           "WorldUpdater must be a JournaledWorldUpdater or an AbstractWorldUpdater");
     }
     undoMark = accounts.mark();
+    authorizedAccountService = new AuthorizedAccountService(this);
   }
 
   /**
@@ -124,6 +126,11 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   @Override
   public void markTransactionBoundary() {
     accounts.values().forEach(JournaledAccount::markTransactionBoundary);
+  }
+
+  @Override
+  public AuthorizedAccountService getAuthorizedAccountService() {
+    return authorizedAccountService;
   }
 
   @Override

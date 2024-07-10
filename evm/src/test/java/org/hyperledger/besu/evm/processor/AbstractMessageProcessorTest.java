@@ -29,7 +29,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.fluent.EVMExecutor;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.toy.ToyWorld;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -50,14 +49,12 @@ abstract class AbstractMessageProcessorTest<T extends AbstractMessageProcessor> 
   @Mock MessageFrame messageFrame;
   @Mock OperationTracer operationTracer;
   @Mock Deque<MessageFrame> messageFrameStack;
-  @Mock WorldUpdaterService worldUpdaterService;
 
   protected abstract T getAbstractMessageProcessor();
 
   @Test
   void shouldTraceExitForContext() {
-    when(messageFrame.getWorldUpdaterService()).thenReturn(worldUpdaterService);
-    when(worldUpdaterService.getWorldUpdater()).thenReturn(new ToyWorld());
+    when(messageFrame.getWorldUpdater()).thenReturn(new ToyWorld());
     when(messageFrame.getState()).thenReturn(MessageFrame.State.COMPLETED_SUCCESS);
     when(messageFrame.getMessageFrameStack()).thenReturn(messageFrameStack);
 

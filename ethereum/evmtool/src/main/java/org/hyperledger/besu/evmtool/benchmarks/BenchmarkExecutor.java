@@ -21,7 +21,6 @@ import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.fluent.SimpleBlockValues;
 import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
@@ -70,7 +69,7 @@ public abstract class BenchmarkExecutor {
           .miningBeneficiary(Address.ZERO)
           .originator(Address.ZERO)
           .initialGas(100_000L)
-          .worldUpdaterService(new WorldUpdaterService(new SimpleWorld()))
+          .worldUpdater(new SimpleWorld())
           .build();
 
   /**

@@ -686,7 +686,7 @@ public class Transaction
   }
 
   @Override
-  public int setCodeTransactionPayloadSize() {
+  public int authorizationListSize() {
     return maybeAuthorizationList.map(List::size).orElse(0);
   }
 

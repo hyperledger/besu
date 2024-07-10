@@ -32,7 +32,6 @@ import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.log.Log;
@@ -49,7 +48,6 @@ import org.junit.jupiter.api.Test;
 
 class EofCreateOperationTest {
 
-  private final WorldUpdaterService worldUpdaterService = mock(WorldUpdaterService.class);
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
   private final MutableAccount newAccount = mock(MutableAccount.class);
@@ -72,13 +70,13 @@ class EofCreateOperationTest {
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdaterService.getAccount(any())).thenReturn(account);
-    when(worldUpdaterService.get(any())).thenReturn(account);
-    when(worldUpdaterService.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdaterService.getOrCreate(any())).thenReturn(newAccount);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
     when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(newAccount.isStorageEmpty()).thenReturn(true);
-    when(worldUpdaterService.updater()).thenReturn(worldUpdater);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     assertThat(createFrame).isNotNull();
@@ -106,13 +104,13 @@ class EofCreateOperationTest {
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdaterService.getAccount(any())).thenReturn(account);
-    when(worldUpdaterService.get(any())).thenReturn(account);
-    when(worldUpdaterService.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdaterService.getOrCreate(any())).thenReturn(newAccount);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+    when(worldUpdater.get(any())).thenReturn(account);
+    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
+    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
     when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
     when(newAccount.isStorageEmpty()).thenReturn(true);
-    when(worldUpdaterService.updater()).thenReturn(worldUpdater);
+    when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     var precompiles = MainnetPrecompiledContracts.prague(evm.getGasCalculator());
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
@@ -155,7 +153,7 @@ class EofCreateOperationTest {
         .miningBeneficiary(Address.ZERO)
         .originator(Address.ZERO)
         .initialGas(100000L)
-        .worldUpdaterService(worldUpdaterService)
+        .worldUpdater(worldUpdater)
         .build();
   }
 }

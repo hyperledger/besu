@@ -190,7 +190,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
             + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L))
-            + gasCalculator.setCodeListGasCost(transaction.setCodeTransactionPayloadSize());
+            + gasCalculator.setCodeListGasCost(transaction.authorizationListSize());
     if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,

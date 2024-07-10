@@ -44,7 +44,7 @@ public class StateDiffGenerator {
     // This corresponds to the world state after the TX executed
     // It is two deep because of the way we addressed Spurious Dragon.
     final WorldUpdater transactionUpdater =
-        traceFrames.get(0).getWorldUpdaterService().parentUpdater().get().parentUpdater().get();
+        traceFrames.get(0).getWorldUpdater().parentUpdater().get().parentUpdater().get();
     // This corresponds to the world state prior to the TX execution,
     // Either the initial block state or the state of the prior TX
     final WorldUpdater previousUpdater = transactionUpdater.parentUpdater().get();

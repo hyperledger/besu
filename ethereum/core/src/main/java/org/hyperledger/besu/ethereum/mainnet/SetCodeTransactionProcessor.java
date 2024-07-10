@@ -24,7 +24,8 @@ import org.hyperledger.besu.ethereum.core.encoding.SetCodeTransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
+import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -48,7 +49,7 @@ public class SetCodeTransactionProcessor {
   }
 
   public void addContractToAuthority(
-      final WorldUpdaterService worldUpdaterService, final Transaction transaction) {
+      final WorldUpdater worldUpdater, final Transaction transaction) {
 
     transaction
         .getAuthorizationList()
@@ -67,7 +68,7 @@ public class SetCodeTransactionProcessor {
                           }
 
                           final Optional<MutableAccount> maybeAccount =
-                              Optional.ofNullable(worldUpdaterService.getAccount(authorityAddress));
+                              Optional.ofNullable(worldUpdater.getAccount(authorityAddress));
                           final long accountNonce =
                               maybeAccount.map(AccountState::getNonce).orElse(0L);
 
@@ -76,12 +77,13 @@ public class SetCodeTransactionProcessor {
                             return;
                           }
 
-                          if (worldUpdaterService.hasAuthorization(authorityAddress)) {
+                          final AuthorizedAccountService service =
+                              worldUpdater.getAuthorizedAccountService();
+                          if (service.hasAuthorization(authorityAddress)) {
                             return;
                           }
 
-                          worldUpdaterService.addAuthorizedAccount(
-                              authorityAddress, payload.address());
+                          service.addAuthorizedAccount(authorityAddress, payload.address());
                         }));
   }
 

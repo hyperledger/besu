@@ -23,15 +23,10 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-
-import org.apache.tuweni.bytes.Bytes;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /**
  * An abstract implementation of a {@link WorldUpdater} that buffers update over the {@link
@@ -45,11 +40,9 @@ import org.slf4j.LoggerFactory;
 public abstract class AbstractWorldUpdater<W extends WorldView, A extends Account>
     implements WorldUpdater {
 
-  private static final Logger LOG = LoggerFactory.getLogger(AbstractWorldUpdater.class);
-
   private final W world;
   private final EvmConfiguration evmConfiguration;
-  private final Map<Address, Bytes> temporaryEOACode = new HashMap<>();
+  private final AuthorizedAccountService authorizedAccountService;
 
   /** The Updated accounts. */
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new ConcurrentHashMap<>();
@@ -67,6 +60,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   protected AbstractWorldUpdater(final W world, final EvmConfiguration evmConfiguration) {
     this.world = world;
     this.evmConfiguration = evmConfiguration;
+    this.authorizedAccountService = new AuthorizedAccountService(this);
   }
 
   /**
@@ -103,14 +97,12 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
-      return addTemporaryCodeToAccount(existing, address);
+      return existing;
     }
     if (deletedAccounts.contains(address)) {
       return null;
     }
-
-    final A account = getForMutation(address);
-    return addTemporaryCodeToAccount(account, address);
+    return getForMutation(address);
   }
 
   @Override
@@ -175,6 +167,11 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     }
   }
 
+  @Override
+  public AuthorizedAccountService getAuthorizedAccountService() {
+    return authorizedAccountService;
+  }
+
   /**
    * The accounts modified in this updater.
    *
@@ -197,23 +194,5 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   protected void reset() {
     updatedAccounts.clear();
     deletedAccounts.clear();
-  }
-
-  private Account addTemporaryCodeToAccount(final Account account, final Address address) {
-    if (!temporaryEOACode.containsKey(address)) {
-      return account;
-    }
-
-    final MutableAccount accountWithCode;
-    try {
-      accountWithCode = account != null ? (MutableAccount) account : createAccount(address);
-      accountWithCode.setCode(temporaryEOACode.get(address));
-    } catch (ClassCastException ex) {
-      LOG.error(
-          "Cannot inject code from EIP-7702 transaction into non-mutable account. {}", account);
-      throw ex;
-    }
-
-    return accountWithCode;
   }
 }

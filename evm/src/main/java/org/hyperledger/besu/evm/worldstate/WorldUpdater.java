@@ -179,4 +179,11 @@ public interface WorldUpdater extends MutableWorldView {
   default void markTransactionBoundary() {
     // default is to ignore
   }
+
+  /**
+   * Returns the {@link AuthorizedAccountService} associated with this {@link WorldUpdater}.
+   *
+   * @return the {@link AuthorizedAccountService} associated with this {@link WorldUpdater}
+   */
+  AuthorizedAccountService getAuthorizedAccountService();
 }

@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
+import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collection;
@@ -34,6 +35,8 @@ public class SimpleWorld implements WorldUpdater {
   /** The Accounts. */
   Map<Address, SimpleAccount> accounts = new HashMap<>();
 
+  private final AuthorizedAccountService authorizedAccountService;
+
   /** Instantiates a new Simple world. */
   public SimpleWorld() {
     this(null);
@@ -46,6 +49,7 @@ public class SimpleWorld implements WorldUpdater {
    */
   public SimpleWorld(final SimpleWorld parent) {
     this.parent = parent;
+    authorizedAccountService = new AuthorizedAccountService(this);
   }
 
   @Override
@@ -131,5 +135,10 @@ public class SimpleWorld implements WorldUpdater {
   @Override
   public Optional<WorldUpdater> parentUpdater() {
     return Optional.ofNullable(parent);
+  }
+
+  @Override
+  public AuthorizedAccountService getAuthorizedAccountService() {
+    return authorizedAccountService;
   }
 }

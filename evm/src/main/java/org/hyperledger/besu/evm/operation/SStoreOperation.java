@@ -67,8 +67,7 @@ public class SStoreOperation extends AbstractOperation {
     final UInt256 key = UInt256.fromBytes(frame.popStackItem());
     final UInt256 newValue = UInt256.fromBytes(frame.popStackItem());
 
-    final MutableAccount account =
-        frame.getWorldUpdaterService().getAccount(frame.getRecipientAddress());
+    final MutableAccount account = frame.getWorldUpdater().getAccount(frame.getRecipientAddress());
     if (account == null) {
       return ILLEGAL_STATE_CHANGE;
     }

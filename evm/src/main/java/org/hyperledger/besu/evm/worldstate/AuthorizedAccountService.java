@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.frame;
+package org.hyperledger.besu.evm.worldstate;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -20,44 +20,26 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AuthorizedCodeAccount;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.account.MutableAuthorizedCodeAccount;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.evm.worldstate.WorldView;
 
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 
-/**
- * A service that provides a mutable view of the world state.
- *
- * <p>This service is a wrapper around a {@link WorldUpdater} that provides additional features such
- * as the ability to authorize accounts to load their code into an EOA account.
- */
-public class WorldUpdaterService {
+/** A service that manages the code injection of authorized accounts. */
+public class AuthorizedAccountService {
   private final WorldUpdater worldUpdater;
   private final Map<Address, Address> authorizedAccounts = new HashMap<>();
   private final Map<Address, Bytes> authorizedCodes = new HashMap<>();
 
   /**
-   * Creates a new world updater service.
+   * Creates a new AuthorizedAccountService.
    *
-   * @param worldUpdater the underlying world updater.
+   * @param worldUpdater the world updater to retrieve the accounts with their code.
    */
-  public WorldUpdaterService(final WorldUpdater worldUpdater) {
+  public AuthorizedAccountService(final WorldUpdater worldUpdater) {
     this.worldUpdater = worldUpdater;
-  }
-
-  /**
-   * Returns the underlying world updater.
-   *
-   * @return the underlying world updater.
-   */
-  public WorldUpdater getWorldUpdater() {
-    return worldUpdater;
   }
 
   /**
@@ -205,74 +187,6 @@ public class WorldUpdaterService {
     }
 
     return createMutableAuthorizedCodeAccount(account);
-  }
-
-  /**
-   * Returns the accounts that have been touched within the scope of the world updater.
-   *
-   * @return the accounts that have been touched within the scope of the world updater
-   */
-  public Collection<? extends Account> getTouchedAccounts() {
-    return worldUpdater.getTouchedAccounts();
-  }
-
-  /** Removes the changes that were made to the world updater. */
-  public void revert() {
-    worldUpdater.revert();
-  }
-
-  /**
-   * Retrieves the senders account, returning a modifiable object (whose updates are accumulated by
-   * this updater).
-   *
-   * @param frame the current message frame.
-   * @return the account {@code address}, or {@code null} if the account does not exist.
-   */
-  public MutableAccount getSenderAccount(final MessageFrame frame) {
-    return worldUpdater.getSenderAccount(frame);
-  }
-
-  /**
-   * Deletes the provided account.
-   *
-   * @param address the address of the account to delete. If that account doesn't exists prior to
-   *     this call, this is a no-op.
-   */
-  public void deleteAccount(final Address address) {
-    worldUpdater.deleteAccount(address);
-  }
-
-  /**
-   * Returns the account addresses that have been deleted within the scope of this updater.
-   *
-   * @return the account addresses that have been deleted within the scope of this updater
-   */
-  public Collection<Address> getDeletedAccountAddresses() {
-    return worldUpdater.getDeletedAccountAddresses();
-  }
-
-  /** Commits the changes made to the world updater to the underlying {@link WorldView} */
-  public void commit() {
-    worldUpdater.commit();
-  }
-
-  /**
-   * Creates an updater for this mutable world view.
-   *
-   * @return a new updater for this mutable world view. On commit, change made to this updater will
-   *     become visible on this view.
-   */
-  public WorldUpdater updater() {
-    return worldUpdater.updater();
-  }
-
-  /**
-   * The parent updater (if it exists).
-   *
-   * @return The parent WorldUpdater if this wraps another one, empty otherwise
-   */
-  public Optional<WorldUpdater> parentUpdater() {
-    return worldUpdater.parentUpdater();
   }
 
   private MutableAccount createMutableAuthorizedCodeAccount(final MutableAccount account) {

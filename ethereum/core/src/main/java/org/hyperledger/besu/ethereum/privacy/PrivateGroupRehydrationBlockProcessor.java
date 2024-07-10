@@ -39,7 +39,6 @@ import org.hyperledger.besu.ethereum.privacy.storage.PrivateTransactionMetadata;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
@@ -144,8 +143,8 @@ public class PrivateGroupRehydrationBlockProcessor {
 
         final TransactionProcessingResult privateResult =
             privateTransactionProcessor.processTransaction(
-                new WorldUpdaterService(worldStateUpdater.updater()),
-                new WorldUpdaterService(privateWorldStateUpdater),
+                worldStateUpdater.updater(),
+                privateWorldStateUpdater,
                 blockHeader,
                 transactionHash,
                 privateTransaction,

@@ -68,22 +68,42 @@ public record SetCodeAuthorization(
         chainId, address, nonces, SIGNATURE_ALGORITHM.get().createSignature(r, s, v));
   }
 
+  /**
+   * Return the list of nonces
+   *
+   * @return all the nonces
+   */
   @Override
   @JsonProperty("nonce")
   public List<Long> nonces() {
     return nonces;
   }
 
+  /**
+   * Return the recovery id.
+   *
+   * @return byte
+   */
   @JsonProperty("v")
   public byte v() {
     return signature.getRecId();
   }
 
+  /**
+   * Return the r value of the signature.
+   *
+   * @return r value
+   */
   @JsonProperty("r")
   public BigInteger r() {
     return signature.getR();
   }
 
+  /**
+   * Return the s value of the signature.
+   *
+   * @return s value
+   */
   @JsonProperty("s")
   public BigInteger s() {
     return signature.getS();

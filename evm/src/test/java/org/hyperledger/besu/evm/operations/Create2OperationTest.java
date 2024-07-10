@@ -31,7 +31,6 @@ import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.Words;
@@ -163,7 +162,7 @@ public class Create2OperationTest {
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100_000L)
-            .worldUpdaterService(new WorldUpdaterService(worldUpdater))
+            .worldUpdater(worldUpdater)
             .build();
     messageFrame.pushStackItem(UInt256.fromHexString(salt));
     messageFrame.pushStackItem(memoryLength);
@@ -275,7 +274,7 @@ public class Create2OperationTest {
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100000L)
-            .worldUpdaterService(new WorldUpdaterService(worldUpdater))
+            .worldUpdater(worldUpdater)
             .build();
     messageFrame.pushStackItem(Bytes.EMPTY);
     messageFrame.pushStackItem(memoryLength);

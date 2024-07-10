@@ -27,10 +27,10 @@ import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
+import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import javax.annotation.Nonnull;
 
@@ -75,7 +75,7 @@ class CodeV0Test {
     final MessageFrame frame =
         MessageFrame.builder()
             .type(MESSAGE_CALL)
-            .worldUpdaterService(mock(WorldUpdaterService.class))
+            .worldUpdater(mock(WorldUpdater.class))
             .initialGas(10_000L)
             .address(Address.ZERO)
             .originator(Address.ZERO)

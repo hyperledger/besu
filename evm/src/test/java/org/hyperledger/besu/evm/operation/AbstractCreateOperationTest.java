@@ -34,7 +34,6 @@ import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.frame.WorldUpdaterService;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -120,7 +119,7 @@ class AbstractCreateOperationTest {
 
     @Override
     protected Address targetContractAddress(final MessageFrame frame, final Code initcode) {
-      final Account sender = frame.getWorldUpdaterService().get(frame.getRecipientAddress());
+      final Account sender = frame.getWorldUpdater().get(frame.getRecipientAddress());
       // Decrement nonce by 1 to normalize the effect of transaction execution
       final Address address =
           Address.contractAddress(frame.getRecipientAddress(), sender.getNonce() - 1L);
@@ -175,7 +174,7 @@ class AbstractCreateOperationTest {
             .miningBeneficiary(Address.ZERO)
             .originator(Address.ZERO)
             .initialGas(100000L)
-            .worldUpdaterService(new WorldUpdaterService(worldUpdater))
+            .worldUpdater(worldUpdater)
             .build();
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
     messageFrame.pushStackItem(Bytes.ofUnsignedLong(contract.size()));
