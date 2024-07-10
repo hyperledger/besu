@@ -5,6 +5,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Add support to load external profiles using `--profile` [#7265](https://github.com/hyperledger/besu/issues/7265)
 
 ### Bug fixes
 
