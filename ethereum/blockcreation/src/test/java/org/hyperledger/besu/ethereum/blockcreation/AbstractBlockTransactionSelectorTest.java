@@ -224,7 +224,8 @@ public abstract class AbstractBlockTransactionSelectorTest {
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
-            false);
+            false,
+            new NoOpMetricsSystem());
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeader(0)).getTransactionProcessor();
 

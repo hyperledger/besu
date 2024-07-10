@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.NavigableMap;
@@ -45,8 +46,8 @@ public class ProtocolScheduleBuilder {
   private final EvmConfiguration evmConfiguration;
   private final MiningParameters miningParameters;
   private final BadBlockManager badBlockManager;
-
   private final boolean isParallelTxEnabled;
+  private final MetricsSystem metricsSystem;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -57,7 +58,8 @@ public class ProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     this(
         config,
         Optional.of(defaultChainId),
@@ -67,7 +69,8 @@ public class ProtocolScheduleBuilder {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 
   public ProtocolScheduleBuilder(
@@ -78,7 +81,8 @@ public class ProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     this(
         config,
         Optional.empty(),
@@ -88,7 +92,8 @@ public class ProtocolScheduleBuilder {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 
   private ProtocolScheduleBuilder(
@@ -100,7 +105,8 @@ public class ProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
@@ -110,6 +116,7 @@ public class ProtocolScheduleBuilder {
     this.miningParameters = miningParameters;
     this.badBlockManager = badBlockManager;
     this.isParallelTxEnabled = isParallelTxEnabled;
+    this.metricsSystem = metricsSystem;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -130,7 +137,8 @@ public class ProtocolScheduleBuilder {
             evmConfiguration.overrides(
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
             miningParameters,
-            isParallelTxEnabled);
+            isParallelTxEnabled,
+            metricsSystem);
 
     validateForkOrdering();
 
@@ -213,7 +221,7 @@ public class ProtocolScheduleBuilder {
                   BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      evmConfiguration, isParallelTxEnabled),
+                      evmConfiguration, isParallelTxEnabled, metricsSystem),
                   Function.identity());
               protocolSchedule.putBlockNumberMilestone(
                   classicBlockNumber + 1, originalProtocolSpec);

@@ -165,7 +165,8 @@ public class RetestethContext {
             EvmConfiguration.DEFAULT,
             miningParameters,
             badBlockManager,
-            false);
+            false,
+            new NoOpMetricsSystem());
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
       protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }

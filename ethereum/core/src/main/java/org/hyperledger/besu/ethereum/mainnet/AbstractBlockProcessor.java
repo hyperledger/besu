@@ -43,6 +43,9 @@ import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -77,6 +80,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
+  private final Optional<MetricsSystem> metricsSystem;
+  private final Optional<Counter> confirmedParallelizedTransactionCounter;
+  private final Optional<Counter> conflictingButCachedTransactionCounter;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
 
@@ -95,6 +101,45 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
+    this.metricsSystem = Optional.empty();
+    this.confirmedParallelizedTransactionCounter = Optional.empty();
+    this.conflictingButCachedTransactionCounter = Optional.empty();
+  }
+
+  protected AbstractBlockProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final TransactionReceiptFactory transactionReceiptFactory,
+      final Wei blockReward,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+      final boolean skipZeroBlockRewards,
+      final boolean isParallelTxEnabled,
+      final ProtocolSchedule protocolSchedule,
+      final MetricsSystem metricsSystem) {
+    this.transactionProcessor = transactionProcessor;
+    this.isParallelTxEnabled = isParallelTxEnabled;
+    this.transactionReceiptFactory = transactionReceiptFactory;
+    this.blockReward = blockReward;
+    this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
+    this.skipZeroBlockRewards = skipZeroBlockRewards;
+    this.protocolSchedule = protocolSchedule;
+    this.metricsSystem = Optional.of(metricsSystem);
+    this.confirmedParallelizedTransactionCounter =
+        Optional.of(
+            this.metricsSystem
+                .get()
+                .createCounter(
+                    BesuMetricCategory.BLOCK_PROCESSING,
+                    "parallelized_transactions_counter",
+                    "Counter for the number of parallelized transactions during block processing"));
+
+    this.conflictingButCachedTransactionCounter =
+        Optional.of(
+            this.metricsSystem
+                .get()
+                .createCounter(
+                    BesuMetricCategory.BLOCK_PROCESSING,
+                    "conflicted_transactions_counter",
+                    "Counter for the number of conflicted transactions during block processing"));
   }
 
   @Override
@@ -166,7 +211,13 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         transactionProcessingResult =
             parallelizedConcurrentTransactionProcessor
                 .get()
-                .applyParallelizedTransactionResult(worldState, miningBeneficiary, transaction, i)
+                .applyParallelizedTransactionResult(
+                    worldState,
+                    miningBeneficiary,
+                    transaction,
+                    i,
+                    confirmedParallelizedTransactionCounter,
+                    conflictingButCachedTransactionCounter)
                 .orElse(null);
       }
 

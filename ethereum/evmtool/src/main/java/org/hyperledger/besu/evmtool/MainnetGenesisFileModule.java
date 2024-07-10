@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Locale;
@@ -84,7 +85,8 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         evmConfiguration,
         MiningParameters.newDefault(),
         new BadBlockManager(),
-        false);
+        false,
+        new NoOpMetricsSystem());
   }
 
   public static Map<String, Supplier<ProtocolSchedule>> createSchedules() {
@@ -150,7 +152,8 @@ class MainnetGenesisFileModule extends GenesisFileModule {
                 EvmConfiguration.DEFAULT,
                 MiningParameters.MINING_DISABLED,
                 new BadBlockManager(),
-                false)
+                false,
+                new NoOpMetricsSystem())
             .createProtocolSchedule();
   }
 }

@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -62,7 +63,8 @@ public class DefaultProtocolScheduleTest {
             evmConfiguration,
             MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
-            false);
+            false,
+            new NoOpMetricsSystem());
   }
 
   @Test

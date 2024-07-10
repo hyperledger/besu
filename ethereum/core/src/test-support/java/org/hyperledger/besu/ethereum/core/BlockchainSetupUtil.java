@@ -143,7 +143,8 @@ public class BlockchainSetupUtil {
         EvmConfiguration.DEFAULT,
         MiningParameters.newDefault(),
         new BadBlockManager(),
-        false);
+        false,
+        new NoOpMetricsSystem());
   }
 
   private static ProtocolContext mainnetProtocolContextProvider(

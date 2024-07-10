@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyCalculators;
 import org.hyperledger.besu.ethereum.difficulty.fixed.FixedDifficultyProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.function.Function;
@@ -40,7 +41,8 @@ public class MainnetProtocolSchedule {
    * @param evmConfiguration how to configure the EVMs jumpdest cache
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param isParallelTxEnabled indicates whether parallel transaction is enabled
+   * @param metricsSystem A metricSystem instance to expose metrics in the underlying calls
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
@@ -50,7 +52,8 @@ public class MainnetProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
           config,
@@ -59,7 +62,8 @@ public class MainnetProtocolSchedule {
           evmConfiguration,
           miningParameters,
           badBlockManager,
-          isParallelTxEnabled);
+          isParallelTxEnabled,
+          metricsSystem);
     }
     return new ProtocolScheduleBuilder(
             config,
@@ -70,7 +74,8 @@ public class MainnetProtocolSchedule {
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelTxEnabled)
+            isParallelTxEnabled,
+            metricsSystem)
         .createProtocolSchedule();
   }
 
@@ -92,7 +97,8 @@ public class MainnetProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
         PrivacyParameters.DEFAULT,
@@ -100,7 +106,8 @@ public class MainnetProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 
   /**
@@ -119,7 +126,8 @@ public class MainnetProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
         PrivacyParameters.DEFAULT,
@@ -127,7 +135,8 @@ public class MainnetProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 
   /**
@@ -144,7 +153,8 @@ public class MainnetProtocolSchedule {
       final GenesisConfigOptions config,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
         PrivacyParameters.DEFAULT,
@@ -152,6 +162,7 @@ public class MainnetProtocolSchedule {
         EvmConfiguration.DEFAULT,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 }

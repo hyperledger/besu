@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -246,7 +247,8 @@ public class BaseBftProtocolScheduleBuilderTest {
         EvmConfiguration.DEFAULT,
         MiningParameters.MINING_DISABLED,
         new BadBlockManager(),
-        false);
+        false,
+        new NoOpMetricsSystem());
   }
 
   private BftConfigOptions createBftConfig(final BigInteger blockReward) {

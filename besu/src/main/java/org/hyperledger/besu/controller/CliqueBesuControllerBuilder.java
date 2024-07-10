@@ -137,7 +137,8 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 
   @Override

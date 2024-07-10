@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 /** A ProtocolSchedule which behaves similarly to MainNet, but with a much reduced difficulty. */
 public class FixedDifficultyProtocolSchedule {
@@ -33,7 +34,8 @@ public class FixedDifficultyProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     return new ProtocolScheduleBuilder(
             config,
             ProtocolSpecAdapters.create(
@@ -45,7 +47,8 @@ public class FixedDifficultyProtocolSchedule {
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelTxEnabled)
+            isParallelTxEnabled,
+            metricsSystem)
         .createProtocolSchedule();
   }
 
@@ -55,7 +58,8 @@ public class FixedDifficultyProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
@@ -63,7 +67,8 @@ public class FixedDifficultyProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 
   public static ProtocolSchedule create(
@@ -71,7 +76,8 @@ public class FixedDifficultyProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
@@ -79,6 +85,7 @@ public class FixedDifficultyProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 }

@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.eth.manager.exceptions.MaxRetriesReachedExc
 import org.hyperledger.besu.ethereum.mainnet.MainnetBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
@@ -73,7 +74,8 @@ public class BackwardSyncStepTest {
           new StubGenesisConfigOptions(),
           MiningParameters.MINING_DISABLED,
           new BadBlockManager(),
-          false);
+          false,
+          new NoOpMetricsSystem());
 
   private final DeterministicEthScheduler ethScheduler = new DeterministicEthScheduler();
 

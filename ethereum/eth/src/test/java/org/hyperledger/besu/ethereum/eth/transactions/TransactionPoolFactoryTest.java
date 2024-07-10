@@ -380,7 +380,8 @@ public class TransactionPoolFactoryTest {
                 EvmConfiguration.DEFAULT,
                 MiningParameters.MINING_DISABLED,
                 new BadBlockManager(),
-                false)
+                false,
+                new NoOpMetricsSystem())
             .createProtocolSchedule();
 
     protocolContext = mock(ProtocolContext.class);

@@ -48,6 +48,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.ForestReferenceTestWorldState;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 
@@ -96,7 +97,8 @@ public class BackwardSyncContextTest {
           new StubGenesisConfigOptions(),
           MiningParameters.MINING_DISABLED,
           new BadBlockManager(),
-          false);
+          false,
+          new NoOpMetricsSystem());
 
   @Spy
   private ProtocolSpec protocolSpec =

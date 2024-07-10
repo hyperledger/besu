@@ -40,6 +40,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.PrecompileContractRegistry;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 import java.util.function.BiFunction;
@@ -90,6 +91,7 @@ public class ProtocolSpecBuilder {
   private PoWHasher powHasher = PoWHasher.ETHASH_LIGHT;
   private boolean isPoS = false;
   private boolean isReplayProtectionSupported = false;
+  private MetricsSystem metricsSystem;
 
   public ProtocolSpecBuilder gasCalculator(final Supplier<GasCalculator> gasCalculatorBuilder) {
     this.gasCalculatorBuilder = gasCalculatorBuilder;
@@ -301,6 +303,11 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
+  public ProtocolSpecBuilder metricsSystem(final MetricsSystem metricsSystem) {
+    this.metricsSystem = metricsSystem;
+    return this;
+  }
+
   public ProtocolSpec build(final ProtocolSchedule protocolSchedule) {
     checkNotNull(gasCalculatorBuilder, "Missing gasCalculator");
     checkNotNull(gasLimitCalculatorBuilder, "Missing gasLimitCalculatorBuilder");
@@ -461,7 +468,8 @@ public class ProtocolSpecBuilder {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         isParallelTxEnabled,
-        protocolSchedule);
+        protocolSchedule,
+        metricsSystem);
   }
 
   private BlockHeaderValidator createBlockHeaderValidator(
@@ -501,7 +509,8 @@ public class ProtocolSpecBuilder {
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
         final boolean isParallelTxEnabled,
-        ProtocolSchedule protocolSchedule);
+        ProtocolSchedule protocolSchedule,
+        MetricsSystem metricsSystem);
   }
 
   public interface BlockValidatorBuilder {

@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldView;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.util.List;
 import java.util.Map;
@@ -59,9 +60,6 @@ public class ParallelizedConcurrentTransactionProcessor {
 
   private final Map<Integer, ParallelizedTransactionContext>
       parallelizedTransactionContextByLocation = new ConcurrentHashMap<>();
-
-  int confirmedParallelizedTransaction = 0;
-  int conflictingButCachedTransaction = 0;
 
   /**
    * Constructs a PreloadConcurrentTransactionProcessor with a specified transaction processor. This
@@ -107,8 +105,6 @@ public class ParallelizedConcurrentTransactionProcessor {
       final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
       final PrivateMetadataUpdater privateMetadataUpdater) {
-    confirmedParallelizedTransaction = 0;
-    conflictingButCachedTransaction = 0;
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
       final int transactionLocation = i;
@@ -216,6 +212,10 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param miningBeneficiary Address of the beneficiary for mining rewards.
    * @param transaction Transaction for which the result is to be applied.
    * @param transactionLocation Index of the transaction within the block.
+   * @param confirmedParallelizedTransactionCounter Metric counter for confirmed parallelized
+   *     transactions
+   * @param conflictingButCachedTransactionCounter Metric counter for conflicting but cached
+   *     transactions
    * @return Optional containing the transaction processing result if applied, or empty if the
    *     transaction needs to be replayed due to a conflict.
    */
@@ -223,7 +223,9 @@ public class ParallelizedConcurrentTransactionProcessor {
       final MutableWorldState worldState,
       final Address miningBeneficiary,
       final Transaction transaction,
-      final int transactionLocation) {
+      final int transactionLocation,
+      final Optional<Counter> confirmedParallelizedTransactionCounter,
+      final Optional<Counter> conflictingButCachedTransactionCounter) {
     final DiffBasedWorldState diffBasedWorldState = (DiffBasedWorldState) worldState;
     final DiffBasedWorldStateUpdateAccumulator blockAccumulator =
         (DiffBasedWorldStateUpdateAccumulator) diffBasedWorldState.updater();
@@ -247,24 +249,18 @@ public class ParallelizedConcurrentTransactionProcessor {
 
         blockAccumulator.importStateChangesFromSource(transactionAccumulator);
 
-        confirmedParallelizedTransaction++;
+        if (confirmedParallelizedTransactionCounter.isPresent())
+          confirmedParallelizedTransactionCounter.get().inc();
         return Optional.of(transactionProcessingResult);
       } else {
         blockAccumulator.importPriorStateFromSource(transactionAccumulator);
-        conflictingButCachedTransaction++;
+        if (conflictingButCachedTransactionCounter.isPresent())
+          conflictingButCachedTransactionCounter.get().inc();
         // If there is a conflict, we return an empty result to signal the block processor to
         // re-execute the transaction.
         return Optional.empty();
       }
     }
     return Optional.empty();
-  }
-
-  public int getConfirmedParallelizedTransaction() {
-    return confirmedParallelizedTransaction;
-  }
-
-  public int getConflictingButCachedTransaction() {
-    return conflictingButCachedTransaction;
   }
 }

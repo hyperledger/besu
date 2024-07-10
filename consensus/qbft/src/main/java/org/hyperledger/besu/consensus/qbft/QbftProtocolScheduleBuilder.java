@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 
@@ -51,6 +52,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param miningParameters The mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -62,7 +65,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     return new QbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
@@ -73,7 +77,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelTxEnabled);
+            isParallelTxEnabled,
+            metricsSystem);
   }
 
   /**
@@ -86,6 +91,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param miningParameters The mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -95,7 +102,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         qbftForksSchedule,
@@ -105,7 +113,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 
   /**
@@ -118,6 +127,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param miningParameters The mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -127,7 +138,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final BftExtraDataCodec bftExtraDataCodec,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         qbftForksSchedule,
@@ -137,7 +149,8 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         EvmConfiguration.DEFAULT,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled);
+        isParallelTxEnabled,
+        metricsSystem);
   }
 
   @Override

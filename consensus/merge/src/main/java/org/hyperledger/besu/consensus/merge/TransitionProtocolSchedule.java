@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -72,13 +73,23 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
       final GenesisConfigOptions genesisConfigOptions,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled) {
+      final boolean isParallelTxEnabled,
+      final MetricsSystem metricsSystem) {
     ProtocolSchedule preMergeProtocolSchedule =
         MainnetProtocolSchedule.fromConfig(
-            genesisConfigOptions, miningParameters, badBlockManager, isParallelTxEnabled);
+            genesisConfigOptions,
+            miningParameters,
+            badBlockManager,
+            isParallelTxEnabled,
+            metricsSystem);
     ProtocolSchedule postMergeProtocolSchedule =
         MergeProtocolSchedule.create(
-            genesisConfigOptions, false, miningParameters, badBlockManager, isParallelTxEnabled);
+            genesisConfigOptions,
+            false,
+            miningParameters,
+            badBlockManager,
+            isParallelTxEnabled,
+            metricsSystem);
     return new TransitionProtocolSchedule(
         preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
   }

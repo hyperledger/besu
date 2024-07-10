@@ -58,7 +58,8 @@ public class ChainHeadTrackerTest {
           EvmConfiguration.DEFAULT,
           MiningParameters.MINING_DISABLED,
           new BadBlockManager(),
-          false);
+          false,
+          new NoOpMetricsSystem());
 
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
 
