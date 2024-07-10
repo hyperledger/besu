@@ -57,7 +57,7 @@ public record EOFLayout(
     String invalidReason,
     AtomicReference<EOFContainerMode> containerMode) {
 
-  enum EOFContainerMode {
+  public enum EOFContainerMode {
     UNKNOWN,
     INITCODE,
     RUNTIME
@@ -324,6 +324,9 @@ public record EOFLayout(
       Bytes subcontainer = container.slice(pos, subcontianerSize);
       pos += subcontianerSize;
       EOFLayout subLayout = EOFLayout.parseEOF(subcontainer, false);
+      if (subLayout.container.size() < subcontainer.size()) {
+        return invalidLayout(container, version, "excess data in subcontainer");
+      }
       if (!subLayout.isValid()) {
         String invalidSubReason = subLayout.invalidReason;
         return invalidLayout(
