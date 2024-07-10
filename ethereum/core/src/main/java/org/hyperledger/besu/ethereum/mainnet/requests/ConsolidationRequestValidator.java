@@ -63,7 +63,7 @@ public class ConsolidationRequestValidator implements RequestValidator {
         consolidationRequests.equals(consolidationRequestsInBlock);
     if (!expectedConsolidationRequestMatch) {
       LOG.warn(
-          "Block {} has a mismatch between its consolidation requests and expected consolidation requests (in_block = {}, "
+          "Block {} has a mismatch between block consolidations and RPC consolidation requests (in_block = {}, "
               + "expected = {})",
           blockHash,
           consolidationRequestsInBlock,

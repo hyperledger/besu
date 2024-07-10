@@ -22,7 +22,6 @@ import static org.hyperledger.besu.ethereum.mainnet.ConsolidationRequestValidato
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.mainnet.ConsolidationRequestValidatorTestFixtures.ConsolidationRequestTestParameter;
 import org.hyperledger.besu.ethereum.mainnet.requests.ConsolidationRequestValidator;
-import org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestValidator;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -41,7 +40,7 @@ class PragueConsolidationRequestValidatorTest {
       final String description,
       final Optional<List<Request>> maybeRequests,
       final boolean expectedValidity) {
-    assertThat(new WithdrawalRequestValidator().validateParameter(maybeRequests))
+    assertThat(new ConsolidationRequestValidator().validateParameter(maybeRequests))
         .isEqualTo(expectedValidity);
   }
 
