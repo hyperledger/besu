@@ -56,6 +56,7 @@ public interface MergeGenesisConfigHelper {
         getPosGenesisConfigFile().getConfigOptions(),
         false,
         MiningParameters.MINING_DISABLED,
-        new BadBlockManager());
+        new BadBlockManager(),
+        false);
   }
 }

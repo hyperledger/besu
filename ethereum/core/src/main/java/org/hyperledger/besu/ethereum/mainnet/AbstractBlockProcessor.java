@@ -162,8 +162,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       if (isParallelTxEnabled && parallelizedConcurrentTransactionProcessor.isPresent()) {
         // applyParallelizedTransactionResult, if activated, fetch the results of transactions
-        // processed by
-        // background threads.
+        // processed by background threads.
         transactionProcessingResult =
             parallelizedConcurrentTransactionProcessor
                 .get()

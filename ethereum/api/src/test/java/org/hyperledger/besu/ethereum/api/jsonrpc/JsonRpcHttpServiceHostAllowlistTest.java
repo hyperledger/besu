@@ -109,7 +109,8 @@ public class JsonRpcHttpServiceHostAllowlistTest {
                 MainnetProtocolSchedule.fromConfig(
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
                     MiningParameters.MINING_DISABLED,
-                    new BadBlockManager()),
+                    new BadBlockManager(),
+                    false),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
                 mock(TransactionPool.class),

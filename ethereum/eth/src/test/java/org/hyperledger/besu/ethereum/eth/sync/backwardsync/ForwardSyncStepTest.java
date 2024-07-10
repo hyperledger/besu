@@ -73,7 +73,10 @@ public class ForwardSyncStepTest {
 
   private final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
-          new StubGenesisConfigOptions(), MiningParameters.MINING_DISABLED, new BadBlockManager());
+          new StubGenesisConfigOptions(),
+          MiningParameters.MINING_DISABLED,
+          new BadBlockManager(),
+          false);
   private MutableBlockchain localBlockchain;
   GenericKeyValueStorageFacade<Hash, BlockHeader> headersStorage;
   GenericKeyValueStorageFacade<Hash, Block> blocksStorage;

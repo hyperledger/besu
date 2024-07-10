@@ -176,7 +176,8 @@ public class WebSocketServiceLoginTest {
                     MainnetProtocolSchedule.fromConfig(
                         genesisConfigOptions,
                         MiningParameters.MINING_DISABLED,
-                        new BadBlockManager()),
+                        new BadBlockManager(),
+                        false),
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),

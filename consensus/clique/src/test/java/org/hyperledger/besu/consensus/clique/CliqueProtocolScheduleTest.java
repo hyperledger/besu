@@ -68,7 +68,8 @@ public class CliqueProtocolScheduleTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false);
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
     final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockHeader(blockHeader(2));
@@ -92,7 +93,8 @@ public class CliqueProtocolScheduleTest {
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningParameters.MINING_DISABLED,
-                new BadBlockManager())
+                new BadBlockManager(),
+                false)
             .getByBlockHeader(blockHeader(0));
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
@@ -116,7 +118,8 @@ public class CliqueProtocolScheduleTest {
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningParameters.MINING_DISABLED,
-                    new BadBlockManager()))
+                    new BadBlockManager(),
+                    false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -136,7 +139,8 @@ public class CliqueProtocolScheduleTest {
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningParameters.MINING_DISABLED,
-                    new BadBlockManager()))
+                    new BadBlockManager(),
+                    false))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -160,7 +164,8 @@ public class CliqueProtocolScheduleTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false);
 
     BlockHeader emptyFrontierParent =
         headerBuilder

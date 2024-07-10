@@ -531,6 +531,14 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
+  /**
+   * Sets whether parallel transaction processing is enabled. When parallel transaction processing
+   * is enabled, transactions within a block can be processed in parallel and potentially improving
+   * performance
+   *
+   * @param isParallelTxEnabled true to enable parallel transaction
+   * @return the besu controller
+   */
   public BesuControllerBuilder isParallelTxEnabled(final boolean isParallelTxEnabled) {
     this.isParallelTxEnabled = isParallelTxEnabled;
     return this;

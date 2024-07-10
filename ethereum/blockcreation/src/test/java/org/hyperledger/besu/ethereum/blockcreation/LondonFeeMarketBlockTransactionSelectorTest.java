@@ -71,7 +71,8 @@ public class LondonFeeMarketBlockTransactionSelectorTest
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager())
+            new BadBlockManager(),
+            false)
         .createProtocolSchedule();
   }
 

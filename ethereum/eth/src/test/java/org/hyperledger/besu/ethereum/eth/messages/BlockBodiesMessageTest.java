@@ -60,7 +60,8 @@ public final class BlockBodiesMessageTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false);
   }
 
   @Test

@@ -107,7 +107,8 @@ public class CliqueBlockCreatorTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false);
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);

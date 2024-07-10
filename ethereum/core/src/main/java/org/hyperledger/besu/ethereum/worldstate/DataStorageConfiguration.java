@@ -85,7 +85,7 @@ public interface DataStorageConfiguration {
     boolean DEFAULT_BONSAI_FULL_FLAT_DB_ENABLED = true;
     boolean DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED = true;
 
-    boolean DEFAULT_PARALLEL_PRELOAD_TRX_ENABLED = false;
+    boolean DEFAULT_PARALLEL_TRX_ENABLED = false;
 
     DataStorageConfiguration.Unstable DEFAULT =
         ImmutableDataStorageConfiguration.Unstable.builder().build();
@@ -105,7 +105,7 @@ public interface DataStorageConfiguration {
 
     @Value.Default
     default boolean isParallelTxEnabled() {
-      return DEFAULT_PARALLEL_PRELOAD_TRX_ENABLED;
+      return DEFAULT_PARALLEL_TRX_ENABLED;
     }
   }
 }

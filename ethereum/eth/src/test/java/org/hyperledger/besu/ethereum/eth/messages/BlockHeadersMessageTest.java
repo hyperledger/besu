@@ -67,7 +67,8 @@ public final class BlockHeadersMessageTest {
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningParameters.MINING_DISABLED,
-                new BadBlockManager()));
+                new BadBlockManager(),
+                false));
 
     for (int i = 0; i < 50; ++i) {
       Assertions.assertThat(readHeaders.get(i)).isEqualTo(headers.get(i));

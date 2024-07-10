@@ -200,7 +200,8 @@ public abstract class AbstractTransactionPoolTest {
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningParameters.MINING_DISABLED,
-                new BadBlockManager())
+                new BadBlockManager(),
+                false)
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
         ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
