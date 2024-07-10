@@ -86,6 +86,16 @@ public class WorldUpdaterService {
   }
 
   /**
+   * Checks if the provided address has set an authorized to load code into an EOA account.
+   *
+   * @param authority the address to check.
+   * @return {@code true} if the address has been authorized, {@code false} otherwise.
+   */
+  public boolean hasAuthorization(final Address authority) {
+    return authorizedAccounts.containsKey(authority);
+  }
+
+  /**
    * Get an account provided its address.
    *
    * @param address the address of the account to retrieve.
@@ -104,12 +114,18 @@ public class WorldUpdaterService {
     }
 
     final Address authorizedCodeAddress = authorizedAccounts.get(address);
-    if (!authorizedCodes.containsKey(authorizedCodeAddress)) {
-      final Account authorizedCodeAccount = worldUpdater.getOrCreate(authorizedCodeAddress);
+    if (authorizedCodes.containsKey(authorizedCodeAddress)) {
+      return new AuthorizedCodeAccount(account, authorizedCodes.get(authorizedCodeAddress));
+    }
+
+    final Account authorizedCodeAccount = worldUpdater.getOrCreate(authorizedCodeAddress);
+
+    // we don't cache empty code, because it can change when a contract is deployed there
+    if (!authorizedCodeAccount.getCode().equals(Bytes.EMPTY)) {
       authorizedCodes.put(authorizedCodeAddress, authorizedCodeAccount.getCode());
     }
 
-    return new AuthorizedCodeAccount(account, authorizedCodes.get(authorizedCodeAddress));
+    return new AuthorizedCodeAccount(account, authorizedCodeAccount.getCode());
   }
 
   /**
@@ -267,9 +283,5 @@ public class WorldUpdaterService {
     }
 
     return new MutableAuthorizedCodeAccount(account, authorizedCodes.get(authorizedCodeAddress));
-  }
-
-  public boolean hasAuthorization(final Address authority) {
-    return authorizedAccounts.containsKey(authority);
   }
 }
