@@ -285,6 +285,7 @@ public abstract class CommandTestAbstract {
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.clock(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isRevertReasonEnabled(false)).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.isParallelTxEnabled(false)).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.storageProvider(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.gasLimitCalculator(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.requiredBlocks(any())).thenReturn(mockControllerBuilder);
@@ -303,7 +304,6 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.cacheLastBlocks(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.genesisStateHashCacheEnabled(any()))
         .thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.isParallelTxEnabled(false)).thenReturn(mockControllerBuilder);
 
     // doReturn used because of generic BesuController
     doReturn(mockController).when(mockControllerBuilder).build();

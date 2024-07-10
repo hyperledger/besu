@@ -383,6 +383,12 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
+  public BesuControllerBuilder isParallelTxEnabled(final boolean isParallelTxEnabled) {
+    super.isParallelTxEnabled(isParallelTxEnabled);
+    return propagateConfig(z -> z.isParallelTxEnabled(isParallelTxEnabled));
+  }
+
+  @Override
   public BesuControllerBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
     super.gasLimitCalculator(gasLimitCalculator);
     return propagateConfig(z -> z.gasLimitCalculator(gasLimitCalculator));

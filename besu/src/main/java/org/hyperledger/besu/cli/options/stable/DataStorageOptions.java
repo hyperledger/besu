@@ -232,6 +232,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiFullFlatDbEnabled(unstableOptions.bonsaiFullFlatDbEnabled)
                 .bonsaiCodeStoredByCodeHashEnabled(unstableOptions.bonsaiCodeUsingCodeHashEnabled)
+                .isParallelTxEnabled(unstableOptions.isParallelTxEnabled)
                 .build())
         .build();
   }

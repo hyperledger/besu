@@ -369,6 +369,12 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
+  public BesuControllerBuilder isParallelTxEnabled(final boolean isParallelTxEnabled) {
+    besuControllerBuilderSchedule.values().forEach(b -> b.isParallelTxEnabled(isParallelTxEnabled));
+    return super.isParallelTxEnabled(isParallelTxEnabled);
+  }
+
+  @Override
   public BesuControllerBuilder gasLimitCalculator(final GasLimitCalculator gasLimitCalculator) {
     besuControllerBuilderSchedule.values().forEach(b -> b.gasLimitCalculator(gasLimitCalculator));
     return super.gasLimitCalculator(gasLimitCalculator);
