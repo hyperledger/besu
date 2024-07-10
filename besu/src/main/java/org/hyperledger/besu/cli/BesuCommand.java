@@ -39,7 +39,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.cli.config.ProfileName;
+import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
@@ -565,9 +565,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {PROFILE_OPTION_NAME},
       paramLabel = PROFILE_FORMAT_HELP,
+      completionCandidates = ProfilesCompletionCandidates.class,
       description =
           "Overwrite default settings. Possible values are ${COMPLETION-CANDIDATES}. (default: none)")
-  private final ProfileName profile = null;
+  private String profile = null; // don't set it as final due to picocli completion candidates
 
   @Option(
       names = {"--nat-method"},
@@ -2773,7 +2774,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (profile != null) {
-      builder.setProfile(profile.toString());
+      builder.setProfile(profile);
     }
 
     builder.setHasCustomGenesis(genesisFile != null);
