@@ -142,7 +142,7 @@ abstract class AbstractBlockProcessorTest {
         final Wei blockReward,
         final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         final boolean skipZeroBlockRewards,
-        final boolean isParallelPreloadTxEnabled,
+        final boolean isParallelTxEnabled,
         final ProtocolSchedule protocolSchedule) {
       super(
           transactionProcessor,
@@ -150,7 +150,7 @@ abstract class AbstractBlockProcessorTest {
           blockReward,
           miningBeneficiaryCalculator,
           skipZeroBlockRewards,
-          isParallelPreloadTxEnabled,
+          isParallelTxEnabled,
           protocolSchedule);
     }
 

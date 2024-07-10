@@ -61,7 +61,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return new QbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
@@ -72,7 +72,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelPreloadTxEnabled);
+            isParallelTxEnabled);
   }
 
   /**
@@ -93,7 +93,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return create(
         config,
         qbftForksSchedule,
@@ -103,7 +103,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelPreloadTxEnabled);
+        isParallelTxEnabled);
   }
 
   /**
@@ -124,7 +124,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final BftExtraDataCodec bftExtraDataCodec,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return create(
         config,
         qbftForksSchedule,
@@ -134,7 +134,7 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         EvmConfiguration.DEFAULT,
         miningParameters,
         badBlockManager,
-        isParallelPreloadTxEnabled);
+        isParallelTxEnabled);
   }
 
   @Override

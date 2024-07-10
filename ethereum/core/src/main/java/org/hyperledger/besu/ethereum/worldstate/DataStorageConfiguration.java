@@ -104,7 +104,7 @@ public interface DataStorageConfiguration {
     }
 
     @Value.Default
-    default boolean isParallelPreloadTxEnabled() {
+    default boolean isParallelTxEnabled() {
       return DEFAULT_PARALLEL_PRELOAD_TRX_ENABLED;
     }
   }

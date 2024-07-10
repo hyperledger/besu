@@ -69,7 +69,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
     forksSchedule
@@ -92,7 +92,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 evmConfiguration,
                 miningParameters,
                 badBlockManager,
-                isParallelPreloadTxEnabled)
+                isParallelTxEnabled)
             .createProtocolSchedule();
     return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);
   }

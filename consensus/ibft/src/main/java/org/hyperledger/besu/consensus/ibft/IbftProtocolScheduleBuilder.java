@@ -57,7 +57,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return new IbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
@@ -68,7 +68,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelPreloadTxEnabled);
+            isParallelTxEnabled);
   }
 
   /**
@@ -89,7 +89,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return create(
         config,
         forksSchedule,
@@ -99,7 +99,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelPreloadTxEnabled);
+        isParallelTxEnabled);
   }
 
   @Override

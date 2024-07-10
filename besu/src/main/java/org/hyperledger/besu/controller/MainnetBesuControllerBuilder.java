@@ -100,7 +100,7 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelPreloadTxEnabled);
+        isParallelTxEnabled);
   }
 
   @Override

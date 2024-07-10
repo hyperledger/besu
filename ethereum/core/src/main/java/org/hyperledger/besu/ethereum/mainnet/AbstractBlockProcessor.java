@@ -69,7 +69,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   static final int MAX_GENERATION = 6;
 
   protected final MainnetTransactionProcessor transactionProcessor;
-  private final boolean isParallelPreloadTxEnabled;
+  private final boolean isParallelTxEnabled;
 
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
@@ -86,10 +86,10 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final boolean isParallelPreloadTxEnabled,
+      final boolean isParallelTxEnabled,
       final ProtocolSchedule protocolSchedule) {
     this.transactionProcessor = transactionProcessor;
-    this.isParallelPreloadTxEnabled = isParallelPreloadTxEnabled;
+    this.isParallelTxEnabled = isParallelTxEnabled;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
@@ -130,17 +130,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                             calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
             .orElse(Wei.ZERO);
 
-    Optional<ParallelizedConcurrentTransactionProcessor> preloadConcurrentTransactionProcessor =
-        Optional.empty();
-    if (isParallelPreloadTxEnabled) {
+    Optional<ParallelizedConcurrentTransactionProcessor>
+        parallelizedConcurrentTransactionProcessor = Optional.empty();
+    if (isParallelTxEnabled) {
       if ((worldState instanceof DiffBasedWorldState)) {
-        preloadConcurrentTransactionProcessor =
+        parallelizedConcurrentTransactionProcessor =
             Optional.of(new ParallelizedConcurrentTransactionProcessor(transactionProcessor));
-        // runAsyncPreloadBlock, if activated, facilitates the  non-blocking parallel execution of
+        // runAsyncBlock, if activated, facilitates the  non-blocking parallel execution of
         // transactions in the background through an optimistic strategy.
-        preloadConcurrentTransactionProcessor
+        parallelizedConcurrentTransactionProcessor
             .get()
-            .runAsyncPreloadBlock(
+            .runAsyncBlock(
                 worldState,
                 blockHeader,
                 transactions,
@@ -160,13 +160,14 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
       TransactionProcessingResult transactionProcessingResult = null;
 
-      if (isParallelPreloadTxEnabled && preloadConcurrentTransactionProcessor.isPresent()) {
-        // applyPreloadBlockResult, if activated, fetch the results of transactions processed by
+      if (isParallelTxEnabled && parallelizedConcurrentTransactionProcessor.isPresent()) {
+        // applyParallelizedTransactionResult, if activated, fetch the results of transactions
+        // processed by
         // background threads.
         transactionProcessingResult =
-            preloadConcurrentTransactionProcessor
+            parallelizedConcurrentTransactionProcessor
                 .get()
-                .applyPreloadBlockResult(worldState, miningBeneficiary, transaction, i)
+                .applyParallelizedTransactionResult(worldState, miningBeneficiary, transaction, i)
                 .orElse(null);
       }
 

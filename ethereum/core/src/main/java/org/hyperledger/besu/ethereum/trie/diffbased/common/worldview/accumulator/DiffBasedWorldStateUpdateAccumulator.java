@@ -100,8 +100,17 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     this.isAccumulatorStateChanged = true;
   }
 
-  @SuppressWarnings("UseBulkOperation")
-  public void cloneFromUpdaterWithPreloader(
+  /**
+   * Integrates prior state changes from an external source into the current state. This method
+   * retrieves state modifications from the specified source and adds them to the current state's
+   * list of modifications. It does not remove any existing elements in the current state's
+   * modification list. If a modification has been made in both the current state and the source,
+   * the modification from the source will be taken. This approach ensures that the source's state
+   * changes are prioritized and overrides any conflicting changes in the current state.
+   *
+   * @param source The source accumulator
+   */
+  public void importStateChangesFromSource(
       final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
     source
         .getAccountsToUpdate()
@@ -143,12 +152,24 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
                             uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getUpdated()));
                   });
             });
-    source.storageToClear.forEach(storageToClear::add);
+    storageToClear.addAll(source.storageToClear);
 
     this.isAccumulatorStateChanged = true;
   }
 
-  public void clonePriorFromUpdater(final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+  /**
+   * Imports unchanged state data from an external source into the current state. This method
+   * focuses on integrating state data from the specified source that has been read but not
+   * modified.
+   *
+   * <p>The method ensures that only new, unmodified data from the source is added to the current
+   * state. If a state data has already been read or modified in the current state, it will not be
+   * added again to avoid overwriting any existing modifications.
+   *
+   * @param source The source accumulator
+   */
+  public void importPriorStateFromSource(
+      final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
 
     source
         .getAccountsToUpdate()

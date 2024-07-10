@@ -208,7 +208,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private int numberOfBlocksToCache = 0;
 
-  protected boolean isParallelPreloadTxEnabled;
+  protected boolean isParallelTxEnabled;
 
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
@@ -531,9 +531,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     return this;
   }
 
-  public BesuControllerBuilder isParallelPreloadTxEnabled(
-      final boolean isParallelPreloadTxEnabled) {
-    this.isParallelPreloadTxEnabled = isParallelPreloadTxEnabled;
+  public BesuControllerBuilder isParallelTxEnabled(final boolean isParallelTxEnabled) {
+    this.isParallelTxEnabled = isParallelTxEnabled;
     return this;
   }
 

@@ -72,7 +72,7 @@ public class ProtocolSpecBuilder {
   private BlockValidatorBuilder blockValidatorBuilder;
   private BlockImporterBuilder blockImporterBuilder;
 
-  private boolean isParallelPreloadTxEnabled = false;
+  private boolean isParallelTxEnabled = false;
   private String name;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private PrivacyParameters privacyParameters;
@@ -146,8 +146,8 @@ public class ProtocolSpecBuilder {
     return this;
   }
 
-  public ProtocolSpecBuilder isParallelPreloadTxEnabled(final boolean isParallelPreloadTxEnabled) {
-    this.isParallelPreloadTxEnabled = isParallelPreloadTxEnabled;
+  public ProtocolSpecBuilder isParallelTxEnabled(final boolean isParallelTxEnabled) {
+    this.isParallelTxEnabled = isParallelTxEnabled;
     return this;
   }
 
@@ -402,7 +402,7 @@ public class ProtocolSpecBuilder {
         miningBeneficiaryCalculator,
         precompileContractRegistry,
         skipZeroBlockRewards,
-        isParallelPreloadTxEnabled,
+        isParallelTxEnabled,
         gasCalculator,
         gasLimitCalculator,
         feeMarket,
@@ -460,7 +460,7 @@ public class ProtocolSpecBuilder {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        isParallelPreloadTxEnabled,
+        isParallelTxEnabled,
         protocolSchedule);
   }
 
@@ -500,7 +500,7 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        final boolean isParallelPreloadTxEnabled,
+        final boolean isParallelTxEnabled,
         ProtocolSchedule protocolSchedule);
   }
 

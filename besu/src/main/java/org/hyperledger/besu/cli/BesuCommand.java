@@ -1905,8 +1905,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pkiBlockCreationConfiguration(maybePkiBlockCreationConfiguration())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
-        .isParallelPreloadTxEnabled(
-            dataStorageConfiguration.getUnstable().isParallelPreloadTxEnabled())
+        .isParallelTxEnabled(dataStorageConfiguration.getUnstable().isParallelTxEnabled())
         .storageProvider(storageProvider)
         .gasLimitCalculator(
             miningParametersSupplier.get().getTargetGasLimit().isPresent()

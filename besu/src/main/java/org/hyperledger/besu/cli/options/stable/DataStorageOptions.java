@@ -124,11 +124,11 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xbonsai-parallel-preload-tx-enabled"},
+        names = {"--Xbonsai-parallel-tx-enabled"},
         arity = "1",
         description =
-            "Enables parallel preloading of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. (default: ${DEFAULT-VALUE})")
-    private Boolean isParallelPreloadTxEnabled = false;
+            "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. (default: ${DEFAULT-VALUE})")
+    private Boolean isParallelTxEnabled = false;
 
     /** Default Constructor. */
     Unstable() {}
@@ -188,7 +188,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         }
       }
     } else {
-      if (unstableOptions.isParallelPreloadTxEnabled) {
+      if (unstableOptions.isParallelTxEnabled) {
         throw new CommandLine.ParameterException(
             commandLine,
             "Transaction parallelization is not supported unless operating in a 'diffbased' mode, such as Bonsai.");
@@ -214,8 +214,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         domainObject.getUnstable().getBonsaiFullFlatDbEnabled();
     dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
         domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
-    dataStorageOptions.unstableOptions.isParallelPreloadTxEnabled =
-        domainObject.getUnstable().isParallelPreloadTxEnabled();
+    dataStorageOptions.unstableOptions.isParallelTxEnabled =
+        domainObject.getUnstable().isParallelTxEnabled();
 
     return dataStorageOptions;
   }

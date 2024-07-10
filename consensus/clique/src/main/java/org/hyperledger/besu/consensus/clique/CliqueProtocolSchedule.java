@@ -75,7 +75,7 @@ public class CliqueProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -112,7 +112,7 @@ public class CliqueProtocolSchedule {
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelPreloadTxEnabled)
+            isParallelTxEnabled)
         .createProtocolSchedule();
   }
 
@@ -137,7 +137,7 @@ public class CliqueProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return create(
         config,
         forksSchedule,
@@ -147,7 +147,7 @@ public class CliqueProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelPreloadTxEnabled);
+        isParallelTxEnabled);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(

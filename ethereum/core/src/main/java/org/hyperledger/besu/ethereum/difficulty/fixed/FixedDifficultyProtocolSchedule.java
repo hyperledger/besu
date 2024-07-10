@@ -33,7 +33,7 @@ public class FixedDifficultyProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return new ProtocolScheduleBuilder(
             config,
             ProtocolSpecAdapters.create(
@@ -45,7 +45,7 @@ public class FixedDifficultyProtocolSchedule {
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelPreloadTxEnabled)
+            isParallelTxEnabled)
         .createProtocolSchedule();
   }
 
@@ -55,7 +55,7 @@ public class FixedDifficultyProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
@@ -63,7 +63,7 @@ public class FixedDifficultyProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelPreloadTxEnabled);
+        isParallelTxEnabled);
   }
 
   public static ProtocolSchedule create(
@@ -71,7 +71,7 @@ public class FixedDifficultyProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
@@ -79,6 +79,6 @@ public class FixedDifficultyProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelPreloadTxEnabled);
+        isParallelTxEnabled);
   }
 }

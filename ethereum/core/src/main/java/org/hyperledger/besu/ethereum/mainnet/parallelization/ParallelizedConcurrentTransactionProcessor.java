@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.LazyBonsaiCachedMerkleTrieLoader;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.NoopBonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
@@ -47,7 +47,7 @@ import com.google.common.annotations.VisibleForTesting;
  * checks for potential conflicts among transactions to ensure data integrity before applying the
  * results to the world state.
  */
-@SuppressWarnings({"unchecked", "rawtypes", "unused"})
+@SuppressWarnings({"unchecked", "rawtypes"})
 public class ParallelizedConcurrentTransactionProcessor {
 
   private static final int NCPU = Runtime.getRuntime().availableProcessors();
@@ -91,7 +91,7 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @param blobGasPrice Gas price for blob transactions.
    * @param privateMetadataUpdater Updater for private transaction metadata.
    */
-  public void runAsyncPreloadBlock(
+  public void runAsyncBlock(
       final MutableWorldState worldState,
       final BlockHeader blockHeader,
       final List<Transaction> transactions,
@@ -133,7 +133,7 @@ public class ParallelizedConcurrentTransactionProcessor {
       final Wei blobGasPrice,
       final PrivateMetadataUpdater privateMetadataUpdater) {
     final DiffBasedWorldState roundWorldState =
-        new BonsaiWorldState((BonsaiWorldState) worldState, new LazyBonsaiCachedMerkleTrieLoader());
+        new BonsaiWorldState((BonsaiWorldState) worldState, new NoopBonsaiCachedMerkleTrieLoader());
 
     final ParallelizedTransactionContext.Builder contextBuilder =
         new ParallelizedTransactionContext.Builder();
@@ -193,7 +193,8 @@ public class ParallelizedConcurrentTransactionProcessor {
   }
 
   /**
-   * Applies the results of preloaded transactions to the world state after checking for conflicts.
+   * Applies the results of parallelized transactions to the world state after checking for
+   * conflicts.
    *
    * <p>If a transaction was executed optimistically without any detected conflicts, its result is
    * directly applied to the world state. If there is a conflict, this method does not apply the
@@ -210,7 +211,7 @@ public class ParallelizedConcurrentTransactionProcessor {
    * @return Optional containing the transaction processing result if applied, or empty if the
    *     transaction needs to be replayed due to a conflict.
    */
-  public Optional<TransactionProcessingResult> applyPreloadBlockResult(
+  public Optional<TransactionProcessingResult> applyParallelizedTransactionResult(
       final MutableWorldState worldState,
       final Address miningBeneficiary,
       final Transaction transaction,
@@ -236,12 +237,12 @@ public class ParallelizedConcurrentTransactionProcessor {
             .getOrCreate(miningBeneficiary)
             .incrementBalance(parallelizedTransactionContext.miningBeneficiaryReward());
 
-        blockAccumulator.cloneFromUpdaterWithPreloader(transactionAccumulator);
+        blockAccumulator.importStateChangesFromSource(transactionAccumulator);
 
         confirmedParallelizedTransaction++;
         return Optional.of(transactionProcessingResult);
       } else {
-        blockAccumulator.clonePriorFromUpdater(transactionAccumulator);
+        blockAccumulator.importPriorStateFromSource(transactionAccumulator);
         conflictingButCachedTransaction++;
         // If there is a conflict, we return an empty result to signal the block processor to
         // re-execute the transaction.

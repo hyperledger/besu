@@ -56,14 +56,14 @@ public class MergeProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         miningParameters,
         badBlockManager,
-        isParallelPreloadTxEnabled);
+        isParallelTxEnabled);
   }
 
   /**
@@ -82,7 +82,7 @@ public class MergeProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelPreloadTxEnabled) {
+      final boolean isParallelTxEnabled) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -102,7 +102,7 @@ public class MergeProtocolSchedule {
             EvmConfiguration.DEFAULT,
             miningParameters,
             badBlockManager,
-            isParallelPreloadTxEnabled)
+            isParallelTxEnabled)
         .createProtocolSchedule();
   }
 
