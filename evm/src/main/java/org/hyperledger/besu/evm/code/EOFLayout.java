@@ -57,9 +57,16 @@ public record EOFLayout(
     String invalidReason,
     AtomicReference<EOFContainerMode> containerMode) {
 
+  /**
+   * Enum tracking the useage mode of an EOF container. Detected either by opcode usage or
+   * determined by the source.
+   */
   public enum EOFContainerMode {
+    /** Usage mode is unknown */
     UNKNOWN,
+    /** Usage mode is as init code */
     INITCODE,
+    /** Usage mode is as deployed or runtime code */
     RUNTIME
   }
 
