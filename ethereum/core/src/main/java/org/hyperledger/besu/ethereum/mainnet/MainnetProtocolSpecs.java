@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcesso
 import org.hyperledger.besu.ethereum.mainnet.blockhash.PragueBlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBlockProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionProcessor;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
@@ -158,7 +159,8 @@ public abstract class MainnetProtocolSpecs {
         .skipZeroBlockRewards(false)
         .isParallelTxEnabled(isParallelTxEnabled)
         .metricsSystem(metricsSystem)
-        .blockProcessorBuilder(MainnetBlockProcessor::new)
+        .blockProcessorBuilder(isParallelTxEnabled ?
+            new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem) : MainnetBlockProcessor::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
@@ -210,9 +212,7 @@ public abstract class MainnetProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                parallelTxEnabled,
-                protocolSchedule,
-                localMetricsSystem) ->
+                protocolSchedule) ->
                 new DaoBlockProcessor(
                     new MainnetBlockProcessor(
                         transactionProcessor,
@@ -220,9 +220,7 @@ public abstract class MainnetProtocolSpecs {
                         blockReward,
                         miningBeneficiaryCalculator,
                         skipZeroBlockRewards,
-                        parallelTxEnabled,
-                        protocolSchedule,
-                        localMetricsSystem)))
+                        protocolSchedule)))
         .name("DaoRecoveryInit");
   }
 

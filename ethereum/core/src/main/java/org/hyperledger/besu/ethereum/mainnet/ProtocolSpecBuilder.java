@@ -467,9 +467,7 @@ public class ProtocolSpecBuilder {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        isParallelTxEnabled,
-        protocolSchedule,
-        metricsSystem);
+        protocolSchedule);
   }
 
   private BlockHeaderValidator createBlockHeaderValidator(
@@ -508,9 +506,7 @@ public class ProtocolSpecBuilder {
         Wei blockReward,
         MiningBeneficiaryCalculator miningBeneficiaryCalculator,
         boolean skipZeroBlockRewards,
-        final boolean isParallelTxEnabled,
-        ProtocolSchedule protocolSchedule,
-        MetricsSystem metricsSystem);
+        ProtocolSchedule protocolSchedule);
   }
 
   public interface BlockValidatorBuilder {

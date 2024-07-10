@@ -44,8 +44,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
       final boolean skipZeroBlockRewards,
       final boolean isParallelTxEnabled,
       final OptionalLong eraLen,
-      final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem) {
+      final ProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
         transactionReceiptFactory,
@@ -53,8 +52,7 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
         isParallelTxEnabled,
-        protocolSchedule,
-        metricsSystem);
+        protocolSchedule);
     eraLength = eraLen.orElse(DEFAULT_ERA_LENGTH);
   }
 

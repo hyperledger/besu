@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 
@@ -37,7 +36,6 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final boolean isParallelTxEnabled,
       final ProtocolSchedule protocolSchedule) {
     super(
         transactionProcessor,
@@ -45,28 +43,7 @@ public class MainnetBlockProcessor extends AbstractBlockProcessor {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        isParallelTxEnabled,
         protocolSchedule);
-  }
-
-  public MainnetBlockProcessor(
-      final MainnetTransactionProcessor transactionProcessor,
-      final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory,
-      final Wei blockReward,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards,
-      final boolean isParallelTxEnabled,
-      final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem) {
-    super(
-        transactionProcessor,
-        transactionReceiptFactory,
-        blockReward,
-        miningBeneficiaryCalculator,
-        skipZeroBlockRewards,
-        isParallelTxEnabled,
-        protocolSchedule,
-        metricsSystem);
   }
 
   @Override

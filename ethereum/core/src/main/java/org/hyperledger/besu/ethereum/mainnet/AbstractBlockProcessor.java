@@ -72,7 +72,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
   static final int MAX_GENERATION = 6;
 
   protected final MainnetTransactionProcessor transactionProcessor;
-  private final boolean isParallelTxEnabled;
 
   protected final AbstractBlockProcessor.TransactionReceiptFactory transactionReceiptFactory;
 
@@ -80,11 +79,23 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
   protected final boolean skipZeroBlockRewards;
   private final ProtocolSchedule protocolSchedule;
-  private final Optional<MetricsSystem> metricsSystem;
-  private final Optional<Counter> confirmedParallelizedTransactionCounter;
-  private final Optional<Counter> conflictingButCachedTransactionCounter;
 
   protected final MiningBeneficiaryCalculator miningBeneficiaryCalculator;
+
+  protected AbstractBlockProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final TransactionReceiptFactory transactionReceiptFactory,
+      final Wei blockReward,
+      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
+      final boolean skipZeroBlockRewards,
+      final ProtocolSchedule protocolSchedule) {
+    this.transactionProcessor = transactionProcessor;
+    this.transactionReceiptFactory = transactionReceiptFactory;
+    this.blockReward = blockReward;
+    this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
+    this.skipZeroBlockRewards = skipZeroBlockRewards;
+    this.protocolSchedule = protocolSchedule;
+  }
 
   protected AbstractBlockProcessor(
       final MainnetTransactionProcessor transactionProcessor,
@@ -95,51 +106,11 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final boolean isParallelTxEnabled,
       final ProtocolSchedule protocolSchedule) {
     this.transactionProcessor = transactionProcessor;
-    this.isParallelTxEnabled = isParallelTxEnabled;
     this.transactionReceiptFactory = transactionReceiptFactory;
     this.blockReward = blockReward;
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
     this.protocolSchedule = protocolSchedule;
-    this.metricsSystem = Optional.empty();
-    this.confirmedParallelizedTransactionCounter = Optional.empty();
-    this.conflictingButCachedTransactionCounter = Optional.empty();
-  }
-
-  protected AbstractBlockProcessor(
-      final MainnetTransactionProcessor transactionProcessor,
-      final TransactionReceiptFactory transactionReceiptFactory,
-      final Wei blockReward,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards,
-      final boolean isParallelTxEnabled,
-      final ProtocolSchedule protocolSchedule,
-      final MetricsSystem metricsSystem) {
-    this.transactionProcessor = transactionProcessor;
-    this.isParallelTxEnabled = isParallelTxEnabled;
-    this.transactionReceiptFactory = transactionReceiptFactory;
-    this.blockReward = blockReward;
-    this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
-    this.skipZeroBlockRewards = skipZeroBlockRewards;
-    this.protocolSchedule = protocolSchedule;
-    this.metricsSystem = Optional.of(metricsSystem);
-    this.confirmedParallelizedTransactionCounter =
-        Optional.of(
-            this.metricsSystem
-                .get()
-                .createCounter(
-                    BesuMetricCategory.BLOCK_PROCESSING,
-                    "parallelized_transactions_counter",
-                    "Counter for the number of parallelized transactions during block processing"));
-
-    this.conflictingButCachedTransactionCounter =
-        Optional.of(
-            this.metricsSystem
-                .get()
-                .createCounter(
-                    BesuMetricCategory.BLOCK_PROCESSING,
-                    "conflicted_transactions_counter",
-                    "Counter for the number of conflicted transactions during block processing"));
   }
 
   @Override
@@ -175,27 +146,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                             calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
             .orElse(Wei.ZERO);
 
-    Optional<ParallelizedConcurrentTransactionProcessor>
-        parallelizedConcurrentTransactionProcessor = Optional.empty();
-    if (isParallelTxEnabled) {
-      if ((worldState instanceof DiffBasedWorldState)) {
-        parallelizedConcurrentTransactionProcessor =
-            Optional.of(new ParallelizedConcurrentTransactionProcessor(transactionProcessor));
-        // runAsyncBlock, if activated, facilitates the  non-blocking parallel execution of
-        // transactions in the background through an optimistic strategy.
-        parallelizedConcurrentTransactionProcessor
-            .get()
-            .runAsyncBlock(
-                worldState,
-                blockHeader,
-                transactions,
-                miningBeneficiary,
-                blockHashLookup,
-                blobGasPrice,
-                privateMetadataUpdater);
-      }
-    }
-
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
@@ -203,38 +153,9 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       }
       final WorldUpdater blockUpdater = worldState.updater();
 
-      TransactionProcessingResult transactionProcessingResult = null;
-
-      if (isParallelTxEnabled && parallelizedConcurrentTransactionProcessor.isPresent()) {
-        // applyParallelizedTransactionResult, if activated, fetch the results of transactions
-        // processed by background threads.
-        transactionProcessingResult =
-            parallelizedConcurrentTransactionProcessor
-                .get()
-                .applyParallelizedTransactionResult(
-                    worldState,
-                    miningBeneficiary,
-                    transaction,
-                    i,
-                    confirmedParallelizedTransactionCounter,
-                    conflictingButCachedTransactionCounter)
-                .orElse(null);
-      }
-
-      if (transactionProcessingResult == null) {
-        transactionProcessingResult =
-            transactionProcessor.processTransaction(
-                blockUpdater,
-                blockHeader,
-                transaction,
-                miningBeneficiary,
-                OperationTracer.NO_TRACING,
-                blockHashLookup,
-                true,
-                TransactionValidationParams.processingBlock(),
-                privateMetadataUpdater,
-                blobGasPrice);
-      }
+      TransactionProcessingResult transactionProcessingResult =
+          getTransactionProcessingResult(worldState, blockHeader, privateMetadataUpdater,
+              miningBeneficiary, transaction, i, blockUpdater, blockHashLookup, blobGasPrice);
       if (transactionProcessingResult.isInvalid()) {
         String errorMessage =
             MessageFormat.format(
@@ -324,6 +245,19 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
 
     return new BlockProcessingResult(
         Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)));
+  }
+
+  protected TransactionProcessingResult getTransactionProcessingResult(
+      final MutableWorldState worldState, final BlockHeader blockHeader,
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final Address miningBeneficiary,
+      final Transaction transaction, final int i, final WorldUpdater blockUpdater,
+      final BlockHashLookup blockHashLookup, final Wei blobGasPrice) {
+    return transactionProcessor.processTransaction(blockUpdater, blockHeader, transaction,
+        miningBeneficiary,
+        OperationTracer.NO_TRACING, blockHashLookup,
+        true,
+        TransactionValidationParams.processingBlock(), privateMetadataUpdater, blobGasPrice);
   }
 
   protected boolean hasAvailableBlockBudget(
