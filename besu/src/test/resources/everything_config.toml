@@ -172,6 +172,7 @@ privacy-multi-tenancy-enabled=true
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-flexible-groups-enabled=false
+privacy-nonce-always-increments=false
 
 # Transaction Pool
 tx-pool="layered"
