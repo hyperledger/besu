@@ -208,6 +208,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private int numberOfBlocksToCache = 0;
 
+  /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxEnabled;
 
   /** Instantiates a new Besu controller builder. */
