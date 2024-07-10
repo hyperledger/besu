@@ -65,6 +65,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    *     milestone starting points
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
    * @return an initialised TransitionProtocolSchedule using post-merge defaults
    */
   public static TransitionProtocolSchedule fromConfig(

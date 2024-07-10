@@ -28,7 +28,7 @@ public record ParallelizedTransactionContext(
     private DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator;
     private TransactionProcessingResult transactionProcessingResult;
     private boolean isMiningBeneficiaryTouchedPreRewardByTransaction;
-    private Wei miningBeneficiaryReward;
+    private Wei miningBeneficiaryReward = Wei.ZERO;
 
     public Builder transactionAccumulator(
         final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator) {

@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertTrue;
-import static org.mockito.Mockito.spy;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -248,10 +247,7 @@ class TransactionCollisionDetectorTest {
     bonsaiUpdater.getDeletedAccountAddresses().add(address);
 
     final Transaction transaction = createTransaction(address, address);
-    final BonsaiWorldStateUpdateAccumulator trxUpdater =
-        spy(
-            new BonsaiWorldStateUpdateAccumulator(
-                worldState, (__, ___) -> {}, (__, ___) -> {}, EvmConfiguration.DEFAULT));
+
     // Simulate that the deleted address is read in the next transaction
     trxUpdater.getAccountsToUpdate().put(address, new DiffBasedValue<>(accountValue, accountValue));
 

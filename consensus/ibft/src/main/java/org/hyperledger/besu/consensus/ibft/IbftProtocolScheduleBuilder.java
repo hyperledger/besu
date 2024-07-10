@@ -46,6 +46,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -80,6 +81,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(

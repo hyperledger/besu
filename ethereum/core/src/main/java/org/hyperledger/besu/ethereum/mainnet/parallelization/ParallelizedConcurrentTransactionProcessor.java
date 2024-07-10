@@ -75,6 +75,14 @@ public class ParallelizedConcurrentTransactionProcessor {
     this.transactionCollisionDetector = new TransactionCollisionDetector();
   }
 
+  @VisibleForTesting
+  public ParallelizedConcurrentTransactionProcessor(
+      final MainnetTransactionProcessor transactionProcessor,
+      final TransactionCollisionDetector transactionCollisionDetector) {
+    this.transactionProcessor = transactionProcessor;
+    this.transactionCollisionDetector = transactionCollisionDetector;
+  }
+
   /**
    * Initiates the parallel and optimistic execution of transactions within a block by creating a
    * copy of the world state for each transaction. This method processes transactions in a

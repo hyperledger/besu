@@ -177,7 +177,8 @@ public class CombinedProtocolScheduleFactoryTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false);
 
     return new BftProtocolSchedule(
         (DefaultProtocolSchedule) protocolScheduleBuilder.createProtocolSchedule());

@@ -49,6 +49,7 @@ public class MergeProtocolSchedule {
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -74,6 +75,7 @@ public class MergeProtocolSchedule {
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
