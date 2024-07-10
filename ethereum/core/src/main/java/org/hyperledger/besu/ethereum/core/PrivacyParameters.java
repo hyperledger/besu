@@ -77,7 +77,7 @@ public class PrivacyParameters {
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
   private PrivacyPluginService privacyPluginService;
-  private boolean privateNonceIncrementationEnabled;
+  private boolean privateNonceAlwaysIncrementsEnabled;
 
   public Address getPrivacyAddress() {
     if (isPrivacyPluginEnabled()) {
@@ -229,13 +229,13 @@ public class PrivacyParameters {
     }
   }
 
-  public boolean isPrivateNonceIncrementationEnabled() {
-    return privateNonceIncrementationEnabled;
+  public boolean isPrivateNonceAlwaysIncrementsEnabled() {
+    return privateNonceAlwaysIncrementsEnabled;
   }
 
-  public void setPrivateNonceIncrementationEnabled(
-      final boolean privateNonceIncrementationEnabled) {
-    this.privateNonceIncrementationEnabled = privateNonceIncrementationEnabled;
+  public void setPrivateNonceAlwaysIncrementsEnabled(
+      final boolean privateNonceAlwaysIncrementsEnabled) {
+    this.privateNonceAlwaysIncrementsEnabled = privateNonceAlwaysIncrementsEnabled;
   }
 
   @Override
@@ -273,7 +273,7 @@ public class PrivacyParameters {
     private boolean flexiblePrivacyGroupsEnabled;
     private boolean privacyPluginEnabled;
     private PrivacyPluginService privacyPluginService;
-    private boolean privateNonceIncrementationEnabled;
+    private boolean privateNonceAlwaysIncrementsEnabled;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -325,9 +325,9 @@ public class PrivacyParameters {
       return this;
     }
 
-    public Builder setPrivateNonceIncrementationEnabled(
-        final boolean isPrivateNonceIncrementationEnabled) {
-      this.privateNonceIncrementationEnabled = isPrivateNonceIncrementationEnabled;
+    public Builder setPrivateNonceAlwaysIncrementsEnabled(
+        final boolean isPrivateNonceAlwaysIncrementsEnabled) {
+      this.privateNonceAlwaysIncrementsEnabled = isPrivateNonceAlwaysIncrementsEnabled;
       return this;
     }
 
@@ -399,7 +399,7 @@ public class PrivacyParameters {
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setFlexiblePrivacyGroupsEnabled(flexiblePrivacyGroupsEnabled);
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
-      config.setPrivateNonceIncrementationEnabled(privateNonceIncrementationEnabled);
+      config.setPrivateNonceAlwaysIncrementsEnabled(privateNonceAlwaysIncrementsEnabled);
       return config;
     }
   }

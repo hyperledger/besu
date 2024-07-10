@@ -63,7 +63,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
   final WorldStateArchive privateWorldStateArchive;
   final PrivateStateRootResolver privateStateRootResolver;
   private final PrivateStateGenesisAllocator privateStateGenesisAllocator;
-  final boolean incrementPrivateNonce;
+  final boolean alwaysIncrementPrivateNonce;
   PrivateTransactionProcessor privateTransactionProcessor;
 
   private static final Logger LOG = LoggerFactory.getLogger(PrivacyPrecompiledContract.class);
@@ -82,7 +82,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
         privacyParameters.getPrivateWorldStateArchive(),
         privacyParameters.getPrivateStateRootResolver(),
         privacyParameters.getPrivateStateGenesisAllocator(),
-        privacyParameters.isPrivateNonceIncrementationEnabled(),
+        privacyParameters.isPrivateNonceAlwaysIncrementsEnabled(),
         name);
   }
 
@@ -92,14 +92,14 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
       final WorldStateArchive worldStateArchive,
       final PrivateStateRootResolver privateStateRootResolver,
       final PrivateStateGenesisAllocator privateStateGenesisAllocator,
-      final boolean incrementPrivateNonce,
+      final boolean alwaysIncrementPrivateNonce,
       final String name) {
     super(name, gasCalculator);
     this.enclave = enclave;
     this.privateWorldStateArchive = worldStateArchive;
     this.privateStateRootResolver = privateStateRootResolver;
     this.privateStateGenesisAllocator = privateStateGenesisAllocator;
-    this.incrementPrivateNonce = incrementPrivateNonce;
+    this.alwaysIncrementPrivateNonce = alwaysIncrementPrivateNonce;
   }
 
   public void setPrivateTransactionProcessor(
@@ -195,7 +195,7 @@ public class PrivacyPrecompiledContract extends AbstractPrecompiledContract {
           "Failed to process private transaction {}: {}",
           pmtHash,
           result.getValidationResult().getErrorMessage());
-      if (isPersistingPrivateState && incrementPrivateNonce) {
+      if (isPersistingPrivateState && alwaysIncrementPrivateNonce) {
         final Address senderAddress = privateTransaction.getSender();
         final MutableAccount senderAccount = privateWorldStateUpdater.getOrCreate(senderAddress);
         senderAccount.incrementNonce();

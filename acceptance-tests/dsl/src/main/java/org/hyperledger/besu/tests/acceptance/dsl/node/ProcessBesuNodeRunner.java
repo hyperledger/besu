@@ -166,8 +166,8 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
       if (node.getPrivacyParameters().isPrivacyPluginEnabled()) {
         params.add("--Xprivacy-plugin-enabled");
       }
-      if (node.getPrivacyParameters().isPrivateNonceIncrementationEnabled()) {
-        params.add("--privacy-nonce-always-increment");
+      if (node.getPrivacyParameters().isPrivateNonceAlwaysIncrementsEnabled()) {
+        params.add("privacy-nonce-always-increments");
       }
     }
 
