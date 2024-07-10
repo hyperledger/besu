@@ -563,7 +563,7 @@ public class MainnetTransactionProcessor {
     executor.process(frame, operationTracer);
   }
 
-  private AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
+  public AbstractMessageProcessor getMessageProcessor(final MessageFrame.Type type) {
     return switch (type) {
       case MESSAGE_CALL -> messageCallProcessor;
       case CONTRACT_CREATION -> contractCreationProcessor;

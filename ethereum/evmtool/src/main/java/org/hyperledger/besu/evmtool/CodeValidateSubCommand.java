@@ -40,6 +40,11 @@ import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 import picocli.CommandLine.ParentCommand;
 
+/**
+ * This class represents the CodeValidateSubCommand. It is responsible for validating EVM code for
+ * fuzzing. It implements the Runnable interface and is annotated with the {@code
+ * CommandLine.Command} annotation.
+ */
 @SuppressWarnings({"ConstantValue", "DataFlowIssue"})
 @CommandLine.Command(
     name = COMMAND_NAME,
@@ -47,6 +52,10 @@ import picocli.CommandLine.ParentCommand;
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class CodeValidateSubCommand implements Runnable {
+  /**
+   * The command name for the CodeValidateSubCommand. This constant is used as the name attribute in
+   * the CommandLine.Command annotation.
+   */
   public static final String COMMAND_NAME = "code-validate";
 
   @ParentCommand EvmToolCommand parentCommand;
@@ -62,6 +71,7 @@ public class CodeValidateSubCommand implements Runnable {
   @CommandLine.Parameters
   private final List<String> cliCode = new ArrayList<>();
 
+  /** Default constructor for the CodeValidateSubCommand class. This is required by PicoCLI. */
   @SuppressWarnings("unused")
   public CodeValidateSubCommand() {
     // PicoCLI requires this
@@ -111,6 +121,18 @@ public class CodeValidateSubCommand implements Runnable {
     }
   }
 
+  /**
+   * This method is responsible for validating the EVM code. It takes a hexadecimal string
+   * representation of the EVM code as input. The method first converts the hexadecimal string to
+   * Bytes. It then checks if the code follows the EOF layout. If the layout is valid, it retrieves
+   * the code from the EVM. If the code is invalid, it returns an error message with the reason for
+   * the invalidity. If the code is valid, it returns a string with "OK" followed by the hexadecimal
+   * string representation of each code section.
+   *
+   * @param hexCode the hexadecimal string representation of the EVM code
+   * @return a string indicating whether the code is valid or not, and in case of validity, the
+   *     hexadecimal string representation of each code section
+   */
   public String considerCode(final String hexCode) {
     Bytes codeBytes;
     try {

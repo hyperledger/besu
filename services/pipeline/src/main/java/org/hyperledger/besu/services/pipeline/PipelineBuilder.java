@@ -421,6 +421,7 @@ public class PipelineBuilder<I, T> {
         newBufferSize,
         outputCounter.labels(labelName, "added"),
         outputCounter.labels(labelName, "removed"),
-        outputCounter.labels(labelName, "aborted"));
+        outputCounter.labels(labelName, "aborted"),
+        stageName);
   }
 }

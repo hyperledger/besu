@@ -34,7 +34,6 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
-import org.hyperledger.besu.ethereum.p2p.peers.Peer;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection.PeerNotConnected;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.Capability;
@@ -158,41 +157,6 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
             blockchain,
             Collections.emptyList(),
             Collections.emptyList(),
-            ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
-  }
-
-  public EthProtocolManager(
-      final Blockchain blockchain,
-      final BigInteger networkId,
-      final WorldStateArchive worldStateArchive,
-      final TransactionPool transactionPool,
-      final EthProtocolConfiguration ethereumWireProtocolConfiguration,
-      final EthPeers ethPeers,
-      final EthMessages ethMessages,
-      final EthContext ethContext,
-      final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter,
-      final SynchronizerConfiguration synchronizerConfiguration,
-      final EthScheduler scheduler,
-      final List<Long> blockNumberForks,
-      final List<Long> timestampForks) {
-    this(
-        blockchain,
-        networkId,
-        worldStateArchive,
-        transactionPool,
-        ethereumWireProtocolConfiguration,
-        ethPeers,
-        ethMessages,
-        ethContext,
-        peerValidators,
-        mergePeerFilter,
-        synchronizerConfiguration,
-        scheduler,
-        new ForkIdManager(
-            blockchain,
-            blockNumberForks,
-            timestampForks,
             ethereumWireProtocolConfiguration.isLegacyEth64ForkIdEnabled()));
   }
 
@@ -399,39 +363,16 @@ public class EthProtocolManager implements ProtocolManager, MinedBlockObserver {
   }
 
   @Override
-  public boolean shouldConnect(final Peer peer, final boolean incoming) {
-    if (peer.getForkId().map(forkIdManager::peerCheck).orElse(true)) {
-      LOG.atDebug()
-          .setMessage("ForkId OK or not available for peer {}")
-          .addArgument(peer::getLoggableId)
-          .log();
-      if (ethPeers.shouldConnect(peer, incoming)) {
-        return true;
-      }
-    } else {
-      LOG.atDebug()
-          .setMessage("ForkId check failed for peer {} our fork id {} theirs {}")
-          .addArgument(peer::getLoggableId)
-          .addArgument(forkIdManager.getForkIdForChainHead())
-          .addArgument(peer.getForkId())
-          .log();
-      return false;
-    }
-    return false;
-  }
-
-  @Override
   public void handleDisconnect(
       final PeerConnection connection,
       final DisconnectReason reason,
       final boolean initiatedByPeer) {
     final boolean wasActiveConnection = ethPeers.registerDisconnect(connection);
     LOG.atDebug()
-        .setMessage("Disconnect - active Connection? {} - {} - {} {} - {} {} - {} peers left")
+        .setMessage("Disconnect - active Connection? {} - {} - {} - {} {} - {} peers left")
         .addArgument(wasActiveConnection)
         .addArgument(initiatedByPeer ? "Inbound" : "Outbound")
-        .addArgument(reason::getValue)
-        .addArgument(reason::name)
+        .addArgument(reason::toString)
         .addArgument(() -> connection.getPeer().getLoggableId())
         .addArgument(() -> connection.getPeerInfo().getClientId())
         .addArgument(ethPeers::peerCount)

@@ -35,6 +35,13 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
+/**
+ * The Scalars class provides methods for creating GraphQLScalarType objects. These objects
+ * represent the scalar types used in GraphQL, such as Address, BigInt, Bytes, Bytes32, and Long.
+ * Each method in this class returns a GraphQLScalarType object that has been configured with a
+ * specific Coercing implementation. The Coercing implementation defines how that type is
+ * serialized, deserialized and validated.
+ */
 public class Scalars {
 
   private Scalars() {}
@@ -366,6 +373,14 @@ public class Scalars {
         }
       };
 
+  /**
+   * Creates a new GraphQLScalarType object for an Address.
+   *
+   * <p>The object is configured with a specific Coercing implementation that defines how the
+   * Address type is serialized, deserialized and validated.
+   *
+   * @return a GraphQLScalarType object for an Address.
+   */
   public static GraphQLScalarType addressScalar() {
     return GraphQLScalarType.newScalar()
         .name("Address")
@@ -374,6 +389,14 @@ public class Scalars {
         .build();
   }
 
+  /**
+   * Creates a new GraphQLScalarType object for a BigInt.
+   *
+   * <p>The object is configured with a specific Coercing implementation that defines how the BigInt
+   * type is serialized, deserialized and validated.
+   *
+   * @return a GraphQLScalarType object for a BigInt.
+   */
   public static GraphQLScalarType bigIntScalar() {
     return GraphQLScalarType.newScalar()
         .name("BigInt")
@@ -382,6 +405,14 @@ public class Scalars {
         .build();
   }
 
+  /**
+   * Creates a new GraphQLScalarType object for Bytes.
+   *
+   * <p>The object is configured with a specific Coercing implementation that defines how the Bytes
+   * type is serialized, deserialized and validated.
+   *
+   * @return a GraphQLScalarType object for Bytes.
+   */
   public static GraphQLScalarType bytesScalar() {
     return GraphQLScalarType.newScalar()
         .name("Bytes")
@@ -390,6 +421,14 @@ public class Scalars {
         .build();
   }
 
+  /**
+   * Creates a new GraphQLScalarType object for Bytes32.
+   *
+   * <p>The object is configured with a specific Coercing implementation that defines how the
+   * Bytes32 type is serialized, deserialized and validated.
+   *
+   * @return a GraphQLScalarType object for Bytes32.
+   */
   public static GraphQLScalarType bytes32Scalar() {
     return GraphQLScalarType.newScalar()
         .name("Bytes32")
@@ -398,6 +437,14 @@ public class Scalars {
         .build();
   }
 
+  /**
+   * Creates a new GraphQLScalarType object for a Long.
+   *
+   * <p>The object is configured with a specific Coercing implementation that defines how the Long
+   * type is serialized, deserialized and validated.
+   *
+   * @return a GraphQLScalarType object for a Long.
+   */
   public static GraphQLScalarType longScalar() {
     return GraphQLScalarType.newScalar()
         .name("Long")

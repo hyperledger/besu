@@ -14,16 +14,37 @@
  */
 package org.hyperledger.besu.ethereum;
 
+/** The GasLimitCalculator interface defines methods for calculating the gas limit. */
 public interface GasLimitCalculator {
 
-  static final long BLOB_GAS_LIMIT = 786432;
+  /** The constant BLOB_GAS_LIMIT represents the gas limit for blob data. */
+  long BLOB_GAS_LIMIT = 786432;
 
+  /**
+   * Calculates the next gas limit based on the current gas limit, target gas limit, and new block
+   * number.
+   *
+   * @param currentGasLimit the current gas limit
+   * @param targetGasLimit the target gas limit
+   * @param newBlockNumber the new block number
+   * @return the calculated next gas limit
+   */
   long nextGasLimit(long currentGasLimit, long targetGasLimit, long newBlockNumber);
 
+  /**
+   * Returns a GasLimitCalculator that always returns the current gas limit.
+   *
+   * @return a GasLimitCalculator that always returns the current gas limit
+   */
   static GasLimitCalculator constant() {
     return (currentGasLimit, targetGasLimit, newBlockNumber) -> currentGasLimit;
   }
 
+  /**
+   * Returns the current blob gas limit.
+   *
+   * @return the current blob gas limit
+   */
   default long currentBlobGasLimit() {
     return BLOB_GAS_LIMIT;
   }
