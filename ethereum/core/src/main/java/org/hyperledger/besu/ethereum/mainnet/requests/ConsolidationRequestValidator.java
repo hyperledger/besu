@@ -88,7 +88,8 @@ public class ConsolidationRequestValidator implements RequestValidator {
     }
     var consolidationRequests =
         RequestUtil.filterRequestsOfType(request.get(), ConsolidationRequest.class);
-    LOG.info("list is non-empty; validating consolidation requests {}", consolidationRequests.size());
+    LOG.info(
+        "list is non-empty; validating consolidation requests {}", consolidationRequests.size());
     return validateConsolidationRequestParameter(Optional.of(consolidationRequests));
   }
 }
