@@ -195,6 +195,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
         .apparentValue(value)
         .code(code)
         .completer(child -> complete(parent, child, evm))
+        .authorizedAccountService(parent.getAuthorizedAccountService())
         .build();
 
     parent.setState(MessageFrame.State.CODE_SUSPENDED);

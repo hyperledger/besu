@@ -156,7 +156,7 @@ public class ClassicProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.frontier(),
-                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
+                    new AuthorityProcessor(chainId.orElse(BigInteger.ZERO))))
         .name("Atlantis");
   }
 
@@ -291,7 +291,7 @@ public class ClassicProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.frontier(),
-                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
+                    new AuthorityProcessor(chainId.orElse(BigInteger.ZERO))))
         .name("Spiral");
   }
 }

@@ -25,7 +25,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** Wraps another mutable account that has authorized code to be loaded into it. */
+/** Wraps a mutable EOA account and includes authorized code to be run on behalf of it. */
 public class MutableAuthorizedCodeAccount implements MutableAccount {
 
   private final MutableAccount wrappedAccount;

@@ -40,6 +40,7 @@ import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -163,6 +164,7 @@ public class Create2OperationTest {
             .originator(Address.ZERO)
             .initialGas(100_000L)
             .worldUpdater(worldUpdater)
+            .authorizedAccountService(new AuthorizedAccountService())
             .build();
     messageFrame.pushStackItem(UInt256.fromHexString(salt));
     messageFrame.pushStackItem(memoryLength);
@@ -275,6 +277,7 @@ public class Create2OperationTest {
             .originator(Address.ZERO)
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
+            .authorizedAccountService(new AuthorizedAccountService())
             .build();
     messageFrame.pushStackItem(Bytes.EMPTY);
     messageFrame.pushStackItem(memoryLength);

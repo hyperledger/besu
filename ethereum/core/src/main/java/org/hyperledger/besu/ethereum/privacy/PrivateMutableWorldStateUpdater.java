@@ -31,37 +31,39 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
 
   protected final WorldUpdater publicWorldUpdater;
   protected final WorldUpdater privateWorldUpdater;
-  private final AuthorizedAccountService authorizedAccountService;
+  private AuthorizedAccountService authorizedAccountService;
 
   public PrivateMutableWorldStateUpdater(
       final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
     this.publicWorldUpdater = publicWorldUpdater;
     this.privateWorldUpdater = privateWorldUpdater;
-    this.authorizedAccountService = new AuthorizedAccountService(this);
+    this.authorizedAccountService = new AuthorizedAccountService();
   }
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    return privateWorldUpdater.createAccount(address, nonce, balance);
+    return authorizedAccountService.processMutableAccount(
+        this, privateWorldUpdater.createAccount(address, nonce, balance), address);
   }
 
   @Override
   public MutableAccount createAccount(final Address address) {
-    return privateWorldUpdater.createAccount(address);
+    return authorizedAccountService.processMutableAccount(
+        this, privateWorldUpdater.createAccount(address), address);
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
     final MutableAccount privateAccount = privateWorldUpdater.getAccount(address);
     if (privateAccount != null && !privateAccount.isEmpty()) {
-      return privateAccount;
+      return authorizedAccountService.processMutableAccount(this, privateAccount, address);
     }
     final MutableAccount publicAccount = publicWorldUpdater.getAccount(address);
     if (publicAccount != null && !publicAccount.isEmpty()) {
       publicAccount.becomeImmutable();
-      return publicAccount;
+      return authorizedAccountService.processMutableAccount(this, publicAccount, address);
     }
-    return privateAccount;
+    return authorizedAccountService.processMutableAccount(this, privateAccount, address);
   }
 
   @Override
@@ -109,7 +111,7 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
   }
 
   @Override
-  public AuthorizedAccountService getAuthorizedAccountService() {
-    return authorizedAccountService;
+  public void setAuthorizedAccountService(final AuthorizedAccountService authorizedAccountService) {
+    this.authorizedAccountService = authorizedAccountService;
   }
 }

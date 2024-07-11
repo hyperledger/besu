@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.toy.ToyBlockValues;
 import org.hyperledger.besu.evm.toy.ToyWorld;
+import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
@@ -58,7 +59,8 @@ class MessageFrameTest {
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
             .code(CodeV0.EMPTY_CODE)
-            .completer(messageFrame -> {});
+            .completer(messageFrame -> {})
+            .authorizedAccountService(new AuthorizedAccountService());
   }
 
   @Test

@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
+import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -180,6 +181,7 @@ public class MessageFrameTestFixture {
                 blockHashLookup.orElseGet(
                     () -> new CachingBlockHashLookup(localBlockHeader, localBlockchain)))
             .maxStackSize(maxStackSize)
+            .authorizedAccountService(new AuthorizedAccountService())
             .build();
     stackItems.forEach(frame::pushStackItem);
     return frame;

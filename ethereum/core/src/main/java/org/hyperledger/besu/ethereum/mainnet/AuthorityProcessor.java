@@ -36,20 +36,22 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class SetCodeTransactionProcessor {
-  private static final Logger LOG = LoggerFactory.getLogger(SetCodeTransactionProcessor.class);
+public class AuthorityProcessor {
+  private static final Logger LOG = LoggerFactory.getLogger(AuthorityProcessor.class);
 
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   private final BigInteger chainId;
 
-  public SetCodeTransactionProcessor(final BigInteger chainId) {
+  public AuthorityProcessor(final BigInteger chainId) {
     this.chainId = chainId;
   }
 
   public void addContractToAuthority(
-      final WorldUpdater worldUpdater, final Transaction transaction) {
+      final WorldUpdater worldUpdater,
+      final AuthorizedAccountService authorizedAccountService,
+      final Transaction transaction) {
 
     transaction
         .getAuthorizationList()
@@ -77,13 +79,12 @@ public class SetCodeTransactionProcessor {
                             return;
                           }
 
-                          final AuthorizedAccountService service =
-                              worldUpdater.getAuthorizedAccountService();
-                          if (service.hasAuthorization(authorityAddress)) {
+                          if (authorizedAccountService.hasAuthorization(authorityAddress)) {
                             return;
                           }
 
-                          service.addAuthorizedAccount(authorityAddress, payload.address());
+                          authorizedAccountService.addAuthorizedAccount(
+                              authorityAddress, payload.address());
                         }));
   }
 

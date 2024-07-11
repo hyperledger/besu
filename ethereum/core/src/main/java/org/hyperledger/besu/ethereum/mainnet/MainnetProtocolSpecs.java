@@ -132,7 +132,7 @@ public abstract class MainnetProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     FeeMarket.legacy(),
                     CoinbaseFeePriceCalculator.frontier(),
-                    new SetCodeTransactionProcessor(BigInteger.ZERO)))
+                    new AuthorityProcessor(BigInteger.ZERO)))
         .privateTransactionProcessorBuilder(
             (transactionValidatorFactory,
                 contractCreationProcessor,
@@ -266,7 +266,7 @@ public abstract class MainnetProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.frontier(),
-                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
+                    new AuthorityProcessor(chainId.orElse(BigInteger.ZERO))))
         .name("SpuriousDragon");
   }
 
@@ -428,7 +428,7 @@ public abstract class MainnetProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559(),
-                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
+                    new AuthorityProcessor(chainId.orElse(BigInteger.ZERO))))
         .contractCreationProcessorBuilder(
             evm ->
                 new ContractCreationProcessor(
@@ -529,7 +529,7 @@ public abstract class MainnetProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559(),
-                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
+                    new AuthorityProcessor(chainId.orElse(BigInteger.ZERO))))
         // Contract creation rules for EIP-3860 Limit and meter intitcode
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -600,7 +600,7 @@ public abstract class MainnetProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559(),
-                    new SetCodeTransactionProcessor(chainId.orElse(BigInteger.ZERO))))
+                    new AuthorityProcessor(chainId.orElse(BigInteger.ZERO))))
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->

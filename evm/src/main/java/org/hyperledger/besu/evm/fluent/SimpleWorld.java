@@ -35,7 +35,7 @@ public class SimpleWorld implements WorldUpdater {
   /** The Accounts. */
   Map<Address, SimpleAccount> accounts = new HashMap<>();
 
-  private final AuthorizedAccountService authorizedAccountService;
+  private AuthorizedAccountService authorizedAccountService;
 
   /** Instantiates a new Simple world. */
   public SimpleWorld() {
@@ -49,7 +49,7 @@ public class SimpleWorld implements WorldUpdater {
    */
   public SimpleWorld(final SimpleWorld parent) {
     this.parent = parent;
-    authorizedAccountService = new AuthorizedAccountService(this);
+    this.authorizedAccountService = new AuthorizedAccountService();
   }
 
   @Override
@@ -60,11 +60,11 @@ public class SimpleWorld implements WorldUpdater {
   @Override
   public Account get(final Address address) {
     if (accounts.containsKey(address)) {
-      return accounts.get(address);
+      return authorizedAccountService.processAccount(this, accounts.get(address), address);
     } else if (parent != null) {
-      return parent.get(address);
+      return authorizedAccountService.processAccount(this, parent.get(address), address);
     } else {
-      return null;
+      return authorizedAccountService.processAccount(this, null, address);
     }
   }
 
@@ -75,14 +75,14 @@ public class SimpleWorld implements WorldUpdater {
     }
     SimpleAccount account = new SimpleAccount(address, nonce, balance);
     accounts.put(address, account);
-    return account;
+    return authorizedAccountService.processMutableAccount(this, account, address);
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
     SimpleAccount account = accounts.get(address);
     if (account != null) {
-      return account;
+      return authorizedAccountService.processMutableAccount(this, account, address);
     }
     Account parentAccount = parent == null ? null : parent.getAccount(address);
     if (parentAccount != null) {
@@ -94,9 +94,9 @@ public class SimpleWorld implements WorldUpdater {
               parentAccount.getBalance(),
               parentAccount.getCode());
       accounts.put(address, account);
-      return account;
+      return authorizedAccountService.processMutableAccount(this, account, address);
     }
-    return null;
+    return authorizedAccountService.processMutableAccount(this, null, address);
   }
 
   @Override
@@ -138,7 +138,7 @@ public class SimpleWorld implements WorldUpdater {
   }
 
   @Override
-  public AuthorizedAccountService getAuthorizedAccountService() {
-    return authorizedAccountService;
+  public void setAuthorizedAccountService(final AuthorizedAccountService authorizedAccountService) {
+    this.authorizedAccountService = authorizedAccountService;
   }
 }

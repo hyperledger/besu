@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
+import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -90,6 +91,7 @@ public class SelfDestructOperationTest {
             .originator(Address.ZERO)
             .initialGas(100_000L)
             .worldUpdater(worldUpdater)
+            .authorizedAccountService(new AuthorizedAccountService())
             .build();
     messageFrame.pushStackItem(Bytes.fromHexString(beneficiary));
     if (newContract) {

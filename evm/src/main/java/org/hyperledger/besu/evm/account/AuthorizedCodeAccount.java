@@ -24,7 +24,7 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 
-/** Wraps another account that has authorized code to be loaded into it. */
+/** Wraps an EOA account and includes authorized code to be run on behalf of it. */
 public class AuthorizedCodeAccount implements Account {
   private final Account wrappedAccount;
   private final Bytes authorizedCode;

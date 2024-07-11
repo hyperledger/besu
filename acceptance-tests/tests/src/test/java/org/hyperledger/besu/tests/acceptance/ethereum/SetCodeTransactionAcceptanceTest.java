@@ -29,11 +29,14 @@ import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.web3j.protocol.core.methods.response.EthSendTransaction;
+import org.web3j.protocol.core.methods.response.TransactionReceipt;
 
 public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
   private static final String GENESIS_FILE = "/dev/dev_prague.json";
@@ -102,7 +105,7 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
                     secp256k1.createPrivateKey(
                         TRANSACTION_SPONSOR_PRIVATE_KEY.toUnsignedBigInteger())));
 
-    besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    final String txHash = besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
     testService.buildNewBlock();
 
     cluster.verify(authorizer.balanceEquals(0));
@@ -114,5 +117,9 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
     // balance check to avoid
     // having to calculate the exact amount of gas used.
     assertThat(transactionSponsorBalance).isGreaterThan(new BigInteger("170000000000000000000000"));
+
+    Optional<TransactionReceipt> maybeTransactionReceipt = besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
+
+    assertThat(maybeTransactionReceipt).isPresent();
   }
 }
