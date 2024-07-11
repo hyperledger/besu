@@ -67,7 +67,7 @@ public class AuthorityProcessor {
                           if (!chainId.equals(BigInteger.ZERO)
                               && !payload.chainId().equals(BigInteger.ZERO)
                               && !chainId.equals(payload.chainId())) {
-                            ;
+                            return;
                           }
 
                           final Optional<MutableAccount> maybeAccount =
