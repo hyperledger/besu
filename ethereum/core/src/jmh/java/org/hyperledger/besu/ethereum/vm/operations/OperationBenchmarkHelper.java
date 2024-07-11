@@ -26,7 +26,7 @@ import org.hyperledger.besu.ethereum.core.ExecutionContextTestFixture;
 import org.hyperledger.besu.ethereum.core.MessageFrameTestFixture;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.rocksdb.RocksDBMetricsFactory;
@@ -126,7 +126,7 @@ public class OperationBenchmarkHelper {
         .code(messageFrame.getCode())
         .isStatic(messageFrame.isStatic())
         .completer(frame -> {})
-        .authorizedAccountService(new AuthorizedAccountService());
+        .authorizedCodeService(new AuthorizedCodeService());
   }
 
   public void cleanUp() throws IOException {

@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collection;
@@ -33,7 +33,7 @@ public class ToyWorld implements WorldUpdater {
 
   ToyWorld parent;
   Map<Address, ToyAccount> accounts = new HashMap<>();
-  private AuthorizedAccountService authorizedAccountService;
+  private AuthorizedCodeService authorizedCodeService;
 
   public ToyWorld() {
     this(null);
@@ -41,7 +41,7 @@ public class ToyWorld implements WorldUpdater {
 
   public ToyWorld(final ToyWorld parent) {
     this.parent = parent;
-    this.authorizedAccountService = new AuthorizedAccountService();
+    this.authorizedCodeService = new AuthorizedCodeService();
   }
 
   @Override
@@ -52,11 +52,11 @@ public class ToyWorld implements WorldUpdater {
   @Override
   public Account get(final Address address) {
     if (accounts.containsKey(address)) {
-      return authorizedAccountService.processAccount(this, accounts.get(address), address);
+      return authorizedCodeService.processAccount(this, accounts.get(address), address);
     } else if (parent != null) {
-      return authorizedAccountService.processAccount(this, parent.get(address), address);
+      return authorizedCodeService.processAccount(this, parent.get(address), address);
     } else {
-      return authorizedAccountService.processAccount(this, null, address);
+      return authorizedCodeService.processAccount(this, null, address);
     }
   }
 
@@ -73,17 +73,17 @@ public class ToyWorld implements WorldUpdater {
       final Bytes code) {
     ToyAccount account = new ToyAccount(parentAccount, address, nonce, balance, code);
     accounts.put(address, account);
-    return authorizedAccountService.processMutableAccount(this, account, address);
+    return authorizedCodeService.processMutableAccount(this, account, address);
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
     if (accounts.containsKey(address)) {
-      return authorizedAccountService.processMutableAccount(this, accounts.get(address), address);
+      return authorizedCodeService.processMutableAccount(this, accounts.get(address), address);
     } else if (parent != null) {
       Account parentAccount = parent.getAccount(address);
       if (parentAccount == null) {
-        return authorizedAccountService.processMutableAccount(this, null, address);
+        return authorizedCodeService.processMutableAccount(this, null, address);
       } else {
         return createAccount(
             parentAccount,
@@ -93,7 +93,7 @@ public class ToyWorld implements WorldUpdater {
             parentAccount.getCode());
       }
     } else {
-      return authorizedAccountService.processMutableAccount(this, null, address);
+      return authorizedCodeService.processMutableAccount(this, null, address);
     }
   }
 
@@ -133,7 +133,7 @@ public class ToyWorld implements WorldUpdater {
   }
 
   @Override
-  public void setAuthorizedAccountService(final AuthorizedAccountService authorizedAccountService) {
-    this.authorizedAccountService = authorizedAccountService;
+  public void setAuthorizedCodeService(final AuthorizedCodeService authorizedCodeService) {
+    this.authorizedCodeService = authorizedCodeService;
   }
 }

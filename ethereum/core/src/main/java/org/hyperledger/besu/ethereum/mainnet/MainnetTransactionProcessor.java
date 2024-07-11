@@ -42,7 +42,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -264,8 +264,8 @@ public class MainnetTransactionProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Wei blobGasPrice) {
     try {
-      final AuthorizedAccountService authorizedAccountService = new AuthorizedAccountService();
-      worldState.setAuthorizedAccountService(authorizedAccountService);
+      final AuthorizedCodeService authorizedCodeService = new AuthorizedCodeService();
+      worldState.setAuthorizedCodeService(authorizedCodeService);
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
@@ -351,7 +351,7 @@ public class MainnetTransactionProcessor {
           setCodeGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
-      worldUpdater.setAuthorizedAccountService(authorizedAccountService);
+      worldUpdater.setAuthorizedCodeService(authorizedCodeService);
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
           ImmutableMap.<String, Object>builder()
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
@@ -386,9 +386,8 @@ public class MainnetTransactionProcessor {
         commonMessageFrameBuilder.versionedHashes(
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
       } else if (transaction.getAuthorizationList().isPresent()) {
-        authorityProcessor.addContractToAuthority(
-            worldUpdater, authorizedAccountService, transaction);
-        addressList.addAll(authorizedAccountService.getAuthorities());
+        authorityProcessor.addContractToAuthority(worldUpdater, authorizedCodeService, transaction);
+        addressList.addAll(authorizedCodeService.getAuthorities());
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
       }
@@ -407,7 +406,7 @@ public class MainnetTransactionProcessor {
                 .contract(contractAddress)
                 .inputData(initCodeBytes.slice(code.getSize()))
                 .code(code)
-                .authorizedAccountService(authorizedAccountService)
+                .authorizedCodeService(authorizedCodeService)
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
@@ -423,7 +422,7 @@ public class MainnetTransactionProcessor {
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
                         .orElse(CodeV0.EMPTY_CODE))
-                .authorizedAccountService(authorizedAccountService)
+                .authorizedCodeService(authorizedCodeService)
                 .build();
       }
       Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
@@ -502,7 +501,7 @@ public class MainnetTransactionProcessor {
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       coinbase.incrementBalance(coinbaseWeiDelta);
-      authorizedAccountService.resetAuthorities();
+      authorizedCodeService.resetAuthorities();
 
       operationTracer.traceEndTransaction(
           worldUpdater,

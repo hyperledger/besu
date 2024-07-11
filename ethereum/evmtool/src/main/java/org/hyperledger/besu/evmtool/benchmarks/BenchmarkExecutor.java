@@ -35,7 +35,7 @@ import org.hyperledger.besu.evm.gascalculator.PragueEOFGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ShanghaiGasCalculator;
 import org.hyperledger.besu.evm.precompile.PrecompiledContract;
-import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 
 import java.io.PrintStream;
 import java.util.Locale;
@@ -71,7 +71,7 @@ public abstract class BenchmarkExecutor {
           .originator(Address.ZERO)
           .initialGas(100_000L)
           .worldUpdater(new SimpleWorld())
-          .authorizedAccountService(new AuthorizedAccountService())
+          .authorizedCodeService(new AuthorizedCodeService())
           .build();
 
   /**

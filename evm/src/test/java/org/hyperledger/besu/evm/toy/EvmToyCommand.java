@@ -28,7 +28,7 @@ import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.tracing.StandardJsonTracer;
-import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.io.PrintStream;
@@ -192,7 +192,7 @@ public class EvmToyCommand implements Runnable {
               .completer(c -> {})
               .miningBeneficiary(Address.ZERO)
               .blockHashLookup(n -> null)
-              .authorizedAccountService(new AuthorizedAccountService())
+              .authorizedCodeService(new AuthorizedCodeService())
               .build();
 
       final MessageCallProcessor mcp = new MessageCallProcessor(evm, precompileContractRegistry);

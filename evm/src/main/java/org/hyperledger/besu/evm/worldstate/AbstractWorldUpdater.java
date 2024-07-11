@@ -42,7 +42,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   private final W world;
   private final EvmConfiguration evmConfiguration;
-  private AuthorizedAccountService authorizedAccountService;
+  private AuthorizedCodeService authorizedCodeService;
 
   /** The Updated accounts. */
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new ConcurrentHashMap<>();
@@ -60,7 +60,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   protected AbstractWorldUpdater(final W world, final EvmConfiguration evmConfiguration) {
     this.world = world;
     this.evmConfiguration = evmConfiguration;
-    this.authorizedAccountService = new AuthorizedAccountService();
+    this.authorizedCodeService = new AuthorizedCodeService();
   }
 
   /**
@@ -89,7 +89,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     final UpdateTrackingAccount<A> account = new UpdateTrackingAccount<>(address);
     account.setNonce(nonce);
     account.setBalance(balance);
-    return authorizedAccountService.processMutableAccount(this, track(account), address);
+    return authorizedCodeService.processMutableAccount(this, track(account), address);
   }
 
   @Override
@@ -97,12 +97,12 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
-      return authorizedAccountService.processAccount(this, existing, address);
+      return authorizedCodeService.processAccount(this, existing, address);
     }
     if (deletedAccounts.contains(address)) {
       return null;
     }
-    return authorizedAccountService.processAccount(this, getForMutation(address), address);
+    return authorizedCodeService.processAccount(this, getForMutation(address), address);
   }
 
   @Override
@@ -110,7 +110,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
-      return authorizedAccountService.processMutableAccount(this, existing, address);
+      return authorizedCodeService.processMutableAccount(this, existing, address);
     }
     if (deletedAccounts.contains(address)) {
       return null;
@@ -119,9 +119,9 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // Otherwise, get it from our wrapped view and create a new update tracker.
     final A origin = getForMutation(address);
     if (origin == null) {
-      return authorizedAccountService.processMutableAccount(this, null, address);
+      return authorizedCodeService.processMutableAccount(this, null, address);
     } else {
-      return authorizedAccountService.processMutableAccount(
+      return authorizedCodeService.processMutableAccount(
           this, track(new UpdateTrackingAccount<>(origin)), address);
     }
   }
@@ -169,8 +169,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   }
 
   @Override
-  public void setAuthorizedAccountService(final AuthorizedAccountService authorizedAccountService) {
-    this.authorizedAccountService = authorizedAccountService;
+  public void setAuthorizedCodeService(final AuthorizedCodeService authorizedCodeService) {
+    this.authorizedCodeService = authorizedCodeService;
   }
 
   /**

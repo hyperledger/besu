@@ -24,21 +24,23 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
-/** A service that manages the code injection of authorized accounts. */
-public class AuthorizedAccountService {
-  private final Map<Address, Address> authorizedAccounts = new HashMap<>();
+import org.apache.tuweni.bytes.Bytes;
 
-  /** Creates a new AuthorizedAccountService. */
-  public AuthorizedAccountService() {}
+/** A service that manages the code injection of authorized code. */
+public class AuthorizedCodeService {
+  private final Map<Address, Bytes> authorizedCode = new HashMap<>();
+
+  /** Creates a new AuthorizedCodeService. */
+  public AuthorizedCodeService() {}
 
   /**
-   * Authorizes to load the code of authorizedAccount into the authorizer account.
+   * Authorizes to load the code of authorizedCode into the authorizer account.
    *
    * @param authorizer the address that gives the authorization.
-   * @param authorizedAccount the address of the account which code will be loaded.
+   * @param authorizedCode the code which will be loaded.
    */
-  public void addAuthorizedAccount(final Address authorizer, final Address authorizedAccount) {
-    authorizedAccounts.put(authorizer, authorizedAccount);
+  public void addAuthorizedCode(final Address authorizer, final Bytes authorizedCode) {
+    this.authorizedCode.put(authorizer, authorizedCode);
   }
 
   /**
@@ -48,12 +50,12 @@ public class AuthorizedAccountService {
    * @return the set of authorities.
    */
   public Set<Address> getAuthorities() {
-    return authorizedAccounts.keySet();
+    return authorizedCode.keySet();
   }
 
   /** Resets all the authorized accounts. */
   public void resetAuthorities() {
-    authorizedAccounts.clear();
+    authorizedCode.clear();
   }
 
   /**
@@ -62,8 +64,8 @@ public class AuthorizedAccountService {
    * @param authority the address to check.
    * @return {@code true} if the address has been authorized, {@code false} otherwise.
    */
-  public boolean hasAuthorization(final Address authority) {
-    return authorizedAccounts.containsKey(authority);
+  public boolean hasAuthorizedCode(final Address authority) {
+    return authorizedCode.containsKey(authority);
   }
 
   /**
@@ -76,7 +78,7 @@ public class AuthorizedAccountService {
    */
   public Account processAccount(
       final WorldUpdater worldUpdater, final Account originalAccount, final Address address) {
-    if (!authorizedAccounts.containsKey(address)) {
+    if (!authorizedCode.containsKey(address)) {
       return originalAccount;
     }
 
@@ -85,10 +87,7 @@ public class AuthorizedAccountService {
       account = worldUpdater.createAccount(address);
     }
 
-    final Address authorizedCodeAddress = authorizedAccounts.get(address);
-    final Account authorizedCodeAccount = worldUpdater.getOrCreate(authorizedCodeAddress);
-
-    return new AuthorizedCodeAccount(account, authorizedCodeAccount.getCode());
+    return new AuthorizedCodeAccount(account, authorizedCode.get(address));
   }
 
   /**
@@ -103,7 +102,7 @@ public class AuthorizedAccountService {
       final WorldUpdater worldUpdater,
       final MutableAccount originalAccount,
       final Address address) {
-    if (!authorizedAccounts.containsKey(address)) {
+    if (!authorizedCode.containsKey(address)) {
       return originalAccount;
     }
 
@@ -112,9 +111,6 @@ public class AuthorizedAccountService {
       account = worldUpdater.createAccount(address);
     }
 
-    final Address authorizedCodeAddress = authorizedAccounts.get(address);
-    final Account authorizedCodeAccount = worldUpdater.getOrCreate(authorizedCodeAddress);
-
-    return new MutableAuthorizedCodeAccount(account, authorizedCodeAccount.getCode());
+    return new MutableAuthorizedCodeAccount(account, authorizedCode.get(address));
   }
 }

@@ -22,9 +22,10 @@ import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.encoding.SetCodeTransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
@@ -50,7 +51,7 @@ public class AuthorityProcessor {
 
   public void addContractToAuthority(
       final WorldUpdater worldUpdater,
-      final AuthorizedAccountService authorizedAccountService,
+      final AuthorizedCodeService authorizedCodeService,
       final Transaction transaction) {
 
     transaction
@@ -79,12 +80,20 @@ public class AuthorityProcessor {
                             return;
                           }
 
-                          if (authorizedAccountService.hasAuthorization(authorityAddress)) {
+                          if (authorizedCodeService.hasAuthorizedCode(authorityAddress)) {
                             return;
                           }
 
-                          authorizedAccountService.addAuthorizedAccount(
-                              authorityAddress, payload.address());
+                          Optional<Account> codeAccount =
+                              Optional.ofNullable(worldUpdater.get(payload.address()));
+                          final Bytes code;
+                          if (codeAccount.isPresent()) {
+                            code = codeAccount.get().getCode();
+                          } else {
+                            code = Bytes.EMPTY;
+                          }
+
+                          authorizedCodeService.addAuthorizedCode(authorityAddress, code);
                         }));
   }
 

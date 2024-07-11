@@ -26,7 +26,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.toy.ToyWorld;
-import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayList;
@@ -171,7 +171,7 @@ public class TestMessageFrameBuilder {
             .blockHashLookup(blockHashLookup.orElse(number -> Hash.hash(Words.longBytes(number))))
             .maxStackSize(maxStackSize)
             .isStatic(isStatic)
-            .authorizedAccountService(new AuthorizedAccountService())
+            .authorizedCodeService(new AuthorizedCodeService())
             .build();
     frame.setPC(pc);
     frame.setSection(section);

@@ -181,10 +181,10 @@ public interface WorldUpdater extends MutableWorldView {
   }
 
   /**
-   * Sets the {@link AuthorizedAccountService} associated with this {@link WorldUpdater}.
+   * Sets the {@link AuthorizedCodeService} associated with this {@link WorldUpdater}.
    *
-   * @param authorizedAccountService the {@link AuthorizedAccountService} to associate with this
-   *     {@link WorldUpdater}
+   * @param authorizedCodeService the {@link AuthorizedCodeService} to associate with this {@link
+   *     WorldUpdater}
    */
-  void setAuthorizedAccountService(AuthorizedAccountService authorizedAccountService);
+  void setAuthorizedCodeService(AuthorizedCodeService authorizedCodeService);
 }

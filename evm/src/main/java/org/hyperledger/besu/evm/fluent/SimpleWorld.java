@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.AuthorizedAccountService;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collection;
@@ -35,7 +35,7 @@ public class SimpleWorld implements WorldUpdater {
   /** The Accounts. */
   Map<Address, SimpleAccount> accounts = new HashMap<>();
 
-  private AuthorizedAccountService authorizedAccountService;
+  private AuthorizedCodeService authorizedCodeService;
 
   /** Instantiates a new Simple world. */
   public SimpleWorld() {
@@ -49,7 +49,7 @@ public class SimpleWorld implements WorldUpdater {
    */
   public SimpleWorld(final SimpleWorld parent) {
     this.parent = parent;
-    this.authorizedAccountService = new AuthorizedAccountService();
+    this.authorizedCodeService = new AuthorizedCodeService();
   }
 
   @Override
@@ -60,11 +60,11 @@ public class SimpleWorld implements WorldUpdater {
   @Override
   public Account get(final Address address) {
     if (accounts.containsKey(address)) {
-      return authorizedAccountService.processAccount(this, accounts.get(address), address);
+      return authorizedCodeService.processAccount(this, accounts.get(address), address);
     } else if (parent != null) {
-      return authorizedAccountService.processAccount(this, parent.get(address), address);
+      return authorizedCodeService.processAccount(this, parent.get(address), address);
     } else {
-      return authorizedAccountService.processAccount(this, null, address);
+      return authorizedCodeService.processAccount(this, null, address);
     }
   }
 
@@ -75,14 +75,14 @@ public class SimpleWorld implements WorldUpdater {
     }
     SimpleAccount account = new SimpleAccount(address, nonce, balance);
     accounts.put(address, account);
-    return authorizedAccountService.processMutableAccount(this, account, address);
+    return authorizedCodeService.processMutableAccount(this, account, address);
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
     SimpleAccount account = accounts.get(address);
     if (account != null) {
-      return authorizedAccountService.processMutableAccount(this, account, address);
+      return authorizedCodeService.processMutableAccount(this, account, address);
     }
     Account parentAccount = parent == null ? null : parent.getAccount(address);
     if (parentAccount != null) {
@@ -94,9 +94,9 @@ public class SimpleWorld implements WorldUpdater {
               parentAccount.getBalance(),
               parentAccount.getCode());
       accounts.put(address, account);
-      return authorizedAccountService.processMutableAccount(this, account, address);
+      return authorizedCodeService.processMutableAccount(this, account, address);
     }
-    return authorizedAccountService.processMutableAccount(this, null, address);
+    return authorizedCodeService.processMutableAccount(this, null, address);
   }
 
   @Override
@@ -138,7 +138,7 @@ public class SimpleWorld implements WorldUpdater {
   }
 
   @Override
-  public void setAuthorizedAccountService(final AuthorizedAccountService authorizedAccountService) {
-    this.authorizedAccountService = authorizedAccountService;
+  public void setAuthorizedCodeService(final AuthorizedCodeService authorizedCodeService) {
+    this.authorizedCodeService = authorizedCodeService;
   }
 }

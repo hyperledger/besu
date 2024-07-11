@@ -41,7 +41,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   final UndoMap<Address, JournaledAccount> accounts;
   final UndoSet<Address> deleted;
   final long undoMark;
-  private AuthorizedAccountService authorizedAccountService;
+  private AuthorizedCodeService authorizedCodeService;
 
   /**
    * Instantiates a new Stacked updater.
@@ -67,7 +67,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
           "WorldUpdater must be a JournaledWorldUpdater or an AbstractWorldUpdater");
     }
     undoMark = accounts.mark();
-    this.authorizedAccountService = new AuthorizedAccountService();
+    this.authorizedCodeService = new AuthorizedCodeService();
   }
 
   /**
@@ -129,8 +129,8 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   }
 
   @Override
-  public void setAuthorizedAccountService(final AuthorizedAccountService authorizedAccountService) {
-    this.authorizedAccountService = authorizedAccountService;
+  public void setAuthorizedCodeService(final AuthorizedCodeService authorizedCodeService) {
+    this.authorizedCodeService = authorizedCodeService;
   }
 
   @Override
@@ -138,7 +138,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     JournaledAccount journaledAccount =
         new JournaledAccount(rootWorld.createAccount(address, nonce, balance));
     accounts.put(address, journaledAccount);
-    return authorizedAccountService.processMutableAccount(
+    return authorizedCodeService.processMutableAccount(
         this, new JournaledAccount(journaledAccount), address);
   }
 
@@ -147,7 +147,7 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     // We may have updated it already, so check that first.
     final JournaledAccount existing = accounts.get(address);
     if (existing != null) {
-      return authorizedAccountService.processMutableAccount(this, existing, address);
+      return authorizedCodeService.processMutableAccount(this, existing, address);
     }
     if (deleted.contains(address)) {
       return null;
@@ -156,11 +156,11 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
     // Otherwise, get it from our wrapped view and create a new update tracker.
     final MutableAccount origin = rootWorld.getAccount(address);
     if (origin == null) {
-      return authorizedAccountService.processMutableAccount(this, null, address);
+      return authorizedCodeService.processMutableAccount(this, null, address);
     } else {
       var newAccount = new JournaledAccount(origin);
       accounts.put(address, newAccount);
-      return authorizedAccountService.processMutableAccount(this, newAccount, address);
+      return authorizedCodeService.processMutableAccount(this, newAccount, address);
     }
   }
 
@@ -177,12 +177,12 @@ public class JournaledUpdater<W extends WorldView> implements WorldUpdater {
   public Account get(final Address address) {
     final MutableAccount existing = accounts.get(address);
     if (existing != null) {
-      return authorizedAccountService.processAccount(this, existing, address);
+      return authorizedCodeService.processAccount(this, existing, address);
     }
     if (deleted.contains(address)) {
-      return authorizedAccountService.processAccount(this, null, address);
+      return authorizedCodeService.processAccount(this, null, address);
     }
-    return authorizedAccountService.processAccount(this, rootWorld.get(address), address);
+    return authorizedCodeService.processAccount(this, rootWorld.get(address), address);
   }
 
   @Override
