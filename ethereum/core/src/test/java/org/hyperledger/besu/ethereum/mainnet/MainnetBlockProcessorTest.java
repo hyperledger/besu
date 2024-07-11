@@ -65,7 +65,6 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
             Wei.ZERO,
             BlockHeader::getCoinbase,
             true,
-            false,
             protocolSchedule);
 
     final MutableWorldState worldState = ReferenceTestWorldState.create(emptyMap());
@@ -91,7 +90,6 @@ public class MainnetBlockProcessorTest extends AbstractBlockProcessorTest {
             transactionReceiptFactory,
             Wei.ZERO,
             BlockHeader::getCoinbase,
-            false,
             false,
             protocolSchedule);
 
