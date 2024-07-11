@@ -51,7 +51,6 @@ public class ConsolidationRequestValidator implements RequestValidator {
             .flatMap(requests -> getConsolidationRequests(Optional.of(requests)))
             .orElse(Collections.emptyList());
 
-    // TODO Do we need to allow for customization? (e.g. if the value changes in the next fork)
     if (consolidationRequestsInBlock.size() > MAX_CONSOLIDATION_REQUESTS_PER_BLOCK) {
       LOG.warn(
           "Block {} has more than the allowed maximum number of consolidation requests", blockHash);
@@ -84,10 +83,12 @@ public class ConsolidationRequestValidator implements RequestValidator {
   @Override
   public boolean validateParameter(final Optional<List<Request>> request) {
     if (request.isEmpty()) {
-      return false;
+      LOG.info("list is empty; ignoring");
+      return true;
     }
     var consolidationRequests =
         RequestUtil.filterRequestsOfType(request.get(), ConsolidationRequest.class);
+    LOG.info("list is non-empty; validating consolidation requests {}", consolidationRequests.size());
     return validateConsolidationRequestParameter(Optional.of(consolidationRequests));
   }
 }
