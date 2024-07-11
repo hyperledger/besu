@@ -752,7 +752,7 @@ public abstract class MainnetProtocolSpecs {
             metricsSystem)
         // EIP-3074 AUTH and AUTCALL gas
         .gasCalculator(PragueGasCalculator::new)
-        // EIP-3074 AUTH and AUTCALL
+        // EIP-3074 AUTH and AUTHCALL
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.prague(
