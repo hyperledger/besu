@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
-import static org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.*;
-
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
@@ -29,10 +27,10 @@ public final class ParallelizedTransactionContext {
   private final Wei miningBeneficiaryReward;
 
   public ParallelizedTransactionContext(
-      DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator,
-      TransactionProcessingResult transactionProcessingResult,
-      boolean isMiningBeneficiaryTouchedPreRewardByTransaction,
-      Wei miningBeneficiaryReward) {
+      final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator,
+      final TransactionProcessingResult transactionProcessingResult,
+      final boolean isMiningBeneficiaryTouchedPreRewardByTransaction,
+      final Wei miningBeneficiaryReward) {
     this.transactionAccumulator = transactionAccumulator;
     this.transactionProcessingResult = transactionProcessingResult;
     this.isMiningBeneficiaryTouchedPreRewardByTransaction =
@@ -57,7 +55,7 @@ public final class ParallelizedTransactionContext {
   }
 
   @Override
-  public boolean equals(Object obj) {
+  public boolean equals(final Object obj) {
     if (obj == this) return true;
     if (obj == null || obj.getClass() != this.getClass()) return false;
     var that = (ParallelizedTransactionContext) obj;

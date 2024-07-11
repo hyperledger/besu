@@ -72,6 +72,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
+      final boolean isParallelTxEnabled,
       final MetricsSystem metricsSystem) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 

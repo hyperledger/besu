@@ -157,7 +157,6 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .metricsSystem(metricsSystem)
         .blockProcessorBuilder(
             isParallelTxEnabled
                 ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
