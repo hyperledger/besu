@@ -157,10 +157,11 @@ public abstract class MainnetProtocolSpecs {
         .transactionReceiptFactory(MainnetProtocolSpecs::frontierTransactionReceiptFactory)
         .blockReward(FRONTIER_BLOCK_REWARD)
         .skipZeroBlockRewards(false)
-        .isParallelTxEnabled(isParallelTxEnabled)
         .metricsSystem(metricsSystem)
-        .blockProcessorBuilder(isParallelTxEnabled ?
-            new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem) : MainnetBlockProcessor::new)
+        .blockProcessorBuilder(
+            isParallelTxEnabled
+                ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
+                : MainnetBlockProcessor::new)
         .blockValidatorBuilder(MainnetProtocolSpecs.blockValidatorBuilder())
         .blockImporterBuilder(MainnetBlockImporter::new)
         .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
@@ -214,13 +215,22 @@ public abstract class MainnetProtocolSpecs {
                 skipZeroBlockRewards,
                 protocolSchedule) ->
                 new DaoBlockProcessor(
-                    new MainnetBlockProcessor(
-                        transactionProcessor,
-                        transactionReceiptFactory,
-                        blockReward,
-                        miningBeneficiaryCalculator,
-                        skipZeroBlockRewards,
-                        protocolSchedule)))
+                    isParallelTxEnabled
+                        ? new MainnetParallelBlockProcessor(
+                            transactionProcessor,
+                            transactionReceiptFactory,
+                            blockReward,
+                            miningBeneficiaryCalculator,
+                            skipZeroBlockRewards,
+                            protocolSchedule,
+                            metricsSystem)
+                        : new MainnetBlockProcessor(
+                            transactionProcessor,
+                            transactionReceiptFactory,
+                            blockReward,
+                            miningBeneficiaryCalculator,
+                            skipZeroBlockRewards,
+                            protocolSchedule)))
         .name("DaoRecoveryInit");
   }
 
@@ -229,7 +239,10 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxEnabled,
       final MetricsSystem metricsSystem) {
     return daoRecoveryInitDefinition(evmConfiguration, isParallelTxEnabled, metricsSystem)
-        .blockProcessorBuilder(MainnetBlockProcessor::new)
+        .blockProcessorBuilder(
+            isParallelTxEnabled
+                ? new MainnetParallelBlockProcessor.ParallelBlockProcessorBuilder(metricsSystem)
+                : MainnetBlockProcessor::new)
         .name("DaoRecoveryTransition");
   }
 

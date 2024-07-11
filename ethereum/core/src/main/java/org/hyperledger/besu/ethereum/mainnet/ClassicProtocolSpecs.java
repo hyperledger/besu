@@ -107,19 +107,15 @@ public class ClassicProtocolSpecs {
                 blockReward,
                 miningBeneficiaryCalculator,
                 skipZeroBlockRewards,
-                parallelTxEnabled,
-                protocolSchedule,
-                localMetricsSystem) ->
+                protocolSchedule) ->
                 new ClassicBlockProcessor(
                     transactionProcessor,
                     transactionReceiptFactory,
                     blockReward,
                     miningBeneficiaryCalculator,
                     skipZeroBlockRewards,
-                    parallelTxEnabled,
                     ecip1017EraRounds,
-                    protocolSchedule,
-                    localMetricsSystem))
+                    protocolSchedule))
         .name("Gotham");
   }
 

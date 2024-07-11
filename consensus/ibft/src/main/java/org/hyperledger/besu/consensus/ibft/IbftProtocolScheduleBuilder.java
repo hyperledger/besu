@@ -73,7 +73,6 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelTxEnabled,
             metricsSystem);
   }
 

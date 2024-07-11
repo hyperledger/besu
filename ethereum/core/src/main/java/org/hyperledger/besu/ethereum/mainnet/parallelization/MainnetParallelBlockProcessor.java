@@ -1,3 +1,17 @@
+/*
+ * Copyright contributors to Hyperledger Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -20,11 +34,11 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 
+import java.util.List;
 import java.util.Optional;
 
 public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
 
-  private final ParallelizedConcurrentTransactionProcessor parallelTransactionProcessor;
   private final Optional<MetricsSystem> metricsSystem;
   private final Optional<Counter> confirmedParallelizedTransactionCounter;
   private final Optional<Counter> conflictingButCachedTransactionCounter;
@@ -37,11 +51,14 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
       final boolean skipZeroBlockRewards,
       final ProtocolSchedule protocolSchedule,
       final MetricsSystem metricsSystem) {
-    super(transactionProcessor, transactionReceiptFactory, blockReward,
-        miningBeneficiaryCalculator, skipZeroBlockRewards, protocolSchedule);
+    super(
+        transactionProcessor,
+        transactionReceiptFactory,
+        blockReward,
+        miningBeneficiaryCalculator,
+        skipZeroBlockRewards,
+        protocolSchedule);
     this.metricsSystem = Optional.of(metricsSystem);
-    this.parallelTransactionProcessor =
-        new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
     this.confirmedParallelizedTransactionCounter =
         Optional.of(
             this.metricsSystem
@@ -62,42 +79,102 @@ public class MainnetParallelBlockProcessor extends MainnetBlockProcessor {
   }
 
   @Override
-  protected TransactionProcessingResult getTransactionProcessingResult(
+  protected Optional<PreprocessingContext> runBlockPreProcessing(
       final MutableWorldState worldState,
-      final BlockHeader blockHeader,
       final PrivateMetadataUpdater privateMetadataUpdater,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
       final Address miningBeneficiary,
-      final Transaction transaction,
-      final int blockTxNumber,
-      final WorldUpdater blockUpdater,
       final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Wei blobGasPrice) {
+    if ((worldState instanceof DiffBasedWorldState)) {
+      ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor =
+          new ParallelizedConcurrentTransactionProcessor(transactionProcessor);
+      // runAsyncBlock, if activated, facilitates the  non-blocking parallel execution of
+      // transactions in the background through an optimistic strategy.
+      parallelizedConcurrentTransactionProcessor.runAsyncBlock(
+          worldState,
+          blockHeader,
+          transactions,
+          miningBeneficiary,
+          blockHashLookup,
+          blobGasPrice,
+          privateMetadataUpdater);
+      return Optional.of(
+          new ParallelizedPreProcessingContext(parallelizedConcurrentTransactionProcessor));
+    }
+    return Optional.empty();
+  }
 
+  @Override
+  protected TransactionProcessingResult getTransactionProcessingResult(
+      final Optional<PreprocessingContext> preProcessingContext,
+      final MutableWorldState worldState,
+      final WorldUpdater blockUpdater,
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final BlockHeader blockHeader,
+      final Wei blobGasPrice,
+      final Address miningBeneficiary,
+      final Transaction transaction,
+      final int location,
+      final BlockHashOperation.BlockHashLookup blockHashLookup) {
 
     TransactionProcessingResult transactionProcessingResult = null;
 
-    if ((worldState instanceof DiffBasedWorldState)) {
-      transactionProcessingResult = parallelTransactionProcessor
-          .applyParallelizedTransactionResult(worldState, miningBeneficiary, transaction,
-              blockTxNumber, confirmedParallelizedTransactionCounter, conflictingButCachedTransactionCounter)
-          .orElse(null);
+    if (preProcessingContext.isPresent()) {
+      final ParallelizedPreProcessingContext parallelizedPreProcessingContext =
+          (ParallelizedPreProcessingContext) preProcessingContext.get();
+      transactionProcessingResult =
+          parallelizedPreProcessingContext
+              .getParallelizedConcurrentTransactionProcessor()
+              .applyParallelizedTransactionResult(
+                  worldState,
+                  miningBeneficiary,
+                  transaction,
+                  location,
+                  confirmedParallelizedTransactionCounter,
+                  conflictingButCachedTransactionCounter)
+              .orElse(null);
     }
 
-    if (transactionProcessingResult != null) {
+    if (transactionProcessingResult == null) {
+      return super.getTransactionProcessingResult(
+          preProcessingContext,
+          worldState,
+          blockUpdater,
+          privateMetadataUpdater,
+          blockHeader,
+          blobGasPrice,
+          miningBeneficiary,
+          transaction,
+          location,
+          blockHashLookup);
+    } else {
       return transactionProcessingResult;
     }
-    return super.getTransactionProcessingResult(
-        worldState, blockHeader, privateMetadataUpdater, miningBeneficiary, transaction,
-        blockTxNumber, blockUpdater, blockHashLookup, blobGasPrice);
-
   }
 
-  public static class ParallelBlockProcessorBuilder implements ProtocolSpecBuilder.BlockProcessorBuilder {
+  static class ParallelizedPreProcessingContext implements PreprocessingContext {
+    final ParallelizedConcurrentTransactionProcessor parallelizedConcurrentTransactionProcessor;
+
+    public ParallelizedPreProcessingContext(
+        final ParallelizedConcurrentTransactionProcessor
+            parallelizedConcurrentTransactionProcessor) {
+      this.parallelizedConcurrentTransactionProcessor = parallelizedConcurrentTransactionProcessor;
+    }
+
+    public ParallelizedConcurrentTransactionProcessor
+        getParallelizedConcurrentTransactionProcessor() {
+      return parallelizedConcurrentTransactionProcessor;
+    }
+  }
+
+  public static class ParallelBlockProcessorBuilder
+      implements ProtocolSpecBuilder.BlockProcessorBuilder {
 
     final MetricsSystem metricsSystem;
 
-    public ParallelBlockProcessorBuilder(
-        final MetricsSystem metricsSystem) {
+    public ParallelBlockProcessorBuilder(final MetricsSystem metricsSystem) {
       this.metricsSystem = metricsSystem;
     }
 

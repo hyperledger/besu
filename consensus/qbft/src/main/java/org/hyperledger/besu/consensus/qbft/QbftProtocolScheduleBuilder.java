@@ -77,7 +77,6 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelTxEnabled,
             metricsSystem);
   }
 

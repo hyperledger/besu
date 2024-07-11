@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.List;
@@ -42,7 +41,6 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
       final Wei blockReward,
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final boolean skipZeroBlockRewards,
-      final boolean isParallelTxEnabled,
       final OptionalLong eraLen,
       final ProtocolSchedule protocolSchedule) {
     super(
@@ -51,7 +49,6 @@ public class ClassicBlockProcessor extends AbstractBlockProcessor {
         blockReward,
         miningBeneficiaryCalculator,
         skipZeroBlockRewards,
-        isParallelTxEnabled,
         protocolSchedule);
     eraLength = eraLen.orElse(DEFAULT_ERA_LENGTH);
   }

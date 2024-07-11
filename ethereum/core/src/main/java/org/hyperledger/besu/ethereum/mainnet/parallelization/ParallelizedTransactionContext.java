@@ -14,15 +14,85 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.parallelization;
 
+import static org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor.*;
+
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 
-public record ParallelizedTransactionContext(
-    DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator,
-    TransactionProcessingResult transactionProcessingResult,
-    boolean isMiningBeneficiaryTouchedPreRewardByTransaction,
-    Wei miningBeneficiaryReward) {
+import java.util.Objects;
+
+public final class ParallelizedTransactionContext {
+  private final DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator;
+  private final TransactionProcessingResult transactionProcessingResult;
+  private final boolean isMiningBeneficiaryTouchedPreRewardByTransaction;
+  private final Wei miningBeneficiaryReward;
+
+  public ParallelizedTransactionContext(
+      DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator,
+      TransactionProcessingResult transactionProcessingResult,
+      boolean isMiningBeneficiaryTouchedPreRewardByTransaction,
+      Wei miningBeneficiaryReward) {
+    this.transactionAccumulator = transactionAccumulator;
+    this.transactionProcessingResult = transactionProcessingResult;
+    this.isMiningBeneficiaryTouchedPreRewardByTransaction =
+        isMiningBeneficiaryTouchedPreRewardByTransaction;
+    this.miningBeneficiaryReward = miningBeneficiaryReward;
+  }
+
+  public DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator() {
+    return transactionAccumulator;
+  }
+
+  public TransactionProcessingResult transactionProcessingResult() {
+    return transactionProcessingResult;
+  }
+
+  public boolean isMiningBeneficiaryTouchedPreRewardByTransaction() {
+    return isMiningBeneficiaryTouchedPreRewardByTransaction;
+  }
+
+  public Wei miningBeneficiaryReward() {
+    return miningBeneficiaryReward;
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    if (obj == this) return true;
+    if (obj == null || obj.getClass() != this.getClass()) return false;
+    var that = (ParallelizedTransactionContext) obj;
+    return Objects.equals(this.transactionAccumulator, that.transactionAccumulator)
+        && Objects.equals(this.transactionProcessingResult, that.transactionProcessingResult)
+        && this.isMiningBeneficiaryTouchedPreRewardByTransaction
+            == that.isMiningBeneficiaryTouchedPreRewardByTransaction
+        && Objects.equals(this.miningBeneficiaryReward, that.miningBeneficiaryReward);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(
+        transactionAccumulator,
+        transactionProcessingResult,
+        isMiningBeneficiaryTouchedPreRewardByTransaction,
+        miningBeneficiaryReward);
+  }
+
+  @Override
+  public String toString() {
+    return "ParallelizedTransactionContext["
+        + "transactionAccumulator="
+        + transactionAccumulator
+        + ", "
+        + "transactionProcessingResult="
+        + transactionProcessingResult
+        + ", "
+        + "isMiningBeneficiaryTouchedPreRewardByTransaction="
+        + isMiningBeneficiaryTouchedPreRewardByTransaction
+        + ", "
+        + "miningBeneficiaryReward="
+        + miningBeneficiaryReward
+        + ']';
+  }
 
   public static class Builder {
     private DiffBasedWorldStateUpdateAccumulator<?> transactionAccumulator;

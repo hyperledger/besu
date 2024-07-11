@@ -70,8 +70,6 @@ public class ProtocolSpec {
 
   private final boolean skipZeroBlockRewards;
 
-  private final boolean isParallelTxEnabled;
-
   private final PrivateTransactionProcessor privateTransactionProcessor;
 
   private final FeeMarket feeMarket;
@@ -107,7 +105,6 @@ public class ProtocolSpec {
    * @param miningBeneficiaryCalculator determines to whom mining proceeds are paid
    * @param precompileContractRegistry all the pre-compiled contracts added
    * @param skipZeroBlockRewards should rewards be skipped if it is zero
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
    * @param gasCalculator the gas calculator to use.
    * @param gasLimitCalculator the gas limit calculator to use.
    * @param feeMarket an {@link Optional} wrapping {@link FeeMarket} class if appropriate.
@@ -139,7 +136,6 @@ public class ProtocolSpec {
       final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
       final PrecompileContractRegistry precompileContractRegistry,
       final boolean skipZeroBlockRewards,
-      final boolean isParallelTxEnabled,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
       final FeeMarket feeMarket,
@@ -169,7 +165,6 @@ public class ProtocolSpec {
     this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
     this.precompileContractRegistry = precompileContractRegistry;
     this.skipZeroBlockRewards = skipZeroBlockRewards;
-    this.isParallelTxEnabled = isParallelTxEnabled;
     this.gasCalculator = gasCalculator;
     this.gasLimitCalculator = gasLimitCalculator;
     this.feeMarket = feeMarket;
@@ -322,10 +317,6 @@ public class ProtocolSpec {
    */
   public boolean isSkipZeroBlockRewards() {
     return skipZeroBlockRewards;
-  }
-
-  public boolean isParallelTxEnabled() {
-    return isParallelTxEnabled;
   }
 
   public MiningBeneficiaryCalculator getMiningBeneficiaryCalculator() {

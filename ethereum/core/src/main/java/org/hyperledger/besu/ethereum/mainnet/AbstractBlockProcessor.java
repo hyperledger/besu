@@ -29,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
-import org.hyperledger.besu.ethereum.mainnet.parallelization.ParallelizedConcurrentTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateMetadataUpdater;
@@ -37,15 +36,12 @@ import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldStateUpdateAccumulator;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldState;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
+import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -97,22 +93,6 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
     this.protocolSchedule = protocolSchedule;
   }
 
-  protected AbstractBlockProcessor(
-      final MainnetTransactionProcessor transactionProcessor,
-      final TransactionReceiptFactory transactionReceiptFactory,
-      final Wei blockReward,
-      final MiningBeneficiaryCalculator miningBeneficiaryCalculator,
-      final boolean skipZeroBlockRewards,
-      final boolean isParallelTxEnabled,
-      final ProtocolSchedule protocolSchedule) {
-    this.transactionProcessor = transactionProcessor;
-    this.transactionReceiptFactory = transactionReceiptFactory;
-    this.blockReward = blockReward;
-    this.miningBeneficiaryCalculator = miningBeneficiaryCalculator;
-    this.skipZeroBlockRewards = skipZeroBlockRewards;
-    this.protocolSchedule = protocolSchedule;
-  }
-
   @Override
   public BlockProcessingResult processBlock(
       final Blockchain blockchain,
@@ -146,6 +126,16 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
                             calculateExcessBlobGasForParent(protocolSpec, parentHeader)))
             .orElse(Wei.ZERO);
 
+    final Optional<PreprocessingContext> preProcessingContext =
+        runBlockPreProcessing(
+            worldState,
+            privateMetadataUpdater,
+            blockHeader,
+            transactions,
+            miningBeneficiary,
+            blockHashLookup,
+            blobGasPrice);
+
     for (int i = 0; i < transactions.size(); i++) {
       final Transaction transaction = transactions.get(i);
       if (!hasAvailableBlockBudget(blockHeader, transaction, currentGasUsed)) {
@@ -154,8 +144,17 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final WorldUpdater blockUpdater = worldState.updater();
 
       TransactionProcessingResult transactionProcessingResult =
-          getTransactionProcessingResult(worldState, blockHeader, privateMetadataUpdater,
-              miningBeneficiary, transaction, i, blockUpdater, blockHashLookup, blobGasPrice);
+          getTransactionProcessingResult(
+              preProcessingContext,
+              worldState,
+              blockUpdater,
+              privateMetadataUpdater,
+              blockHeader,
+              blobGasPrice,
+              miningBeneficiary,
+              transaction,
+              i,
+              blockHashLookup);
       if (transactionProcessingResult.isInvalid()) {
         String errorMessage =
             MessageFormat.format(
@@ -247,17 +246,39 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
         Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)));
   }
 
-  protected TransactionProcessingResult getTransactionProcessingResult(
-      final MutableWorldState worldState, final BlockHeader blockHeader,
+  protected Optional<PreprocessingContext> runBlockPreProcessing(
+      final MutableWorldState worldState,
       final PrivateMetadataUpdater privateMetadataUpdater,
+      final BlockHeader blockHeader,
+      final List<Transaction> transactions,
       final Address miningBeneficiary,
-      final Transaction transaction, final int i, final WorldUpdater blockUpdater,
-      final BlockHashLookup blockHashLookup, final Wei blobGasPrice) {
-    return transactionProcessor.processTransaction(blockUpdater, blockHeader, transaction,
+      final BlockHashOperation.BlockHashLookup blockHashLookup,
+      final Wei blobGasPrice) {
+    return Optional.empty();
+  }
+
+  protected TransactionProcessingResult getTransactionProcessingResult(
+      final Optional<PreprocessingContext> preProcessingContext,
+      final MutableWorldState worldState,
+      final WorldUpdater blockUpdater,
+      final PrivateMetadataUpdater privateMetadataUpdater,
+      final BlockHeader blockHeader,
+      final Wei blobGasPrice,
+      final Address miningBeneficiary,
+      final Transaction transaction,
+      final int location,
+      final BlockHashLookup blockHashLookup) {
+    return transactionProcessor.processTransaction(
+        blockUpdater,
+        blockHeader,
+        transaction,
         miningBeneficiary,
-        OperationTracer.NO_TRACING, blockHashLookup,
+        OperationTracer.NO_TRACING,
+        blockHashLookup,
         true,
-        TransactionValidationParams.processingBlock(), privateMetadataUpdater, blobGasPrice);
+        TransactionValidationParams.processingBlock(),
+        privateMetadataUpdater,
+        blobGasPrice);
   }
 
   protected boolean hasAvailableBlockBudget(
@@ -286,4 +307,7 @@ public abstract class AbstractBlockProcessor implements BlockProcessor {
       final BlockHeader header,
       final List<BlockHeader> ommers,
       final boolean skipZeroBlockRewards);
+
+  public interface PreprocessingContext {}
+  ;
 }

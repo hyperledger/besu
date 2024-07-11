@@ -73,7 +73,6 @@ public class ProtocolSpecBuilder {
   private BlockValidatorBuilder blockValidatorBuilder;
   private BlockImporterBuilder blockImporterBuilder;
 
-  private boolean isParallelTxEnabled = false;
   private String name;
   private MiningBeneficiaryCalculator miningBeneficiaryCalculator;
   private PrivacyParameters privacyParameters;
@@ -145,11 +144,6 @@ public class ProtocolSpecBuilder {
   public ProtocolSpecBuilder blockHeaderValidatorBuilder(
       final Function<FeeMarket, BlockHeaderValidator.Builder> blockHeaderValidatorBuilder) {
     this.blockHeaderValidatorBuilder = blockHeaderValidatorBuilder;
-    return this;
-  }
-
-  public ProtocolSpecBuilder isParallelTxEnabled(final boolean isParallelTxEnabled) {
-    this.isParallelTxEnabled = isParallelTxEnabled;
     return this;
   }
 
@@ -409,7 +403,6 @@ public class ProtocolSpecBuilder {
         miningBeneficiaryCalculator,
         precompileContractRegistry,
         skipZeroBlockRewards,
-        isParallelTxEnabled,
         gasCalculator,
         gasLimitCalculator,
         feeMarket,
