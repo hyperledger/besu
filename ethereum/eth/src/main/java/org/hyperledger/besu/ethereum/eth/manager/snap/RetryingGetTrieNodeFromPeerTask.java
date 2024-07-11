@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
@@ -28,7 +29,9 @@ import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Map<Bytes, Bytes>> {
+public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingSwitchingPeerTask<Map<Bytes, Bytes>> {
+
+  public static final int MAX_RETRIES = 4;
 
   private final EthContext ethContext;
   private final Map<Bytes, List<Bytes>> paths;
@@ -40,7 +43,7 @@ public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Ma
       final Map<Bytes, List<Bytes>> paths,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 4, Map::isEmpty, metricsSystem);
+    super(ethContext, metricsSystem, Map::isEmpty, MAX_RETRIES);
     this.ethContext = ethContext;
     this.paths = paths;
     this.blockHeader = blockHeader;
@@ -56,11 +59,10 @@ public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingPeerTask<Ma
   }
 
   @Override
-  protected CompletableFuture<Map<Bytes, Bytes>> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
+  protected CompletableFuture<Map<Bytes, Bytes>> executeTaskOnCurrentPeer(final EthPeer peer) {
     final GetTrieNodeFromPeerTask task =
         GetTrieNodeFromPeerTask.forTrieNodes(ethContext, paths, blockHeader, metricsSystem);
-    assignedPeer.ifPresent(task::assignPeer);
+    task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {

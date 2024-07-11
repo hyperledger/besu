@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.eth.messages.snap.AccountRangeMessage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
@@ -28,7 +29,7 @@ import java.util.concurrent.CompletableFuture;
 import org.apache.tuweni.bytes.Bytes32;
 
 public class RetryingGetAccountRangeFromPeerTask
-    extends AbstractRetryingPeerTask<AccountRangeMessage.AccountRangeData> {
+    extends AbstractRetryingSwitchingPeerTask<AccountRangeMessage.AccountRangeData> {
 
   public static final int MAX_RETRIES = 4;
 
@@ -46,9 +47,9 @@ public class RetryingGetAccountRangeFromPeerTask
       final MetricsSystem metricsSystem) {
     super(
         ethContext,
-        MAX_RETRIES,
+            metricsSystem,
         data -> data.accounts().isEmpty() && data.proofs().isEmpty(),
-        metricsSystem);
+            MAX_RETRIES);
     this.ethContext = ethContext;
     this.startKeyHash = startKeyHash;
     this.endKeyHash = endKeyHash;
@@ -67,12 +68,11 @@ public class RetryingGetAccountRangeFromPeerTask
   }
 
   @Override
-  protected CompletableFuture<AccountRangeMessage.AccountRangeData> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
+  protected CompletableFuture<AccountRangeMessage.AccountRangeData> executeTaskOnCurrentPeer(final EthPeer peer) {
     final GetAccountRangeFromPeerTask task =
         GetAccountRangeFromPeerTask.forAccountRange(
             ethContext, startKeyHash, endKeyHash, blockHeader, metricsSystem);
-    assignedPeer.ifPresent(task::assignPeer);
+    task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
