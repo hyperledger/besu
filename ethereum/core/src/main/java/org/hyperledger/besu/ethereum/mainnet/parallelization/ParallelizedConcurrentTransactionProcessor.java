@@ -151,7 +151,7 @@ public class ParallelizedConcurrentTransactionProcessor {
             miningBeneficiary,
             new OperationTracer() {
               @Override
-              public void traceTransactionBeforeMiningReward(
+              public void traceBeforeRewardTransaction(
                   final WorldView worldView,
                   final org.hyperledger.besu.datatypes.Transaction tx,
                   final Wei miningReward) {

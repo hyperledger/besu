@@ -93,7 +93,7 @@ public interface OperationTracer {
    * @param tx the transaction that just concluded
    * @param miningReward the reward that the mining beneficiary will receive.
    */
-  default void traceTransactionBeforeMiningReward(
+  default void traceBeforeRewardTransaction(
       final WorldView worldView, final Transaction tx, final Wei miningReward) {}
   ;
 

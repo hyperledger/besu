@@ -483,8 +483,7 @@ public class MainnetTransactionProcessor {
       final Wei coinbaseWeiDelta =
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
-      operationTracer.traceTransactionBeforeMiningReward(
-          worldUpdater, transaction, coinbaseWeiDelta);
+      operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
 
       final var coinbase = worldState.getOrCreate(miningBeneficiary);
       coinbase.incrementBalance(coinbaseWeiDelta);
