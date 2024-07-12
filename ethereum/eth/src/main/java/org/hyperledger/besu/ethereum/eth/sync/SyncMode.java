@@ -27,17 +27,9 @@ public enum SyncMode {
   // Perform snapsync
   SNAP,
   // Perform snapsync but starting from a checkpoint instead of starting from genesis
-  CHECKPOINT,
-  // Deprecated and will be removed in 24.4.0 (X_SNAP and X_CHECKPOINT)
-  X_SNAP,
-  X_CHECKPOINT;
+  CHECKPOINT;
 
   public String normalize() {
-    if (this.toString().startsWith("X_")) {
-      // removes X_ at the beginning
-      return StringUtils.capitalize(this.toString().substring(2).toLowerCase(Locale.ROOT));
-    }
-
     return StringUtils.capitalize(this.toString().toLowerCase(Locale.ROOT));
   }
 
@@ -45,17 +37,7 @@ public enum SyncMode {
     return !EnumSet.of(
             SyncMode.FAST,
             SyncMode.SNAP,
-            SyncMode.X_SNAP,
-            SyncMode.CHECKPOINT,
-            SyncMode.X_CHECKPOINT)
+            SyncMode.CHECKPOINT)
         .contains(syncMode);
-  }
-
-  public static boolean isCheckpointSync(final SyncMode syncMode) {
-    return X_CHECKPOINT.equals(syncMode) || CHECKPOINT.equals(syncMode);
-  }
-
-  public static boolean isSnapSync(final SyncMode syncMode) {
-    return X_SNAP.equals(syncMode) || SNAP.equals(syncMode);
   }
 }

@@ -99,8 +99,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
         this::calculateTrailingPeerRequirements,
         metricsSystem);
 
-    if (SyncMode.isSnapSync(syncConfig.getSyncMode())
-        || SyncMode.isCheckpointSync(syncConfig.getSyncMode())) {
+    if (syncConfig.getSyncMode() == SyncMode.SNAP || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
       SnapServerChecker.createAndSetSnapServerChecker(ethContext, metricsSystem);
     }
 
@@ -145,7 +144,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
                   worldStateStorageCoordinator,
                   syncState,
                   clock);
-    } else if (SyncMode.isCheckpointSync(syncConfig.getSyncMode())) {
+    } else if (syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
       this.fastSyncFactory =
           () ->
               CheckpointDownloaderFactory.createCheckpointDownloader(
