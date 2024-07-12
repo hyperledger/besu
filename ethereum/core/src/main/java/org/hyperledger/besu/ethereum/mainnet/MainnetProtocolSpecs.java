@@ -642,9 +642,9 @@ public abstract class MainnetProtocolSpecs {
 
     return cancunDefinition(
             chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
-        // EIP-3074 AUTH and AUTCALL gas
+        // EIP-3074 AUTH and AUTHCALL gas
         .gasCalculator(PragueGasCalculator::new)
-        // EIP-3074 AUTH and AUTCALL
+        // EIP-3074 AUTH and AUTHCALL
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->
                 MainnetEVMs.prague(

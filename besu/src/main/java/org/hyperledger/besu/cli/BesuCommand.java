@@ -39,7 +39,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.cli.config.ProfileName;
+import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
 import org.hyperledger.besu.cli.converter.PercentageConverter;
 import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
@@ -578,9 +578,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @Option(
       names = {PROFILE_OPTION_NAME},
       paramLabel = PROFILE_FORMAT_HELP,
+      completionCandidates = ProfilesCompletionCandidates.class,
       description =
           "Overwrite default settings. Possible values are ${COMPLETION-CANDIDATES}. (default: none)")
-  private final ProfileName profile = null;
+  private String profile = null; // don't set it as final due to picocli completion candidates
 
   @Option(
       names = {"--nat-method"},
@@ -728,6 +729,13 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         names = {"--privacy-flexible-groups-enabled"},
         description = "Enable flexible privacy groups (default: ${DEFAULT-VALUE})")
     private final Boolean isFlexiblePrivacyGroupsEnabled = false;
+
+    @Option(
+        names = {"--privacy-nonce-always-increments"},
+        description =
+            "Enable private nonce "
+                + "incrementation even if the transaction didn't succeeded (default: ${DEFAULT-VALUE})")
+    private final Boolean isPrivateNonceAlwaysIncrementsEnabled = false;
   }
 
   // Metrics Option Group
@@ -1571,11 +1579,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             || genesisConfigOptionsSupplier.get().isQbft())
         && !unstableSynchronizerOptions.isSnapSyncBftEnabled()) {
       final String errorSuffix = "can't be used with BFT networks";
-      if (SyncMode.CHECKPOINT.equals(syncMode) || SyncMode.X_CHECKPOINT.equals(syncMode)) {
+      if (SyncMode.CHECKPOINT.equals(syncMode)) {
         throw new ParameterException(
             commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
       }
-      if (syncMode == SyncMode.SNAP || syncMode == SyncMode.X_SNAP) {
+      if (syncMode == SyncMode.SNAP) {
         throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
       }
     }
@@ -1758,7 +1766,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "--Xcheckpoint-post-merge-enabled can only be used with CHECKPOINT sync-mode",
-        SyncMode.isCheckpointSync(getDefaultSyncModeIfNotSet()),
+        getDefaultSyncModeIfNotSet() == SyncMode.CHECKPOINT,
         singletonList("--Xcheckpoint-post-merge-enabled"));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
@@ -2048,10 +2056,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (syncMode == SyncMode.FAST) {
         throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
       }
-      if (syncMode == SyncMode.SNAP || syncMode == SyncMode.X_SNAP) {
+      if (syncMode == SyncMode.SNAP) {
         throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
       }
-      if (syncMode == SyncMode.CHECKPOINT || syncMode == SyncMode.X_CHECKPOINT) {
+      if (syncMode == SyncMode.CHECKPOINT) {
         throw new ParameterException(
             commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
       }
@@ -2075,6 +2083,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           privacyOptionGroup.isFlexiblePrivacyGroupsEnabled);
       privacyParametersBuilder.setPrivacyPluginEnabled(
           unstablePrivacyPluginOptions.isPrivacyPluginEnabled());
+      privacyParametersBuilder.setPrivateNonceAlwaysIncrementsEnabled(
+          privacyOptionGroup.isPrivateNonceAlwaysIncrementsEnabled);
 
       final boolean hasPrivacyPublicKey = privacyOptionGroup.privacyPublicKeyFile != null;
 
@@ -2778,7 +2788,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (profile != null) {
-      builder.setProfile(profile.toString());
+      builder.setProfile(profile);
     }
 
     builder.setHasCustomGenesis(genesisFile != null);
