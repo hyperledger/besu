@@ -83,13 +83,10 @@ public class ConsolidationRequestValidator implements RequestValidator {
   @Override
   public boolean validateParameter(final Optional<List<Request>> request) {
     if (request.isEmpty()) {
-      LOG.info("list is empty; ignoring");
       return true;
     }
     var consolidationRequests =
         RequestUtil.filterRequestsOfType(request.get(), ConsolidationRequest.class);
-    LOG.info(
-        "list is non-empty; validating consolidation requests {}", consolidationRequests.size());
     return validateConsolidationRequestParameter(Optional.of(consolidationRequests));
   }
 }

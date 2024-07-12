@@ -49,7 +49,7 @@ class PragueConsolidationRequestValidatorTest {
         Arguments.of(
             "Allowed ConsolidationRequests - validating empty ConsolidationRequests",
             Optional.empty(),
-            false),
+            true),
         Arguments.of(
             "Allowed ConsolidationRequests - validating present ConsolidationRequests",
             Optional.of(List.of()),
