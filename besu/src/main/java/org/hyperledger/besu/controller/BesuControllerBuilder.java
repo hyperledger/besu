@@ -708,8 +708,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     ethPeers.setTrailingPeerRequirementsSupplier(synchronizer::calculateTrailingPeerRequirements);
 
-    if (SyncMode.isSnapSync(syncConfig.getSyncMode())
-        || SyncMode.isCheckpointSync(syncConfig.getSyncMode())) {
+    if (syncConfig.getSyncMode() == SyncMode.SNAP
+        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
       synchronizer.subscribeInSync((b) -> ethPeers.snapServerPeersNeeded(!b));
       ethPeers.snapServerPeersNeeded(true);
     } else {
@@ -1157,7 +1157,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
     final CheckpointConfigOptions checkpointConfigOptions =
         genesisConfigOptions.getCheckpointOptions();
-    if (SyncMode.isCheckpointSync(syncConfig.getSyncMode()) && checkpointConfigOptions.isValid()) {
+    if (syncConfig.getSyncMode() == SyncMode.CHECKPOINT && checkpointConfigOptions.isValid()) {
       validators.add(
           new CheckpointBlocksPeerValidator(
               protocolSchedule,
