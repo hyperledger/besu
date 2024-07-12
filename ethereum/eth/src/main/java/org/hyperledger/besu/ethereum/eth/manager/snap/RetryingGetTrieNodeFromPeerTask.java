@@ -17,19 +17,18 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class RetryingGetTrieNodeFromPeerTask extends AbstractRetryingSwitchingPeerTask<Map<Bytes, Bytes>> {
+public class RetryingGetTrieNodeFromPeerTask
+    extends AbstractRetryingSwitchingPeerTask<Map<Bytes, Bytes>> {
 
   public static final int MAX_RETRIES = 4;
 
