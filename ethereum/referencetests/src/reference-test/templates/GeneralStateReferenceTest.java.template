@@ -1,4 +1,4 @@
-package org.hyperledger.besu.ethereum.vm.generalstate;
+package %%PACKAGE_NAME%%;
 
 import static org.hyperledger.besu.ethereum.vm.GeneralStateReferenceTestTools.executeTest;
 import static org.hyperledger.besu.ethereum.vm.GeneralStateReferenceTestTools.generateTestParametersForConfig;

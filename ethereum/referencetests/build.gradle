@@ -34,6 +34,7 @@ def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
     "BlockchainTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/blockchain",
     "BlockchainReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.blockchain",
     ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
     )
 }
@@ -50,6 +51,7 @@ def eipBlockchainReferenceTests = tasks.register("eipBlockchainReferenceTests") 
     "EIPTests${File.separatorChar}BlockchainTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
     "EIPBlockchainReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.eip",
     )
 }
 
@@ -65,6 +67,7 @@ def eipStateReferenceTests = tasks.register("eipStateReferenceTests")  {
     "EIPTests${File.separatorChar}StateTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
     "EIPStateReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.eip",
     )
 }
 
@@ -83,19 +86,21 @@ def executionSpecTests = tasks.register("executionSpecTests") {
   // generate blockchain_tests:
   generateTestFiles(
     fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
-    file("src/reference-test/templates/ExecutionSpecTest.java.template"),
+    file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
     "fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
-    "ExecutionSpecBlockchainTest"
+    "ExecutionSpecBlockchainTest",
+    "org.hyperledger.besu.ethereum.vm.executionspec",
     )
 
   // generate state_tests:
   generateTestFiles(
     fileTree(referenceTestsPath + "/fixtures/state_tests"),
-    file("src/reference-test/templates/ExecutionSpecStateTest.java.template"),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
     "fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
-    "ExecutionSpecStateTest"
+    "ExecutionSpecStateTest",
+    "org.hyperledger.besu.ethereum.vm.executionspec",
     )
 }
 
@@ -110,7 +115,8 @@ def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
     "GeneralStateTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
-    "GeneralStateReferenceTest"
+    "GeneralStateReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.generalstate",
     )
 }
 
@@ -125,7 +131,8 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
     "regressions",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
-    "GeneralStateRegressionReferenceTest"
+    "GeneralStateRegressionReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.generalstate"
     )
 }
 
@@ -140,7 +147,8 @@ def eofReferenceTests = tasks.register("eofReferenceTests") {
     file("src/reference-test/templates/EOFReferenceTest.java.template"),
     "EOFTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
-    "EOFReferenceTest"
+    "EOFReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.eof"
     )
 }
 
@@ -259,7 +267,14 @@ following commands:
 }
 processResources.dependsOn('validateReferenceTestSubmodule')
 
-def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
+def generateTestFiles(
+  FileTree jsonPath,
+  File templateFile,
+  String pathstrip,
+  String destination,
+  String namePrefix,
+  String packageString,
+  String ... excludedPath) {
   mkdir(destination)
   def referenceTestTemplate = templateFile.text
 
@@ -281,6 +296,7 @@ def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, St
     def testFileContents = referenceTestTemplate
       .replaceAll("%%TESTS_FILE%%", allPaths)
       .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
+      .replaceAll("%%PACKAGE_NAME%%", packageString)
     testFile.newWriter().withWriter { w -> w << testFileContents }
   }
 }

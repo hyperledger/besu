@@ -24,9 +24,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Delegate call operation. */
 public class ExtDelegateCallOperation extends AbstractExtCallOperation {
 
-  static final int STACK_INPUT_OFFSET = 1;
-  static final int STACK_INPUT_LENGTH = 2;
-
   /**
    * Instantiates a new Delegate call operation.
    *

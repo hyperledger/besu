@@ -194,6 +194,13 @@ class GenesisConfigOptionsTest {
   }
 
   @Test
+  void shouldGetCancunEOFTime() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("cancunEOFTime", 1670470142));
+    assertThat(config.getCancunEOFTime()).hasValue(1670470142);
+  }
+
+  @Test
   void shouldGetPragueTime() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("pragueTime", 1670470143));
     assertThat(config.getPragueTime()).hasValue(1670470143);
@@ -238,6 +245,7 @@ class GenesisConfigOptionsTest {
     assertThat(config.getMergeNetSplitBlockNumber()).isEmpty();
     assertThat(config.getShanghaiTime()).isEmpty();
     assertThat(config.getCancunTime()).isEmpty();
+    assertThat(config.getCancunEOFTime()).isEmpty();
     assertThat(config.getPragueTime()).isEmpty();
     assertThat(config.getPragueEOFTime()).isEmpty();
     assertThat(config.getFutureEipsTime()).isEmpty();

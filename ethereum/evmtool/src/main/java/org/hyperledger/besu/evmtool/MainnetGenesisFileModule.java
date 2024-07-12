@@ -27,9 +27,11 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -68,13 +70,15 @@ class MainnetGenesisFileModule extends GenesisFileModule {
       }
     }
 
-    if (fork.isPresent()) {
-      var schedules = createSchedules();
-      var schedule = schedules.get(fork.map(String::toLowerCase).get());
-      if (schedule != null) {
-        return schedule.get();
-      }
+    var schedules = createSchedules();
+    var schedule =
+        schedules.get(
+            fork.orElse(EvmSpecVersion.defaultVersion().getName())
+                .toLowerCase(Locale.getDefault()));
+    if (schedule != null) {
+      return schedule.get();
     }
+
     return MainnetProtocolSchedule.fromConfig(
         configOptions, evmConfiguration, MiningParameters.newDefault(), new BadBlockManager());
   }
@@ -113,6 +117,9 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         Map.entry(
             "cancun",
             createSchedule(new StubGenesisConfigOptions().cancunTime(0).baseFeePerGas(0x0a))),
+        Map.entry(
+            "cancuneof",
+            createSchedule(new StubGenesisConfigOptions().cancunEOFTime(0).baseFeePerGas(0x0a))),
         Map.entry(
             "prague",
             createSchedule(new StubGenesisConfigOptions().pragueTime(0).baseFeePerGas(0x0a))),

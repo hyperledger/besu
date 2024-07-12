@@ -44,7 +44,7 @@ public abstract class BaseBftController implements BftEventHandler {
   private final FutureMessageBuffer futureMessageBuffer;
   private final Gossiper gossiper;
   private final MessageTracker duplicateMessageTracker;
-  private final SynchronizerUpdater sychronizerUpdater;
+  private final SynchronizerUpdater synchronizerUpdater;
 
   private final AtomicBoolean started = new AtomicBoolean(false);
 
@@ -56,7 +56,7 @@ public abstract class BaseBftController implements BftEventHandler {
    * @param gossiper the gossiper
    * @param duplicateMessageTracker the duplicate message tracker
    * @param futureMessageBuffer the future message buffer
-   * @param sychronizerUpdater the synchronizer updater
+   * @param synchronizerUpdater the synchronizer updater
    */
   protected BaseBftController(
       final Blockchain blockchain,
@@ -64,13 +64,13 @@ public abstract class BaseBftController implements BftEventHandler {
       final Gossiper gossiper,
       final MessageTracker duplicateMessageTracker,
       final FutureMessageBuffer futureMessageBuffer,
-      final SynchronizerUpdater sychronizerUpdater) {
+      final SynchronizerUpdater synchronizerUpdater) {
     this.blockchain = blockchain;
     this.bftFinalState = bftFinalState;
     this.futureMessageBuffer = futureMessageBuffer;
     this.gossiper = gossiper;
     this.duplicateMessageTracker = duplicateMessageTracker;
-    this.sychronizerUpdater = sychronizerUpdater;
+    this.synchronizerUpdater = synchronizerUpdater;
   }
 
   @Override
@@ -162,14 +162,14 @@ public abstract class BaseBftController implements BftEventHandler {
 
   @Override
   public void handleBlockTimerExpiry(final BlockTimerExpiry blockTimerExpiry) {
-    final ConsensusRoundIdentifier roundIndentifier = blockTimerExpiry.getRoundIndentifier();
-    if (isMsgForCurrentHeight(roundIndentifier)) {
-      getCurrentHeightManager().handleBlockTimerExpiry(roundIndentifier);
+    final ConsensusRoundIdentifier roundIdentifier = blockTimerExpiry.getRoundIdentifier();
+    if (isMsgForCurrentHeight(roundIdentifier)) {
+      getCurrentHeightManager().handleBlockTimerExpiry(roundIdentifier);
     } else {
       LOG.trace(
           "Block timer event discarded as it is not for current block height chainHeight={} eventHeight={}",
           getCurrentHeightManager().getChainHeight(),
-          roundIndentifier.getSequenceNumber());
+          roundIdentifier.getSequenceNumber());
     }
   }
 
@@ -221,7 +221,7 @@ public abstract class BaseBftController implements BftEventHandler {
       futureMessageBuffer.addMessage(msgRoundIdentifier.getSequenceNumber(), rawMsg);
       // Notify the synchronizer the transmitting peer must have the parent block to the received
       // message's target height.
-      sychronizerUpdater.updatePeerChainState(
+      synchronizerUpdater.updatePeerChainState(
           msgRoundIdentifier.getSequenceNumber() - 1L, rawMsg.getConnection());
     } else {
       LOG.trace(

@@ -14,25 +14,60 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import org.hyperledger.besu.ethereum.core.MutableWorldState;
-import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.BLSPublicKey;
+import org.hyperledger.besu.datatypes.GWei;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
-import org.hyperledger.besu.ethereum.mainnet.WithdrawalRequestContractHelper;
 
-import java.util.List;
-import java.util.Optional;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.units.bigints.UInt64;
 
-public class WithdrawalRequestProcessor implements RequestProcessor {
+/** Processor for handling withdrawal requests. */
+public class WithdrawalRequestProcessor
+    extends AbstractSystemCallRequestProcessor<WithdrawalRequest> {
+
+  public static final Address WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS =
+      Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
+
+  private static final int ADDRESS_BYTES = 20;
+  private static final int PUBLIC_KEY_BYTES = 48;
+  private static final int AMOUNT_BYTES = 8;
+  private static final int WITHDRAWAL_REQUEST_BYTES_SIZE =
+      ADDRESS_BYTES + PUBLIC_KEY_BYTES + AMOUNT_BYTES;
+
+  /**
+   * Gets the call address for withdrawal requests.
+   *
+   * @return The call address.
+   */
   @Override
-  public Optional<List<? extends Request>> process(
-      final MutableWorldState mutableWorldState,
-      final List<TransactionReceipt> transactionReceipts) {
+  protected Address getCallAddress() {
+    return WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS;
+  }
 
-    List<WithdrawalRequest> withdrawalRequests =
-        WithdrawalRequestContractHelper.popWithdrawalRequestsFromQueue(mutableWorldState).stream()
-            .toList();
+  /**
+   * Gets the size of the bytes representing a single withdrawal request.
+   *
+   * @return The size of the bytes representing a single withdrawal request.
+   */
+  @Override
+  protected int getRequestBytesSize() {
+    return WITHDRAWAL_REQUEST_BYTES_SIZE;
+  }
 
-    return Optional.of(withdrawalRequests);
+  /**
+   * Parses a single withdrawal request from the provided bytes.
+   *
+   * @param requestBytes The bytes representing a single withdrawal request.
+   * @return A parsed {@link WithdrawalRequest} object.
+   */
+  @Override
+  protected WithdrawalRequest parseRequest(final Bytes requestBytes) {
+    final Address sourceAddress = Address.wrap(requestBytes.slice(0, ADDRESS_BYTES));
+    final BLSPublicKey validatorPublicKey =
+        BLSPublicKey.wrap(requestBytes.slice(ADDRESS_BYTES, PUBLIC_KEY_BYTES));
+    final UInt64 amount =
+        UInt64.fromBytes(requestBytes.slice(ADDRESS_BYTES + PUBLIC_KEY_BYTES, AMOUNT_BYTES));
+    return new WithdrawalRequest(sourceAddress, validatorPublicKey, GWei.of(amount));
   }
 }
