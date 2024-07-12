@@ -34,10 +34,6 @@ public enum SyncMode {
   }
 
   public static boolean isFullSync(final SyncMode syncMode) {
-    return !EnumSet.of(
-            SyncMode.FAST,
-            SyncMode.SNAP,
-            SyncMode.CHECKPOINT)
-        .contains(syncMode);
+    return !EnumSet.of(SyncMode.FAST, SyncMode.SNAP, SyncMode.CHECKPOINT).contains(syncMode);
   }
 }

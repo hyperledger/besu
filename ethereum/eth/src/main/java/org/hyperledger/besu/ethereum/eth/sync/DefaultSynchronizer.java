@@ -99,7 +99,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
         this::calculateTrailingPeerRequirements,
         metricsSystem);
 
-    if (syncConfig.getSyncMode() == SyncMode.SNAP || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
+    if (syncConfig.getSyncMode() == SyncMode.SNAP
+        || syncConfig.getSyncMode() == SyncMode.CHECKPOINT) {
       SnapServerChecker.createAndSetSnapServerChecker(ethContext, metricsSystem);
     }
 
