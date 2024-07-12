@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 
 import java.nio.file.Path;
@@ -70,7 +69,6 @@ public class BesuNodeConfiguration {
   private final List<String> runCommand;
   private final NetworkName network;
   private final Optional<KeyPair> keyPair;
-  private final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration;
   private final boolean strictTxReplayProtectionEnabled;
   private final Map<String, String> environment;
 
@@ -107,7 +105,6 @@ public class BesuNodeConfiguration {
       final Optional<PrivacyParameters> privacyParameters,
       final List<String> runCommand,
       final Optional<KeyPair> keyPair,
-      final Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration,
       final boolean strictTxReplayProtectionEnabled,
       final Map<String, String> environment) {
     this.name = name;
@@ -142,7 +139,6 @@ public class BesuNodeConfiguration {
     this.privacyParameters = privacyParameters;
     this.runCommand = runCommand;
     this.keyPair = keyPair;
-    this.pkiKeyStoreConfiguration = pkiKeyStoreConfiguration;
     this.strictTxReplayProtectionEnabled = strictTxReplayProtectionEnabled;
     this.environment = environment;
   }
@@ -273,10 +269,6 @@ public class BesuNodeConfiguration {
 
   public Optional<KeyPair> getKeyPair() {
     return keyPair;
-  }
-
-  public Optional<PkiKeyStoreConfiguration> getPkiKeyStoreConfiguration() {
-    return pkiKeyStoreConfiguration;
   }
 
   public boolean isStrictTxReplayProtectionEnabled() {
