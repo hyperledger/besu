@@ -12,6 +12,7 @@
 - `privacy-nonce-always-increments` option enables private transactions to always increment the nonce, even if the transaction is invalid [#6593](https://github.com/hyperledger/besu/pull/6593)
 - Add `block-test` subcommand to the evmtool which runs blockchain reference tests [#7310](https://github.com/hyperledger/besu/pull/7310)
 - Implement gnark-crypto for eip-2537 [#7316](https://github.com/hyperledger/besu/pull/7316)
+- Improve blob size transaction selector [#7312](https://github.com/hyperledger/besu/pull/7312)
 
 ### Bug fixes
 - Fix `eth_call` deserialization to correctly ignore unknown fields in the transaction object. [#7323](https://github.com/hyperledger/besu/pull/7323)
