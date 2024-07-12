@@ -268,13 +268,13 @@ following commands:
 processResources.dependsOn('validateReferenceTestSubmodule')
 
 def generateTestFiles(
-        FileTree jsonPath,
-        File templateFile,
-        String pathstrip,
-        String destination,
-        String namePrefix,
-        String packageString,
-        String ... excludedPath) {
+  FileTree jsonPath,
+  File templateFile,
+  String pathstrip,
+  String destination,
+  String namePrefix,
+  String packageString,
+  String ... excludedPath) {
   mkdir(destination)
   def referenceTestTemplate = templateFile.text
 
