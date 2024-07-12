@@ -3,6 +3,7 @@
 ## Next release
 
 ### Breaking Changes
+- Change the default behaviour for PoA bootnodes to be non-maintained connections [#7313](https://github.com/hyperledger/besu/pull/7313)
 
 ### Additions and Improvements
 
