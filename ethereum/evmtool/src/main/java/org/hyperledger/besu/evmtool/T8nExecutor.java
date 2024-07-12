@@ -42,6 +42,7 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestUtil;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
 import org.hyperledger.besu.ethereum.referencetests.BonsaiReferenceTestWorldState;
@@ -52,6 +53,7 @@ import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedAccount;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.log.Log;
@@ -466,6 +468,44 @@ public class T8nExecutor {
       }
     }
 
+    var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
+    if (requestProcessorCoordinator.isPresent()) {
+      var rpc = requestProcessorCoordinator.get();
+      ProcessRequestContext context =
+          new ProcessRequestContext(
+              blockHeader,
+              worldState,
+              protocolSpec,
+              receipts,
+              new CachingBlockHashLookup(blockHeader, blockchain),
+              OperationTracer.NO_TRACING);
+      Optional<List<Request>> maybeRequests = rpc.process(context);
+      Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
+
+      resultObject.put("requestsRoot", requestRoot.toHexString());
+      var deposits = resultObject.putArray("depositRequests");
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
+          .forEach(
+              deposit -> {
+                var obj = deposits.addObject();
+                obj.put("pubkey", deposit.getPubkey().toHexString());
+                obj.put("withdrawalCredentials", deposit.getWithdrawalCredentials().toHexString());
+                obj.put("amount", deposit.getAmount().toHexString());
+                obj.put("signature", deposit.getSignature().toHexString());
+                obj.put("index", deposit.getIndex().toHexString());
+              });
+
+      var withdrawlRequests = resultObject.putArray("withdrawalRequests");
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), WithdrawalRequest.class)
+          .forEach(
+              wr -> {
+                var obj = withdrawlRequests.addObject();
+                obj.put("sourceAddress", wr.getSourceAddress().toHexString());
+                obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
+                obj.put("amount", wr.getAmount().toHexString());
+              });
+    }
+
     worldState.persist(blockHeader);
 
     resultObject.put("stateRoot", worldState.rootHash().toHexString());
@@ -506,36 +546,6 @@ public class T8nExecutor {
               .toBytes()
               .toQuantityHexString());
       resultObject.put("blobGasUsed", Bytes.ofUnsignedLong(blobGasUsed).toQuantityHexString());
-    }
-
-    var requestProcessorCoordinator = protocolSpec.getRequestProcessorCoordinator();
-    if (requestProcessorCoordinator.isPresent()) {
-      var rpc = requestProcessorCoordinator.get();
-      Optional<List<Request>> maybeRequests = rpc.process(worldState, receipts);
-      Hash requestRoot = BodyValidation.requestsRoot(maybeRequests.orElse(List.of()));
-
-      resultObject.put("requestsRoot", requestRoot.toHexString());
-      var deposits = resultObject.putArray("depositRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), DepositRequest.class)
-          .forEach(
-              deposit -> {
-                var obj = deposits.addObject();
-                obj.put("pubkey", deposit.getPubkey().toHexString());
-                obj.put("withdrawalCredentials", deposit.getWithdrawalCredentials().toHexString());
-                obj.put("amount", deposit.getAmount().toHexString());
-                obj.put("signature", deposit.getSignature().toHexString());
-                obj.put("index", deposit.getIndex().toHexString());
-              });
-
-      var withdrawlRequests = resultObject.putArray("withdrawalRequests");
-      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), WithdrawalRequest.class)
-          .forEach(
-              wr -> {
-                var obj = withdrawlRequests.addObject();
-                obj.put("sourceAddress", wr.getSourceAddress().toHexString());
-                obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
-                obj.put("amount", wr.getAmount().toHexString());
-              });
     }
 
     ObjectNode allocObject = objectMapper.createObjectNode();

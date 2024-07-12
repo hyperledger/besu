@@ -14,10 +14,18 @@
  */
 package org.hyperledger.besu.cli.config;
 
+import java.util.Arrays;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
 import org.apache.commons.lang3.StringUtils;
 
-/** Enum for profile names. Each profile corresponds to a configuration file. */
-public enum ProfileName {
+/**
+ * Enum for profile names which are bundled. Each profile corresponds to a bundled configuration
+ * file.
+ */
+public enum InternalProfileName {
   /** The 'STAKER' profile */
   STAKER("profiles/staker.toml"),
   /** The 'MINIMALIST_STAKER' profile */
@@ -32,11 +40,35 @@ public enum ProfileName {
   private final String configFile;
 
   /**
+   * Returns the InternalProfileName that matches the given name, ignoring case.
+   *
+   * @param name The profile name
+   * @return Optional InternalProfileName if found, otherwise empty
+   */
+  public static Optional<InternalProfileName> valueOfIgnoreCase(final String name) {
+    return Arrays.stream(values())
+        .filter(profile -> profile.name().equalsIgnoreCase(name))
+        .findFirst();
+  }
+
+  /**
+   * Returns the set of internal profile names as lowercase.
+   *
+   * @return Set of internal profile names
+   */
+  public static Set<String> getInternalProfileNames() {
+    return Arrays.stream(InternalProfileName.values())
+        .map(InternalProfileName::name)
+        .map(String::toLowerCase)
+        .collect(Collectors.toSet());
+  }
+
+  /**
    * Constructs a new ProfileName.
    *
    * @param configFile the configuration file corresponding to the profile
    */
-  ProfileName(final String configFile) {
+  InternalProfileName(final String configFile) {
     this.configFile = configFile;
   }
 

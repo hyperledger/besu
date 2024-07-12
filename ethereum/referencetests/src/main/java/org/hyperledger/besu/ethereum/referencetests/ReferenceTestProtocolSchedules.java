@@ -91,6 +91,11 @@ public class ReferenceTestProtocolSchedules {
         "CancunToPragueAtTime15k",
         createSchedule(genesisStub.clone().cancunTime(0).pragueTime(15000)));
     builder.put("Prague", createSchedule(genesisStub.clone().pragueEOFTime(0)));
+    builder.put("Osaka", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Amsterdam", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Bogota", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Polis", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Bangkok", createSchedule(genesisStub.clone().futureEipsTime(0)));
     builder.put("Future_EIPs", createSchedule(genesisStub.clone().futureEipsTime(0)));
     builder.put("Experimental_EIPs", createSchedule(genesisStub.clone().experimentalEipsTime(0)));
     return new ReferenceTestProtocolSchedules(builder.build());

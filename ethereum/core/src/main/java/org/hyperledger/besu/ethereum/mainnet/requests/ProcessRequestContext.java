@@ -14,11 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
-import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
+import org.hyperledger.besu.evm.tracing.OperationTracer;
 
 import java.util.List;
-import java.util.Optional;
 
-public interface RequestProcessor {
-  Optional<List<? extends Request>> process(final ProcessRequestContext context);
-}
+public record ProcessRequestContext(
+    ProcessableBlockHeader blockHeader,
+    MutableWorldState mutableWorldState,
+    ProtocolSpec protocolSpec,
+    List<TransactionReceipt> transactionReceipts,
+    BlockHashLookup blockHashLookup,
+    OperationTracer operationTracer) {}
