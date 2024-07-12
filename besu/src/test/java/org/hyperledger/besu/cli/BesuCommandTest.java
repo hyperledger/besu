@@ -673,7 +673,9 @@ public class BesuCommandTest extends CommandTestAbstract {
         "--banned-node-id",
         String.join(",", nodes),
         "--banned-node-ids",
-        String.join(",", nodes));
+        String.join(",", nodes),
+        "--poa-bootnodes-maintain-connection",
+        "false");
 
     verifyOptionsConstraintLoggerCall(
         "--p2p-enabled",
@@ -708,7 +710,8 @@ public class BesuCommandTest extends CommandTestAbstract {
                 + "\"]\n"
                 + "banned-node-ids=[\""
                 + String.join(",", nodes)
-                + "\"]\n");
+                + "\"]\n"
+                + "poa-bootnodes-maintain-connection=false\n");
 
     parseCommand("--config-file", toml.toString());
 
@@ -740,6 +743,28 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--discovery-enabled", "false");
 
     verify(mockRunnerBuilder).discovery(eq(false));
+    verify(mockRunnerBuilder).build();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void poaBootnodesMaintainConnectionValueTrueMustBeUsed() {
+    parseCommand("--poa-bootnodes-maintain-connection", "true");
+
+    verify(mockRunnerBuilder).bootNodesMaintainConnection(eq(true));
+    verify(mockRunnerBuilder).build();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void poaBootnodesMaintainConnectionValueFalseMustBeUsed() {
+    parseCommand("--poa-bootnodes-maintain-connection", "false");
+
+    verify(mockRunnerBuilder).bootNodesMaintainConnection(eq(false));
     verify(mockRunnerBuilder).build();
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();

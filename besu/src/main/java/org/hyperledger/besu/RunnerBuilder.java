@@ -195,6 +195,7 @@ public class RunnerBuilder {
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<SubnetInfo> allowedSubnets = new ArrayList<>();
+  private boolean bootNodesMaintainConnection = false;
 
   /** Instantiates a new Runner builder. */
   public RunnerBuilder() {}
@@ -604,6 +605,17 @@ public class RunnerBuilder {
   }
 
   /**
+   * Bootnodes have their connections maintained
+   *
+   * @param bootNodesMaintainConnection whether bootnode connections should be maintained
+   * @return the runner builder
+   */
+  public RunnerBuilder bootNodesMaintainConnection(final boolean bootNodesMaintainConnection) {
+    this.bootNodesMaintainConnection = bootNodesMaintainConnection;
+    return this;
+  }
+
+  /**
    * Build Runner instance.
    *
    * @return the runner
@@ -793,9 +805,10 @@ public class RunnerBuilder {
     }
 
     final Stream<EnodeURL> maintainedPeers;
-    if (besuController.getGenesisConfigOptions().isPoa()) {
-      // In a permissioned chain Besu should maintain connections to both static nodes and
-      // bootnodes, which includes retries periodically
+    if (besuController.getGenesisConfigOptions().isPoa() && bootNodesMaintainConnection) {
+      // In a permissioned chain Besu can be configured to maintain connections to bootnodes as well
+      // as static nodes. This causes the node to retry connections to bootnodes periodically, just
+      // like static nodes.
       maintainedPeers =
           sanitizePeers(
               network,
@@ -805,6 +818,7 @@ public class RunnerBuilder {
       // In a public chain only maintain connections to static nodes
       maintainedPeers = sanitizePeers(network, staticNodes);
     }
+
     maintainedPeers
         .map(DefaultPeer::fromEnodeURL)
         .forEach(peerNetwork::addMaintainedConnectionPeer);

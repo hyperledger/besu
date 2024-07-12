@@ -52,6 +52,7 @@ engine-jwt-secret="/tmp/jwt.hex"
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org"
 net-restrict=["none"]
+poa-bootnodes-maintain-connection=false
 
 # chain
 network="MAINNET"

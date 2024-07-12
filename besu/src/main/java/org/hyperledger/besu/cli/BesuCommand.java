@@ -439,6 +439,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         arity = "0..*")
     private final List<String> bootNodes = null;
 
+    // A flag to indicate if bootnodes in a permissioned chain should be treated like static
+    // nodes and have their connections maintained (and retried periodically).
+    @Option(
+        names = {"--poa-bootnodes-maintain-connection"},
+        description =
+            "Maintain connections to bootnodes in a PoA network. This causes them to be treated "
+                + "like static nodes and ensures that Besu will retry its connection to them periodically.",
+        arity = "1")
+    private final Boolean bootNodesMaintainConnection = false;
+
     @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
     @Option(
         names = {"--p2p-host"},
@@ -2330,6 +2340,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .rpcEndpointService(rpcEndpointServiceImpl)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .allowedSubnets(p2PDiscoveryOptionGroup.allowedSubnets)
+            .bootNodesMaintainConnection(p2PDiscoveryOptionGroup.bootNodesMaintainConnection)
             .build();
 
     addShutdownHook(runner);

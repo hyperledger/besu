@@ -24,6 +24,7 @@ rpc-ws-port=9101
 rpc-ws-api=["ETH","WEB3"]
 metrics-host="8.6.7.5"
 metrics-port=309
+poa-bootnodes-maintain-connection=false
 
 # chain
 genesis-file="/opt/besu/genesis.json" # Path
