@@ -101,6 +101,7 @@ import picocli.CommandLine.Option;
     subcommands = {
       BenchmarkSubCommand.class,
       B11rSubCommand.class,
+      BlockchainTestSubCommand.class,
       CodeValidateSubCommand.class,
       EOFTestSubCommand.class,
       PrettyPrintSubCommand.class,
@@ -370,15 +371,18 @@ public class EvmToolCommand implements Runnable {
   public void run() {
     LogConfigurator.setLevel("", "OFF");
     try {
+      GenesisFileModule genesisFileModule;
+      if (network != null) {
+        genesisFileModule = GenesisFileModule.createGenesisModule(network);
+      } else if (genesisFile != null) {
+        genesisFileModule = GenesisFileModule.createGenesisModule(genesisFile);
+      } else {
+        genesisFileModule = GenesisFileModule.createGenesisModule(NetworkName.DEV);
+      }
       final EvmToolComponent component =
           DaggerEvmToolComponent.builder()
               .dataStoreModule(new DataStoreModule())
-              .genesisFileModule(
-                  network == null
-                      ? genesisFile == null
-                          ? GenesisFileModule.createGenesisModule(NetworkName.DEV)
-                          : GenesisFileModule.createGenesisModule(genesisFile)
-                      : GenesisFileModule.createGenesisModule(network))
+              .genesisFileModule(genesisFileModule)
               .evmToolCommandOptionsModule(daggerOptions)
               .metricsSystemModule(new MetricsSystemModule())
               .build();
