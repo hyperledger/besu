@@ -831,7 +831,7 @@ public class PeerDiscoveryController {
     private OutboundMessageHandler outboundMessageHandler = OutboundMessageHandler.NOOP;
     private PeerRequirement peerRequirement = PeerRequirement.NOOP;
     private PeerPermissions peerPermissions = PeerPermissions.noop();
-    private long tableRefreshIntervalMs = MILLISECONDS.convert(2, TimeUnit.MINUTES);
+    private long tableRefreshIntervalMs = MILLISECONDS.convert(30, TimeUnit.MINUTES);
     private long cleanPeerTableIntervalMs = MILLISECONDS.convert(1, TimeUnit.MINUTES);
     private final List<DiscoveryPeer> bootstrapNodes = new ArrayList<>();
     private PeerTable peerTable;
