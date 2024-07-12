@@ -136,10 +136,10 @@ public class ParallelizedConcurrentTransactionProcessor {
       final BlockHashOperation.BlockHashLookup blockHashLookup,
       final Wei blobGasPrice,
       final PrivateMetadataUpdater privateMetadataUpdater) {
-    try {
-      final DiffBasedWorldState roundWorldState =
-              new BonsaiWorldState((BonsaiWorldState) worldState, new NoopBonsaiCachedMerkleTrieLoader());
-
+    try (final DiffBasedWorldState roundWorldState =
+                 new BonsaiWorldState(
+                         (BonsaiWorldState) worldState, new NoopBonsaiCachedMerkleTrieLoader())) {
+      roundWorldState.freeze(); // make the clone frozen
       final ParallelizedTransactionContext.Builder contextBuilder =
               new ParallelizedTransactionContext.Builder();
       final DiffBasedWorldStateUpdateAccumulator<?> roundWorldStateUpdater =
@@ -195,9 +195,6 @@ public class ParallelizedConcurrentTransactionProcessor {
       }
       parallelizedTransactionContextByLocation.put(
               transactionLocation, parallelizedTransactionContext);
-      roundWorldState.close();
-    } catch (Exception exception) {
-      // no-op
     }
   }
 
