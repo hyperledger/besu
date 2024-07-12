@@ -1566,11 +1566,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             || genesisConfigOptionsSupplier.get().isQbft())
         && !unstableSynchronizerOptions.isSnapSyncBftEnabled()) {
       final String errorSuffix = "can't be used with BFT networks";
-      if (SyncMode.CHECKPOINT.equals(syncMode) || SyncMode.X_CHECKPOINT.equals(syncMode)) {
+      if (SyncMode.CHECKPOINT.equals(syncMode)) {
         throw new ParameterException(
             commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
       }
-      if (syncMode == SyncMode.SNAP || syncMode == SyncMode.X_SNAP) {
+      if (syncMode == SyncMode.SNAP) {
         throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
       }
     }
@@ -1753,7 +1753,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
         commandLine,
         "--Xcheckpoint-post-merge-enabled can only be used with CHECKPOINT sync-mode",
-        SyncMode.isCheckpointSync(getDefaultSyncModeIfNotSet()),
+        getDefaultSyncModeIfNotSet() == SyncMode.CHECKPOINT,
         singletonList("--Xcheckpoint-post-merge-enabled"));
 
     CommandLineUtils.failIfOptionDoesntMeetRequirement(
@@ -2044,10 +2044,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       if (syncMode == SyncMode.FAST) {
         throw new ParameterException(commandLine, String.format("%s %s", "Fast sync", errorSuffix));
       }
-      if (syncMode == SyncMode.SNAP || syncMode == SyncMode.X_SNAP) {
+      if (syncMode == SyncMode.SNAP) {
         throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
       }
-      if (syncMode == SyncMode.CHECKPOINT || syncMode == SyncMode.X_CHECKPOINT) {
+      if (syncMode == SyncMode.CHECKPOINT) {
         throw new ParameterException(
             commandLine, String.format("%s %s", "Checkpoint sync", errorSuffix));
       }
