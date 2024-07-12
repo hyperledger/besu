@@ -6,6 +6,8 @@
 
 ### Additions and Improvements
 
+- Add option `--poa-discovery-retry-bootnodes` for PoA networks to always use bootnodes during peer refresh, not just on first start [#7314](https://github.com/hyperledger/besu/pull/7314) 
+
 ### Bug fixes
 
 ## 24.7.0
