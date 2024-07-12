@@ -410,6 +410,13 @@ public abstract class JsonBlockImporterTest {
                     + genesisConfigFile.getConfigOptions().getConsensusEngine());
       }
     }
+
+    @Test
+    void dryRunDetector() {
+      assertThat(true)
+          .withFailMessage("This test is here so gradle --dry-run executes this class")
+          .isTrue();
+    }
   }
 
   protected Block getBlockAt(final Blockchain blockchain, final long blockNumber) {
