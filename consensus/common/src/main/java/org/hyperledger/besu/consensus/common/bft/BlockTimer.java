@@ -109,10 +109,10 @@ public class BlockTimer {
         (chainHeadHeader.getTimestamp() + emptyBlockPeriodSeconds) * 1000;
 
     if (currentTimeInMillis > emptyBlockPeriodExpiryTime) {
-      LOG.info("Empty Block expired");
+      LOG.debug("Empty Block expired");
       return true;
     }
-    LOG.info("Empty Block NOT expired");
+    LOG.debug("Empty Block NOT expired");
     return false;
   }
 

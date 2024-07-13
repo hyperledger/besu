@@ -148,37 +148,33 @@ public class QbftBlockHeightManager implements BaseQbftBlockHeightManager {
     final boolean isProposer =
         finalState.isLocalNodeProposerForRound(qbftRound.getRoundIdentifier());
 
+    if (!isProposer) {
+      // nothing to do here...
+      LOG.trace("This node is not a proposer so it will not send a proposal: " + roundIdentifier);
+      return;
+    }
+
     final long headerTimeStampSeconds = Math.round(clock.millis() / 1000D);
     final Block block = qbftRound.createBlock(headerTimeStampSeconds);
     final boolean blockHasTransactions = !block.getBody().getTransactions().isEmpty();
     if (blockHasTransactions) {
-      if (isProposer) {
-        LOG.info(
-            "Block has transactions and this node is a proposer so it will send a proposal: "
-                + roundIdentifier);
-        qbftRound.sendProposalMessage(block);
-      } else {
-        LOG.info(
-            "Block has transactions but this node is not a proposer so it will not send a proposal: "
-                + roundIdentifier);
-      }
+      LOG.trace(
+          "Block has transactions and this node is a proposer so it will send a proposal: "
+              + roundIdentifier);
+      qbftRound.sendProposalMessage(block);
+
     } else {
+      // handle the block times period
       final long currentTimeInMillis = finalState.getClock().millis();
       boolean emptyBlockExpired =
           finalState.getBlockTimer().checkEmptyBlockExpired(parentHeader, currentTimeInMillis);
       if (emptyBlockExpired) {
-        if (isProposer) {
-          LOG.info(
-              "Block has no transactions and this node is a proposer so it will send a proposal: "
-                  + roundIdentifier);
-          qbftRound.sendProposalMessage(block);
-        } else {
-          LOG.info(
-              "Block has no transactions but this node is not a proposer so it will not send a proposal: "
-                  + roundIdentifier);
-        }
+        LOG.trace(
+            "Block has no transactions and this node is a proposer so it will send a proposal: "
+                + roundIdentifier);
+        qbftRound.sendProposalMessage(block);
       } else {
-        LOG.info(
+        LOG.trace(
             "Block has no transactions but emptyBlockPeriodSeconds did not expired yet: "
                 + roundIdentifier);
         finalState
