@@ -577,7 +577,6 @@ public class QbftBlockHeightManagerTest {
   @Test
   public void checkOnlyEmptyBlockPeriodSecondsIsInvokedForBlocksWithNoTransactions() {
     when(finalState.isLocalNodeProposerForRound(roundIdentifier)).thenReturn(true);
-    
 
     final QbftBlockHeightManager manager =
         new QbftBlockHeightManager(
