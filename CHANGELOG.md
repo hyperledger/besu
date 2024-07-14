@@ -3,7 +3,7 @@
 ## Next release
 
 ### Breaking Changes
-- Removed deprecated sync modes (X_SNAP and X_CHECKPOINT) [#7309](https://github.com/hyperledger/besu/pull/7309)
+- Removed deprecated sync modes (X_SNAP and X_CHECKPOINT). Use SNAP and CHECKPOINT instead [#7309](https://github.com/hyperledger/besu/pull/7309)
 
 ### Additions and Improvements
 - `--Xsnapsync-bft-enabled` option enables experimental support for snap sync with IBFT/QBFT permissioned Bonsai-DB chains [#7140](https://github.com/hyperledger/besu/pull/7140)
