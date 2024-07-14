@@ -9,6 +9,7 @@
 - Add support to load external profiles using `--profile` [#7265](https://github.com/hyperledger/besu/issues/7265)
 - `privacy-nonce-always-increments` option enables private transactions to always increment the nonce, even if the transaction is invalid [#6593](https://github.com/hyperledger/besu/pull/6593)
 - Added `block-test` subcommand to the evmtool which runs blockchain reference tests [#7293](https://github.com/hyperledger/besu/pull/7293)
+- implement gnark-crypto for eip-2537 [#7316](https://github.com/hyperledger/besu/pull/7316)
 
 ### Bug fixes
 
