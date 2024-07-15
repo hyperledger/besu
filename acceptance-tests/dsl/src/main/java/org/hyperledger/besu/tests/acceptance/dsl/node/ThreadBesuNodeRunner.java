@@ -91,6 +91,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
@@ -103,6 +104,7 @@ import dagger.Module;
 import dagger.Provides;
 import io.opentelemetry.api.GlobalOpenTelemetry;
 import io.vertx.core.Vertx;
+import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.slf4j.MDC;
@@ -131,7 +133,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     AcceptanceTestBesuComponent component =
         DaggerThreadBesuNodeRunner_AcceptanceTestBesuComponent.create();
 
-    final StorageServiceImpl storageService = new StorageServiceImpl();
+    //final StorageServiceImpl storageService = new StorageServiceImpl();
+    //storageService.registerKeyValueStorage(new InMemoryStoragePlugin.InMemoryKeyValueStorageFactory("memory"));
     final TransactionSimulationServiceImpl transactionSimulationServiceImpl =
         new TransactionSimulationServiceImpl();
     final TransactionSelectionServiceImpl transactionSelectionServiceImpl =
@@ -171,13 +174,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .map(GenesisConfigFile::fromConfig)
         .ifPresent(networkConfigBuilder::setGenesisConfigFile);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
-
-    final KeyValueStorageProvider storageProvider =
-        new KeyValueStorageProviderBuilder()
-            .withStorageFactory(storageService.getByName("rocksdb").get())
-            .withCommonConfiguration(commonPluginConfiguration)
-            .withMetricsSystem(metricsSystem)
-            .build();
 
     final TransactionPoolConfiguration txPoolConfig =
         ImmutableTransactionPoolConfiguration.builder()
@@ -232,10 +228,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
                 .collect(Collectors.toList()))
         .besuPluginContext(besuPluginContext)
         .autoLogBloomCaching(false)
-        .storageProvider(storageProvider)
+        .storageProvider(besuController.getStorageProvider())
         .rpcEndpointService(rpcEndpointServiceImpl);
     node.engineRpcConfiguration().ifPresent(runnerBuilder::engineJsonRpcConfiguration);
-
+    //besuPluginContext.registerPlugins(commonPluginConfiguration.);
     besuPluginContext.beforeExternalServices();
     final Runner runner = runnerBuilder.build();
 
@@ -353,7 +349,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final SynchronizerConfiguration synchronizerConfiguration,
         final BesuControllerBuilder builder,
         final ObservableMetricsSystem metricsSystem,
-        final KeyValueStorageProvider storageProvider) {
+        final KeyValueStorageProvider storageProvider,
+        final MiningParameters miningParameters) {
 
       builder
           .synchronizerConfiguration(synchronizerConfiguration)
@@ -366,6 +363,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           .evmConfiguration(EvmConfiguration.DEFAULT)
           .maxPeers(25)
           .maxRemotelyInitiatedPeers(15)
+              .miningParameters(miningParameters)
           .randomPeerPriority(false)
           .besuComponent(null);
       return builder.build();
@@ -388,9 +386,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
-    @Inject
+    @Named("besuPluginContext")
     public BesuPluginContextImpl providePluginContext(
-        final BesuNode node,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
         final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
@@ -400,7 +397,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final RpcEndpointServiceImpl rpcEndpointServiceImpl,
         final BesuConfiguration commonPluginConfiguration,
         final PermissioningServiceImpl permissioningService) {
-      final CommandLine commandLine = new CommandLine(CommandSpec.create());
+        final CommandLine commandLine = new CommandLine(CommandSpec.create());
       final BesuPluginContextImpl besuPluginContext = new BesuPluginContextImpl();
       besuPluginContext.addService(StorageService.class, storageService);
       besuPluginContext.addService(SecurityModuleService.class, securityModuleService);
@@ -418,7 +415,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       final Path pluginsPath;
       final String pluginDir = System.getProperty("besu.plugins.dir");
       if (pluginDir == null || pluginDir.isEmpty()) {
-        pluginsPath = node.homeDirectory().resolve("plugins");
+        //pluginsPath = node.homeDirectory().resolve("plugins");
+        pluginsPath = commonPluginConfiguration.getDataPath().resolve("plugins");
         final File pluginsDirFile = pluginsPath.toFile();
         if (!pluginsDirFile.isDirectory()) {
           pluginsDirFile.mkdirs();
@@ -434,7 +432,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
 
       besuPluginContext.registerPlugins(new PluginConfiguration(pluginsPath));
-      commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
+      //commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
       // register built-in plugins
       new RocksDBPlugin().register(besuPluginContext);
@@ -446,9 +444,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         final BesuConfiguration commonPluginConfiguration, final MetricsSystem metricsSystem) {
 
       final StorageServiceImpl storageService = new StorageServiceImpl();
+      storageService.registerKeyValueStorage(new InMemoryStoragePlugin.InMemoryKeyValueStorageFactory("memory"));
       final KeyValueStorageProvider storageProvider =
           new KeyValueStorageProviderBuilder()
-              .withStorageFactory(storageService.getByName("rocksdb").get())
+              .withStorageFactory(storageService.getByName("memory").get())
               .withCommonConfiguration(commonPluginConfiguration)
               .withMetricsSystem(metricsSystem)
               .build();
@@ -458,11 +457,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
 
     @Provides
     public MiningParameters provideMiningParameters(
-        final BesuNode node,
         final TransactionSelectionServiceImpl transactionSelectionServiceImpl) {
       final var miningParameters =
           ImmutableMiningParameters.builder()
-              .from(node.getMiningParameters())
               .transactionSelectionService(transactionSelectionServiceImpl)
               .build();
 
@@ -539,7 +536,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         ThreadBesuNodeRunner.MockBesuCommandModule.class,
         BonsaiCachedMerkleTrieLoaderModule.class,
         MetricsSystemModule.class,
-        BesuPluginContextModule.class,
         BlobCacheModule.class
       })
   public interface AcceptanceTestBesuComponent extends BesuComponent {
