@@ -19,9 +19,9 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
@@ -82,7 +82,8 @@ public class SetCodeTransactionDecoder {
     return transaction;
   }
 
-  public static SetCodeAuthorization decodeInnerPayload(final RLPInput input) {
+  public static org.hyperledger.besu.datatypes.SetCodeAuthorization decodeInnerPayload(
+      final RLPInput input) {
     input.enterList();
     final BigInteger chainId = input.readBigIntegerScalar();
     final Address address = Address.wrap(input.readBytes());

@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
@@ -78,7 +78,7 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
 
     // 7702 transaction
-    final SetCodeAuthorization authorization =
+    final org.hyperledger.besu.datatypes.SetCodeAuthorization authorization =
         SetCodeAuthorization.builder()
             .chainId(BigInteger.valueOf(20211))
             .address(SEND_ALL_ETH_CONTRACT_ADDRESS)

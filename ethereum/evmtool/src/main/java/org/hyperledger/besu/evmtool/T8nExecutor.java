@@ -27,7 +27,6 @@ import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
@@ -222,7 +222,8 @@ public class T8nExecutor {
                 continue;
               }
 
-              List<SetCodeAuthorization> authorizations = new ArrayList<>(authorizationList.size());
+              List<org.hyperledger.besu.datatypes.SetCodeAuthorization> authorizations =
+                  new ArrayList<>(authorizationList.size());
               for (JsonNode entryAsJson : authorizationList) {
                 final BigInteger authorizationChainId =
                     Bytes.fromHexStringLenient(entryAsJson.get("chainId").textValue())
@@ -319,18 +320,6 @@ public class T8nExecutor {
                           v.byteValueExact()));
 
               final Transaction tx = builder.build();
-
-              if (txNode.has("sender")) {
-                final Address senderAddress =
-                    Address.fromHexString(txNode.get("sender").textValue());
-
-                if (!tx.getSender().equals(senderAddress)) {
-                  out.printf(
-                      "TX json node unparseable: sender address does not match signature - %s%n",
-                      txNode);
-                  continue;
-                }
-              }
 
               transactions.add(tx);
             }

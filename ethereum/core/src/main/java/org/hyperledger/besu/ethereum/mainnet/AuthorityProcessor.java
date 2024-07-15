@@ -14,14 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-import org.hyperledger.besu.crypto.SignatureAlgorithm;
-import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.encoding.SetCodeTransactionEncoder;
-import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -30,18 +23,13 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.function.Supplier;
 
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class AuthorityProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(AuthorityProcessor.class);
-
-  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
-      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
   private final BigInteger chainId;
 
@@ -59,7 +47,8 @@ public class AuthorityProcessor {
         .get()
         .forEach(
             payload ->
-                recoverAuthority(payload)
+                payload
+                    .authorizer()
                     .ifPresent(
                         authorityAddress -> {
                           LOG.trace("Set code authority: {}", authorityAddress);
@@ -95,17 +84,5 @@ public class AuthorityProcessor {
 
                           authorizedCodeService.addAuthorizedCode(authorityAddress, code);
                         }));
-  }
-
-  private Optional<Address> recoverAuthority(final SetCodeAuthorization authorization) {
-    BytesValueRLPOutput rlpOutput = new BytesValueRLPOutput();
-    SetCodeTransactionEncoder.encodeSingleSetCodeWithoutSignature(authorization, rlpOutput);
-
-    final Hash hash = Hash.hash(Bytes.concatenate(SetCodeAuthorization.MAGIC, rlpOutput.encoded()));
-
-    return SIGNATURE_ALGORITHM
-        .get()
-        .recoverPublicKeyFromSignature(hash, authorization.signature())
-        .map(Address::extract);
   }
 }
