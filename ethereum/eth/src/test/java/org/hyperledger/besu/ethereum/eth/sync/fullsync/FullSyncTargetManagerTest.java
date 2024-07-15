@@ -43,6 +43,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -100,7 +101,9 @@ public class FullSyncTargetManagerTest {
 
   @AfterEach
   public void tearDown() {
-    ethProtocolManager.stop();
+    if (ethProtocolManager != null) {
+      ethProtocolManager.stop();
+    }
   }
 
   @ParameterizedTest
@@ -179,5 +182,12 @@ public class FullSyncTargetManagerTest {
         .isCompletedWithValue(
             new SyncTarget(bestPeer.getEthPeer(), localBlockchain.getChainHeadHeader()));
     assertThat(bestPeer.getPeerConnection().isDisconnected()).isFalse();
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

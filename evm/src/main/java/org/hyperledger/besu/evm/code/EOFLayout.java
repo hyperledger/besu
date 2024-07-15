@@ -57,9 +57,16 @@ public record EOFLayout(
     String invalidReason,
     AtomicReference<EOFContainerMode> containerMode) {
 
-  enum EOFContainerMode {
+  /**
+   * Enum tracking the useage mode of an EOF container. Detected either by opcode usage or
+   * determined by the source.
+   */
+  public enum EOFContainerMode {
+    /** Usage mode is unknown */
     UNKNOWN,
+    /** Usage mode is as init code */
     INITCODE,
+    /** Usage mode is as deployed or runtime code */
     RUNTIME
   }
 
@@ -324,6 +331,9 @@ public record EOFLayout(
       Bytes subcontainer = container.slice(pos, subcontianerSize);
       pos += subcontianerSize;
       EOFLayout subLayout = EOFLayout.parseEOF(subcontainer, false);
+      if (subLayout.container.size() < subcontainer.size()) {
+        return invalidLayout(container, version, "excess data in subcontainer");
+      }
       if (!subLayout.isValid()) {
         String invalidSubReason = subLayout.invalidReason;
         return invalidLayout(

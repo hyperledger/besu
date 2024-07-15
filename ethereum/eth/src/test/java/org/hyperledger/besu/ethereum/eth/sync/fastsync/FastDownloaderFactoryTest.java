@@ -48,6 +48,7 @@ import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.Assumptions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -253,5 +254,12 @@ public class FastDownloaderFactoryTest {
     when(fastSyncDir.resolve(any(String.class))).thenReturn(pivotBlockHeaderPath);
     when(fastSyncDir.toFile()).thenReturn(fastSyncDirFile);
     when(dataDirectory.resolve(anyString())).thenReturn(fastSyncDir);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }
