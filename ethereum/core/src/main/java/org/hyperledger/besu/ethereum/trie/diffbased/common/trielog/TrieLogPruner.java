@@ -74,6 +74,10 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
         .setMessage("Loading first {} trie logs from database...")
         .addArgument(loadingLimit)
         .log();
+    LOG.atInfo()
+        .setMessage(
+            "If trie log loading takes a long time, consider using `besu storage trie-log prune` subcommand, see https://besu.hyperledger.org/public-networks/how-to/bonsai-limit-trie-logs")
+        .log();
     try (final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
       final AtomicLong count = new AtomicLong();
       final AtomicLong orphansPruned = new AtomicLong();
