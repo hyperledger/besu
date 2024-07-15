@@ -23,6 +23,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -173,6 +174,19 @@ public interface WorldUpdater extends MutableWorldView {
   default void clearAccountsThatAreEmpty() {
     new ArrayList<>(getTouchedAccounts())
         .stream().filter(Account::isEmpty).forEach(a -> deleteAccount(a.getAddress()));
+  }
+
+  /**
+   * Clears any accounts that are empty, excluding those in the provided set
+   *
+   * @param excludedAddresses the addresses to exclude from deletion
+   */
+  default void clearAccountsThatAreEmpty(final Set<Address> excludedAddresses) {
+    new ArrayList<>(getTouchedAccounts())
+        .stream()
+            .filter(a -> !excludedAddresses.contains(a.getAddress()))
+            .filter(Account::isEmpty)
+            .forEach(a -> deleteAccount(a.getAddress()));
   }
 
   /** Mark transaction boundary. */

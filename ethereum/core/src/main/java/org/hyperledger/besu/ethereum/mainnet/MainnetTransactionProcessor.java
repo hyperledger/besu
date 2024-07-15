@@ -501,7 +501,6 @@ public class MainnetTransactionProcessor {
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
       coinbase.incrementBalance(coinbaseWeiDelta);
-      authorizedCodeService.resetAuthorities();
 
       operationTracer.traceEndTransaction(
           worldUpdater,
@@ -516,8 +515,13 @@ public class MainnetTransactionProcessor {
       initialFrame.getSelfDestructs().forEach(worldState::deleteAccount);
 
       if (clearEmptyAccounts) {
-        worldState.clearAccountsThatAreEmpty();
+        // TODO remove for devnet-2 and later as in the new version of 7702 the nonce of the
+        // authorities is increased
+        // and will not be cleared anymore in case of storage change only
+        worldState.clearAccountsThatAreEmpty(authorizedCodeService.getAuthorities());
+        // worldState.clearAccountsThatAreEmpty();
       }
+      authorizedCodeService.resetAuthorities();
 
       if (initialFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
         return TransactionProcessingResult.successful(
