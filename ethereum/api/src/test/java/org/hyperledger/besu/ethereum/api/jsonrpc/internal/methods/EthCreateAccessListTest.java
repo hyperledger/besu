@@ -142,7 +142,7 @@ public class EthCreateAccessListTest {
 
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("gasPrice cannot be used with baseFee or maxFeePerGas");
+        .hasMessageContaining("gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
   }
 
   @Test
