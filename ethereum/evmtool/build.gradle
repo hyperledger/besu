@@ -15,7 +15,7 @@
  */
 
 plugins {
-  id 'org.graalvm.buildtools.native' version '0.9.17'
+  id 'org.graalvm.buildtools.native' version '0.10.2'
 }
 
 apply plugin: 'java-library'
