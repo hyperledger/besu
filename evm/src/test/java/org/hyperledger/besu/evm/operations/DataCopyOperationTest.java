@@ -15,11 +15,16 @@
 package org.hyperledger.besu.evm.operations;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assumptions.assumeThat;
 
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
-import org.hyperledger.besu.evm.gascalculator.CancunGasCalculator;
-import org.hyperledger.besu.evm.operation.MCopyOperation;
+import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.evm.operation.DataCopyOperation;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
@@ -28,18 +33,14 @@ import java.util.Collection;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
-import org.mockito.Mock;
-import org.mockito.junit.jupiter.MockitoExtension;
 
-@ExtendWith(MockitoExtension.class)
-class MCopyOperationTest {
+class DataCopyOperationTest {
 
-  @Mock EVM evm;
+  static EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
 
-  static Collection<Object[]> mcopyTestVector() {
+  static Collection<Object[]> datacopyTestVector() {
     return Arrays.asList(
         new Object[][] {
           {
@@ -49,18 +50,18 @@ class MCopyOperationTest {
             0,
             8,
             Bytes.fromHexString(
-                "0123456789abcdef0000000000000000000000000000000000000000000000000123456789abcdef"),
-            9L
+                "00000000000000000000000000000000000000000000000000000000000000000123456789abcdef"),
+            12L
           },
           {
-            "copy from uninitialized memory",
+            "copy past data limit",
             Bytes.EMPTY,
             0,
             24,
             16,
             Bytes.fromHexString(
-                "0x000000000000000000000000000000000000000000000000000000000000000000"),
-            12L
+                "0x0000000000000000000000000000000000000000000000000000000000000000"),
+            9L
           },
           {
             "copy from initialized + uninitialized memory",
@@ -70,8 +71,8 @@ class MCopyOperationTest {
             24,
             16,
             Bytes.fromHexString(
-                "0x0000000000000000000000000000000000000000000000000123456789abcdef00000000000000000000000000000000000000000000000000000000000000000123456789abcdef000000000000000000000000000000000000000000000000"),
-            12L
+                "0x000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000123456789abcdef000000000000000000000000000000000000000000000000"),
+            15L
           },
           {
             "overlapping src < dst",
@@ -81,8 +82,8 @@ class MCopyOperationTest {
             0,
             8,
             Bytes.fromHexString(
-                "0x012345670123456789abcdef0000000000000000000000000000000000000000"),
-            6L
+                "0x000000000123456789abcdef0000000000000000000000000000000000000000"),
+            9L
           },
           {
             "overlapping src > dst",
@@ -92,8 +93,8 @@ class MCopyOperationTest {
             4,
             8,
             Bytes.fromHexString(
-                "0x445566778899aabb8899aabbccddeeff00000000000000000000000000000000"),
-            6L
+                "0x445566778899aabb000000000000000000000000000000000000000000000000"),
+            9L
           },
           {
             "overlapping src == dst",
@@ -103,30 +104,49 @@ class MCopyOperationTest {
             4,
             8,
             Bytes.fromHexString(
-                "0x00112233445566778899aabbccddeeff00000000000000000000000000000000"),
-            6L
-          }
+                "0x00000000445566778899aabb0000000000000000000000000000000000000000"),
+            9L
+          },
+          {"large dst offset", Bytes.EMPTY, 0x8000000000000010L, 4, 8, Bytes.EMPTY, 8796294610953L},
+          {
+            "large src offset",
+            Bytes.EMPTY,
+            4,
+            0x8000000000000010L,
+            8,
+            Bytes.fromHexString(
+                "0x0000000000000000000000000000000000000000000000000000000000000000"),
+            9L
+          },
+          {"large len", Bytes.EMPTY, 4, 4, 0x8000000000000010L, Bytes.EMPTY, 8796093284361L}
         });
   }
 
   @SuppressWarnings("unused")
   @ParameterizedTest(name = "{0}")
-  @MethodSource("mcopyTestVector")
+  @MethodSource("datacopyTestVector")
   void testMCopy(
       final String name,
-      final Bytes memory,
+      final Bytes data,
       final long dst,
       final long src,
       final long len,
       final Bytes expected,
       final long gasCost) {
-    MCopyOperation subject = new MCopyOperation(new CancunGasCalculator());
+    DataCopyOperation subject = new DataCopyOperation(new PragueGasCalculator());
+    String eofCode =
+        "0xef0001010004020001001d04%04x000080000367%016x67%016x67%016xd300%s"
+            .formatted(data.size(), dst, src, len, data.toUnprefixedHexString());
+    Code code = evm.getCodeUncached(Bytes.fromHexString(eofCode));
+    assumeThat(code.isValid()).isTrue();
+
     MessageFrame frame =
         new TestMessageFrameBuilder()
             .pushStackItem(Bytes.ofUnsignedLong(len))
             .pushStackItem(Bytes.ofUnsignedLong(src))
             .pushStackItem(Bytes.ofUnsignedLong(dst))
-            .memory(memory)
+            .initialGas(10_000_000)
+            .code(code)
             .build();
 
     Operation.OperationResult result = subject.execute(frame, evm);
@@ -137,9 +157,23 @@ class MCopyOperationTest {
   }
 
   @Test
-  void dryRunDetector() {
-    assertThat(true)
-        .withFailMessage("This test is here so gradle --dry-run executes this class")
-        .isTrue();
+  void legacyCallFails() {
+    DataCopyOperation subject = new DataCopyOperation(new PragueGasCalculator());
+    Code code = evm.getCodeUncached(Bytes.fromHexString("0x600460046004d3"));
+    assumeThat(code.isValid()).isTrue();
+
+    MessageFrame frame =
+        new TestMessageFrameBuilder()
+            .pushStackItem(Bytes.ofUnsignedLong(4))
+            .pushStackItem(Bytes.ofUnsignedLong(4))
+            .pushStackItem(Bytes.ofUnsignedLong(4))
+            .initialGas(10_000_000)
+            .code(code)
+            .pc(6)
+            .build();
+
+    Operation.OperationResult result = subject.execute(frame, evm);
+    assertThat(result.getGasCost()).isZero();
+    assertThat(result.getHaltReason()).isEqualTo(ExceptionalHaltReason.INVALID_OPERATION);
   }
 }

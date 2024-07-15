@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.SpuriousDragonGasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -354,5 +355,12 @@ class ECRECPrecompiledContractTest {
     final Bytes expected =
         expectedResult == null ? Bytes.EMPTY : Bytes32.fromHexString(expectedResult);
     assertThat(contract.computePrecompile(input, messageFrame).getOutput()).isEqualTo(expected);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }
