@@ -25,7 +25,7 @@ public class JsonCallParameterTest {
   private final ObjectMapper objectMapper = new ObjectMapper();
 
   @Test
-  public void acceptsAndCapMaxValueForGasLimit() throws JsonProcessingException {
+  public void acceptsAndCapMaxValueForGas() throws JsonProcessingException {
     final String json =
         """
         {
@@ -36,5 +36,20 @@ public class JsonCallParameterTest {
     final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
 
     assertThat(callParameter.getGasLimit()).isEqualTo(Long.MAX_VALUE);
+  }
+
+  @Test
+  public void extraParameterIsIgnored() throws JsonProcessingException {
+    final String json =
+        """
+            {
+              "gas": "0x96",
+              "gasLimit": "0xfa"
+            }
+            """;
+
+    final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
+
+    assertThat(callParameter.getGasLimit()).isEqualTo(150);
   }
 }

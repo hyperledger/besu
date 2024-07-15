@@ -20,6 +20,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.json.GasDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
+import org.hyperledger.besu.ethereum.core.json.IgnoreFieldDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.util.List;
@@ -83,6 +84,7 @@ public class JsonCallParameter extends CallParameter {
   }
 
   @JsonAnySetter
+  @JsonDeserialize(using = IgnoreFieldDeserializer.class)
   public void logUnknownProperties(final String key, final Object value) {
     LOG.debug(
         "unknown property - {} with value - {} and type - {} caught during serialization",
