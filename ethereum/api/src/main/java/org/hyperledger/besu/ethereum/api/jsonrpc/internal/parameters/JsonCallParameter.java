@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
-import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
@@ -36,47 +35,41 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
+@JsonDeserialize(builder = JsonCallParameter.JsonCallParameterBuilder.class)
 public class JsonCallParameter extends CallParameter {
 
   private static final Logger LOG = LoggerFactory.getLogger(JsonCallParameter.class);
 
   private final Optional<Boolean> strict;
 
-  @JsonCreator
-  public JsonCallParameter(
-      @JsonProperty("from") final Address from,
-      @JsonProperty("to") final Address to,
-      @JsonDeserialize(using = GasDeserializer.class) @JsonProperty("gas") final Long gasLimit,
-      @JsonProperty("gasPrice") final Wei gasPrice,
-      @JsonProperty("maxPriorityFeePerGas") final Wei maxPriorityFeePerGas,
-      @JsonProperty("maxFeePerGas") final Wei maxFeePerGas,
-      @JsonProperty("value") final Wei value,
-      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("data") final Bytes data,
-      @JsonDeserialize(using = HexStringDeserializer.class) @JsonProperty("input")
-          final Bytes input,
-      @JsonProperty("strict") final Boolean strict,
-      @JsonProperty("accessList") final List<AccessListEntry> accessList,
-      @JsonProperty("maxFeePerBlobGas") final Wei maxFeePerBlobGas,
-      @JsonProperty("blobVersionedHashes") final List<VersionedHash> blobVersionedHashes) {
+  private JsonCallParameter(
+      final Address from,
+      final Address to,
+      final Long gasLimit,
+      final Wei gasPrice,
+      final Optional<Wei> maxPriorityFeePerGas,
+      final Optional<Wei> maxFeePerGas,
+      final Wei value,
+      final Bytes payload,
+      final Optional<Boolean> strict,
+      final Optional<List<AccessListEntry>> accessList,
+      final Optional<Wei> maxFeePerBlobGas,
+      final Optional<List<VersionedHash>> blobVersionedHashes) {
 
     super(
         from,
         to,
-        gasLimit != null ? gasLimit : -1L,
+        gasLimit,
         gasPrice,
-        Optional.ofNullable(maxPriorityFeePerGas),
-        Optional.ofNullable(maxFeePerGas),
+        maxPriorityFeePerGas,
+        maxFeePerGas,
         value,
-        Optional.ofNullable(input != null ? input : data).orElse(null),
-        Optional.ofNullable(accessList),
-        Optional.ofNullable(maxFeePerBlobGas),
-        Optional.ofNullable(blobVersionedHashes));
+        payload,
+        accessList,
+        maxFeePerBlobGas,
+        blobVersionedHashes);
 
-    if (input != null && data != null && !input.equals(data)) {
-      throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
-    }
-
-    this.strict = Optional.ofNullable(strict);
+    this.strict = strict;
   }
 
   public Optional<Boolean> isMaybeStrict() {
@@ -91,5 +84,125 @@ public class JsonCallParameter extends CallParameter {
         key,
         value,
         value.getClass());
+  }
+
+  public static final class JsonCallParameterBuilder {
+    private Optional<Boolean> strict = Optional.empty();
+    private Address from;
+    private Address to;
+    private long gasLimit = -1;
+    private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
+    private Optional<Wei> maxFeePerGas = Optional.empty();
+    private Optional<Wei> maxFeePerBlobGas = Optional.empty();
+    private Wei gasPrice;
+    private Wei value;
+    private Bytes data;
+    private Bytes input;
+    private Optional<List<AccessListEntry>> accessList = Optional.empty();
+    private Optional<List<VersionedHash>> blobVersionedHashes = Optional.empty();
+
+    public JsonCallParameterBuilder() {}
+
+    public JsonCallParameterBuilder withStrict(final Boolean strict) {
+      this.strict = Optional.ofNullable(strict);
+      return this;
+    }
+
+    public JsonCallParameterBuilder withFrom(final Address from) {
+      this.from = from;
+      return this;
+    }
+
+    public JsonCallParameterBuilder withTo(final Address to) {
+      this.to = to;
+      return this;
+    }
+
+    @JsonDeserialize(using = GasDeserializer.class)
+    @JsonProperty("gas")
+    public JsonCallParameterBuilder withGasLimit(final Long gasLimit) {
+      this.gasLimit = Optional.ofNullable(gasLimit).orElse(-1L);
+      return this;
+    }
+
+    public JsonCallParameterBuilder withMaxPriorityFeePerGas(final Wei maxPriorityFeePerGas) {
+      this.maxPriorityFeePerGas = Optional.ofNullable(maxPriorityFeePerGas);
+      return this;
+    }
+
+    public JsonCallParameterBuilder withMaxFeePerGas(final Wei maxFeePerGas) {
+      this.maxFeePerGas = Optional.ofNullable(maxFeePerGas);
+      return this;
+    }
+
+    public JsonCallParameterBuilder withMaxFeePerBlobGas(final Wei maxFeePerBlobGas) {
+      this.maxFeePerBlobGas = Optional.ofNullable(maxFeePerBlobGas);
+      return this;
+    }
+
+    public JsonCallParameterBuilder withGasPrice(final Wei gasPrice) {
+      this.gasPrice = gasPrice;
+      return this;
+    }
+
+    public JsonCallParameterBuilder withValue(final Wei value) {
+      this.value = value;
+      return this;
+    }
+
+    @JsonDeserialize(using = HexStringDeserializer.class)
+    public JsonCallParameterBuilder withData(final Bytes data) {
+      this.data = data;
+      return this;
+    }
+
+    @JsonDeserialize(using = HexStringDeserializer.class)
+    public JsonCallParameterBuilder withInput(final Bytes input) {
+      this.input = input;
+      return this;
+    }
+
+    public JsonCallParameterBuilder withAccessList(final List<AccessListEntry> accessList) {
+      this.accessList = Optional.ofNullable(accessList);
+      return this;
+    }
+
+    public JsonCallParameterBuilder withBlobVersionedHashes(
+        final List<VersionedHash> blobVersionedHashes) {
+      this.blobVersionedHashes = Optional.ofNullable(blobVersionedHashes);
+      return this;
+    }
+
+    @JsonAnySetter
+    @JsonDeserialize(using = IgnoreFieldDeserializer.class)
+    public void withUnknownProperties(final String key, final Object value) {
+      LOG.debug(
+          "unknown property - {} with value - {} and type - {} caught during serialization",
+          key,
+          value,
+          value.getClass());
+    }
+
+    public JsonCallParameter build() {
+      if (input != null && data != null && !input.equals(data)) {
+        throw new IllegalArgumentException("Only one of 'input' or 'data' should be provided");
+      }
+
+      final Bytes payload = input != null ? input : data;
+
+      return new JsonCallParameter(
+          from,
+          to,
+          gasLimit,
+          gasPrice,
+          maxPriorityFeePerGas,
+          maxFeePerGas,
+          value,
+          payload,
+          strict,
+          accessList,
+          maxFeePerBlobGas,
+          blobVersionedHashes);
+    }
   }
 }

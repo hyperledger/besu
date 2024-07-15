@@ -305,20 +305,15 @@ public class EthCreateAccessListTest {
   }
 
   private JsonCallParameter legacyTransactionCallParameter(final Wei gasPrice) {
-    return new JsonCallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        0L,
-        gasPrice,
-        null,
-        null,
-        Wei.ZERO,
-        Bytes.EMPTY,
-        null,
-        false,
-        null,
-        null,
-        null);
+    return new JsonCallParameter.JsonCallParameterBuilder()
+        .withFrom(Address.fromHexString("0x0"))
+        .withTo(Address.fromHexString("0x0"))
+        .withGasLimit(0L)
+        .withGasPrice(gasPrice)
+        .withValue(Wei.ZERO)
+        .withInput(Bytes.EMPTY)
+        .withStrict(Boolean.FALSE)
+        .build();
   }
 
   private CallParameter eip1559TransactionCallParameter() {
@@ -336,20 +331,17 @@ public class EthCreateAccessListTest {
 
   private JsonCallParameter eip1559TransactionCallParameter(
       final Optional<Wei> gasPrice, final List<AccessListEntry> accessListEntries) {
-    return new JsonCallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        null,
-        gasPrice.orElse(null),
-        Wei.fromHexString("0x10"),
-        Wei.fromHexString("0x10"),
-        Wei.ZERO,
-        Bytes.EMPTY,
-        null,
-        false,
-        accessListEntries,
-        null,
-        null);
+    return new JsonCallParameter.JsonCallParameterBuilder()
+        .withFrom(Address.fromHexString("0x0"))
+        .withTo(Address.fromHexString("0x0"))
+        .withGasPrice(gasPrice.orElse(null))
+        .withMaxFeePerGas(Wei.fromHexString("0x10"))
+        .withMaxPriorityFeePerGas(Wei.fromHexString("0x10"))
+        .withValue(Wei.ZERO)
+        .withInput(Bytes.EMPTY)
+        .withStrict(Boolean.FALSE)
+        .withAccessList(accessListEntries)
+        .build();
   }
 
   private List<AccessListEntry> createAccessList() {
