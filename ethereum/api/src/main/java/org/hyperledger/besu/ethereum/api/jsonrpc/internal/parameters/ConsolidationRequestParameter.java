@@ -27,17 +27,17 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 public class ConsolidationRequestParameter {
 
   private final String sourceAddress;
-  private final String sourcePubKey;
-  private final String targetPubKey;
+  private final String sourcePubkey;
+  private final String targetPubkey;
 
   @JsonCreator
   public ConsolidationRequestParameter(
       @JsonProperty("sourceAddress") final String sourceAddress,
-      @JsonProperty("sourcePubkey") final String sourcePubKey,
-      @JsonProperty("targetPubkey") final String targetPubKey) {
+      @JsonProperty("sourcePubkey") final String sourcePubkey,
+      @JsonProperty("targetPubkey") final String targetPubkey) {
     this.sourceAddress = sourceAddress;
-    this.sourcePubKey = sourcePubKey;
-    this.targetPubKey = targetPubKey;
+    this.sourcePubkey = sourcePubkey;
+    this.targetPubkey = targetPubkey;
   }
 
   public static ConsolidationRequestParameter fromConsolidationRequest(
@@ -51,8 +51,8 @@ public class ConsolidationRequestParameter {
   public ConsolidationRequest toConsolidationRequest() {
     return new ConsolidationRequest(
         Address.fromHexString(sourceAddress),
-        BLSPublicKey.fromHexString(sourcePubKey),
-        BLSPublicKey.fromHexString(targetPubKey));
+        BLSPublicKey.fromHexString(sourcePubkey),
+        BLSPublicKey.fromHexString(targetPubkey));
   }
 
   @JsonGetter
@@ -62,12 +62,12 @@ public class ConsolidationRequestParameter {
 
   @JsonGetter
   public String getSourcePubKey() {
-    return sourcePubKey;
+    return sourcePubkey;
   }
 
   @JsonGetter
   public String getTargetPubKey() {
-    return targetPubKey;
+    return targetPubkey;
   }
 
   @Override
@@ -76,13 +76,13 @@ public class ConsolidationRequestParameter {
     if (o == null || getClass() != o.getClass()) return false;
     final ConsolidationRequestParameter that = (ConsolidationRequestParameter) o;
     return Objects.equals(sourceAddress, that.sourceAddress)
-        && Objects.equals(sourcePubKey, that.sourcePubKey)
-        && Objects.equals(targetPubKey, that.targetPubKey);
+        && Objects.equals(sourcePubkey, that.sourcePubkey)
+        && Objects.equals(targetPubkey, that.targetPubkey);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceAddress, sourcePubKey, targetPubKey);
+    return Objects.hash(sourceAddress, sourcePubkey, targetPubkey);
   }
 
   @Override
@@ -91,11 +91,11 @@ public class ConsolidationRequestParameter {
         + "sourceAddress='"
         + sourceAddress
         + '\''
-        + ", sourcePubKey='"
-        + sourcePubKey
+        + ", sourcePubkey='"
+        + sourcePubkey
         + '\''
-        + ", targetPubKey='"
-        + targetPubKey
+        + ", targetPubkey='"
+        + targetPubkey
         + '\''
         + '}';
   }
