@@ -28,6 +28,7 @@
         "withdrawals": [],
         "depositRequests": [],
         "withdrawalRequests": [],
+        "consolidationRequests" : [],
         "blockNumber": "0x3",
         "blockHash": "0xf3a9dd89d72227dc8671420c7499925801460bcb4a6e62371c00355f605d3c61",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",

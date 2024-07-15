@@ -34,6 +34,7 @@
             "amount": "0x0"
           }
         ],
+        "consolidationRequests" : [],
         "blockNumber": "0x2",
         "blockHash": "0xef8c3742cf11990550277b6b6064985aa401cc4f6d7e60c781c69c8a509b359e",
         "receiptsRoot": "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421",
