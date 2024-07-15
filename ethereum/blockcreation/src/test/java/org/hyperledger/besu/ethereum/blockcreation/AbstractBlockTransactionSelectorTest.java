@@ -1423,15 +1423,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   private static class PluginTransactionSelectionResult extends TransactionSelectionResult {
     private enum PluginStatus implements Status {
-      PLUGIN_INVALID(false, true),
-      PLUGIN_INVALID_TRANSIENT(false, false);
+      PLUGIN_INVALID(false, true, false),
+      PLUGIN_INVALID_TRANSIENT(false, false, true);
 
       private final boolean stop;
       private final boolean discard;
+      private final boolean penalize;
 
-      PluginStatus(final boolean stop, final boolean discard) {
+      PluginStatus(final boolean stop, final boolean discard, final boolean penalize) {
         this.stop = stop;
         this.discard = discard;
+        this.penalize = penalize;
       }
 
       @Override
@@ -1442,6 +1444,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
       @Override
       public boolean discard() {
         return discard;
+      }
+
+      @Override
+      public boolean penalize() {
+        return penalize;
       }
     }
 

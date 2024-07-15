@@ -50,6 +50,7 @@ public abstract class PendingTransaction
   private final Transaction transaction;
   private final long addedAt;
   private final long sequence; // Allows prioritization based on order transactions are added
+  private volatile byte score = Byte.MAX_VALUE;
 
   private int memorySize = NOT_INITIALIZED;
 
@@ -121,6 +122,20 @@ public abstract class PendingTransaction
       memorySize = computeMemorySize();
     }
     return memorySize;
+  }
+
+  public byte getScore() {
+    return score;
+  }
+
+  public void decrementScore() {
+    // use temp var to avoid non-atomic update of volatile var
+    final byte newScore = (byte) (score - 1);
+
+    // check to avoid underflow
+    if (newScore < score) {
+      score = newScore;
+    }
   }
 
   public abstract PendingTransaction detachedCopy();
@@ -255,6 +270,8 @@ public abstract class PendingTransaction
         + isReceivedFromLocalSource()
         + ", hasPriority="
         + hasPriority()
+        + ", score="
+        + score
         + '}';
   }
 
@@ -267,6 +284,8 @@ public abstract class PendingTransaction
         + isReceivedFromLocalSource()
         + ", hasPriority="
         + hasPriority()
+        + ", score="
+        + score
         + ", "
         + transaction.toTraceLog()
         + "}";

@@ -24,13 +24,17 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Holds the current set of executable pending transactions, that are candidate for inclusion on
@@ -186,6 +190,46 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
                 new SenderPendingTransactions(
                     sender, List.copyOf(txsBySender.get(sender).values())))
         .toList();
+  }
+
+  public Map<Byte, List<SenderPendingTransactions>> getByScore() {
+    final var sendersToAdd = new HashSet<>(txsBySender.keySet());
+    return orderByFee.descendingSet().stream()
+        .map(PendingTransaction::getSender)
+        .filter(sendersToAdd::remove)
+        .flatMap(sender -> splitByScore(sender, txsBySender.get(sender)).entrySet().stream())
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (a, b) -> {
+                  a.addAll(b);
+                  return a;
+                },
+                TreeMap::new));
+  }
+
+  private Map<Byte, List<SenderPendingTransactions>> splitByScore(
+      final Address sender, final NavigableMap<Long, PendingTransaction> txsBySender) {
+    final var splitByScore = new HashMap<Byte, List<SenderPendingTransactions>>();
+    byte currScore = txsBySender.firstEntry().getValue().getScore();
+    var currSplit = new ArrayList<PendingTransaction>();
+    for (final var entry : txsBySender.entrySet()) {
+      if (entry.getValue().getScore() < currScore) {
+        // score decreased, we need to start a new split
+        splitByScore
+            .computeIfAbsent(currScore, k -> new ArrayList<>())
+            .add(new SenderPendingTransactions(sender, currSplit));
+        currSplit = new ArrayList<>();
+        currScore = entry.getValue().getScore();
+      } else {
+        currSplit.add(entry.getValue());
+      }
+    }
+    splitByScore
+        .computeIfAbsent(currScore, k -> new ArrayList<>())
+        .add(new SenderPendingTransactions(sender, currSplit));
+    return splitByScore;
   }
 
   @Override

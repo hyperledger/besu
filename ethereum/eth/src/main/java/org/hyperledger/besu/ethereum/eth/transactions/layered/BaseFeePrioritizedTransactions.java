@@ -66,7 +66,8 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
   @Override
   protected int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
-    return Comparator.comparing(PendingTransaction::hasPriority)
+    return Comparator.comparing(PendingTransaction::getScore)
+        .thenComparing(PendingTransaction::hasPriority)
         .thenComparing(
             (PendingTransaction pendingTransaction) ->
                 pendingTransaction.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee))

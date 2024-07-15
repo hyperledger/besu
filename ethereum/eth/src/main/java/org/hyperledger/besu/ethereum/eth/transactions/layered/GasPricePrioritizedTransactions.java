@@ -56,7 +56,8 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
 
   @Override
   protected int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
-    return comparing(PendingTransaction::hasPriority)
+    return comparing(PendingTransaction::getScore)
+        .thenComparing(PendingTransaction::hasPriority)
         .thenComparing(PendingTransaction::getGasPrice)
         .thenComparing(PendingTransaction::getSequence)
         .compare(pt1, pt2);
