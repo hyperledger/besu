@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.json.GasDeserializer;
 import org.hyperledger.besu.ethereum.core.json.HexStringDeserializer;
-import org.hyperledger.besu.ethereum.core.json.IgnoreFieldDeserializer;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 
 import java.util.List;
@@ -34,6 +33,9 @@ import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * This class is used to deserialize JSON parameters for a call to the JSON-RPC method eth_call.
+ */
 @JsonIgnoreProperties(ignoreUnknown = true)
 @JsonDeserialize(builder = JsonCallParameter.JsonCallParameterBuilder.class)
 public class JsonCallParameter extends CallParameter {
@@ -72,20 +74,17 @@ public class JsonCallParameter extends CallParameter {
     this.strict = strict;
   }
 
+  /**
+   * Returns whether the call should be executed in strict mode.
+   * @return Optional strict mode flag
+   */
   public Optional<Boolean> isMaybeStrict() {
     return strict;
   }
 
-  @JsonAnySetter
-  @JsonDeserialize(using = IgnoreFieldDeserializer.class)
-  public void logUnknownProperties(final String key, final Object value) {
-    LOG.debug(
-        "unknown property - {} with value - {} and type - {} caught during serialization",
-        key,
-        value,
-        value.getClass());
-  }
-
+  /**
+   * Builder for {@link JsonCallParameter}. Used by Jackson to deserialize {@code JsonCallParameter}.
+   */
   public static final class JsonCallParameterBuilder {
     private Optional<Boolean> strict = Optional.empty();
     private Address from;
@@ -174,13 +173,12 @@ public class JsonCallParameter extends CallParameter {
     }
 
     @JsonAnySetter
-    @JsonDeserialize(using = IgnoreFieldDeserializer.class)
     public void withUnknownProperties(final String key, final Object value) {
       LOG.debug(
           "unknown property - {} with value - {} and type - {} caught during serialization",
           key,
           value,
-          value.getClass());
+          value != null ? value.getClass() : "NULL");
     }
 
     public JsonCallParameter build() {

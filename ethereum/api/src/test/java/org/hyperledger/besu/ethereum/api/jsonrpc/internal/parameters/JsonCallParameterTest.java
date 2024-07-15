@@ -39,12 +39,13 @@ public class JsonCallParameterTest {
   }
 
   @Test
-  public void extraParameterIsIgnored() throws JsonProcessingException {
+  public void extraParametersAreIgnoredIgnored() throws JsonProcessingException {
     final String json =
         """
             {
               "gas": "0x96",
-              "gasLimit": "0xfa"
+              "gasLimit": "0xfa",
+              "extraField": "extra"
             }
             """;
 
