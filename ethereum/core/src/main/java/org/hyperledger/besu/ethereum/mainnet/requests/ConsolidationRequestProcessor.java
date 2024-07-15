@@ -22,7 +22,6 @@ import org.apache.tuweni.bytes.Bytes;
 
 public class ConsolidationRequestProcessor
     extends AbstractSystemCallRequestProcessor<ConsolidationRequest> {
-  // TODO this is not the final value
   public static final Address CONSOLIDATION_REQUEST_PREDEPLOY_ADDRESS =
       Address.fromHexString("0x00b42dbF2194e931E80326D950320f7d9Dbeac02");
 
