@@ -211,9 +211,9 @@ public class ExtCallOperationTest {
         new TestMessageFrameBuilder()
             .initialGas(parentGas)
             .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
-            .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(Bytes.EMPTY)
             .pushStackItem(valueSent)
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(Bytes.EMPTY)
             .pushStackItem(CONTRACT_ADDRESS)
             .worldUpdater(worldUpdater)
             .isStatic(isStatic)
