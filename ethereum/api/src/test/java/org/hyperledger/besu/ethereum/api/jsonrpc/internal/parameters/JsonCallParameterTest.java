@@ -15,9 +15,12 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatExceptionOfType;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class JsonCallParameterTest {
@@ -36,6 +39,64 @@ public class JsonCallParameterTest {
     final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
 
     assertThat(callParameter.getGasLimit()).isEqualTo(Long.MAX_VALUE);
+  }
+
+  @Test
+  public void dataAsPayLoad() throws JsonProcessingException {
+    final String json =
+        """
+        {
+          "data": "0x1234"
+        }
+        """;
+
+    final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
+
+    assertThat(callParameter.getPayload()).isEqualTo(Bytes.fromHexString("0x1234"));
+  }
+
+  @Test
+  public void inputAsPayLoad() throws JsonProcessingException {
+    final String json =
+        """
+            {
+              "input": "0x1234"
+            }
+            """;
+
+    final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
+
+    assertThat(callParameter.getPayload()).isEqualTo(Bytes.fromHexString("0x1234"));
+  }
+
+  @Test
+  public void inputAndDataWithSameValueAsPayLoad() throws JsonProcessingException {
+    final String json =
+        """
+            {
+              "input": "0x1234",
+              "data": "0x1234"
+            }
+            """;
+
+    final JsonCallParameter callParameter = objectMapper.readValue(json, JsonCallParameter.class);
+
+    assertThat(callParameter.getPayload()).isEqualTo(Bytes.fromHexString("0x1234"));
+  }
+
+  @Test
+  public void inputAndDataWithDifferentValueAsPayLoadCauseException() {
+    final String json =
+        """
+            {
+              "input": "0x1234",
+              "data": "0x1235"
+            }
+            """;
+
+    assertThatExceptionOfType(JsonMappingException.class)
+        .isThrownBy(() -> objectMapper.readValue(json, JsonCallParameter.class))
+        .withMessageContaining("problem: Only one of 'input' or 'data' should be provided");
   }
 
   @Test
