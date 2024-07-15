@@ -34,12 +34,12 @@ public interface ConsolidationRequest {
    *
    * @return public key of sender
    */
-  PublicKey getSourcePublicKey();
+  PublicKey getSourcePubkey();
 
   /**
    * Public key of the address to receives the consolidation
    *
    * @return public key of target
    */
-  PublicKey getTargetPublicKey();
+  PublicKey getTargetPubkey();
 }

@@ -25,16 +25,16 @@ public class ConsolidationRequest extends Request
     implements org.hyperledger.besu.plugin.data.ConsolidationRequest {
 
   private final Address sourceAddress;
-  private final BLSPublicKey sourcePublicKey;
-  private final BLSPublicKey targetPublicKey;
+  private final BLSPublicKey sourcePubkey;
+  private final BLSPublicKey targetPubkey;
 
   public ConsolidationRequest(
       final Address sourceAddress,
-      final BLSPublicKey sourcePublicKey,
-      final BLSPublicKey targetPublicKey) {
+      final BLSPublicKey sourcePubkey,
+      final BLSPublicKey targetPubkey) {
     this.sourceAddress = sourceAddress;
-    this.sourcePublicKey = sourcePublicKey;
-    this.targetPublicKey = targetPublicKey;
+    this.sourcePubkey = sourcePubkey;
+    this.targetPubkey = targetPubkey;
   }
 
   @Override
@@ -48,13 +48,13 @@ public class ConsolidationRequest extends Request
   }
 
   @Override
-  public PublicKey getSourcePublicKey() {
-    return sourcePublicKey;
+  public PublicKey getSourcePubkey() {
+    return sourcePubkey;
   }
 
   @Override
-  public PublicKey getTargetPublicKey() {
-    return targetPublicKey;
+  public PublicKey getTargetPubkey() {
+    return targetPubkey;
   }
 
   @Override
@@ -62,10 +62,10 @@ public class ConsolidationRequest extends Request
     return "ConsolidationRequest{"
         + "sourceAddress="
         + sourceAddress
-        + " sourcePublicKey="
-        + sourcePublicKey
-        + " targetPublicKey="
-        + targetPublicKey
+        + " sourcePubkey="
+        + sourcePubkey
+        + " targetPubkey="
+        + targetPubkey
         + '}';
   }
 
@@ -79,12 +79,12 @@ public class ConsolidationRequest extends Request
     }
     final ConsolidationRequest that = (ConsolidationRequest) o;
     return Objects.equals(sourceAddress, that.sourceAddress)
-        && Objects.equals(sourcePublicKey, that.sourcePublicKey)
-        && Objects.equals(targetPublicKey, that.targetPublicKey);
+        && Objects.equals(sourcePubkey, that.sourcePubkey)
+        && Objects.equals(targetPubkey, that.targetPubkey);
   }
 
   @Override
   public int hashCode() {
-    return Objects.hash(sourceAddress, sourcePublicKey, targetPublicKey);
+    return Objects.hash(sourceAddress, sourcePubkey, targetPubkey);
   }
 }

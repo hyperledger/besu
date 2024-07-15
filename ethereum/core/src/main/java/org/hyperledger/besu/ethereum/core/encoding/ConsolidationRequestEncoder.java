@@ -49,8 +49,8 @@ public class ConsolidationRequestEncoder {
       final ConsolidationRequest consolidationRequest, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     rlpOutput.writeBytes(consolidationRequest.getSourceAddress());
-    rlpOutput.writeBytes(consolidationRequest.getSourcePublicKey());
-    rlpOutput.writeBytes(consolidationRequest.getTargetPublicKey());
+    rlpOutput.writeBytes(consolidationRequest.getSourcePubkey());
+    rlpOutput.writeBytes(consolidationRequest.getTargetPubkey());
     rlpOutput.endList();
   }
 

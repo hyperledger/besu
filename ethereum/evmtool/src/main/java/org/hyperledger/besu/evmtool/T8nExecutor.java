@@ -512,8 +512,8 @@ public class T8nExecutor {
               cr -> {
                 var obj = consolidationRequests.addObject();
                 obj.put("sourceAddress", cr.getSourceAddress().toHexString());
-                obj.put("sourcePubkey", cr.getSourcePublicKey().toHexString());
-                obj.put("targetPubkey", cr.getTargetPublicKey().toHexString());
+                obj.put("sourcePubkey", cr.getSourcePubkey().toHexString());
+                obj.put("targetPubkey", cr.getTargetPubkey().toHexString());
               });
     }
 

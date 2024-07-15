@@ -44,8 +44,8 @@ public class ConsolidationRequestParameter {
       final ConsolidationRequest consolidationRequest) {
     return new ConsolidationRequestParameter(
         consolidationRequest.getSourceAddress().toHexString(),
-        consolidationRequest.getSourcePublicKey().toHexString(),
-        consolidationRequest.getTargetPublicKey().toHexString());
+        consolidationRequest.getSourcePubkey().toHexString(),
+        consolidationRequest.getTargetPubkey().toHexString());
   }
 
   public ConsolidationRequest toConsolidationRequest() {
