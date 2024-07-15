@@ -32,6 +32,7 @@ import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.ConsolidationRequest;
 import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.Transaction;
@@ -495,14 +496,24 @@ public class T8nExecutor {
                 obj.put("index", deposit.getIndex().toHexString());
               });
 
-      var withdrawlRequests = resultObject.putArray("withdrawalRequests");
+      var withdrawalRequests = resultObject.putArray("withdrawalRequests");
       RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), WithdrawalRequest.class)
           .forEach(
               wr -> {
-                var obj = withdrawlRequests.addObject();
+                var obj = withdrawalRequests.addObject();
                 obj.put("sourceAddress", wr.getSourceAddress().toHexString());
                 obj.put("validatorPubkey", wr.getValidatorPubkey().toHexString());
                 obj.put("amount", wr.getAmount().toHexString());
+              });
+
+      var consolidationRequests = resultObject.putArray("consolidationRequests");
+      RequestUtil.filterRequestsOfType(maybeRequests.orElse(List.of()), ConsolidationRequest.class)
+          .forEach(
+              cr -> {
+                var obj = consolidationRequests.addObject();
+                obj.put("sourceAddress", cr.getSourceAddress().toHexString());
+                obj.put("sourcePubkey", cr.getSourcePublicKey().toHexString());
+                obj.put("targetPubkey", cr.getTargetPublicKey().toHexString());
               });
     }
 
