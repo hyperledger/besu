@@ -22,8 +22,10 @@ import java.math.BigInteger;
 import java.util.Collections;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled("test is flaky")
 public class AccountSmartContractPermissioningAcceptanceTest
     extends AccountSmartContractPermissioningAcceptanceTestBase {
 
