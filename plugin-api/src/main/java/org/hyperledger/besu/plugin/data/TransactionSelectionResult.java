@@ -55,7 +55,7 @@ public class TransactionSelectionResult {
     BLOCK_FULL(true, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
     BLOCK_SELECTION_TIMEOUT(true, false),
-    TX_EVALUATION_TOO_LONG(false, true),
+    TX_EVALUATION_TOO_LONG(true, true),
     INVALID_TRANSIENT(false, false),
     INVALID(false, true);
 
