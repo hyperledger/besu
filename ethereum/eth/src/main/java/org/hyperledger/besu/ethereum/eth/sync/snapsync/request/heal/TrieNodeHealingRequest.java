@@ -130,7 +130,7 @@ public abstract class TrieNodeHealingRequest extends SnapDataRequest
   @Override
   public boolean isResponseReceived() {
     return (!data.isEmpty() && Hash.hash(data).equals(getNodeHash()))
-        || (data.isEmpty() && Hash.hash(data).equals(Hash.EMPTY));
+        || (data.isEmpty() && location.isEmpty());
   }
 
   @Override
