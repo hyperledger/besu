@@ -77,9 +77,7 @@ public enum EvmSpecVersion {
   /** Development fork for EIPs not accepted to Mainnet */
   EXPERIMENTAL_EIPS(
       0x6000, 0xc000, 1, false, "Experimental_EIPs", "Development, for experimental EIPs"),
-  /**
-   * Linea evm spec version
-   */
+  /** Linea evm spec version */
   LINEA(0x6000, 0xc000, Integer.MAX_VALUE, false, "Linea", "Linea");
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 
