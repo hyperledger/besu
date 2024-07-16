@@ -32,7 +32,6 @@ import org.hyperledger.besu.evm.code.CodeV0;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -148,7 +147,6 @@ public class PrivateTransactionProcessor {
                 .contract(privateContractAddress)
                 .inputData(initCodeBytes.slice(code.getSize()))
                 .code(code)
-                .authorizedCodeService(new AuthorizedCodeService())
                 .build();
       } else {
         final Address to = transaction.getTo().get();
@@ -164,7 +162,6 @@ public class PrivateTransactionProcessor {
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
                         .orElse(CodeV0.EMPTY_CODE))
-                .authorizedCodeService(new AuthorizedCodeService())
                 .build();
       }
 

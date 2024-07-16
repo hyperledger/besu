@@ -30,7 +30,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.operation.JumpOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
-import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import javax.annotation.Nonnull;
@@ -91,7 +90,6 @@ class CodeV0Test {
             .completer(f -> {})
             .miningBeneficiary(Address.ZERO)
             .blockHashLookup(l -> Hash.EMPTY)
-            .authorizedCodeService(new AuthorizedCodeService())
             .build();
 
     frame.setPC(CURRENT_PC);

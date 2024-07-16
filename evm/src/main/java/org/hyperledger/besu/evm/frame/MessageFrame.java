@@ -1676,7 +1676,6 @@ public class MessageFrame {
       checkState(apparentValue != null, "Missing message frame apparent value");
       checkState(code != null, "Missing message frame code");
       checkState(completer != null, "Missing message frame completer");
-      checkState(authorizedCodeService != null, "Missing authorized account service");
     }
 
     /**
@@ -1690,6 +1689,11 @@ public class MessageFrame {
       WorldUpdater updater;
       boolean newStatic;
       TxValues newTxValues;
+
+      if (authorizedCodeService == null) {
+        authorizedCodeService = new AuthorizedCodeService();
+      }
+
       if (parentMessageFrame == null) {
         newTxValues =
             new TxValues(

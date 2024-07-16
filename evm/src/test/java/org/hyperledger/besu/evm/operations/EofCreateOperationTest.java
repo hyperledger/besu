@@ -39,7 +39,6 @@ import org.hyperledger.besu.evm.precompile.MainnetPrecompiledContracts;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.processor.MessageCallProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.List;
@@ -155,7 +154,6 @@ class EofCreateOperationTest {
         .originator(Address.ZERO)
         .initialGas(100000L)
         .worldUpdater(worldUpdater)
-        .authorizedCodeService(new AuthorizedCodeService())
         .build();
   }
 }

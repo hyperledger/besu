@@ -31,7 +31,6 @@ import org.hyperledger.besu.evm.fluent.SimpleWorld;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
-import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 
 import java.math.BigInteger;
 import java.util.Map;
@@ -73,7 +72,6 @@ public class Benchmarks {
           .originator(Address.ZERO)
           .initialGas(100_000L)
           .worldUpdater(new SimpleWorld())
-          .authorizedCodeService(new AuthorizedCodeService())
           .build();
 
   private static void benchSecp256k1Recover() {

@@ -25,7 +25,6 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.operation.BlockHashOperation;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
-import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -137,7 +136,6 @@ public class SystemCallProcessor {
             maybeContract
                 .map(c -> processor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
                 .orElse(CodeV0.EMPTY_CODE))
-        .authorizedCodeService(new AuthorizedCodeService())
         .build();
   }
 }
