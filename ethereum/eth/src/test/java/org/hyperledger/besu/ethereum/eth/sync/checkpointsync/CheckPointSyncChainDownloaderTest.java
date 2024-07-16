@@ -48,6 +48,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -124,8 +125,10 @@ public class CheckPointSyncChainDownloaderTest {
   }
 
   @AfterEach
-  public void tearDown() {
-    ethProtocolManager.stop();
+  void tearDown() {
+    if (ethContext != null) {
+      ethProtocolManager.stop();
+    }
   }
 
   private ChainDownloader downloader(
@@ -207,5 +210,12 @@ public class CheckPointSyncChainDownloaderTest {
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(pivotBlockNumber);
     assertThat(localBlockchain.getChainHeadHeader())
         .isEqualTo(otherBlockchain.getBlockHeader(pivotBlockNumber).get());
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

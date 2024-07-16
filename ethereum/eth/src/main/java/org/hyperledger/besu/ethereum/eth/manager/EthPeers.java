@@ -525,7 +525,7 @@ public class EthPeers {
 
             peer.chainState().updateHeightEstimate(peerHeadBlockHeader.getNumber());
             CompletableFuture<Void> isServingSnapFuture;
-            if (SyncMode.isCheckpointSync(syncMode) || SyncMode.isSnapSync(syncMode)) {
+            if (syncMode == SyncMode.SNAP || syncMode == SyncMode.CHECKPOINT) {
               // even if we have finished the snap sync, we still want to know if the peer is a snap
               // server
               isServingSnapFuture =

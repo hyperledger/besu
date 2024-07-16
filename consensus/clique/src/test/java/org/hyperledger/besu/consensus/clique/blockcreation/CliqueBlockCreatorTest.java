@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.consensus.clique.blockcreation;
 
-import static org.assertj.core.api.Java6Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryBlockchain;
 import static org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider.createInMemoryWorldStateArchive;
 import static org.mockito.ArgumentMatchers.any;
@@ -75,7 +75,6 @@ import java.util.Optional;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
-import org.assertj.core.api.Java6Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -98,7 +97,7 @@ public class CliqueBlockCreatorTest {
   private VoteProvider voteProvider;
 
   @BeforeEach
-  public void setup() {
+  void setup() {
     protocolSchedule =
         CliqueProtocolSchedule.create(
             GenesisConfigFile.DEFAULT.getConfigOptions(),
@@ -160,7 +159,7 @@ public class CliqueBlockCreatorTest {
 
     final Block createdBlock = blockCreator.createBlock(5L).getBlock();
 
-    Java6Assertions.assertThat(CliqueHelpers.getProposerOfBlock(createdBlock.getHeader()))
+    assertThat(CliqueHelpers.getProposerOfBlock(createdBlock.getHeader()))
         .isEqualTo(proposerAddress);
   }
 

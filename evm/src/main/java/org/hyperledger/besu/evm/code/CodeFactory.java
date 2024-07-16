@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.code;
 
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 
 import javax.annotation.Nonnull;
 
@@ -94,6 +95,9 @@ public class CodeFactory {
       }
 
       final EOFLayout layout = EOFLayout.parseEOF(bytes, !createTransaction);
+      if (createTransaction) {
+        layout.containerMode().set(EOFContainerMode.INITCODE);
+      }
       return createCode(layout);
     } else {
       return new CodeV0(bytes);

@@ -21,7 +21,6 @@ import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -348,13 +347,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     super.privacyParameters(privacyParameters);
     return propagateConfig(z -> z.privacyParameters(privacyParameters));
-  }
-
-  @Override
-  public BesuControllerBuilder pkiBlockCreationConfiguration(
-      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
-    super.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
-    return propagateConfig(z -> z.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration));
   }
 
   @Override
