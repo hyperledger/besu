@@ -63,17 +63,6 @@ public class BlockTimerTest {
 
   @Test
   public void cancelTimerCancelsWhenNoTimer() {
-    final int MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 15;
-    final int MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS = 60;
-
-    when(mockForksSchedule.getFork(anyLong()))
-        .thenReturn(
-            new ForkSpec<>(
-                0,
-                createBftFork(
-                    MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS,
-                    MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
-
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
     // Starts with nothing running
     assertThat(timer.isRunning()).isFalse();
@@ -314,6 +303,15 @@ public class BlockTimerTest {
   public void checkBlockTimerEmptyAndNonEmptyPeriodSecods() {
     final int MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS = 15;
     final int MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS = 60;
+    final long BLOCK_TIME_STAMP = 500L;
+    final ConsensusRoundIdentifier round =
+        new ConsensusRoundIdentifier(0xFEDBCA9876543210L, 0x12345678);
+    final BlockHeader header =
+        new BlockHeaderTestFixture().timestamp(BLOCK_TIME_STAMP).buildHeader();
+    final ScheduledFuture<?> mockedFuture = mock(ScheduledFuture.class);
+    Mockito.<ScheduledFuture<?>>when(
+            bftExecutors.scheduleTask(any(Runnable.class), anyLong(), any()))
+        .thenReturn(mockedFuture);
 
     when(mockForksSchedule.getFork(anyLong()))
         .thenReturn(
@@ -324,6 +322,7 @@ public class BlockTimerTest {
                     MINIMAL_TIME_BETWEEN_EMPTY_BLOCKS_SECONDS)));
 
     final BlockTimer timer = new BlockTimer(mockQueue, mockForksSchedule, bftExecutors, mockClock);
+    timer.startTimer(round, header);
 
     assertThat(timer.getBlockPeriodSeconds()).isEqualTo(MINIMAL_TIME_BETWEEN_BLOCKS_SECONDS);
     assertThat(timer.getEmptyBlockPeriodSeconds())
