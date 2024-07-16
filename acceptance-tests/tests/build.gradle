@@ -128,6 +128,7 @@ task acceptanceTestMainnet(type: Test) {
   exclude '**/clique/**'
   exclude '**/permissioning/**'
   exclude '**/privacy/**'
+  exclude '**/bftsoak/**'
 
   useJUnitPlatform {}
 
@@ -152,9 +153,10 @@ task acceptanceTestMainnet(type: Test) {
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
 
-task acceptanceTestNotPrivacy(type: Test) {
+task acceptanceTestNotPrivacyNotPermissioning(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   exclude '**/privacy/**'
+  exclude '**/permissioning/**'
   exclude '**/bftsoak/**'
 
   useJUnitPlatform {}
@@ -164,7 +166,7 @@ task acceptanceTestNotPrivacy(type: Test) {
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
   mustRunAfter rootProject.subprojects*.test
-  description = 'Runs MAINNET Besu acceptance tests (excluding privacy since they run nightly, and are being refactored).'
+  description = 'Runs MAINNET Besu acceptance tests (excluding specific non-mainnet suites).'
   group = 'verification'
 
   jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
