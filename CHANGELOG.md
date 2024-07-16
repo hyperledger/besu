@@ -14,6 +14,7 @@
 - Implement gnark-crypto for eip-2537 [#7316](https://github.com/hyperledger/besu/pull/7316)
 
 ### Bug fixes
+- Fix `eth_call` deserialization to correctly ignore unknown fields in the transaction object. [#7323](https://github.com/hyperledger/besu/pull/7323)
 
 ## 24.7.0
 
