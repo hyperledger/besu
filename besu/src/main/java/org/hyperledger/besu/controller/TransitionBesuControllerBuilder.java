@@ -375,9 +375,10 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public BesuControllerBuilder isParallelTxEnabled(final boolean isParallelTxEnabled) {
-    super.isParallelTxEnabled(isParallelTxEnabled);
-    return propagateConfig(z -> z.isParallelTxEnabled(isParallelTxEnabled));
+  public BesuControllerBuilder isParallelTxProcessingEnabled(
+      final boolean isParallelTxProcessingEnabled) {
+    super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
+    return propagateConfig(z -> z.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
   }
 
   @Override

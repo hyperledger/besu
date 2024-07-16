@@ -41,7 +41,7 @@ public class MainnetProtocolSchedule {
    * @param evmConfiguration how to configure the EVMs jumpdest cache
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param metricsSystem A metricSystem instance to expose metrics in the underlying calls
    * @return A configured mainnet protocol schedule
    */
@@ -52,7 +52,7 @@ public class MainnetProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     if (FixedDifficultyCalculators.isFixedDifficultyInConfig(config)) {
       return FixedDifficultyProtocolSchedule.create(
@@ -62,7 +62,7 @@ public class MainnetProtocolSchedule {
           evmConfiguration,
           miningParameters,
           badBlockManager,
-          isParallelTxEnabled,
+          isParallelTxProcessingEnabled,
           metricsSystem);
     }
     return new ProtocolScheduleBuilder(
@@ -74,7 +74,7 @@ public class MainnetProtocolSchedule {
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem)
         .createProtocolSchedule();
   }
@@ -88,7 +88,7 @@ public class MainnetProtocolSchedule {
    * @param evmConfiguration how to configure the EVMs jumpdest cache
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
@@ -97,7 +97,7 @@ public class MainnetProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
@@ -106,7 +106,7 @@ public class MainnetProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
@@ -118,7 +118,7 @@ public class MainnetProtocolSchedule {
    * @param evmConfiguration size of
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
@@ -126,7 +126,7 @@ public class MainnetProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
@@ -135,7 +135,7 @@ public class MainnetProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
@@ -146,14 +146,14 @@ public class MainnetProtocolSchedule {
    *     starting points
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return A configured mainnet protocol schedule
    */
   public static ProtocolSchedule fromConfig(
       final GenesisConfigOptions config,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return fromConfig(
         config,
@@ -162,7 +162,7 @@ public class MainnetProtocolSchedule {
         EvmConfiguration.DEFAULT,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 }

@@ -359,9 +359,12 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
-  public BesuControllerBuilder isParallelTxEnabled(final boolean isParallelTxEnabled) {
-    besuControllerBuilderSchedule.values().forEach(b -> b.isParallelTxEnabled(isParallelTxEnabled));
-    return super.isParallelTxEnabled(isParallelTxEnabled);
+  public BesuControllerBuilder isParallelTxProcessingEnabled(
+      final boolean isParallelTxProcessingEnabled) {
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
+    return super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
   }
 
   @Override

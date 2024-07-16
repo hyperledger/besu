@@ -47,7 +47,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
    * @return the protocol schedule
@@ -61,7 +61,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return new IbftProtocolScheduleBuilder()
         .createProtocolSchedule(
@@ -73,7 +73,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem);
   }
 
@@ -86,7 +86,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
    * @return the protocol schedule
@@ -98,7 +98,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return create(
         config,
@@ -109,7 +109,7 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 

@@ -50,7 +50,7 @@ public class MergeProtocolSchedule {
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -58,7 +58,7 @@ public class MergeProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return create(
         config,
@@ -66,7 +66,7 @@ public class MergeProtocolSchedule {
         isRevertReasonEnabled,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
@@ -78,7 +78,7 @@ public class MergeProtocolSchedule {
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -87,7 +87,7 @@ public class MergeProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
@@ -108,7 +108,7 @@ public class MergeProtocolSchedule {
             EvmConfiguration.DEFAULT,
             miningParameters,
             badBlockManager,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem)
         .createProtocolSchedule();
   }

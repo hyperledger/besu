@@ -59,7 +59,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled.
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param metricsSystem metricsSystem A metricSystem instance to be able to expose metrics in the
    *     underlying calls
    * @return the protocol schedule
@@ -73,7 +73,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
@@ -97,7 +97,7 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 evmConfiguration,
                 miningParameters,
                 badBlockManager,
-                isParallelTxEnabled,
+                isParallelTxProcessingEnabled,
                 metricsSystem)
             .createProtocolSchedule();
     return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);

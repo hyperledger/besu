@@ -178,7 +178,7 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
         isRevertReasonEnabled,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 

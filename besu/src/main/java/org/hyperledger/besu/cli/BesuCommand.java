@@ -1901,7 +1901,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
-        .isParallelTxEnabled(dataStorageConfiguration.getUnstable().isParallelTxEnabled())
+        .isParallelTxProcessingEnabled(
+            dataStorageConfiguration.getUnstable().isParallelTxProcessingEnabled())
         .storageProvider(storageProvider)
         .gasLimitCalculator(
             miningParametersSupplier.get().getTargetGasLimit().isPresent()

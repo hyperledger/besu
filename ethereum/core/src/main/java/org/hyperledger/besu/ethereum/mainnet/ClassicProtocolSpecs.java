@@ -56,10 +56,10 @@ public class ClassicProtocolSpecs {
 
   public static ProtocolSpecBuilder classicRecoveryInitDefinition(
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            evmConfiguration, isParallelTxEnabled, metricsSystem)
+            evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .blockHeaderValidatorBuilder(
             feeMarket -> MainnetBlockHeaderValidator.createClassicValidator())
         .name("ClassicRecoveryInit");
@@ -68,10 +68,10 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder tangerineWhistleDefinition(
       final Optional<BigInteger> chainId,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return MainnetProtocolSpecs.homesteadDefinition(
-            evmConfiguration, isParallelTxEnabled, metricsSystem)
+            evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .isReplayProtectionSupported(true)
         .gasCalculator(TangerineWhistleGasCalculator::new)
         .transactionValidatorFactoryBuilder(
@@ -84,9 +84,10 @@ public class ClassicProtocolSpecs {
   public static ProtocolSpecBuilder dieHardDefinition(
       final Optional<BigInteger> chainId,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    return tangerineWhistleDefinition(chainId, evmConfiguration, isParallelTxEnabled, metricsSystem)
+    return tangerineWhistleDefinition(
+            chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .gasCalculator(DieHardGasCalculator::new)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_PAUSED)
         .name("DieHard");
@@ -96,9 +97,10 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
-    return dieHardDefinition(chainId, evmConfiguration, isParallelTxEnabled, metricsSystem)
+    return dieHardDefinition(
+            chainId, evmConfiguration, isParallelTxProcessingEnabled, metricsSystem)
         .blockReward(MAX_BLOCK_REWARD)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_DELAYED)
         .blockProcessorBuilder(
@@ -123,10 +125,14 @@ public class ClassicProtocolSpecs {
       final Optional<BigInteger> chainId,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return gothamDefinition(
-            chainId, ecip1017EraRounds, evmConfiguration, isParallelTxEnabled, metricsSystem)
+            chainId,
+            ecip1017EraRounds,
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
         .difficultyCalculator(ClassicDifficultyCalculators.DIFFICULTY_BOMB_REMOVED)
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -140,10 +146,14 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return gothamDefinition(
-            chainId, ecip1017EraRounds, evmConfiguration, isParallelTxEnabled, metricsSystem)
+            chainId,
+            ecip1017EraRounds,
+            evmConfiguration,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
         .evmBuilder(MainnetEVMs::byzantium)
         .evmConfiguration(evmConfiguration)
         .gasCalculator(SpuriousDragonGasCalculator::new)
@@ -183,14 +193,14 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return atlantisDefinition(
             chainId,
             enableRevertReason,
             ecip1017EraRounds,
             evmConfiguration,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem)
         .evmBuilder(MainnetEVMs::constantinople)
         .gasCalculator(PetersburgGasCalculator::new)
@@ -204,14 +214,14 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return aghartaDefinition(
             chainId,
             enableRevertReason,
             ecip1017EraRounds,
             evmConfiguration,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem)
         .gasCalculator(IstanbulGasCalculator::new)
         .evmBuilder(
@@ -227,14 +237,14 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return phoenixDefinition(
             chainId,
             enableRevertReason,
             ecip1017EraRounds,
             evmConfiguration,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem)
         .blockHeaderValidatorBuilder(
             feeMarket ->
@@ -272,14 +282,14 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return thanosDefinition(
             chainId,
             enableRevertReason,
             ecip1017EraRounds,
             evmConfiguration,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem)
         .gasCalculator(BerlinGasCalculator::new)
         .transactionValidatorFactoryBuilder(
@@ -302,14 +312,14 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return magnetoDefinition(
             chainId,
             enableRevertReason,
             ecip1017EraRounds,
             evmConfiguration,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem)
         .gasCalculator(LondonGasCalculator::new)
         .contractCreationProcessorBuilder(
@@ -324,14 +334,14 @@ public class ClassicProtocolSpecs {
       final boolean enableRevertReason,
       final OptionalLong ecip1017EraRounds,
       final EvmConfiguration evmConfiguration,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return mystiqueDefinition(
             chainId,
             enableRevertReason,
             ecip1017EraRounds,
             evmConfiguration,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem)
         // EIP-3860
         .gasCalculator(ShanghaiGasCalculator::new)

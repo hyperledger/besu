@@ -124,11 +124,11 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
     @CommandLine.Option(
         hidden = true,
-        names = {"--Xbonsai-parallel-tx-enabled"},
+        names = {"--Xbonsai-parallel-tx-processing-enabled"},
         arity = "1",
         description =
             "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. (default: ${DEFAULT-VALUE})")
-    private Boolean isParallelTxEnabled = false;
+    private Boolean isParallelTxProcessingEnabled = false;
 
     /** Default Constructor. */
     Unstable() {}
@@ -188,7 +188,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         }
       }
     } else {
-      if (unstableOptions.isParallelTxEnabled) {
+      if (unstableOptions.isParallelTxProcessingEnabled) {
         throw new CommandLine.ParameterException(
             commandLine,
             "Transaction parallelization is not supported unless operating in a 'diffbased' mode, such as Bonsai.");
@@ -214,8 +214,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         domainObject.getUnstable().getBonsaiFullFlatDbEnabled();
     dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
         domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
-    dataStorageOptions.unstableOptions.isParallelTxEnabled =
-        domainObject.getUnstable().isParallelTxEnabled();
+    dataStorageOptions.unstableOptions.isParallelTxProcessingEnabled =
+        domainObject.getUnstable().isParallelTxProcessingEnabled();
 
     return dataStorageOptions;
   }
@@ -232,7 +232,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiFullFlatDbEnabled(unstableOptions.bonsaiFullFlatDbEnabled)
                 .bonsaiCodeStoredByCodeHashEnabled(unstableOptions.bonsaiCodeUsingCodeHashEnabled)
-                .isParallelTxEnabled(unstableOptions.isParallelTxEnabled)
+                .isParallelTxProcessingEnabled(unstableOptions.isParallelTxProcessingEnabled)
                 .build())
         .build();
   }

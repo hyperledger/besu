@@ -46,7 +46,7 @@ public class ProtocolScheduleBuilder {
   private final EvmConfiguration evmConfiguration;
   private final MiningParameters miningParameters;
   private final BadBlockManager badBlockManager;
-  private final boolean isParallelTxEnabled;
+  private final boolean isParallelTxProcessingEnabled;
   private final MetricsSystem metricsSystem;
 
   public ProtocolScheduleBuilder(
@@ -58,7 +58,7 @@ public class ProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     this(
         config,
@@ -69,7 +69,7 @@ public class ProtocolScheduleBuilder {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
@@ -81,7 +81,7 @@ public class ProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     this(
         config,
@@ -92,7 +92,7 @@ public class ProtocolScheduleBuilder {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
@@ -105,7 +105,7 @@ public class ProtocolScheduleBuilder {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
@@ -115,7 +115,7 @@ public class ProtocolScheduleBuilder {
     this.defaultChainId = defaultChainId;
     this.miningParameters = miningParameters;
     this.badBlockManager = badBlockManager;
-    this.isParallelTxEnabled = isParallelTxEnabled;
+    this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
     this.metricsSystem = metricsSystem;
   }
 
@@ -137,7 +137,7 @@ public class ProtocolScheduleBuilder {
             evmConfiguration.overrides(
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
             miningParameters,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem);
 
     validateForkOrdering();
@@ -221,7 +221,7 @@ public class ProtocolScheduleBuilder {
                   BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
                   classicBlockNumber,
                   ClassicProtocolSpecs.classicRecoveryInitDefinition(
-                      evmConfiguration, isParallelTxEnabled, metricsSystem),
+                      evmConfiguration, isParallelTxProcessingEnabled, metricsSystem),
                   Function.identity());
               protocolSchedule.putBlockNumberMilestone(
                   classicBlockNumber + 1, originalProtocolSpec);

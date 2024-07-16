@@ -65,7 +65,7 @@ public class CliqueProtocolSchedule {
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
    * @return the protocol schedule
@@ -79,7 +79,7 @@ public class CliqueProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
@@ -117,7 +117,7 @@ public class CliqueProtocolSchedule {
             evmConfiguration,
             miningParameters,
             badBlockManager,
-            isParallelTxEnabled,
+            isParallelTxProcessingEnabled,
             metricsSystem)
         .createProtocolSchedule();
   }
@@ -132,7 +132,7 @@ public class CliqueProtocolSchedule {
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
-   * @param isParallelTxEnabled indicates whether parallel transaction is enabled
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
    * @return the protocol schedule
@@ -146,7 +146,7 @@ public class CliqueProtocolSchedule {
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
-      final boolean isParallelTxEnabled,
+      final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
     return create(
         config,
@@ -157,7 +157,7 @@ public class CliqueProtocolSchedule {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 

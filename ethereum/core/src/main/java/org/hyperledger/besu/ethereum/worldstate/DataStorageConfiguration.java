@@ -104,7 +104,7 @@ public interface DataStorageConfiguration {
     }
 
     @Value.Default
-    default boolean isParallelTxEnabled() {
+    default boolean isParallelTxProcessingEnabled() {
       return DEFAULT_PARALLEL_TRX_ENABLED;
     }
   }

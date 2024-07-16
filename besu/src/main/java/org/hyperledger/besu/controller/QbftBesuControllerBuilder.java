@@ -331,7 +331,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 

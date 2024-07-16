@@ -292,7 +292,7 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
         evmConfiguration,
         miningParameters,
         badBlockManager,
-        isParallelTxEnabled,
+        isParallelTxProcessingEnabled,
         metricsSystem);
   }
 
