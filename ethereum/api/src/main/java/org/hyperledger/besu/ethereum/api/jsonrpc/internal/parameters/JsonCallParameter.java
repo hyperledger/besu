@@ -43,7 +43,7 @@ import org.slf4j.LoggerFactory;
  * JsonCallParameter param = new JsonCallParameter.JsonCallParameterBuilder()
  *     .withFrom(Address.fromHexString("0x..."))
  *     .withTo(Address.fromHexString("0x..."))
- *     .withGasLimit(21000L)
+ *     .withGas(21000L)
  *     .withGasPrice(Wei.of(1000000000L))
  *     .withValue(Wei.ZERO)
  *     .withInput(Bytes.fromHexString("0x..."))
@@ -159,7 +159,7 @@ public class JsonCallParameter extends CallParameter {
 
     /**
      * Sets the "to" address for the {@link JsonCallParameter}. This address represents the
-     * recipient of the call.
+     * recipient of the call. It can be null for contract creation transactions.
      *
      * @param to the recipient's address
      * @return the {@link JsonCallParameterBuilder} instance for chaining
@@ -170,10 +170,9 @@ public class JsonCallParameter extends CallParameter {
     }
 
     /**
-     * Sets the gas limit for the {@link JsonCallParameter}. The gas limit specifies the maximum
-     * amount of gas that the call is allowed to consume. If the actual gas consumed exceeds this
-     * limit, the call is reverted. By default, if not specified, the gas limit is set to -1,
-     * indicating that it is not set.
+     * Sets the gas for the {@link JsonCallParameter} used for transaction execution. eth_call uses
+     * 0 gas but this parameter may be needed by some executions. By default, if not specified, the
+     * gas is set to -1, indicating that it is not set.
      *
      * @param gas the gas limit for the call, can be {@code null} to indicate that the gas limit is
      *     not set

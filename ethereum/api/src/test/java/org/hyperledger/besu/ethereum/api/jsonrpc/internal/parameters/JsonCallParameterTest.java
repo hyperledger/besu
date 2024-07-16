@@ -100,7 +100,7 @@ public class JsonCallParameterTest {
   }
 
   @Test
-  public void extraParametersAreIgnoredIgnored() throws JsonProcessingException {
+  public void extraParametersAreIgnored() throws JsonProcessingException {
     // 0x96 = 150
     final String json =
         """
