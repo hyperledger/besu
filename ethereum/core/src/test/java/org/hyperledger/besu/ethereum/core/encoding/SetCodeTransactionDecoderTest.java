@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.core.encoding;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 
 import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.datatypes.Address;
@@ -42,7 +43,6 @@ class SetCodeTransactionDecoderTest {
     assertThat(authorization.chainId()).isEqualTo(BigInteger.ONE);
     assertThat(authorization.address())
         .isEqualTo(Address.fromHexStringStrict("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"));
-    assertThat(authorization.nonceList().size()).isEqualTo(1);
     assertThat(authorization.nonce().get()).isEqualTo(0L);
 
     final SECPSignature signature = authorization.signature();
@@ -67,7 +67,7 @@ class SetCodeTransactionDecoderTest {
     assertThat(authorization.chainId()).isEqualTo(BigInteger.ONE);
     assertThat(authorization.address())
         .isEqualTo(Address.fromHexStringStrict("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"));
-    assertThat(authorization.nonceList().size()).isEqualTo(0);
+    assertThat(authorization.nonce()).isEmpty();
 
     final SECPSignature signature = authorization.signature();
     assertThat(signature.getRecId()).isEqualTo((byte) 1);
@@ -78,7 +78,7 @@ class SetCodeTransactionDecoderTest {
   }
 
   @Test
-  void shouldDecodeInnerPayloadWithMultipleNonces() {
+  void shouldThrowInnerPayloadWithMultipleNonces() {
     // "d90194633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c20107"
 
     final BytesValueRLPInput input =
@@ -86,21 +86,12 @@ class SetCodeTransactionDecoderTest {
             Bytes.fromHexString(
                 "0xf85c0194633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c2010201a0401b5d4ebe88306448115d1a46a30e5ad1136f2818b4ebb0733d9c4efffd135aa0753ff1dbce6db504ecb9635a64d8c4506ff887e2d2a0d2b7175baf94c849eccc"),
             true);
-    final SetCodeAuthorization authorization = SetCodeTransactionDecoder.decodeInnerPayload(input);
 
-    assertThat(authorization.chainId()).isEqualTo(BigInteger.ONE);
-    assertThat(authorization.address())
-        .isEqualTo(Address.fromHexStringStrict("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"));
-    assertThat(authorization.nonceList().size()).isEqualTo(2);
-    assertThat(authorization.nonce().get()).isEqualTo(1L);
-    assertThat(authorization.nonceList().get(1)).isEqualTo(2L);
-
-    final SECPSignature signature = authorization.signature();
-    assertThat(signature.getRecId()).isEqualTo((byte) 1);
-    assertThat(signature.getR().toString(16))
-        .isEqualTo("401b5d4ebe88306448115d1a46a30e5ad1136f2818b4ebb0733d9c4efffd135a");
-    assertThat(signature.getS().toString(16))
-        .isEqualTo("753ff1dbce6db504ecb9635a64d8c4506ff887e2d2a0d2b7175baf94c849eccc");
+    assertThrows(
+        IllegalArgumentException.class,
+        () -> {
+          SetCodeTransactionDecoder.decodeInnerPayload(input);
+        });
   }
 
   @Test

@@ -26,8 +26,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -88,7 +87,7 @@ public class SetCodeTransactionDecoder {
     final BigInteger chainId = input.readBigIntegerScalar();
     final Address address = Address.wrap(input.readBytes());
 
-    final List<Long> nonces = new ArrayList<>();
+    Optional<Long> nonce = Optional.empty();
 
     if (!input.nextIsList()) {
       throw new IllegalArgumentException("Optional nonce must be an list, but isn't");
@@ -97,8 +96,10 @@ public class SetCodeTransactionDecoder {
     final long noncesSize = input.nextSize();
 
     input.enterList();
-    for (int i = 0; i < noncesSize; i++) {
-      nonces.add(input.readLongScalar());
+    if (noncesSize == 1) {
+      nonce = Optional.ofNullable(input.readLongScalar());
+    } else if (noncesSize > 1) {
+      throw new IllegalArgumentException("Nonce list may only have 1 member, if any");
     }
     input.leaveList();
 
@@ -110,6 +111,6 @@ public class SetCodeTransactionDecoder {
 
     final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, yParity);
 
-    return new SetCodeAuthorization(chainId, address, nonces, signature);
+    return new SetCodeAuthorization(chainId, address, nonce, signature);
   }
 }

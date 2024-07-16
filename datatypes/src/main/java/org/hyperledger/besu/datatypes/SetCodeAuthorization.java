@@ -17,7 +17,6 @@ package org.hyperledger.besu.datatypes;
 import org.hyperledger.besu.crypto.SECPSignature;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 
 /**
@@ -59,13 +58,6 @@ public interface SetCodeAuthorization {
    * @return all the optional nonce
    */
   Optional<Long> nonce();
-
-  /**
-   * Return all nonces in the list
-   *
-   * @return all the nonces
-   */
-  List<Long> nonceList();
 
   /**
    * Return the recovery id.
