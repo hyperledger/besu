@@ -27,7 +27,6 @@ import java.util.Optional;
 
 import com.fasterxml.jackson.annotation.JsonAnySetter;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
@@ -118,7 +117,7 @@ public class JsonCallParameter extends CallParameter {
     private Optional<Boolean> strict = Optional.empty();
     private Address from;
     private Address to;
-    private long gasLimit = -1;
+    private long gas = -1;
     private Optional<Wei> maxPriorityFeePerGas = Optional.empty();
     private Optional<Wei> maxFeePerGas = Optional.empty();
     private Optional<Wei> maxFeePerBlobGas = Optional.empty();
@@ -176,14 +175,13 @@ public class JsonCallParameter extends CallParameter {
      * limit, the call is reverted. By default, if not specified, the gas limit is set to -1,
      * indicating that it is not set.
      *
-     * @param gasLimit the gas limit for the call, can be {@code null} to indicate that the gas
-     *     limit is not set
+     * @param gas the gas limit for the call, can be {@code null} to indicate that the gas limit is
+     *     not set
      * @return the {@link JsonCallParameterBuilder} instance for chaining
      */
     @JsonDeserialize(using = GasDeserializer.class)
-    @JsonProperty("gas")
-    public JsonCallParameterBuilder withGasLimit(final Long gasLimit) {
-      this.gasLimit = Optional.ofNullable(gasLimit).orElse(-1L);
+    public JsonCallParameterBuilder withGas(final Long gas) {
+      this.gas = Optional.ofNullable(gas).orElse(-1L);
       return this;
     }
 
@@ -351,7 +349,7 @@ public class JsonCallParameter extends CallParameter {
       return new JsonCallParameter(
           from,
           to,
-          gasLimit,
+          gas,
           gasPrice,
           maxPriorityFeePerGas,
           maxFeePerGas,

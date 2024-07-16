@@ -126,7 +126,7 @@ public class EthCallIntegrationTest {
         new JsonCallParameter.JsonCallParameterBuilder()
             .withFrom(Address.fromHexString("0xa94f5374fce5edbc8e2a8697c15331677e6ebf0b"))
             .withTo(Address.fromHexString("0x6295ee1b4f6dd65047762f924ecd367c17eabf8f"))
-            .withGasLimit(0L)
+            .withGas(0L)
             .withInput(Bytes.fromHexString("0x12a7b914"))
             .build();
 

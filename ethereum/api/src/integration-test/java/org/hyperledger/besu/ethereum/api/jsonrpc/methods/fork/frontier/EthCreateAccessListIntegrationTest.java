@@ -197,7 +197,7 @@ public class EthCreateAccessListIntegrationTest {
     final JsonCallParameter callParameter =
         new JsonCallParameter.JsonCallParameterBuilder()
             .withFrom(Address.fromHexString("0x0000000000000000000000000000000000000000"))
-            .withGasLimit(1L)
+            .withGas(1L)
             .withGasPrice(Wei.fromHexString("0x9999999999"))
             .withInput(
                 Bytes.fromHexString(
@@ -217,7 +217,7 @@ public class EthCreateAccessListIntegrationTest {
   @Test
   public void shouldReturnExpectedValueForInsufficientGas() {
     final JsonCallParameter callParameter =
-        new JsonCallParameter.JsonCallParameterBuilder().withGasLimit(1L).build();
+        new JsonCallParameter.JsonCallParameterBuilder().withGas(1L).build();
     final JsonRpcRequestContext request = requestWithParams(callParameter);
     final JsonRpcResponse expectedResponse =
         new JsonRpcSuccessResponse(null, new CreateAccessListResult(new ArrayList<>(), 0xcf08));

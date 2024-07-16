@@ -446,7 +446,7 @@ public class EthCallTest {
     return new JsonCallParameter.JsonCallParameterBuilder()
         .withFrom(Address.fromHexString("0x0"))
         .withTo(Address.fromHexString("0x0"))
-        .withGasLimit(0L)
+        .withGas(0L)
         .withGasPrice(gasPrice)
         .withMaxFeePerGas(maxFeesPerGas)
         .withMaxPriorityFeePerGas(maxPriorityFeesPerGas)

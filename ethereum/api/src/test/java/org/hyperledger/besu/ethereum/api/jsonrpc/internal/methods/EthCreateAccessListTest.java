@@ -308,7 +308,7 @@ public class EthCreateAccessListTest {
     return new JsonCallParameter.JsonCallParameterBuilder()
         .withFrom(Address.fromHexString("0x0"))
         .withTo(Address.fromHexString("0x0"))
-        .withGasLimit(0L)
+        .withGas(0L)
         .withGasPrice(gasPrice)
         .withValue(Wei.ZERO)
         .withInput(Bytes.EMPTY)
