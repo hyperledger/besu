@@ -54,11 +54,18 @@ public interface SetCodeAuthorization {
   Optional<Address> authorizer();
 
   /**
-   * Return the list of nonces
+   * Return a valid nonce or empty otherwise. A nonce is valid if the size of the list is exactly 1
+   *
+   * @return all the optional nonce
+   */
+  Optional<Long> nonce();
+
+  /**
+   * Return all nonces in the list
    *
    * @return all the nonces
    */
-  List<Long> nonces();
+  List<Long> nonceList();
 
   /**
    * Return the recovery id.

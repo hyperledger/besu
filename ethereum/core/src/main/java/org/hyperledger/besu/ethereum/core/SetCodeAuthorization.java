@@ -116,9 +116,14 @@ public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetC
     return authorizer;
   }
 
+  @Override
+  public Optional<Long> nonce() {
+    return nonces.size() == 1 ? Optional.of(nonces.getFirst()) : Optional.empty();
+  }
+
   @JsonProperty("nonce")
   @Override
-  public List<Long> nonces() {
+  public List<Long> nonceList() {
     return nonces;
   }
 

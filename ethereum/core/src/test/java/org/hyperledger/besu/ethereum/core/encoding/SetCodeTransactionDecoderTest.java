@@ -42,8 +42,8 @@ class SetCodeTransactionDecoderTest {
     assertThat(authorization.chainId()).isEqualTo(BigInteger.ONE);
     assertThat(authorization.address())
         .isEqualTo(Address.fromHexStringStrict("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"));
-    assertThat(authorization.nonces().size()).isEqualTo(1);
-    assertThat(authorization.nonces().getFirst()).isEqualTo(0L);
+    assertThat(authorization.nonceList().size()).isEqualTo(1);
+    assertThat(authorization.nonce().get()).isEqualTo(0L);
 
     final SECPSignature signature = authorization.signature();
     assertThat(signature.getRecId()).isEqualTo((byte) 0);
@@ -67,7 +67,7 @@ class SetCodeTransactionDecoderTest {
     assertThat(authorization.chainId()).isEqualTo(BigInteger.ONE);
     assertThat(authorization.address())
         .isEqualTo(Address.fromHexStringStrict("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"));
-    assertThat(authorization.nonces().size()).isEqualTo(0);
+    assertThat(authorization.nonceList().size()).isEqualTo(0);
 
     final SECPSignature signature = authorization.signature();
     assertThat(signature.getRecId()).isEqualTo((byte) 1);
@@ -91,9 +91,9 @@ class SetCodeTransactionDecoderTest {
     assertThat(authorization.chainId()).isEqualTo(BigInteger.ONE);
     assertThat(authorization.address())
         .isEqualTo(Address.fromHexStringStrict("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"));
-    assertThat(authorization.nonces().size()).isEqualTo(2);
-    assertThat(authorization.nonces().getFirst()).isEqualTo(1L);
-    assertThat(authorization.nonces().get(1)).isEqualTo(2L);
+    assertThat(authorization.nonceList().size()).isEqualTo(2);
+    assertThat(authorization.nonce().get()).isEqualTo(1L);
+    assertThat(authorization.nonceList().get(1)).isEqualTo(2L);
 
     final SECPSignature signature = authorization.signature();
     assertThat(signature.getRecId()).isEqualTo((byte) 1);
@@ -117,7 +117,7 @@ class SetCodeTransactionDecoderTest {
     assertThat(authorization.chainId()).isEqualTo(BigInteger.ZERO);
     assertThat(authorization.address())
         .isEqualTo(Address.fromHexStringStrict("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"));
-    assertThat(authorization.nonces().isEmpty()).isTrue();
+    assertThat(authorization.nonce().isEmpty()).isTrue();
 
     final SECPSignature signature = authorization.signature();
     assertThat(signature.getRecId()).isEqualTo((byte) 1);

@@ -64,8 +64,8 @@ public class AuthorityProcessor {
                           final long accountNonce =
                               maybeAccount.map(AccountState::getNonce).orElse(0L);
 
-                          if (payload.nonces().size() == 1
-                              && !payload.nonces().getFirst().equals(accountNonce)) {
+                          if (payload.nonce().isPresent()
+                              && !payload.nonce().get().equals(accountNonce)) {
                             return;
                           }
 
