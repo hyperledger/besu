@@ -34,6 +34,7 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import java.util.List;
 
 import org.apache.tuweni.units.bigints.UInt256;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -87,5 +88,12 @@ class SStoreOperationTest {
 
     final OperationResult result = operation.execute(frame, null);
     assertThat(result.getHaltReason()).isEqualTo(expectedHalt);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

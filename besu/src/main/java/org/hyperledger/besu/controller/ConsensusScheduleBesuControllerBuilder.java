@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.MigratingContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
 import org.hyperledger.besu.consensus.common.MigratingProtocolContext;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -328,15 +327,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   public BesuControllerBuilder privacyParameters(final PrivacyParameters privacyParameters) {
     besuControllerBuilderSchedule.values().forEach(b -> b.privacyParameters(privacyParameters));
     return super.privacyParameters(privacyParameters);
-  }
-
-  @Override
-  public BesuControllerBuilder pkiBlockCreationConfiguration(
-      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
-    besuControllerBuilderSchedule
-        .values()
-        .forEach(b -> b.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration));
-    return super.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
   }
 
   @Override

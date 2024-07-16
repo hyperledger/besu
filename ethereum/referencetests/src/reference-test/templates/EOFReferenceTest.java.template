@@ -34,9 +34,10 @@ public class %%TESTS_NAME%% {
       final String name,
       final String fork,
       final Bytes code,
+      final String containerKind,
       final EOFTestCaseSpec.TestResult results,
       final boolean runTest) {
     assumeTrue(runTest, "Test " + name + " was ignored");
-    executeTest(fork, code, results);
+    executeTest(fork, code, containerKind, results);
   }
 }
