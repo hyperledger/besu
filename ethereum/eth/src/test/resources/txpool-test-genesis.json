@@ -1,0 +1,15 @@
+{
+  "config": {
+    "chainId": 1,
+    "cancunTime": 0,
+    "terminalTotalDifficulty": 0
+  },
+  "nonce": "0x42",
+  "timestamp": "0x0",
+  "extraData": "",
+  "gasLimit": "0x1fffffffffffff",
+  "difficulty": "0x10000",
+  "mixHash": "0x0000000000000000000000000000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000000",
+  "baseFeePerGas": "0xA"
+}
