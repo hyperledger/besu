@@ -232,7 +232,7 @@ public class T8nExecutor {
                 final Address authorizationAddress =
                     Address.fromHexString(entryAsJson.get("address").textValue());
 
-                JsonNode nonces = txNode.get("nonce");
+                JsonNode nonces = entryAsJson.get("nonce");
 
                 if (nonces == null) {
                   out.printf(
