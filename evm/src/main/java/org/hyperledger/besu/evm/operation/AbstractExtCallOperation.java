@@ -38,6 +38,8 @@ import org.apache.tuweni.bytes.Bytes;
 public abstract class AbstractExtCallOperation extends AbstractCallOperation {
 
   static final int STACK_TO = 0;
+  static final int STACK_INPUT_OFFSET = 1;
+  static final int STACK_INPUT_LENGTH = 2;
 
   /** EXT*CALL response indicating success */
   public static final Bytes EOF1_SUCCESS_STACK_ITEM = Bytes.EMPTY;
@@ -195,6 +197,10 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     return switch (childFrame.getState()) {
       case COMPLETED_SUCCESS -> EOF1_SUCCESS_STACK_ITEM;
       case EXCEPTIONAL_HALT -> EOF1_EXCEPTION_STACK_ITEM;
+      case COMPLETED_FAILED ->
+          childFrame.getExceptionalHaltReason().isPresent()
+              ? EOF1_FAILURE_STACK_ITEM
+              : EOF1_EXCEPTION_STACK_ITEM;
       default -> EOF1_FAILURE_STACK_ITEM;
     };
   }

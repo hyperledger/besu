@@ -25,7 +25,8 @@ public class EOFTestCaseSpec {
 
   public record TestVector(
       @JsonProperty("code") String code,
-      @JsonProperty("results") NavigableMap<String, TestResult> results) {}
+      @JsonProperty("results") NavigableMap<String, TestResult> results,
+      @JsonProperty("containerKind") String containerKind) {}
 
   public record TestResult(
       @JsonProperty("exception") String exception, @JsonProperty("result") boolean result) {

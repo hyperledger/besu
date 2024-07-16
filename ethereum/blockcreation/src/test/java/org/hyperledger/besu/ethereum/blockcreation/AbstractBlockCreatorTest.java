@@ -26,8 +26,9 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPPrivateKey;
+import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BLSPublicKey;
@@ -73,12 +74,18 @@ import org.hyperledger.besu.ethereum.mainnet.BodyValidation;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidator;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidatorFactory;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsProcessor;
-import org.hyperledger.besu.ethereum.mainnet.feemarket.CancunFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor;
 import org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestValidator;
+import org.hyperledger.besu.ethereum.mainnet.requests.ProcessRequestContext;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestProcessorCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
+import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
+import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.log.LogTopic;
@@ -88,13 +95,13 @@ import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import java.math.BigInteger;
 import java.time.Clock;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 
+import com.google.common.base.Supplier;
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt64;
-import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
@@ -102,6 +109,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 abstract class AbstractBlockCreatorTest {
+  private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
+      Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
+  private static final SECPPrivateKey PRIVATE_KEY1 =
+      SIGNATURE_ALGORITHM
+          .get()
+          .createPrivateKey(
+              Bytes32.fromHexString(
+                  "8f2a55949038a9610f50fb23b5883af3b4ecb3c3bb792cbcefbd1542c692be63"));
+  private static final KeyPair KEYS1 =
+      new KeyPair(PRIVATE_KEY1, SIGNATURE_ALGORITHM.get().createPublicKey(PRIVATE_KEY1));
+
   @Mock private WithdrawalsProcessor withdrawalsProcessor;
   protected EthScheduler ethScheduler = new DeterministicEthScheduler();
 
@@ -135,7 +153,8 @@ abstract class AbstractBlockCreatorTest {
     final List<DepositRequest> expectedDepositRequests = List.of(expectedDepositRequest);
 
     var depositRequestsFromReceipts =
-        new DepositRequestProcessor(DEFAULT_DEPOSIT_CONTRACT_ADDRESS).process(null, receipts);
+        new DepositRequestProcessor(DEFAULT_DEPOSIT_CONTRACT_ADDRESS)
+            .process(new ProcessRequestContext(null, null, null, receipts, null, null));
     assertThat(depositRequestsFromReceipts.get()).isEqualTo(expectedDepositRequests);
   }
 
@@ -299,10 +318,8 @@ abstract class AbstractBlockCreatorTest {
     assertThat(blockCreationResult.getBlock().getBody().getWithdrawals()).isEmpty();
   }
 
-  @Disabled
   @Test
   public void computesGasUsageFromIncludedTransactions() {
-    final KeyPair senderKeys = SignatureAlgorithmFactory.getInstance().generateKeyPair();
     final AbstractBlockCreator blockCreator = blockCreatorWithBlobGasSupport();
     BlobTestFixture blobTestFixture = new BlobTestFixture();
     BlobsWithCommitments bwc = blobTestFixture.createBlobsWithCommitments(6);
@@ -311,13 +328,14 @@ abstract class AbstractBlockCreatorTest {
         ttf.to(Optional.of(Address.ZERO))
             .type(TransactionType.BLOB)
             .chainId(Optional.of(BigInteger.valueOf(42)))
+            .gasLimit(21000)
             .maxFeePerGas(Optional.of(Wei.of(15)))
             .maxFeePerBlobGas(Optional.of(Wei.of(128)))
             .maxPriorityFeePerGas(Optional.of(Wei.of(1)))
             .versionedHashes(Optional.of(bwc.getVersionedHashes()))
-            .createTransaction(senderKeys);
+            .blobsWithCommitments(Optional.of(bwc))
+            .createTransaction(KEYS1);
 
-    ttf.blobsWithCommitments(Optional.of(bwc));
     final BlockCreationResult blockCreationResult =
         blockCreator.createBlock(
             Optional.of(List.of(fullOfBlobs)),
@@ -334,13 +352,17 @@ abstract class AbstractBlockCreatorTest {
   }
 
   private AbstractBlockCreator blockCreatorWithBlobGasSupport() {
+    final var alwaysValidTransactionValidatorFactory = mock(TransactionValidatorFactory.class);
+    when(alwaysValidTransactionValidatorFactory.get())
+        .thenReturn(new AlwaysValidTransactionValidator());
     final ProtocolSpecAdapters protocolSpecAdapters =
         ProtocolSpecAdapters.create(
             0,
             specBuilder -> {
-              specBuilder.feeMarket(new CancunFeeMarket(0, Optional.empty()));
               specBuilder.isReplayProtectionSupported(true);
               specBuilder.withdrawalsProcessor(withdrawalsProcessor);
+              specBuilder.transactionValidatorFactoryBuilder(
+                  (evm, gasLimitCalculator, feeMarket) -> alwaysValidTransactionValidatorFactory);
               return specBuilder;
             });
     return createBlockCreator(protocolSpecAdapters);
@@ -354,16 +376,19 @@ abstract class AbstractBlockCreatorTest {
   }
 
   private AbstractBlockCreator blockCreatorWithoutWithdrawalsProcessor() {
-    return createBlockCreator(new ProtocolSpecAdapters(Map.of()));
+    final ProtocolSpecAdapters protocolSpecAdapters =
+        ProtocolSpecAdapters.create(0, specBuilder -> specBuilder.withdrawalsProcessor(null));
+    return createBlockCreator(protocolSpecAdapters);
   }
 
   private AbstractBlockCreator createBlockCreator(final ProtocolSpecAdapters protocolSpecAdapters) {
-    final GenesisConfigOptions genesisConfigOptions = GenesisConfigFile.DEFAULT.getConfigOptions();
+
+    final var genesisConfigFile = GenesisConfigFile.fromResource("/block-creation-genesis.json");
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder()
+        ExecutionContextTestFixture.builder(genesisConfigFile)
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
-                        genesisConfigOptions,
+                        genesisConfigFile.getConfigOptions(),
                         BigInteger.valueOf(42),
                         protocolSpecAdapters,
                         PrivacyParameters.DEFAULT,
@@ -448,6 +473,26 @@ abstract class AbstractBlockCreatorTest {
           .nonce(0L)
           .blockHeaderFunctions(blockHeaderFunctions)
           .buildBlockHeader();
+    }
+  }
+
+  static class AlwaysValidTransactionValidator implements TransactionValidator {
+
+    @Override
+    public ValidationResult<TransactionInvalidReason> validate(
+        final Transaction transaction,
+        final Optional<Wei> baseFee,
+        final Optional<Wei> blobBaseFee,
+        final TransactionValidationParams transactionValidationParams) {
+      return ValidationResult.valid();
+    }
+
+    @Override
+    public ValidationResult<TransactionInvalidReason> validateForSender(
+        final Transaction transaction,
+        final Account sender,
+        final TransactionValidationParams validationParams) {
+      return ValidationResult.valid();
     }
   }
 }

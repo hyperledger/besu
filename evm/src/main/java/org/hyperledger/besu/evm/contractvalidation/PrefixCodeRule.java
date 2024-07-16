@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.contractvalidation;
 
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 
@@ -31,12 +32,14 @@ public class PrefixCodeRule implements ContractValidationRule {
   private static final byte FORMAT_RESERVED = (byte) 0xEF;
 
   /** Default constructor. */
-  public PrefixCodeRule() {}
+  public PrefixCodeRule() {
+    // This constructor exists because of JavaDoc linting rules.
+  }
 
   @Override
   // As per https://eips.ethereum.org/EIPS/eip-3541
   public Optional<ExceptionalHaltReason> validate(
-      final Bytes contractCode, final MessageFrame frame) {
+      final Bytes contractCode, final MessageFrame frame, final EVM evm) {
     if (!contractCode.isEmpty() && contractCode.get(0) == FORMAT_RESERVED) {
       LOG.trace("Contract creation error: code cannot start with {}", FORMAT_RESERVED);
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);

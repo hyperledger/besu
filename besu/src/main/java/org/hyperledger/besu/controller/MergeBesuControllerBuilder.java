@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardChain;
 import org.hyperledger.besu.ethereum.eth.sync.backwardsync.BackwardSyncContext;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
+import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
@@ -97,14 +98,15 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
       final EthMessages ethMessages,
       final EthScheduler scheduler,
       final List<PeerValidator> peerValidators,
-      final Optional<MergePeerFilter> mergePeerFilter) {
+      final Optional<MergePeerFilter> mergePeerFilter,
+      final ForkIdManager forkIdManager) {
 
     var mergeContext = protocolContext.getConsensusContext(MergeContext.class);
 
     var mergeBestPeerComparator =
         new TransitionBestPeerComparator(
             genesisConfigOptions.getTerminalTotalDifficulty().map(Difficulty::of).orElseThrow());
-    ethPeers.setBestChainComparator(mergeBestPeerComparator);
+    ethPeers.setBestPeerComparator(mergeBestPeerComparator);
     mergeContext.observeNewIsPostMergeState(mergeBestPeerComparator);
 
     Optional<MergePeerFilter> filterToUse = Optional.of(new MergePeerFilter());
@@ -126,7 +128,8 @@ public class MergeBesuControllerBuilder extends BesuControllerBuilder {
             ethMessages,
             scheduler,
             peerValidators,
-            filterToUse);
+            filterToUse,
+            forkIdManager);
 
     return ethProtocolManager;
   }

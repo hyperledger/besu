@@ -77,6 +77,7 @@ public class PrivacyParameters {
   private PrivateStateRootResolver privateStateRootResolver;
   private PrivateWorldStateReader privateWorldStateReader;
   private PrivacyPluginService privacyPluginService;
+  private boolean privateNonceAlwaysIncrementsEnabled;
 
   public Address getPrivacyAddress() {
     if (isPrivacyPluginEnabled()) {
@@ -228,6 +229,15 @@ public class PrivacyParameters {
     }
   }
 
+  public boolean isPrivateNonceAlwaysIncrementsEnabled() {
+    return privateNonceAlwaysIncrementsEnabled;
+  }
+
+  public void setPrivateNonceAlwaysIncrementsEnabled(
+      final boolean privateNonceAlwaysIncrementsEnabled) {
+    this.privateNonceAlwaysIncrementsEnabled = privateNonceAlwaysIncrementsEnabled;
+  }
+
   @Override
   public String toString() {
     return "PrivacyParameters{"
@@ -263,6 +273,7 @@ public class PrivacyParameters {
     private boolean flexiblePrivacyGroupsEnabled;
     private boolean privacyPluginEnabled;
     private PrivacyPluginService privacyPluginService;
+    private boolean privateNonceAlwaysIncrementsEnabled;
 
     public Builder setEnclaveUrl(final URI enclaveUrl) {
       this.enclaveUrl = enclaveUrl;
@@ -311,6 +322,12 @@ public class PrivacyParameters {
 
     public Builder setFlexiblePrivacyGroupsEnabled(final boolean flexiblePrivacyGroupsEnabled) {
       this.flexiblePrivacyGroupsEnabled = flexiblePrivacyGroupsEnabled;
+      return this;
+    }
+
+    public Builder setPrivateNonceAlwaysIncrementsEnabled(
+        final boolean isPrivateNonceAlwaysIncrementsEnabled) {
+      this.privateNonceAlwaysIncrementsEnabled = isPrivateNonceAlwaysIncrementsEnabled;
       return this;
     }
 
@@ -382,6 +399,7 @@ public class PrivacyParameters {
       config.setMultiTenancyEnabled(multiTenancyEnabled);
       config.setFlexiblePrivacyGroupsEnabled(flexiblePrivacyGroupsEnabled);
       config.setPrivacyPluginEnabled(privacyPluginEnabled);
+      config.setPrivateNonceAlwaysIncrementsEnabled(privateNonceAlwaysIncrementsEnabled);
       return config;
     }
   }

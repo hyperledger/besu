@@ -103,6 +103,7 @@ public class EthPeer implements Comparable<EthPeer> {
   private final PeerReputation reputation = new PeerReputation();
   private final Map<PeerValidator, Boolean> validationStatus = new ConcurrentHashMap<>();
   private final Bytes id;
+  private boolean isServingSnap = false;
 
   private static final Map<Integer, Integer> roundMessages;
 
@@ -393,6 +394,14 @@ public class EthPeer implements Comparable<EthPeer> {
         requestManagers.get(SnapProtocol.NAME).get(SnapV1.GET_TRIE_NODES), getTrieNodes);
   }
 
+  public void setIsServingSnap(final boolean isServingSnap) {
+    this.isServingSnap = isServingSnap;
+  }
+
+  public boolean isServingSnap() {
+    return isServingSnap;
+  }
+
   private RequestManager.ResponseStream sendRequest(
       final RequestManager requestManager, final MessageData messageData) throws PeerNotConnected {
     lastRequestTimestamp = clock.millis();
@@ -582,9 +591,9 @@ public class EthPeer implements Comparable<EthPeer> {
   }
 
   /**
-   * Return A read-only snapshot of this peer's current {@code chainState} }
+   * Return A read-only snapshot of this peer's current {@code chainState}
    *
-   * @return A read-only snapshot of this peer's current {@code chainState} }
+   * @return A read-only snapshot of this peer's current {@code chainState}
    */
   public ChainHeadEstimate chainStateSnapshot() {
     return chainHeadState.getSnapshot();
@@ -629,14 +638,17 @@ public class EthPeer implements Comparable<EthPeer> {
   @Override
   public String toString() {
     return String.format(
-        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s",
+        "PeerId: %s %s, validated? %s, disconnected? %s, client: %s, %s, %s, isServingSnap %s, has height %s, connected for %s ms",
         getLoggableId(),
         reputation,
         isFullyValidated(),
         isDisconnected(),
         connection.getPeerInfo().getClientId(),
         connection,
-        connection.getPeer().getEnodeURLString());
+        connection.getPeer().getEnodeURLString(),
+        isServingSnap,
+        chainHeadState.getEstimatedHeight(),
+        System.currentTimeMillis() - connection.getInitiatedAt());
   }
 
   @Nonnull

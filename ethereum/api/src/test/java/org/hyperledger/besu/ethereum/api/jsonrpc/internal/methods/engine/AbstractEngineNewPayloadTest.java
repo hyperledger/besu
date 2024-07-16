@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsolidationRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
@@ -403,7 +404,7 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
 
   protected EnginePayloadParameter mockEnginePayload(
       final BlockHeader header, final List<String> txs) {
-    return mockEnginePayload(header, txs, null, null, null);
+    return mockEnginePayload(header, txs, null, null, null, null);
   }
 
   protected EnginePayloadParameter mockEnginePayload(
@@ -411,7 +412,8 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
       final List<String> txs,
       final List<WithdrawalParameter> withdrawals,
       final List<DepositRequestParameter> depositRequests,
-      final List<WithdrawalRequestParameter> withdrawalRequests) {
+      final List<WithdrawalRequestParameter> withdrawalRequests,
+      final List<ConsolidationRequestParameter> consolidationRequests) {
     return new EnginePayloadParameter(
         header.getHash(),
         header.getParentHash(),
@@ -431,7 +433,8 @@ public abstract class AbstractEngineNewPayloadTest extends AbstractScheduledApiT
         header.getBlobGasUsed().map(UnsignedLongParameter::new).orElse(null),
         header.getExcessBlobGas().map(BlobGas::toHexString).orElse(null),
         depositRequests,
-        withdrawalRequests);
+        withdrawalRequests,
+        consolidationRequests);
   }
 
   protected BlockHeader setupValidPayload(

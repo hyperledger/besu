@@ -352,11 +352,63 @@ allprojects {
     options.addBooleanOption('Xdoclint/package:-org.hyperledger.besu.privacy.contracts.generated,' +
       '-org.hyperledger.besu.tests.acceptance.*,' +
       '-org.hyperledger.besu.tests.web3j.generated,' +
-      // TODO: these are temporary disabled (ethereum and sub modules), it should be removed in a future PR.
-      '-org.hyperledger.besu.ethereum,' +
-      '-org.hyperledger.besu.ethereum.*,' +
-      '-org.hyperledger.besu.ethstats.*,' +
-      '-org.hyperledger.besu.evmtool',
+      // TODO: these are temporary excluded from lint (ethereum sub modules), it should be removed in a future PR.
+      // ethereum api module
+      '-org.hyperledger.besu.ethereum.api.handlers,' +
+      '-org.hyperledger.besu.ethereum.api.jsonrpc,' +
+      '-org.hyperledger.besu.ethereum.api.jsonrpc.*,' +
+      '-org.hyperledger.besu.ethereum.api.query,' +
+      '-org.hyperledger.besu.ethereum.api.query.*,' +
+      '-org.hyperledger.besu.ethereum.api.tls,' +
+      '-org.hyperledger.besu.ethereum.api.util,' +
+      // ethereum blockcreation module
+      '-org.hyperledger.besu.ethereum.blockcreation,' +
+      '-org.hyperledger.besu.ethereum.blockcreation.*,' +
+      // ethereum core module
+      '-org.hyperledger.besu.ethereum.chain,' +
+      '-org.hyperledger.besu.ethereum.core,' +
+      '-org.hyperledger.besu.ethereum.core.*,' +
+      '-org.hyperledger.besu.ethereum.debug,' +
+      '-org.hyperledger.besu.ethereum.difficulty.fixed,' +
+      '-org.hyperledger.besu.ethereum.forkid,' +
+      '-org.hyperledger.besu.ethereum.mainnet,' +
+      '-org.hyperledger.besu.ethereum.mainnet.*,' +
+      '-org.hyperledger.besu.ethereum.privacy,' +
+      '-org.hyperledger.besu.ethereum.privacy.*,' +
+      '-org.hyperledger.besu.ethereum.processing,' +
+      '-org.hyperledger.besu.ethereum.proof,' +
+      '-org.hyperledger.besu.ethereum.storage,' +
+      '-org.hyperledger.besu.ethereum.storage.*,' +
+      '-org.hyperledger.besu.ethereum.transaction,' +
+      '-org.hyperledger.besu.ethereum.trie.*,' +
+      '-org.hyperledger.besu.ethereum.util,' +
+      '-org.hyperledger.besu.ethereum.vm,' +
+      '-org.hyperledger.besu.ethereum.worldstate,' +
+      // ethereum eth module
+      '-org.hyperledger.besu.ethereum.eth.*,' +
+      '-org.hyperledger.besu.ethereum.eth,' +
+      '-org.hyperledger.besu.consensus.merge,' +
+      // p2p module
+      '-org.hyperledger.besu.ethereum.p2p,' +
+      '-org.hyperledger.besu.ethereum.p2p.*,' +
+      // permissioning module
+      '-org.hyperledger.besu.ethereum.permissioning,' +
+      '-org.hyperledger.besu.ethereum.permissioning.*,' +
+      // referencetests module
+      '-org.hyperledger.besu.ethereum.referencetests,' +
+      // retesteth module
+      '-org.hyperledger.besu.ethereum.retesteth.methods,' +
+      '-org.hyperledger.besu.ethereum.retesteth,' +
+      //rlp module
+      '-org.hyperledger.besu.ethereum.rlp,' +
+      // stratum module
+      '-org.hyperledger.besu.ethereum.stratum,' +
+      // trie module
+      '-org.hyperledger.besu.ethereum.trie.*,' +
+      '-org.hyperledger.besu.ethereum.trie,' +
+      // verkle trie module
+      '-org.hyperledger.besu.ethereum.verkletrie,' +
+      '-org.hyperledger.besu.ethereum.verkletrie.*',
       true)
     options.addStringOption('Xmaxerrs','65535')
     options.addStringOption('Xmaxwarns','65535')
@@ -908,6 +960,10 @@ def calculateVersion() {
   def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
 
   if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
+    if (project.hasProperty('versionappendcommit') && project.versionappendcommit == "true") {
+      def gitDetails = getGitCommitDetails(7) // Adjust length as needed
+      return "${project.version}-${gitDetails.hash}"
+    }
     return "${project.version}"
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git

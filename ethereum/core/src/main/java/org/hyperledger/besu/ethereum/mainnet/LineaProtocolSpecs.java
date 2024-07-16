@@ -21,28 +21,19 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
 import java.math.BigInteger;
 import java.util.Optional;
-import java.util.OptionalInt;
 
 public class LineaProtocolSpecs {
   private LineaProtocolSpecs() {}
 
   static ProtocolSpecBuilder lineaOpCodesDefinition(
       final Optional<BigInteger> chainId,
-      final OptionalInt configContractSizeLimit,
-      final OptionalInt configStackSizeLimit,
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters) {
 
     return MainnetProtocolSpecs.londonDefinition(
-            chainId,
-            configContractSizeLimit,
-            configStackSizeLimit,
-            enableRevertReason,
-            genesisConfigOptions,
-            evmConfiguration,
-            miningParameters)
+            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
         // some Linea evm opcodes behave differently.
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->

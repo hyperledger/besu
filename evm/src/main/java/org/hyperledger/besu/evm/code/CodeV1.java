@@ -18,6 +18,7 @@ import static com.google.common.base.Preconditions.checkArgument;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.internal.Words;
 
 import java.io.PrintWriter;
@@ -94,22 +95,23 @@ public class CodeV1 implements Code {
   }
 
   @Override
-  public Optional<Code> getSubContainer(final int index, final Bytes auxData) {
+  public Optional<Code> getSubContainer(final int index, final Bytes auxData, final EVM evm) {
     EOFLayout subcontainerLayout = eofLayout.getSubcontainer(index);
+    Bytes codeToLoad;
     if (auxData != null && !auxData.isEmpty()) {
-      Bytes subcontainerWithAuxData = subcontainerLayout.writeContainer(auxData);
-      if (subcontainerWithAuxData == null) {
+      codeToLoad = subcontainerLayout.writeContainer(auxData);
+      if (codeToLoad == null) {
         return Optional.empty();
       }
-      subcontainerLayout = EOFLayout.parseEOF(subcontainerWithAuxData);
     } else {
-      // if no auxdata is added we must validate data is not truncated separately
+      // if no auxdata is added, we must validate data is not truncated separately
       if (subcontainerLayout.dataLength() != subcontainerLayout.data().size()) {
         return Optional.empty();
       }
+      codeToLoad = subcontainerLayout.container();
     }
 
-    Code subContainerCode = CodeFactory.createCode(subcontainerLayout, auxData == null);
+    Code subContainerCode = evm.getCodeUncached(codeToLoad);
 
     return subContainerCode.isValid() && subContainerCode.getEofVersion() > 0
         ? Optional.of(subContainerCode)
@@ -148,6 +150,11 @@ public class CodeV1 implements Code {
   @Override
   public int getDataSize() {
     return eofLayout.data().size();
+  }
+
+  @Override
+  public int getDeclaredDataSize() {
+    return eofLayout.dataLength();
   }
 
   @Override

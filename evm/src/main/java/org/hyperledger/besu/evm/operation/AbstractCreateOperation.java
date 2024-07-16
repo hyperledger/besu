@@ -22,7 +22,6 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -104,6 +103,11 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     Code code = codeSupplier.get();
 
+    if (code != null && code.getSize() > maxInitcodeSize) {
+      frame.popStackItems(getStackItemsConsumed());
+      return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
+    }
+
     if (value.compareTo(account.getBalance()) > 0
         || frame.getDepth() >= 1024
         || account.getNonce() == -1
@@ -113,14 +117,9 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
     } else {
       account.incrementNonce();
 
-      if (code.getSize() > maxInitcodeSize) {
-        frame.popStackItems(getStackItemsConsumed());
-        return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
-      }
       if (!code.isValid()) {
         fail(frame);
       } else {
-
         frame.decrementRemainingGas(cost);
         spawnChildMessage(frame, code, evm);
         frame.incrementRemainingGas(cost);
@@ -215,32 +214,32 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   private void complete(final MessageFrame frame, final MessageFrame childFrame, final EVM evm) {
     frame.setState(MessageFrame.State.CODE_EXECUTING);
 
-    Code outputCode =
-        (childFrame.getCreatedCode() != null)
-            ? childFrame.getCreatedCode()
-            : CodeFactory.createCode(childFrame.getOutputData(), evm.getMaxEOFVersion());
+    frame.incrementRemainingGas(childFrame.getRemainingGas());
+    frame.addLogs(childFrame.getLogs());
+    frame.addSelfDestructs(childFrame.getSelfDestructs());
+    frame.addCreates(childFrame.getCreates());
     frame.popStackItems(getStackItemsConsumed());
 
-    if (outputCode.isValid()) {
-      frame.incrementRemainingGas(childFrame.getRemainingGas());
-      frame.addLogs(childFrame.getLogs());
-      frame.addSelfDestructs(childFrame.getSelfDestructs());
-      frame.addCreates(childFrame.getCreates());
-
-      if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+    if (childFrame.getState() == MessageFrame.State.COMPLETED_SUCCESS) {
+      Code outputCode =
+          (childFrame.getCreatedCode() != null)
+              ? childFrame.getCreatedCode()
+              : evm.getCodeForCreation(childFrame.getOutputData());
+      if (outputCode.isValid()) {
         Address createdAddress = childFrame.getContractAddress();
         frame.pushStackItem(Words.fromAddress(createdAddress));
+        frame.setReturnData(Bytes.EMPTY);
         onSuccess(frame, createdAddress);
       } else {
+        frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
         frame.setReturnData(childFrame.getOutputData());
         frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
-        onFailure(frame, childFrame.getExceptionalHaltReason());
+        onInvalid(frame, (CodeInvalid) outputCode);
       }
     } else {
-      frame.getWorldUpdater().deleteAccount(childFrame.getRecipientAddress());
       frame.setReturnData(childFrame.getOutputData());
       frame.pushStackItem(LEGACY_FAILURE_STACK_ITEM);
-      onInvalid(frame, (CodeInvalid) outputCode);
+      onFailure(frame, childFrame.getExceptionalHaltReason());
     }
 
     final int currentPC = frame.getPC();

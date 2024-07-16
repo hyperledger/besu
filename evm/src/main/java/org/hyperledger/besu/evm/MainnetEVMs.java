@@ -962,6 +962,76 @@ public class MainnetEVMs {
   }
 
   /**
+   * CancunEOF evm.
+   *
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM cancunEOF(final EvmConfiguration evmConfiguration) {
+    return cancunEOF(DEV_NET_CHAIN_ID, evmConfiguration);
+  }
+
+  /**
+   * CancunEOF evm.
+   *
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM cancunEOF(final BigInteger chainId, final EvmConfiguration evmConfiguration) {
+    return cancunEOF(new CancunGasCalculator(), chainId, evmConfiguration);
+  }
+
+  /**
+   * CancunEOF evm.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @param evmConfiguration the evm configuration
+   * @return the evm
+   */
+  public static EVM cancunEOF(
+      final GasCalculator gasCalculator,
+      final BigInteger chainId,
+      final EvmConfiguration evmConfiguration) {
+    return new EVM(
+        cancunEOFOperations(gasCalculator, chainId),
+        gasCalculator,
+        evmConfiguration,
+        EvmSpecVersion.CANCUN_EOF);
+  }
+
+  /**
+   * Operation registry for PragueEOF's operations.
+   *
+   * @param gasCalculator the gas calculator
+   * @param chainId the chain id
+   * @return the operation registry
+   */
+  public static OperationRegistry cancunEOFOperations(
+      final GasCalculator gasCalculator, final BigInteger chainId) {
+    OperationRegistry operationRegistry = new OperationRegistry();
+    registerCancunEOFOperations(operationRegistry, gasCalculator, chainId);
+    return operationRegistry;
+  }
+
+  /**
+   * Register CancunEOF's operations.
+   *
+   * @param registry the registry
+   * @param gasCalculator the gas calculator
+   * @param chainID the chain id
+   */
+  public static void registerCancunEOFOperations(
+      final OperationRegistry registry,
+      final GasCalculator gasCalculator,
+      final BigInteger chainID) {
+    registerCancunOperations(registry, gasCalculator, chainID);
+
+    registerEOFOperations(registry, gasCalculator);
+  }
+
+  /**
    * Prague evm.
    *
    * @param evmConfiguration the evm configuration
@@ -1098,6 +1168,11 @@ public class MainnetEVMs {
       final BigInteger chainID) {
     registerPragueOperations(registry, gasCalculator, chainID);
 
+    registerEOFOperations(registry, gasCalculator);
+  }
+
+  private static void registerEOFOperations(
+      final OperationRegistry registry, final GasCalculator gasCalculator) {
     // EIP-663 Unlimited Swap and Dup
     registry.put(new DupNOperation(gasCalculator));
     registry.put(new SwapNOperation(gasCalculator));

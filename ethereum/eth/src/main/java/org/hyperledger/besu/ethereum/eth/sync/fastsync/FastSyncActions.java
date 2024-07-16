@@ -142,8 +142,8 @@ public class FastSyncActions {
                                     ethContext,
                                     metricsSystem,
                                     currentState.getPivotBlockNumber().getAsLong(),
-                                    syncConfig.getFastSyncMinimumPeerCount(),
-                                    syncConfig.getFastSyncPivotDistance())
+                                    syncConfig.getSyncMinimumPeerCount(),
+                                    syncConfig.getSyncPivotDistance())
                                 .downloadPivotBlockHeader()));
   }
 

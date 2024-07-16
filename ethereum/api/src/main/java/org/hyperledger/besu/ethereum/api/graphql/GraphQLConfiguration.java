@@ -26,17 +26,33 @@ import java.util.Objects;
 
 import com.google.common.base.MoreObjects;
 
+/**
+ * Represents the configuration for GraphQL. This class is used to set and get the configuration
+ * details for GraphQL such as enabling GraphQL, setting the port and host, setting the allowed
+ * domains for CORS, setting the hosts allowlist, and setting the HTTP timeout.
+ */
 public class GraphQLConfiguration {
   private static final String DEFAULT_GRAPHQL_HTTP_HOST = "127.0.0.1";
+
+  /** The default port number for the GraphQL HTTP server. */
   public static final int DEFAULT_GRAPHQL_HTTP_PORT = 8547;
 
   private boolean enabled;
   private int port;
   private String host;
   private List<String> corsAllowedDomains = Collections.emptyList();
-  private List<String> hostsAllowlist = Arrays.asList("localhost", "127.0.0.1");
+  private List<String> hostsAllowlist = Arrays.asList("localhost", DEFAULT_GRAPHQL_HTTP_HOST);
   private long httpTimeoutSec = TimeoutOptions.defaultOptions().getTimeoutSeconds();
 
+  /**
+   * Creates a default configuration for GraphQL.
+   *
+   * <p>This method initializes a new GraphQLConfiguration object with default settings. The default
+   * settings are: - GraphQL is not enabled - The port is set to the default GraphQL HTTP port - The
+   * host is set to the default GraphQL HTTP host - The HTTP timeout is set to the default timeout
+   *
+   * @return a GraphQLConfiguration object with default settings
+   */
   public static GraphQLConfiguration createDefault() {
     final GraphQLConfiguration config = new GraphQLConfiguration();
     config.setEnabled(false);
@@ -48,52 +64,112 @@ public class GraphQLConfiguration {
 
   private GraphQLConfiguration() {}
 
+  /**
+   * Checks if GraphQL is enabled.
+   *
+   * @return true if GraphQL is enabled, false otherwise
+   */
   public boolean isEnabled() {
     return enabled;
   }
 
+  /**
+   * Sets the enabled status of GraphQL.
+   *
+   * @param enabled the status to set. true to enable GraphQL, false to disable it
+   */
   public void setEnabled(final boolean enabled) {
     this.enabled = enabled;
   }
 
+  /**
+   * Retrieves the port number for the GraphQL HTTP server.
+   *
+   * @return the port number
+   */
   public int getPort() {
     return port;
   }
 
+  /**
+   * Sets the port number for the GraphQL HTTP server.
+   *
+   * @param port the port number to set
+   */
   public void setPort(final int port) {
     this.port = port;
   }
 
+  /**
+   * Retrieves the host for the GraphQL HTTP server.
+   *
+   * @return the host
+   */
   public String getHost() {
     return host;
   }
 
+  /**
+   * Sets the host for the GraphQL HTTP server.
+   *
+   * @param host the host to set
+   */
   public void setHost(final String host) {
     this.host = host;
   }
 
+  /**
+   * Retrieves the allowed domains for CORS.
+   *
+   * @return a collection of allowed domains for CORS
+   */
   Collection<String> getCorsAllowedDomains() {
     return corsAllowedDomains;
   }
 
+  /**
+   * Sets the allowed domains for CORS.
+   *
+   * @param corsAllowedDomains a list of allowed domains for CORS
+   */
   public void setCorsAllowedDomains(final List<String> corsAllowedDomains) {
     checkNotNull(corsAllowedDomains);
     this.corsAllowedDomains = corsAllowedDomains;
   }
 
+  /**
+   * Retrieves the hosts allowlist.
+   *
+   * @return a collection of hosts in the allowlist
+   */
   Collection<String> getHostsAllowlist() {
     return Collections.unmodifiableCollection(this.hostsAllowlist);
   }
 
+  /**
+   * Sets the hosts allowlist.
+   *
+   * @param hostsAllowlist a list of hosts to be added to the allowlist
+   */
   public void setHostsAllowlist(final List<String> hostsAllowlist) {
     checkNotNull(hostsAllowlist);
     this.hostsAllowlist = hostsAllowlist;
   }
 
+  /**
+   * Retrieves the HTTP timeout in seconds.
+   *
+   * @return the HTTP timeout in seconds
+   */
   public Long getHttpTimeoutSec() {
     return httpTimeoutSec;
   }
 
+  /**
+   * Sets the HTTP timeout in seconds.
+   *
+   * @param httpTimeoutSec the HTTP timeout to set in seconds
+   */
   public void setHttpTimeoutSec(final long httpTimeoutSec) {
     this.httpTimeoutSec = httpTimeoutSec;
   }

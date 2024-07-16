@@ -15,7 +15,7 @@
  */
 
 plugins {
-  id 'org.graalvm.buildtools.native' version '0.9.17'
+  id 'org.graalvm.buildtools.native' version '0.10.2'
 }
 
 apply plugin: 'java-library'
@@ -72,46 +72,5 @@ dependencies {
 
 mainClassName = 'org.hyperledger.besu.evmtool.EvmTool'
 
-startScripts {
-  applicationName = 'evm'
-  defaultJvmOpts = [
-    "-Dsecp256k1.randomize=false"
-  ]
-  doLast {
-    unixScript.text = unixScript.text.replace('BESU_HOME', '\$APP_HOME')
-    windowsScript.text = windowsScript.text.replace('BESU_HOME', '%~dp0..')
-  }
-}
 
 // no evmtool docker image needed on this fork
-
-graalvmNative {
-  binaries {
-    main {
-      sharedLibrary = false
-      buildArgs.addAll(
-        "-H:ReflectionConfigurationFiles=${projectDir}/src/main/graal/reflection-config.json",
-        "-H:AdditionalSecurityProviders=org.bouncycastle.jce.provider.BouncyCastleProvider",
-        '-H:+TraceSecurityServices'
-        )
-
-
-      // Netty drags in older versions of bouncy castle, exclude it so there are no conflicts
-      excludeConfig.put("io.netty:netty-buffer", [".*"])
-    }
-  }
-}
-
-
-configurations.nativeImageClasspath {
-  // netty statically allocates some problematic classes
-  exclude group: 'io.netty', module: 'netty-buffer'
-  exclude group: 'io.netty', module: 'netty-common'
-  exclude group: 'io.netty', module: 'netty-transport'
-
-  // keep log4j from sneaking in.  GraalVM has an aleric reaction if it sees even one class
-  exclude group: 'org.slf4j', module: 'log4j-over-slf4j:1.7.36'
-  exclude group: "log4j", module: "log4j"
-  exclude group: "org.apache.logging.log4j"
-  exclude group: 'org.bouncycastle', module: 'bcprov-jdk18on'
-}

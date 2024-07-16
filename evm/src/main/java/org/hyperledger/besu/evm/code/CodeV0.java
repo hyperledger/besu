@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.code;
 
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
@@ -91,6 +92,11 @@ public class CodeV0 implements Code {
   }
 
   @Override
+  public int getDeclaredDataSize() {
+    return 0;
+  }
+
+  @Override
   public Bytes getBytes() {
     return bytes;
   }
@@ -149,7 +155,7 @@ public class CodeV0 implements Code {
   }
 
   @Override
-  public Optional<Code> getSubContainer(final int index, final Bytes auxData) {
+  public Optional<Code> getSubContainer(final int index, final Bytes auxData, final EVM evm) {
     return Optional.empty();
   }
 

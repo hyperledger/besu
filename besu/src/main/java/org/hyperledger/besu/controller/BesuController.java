@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.controller;
 
-import static org.hyperledger.besu.ethereum.eth.sync.SyncMode.isCheckpointSync;
-
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -361,7 +359,7 @@ public class BesuController implements java.io.Closeable {
       // wrap with TransitionBesuControllerBuilder if we have a terminal total difficulty:
       if (configOptions.getTerminalTotalDifficulty().isPresent()) {
         // Enable start with vanilla MergeBesuControllerBuilder for PoS checkpoint block
-        if ((isCheckpointSync(syncMode) && isCheckpointPoSBlock(configOptions))
+        if ((syncMode == SyncMode.CHECKPOINT && isCheckpointPoSBlock(configOptions))
             || configOptions.getLineaBlockNumber().isPresent()) {
           return new MergeBesuControllerBuilder().genesisConfigFile(genesisConfigFile);
         } else {

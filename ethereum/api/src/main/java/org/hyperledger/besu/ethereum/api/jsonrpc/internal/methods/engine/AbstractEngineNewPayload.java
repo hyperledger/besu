@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID_BLOCK_HASH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getConsolidationRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getDepositRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getWithdrawalRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
@@ -36,6 +37,7 @@ import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsolidationRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
@@ -185,8 +187,23 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
           reqId, new JsonRpcError(INVALID_PARAMS, "Invalid withdrawal request"));
     }
 
+    final Optional<List<Request>> maybeConsolidationRequests =
+        Optional.ofNullable(blockParam.getConsolidationRequests())
+            .map(
+                consolidationRequest ->
+                    consolidationRequest.stream()
+                        .map(ConsolidationRequestParameter::toConsolidationRequest)
+                        .collect(toList()));
+    if (!getConsolidationRequestValidator(
+            protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
+        .validateParameter(maybeConsolidationRequests)) {
+      return new JsonRpcErrorResponse(
+          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid consolidation request"));
+    }
+
     Optional<List<Request>> maybeRequests =
-        RequestUtil.combine(maybeDepositRequests, maybeWithdrawalRequests);
+        RequestUtil.combine(
+            maybeDepositRequests, maybeWithdrawalRequests, maybeConsolidationRequests);
 
     if (mergeContext.get().isSyncing()) {
       LOG.debug("We are syncing");

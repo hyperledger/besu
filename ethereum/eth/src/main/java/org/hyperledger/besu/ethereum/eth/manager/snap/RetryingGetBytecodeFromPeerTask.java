@@ -17,19 +17,21 @@ package org.hyperledger.besu.ethereum.eth.manager.snap;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
-import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingPeerTask;
+import org.hyperledger.besu.ethereum.eth.manager.task.AbstractRetryingSwitchingPeerTask;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Map<Bytes32, Bytes>> {
+public class RetryingGetBytecodeFromPeerTask
+    extends AbstractRetryingSwitchingPeerTask<Map<Bytes32, Bytes>> {
+
+  public static final int MAX_RETRIES = 4;
 
   private final EthContext ethContext;
   private final List<Bytes32> codeHashes;
@@ -41,7 +43,7 @@ public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Ma
       final List<Bytes32> codeHashes,
       final BlockHeader blockHeader,
       final MetricsSystem metricsSystem) {
-    super(ethContext, 4, Map::isEmpty, metricsSystem);
+    super(ethContext, metricsSystem, Map::isEmpty, MAX_RETRIES);
     this.ethContext = ethContext;
     this.codeHashes = codeHashes;
     this.blockHeader = blockHeader;
@@ -57,16 +59,20 @@ public class RetryingGetBytecodeFromPeerTask extends AbstractRetryingPeerTask<Ma
   }
 
   @Override
-  protected CompletableFuture<Map<Bytes32, Bytes>> executePeerTask(
-      final Optional<EthPeer> assignedPeer) {
+  protected CompletableFuture<Map<Bytes32, Bytes>> executeTaskOnCurrentPeer(final EthPeer peer) {
     final GetBytecodeFromPeerTask task =
         GetBytecodeFromPeerTask.forBytecode(ethContext, codeHashes, blockHeader, metricsSystem);
-    assignedPeer.ifPresent(task::assignPeer);
+    task.assignPeer(peer);
     return executeSubTask(task::run)
         .thenApply(
             peerResult -> {
               result.complete(peerResult.getResult());
               return peerResult.getResult();
             });
+  }
+
+  @Override
+  protected boolean isSuitablePeer(final EthPeer peer) {
+    return peer.isServingSnap();
   }
 }

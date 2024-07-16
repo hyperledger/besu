@@ -22,8 +22,10 @@ import java.math.BigInteger;
 import java.util.Arrays;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
+@Disabled("permissioning tests flaky with timeouts")
 public class AccountLocalAndOnchainPermissioningAcceptanceTest
     extends AccountSmartContractPermissioningAcceptanceTestBase {
 

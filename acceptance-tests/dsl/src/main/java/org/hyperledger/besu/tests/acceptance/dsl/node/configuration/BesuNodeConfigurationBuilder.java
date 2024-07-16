@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.genesis.GenesisConfigurationProvider;
 import org.hyperledger.besu.tests.acceptance.dsl.node.configuration.pki.PKCS11Utils;
 
@@ -100,7 +99,6 @@ public class BesuNodeConfigurationBuilder {
   private Optional<PrivacyParameters> privacyParameters = Optional.empty();
   private List<String> runCommand = new ArrayList<>();
   private Optional<KeyPair> keyPair = Optional.empty();
-  private Optional<PkiKeyStoreConfiguration> pkiKeyStoreConfiguration = Optional.empty();
   private Boolean strictTxReplayProtectionEnabled = false;
   private Map<String, String> environment = new HashMap<>();
 
@@ -439,13 +437,6 @@ public class BesuNodeConfigurationBuilder {
     return this;
   }
 
-  public BesuNodeConfigurationBuilder pkiBlockCreationEnabled(
-      final PkiKeyStoreConfiguration pkiKeyStoreConfiguration) {
-    this.pkiKeyStoreConfiguration = Optional.of(pkiKeyStoreConfiguration);
-
-    return this;
-  }
-
   public BesuNodeConfigurationBuilder discoveryEnabled(final boolean discoveryEnabled) {
     this.discoveryEnabled = discoveryEnabled;
     return this;
@@ -560,7 +551,6 @@ public class BesuNodeConfigurationBuilder {
         privacyParameters,
         runCommand,
         keyPair,
-        pkiKeyStoreConfiguration,
         strictTxReplayProtectionEnabled,
         environment);
   }

@@ -23,51 +23,62 @@ import org.slf4j.LoggerFactory;
 /** The enum Evm spec version. */
 public enum EvmSpecVersion {
   /** Frontier evm spec version. */
-  FRONTIER(0, true, "Frontier", "Finalized"),
+  FRONTIER(Integer.MAX_VALUE, Integer.MAX_VALUE, 0, true, "Frontier", "Finalized"),
   /** Homestead evm spec version. */
-  HOMESTEAD(0, true, "Homestead", "Finalized"),
+  HOMESTEAD(Integer.MAX_VALUE, Integer.MAX_VALUE, 0, true, "Homestead", "Finalized"),
   /** Tangerine Whistle evm spec version. */
-  TANGERINE_WHISTLE(0, true, "Tangerine Whistle", "Finalized"),
+  TANGERINE_WHISTLE(
+      Integer.MAX_VALUE, Integer.MAX_VALUE, 0, true, "Tangerine Whistle", "Finalized"),
   /** Spurious Dragon evm spec version. */
-  SPURIOUS_DRAGON(0, true, "Spuruous Dragon", "Finalized"),
+  SPURIOUS_DRAGON(0x6000, Integer.MAX_VALUE, 0, true, "Spuruous Dragon", "Finalized"),
   /** Byzantium evm spec version. */
-  BYZANTIUM(0, true, "Byzantium", "Finalized"),
+  BYZANTIUM(0x6000, Integer.MAX_VALUE, 0, true, "Byzantium", "Finalized"),
   /** Constantinople evm spec version. */
-  CONSTANTINOPLE(0, true, "Constantinople", "Did not reach Mainnet"),
+  CONSTANTINOPLE(0x6000, Integer.MAX_VALUE, 0, true, "Constantinople", "Did not reach Mainnet"),
   /** Petersburg / ConstantinopleFix evm spec version. */
-  PETERSBURG(0, true, "ConstantinopleFix", "Finalized (also called Petersburg)"),
+  PETERSBURG(
+      0x6000,
+      Integer.MAX_VALUE,
+      0,
+      true,
+      "ConstantinopleFix",
+      "Finalized (also called Petersburg)"),
   /** Istanbul evm spec version. */
-  ISTANBUL(0, true, "Istanbul", "Finalized"),
+  ISTANBUL(0x6000, Integer.MAX_VALUE, 0, true, "Istanbul", "Finalized"),
   /** Berlin evm spec version */
-  BERLIN(0, true, "Berlin", "Finalized"),
+  BERLIN(0x6000, Integer.MAX_VALUE, 0, true, "Berlin", "Finalized"),
   /** London evm spec version. */
-  LONDON(0, true, "London", "Finalized"),
+  LONDON(0x6000, Integer.MAX_VALUE, 0, true, "London", "Finalized"),
   /** Paris evm spec version. */
-  PARIS(0, true, "Merge", "Finalized (also called Paris)"),
+  PARIS(0x6000, Integer.MAX_VALUE, 0, true, "Merge", "Finalized (also called Paris)"),
   /** Shanghai evm spec version. */
-  SHANGHAI(0, true, "Shanghai", "Finalized"),
+  SHANGHAI(0x6000, 0xc000, 0, true, "Shanghai", "Finalized"),
   /** Cancun evm spec version. */
-  CANCUN(0, true, "Cancun", "Finalized"),
+  CANCUN(0x6000, 0xc000, 0, true, "Cancun", "Finalized"),
+  /** Cancun evm spec version. */
+  CANCUN_EOF(0x6000, 0xc000, 1, false, "CancunEOF", "For Testing"),
   /** Prague evm spec version. */
-  PRAGUE(0, false, "Prague", "In Development"),
+  PRAGUE(0x6000, 0xc000, 0, false, "Prague", "In Development"),
   /** PragueEOF evm spec version. */
-  PRAGUE_EOF(1, false, "PragueEOF", "Prague + EOF.  In Development"),
+  PRAGUE_EOF(0x6000, 0xc000, 1, false, "PragueEOF", "Prague + EOF.  In Development"),
   /** Osaka evm spec version. */
-  OSAKA(1, false, "Osaka", "Placeholder"),
+  OSAKA(0x6000, 0xc000, 1, false, "Osaka", "Placeholder"),
   /** Amstedam evm spec version. */
-  AMSTERDAM(1, false, "Amsterdam", "Placeholder"),
+  AMSTERDAM(0x6000, 0xc000, 1, false, "Amsterdam", "Placeholder"),
   /** Bogota evm spec version. */
-  BOGOTA(1, false, "Bogota", "Placeholder"),
+  BOGOTA(0x6000, 0xc000, 1, false, "Bogota", "Placeholder"),
   /** Polis evm spec version. */
-  POLIS(1, false, "Polis", "Placeholder"),
+  POLIS(0x6000, 0xc000, 1, false, "Polis", "Placeholder"),
   /** Bogota evm spec version. */
-  BANGKOK(1, false, "Bangkok", "Placeholder"),
+  BANGKOK(0x6000, 0xc000, 1, false, "Bangkok", "Placeholder"),
   /** Development fork for unscheduled EIPs */
-  FUTURE_EIPS(1, false, "Future_EIPs", "Development, for accepted and unscheduled EIPs"),
+  FUTURE_EIPS(
+      0x6000, 0xc000, 1, false, "Future_EIPs", "Development, for accepted and unscheduled EIPs"),
   /** Development fork for EIPs not accepted to Mainnet */
-  EXPERIMENTAL_EIPS(1, false, "Experimental_EIPs", "Development, for experimental EIPs"),
-  /** Linea evm spec version. */
-  LINEA(0, false, "Linea", "Linea");
+  EXPERIMENTAL_EIPS(
+      0x6000, 0xc000, 1, false, "Experimental_EIPs", "Development, for experimental EIPs"),
+
+  LINEA(0x6000, 0xc000, 0, false, "Linea", "Linea");
   private static final Logger LOGGER = LoggerFactory.getLogger(EvmSpecVersion.class);
 
   /** The Spec finalized. */
@@ -75,6 +86,12 @@ public enum EvmSpecVersion {
 
   /** The Max eof version. */
   final int maxEofVersion;
+
+  /** Maximum size of deployed code */
+  final int maxCodeSize;
+
+  /** Maximum size of initcode */
+  final int maxInitcodeSize;
 
   /** Public name matching execution-spec-tests name */
   final String name;
@@ -86,11 +103,15 @@ public enum EvmSpecVersion {
   boolean versionWarned = false;
 
   EvmSpecVersion(
+      final int maxCodeSize,
+      final int maxInitcodeSize,
       final int maxEofVersion,
       final boolean specFinalized,
       final String name,
       final String description) {
     this.maxEofVersion = maxEofVersion;
+    this.maxCodeSize = maxCodeSize;
+    this.maxInitcodeSize = maxInitcodeSize;
     this.specFinalized = specFinalized;
     this.name = name;
     this.description = description;
@@ -103,7 +124,13 @@ public enum EvmSpecVersion {
    * @return the current mainnet for as of the release of this version of Besu
    */
   public static EvmSpecVersion defaultVersion() {
-    return SHANGHAI;
+    EvmSpecVersion answer = null;
+    for (EvmSpecVersion version : EvmSpecVersion.values()) {
+      if (version.specFinalized) {
+        answer = version;
+      }
+    }
+    return answer;
   }
 
   /**
@@ -113,6 +140,24 @@ public enum EvmSpecVersion {
    */
   public int getMaxEofVersion() {
     return maxEofVersion;
+  }
+
+  /**
+   * Gets max deployed code size this EVM supports.
+   *
+   * @return the max eof version
+   */
+  public int getMaxCodeSize() {
+    return maxCodeSize;
+  }
+
+  /**
+   * Gets max initcode size this EVM supports.
+   *
+   * @return the max eof version
+   */
+  public int getMaxInitcodeSize() {
+    return maxInitcodeSize;
   }
 
   /**
@@ -158,6 +203,10 @@ public enum EvmSpecVersion {
     // TODO remove once PragueEOF settles
     if ("prague".equalsIgnoreCase(name)) {
       return EvmSpecVersion.PRAGUE_EOF;
+    }
+    // TODO remove once PragueEOF settles
+    if ("cancuneof".equalsIgnoreCase(name)) {
+      return EvmSpecVersion.CANCUN_EOF;
     }
     for (var version : EvmSpecVersion.values()) {
       if (version.name().equalsIgnoreCase(name)) {

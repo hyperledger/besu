@@ -109,7 +109,9 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
         .thenReturn(Optional.of(mockHeader.getHash()));
 
     var resp =
-        resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, depositRequests, null));
+        resp(
+            mockEnginePayload(
+                mockHeader, Collections.emptyList(), null, depositRequests, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -125,6 +127,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
                 Collections.emptyList(),
                 null,
                 depositRequests,
+                null,
                 null));
 
     assertThat(fromErrorResp(resp).getCode()).isEqualTo(INVALID_PARAMS.getCode());
@@ -152,7 +155,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     var resp =
         resp(
             mockEnginePayload(
-                mockHeader, Collections.emptyList(), null, depositRequestsParam, null));
+                mockHeader, Collections.emptyList(), null, depositRequestsParam, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -172,6 +175,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
                 Collections.emptyList(),
                 null,
                 depositRequests,
+                null,
                 null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
@@ -195,7 +199,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     when(mergeCoordinator.getLatestValidAncestor(mockHeader))
         .thenReturn(Optional.of(mockHeader.getHash()));
 
-    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, null, null));
+    var resp = resp(mockEnginePayload(mockHeader, Collections.emptyList(), null, null, null, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -209,6 +213,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
             mockEnginePayload(
                 createBlockHeader(Optional.empty(), Optional.empty(), Optional.empty()),
                 Collections.emptyList(),
+                null,
                 null,
                 null,
                 null));
@@ -239,7 +244,7 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
     var resp =
         resp(
             mockEnginePayload(
-                mockHeader, Collections.emptyList(), null, null, withdrawalRequestsParams));
+                mockHeader, Collections.emptyList(), null, null, withdrawalRequestsParams, null));
 
     assertValidResponse(mockHeader, resp);
   }
@@ -258,7 +263,8 @@ public class EngineNewPayloadV4Test extends EngineNewPayloadV3Test {
                 Collections.emptyList(),
                 null,
                 null,
-                withdrawalRequests));
+                withdrawalRequests,
+                null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());

@@ -24,9 +24,6 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Static call operation. */
 public class ExtStaticCallOperation extends AbstractExtCallOperation {
 
-  static final int STACK_INPUT_OFFSET = 1;
-  static final int STACK_INPUT_LENGTH = 2;
-
   /**
    * Instantiates a new Static call operation.
    *

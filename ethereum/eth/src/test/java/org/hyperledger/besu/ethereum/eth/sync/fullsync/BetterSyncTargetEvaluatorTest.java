@@ -49,7 +49,7 @@ public class BetterSyncTargetEvaluatorTest {
 
   @BeforeEach
   public void setupMocks() {
-    when(ethPeers.getBestChainComparator()).thenReturn(EthPeers.HEAVIEST_CHAIN);
+    when(ethPeers.getBestPeerComparator()).thenReturn(EthPeers.HEAVIEST_CHAIN);
   }
 
   @Test

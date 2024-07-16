@@ -249,7 +249,8 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("uncleHeaders") final Object uncleHeaders,
         @JsonProperty("withdrawals") final Object withdrawals,
         @JsonProperty("depositRequests") final Object depositRequests,
-        @JsonProperty("withdrawalRequests") final Object withdrawalRequests) {
+        @JsonProperty("withdrawalRequests") final Object withdrawalRequests,
+        @JsonProperty("consolidationRequests") final Object consolidationRequests) {
       boolean blockVaid = true;
       // The BLOCK__WrongCharAtRLP_0 test has an invalid character in its rlp string.
       Bytes rlpAttempt = null;

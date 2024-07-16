@@ -227,8 +227,8 @@ public final class RunnerTest {
       final SynchronizerConfiguration syncConfigBehind =
           SynchronizerConfiguration.builder()
               .syncMode(mode)
-              .fastSyncPivotDistance(5)
-              .fastSyncMinimumPeerCount(1)
+              .syncPivotDistance(5)
+              .syncMinimumPeerCount(1)
               .build();
       final Path dataDirBehind = Files.createTempDirectory(temp, "db-behind");
 
