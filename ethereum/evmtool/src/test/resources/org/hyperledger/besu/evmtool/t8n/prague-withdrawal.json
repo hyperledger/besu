@@ -314,6 +314,7 @@
           "amount": "0x0000000000000000"
         }
       ],
+      "consolidationRequests":[],
       "stateRoot": "0xf63d7552dc407993393315e99272781d04eedfcf369a1acd3e386d1e6710229d",
       "txRoot": "0x8521df63211790726b6f1a437bb0fd4b27c00e13e7678d324c4cfddb8d834ad2",
       "receiptsRoot": "0x4bd8bd5580caf4ed45f873794ad7ff9d6fd2363ae529269b17b891b68d349d75",
