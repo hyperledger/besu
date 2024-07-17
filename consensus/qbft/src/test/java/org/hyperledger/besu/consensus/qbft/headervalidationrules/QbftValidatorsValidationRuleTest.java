@@ -21,7 +21,6 @@ import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
@@ -47,7 +46,7 @@ public class QbftValidatorsValidationRuleTest {
         new ProtocolContext(
             null,
             null,
-            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData),
+            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.empty());
@@ -66,7 +65,7 @@ public class QbftValidatorsValidationRuleTest {
         new ProtocolContext(
             null,
             null,
-            setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData),
+            setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isTrue();
@@ -84,7 +83,7 @@ public class QbftValidatorsValidationRuleTest {
         new ProtocolContext(
             null,
             null,
-            setupContextWithBftExtraData(QbftContext.class, validators, bftExtraData),
+            setupContextWithBftExtraData(BftContext.class, validators, bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(validators);
     assertThat(qbftValidatorsValidationRule.validate(blockHeader, null, context)).isFalse();
@@ -98,7 +97,7 @@ public class QbftValidatorsValidationRuleTest {
         new ProtocolContext(
             null,
             null,
-            setupContextWithBftExtraData(QbftContext.class, Collections.emptyList(), bftExtraData),
+            setupContextWithBftExtraData(BftContext.class, Collections.emptyList(), bftExtraData),
             new BadBlockManager());
     when(bftExtraData.getValidators()).thenReturn(Collections.emptyList());
     when(bftExtraData.getVote()).thenReturn(Optional.of(mock(Vote.class)));

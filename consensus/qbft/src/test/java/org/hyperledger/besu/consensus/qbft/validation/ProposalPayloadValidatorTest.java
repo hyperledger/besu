@@ -24,7 +24,6 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.messagewrappers.Proposal;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
@@ -74,7 +73,7 @@ public class ProposalPayloadValidatorTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(QbftContext.class, emptyList(), bftExtraDataCodec),
+            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataCodec),
             new BadBlockManager());
   }
 
