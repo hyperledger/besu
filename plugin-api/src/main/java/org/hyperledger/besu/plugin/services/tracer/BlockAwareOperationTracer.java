@@ -15,6 +15,7 @@
 package org.hyperledger.besu.plugin.services.tracer;
 
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
 import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
@@ -46,7 +47,8 @@ public interface BlockAwareOperationTracer extends OperationTracer {
    * @param blockHeader the header of the block which is traced
    * @param blockBody the body of the block which is traced
    */
-  default void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {}
+  default void traceEndBlock(
+      final BlockHeader blockHeader, final BlockBody blockBody, final WorldState worldState) {}
 
   /**
    * When building a block this API is called at the start of the process
