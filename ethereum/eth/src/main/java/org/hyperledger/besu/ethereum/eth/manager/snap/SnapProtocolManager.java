@@ -96,16 +96,19 @@ public class SnapProtocolManager implements ProtocolManager {
     LOG.trace("Process snap message {}, {}", cap, code);
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
     if (ethPeer == null) {
-      LOG.debug(
-          "Ignoring message received from unknown peer connection: " + message.getConnection());
+      LOG.atDebug()
+          .setMessage("Ignoring message received from unknown peer connection: {}")
+          .addArgument(message.getConnection())
+          .log();
       return;
     }
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
     if (!ethPeer.validateReceivedMessage(ethMessage, getSupportedProtocol())) {
-      LOG.debug(
-          "Unsolicited message {} received from, disconnecting: {}",
-          ethMessage.getData().getCode(),
-          ethPeer);
+      LOG.atDebug()
+          .setMessage("Unsolicited message {} received from, disconnecting: {}")
+          .addArgument(ethMessage.getData().getCode())
+          .addArgument(ethPeer)
+          .log();
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_UNSOLICITED_MESSAGE_RECEIVED);
       return;
     }
@@ -123,8 +126,12 @@ public class SnapProtocolManager implements ProtocolManager {
               .dispatch(new EthMessage(ethPeer, requestIdAndEthMessage.getValue()))
               .map(responseData -> responseData.wrapMessageData(requestIdAndEthMessage.getKey()));
     } catch (final RLPException e) {
-      LOG.debug(
-          "Received malformed message {} , disconnecting: {}", messageData.getData(), ethPeer, e);
+      LOG.atDebug()
+          .setMessage("Received malformed message {} , disconnecting: {}")
+          .addArgument(messageData.getData())
+          .addArgument(ethPeer)
+          .addArgument(e)
+          .log();
       ethPeer.disconnect(DisconnectReason.BREACH_OF_PROTOCOL_MALFORMED_MESSAGE_RECEIVED);
     }
     maybeResponseData.ifPresent(
@@ -132,9 +139,10 @@ public class SnapProtocolManager implements ProtocolManager {
           try {
             ethPeer.send(responseData, getSupportedProtocol());
           } catch (final PeerConnection.PeerNotConnected error) {
-            // Peer disconnected before we could respond - nothing to do
-            LOG.trace(
-                "Peer disconnected before we could respond - nothing to do " + error.getMessage());
+            LOG.atTrace()
+                .setMessage("Peer disconnected before we could respond - nothing to do {}")
+                .addArgument(error.getMessage())
+                .log();
           }
         });
   }

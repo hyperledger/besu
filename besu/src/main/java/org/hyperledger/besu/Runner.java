@@ -253,7 +253,11 @@ public class Runner implements AutoCloseable {
     try {
       shutdown.await();
     } catch (final InterruptedException e) {
-      LOG.debug("Interrupted while waiting for service " + serviceName + " to stop", e);
+      LOG.atDebug()
+          .setMessage("Interrupted while waiting for service {} to stop {}")
+          .addArgument(serviceName)
+          .addArgument(e)
+          .log();
       Thread.currentThread().interrupt();
     }
   }
