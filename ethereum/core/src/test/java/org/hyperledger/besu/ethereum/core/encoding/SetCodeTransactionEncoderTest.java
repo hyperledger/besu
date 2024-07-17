@@ -23,8 +23,7 @@ import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -51,7 +50,7 @@ class SetCodeTransactionEncoderTest {
         new SetCodeAuthorization(
             BigInteger.ONE,
             Address.fromHexString("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"),
-            List.of(0L),
+            Optional.of(0L),
             SIGNATURE_ALGORITHM
                 .get()
                 .createSignature(
@@ -77,7 +76,7 @@ class SetCodeTransactionEncoderTest {
         new SetCodeAuthorization(
             BigInteger.ONE,
             Address.fromHexString("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"),
-            new ArrayList<>(),
+            Optional.empty(),
             SIGNATURE_ALGORITHM
                 .get()
                 .createSignature(
@@ -96,32 +95,6 @@ class SetCodeTransactionEncoderTest {
   }
 
   @Test
-  void shouldEncodeSingleSetCodeWithMultipleNonces() {
-    // "d90194633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c20107"
-
-    final SetCodeAuthorization authorization =
-        new SetCodeAuthorization(
-            BigInteger.ONE,
-            Address.fromHexString("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"),
-            List.of(1L, 2L),
-            SIGNATURE_ALGORITHM
-                .get()
-                .createSignature(
-                    new BigInteger(
-                        "401b5d4ebe88306448115d1a46a30e5ad1136f2818b4ebb0733d9c4efffd135a", 16),
-                    new BigInteger(
-                        "753ff1dbce6db504ecb9635a64d8c4506ff887e2d2a0d2b7175baf94c849eccc", 16),
-                    (byte) 1));
-
-    SetCodeTransactionEncoder.encodeSingleSetCode(authorization, output);
-
-    assertThat(output.encoded())
-        .isEqualTo(
-            Bytes.fromHexString(
-                "0xf85c0194633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c2010201a0401b5d4ebe88306448115d1a46a30e5ad1136f2818b4ebb0733d9c4efffd135aa0753ff1dbce6db504ecb9635a64d8c4506ff887e2d2a0d2b7175baf94c849eccc"));
-  }
-
-  @Test
   void shouldEncodeSingleSetCodeWithoutNonceAndChainIdZero() {
     // "d70094633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c5"
 
@@ -129,7 +102,7 @@ class SetCodeTransactionEncoderTest {
         new SetCodeAuthorization(
             BigInteger.ZERO,
             Address.fromHexString("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"),
-            new ArrayList<>(),
+            Optional.empty(),
             SIGNATURE_ALGORITHM
                 .get()
                 .createSignature(

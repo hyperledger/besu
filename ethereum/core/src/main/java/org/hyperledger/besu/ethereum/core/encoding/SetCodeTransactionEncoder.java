@@ -60,7 +60,7 @@ public class SetCodeTransactionEncoder {
     rlpOutput.writeBigIntegerScalar(payload.chainId());
     rlpOutput.writeBytes(payload.address().copy());
     rlpOutput.startList();
-    payload.nonceList().forEach(rlpOutput::writeLongScalar);
+    payload.nonce().ifPresent(rlpOutput::writeLongScalar);
     rlpOutput.endList();
   }
 
