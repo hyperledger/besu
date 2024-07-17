@@ -13,6 +13,7 @@
 - Add `block-test` subcommand to the evmtool which runs blockchain reference tests [#7310](https://github.com/hyperledger/besu/pull/7310)
 - Implement gnark-crypto for eip-2537 [#7316](https://github.com/hyperledger/besu/pull/7316)
 - Added EIP-7702 [#7237](https://github.com/hyperledger/besu/pull/7237)
+- Improve blob size transaction selector [#7312](https://github.com/hyperledger/besu/pull/7312)
 
 ### Bug fixes
 - Fix `eth_call` deserialization to correctly ignore unknown fields in the transaction object. [#7323](https://github.com/hyperledger/besu/pull/7323)
