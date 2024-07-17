@@ -166,7 +166,6 @@ public abstract class PendingTransaction
   }
 
   private int computeSetCodeMemorySize() {
-    // TODO: Implement this for 7702
     return 0;
   }
 

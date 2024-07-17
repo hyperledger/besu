@@ -42,6 +42,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   private final W world;
   private final EvmConfiguration evmConfiguration;
+
   /** The authorized code service. */
   protected AuthorizedCodeService authorizedCodeService;
 

@@ -93,7 +93,6 @@ public class TransactionTestFixture {
         }
         break;
       case SET_CODE:
-        // TODO 7702
         break;
     }
 
