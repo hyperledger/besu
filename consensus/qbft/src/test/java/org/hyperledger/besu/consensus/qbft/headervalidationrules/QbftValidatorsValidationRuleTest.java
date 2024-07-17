@@ -19,6 +19,7 @@ import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupC
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.Vote;
 import org.hyperledger.besu.datatypes.Address;

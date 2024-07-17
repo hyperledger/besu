@@ -30,6 +30,7 @@ import static org.mockito.Mockito.verifyNoInteractions;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.consensus.common.bft.BftBlockHashing;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraData;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;

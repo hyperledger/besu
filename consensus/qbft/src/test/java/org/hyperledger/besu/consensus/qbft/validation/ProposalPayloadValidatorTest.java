@@ -21,6 +21,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.ProposedBlockHelpers;

@@ -24,6 +24,7 @@ import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftHelpers;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundHelpers;
@@ -83,8 +84,7 @@ public class RoundChangeMessageValidatorTest {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            setupContextWithBftExtraDataEncoder(
-                BftContext.class, emptyList(), bftExtraDataEncoder),
+            setupContextWithBftExtraDataEncoder(BftContext.class, emptyList(), bftExtraDataEncoder),
             new BadBlockManager());
 
     lenient().when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
