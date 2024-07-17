@@ -83,11 +83,11 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
             BesuMetricCategory.PRUNER, "trie_log_pruned_orphan", "trie log pruned orphan");
   }
 
-  public int initialize() {
-    return preloadQueue();
+  public void initialize() {
+    executeAsync.accept(this::preloadQueue);
   }
 
-  private int preloadQueue() {
+  private void preloadQueue() {
     LOG.atInfo()
         .setMessage("Loading first {} trie logs from database...")
         .addArgument(loadingLimit)
@@ -111,10 +111,9 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
           });
       LOG.atDebug().log("Pruned {} orphaned trie logs from database...", orphansPruned.intValue());
       LOG.atInfo().log("Loaded {} trie logs from database", count);
-      return pruneFromQueue() + orphansPruned.intValue();
+      pruneFromQueue();
     } catch (Exception e) {
       LOG.error("Error loading trie logs from database, nothing pruned", e);
-      return 0;
     }
   }
 
