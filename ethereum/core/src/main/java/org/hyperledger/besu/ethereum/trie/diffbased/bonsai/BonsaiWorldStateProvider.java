@@ -17,10 +17,13 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedWorldStorageManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.DiffBasedWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
@@ -54,6 +57,7 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       final EvmConfiguration evmConfiguration) {
     super(worldStateKeyValueStorage, blockchain, maxLayersToLoad, pluginContext);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.evmConfiguration = evmConfiguration;
     provideCachedWorldStorageManager(
         new BonsaiCachedWorldStorageManager(
             this, worldStateKeyValueStorage, this::cloneBonsaiWorldStateConfig));
@@ -72,10 +76,49 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
       final EvmConfiguration evmConfiguration) {
     super(worldStateKeyValueStorage, blockchain, trieLogManager);
     this.bonsaiCachedMerkleTrieLoader = bonsaiCachedMerkleTrieLoader;
+    this.evmConfiguration = evmConfiguration;
     provideCachedWorldStorageManager(bonsaiCachedWorldStorageManager);
     loadPersistedState(
         new BonsaiWorldState(
             this, worldStateKeyValueStorage, evmConfiguration, defaultWorldStateConfig));
+  }
+
+  @Override
+  public Optional<MutableWorldState> getMutable(
+      final BlockHeader blockHeader, final boolean shouldPersistState) {
+    if (shouldPersistState) {
+      return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
+    } else {
+      // TODO this needs to be better integrated && ensure block is canonical
+      // HACK for kikori PoC, if we have the trielog for this block, we can assume we have it in
+      // flatDB
+      // although, in practice we can only serve canonical chain worldstates and need to fall back
+      // to state rolling if the requested block is a fork.
+      if (this.worldStateKeyValueStorage.getFlatDbStrategy() instanceof ArchiveFlatDbStrategy
+          && trieLogManager.getTrieLogLayer(blockHeader.getBlockHash()).isPresent()) {
+        var contextSafeCopy =
+            ((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage).getContextSafeCopy();
+        contextSafeCopy.getFlatDbStrategy().updateBlockContext(blockHeader);
+        return Optional.of(
+            new BonsaiWorldState(
+                this, contextSafeCopy, evmConfiguration, this.defaultWorldStateConfig));
+      }
+
+      final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
+      if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
+          >= trieLogManager.getMaxLayersToLoad()) {
+        LOG.warn(
+            "Exceeded the limit of historical blocks that can be loaded ({}). If you need to make older historical queries, configure your `--bonsai-historical-block-limit`.",
+            trieLogManager.getMaxLayersToLoad());
+        return Optional.empty();
+      }
+      return cachedWorldStorageManager
+          .getWorldState(blockHeader.getHash())
+          .or(() -> cachedWorldStorageManager.getNearestWorldState(blockHeader))
+          .or(() -> cachedWorldStorageManager.getHeadWorldState(blockchain::getBlockHeader))
+          .flatMap(worldState -> rollMutableStateToBlockHash(worldState, blockHeader.getHash()))
+          .map(MutableWorldState::freeze);
+    }
   }
 
   public BonsaiCachedMerkleTrieLoader getCachedMerkleTrieLoader() {

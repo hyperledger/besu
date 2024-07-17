@@ -65,17 +65,17 @@ public class BonsaiWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     flatDbStrategyProvider.loadFlatDbStrategy(composedWorldStateStorage);
   }
 
+  public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
+    return new BonsaiWorldStateKeyValueStorage(
+        flatDbStrategyProvider.contextSafeClone(), composedWorldStateStorage, trieLogStorage);
+  }
+
   public BonsaiWorldStateKeyValueStorage(
       final FlatDbStrategyProvider flatDbStrategyProvider,
       final SegmentedKeyValueStorage composedWorldStateStorage,
       final KeyValueStorage trieLogStorage) {
     super(composedWorldStateStorage, trieLogStorage);
     this.flatDbStrategyProvider = flatDbStrategyProvider;
-  }
-
-  public BonsaiWorldStateKeyValueStorage getContextSafeCopy() {
-    return new BonsaiWorldStateKeyValueStorage(
-        flatDbStrategyProvider.contextSafeClone(), composedWorldStateStorage, trieLogStorage);
   }
 
   @Override

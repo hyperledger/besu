@@ -137,16 +137,21 @@ public class AccountRangeDataRequest extends SnapDataRequest {
         new AtomicReference<>(noop());
 
     // we have a flat DB only with Bonsai
-    if (!worldStateStorage.getFlatDbMode().equals(FlatDbMode.PARTIAL)) {
+    if (!worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.PARTIAL)) {
       // we have a flat DB only with Bonsai
-      flatDatabaseUpdater =
-              (key, value) ->
-                      ((BonsaiWorldStateKeyValueStorage.BonsaiUpdater) updater)
-                              .putAccountInfoState(Hash.wrap(key), value);
+      flatDatabaseUpdater.set(
+          (key, value) ->
+              ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                  .putAccountInfoState(Hash.wrap(key), value));
     } else {
-      worldStateStorageCoordinator.applyOnMatchingFlatMode(FlatDbMode.FULL, bonsaiWorldStateStorageStrategy -> {
-        flatDatabaseUpdater.set((key, value) -> ((BonsaiWorldStateKeyValueStorage.Updater) updater).putAccountInfoState(Hash.wrap(key), value));
-      });
+      worldStateStorageCoordinator.applyOnMatchingFlatMode(
+          FlatDbMode.FULL,
+          bonsaiWorldStateStorageStrategy -> {
+            flatDatabaseUpdater.set(
+                (key, value) ->
+                    ((BonsaiWorldStateKeyValueStorage.Updater) updater)
+                        .putAccountInfoState(Hash.wrap(key), value));
+          });
     }
 
     stackTrie.commit(flatDatabaseUpdater.get(), nodeUpdater);

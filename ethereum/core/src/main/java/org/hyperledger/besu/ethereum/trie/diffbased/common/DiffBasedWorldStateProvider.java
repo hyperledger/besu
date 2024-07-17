@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWo
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.plugin.BesuContext;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -53,6 +54,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
   protected final TrieLogManager trieLogManager;
   protected DiffBasedCachedWorldStorageManager cachedWorldStorageManager;
   protected DiffBasedWorldState persistedState;
+  protected EvmConfiguration evmConfiguration;
 
   protected final DiffBasedWorldStateKeyValueStorage worldStateKeyValueStorage;
   protected final DiffBasedWorldStateConfig defaultWorldStateConfig;
@@ -130,19 +132,6 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     if (shouldPersistState) {
       return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
     } else {
-      // TODO this needs to be better integrated && ensure block is canonical
-      // HACK for kikori PoC, if we have the trielog for this block, we can assume we have it in
-      // flatDB
-      // although, in practice we can only serve canonical chain worldstates and need to fall back
-      // to state rolling if the requested block is a fork.
-      if (this.worldStateStorage.getFlatDbStrategy() instanceof ArchiveFlatDbStrategy
-          && trieLogManager.getTrieLogLayer(blockHeader.getBlockHash()).isPresent()) {
-
-        var contextSafeCopy = worldStateStorage.getContextSafeCopy();
-        contextSafeCopy.getFlatDbStrategy().updateBlockContext(blockHeader);
-        return Optional.of(new BonsaiWorldState(this, contextSafeCopy, evmConfiguration));
-      }
-
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
       if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
           >= trieLogManager.getMaxLayersToLoad()) {
@@ -166,7 +155,7 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     return rollMutableStateToBlockHash(persistedState, blockHash);
   }
 
-  Optional<MutableWorldState> rollMutableStateToBlockHash(
+  protected Optional<MutableWorldState> rollMutableStateToBlockHash(
       final DiffBasedWorldState mutableState, final Hash blockHash) {
     if (blockHash.equals(mutableState.blockHash())) {
       return Optional.of(mutableState);
