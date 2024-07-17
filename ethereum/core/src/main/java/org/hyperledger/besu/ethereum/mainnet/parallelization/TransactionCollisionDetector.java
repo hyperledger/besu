@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 
 import java.util.HashSet;
+import java.util.Iterator;
 import java.util.Optional;
 import java.util.Set;
 
@@ -49,9 +50,14 @@ public class TransactionCollisionDetector {
     }
     final Set<Address> addressesTouchedByBlock =
         getAddressesTouchedByBlock(Optional.of(blockAccumulator));
-    final Set<Address> commonAddresses = new HashSet<>(addressesTouchedByTransaction);
-    commonAddresses.retainAll(addressesTouchedByBlock);
-    return !commonAddresses.isEmpty();
+    final Iterator<Address> it = addressesTouchedByTransaction.iterator();
+    boolean commonAddressFound = false;
+    while (it.hasNext() && !commonAddressFound) {
+      if (addressesTouchedByBlock.contains(it.next())) {
+        commonAddressFound = true;
+      }
+    }
+    return commonAddressFound;
   }
 
   /**
