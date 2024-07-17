@@ -23,6 +23,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobSizeTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
@@ -146,6 +147,7 @@ public class BlockTransactionSelector {
       final BlockSelectionContext context) {
     return List.of(
         new BlockSizeTransactionSelector(context),
+        new BlobSizeTransactionSelector(context),
         new PriceTransactionSelector(context),
         new BlobPriceTransactionSelector(context),
         new MinPriorityFeePerGasTransactionSelector(context),

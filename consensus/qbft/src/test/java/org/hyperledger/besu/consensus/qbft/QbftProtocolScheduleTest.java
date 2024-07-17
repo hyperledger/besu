@@ -26,6 +26,7 @@ import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.consensus.common.ForkSpec;
 import org.hyperledger.besu.consensus.common.ForksSchedule;
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.BftProtocolSchedule;
 import org.hyperledger.besu.cryptoservices.NodeKey;
@@ -59,8 +60,7 @@ public class QbftProtocolScheduleTest {
     return new ProtocolContext(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(
-            QbftContext.class, validators, new QbftExtraDataCodec()),
+        setupContextWithBftExtraDataEncoder(BftContext.class, validators, new QbftExtraDataCodec()),
         new BadBlockManager());
   }
 
