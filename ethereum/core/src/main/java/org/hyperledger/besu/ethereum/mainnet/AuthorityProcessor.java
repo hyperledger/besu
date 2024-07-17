@@ -31,10 +31,10 @@ import org.slf4j.LoggerFactory;
 public class AuthorityProcessor {
   private static final Logger LOG = LoggerFactory.getLogger(AuthorityProcessor.class);
 
-  private final BigInteger chainId;
+  private final Optional<BigInteger> maybeChainId;
 
-  public AuthorityProcessor(final BigInteger chainId) {
-    this.chainId = chainId;
+  public AuthorityProcessor(final Optional<BigInteger> maybeChainId) {
+    this.maybeChainId = maybeChainId;
   }
 
   public void addContractToAuthority(
@@ -53,9 +53,9 @@ public class AuthorityProcessor {
                         authorityAddress -> {
                           LOG.trace("Set code authority: {}", authorityAddress);
 
-                          if (!chainId.equals(BigInteger.ZERO)
+                          if (maybeChainId.isPresent()
                               && !payload.chainId().equals(BigInteger.ZERO)
-                              && !chainId.equals(payload.chainId())) {
+                              && !maybeChainId.get().equals(payload.chainId())) {
                             return;
                           }
 

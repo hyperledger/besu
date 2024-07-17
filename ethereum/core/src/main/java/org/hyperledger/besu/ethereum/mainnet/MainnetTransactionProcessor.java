@@ -81,7 +81,30 @@ public class MainnetTransactionProcessor {
   protected final FeeMarket feeMarket;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
-  private final AuthorityProcessor authorityProcessor;
+  private final Optional<AuthorityProcessor> maybeAuthorityProcessor;
+
+  public MainnetTransactionProcessor(
+      final GasCalculator gasCalculator,
+      final TransactionValidatorFactory transactionValidatorFactory,
+      final AbstractMessageProcessor contractCreationProcessor,
+      final AbstractMessageProcessor messageCallProcessor,
+      final boolean clearEmptyAccounts,
+      final boolean warmCoinbase,
+      final int maxStackSize,
+      final FeeMarket feeMarket,
+      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
+    this(
+        gasCalculator,
+        transactionValidatorFactory,
+        contractCreationProcessor,
+        messageCallProcessor,
+        clearEmptyAccounts,
+        warmCoinbase,
+        maxStackSize,
+        feeMarket,
+        coinbaseFeePriceCalculator,
+        null);
+  }
 
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
@@ -93,7 +116,7 @@ public class MainnetTransactionProcessor {
       final int maxStackSize,
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
-      final AuthorityProcessor authorityProcessor) {
+      final AuthorityProcessor maybeAuthorityProcessor) {
     this.gasCalculator = gasCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -103,7 +126,7 @@ public class MainnetTransactionProcessor {
     this.maxStackSize = maxStackSize;
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
-    this.authorityProcessor = authorityProcessor;
+    this.maybeAuthorityProcessor = Optional.ofNullable(maybeAuthorityProcessor);
   }
 
   /**
@@ -386,7 +409,13 @@ public class MainnetTransactionProcessor {
         commonMessageFrameBuilder.versionedHashes(
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
       } else if (transaction.getAuthorizationList().isPresent()) {
-        authorityProcessor.addContractToAuthority(worldUpdater, authorizedCodeService, transaction);
+        if (maybeAuthorityProcessor.isEmpty()) {
+          throw new RuntimeException("Authority processor is required for 7702 transactions");
+        }
+
+        maybeAuthorityProcessor
+            .get()
+            .addContractToAuthority(worldUpdater, authorizedCodeService, transaction);
         addressList.addAll(authorizedCodeService.getAuthorities());
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
