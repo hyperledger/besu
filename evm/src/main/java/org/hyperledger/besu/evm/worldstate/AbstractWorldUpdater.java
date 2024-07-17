@@ -42,7 +42,8 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
 
   private final W world;
   private final EvmConfiguration evmConfiguration;
-  private AuthorizedCodeService authorizedCodeService;
+  /** The authorized code service. */
+  protected AuthorizedCodeService authorizedCodeService;
 
   /** The Updated accounts. */
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new ConcurrentHashMap<>();
