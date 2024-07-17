@@ -92,6 +92,8 @@ public class TransactionTestFixture {
           builder.versionedHashes(versionedHashes.get());
         }
         break;
+      case SET_CODE:
+        break;
     }
 
     to.ifPresent(builder::to);

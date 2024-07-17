@@ -131,6 +131,7 @@ public abstract class PendingTransaction
           case ACCESS_LIST -> computeAccessListMemorySize();
           case EIP1559 -> computeEIP1559MemorySize();
           case BLOB -> computeBlobMemorySize();
+          case SET_CODE -> computeSetCodeMemorySize();
         }
         + PENDING_TRANSACTION_MEMORY_SIZE;
   }
@@ -162,6 +163,10 @@ public abstract class PendingTransaction
     return computeEIP1559MemorySize()
         + BASE_OPTIONAL_SIZE // for the versionedHashes field
         + computeBlobWithCommitmentsMemorySize();
+  }
+
+  private int computeSetCodeMemorySize() {
+    return 0;
   }
 
   private int computeBlobWithCommitmentsMemorySize() {
