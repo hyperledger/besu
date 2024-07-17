@@ -32,7 +32,7 @@ import okhttp3.RequestBody;
 import okhttp3.Response;
 import org.web3j.protocol.core.methods.response.EthBlock;
 
-public class PragueAcceptanceTestService {
+public class PragueAcceptanceTestHelper {
   protected static final MediaType MEDIA_TYPE_JSON =
       MediaType.parse("application/json; charset=utf-8");
 
@@ -43,7 +43,7 @@ public class PragueAcceptanceTestService {
 
   private long blockTimeStamp = 0;
 
-  PragueAcceptanceTestService(final BesuNode besuNode, final EthTransactions ethTransactions) {
+  PragueAcceptanceTestHelper(final BesuNode besuNode, final EthTransactions ethTransactions) {
     this.besuNode = besuNode;
     this.ethTransactions = ethTransactions;
     httpClient = new OkHttpClient();

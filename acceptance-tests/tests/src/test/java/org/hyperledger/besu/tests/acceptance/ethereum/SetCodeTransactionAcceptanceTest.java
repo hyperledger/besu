@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
+import org.hyperledger.besu.tests.acceptance.dsl.blockchain.Amount;
 import org.hyperledger.besu.tests.acceptance.dsl.node.BesuNode;
 
 import java.io.IOException;
@@ -57,14 +58,14 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
       Bytes.fromHexString("3a4ff6d22d7502ef2452368165422861c01a0f72f851793b372b87888dc3c453");
 
   private BesuNode besuNode;
-  private PragueAcceptanceTestService testService;
+  private PragueAcceptanceTestHelper testHelper;
 
   @BeforeEach
   void setUp() throws IOException {
     besuNode = besu.createExecutionEngineGenesisNode("besuNode", GENESIS_FILE);
     cluster.start(besuNode);
 
-    testService = new PragueAcceptanceTestService(besuNode, ethTransactions);
+    testHelper = new PragueAcceptanceTestHelper(besuNode, ethTransactions);
   }
 
   /**
@@ -72,7 +73,7 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
    * 90000 ETH. The authorizer creates an authorization for a contract that send all its ETH to any
    * given address. The transaction sponsor created a 7702 transaction with it and sends all the ETH
    * from the authorizer to itself. The authorizer balance should be 0 and the transaction sponsor
-   * balance should be greater than 170000 ETH.
+   * balance should be 180000 ETH minus the transaction costs.
    */
   @Test
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
@@ -106,20 +107,19 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
 
     final String txHash =
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
-    testService.buildNewBlock();
-
-    cluster.verify(authorizer.balanceEquals(0));
-
-    final BigInteger transactionSponsorBalance =
-        besuNode.execute(ethTransactions.getBalance(transactionSponsor));
-
-    // The transaction sponsor balance should be greater than 170000 ETH. We don't do an exact
-    // balance check to avoid
-    // having to calculate the exact amount of gas used.
-    assertThat(transactionSponsorBalance).isGreaterThan(new BigInteger("170000000000000000000000"));
+    testHelper.buildNewBlock();
 
     Optional<TransactionReceipt> maybeTransactionReceipt =
         besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
     assertThat(maybeTransactionReceipt).isPresent();
+
+    cluster.verify(authorizer.balanceEquals(0));
+
+    final String gasPriceWithout0x =
+        maybeTransactionReceipt.get().getEffectiveGasPrice().substring(2);
+    final BigInteger txCost =
+        maybeTransactionReceipt.get().getGasUsed().multiply(new BigInteger(gasPriceWithout0x, 16));
+    BigInteger expectedSponsorBalance = new BigInteger("180000000000000000000000").subtract(txCost);
+    cluster.verify(transactionSponsor.balanceEquals(Amount.wei(expectedSponsorBalance)));
   }
 }
