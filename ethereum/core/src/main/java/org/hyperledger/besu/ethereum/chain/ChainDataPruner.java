@@ -76,10 +76,7 @@ public class ChainDataPruner implements BlockAddedObserver {
           if (event.isNewCanonicalHead() && blocksToBePruned >= pruningFrequency) {
             long currentRetainedBlock = blockNumber - currentPruningMark + 1;
             while (currentRetainedBlock > blocksToRetain) {
-              LOG.atDebug()
-                  .setMessage("Pruning chain data with block height of {}")
-                  .addArgument(currentPruningMark)
-                  .log();
+              LOG.debug("Pruning chain data with block height of {}", currentPruningMark);
               pruneChainDataAtBlock(pruningTransaction, currentPruningMark);
               currentPruningMark++;
               currentRetainedBlock = blockNumber - currentPruningMark;

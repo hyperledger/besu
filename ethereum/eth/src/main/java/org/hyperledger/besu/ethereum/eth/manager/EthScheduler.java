@@ -252,7 +252,7 @@ public class EthScheduler {
       shutdown.countDown();
     } else {
       LOG.atTrace()
-          .setMessage("Attempted to stop already stopped ")
+          .setMessage("Attempted to stop already stopped {}")
           .addArgument(getClass().getSimpleName())
           .log();
     }
