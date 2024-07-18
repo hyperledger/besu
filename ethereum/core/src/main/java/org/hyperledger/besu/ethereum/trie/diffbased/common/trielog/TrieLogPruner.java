@@ -95,20 +95,22 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
     try (final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
       final AtomicLong count = new AtomicLong();
       final AtomicLong orphansPruned = new AtomicLong();
-      trieLogKeys.forEach(
-          blockHashAsBytes -> {
-            final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
-            final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
-            if (header.isPresent()) {
-              addToPruneQueue(header.get().getNumber(), blockHash);
-              count.getAndIncrement();
-            } else {
-              // prune orphaned blocks (sometimes created during block production)
-              rootWorldStateStorage.pruneTrieLog(blockHash);
-              orphansPruned.getAndIncrement();
-              prunedOrphanCounter.inc();
-            }
-          });
+      trieLogKeys
+          .parallel()
+          .forEach(
+              blockHashAsBytes -> {
+                final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
+                final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
+                if (header.isPresent()) {
+                  addToPruneQueue(header.get().getNumber(), blockHash);
+                  count.getAndIncrement();
+                } else {
+                  // prune orphaned blocks (sometimes created during block production)
+                  rootWorldStateStorage.pruneTrieLog(blockHash);
+                  orphansPruned.getAndIncrement();
+                  prunedOrphanCounter.inc();
+                }
+              });
       LOG.atDebug().log("Pruned {} orphaned trie logs from database...", orphansPruned.intValue());
       LOG.atInfo().log("Loaded {} trie logs from database", count);
       return pruneFromQueue() + orphansPruned.intValue();
