@@ -26,5 +26,6 @@ assignees: ''
 - [ ] Check "Container Verify" GitHub workflow has run successfully
 - [ ] Create homebrew release - run https://github.com/hyperledger/homebrew-besu/actions/workflows/update-version.yml
 - [ ] Create besu-docs release - https://github.com/hyperledger/besu-docs/releases/new
-   - If it doesn't automatically trigger this workflow, then run manually https://github.com/hyperledger/besu-docs/actions/workflows/update-version.yml
+   - Copy changelog from the besu release
+   - If publishing the release in github doesn't automatically trigger this workflow, then manually run https://github.com/hyperledger/besu-docs/actions/workflows/update-version.yml
 - [ ] Social announcements
