@@ -142,6 +142,13 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   @Override
+  protected void internalPenalize(final PendingTransaction penalizedTx) {
+    orderByFee.remove(penalizedTx);
+    penalizedTx.decrementScore();
+    orderByFee.add(penalizedTx);
+  }
+
+  @Override
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
@@ -192,7 +199,21 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
         .toList();
   }
 
-  public Map<Byte, List<SenderPendingTransactions>> getByScore() {
+  /**
+   * Returns pending txs by sender and ordered by score desc. In case a sender has pending txs with
+   * different scores, then in nonce sequence, every time there is a score decrease, his pending txs
+   * will be put in a new entry with that score. For example if a sender has 3 pending txs (where
+   * the first number is the nonce and the score is between parenthesis): 0(127), 1(126), 2(127),
+   * then for he there will be 2 entries:
+   *
+   * <ul>
+   *   <li>0(127)
+   *   <li>1(126), 2(127)
+   * </ul>
+   *
+   * @return pending txs by sender and ordered by score desc
+   */
+  public NavigableMap<Byte, List<SenderPendingTransactions>> getByScore() {
     final var sendersToAdd = new HashSet<>(txsBySender.keySet());
     return orderByFee.descendingSet().stream()
         .map(PendingTransaction::getSender)
@@ -206,7 +227,8 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
                   a.addAll(b);
                   return a;
                 },
-                TreeMap::new));
+                TreeMap::new))
+        .descendingMap();
   }
 
   private Map<Byte, List<SenderPendingTransactions>> splitByScore(
@@ -216,15 +238,14 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
     var currSplit = new ArrayList<PendingTransaction>();
     for (final var entry : txsBySender.entrySet()) {
       if (entry.getValue().getScore() < currScore) {
-        // score decreased, we need to start a new split
+        // score decreased, we need to save current split and start a new one
         splitByScore
             .computeIfAbsent(currScore, k -> new ArrayList<>())
             .add(new SenderPendingTransactions(sender, currSplit));
         currSplit = new ArrayList<>();
         currScore = entry.getValue().getScore();
-      } else {
-        currSplit.add(entry.getValue());
       }
+      currSplit.add(entry.getValue());
     }
     splitByScore
         .computeIfAbsent(currScore, k -> new ArrayList<>())

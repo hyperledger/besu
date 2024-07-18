@@ -54,8 +54,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
    */
   private final NavigableSet<PendingTransaction> sparseEvictionOrder =
       new TreeSet<>(
-          Comparator.comparing(PendingTransaction::getScore)
-              .thenComparing(PendingTransaction::hasPriority)
+          Comparator.comparing(PendingTransaction::hasPriority)
               .thenComparing(PendingTransaction::getSequence));
 
   private final Map<Address, Integer> gapBySender = new HashMap<>();
@@ -302,6 +301,11 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     } else {
       deleteGap(sender);
     }
+  }
+
+  @Override
+  protected void internalPenalize(final PendingTransaction penalizedTx) {
+    // intentionally no-op
   }
 
   private void deleteGap(final Address sender) {
