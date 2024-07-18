@@ -379,22 +379,20 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
           plugin ->
               summary.add(
                   String.format(
-                      " - %s (Version: %s)",
-                      plugin.getClass().getSimpleName(), plugin.getVersion())));
+                      " - %s (%s)", plugin.getClass().getSimpleName(), plugin.getVersion())));
     }
 
     // Identify and log detected but not registered (skipped) plugins
-    List<String> skippedPlugins =
-        detectedPlugins.stream()
-            .filter(plugin -> !registeredPlugins.contains(plugin))
-            .map(plugin -> plugin.getClass().getSimpleName())
-            .toList();
+    List<BesuPlugin> skippedPlugins =
+        detectedPlugins.stream().filter(plugin -> !registeredPlugins.contains(plugin)).toList();
 
     if (!skippedPlugins.isEmpty()) {
-      summary.add("Skipped Plugins:");
+      summary.add("Detected but not registered:");
       skippedPlugins.forEach(
-          pluginName ->
-              summary.add(String.format(" - %s (Detected but not registered)", pluginName)));
+          plugin ->
+              summary.add(
+                  String.format(
+                      " - %s (%s)", plugin.getClass().getSimpleName(), plugin.getVersion())));
     }
     summary.add(
         String.format(
