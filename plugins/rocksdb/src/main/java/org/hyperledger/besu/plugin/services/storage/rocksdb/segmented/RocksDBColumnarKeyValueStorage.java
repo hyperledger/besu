@@ -394,7 +394,8 @@ public abstract class RocksDBColumnarKeyValueStorage implements SegmentedKeyValu
 
   @Override
   public Stream<byte[]> streamKeys(final SegmentIdentifier segmentIdentifier) {
-    final RocksIterator rocksIterator = getDB().newIterator(safeColumnHandle(segmentIdentifier));
+    final RocksIterator rocksIterator =
+        getDB().newIterator(safeColumnHandle(segmentIdentifier), readOptions);
     rocksIterator.seekToFirst();
     return RocksDbIterator.create(rocksIterator).toStreamKeys();
   }
