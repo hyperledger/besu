@@ -97,7 +97,7 @@ public class SnapProtocolManager implements ProtocolManager {
     final EthPeer ethPeer = ethPeers.peer(message.getConnection());
     if (ethPeer == null) {
       LOG.debug(
-          "Ignoring message received from unknown peer connection: " + message.getConnection());
+          "Ignoring message received from unknown peer connection: {}", message.getConnection());
       return;
     }
     final EthMessage ethMessage = new EthMessage(ethPeer, messageData);
@@ -132,9 +132,10 @@ public class SnapProtocolManager implements ProtocolManager {
           try {
             ethPeer.send(responseData, getSupportedProtocol());
           } catch (final PeerConnection.PeerNotConnected error) {
-            // Peer disconnected before we could respond - nothing to do
-            LOG.trace(
-                "Peer disconnected before we could respond - nothing to do " + error.getMessage());
+            LOG.atTrace()
+                .setMessage("Peer disconnected before we could respond - nothing to do {}")
+                .addArgument(error.getMessage())
+                .log();
           }
         });
   }
