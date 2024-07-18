@@ -33,6 +33,7 @@ import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.log.Log;
 import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.operation.Operation;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.ArrayDeque;
@@ -201,6 +202,7 @@ public class MessageFrame {
 
   // Global data fields.
   private final WorldUpdater worldUpdater;
+  private final AuthorizedCodeService authorizedCodeService;
 
   // Metadata fields.
   private final Type type;
@@ -270,7 +272,8 @@ public class MessageFrame {
       final Consumer<MessageFrame> completer,
       final Map<String, Object> contextVariables,
       final Optional<Bytes> revertReason,
-      final TxValues txValues) {
+      final TxValues txValues,
+      final AuthorizedCodeService authorizedCodeService) {
 
     this.txValues = txValues;
     this.type = type;
@@ -290,6 +293,7 @@ public class MessageFrame {
     this.completer = completer;
     this.contextVariables = contextVariables;
     this.revertReason = revertReason;
+    this.authorizedCodeService = authorizedCodeService;
 
     this.undoMark = txValues.transientStorage().mark();
   }
@@ -421,6 +425,15 @@ public class MessageFrame {
    */
   public Bytes getReturnData() {
     return returnData;
+  }
+
+  /**
+   * Return the authorized account service.
+   *
+   * @return the authorized account service
+   */
+  public AuthorizedCodeService getAuthorizedCodeService() {
+    return authorizedCodeService;
   }
 
   /**
@@ -1347,6 +1360,7 @@ public class MessageFrame {
     private Optional<Bytes> reason = Optional.empty();
     private Set<Address> accessListWarmAddresses = emptySet();
     private Multimap<Address, Bytes32> accessListWarmStorage = HashMultimap.create();
+    private AuthorizedCodeService authorizedCodeService;
 
     private Optional<List<VersionedHash>> versionedHashes = Optional.empty();
 
@@ -1631,6 +1645,17 @@ public class MessageFrame {
       return this;
     }
 
+    /**
+     * Sets authorized account service.
+     *
+     * @param authorizedCodeService the authorized account service
+     * @return the builder
+     */
+    public Builder authorizedCodeService(final AuthorizedCodeService authorizedCodeService) {
+      this.authorizedCodeService = authorizedCodeService;
+      return this;
+    }
+
     private void validate() {
       if (parentMessageFrame == null) {
         checkState(worldUpdater != null, "Missing message frame world updater");
@@ -1664,6 +1689,11 @@ public class MessageFrame {
       WorldUpdater updater;
       boolean newStatic;
       TxValues newTxValues;
+
+      if (authorizedCodeService == null) {
+        authorizedCodeService = new AuthorizedCodeService();
+      }
+
       if (parentMessageFrame == null) {
         newTxValues =
             new TxValues(
@@ -1686,9 +1716,11 @@ public class MessageFrame {
         newStatic = isStatic;
       } else {
         newTxValues = parentMessageFrame.txValues;
-        updater = parentMessageFrame.worldUpdater.updater();
+        updater = parentMessageFrame.getWorldUpdater().updater();
         newStatic = isStatic || parentMessageFrame.isStatic;
       }
+
+      updater.setAuthorizedCodeService(authorizedCodeService);
 
       MessageFrame messageFrame =
           new MessageFrame(
@@ -1706,7 +1738,8 @@ public class MessageFrame {
               completer,
               contextVariables == null ? Map.of() : contextVariables,
               reason,
-              newTxValues);
+              newTxValues,
+              authorizedCodeService);
       newTxValues.messageFrameStack().addFirst(messageFrame);
       messageFrame.warmUpAddress(sender);
       messageFrame.warmUpAddress(contract);

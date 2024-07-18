@@ -10,9 +10,12 @@
 - `--Xsnapsync-bft-enabled` option enables experimental support for snap sync with IBFT/QBFT permissioned Bonsai-DB chains [#7140](https://github.com/hyperledger/besu/pull/7140)
 - Add support to load external profiles using `--profile` [#7265](https://github.com/hyperledger/besu/issues/7265)
 - `privacy-nonce-always-increments` option enables private transactions to always increment the nonce, even if the transaction is invalid [#6593](https://github.com/hyperledger/besu/pull/6593)
-- Add `block-test` subcommand to the evmtool which runs blockchain reference tests [#7310](https://github.com/hyperledger/besu/pull/7310)
+- Added `block-test` subcommand to the evmtool which runs blockchain reference tests [#7293](https://github.com/hyperledger/besu/pull/7293)
+- removed PKI backed QBFT [#7310](https://github.com/hyperledger/besu/pull/7310)
 - Implement gnark-crypto for eip-2537 [#7316](https://github.com/hyperledger/besu/pull/7316)
 - Improve blob size transaction selector [#7312](https://github.com/hyperledger/besu/pull/7312)
+- Added EIP-7702 [#7237](https://github.com/hyperledger/besu/pull/7237)
+- implement gnark-crypto for eip-196 [#7262](https://github.com/hyperledger/besu/pull/7262)
 - `--Xbonsai-parallel-tx-processing-enabled` option enables executing transactions in parallel during block processing for Bonsai nodes
 
 ### Bug fixes
