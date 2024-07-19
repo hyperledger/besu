@@ -793,7 +793,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             scheduler::executeServiceTask,
             dataStorageConfiguration.getBonsaiMaxLayersToLoad(),
             dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize(),
-            isProofOfStake);
+            isProofOfStake,
+            metricsSystem);
     trieLogPruner.initialize();
 
     return trieLogPruner;

@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogAddedEvent;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Optional;
 import java.util.function.Consumer;
@@ -72,7 +73,8 @@ public class TrieLogPrunerTest {
 
     // When
     TrieLogPruner trieLogPruner =
-        new TrieLogPruner(worldState, blockchain, executeAsync, 3, loadingLimit, false);
+        new TrieLogPruner(
+            worldState, blockchain, executeAsync, 3, loadingLimit, false, new NoOpMetricsSystem());
     trieLogPruner.initialize();
 
     // Then
@@ -92,7 +94,13 @@ public class TrieLogPrunerTest {
     // requireFinalizedBlock = false means this is not a PoS chain
     TrieLogPruner trieLogPruner =
         new TrieLogPruner(
-            worldState, blockchain, executeAsync, blocksToRetain, pruningWindowSize, false);
+            worldState,
+            blockchain,
+            executeAsync,
+            blocksToRetain,
+            pruningWindowSize,
+            false,
+            new NoOpMetricsSystem());
 
     trieLogPruner.addToPruneQueue(0, key(0)); // older block outside prune window
     trieLogPruner.addToPruneQueue(1, key(1)); // block inside the prune window
@@ -201,7 +209,13 @@ public class TrieLogPrunerTest {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(chainHeight);
     TrieLogPruner trieLogPruner =
         new TrieLogPruner(
-            worldState, blockchain, executeAsync, blocksToRetain, pruningWindowSize, true);
+            worldState,
+            blockchain,
+            executeAsync,
+            blocksToRetain,
+            pruningWindowSize,
+            true,
+            new NoOpMetricsSystem());
 
     trieLogPruner.addToPruneQueue(1, key(1));
     trieLogPruner.addToPruneQueue(2, key(2));
@@ -240,7 +254,8 @@ public class TrieLogPrunerTest {
     // Given
     final TriggerableConsumer triggerableConsumer = new TriggerableConsumer();
     TrieLogPruner trieLogPruner =
-        new TrieLogPruner(worldState, blockchain, triggerableConsumer, 0, 1, false);
+        new TrieLogPruner(
+            worldState, blockchain, triggerableConsumer, 0, 1, false, new NoOpMetricsSystem());
     assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(0);
 
     final TrieLogLayer layer = new TrieLogLayer();
@@ -261,7 +276,8 @@ public class TrieLogPrunerTest {
   public void onTrieLogAdded_should_not_prune_when_no_blockNumber() {
     // Given
     TrieLogPruner trieLogPruner =
-        new TrieLogPruner(worldState, blockchain, executeAsync, 0, 1, false);
+        new TrieLogPruner(
+            worldState, blockchain, executeAsync, 0, 1, false, new NoOpMetricsSystem());
     assertThat(trieLogPruner.pruneFromQueue()).isEqualTo(0);
 
     final TrieLogLayer layer = new TrieLogLayer();
@@ -289,7 +305,13 @@ public class TrieLogPrunerTest {
     when(blockchain.getChainHeadBlockNumber()).thenReturn(chainHeight);
     TrieLogPruner trieLogPruner =
         new TrieLogPruner(
-            worldState, blockchain, executeAsync, blocksToRetain, pruningWindowSize, true);
+            worldState,
+            blockchain,
+            executeAsync,
+            blocksToRetain,
+            pruningWindowSize,
+            true,
+            new NoOpMetricsSystem());
 
     trieLogPruner.addToPruneQueue(1, key(1));
     trieLogPruner.addToPruneQueue(2, key(2));
