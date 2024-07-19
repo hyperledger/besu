@@ -16,7 +16,6 @@ package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
-import static org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage.WORLD_ROOT_HASH_KEY;
 
 import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveCodeStorageStrategy;
@@ -79,13 +78,14 @@ public class FlatDbStrategyProvider {
 
   @VisibleForTesting
   FlatDbMode deriveFlatDbStrategy(final SegmentedKeyValueStorage composedWorldStateStorage) {
-    final FlatDbMode requestedFlatDbMode =
-        dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
-            ? FlatDbMode.FULL
-            : FlatDbMode.PARTIAL;
+    // final FlatDbMode requestedFlatDbMode =
+    //    dataStorageConfiguration.getUnstable().getBonsaiFullFlatDbEnabled()
+    //        ? FlatDbMode.FULL
+    //        : FlatDbMode.PARTIAL;
 
-    final var existingTrieData =
-        composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
+    // TODO: commented out for archive testing
+    // final var existingTrieData =
+    //     composedWorldStateStorage.get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY).isPresent();
 
     var flatDbMode =
         FlatDbMode.fromVersion(
@@ -99,10 +99,10 @@ public class FlatDbStrategyProvider {
                       // and default to the storage config otherwise
 
                       // TODO: temporarily hard code ARCHIVE mode for testing
-                      var flatDbModeVal =
-                          existingTrieData
-                              ? FlatDbMode.ARCHIVE.getVersion()
-                              : requestedFlatDbMode.getVersion();
+                      var flatDbModeVal = FlatDbMode.ARCHIVE.getVersion();
+                      // existingTrieData
+                      //        ? FlatDbMode.ARCHIVE.getVersion()
+                      //        : requestedFlatDbMode.getVersion();
                       // persist this config in the db
                       var setDbModeTx = composedWorldStateStorage.startTransaction();
                       setDbModeTx.put(

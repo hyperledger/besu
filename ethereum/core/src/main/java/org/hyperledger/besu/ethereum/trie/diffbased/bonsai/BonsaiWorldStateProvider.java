@@ -99,9 +99,14 @@ public class BonsaiWorldStateProvider extends DiffBasedWorldStateProvider {
         var contextSafeCopy =
             ((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage).getContextSafeCopy();
         contextSafeCopy.getFlatDbStrategy().updateBlockContext(blockHeader);
-        return Optional.of(
+        BonsaiWorldState worldState =
             new BonsaiWorldState(
-                this, contextSafeCopy, evmConfiguration, this.defaultWorldStateConfig));
+                this,
+                contextSafeCopy,
+                evmConfiguration,
+                new DiffBasedWorldStateConfig(defaultWorldStateConfig));
+        worldState.freeze();
+        return Optional.of(worldState);
       }
 
       final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
