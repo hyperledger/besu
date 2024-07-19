@@ -122,9 +122,7 @@ public class StateTestVersionedTransaction {
     this.payloads = parseArray(data, Bytes::fromHexString);
     this.maybeAccessLists = Optional.ofNullable(maybeAccessLists);
     this.maxFeePerBlobGas =
-        Optional.ofNullable(maxFeePerBlobGas)
-            .map(Wei::fromHexString)
-            .orElse(null);
+        Optional.ofNullable(maxFeePerBlobGas).map(Wei::fromHexString).orElse(null);
     this.blobVersionedHashes = blobVersionedHashes;
   }
 
