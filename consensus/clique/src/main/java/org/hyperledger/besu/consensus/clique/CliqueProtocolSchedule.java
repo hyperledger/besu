@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -64,6 +65,9 @@ public class CliqueProtocolSchedule {
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -74,7 +78,9 @@ public class CliqueProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -110,7 +116,9 @@ public class CliqueProtocolSchedule {
             isRevertReasonEnabled,
             evmConfiguration,
             miningParameters,
-            badBlockManager)
+            badBlockManager,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
         .createProtocolSchedule();
   }
 
@@ -124,6 +132,9 @@ public class CliqueProtocolSchedule {
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   @VisibleForTesting
@@ -134,7 +145,9 @@ public class CliqueProtocolSchedule {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         forksSchedule,
@@ -143,7 +156,9 @@ public class CliqueProtocolSchedule {
         isRevertReasonEnabled,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(
