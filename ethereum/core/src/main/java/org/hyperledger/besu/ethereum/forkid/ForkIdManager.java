@@ -85,14 +85,15 @@ public class ForkIdManager {
         Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
             .collect(Collectors.toList());
     this.noForksAvailable = allForkIds.isEmpty();
-    this.highestKnownFork = !allForkNumbers.isEmpty() ? allForkNumbers.getLast() : 0L;
+    this.highestKnownFork =
+        !allForkNumbers.isEmpty() ? allForkNumbers.get(allForkNumbers.size() - 1) : 0L;
   }
 
   public ForkId getForkIdForChainHead() {
     if (legacyEth64) {
       return blockNumbersForkIds.isEmpty()
           ? new ForkId(genesisHashCrc, 0)
-          : blockNumbersForkIds.getLast();
+          : blockNumbersForkIds.get(blockNumbersForkIds.size() - 1);
     }
     final BlockHeader header = chainHeadSupplier.get();
     for (final ForkId forkId : blockNumbersForkIds) {
@@ -105,7 +106,9 @@ public class ForkIdManager {
         return forkId;
       }
     }
-    return allForkIds.isEmpty() ? new ForkId(genesisHashCrc, 0) : allForkIds.getLast();
+    return allForkIds.isEmpty()
+        ? new ForkId(genesisHashCrc, 0)
+        : allForkIds.get(allForkIds.size() - 1);
   }
 
   @VisibleForTesting
