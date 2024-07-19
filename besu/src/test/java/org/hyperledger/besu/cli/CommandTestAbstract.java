@@ -413,8 +413,21 @@ public abstract class CommandTestAbstract {
     environment.put(name, value);
   }
 
-  protected TestBesuCommand parseCommand(final String... args) {
+  protected TestBesuCommand parseCommandNoDefaultsSet(final String... args) {
     return parseCommand(System.in, args);
+  }
+
+  protected TestBesuCommand parseCommand(final String... args) {
+    // Most test cases need this to be disabled
+    String[] augmentedArgs = prependArg(args, "--bonsai-limit-trie-logs-enabled=false");
+    return parseCommand(System.in, augmentedArgs);
+  }
+
+  private String[] prependArg(final String[] args, final String arg) {
+    String[] augmentedArgs = new String[args.length + 1];
+    augmentedArgs[0] = arg;
+    System.arraycopy(args, 0, augmentedArgs, 1, args.length);
+    return augmentedArgs;
   }
 
   protected TestBesuCommand parseCommand(final InputStream in, final String... args) {

@@ -65,7 +65,7 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     T options = optionsFromDomainObject(domainObject);
     final String[] cliOptions = options.getCLIOptions().toArray(new String[0]);
 
-    final TestBesuCommand cmd = parseCommand(cliOptions);
+    final TestBesuCommand cmd = parseCommandNoDefaultsSet(cliOptions);
     final T optionsFromCommand = getOptionsFromBesuCommand(cmd);
 
     assertThat(optionsFromCommand)
@@ -79,7 +79,7 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
   @Test
   public void defaultValues() {
-    final TestBesuCommand cmd = parseCommand();
+    final TestBesuCommand cmd = parseCommandNoDefaultsSet();
 
     final D defaultDomainObject = createDefaultDomainObject();
     final T defaultOptions = optionsFromDomainObject(defaultDomainObject);
@@ -117,11 +117,22 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
     internalTestSuccess((bc, conf) -> conf, assertion, args);
   }
 
+  protected void internalTestSuccessNoDefaultsSet(
+      final Consumer<D> assertion, final String... args) {
+    internalTestSuccess((bc, conf) -> conf, assertion, parseCommandNoDefaultsSet(args));
+  }
+
   protected void internalTestSuccess(
       final BiFunction<TestBesuCommand, D, D> runtimeConf,
       final Consumer<D> assertion,
       final String... args) {
-    final TestBesuCommand cmd = parseCommand(args);
+    internalTestSuccess(runtimeConf, assertion, parseCommand(args));
+  }
+
+  private void internalTestSuccess(
+      final BiFunction<TestBesuCommand, D, D> runtimeConf,
+      final Consumer<D> assertion,
+      final TestBesuCommand cmd) {
 
     final T options = getOptionsFromBesuCommand(cmd);
     final D config = runtimeConf.apply(cmd, options.toDomainObject());
@@ -135,6 +146,13 @@ public abstract class AbstractCLIOptionsTest<D, T extends CLIOptions<D>>
 
   protected void internalTestFailure(final String errorMsg, final String... args) {
     parseCommand(args);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).contains(errorMsg);
+  }
+
+  protected void internalTestFailureNoDefaultsSet(final String errorMsg, final String... args) {
+    parseCommandNoDefaultsSet(args);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).contains(errorMsg);

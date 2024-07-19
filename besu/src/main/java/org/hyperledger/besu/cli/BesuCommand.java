@@ -20,6 +20,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
+import static org.hyperledger.besu.cli.options.stable.DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
@@ -30,6 +31,7 @@ import static org.hyperledger.besu.metrics.MetricsProtocol.PROMETHEUS;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
 
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
@@ -1574,7 +1576,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateDataStorageOptions() {
-    dataStorageOptions.validate(commandLine, syncMode);
+    dataStorageOptions.validate(commandLine);
   }
 
   private void validateRequiredOptions() {
@@ -2234,6 +2236,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private DataStorageConfiguration getDataStorageConfiguration() {
     if (dataStorageConfiguration == null) {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
+    }
+    if (BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())
+        && dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()
+        && SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())) {
+      throw new ParameterException(
+          commandLine,
+          String.format(
+              "Cannot enable %s with sync-mode %s. You must set %s or use a different sync-mode",
+              BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+              SyncMode.FULL,
+              BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
     }
     return dataStorageConfiguration;
   }

@@ -29,7 +29,7 @@ public class DataStorageOptionsTest
 
   @Test
   public void bonsaiTrieLogPruningLimitOption() {
-    internalTestSuccess(
+    internalTestSuccessNoDefaultsSet(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize()).isEqualTo(600),
         "--bonsai-limit-trie-logs-enabled",
@@ -39,7 +39,7 @@ public class DataStorageOptionsTest
 
   @Test
   public void bonsaiTrieLogPruningLimitLegacyOption() {
-    internalTestSuccess(
+    internalTestSuccessNoDefaultsSet(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize()).isEqualTo(600),
         "--Xbonsai-limit-trie-logs-enabled",
@@ -49,7 +49,7 @@ public class DataStorageOptionsTest
 
   @Test
   public void bonsaiTrieLogsEnabled_explicitlySetToFalse() {
-    internalTestSuccess(
+    internalTestSuccessNoDefaultsSet(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isEqualTo(false),
         "--bonsai-limit-trie-logs-enabled=false");
@@ -57,7 +57,7 @@ public class DataStorageOptionsTest
 
   @Test
   public void bonsaiTrieLogPruningWindowSizeShouldBePositive2() {
-    internalTestFailure(
+    internalTestFailureNoDefaultsSet(
         "Cannot enable --bonsai-limit-trie-logs-enabled with sync-mode FULL. You must set --bonsai-limit-trie-logs-enabled=false or use a different sync-mode",
         "--sync-mode",
         "FULL");
@@ -65,7 +65,7 @@ public class DataStorageOptionsTest
 
   @Test
   public void bonsaiTrieLogPruningWindowSizeShouldBePositive() {
-    internalTestFailure(
+    internalTestFailureNoDefaultsSet(
         "--bonsai-trie-logs-pruning-window-size=0 must be greater than 0",
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-trie-logs-pruning-window-size",
@@ -74,7 +74,7 @@ public class DataStorageOptionsTest
 
   @Test
   public void bonsaiTrieLogPruningWindowSizeShouldBeAboveRetentionLimit() {
-    internalTestFailure(
+    internalTestFailureNoDefaultsSet(
         "--bonsai-trie-logs-pruning-window-size=512 must be greater than --bonsai-historical-block-limit=512",
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-trie-logs-pruning-window-size",
@@ -83,7 +83,7 @@ public class DataStorageOptionsTest
 
   @Test
   public void bonsaiTrieLogRetentionLimitOption() {
-    internalTestSuccess(
+    internalTestSuccessNoDefaultsSet(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
                 .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT + 1),
@@ -94,7 +94,7 @@ public class DataStorageOptionsTest
 
   @Test
   public void bonsaiTrieLogRetentionLimitOption_boundaryTest() {
-    internalTestSuccess(
+    internalTestSuccessNoDefaultsSet(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getBonsaiMaxLayersToLoad())
                 .isEqualTo(MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT),
@@ -105,7 +105,7 @@ public class DataStorageOptionsTest
 
   @Test
   public void bonsaiTrieLogRetentionLimitShouldBeAboveMinimum() {
-    internalTestFailure(
+    internalTestFailureNoDefaultsSet(
         "--bonsai-historical-block-limit minimum value is 512",
         "--bonsai-limit-trie-logs-enabled",
         "--bonsai-historical-block-limit",
