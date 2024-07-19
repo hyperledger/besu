@@ -37,6 +37,7 @@ import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.time.Instant;
 import java.util.List;
@@ -68,7 +69,9 @@ public class CliqueProtocolScheduleTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
     final ProtocolSpec tangerineWhistleSpec = protocolSchedule.getByBlockHeader(blockHeader(2));
@@ -92,7 +95,9 @@ public class CliqueProtocolScheduleTest {
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningParameters.MINING_DISABLED,
-                new BadBlockManager())
+                new BadBlockManager(),
+                false,
+                new NoOpMetricsSystem())
             .getByBlockHeader(blockHeader(0));
 
     assertThat(homestead.getName()).isEqualTo("Frontier");
@@ -116,7 +121,9 @@ public class CliqueProtocolScheduleTest {
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningParameters.MINING_DISABLED,
-                    new BadBlockManager()))
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -136,7 +143,9 @@ public class CliqueProtocolScheduleTest {
                     false,
                     EvmConfiguration.DEFAULT,
                     MiningParameters.MINING_DISABLED,
-                    new BadBlockManager()))
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()))
         .isInstanceOf(IllegalArgumentException.class)
         .hasMessage("Epoch length in config must be greater than zero");
   }
@@ -160,7 +169,9 @@ public class CliqueProtocolScheduleTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     BlockHeader emptyFrontierParent =
         headerBuilder
