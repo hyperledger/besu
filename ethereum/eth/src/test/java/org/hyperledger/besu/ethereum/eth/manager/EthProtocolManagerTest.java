@@ -1152,10 +1152,12 @@ public final class EthProtocolManagerTest {
                 blockchain, Collections.emptyList(), Collections.emptyList(), true))) {
 
       assertThat(ethManager.getForkIdAsBytesList()).isNotEmpty();
-      new CRC32().update(blockchain.getGenesisBlock().getHash().toArray());
+      final CRC32 genesisHashCRC = new CRC32();
+      genesisHashCRC.update(blockchain.getGenesisBlock().getHash().toArray());
       assertThat(ethManager.getForkIdAsBytesList())
           .isEqualTo(
-              new ForkId(Bytes.ofUnsignedInt(new CRC32().getValue()), 0L).getForkIdAsBytesList());
+              new ForkId(Bytes.ofUnsignedInt(genesisHashCRC.getValue()), 0L)
+                  .getForkIdAsBytesList());
     }
   }
 
