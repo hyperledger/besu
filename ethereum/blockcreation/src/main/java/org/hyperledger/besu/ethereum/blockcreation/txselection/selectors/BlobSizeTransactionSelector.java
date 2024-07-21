@@ -26,7 +26,7 @@ import org.slf4j.LoggerFactory;
 /**
  * This class extends AbstractTransactionSelector and provides a specific implementation for
  * evaluating transactions based on blobs size. It checks if a transaction supports blobs, and if
- * so, checks that there is enough remaining data gas in the block to fit the blobs of the tx.
+ * so, checks that there is enough remaining blob gas in the block to fit the blobs of the tx.
  */
 public class BlobSizeTransactionSelector extends AbstractTransactionSelector {
   private static final Logger LOG = LoggerFactory.getLogger(BlobSizeTransactionSelector.class);
