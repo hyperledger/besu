@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecBuilder;
 import org.hyperledger.besu.ethereum.mainnet.WithdrawalsValidator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.HashMap;
@@ -58,6 +59,9 @@ public abstract class BaseBftProtocolScheduleBuilder {
    * @param evmConfiguration the evm configuration
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param metricsSystem metricsSystem A metricSystem instance to be able to expose metrics in the
+   *     underlying calls
    * @return the protocol schedule
    */
   public BftProtocolSchedule createProtocolSchedule(
@@ -68,7 +72,9 @@ public abstract class BaseBftProtocolScheduleBuilder {
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     final Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> specMap = new HashMap<>();
 
     forksSchedule
@@ -90,7 +96,9 @@ public abstract class BaseBftProtocolScheduleBuilder {
                 isRevertReasonEnabled,
                 evmConfiguration,
                 miningParameters,
-                badBlockManager)
+                badBlockManager,
+                isParallelTxProcessingEnabled,
+                metricsSystem)
             .createProtocolSchedule();
     return new BftProtocolSchedule((DefaultProtocolSchedule) protocolSchedule);
   }

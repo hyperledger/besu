@@ -41,6 +41,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -138,7 +139,9 @@ public class QbftProtocolScheduleTest {
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
         MiningParameters.MINING_DISABLED,
-        new BadBlockManager());
+        new BadBlockManager(),
+        false,
+        new NoOpMetricsSystem());
   }
 
   private boolean validateHeader(
