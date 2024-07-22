@@ -2259,11 +2259,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
               .withBonsaiLimitTrieLogsEnabled(false);
       logger.warn(
-          "Cannot enable {} with --sync-mode={} and --data-storage-format={}. {} has been set automatically.",
-          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+          "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
+          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false",
           SyncMode.FULL,
-          DataStorageFormat.BONSAI,
-          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false");
+          DataStorageFormat.BONSAI);
     }
     return dataStorageConfiguration;
   }
