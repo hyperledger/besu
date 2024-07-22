@@ -223,7 +223,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
             GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeader(0)).getTransactionProcessor();
 

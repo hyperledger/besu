@@ -194,6 +194,7 @@ dependencies {
   referenceTestImplementation project(path: ':config')
   referenceTestImplementation project(path: ':datatypes')
   referenceTestImplementation project(path: ':ethereum:core')
+  referenceTestImplementation project(path: ':metrics:core')
   referenceTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(path: ':ethereum:rlp')
   referenceTestImplementation project(path: ':ethereum:rlp', configuration: 'testSupportArtifacts')

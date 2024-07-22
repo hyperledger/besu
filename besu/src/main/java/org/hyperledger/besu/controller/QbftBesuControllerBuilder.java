@@ -329,7 +329,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         bftExtraDataCodec().get(),
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   @Override

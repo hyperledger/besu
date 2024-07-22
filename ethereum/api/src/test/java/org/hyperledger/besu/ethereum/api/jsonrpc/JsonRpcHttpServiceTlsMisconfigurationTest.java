@@ -111,7 +111,9 @@ class JsonRpcHttpServiceTlsMisconfigurationTest {
                 MainnetProtocolSchedule.fromConfig(
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
                     MiningParameters.MINING_DISABLED,
-                    new BadBlockManager()),
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
                 mock(TransactionPool.class),

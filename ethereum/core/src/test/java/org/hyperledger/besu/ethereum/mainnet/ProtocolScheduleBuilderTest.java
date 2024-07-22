@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.OptionalLong;
@@ -61,7 +62,9 @@ class ProtocolScheduleBuilderTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
   }
 
   @Test
@@ -216,7 +219,9 @@ class ProtocolScheduleBuilderTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     return new MilestoneStreamingProtocolSchedule(
         (DefaultProtocolSchedule) builder.createProtocolSchedule());

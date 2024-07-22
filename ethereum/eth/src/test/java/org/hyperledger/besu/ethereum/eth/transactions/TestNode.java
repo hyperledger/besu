@@ -123,7 +123,9 @@ public class TestNode implements Closeable {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, protocolSchedule);
     final BlockHeaderFunctions blockHeaderFunctions =
