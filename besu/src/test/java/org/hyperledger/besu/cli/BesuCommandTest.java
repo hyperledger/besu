@@ -65,6 +65,7 @@ import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
@@ -1281,13 +1282,24 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesInvalidDefaultBonsaiLimitTrieLogsWhenFullSyncEnabled() {
+  public void bonsaiLimitTrieLogsDisabledWhenFullSyncEnabled() {
     parseCommand("--sync-mode=FULL");
 
-    Mockito.verifyNoInteractions(mockRunnerBuilder);
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Cannot enable --bonsai-limit-trie-logs-enabled with sync-mode FULL");
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isFalse();
+    verify(mockLogger)
+        .warn(
+            "Cannot enable {} with --sync-mode {} and --data-storage-format {}. {} has been automatically disabled.",
+            "--bonsai-limit-trie-logs-enabled",
+            SyncMode.FULL,
+            DataStorageFormat.BONSAI,
+            "--bonsai-limit-trie-logs-enabled");
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
   @Test

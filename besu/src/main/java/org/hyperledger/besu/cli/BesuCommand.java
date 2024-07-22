@@ -139,6 +139,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -1574,7 +1575,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateDataStorageOptions() {
-    dataStorageOptions.validate(commandLine, syncMode);
+    dataStorageOptions.validate(commandLine);
   }
 
   private void validateRequiredOptions() {
@@ -2236,6 +2237,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private DataStorageConfiguration getDataStorageConfiguration() {
     if (dataStorageConfiguration == null) {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
+    }
+    if (SyncMode.FULL.equals(syncMode)
+        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())
+        && dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()) {
+      dataStorageConfiguration =
+          ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
+              .withBonsaiLimitTrieLogsEnabled(false);
+      logger.warn(
+          "Cannot enable {} with --sync-mode {} and --data-storage-format {}. {} has been automatically disabled.",
+          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+          SyncMode.FULL,
+          DataStorageFormat.BONSAI,
+          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED);
     }
     return dataStorageConfiguration;
   }
