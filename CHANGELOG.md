@@ -23,6 +23,7 @@
 - Added EIP-7702 [#7237](https://github.com/hyperledger/besu/pull/7237)
 - Implement gnark-crypto for eip-196 [#7262](https://github.com/hyperledger/besu/pull/7262)
 - Add trie log pruner metrics [#7352](https://github.com/hyperledger/besu/pull/7352)
+- Allow configuration of Withdrawal Request Predeploy Address via genesis configuration [#7356](https://github.com/hyperledger/besu/pull/7356)
 
 ### Bug fixes
 - Fix `eth_call` deserialization to correctly ignore unknown fields in the transaction object. [#7323](https://github.com/hyperledger/besu/pull/7323)
