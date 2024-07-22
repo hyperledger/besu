@@ -58,6 +58,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -1376,6 +1377,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                     case ACCESS_LIST -> createAccessListPendingTransaction(sender, n);
                     case EIP1559 -> createEIP1559PendingTransaction(sender, n);
                     case BLOB -> createBlobPendingTransaction(sender, n);
+                    case SET_CODE -> throw new UnsupportedOperationException();
                   });
     }
 
@@ -1621,5 +1623,12 @@ public class LayersTest extends BaseTransactionPoolTest {
       this.gasFeeMultiplier = gasFeeMultiplier;
       this.hasPriority = hasPriority;
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
-  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
+  private final Optional<ScheduledProtocolSpec.Hardfork> supportedHardFork;
   private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV3.class);
 
   public EngineForkchoiceUpdatedV3(
@@ -43,7 +43,11 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
-    this.cancun = protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+    this.supportedHardFork =
+        protocolSchedule.hardforkFor(
+            s ->
+                s.fork().name().equalsIgnoreCase("Cancun")
+                    || s.fork().name().equalsIgnoreCase("Prague"));
   }
 
   @Override
@@ -77,12 +81,12 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
     if (protocolSchedule.isPresent()) {
-      if (cancun.isPresent() && blockTimestamp >= cancun.get().milestone()) {
+      if (supportedHardFork.isPresent() && blockTimestamp >= supportedHardFork.get().milestone()) {
         return ValidationResult.valid();
       } else {
         return ValidationResult.invalid(
             RpcErrorType.UNSUPPORTED_FORK,
-            "Cancun configured to start at timestamp: " + cancun.get().milestone());
+            "Cancun configured to start at timestamp: " + supportedHardFork.get().milestone());
       }
     } else {
       return ValidationResult.invalid(
@@ -99,7 +103,7 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     } else if (payloadAttributes.getTimestamp().longValue() == 0) {
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
-    } else if (payloadAttributes.getTimestamp() < cancun.get().milestone()) {
+    } else if (payloadAttributes.getTimestamp() < supportedHardFork.get().milestone()) {
       return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
     } else {
       return Optional.empty();

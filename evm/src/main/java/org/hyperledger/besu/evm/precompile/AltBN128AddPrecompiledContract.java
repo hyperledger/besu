@@ -19,7 +19,7 @@ import org.hyperledger.besu.crypto.altbn128.Fq;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
-import org.hyperledger.besu.nativelib.bls12_381.LibEthPairings;
+import org.hyperledger.besu.nativelib.gnark.LibGnarkEIP196;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -40,7 +40,7 @@ public class AltBN128AddPrecompiledContract extends AbstractAltBnPrecompiledCont
     super(
         "AltBN128Add",
         gasCalculator,
-        LibEthPairings.EIP196_ADD_OPERATION_RAW_VALUE,
+        LibGnarkEIP196.EIP196_ADD_OPERATION_RAW_VALUE,
         PARAMETER_LENGTH);
     this.gasCost = gasCost;
   }

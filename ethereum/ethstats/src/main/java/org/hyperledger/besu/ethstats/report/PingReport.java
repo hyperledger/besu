@@ -19,15 +19,29 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
+/**
+ * This interface represents a ping report. It provides methods to get the id and current time of
+ * the ping report.
+ */
 @Value.Immutable
 @Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutablePingReport.class)
 @JsonDeserialize(as = ImmutablePingReport.class)
 public interface PingReport {
 
+  /**
+   * Gets the id of the ping report.
+   *
+   * @return the id of the ping report.
+   */
   @JsonProperty("id")
   String getId();
 
+  /**
+   * Gets the current time of the ping report.
+   *
+   * @return the current time of the ping report.
+   */
   @JsonProperty("clientTime")
   String getCurrentTime();
 }

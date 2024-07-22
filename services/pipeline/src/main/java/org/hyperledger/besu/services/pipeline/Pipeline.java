@@ -89,6 +89,19 @@ public class Pipeline<I> {
     this.stages = stages;
     this.pipes = pipes;
     this.completerStage = completerStage;
+
+    if (LOG.isTraceEnabled()) {
+      StringBuilder sb = new StringBuilder();
+      sb.append("Building pipeline ");
+      sb.append(name);
+      sb.append(". Stages: ");
+      for (Stage nextStage : stages) {
+        sb.append(nextStage.getName());
+        sb.append(" -> ");
+      }
+      sb.append("END");
+      LOG.trace("{}", sb.toString());
+    }
   }
 
   /**

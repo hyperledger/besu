@@ -55,7 +55,7 @@ public class LoadLocalDataStepTest {
   private final Task<SnapDataRequest> task = new StubTask(request);
 
   private final Pipe<Task<SnapDataRequest>> completedTasks =
-      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER);
+      new Pipe<>(10, NO_OP_COUNTER, NO_OP_COUNTER, NO_OP_COUNTER, "test_pipe");
 
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);

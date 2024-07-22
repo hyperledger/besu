@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -91,6 +92,11 @@ public class ReferenceTestProtocolSchedules {
         "CancunToPragueAtTime15k",
         createSchedule(genesisStub.clone().cancunTime(0).pragueTime(15000)));
     builder.put("Prague", createSchedule(genesisStub.clone().pragueEOFTime(0)));
+    builder.put("Osaka", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Amsterdam", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Bogota", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Polis", createSchedule(genesisStub.clone().futureEipsTime(0)));
+    builder.put("Bangkok", createSchedule(genesisStub.clone().futureEipsTime(0)));
     builder.put("Future_EIPs", createSchedule(genesisStub.clone().futureEipsTime(0)));
     builder.put("Experimental_EIPs", createSchedule(genesisStub.clone().experimentalEipsTime(0)));
     return new ReferenceTestProtocolSchedules(builder.build());
@@ -125,7 +131,9 @@ public class ReferenceTestProtocolSchedules {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager())
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem())
         .createProtocolSchedule();
   }
 

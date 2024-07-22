@@ -14,9 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.bonsai;
 
+import static org.assertj.core.api.Assertions.assertThat;
+
 import org.hyperledger.besu.ethereum.api.jsonrpc.AbstractJsonRpcHttpBySpecTest;
 
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 
 public class EthJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
@@ -29,5 +32,12 @@ public class EthJsonRpcHttpBySpecTest extends AbstractJsonRpcHttpBySpecTest {
 
   public static Object[][] specs() {
     return findSpecFiles(new String[] {"eth"});
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

@@ -43,7 +43,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.quality.Strictness.LENIENT;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -191,19 +191,24 @@ public abstract class AbstractTransactionPoolTest {
   protected abstract ExecutionContextTestFixture createExecutionContextTestFixture();
 
   protected static ExecutionContextTestFixture createExecutionContextTestFixtureBaseFeeMarket() {
+    final var genesisConfigFile = GenesisConfigFile.fromResource("/txpool-test-genesis.json");
     final ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
-                new StubGenesisConfigOptions().londonBlock(0L).baseFeePerGas(10L),
+                genesisConfigFile.getConfigOptions(),
                 BigInteger.valueOf(1),
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 new PrivacyParameters(),
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningParameters.MINING_DISABLED,
-                new BadBlockManager())
+                new BadBlockManager(),
+                false,
+                new NoOpMetricsSystem())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
+        ExecutionContextTestFixture.builder(genesisConfigFile)
+            .protocolSchedule(protocolSchedule)
+            .build();
 
     final Block block =
         new Block(

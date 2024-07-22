@@ -1,6 +1,41 @@
 # Changelog
 
-## Next Release
+## Next release
+
+### Upcoming Breaking Changes
+- Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
+- --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
+- --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
+- `besu storage x-trie-log` subcommand is deprecated, use `besu storage trie-log` instead
+
+### Breaking Changes
+- Remove deprecated sync modes (X_SNAP and X_CHECKPOINT). Use SNAP and CHECKPOINT instead [#7309](https://github.com/hyperledger/besu/pull/7309)
+- Remove PKI-backed QBFT (deprecated in 24.5.1) Other forms of QBFT remain unchanged. [#7293](https://github.com/hyperledger/besu/pull/7293)
+
+### Additions and Improvements
+- `--Xsnapsync-bft-enabled` option enables experimental support for snap sync with IBFT/QBFT permissioned Bonsai-DB chains [#7140](https://github.com/hyperledger/besu/pull/7140)
+- Add support to load external profiles using `--profile` [#7265](https://github.com/hyperledger/besu/issues/7265)
+- `privacy-nonce-always-increments` option enables private transactions to always increment the nonce, even if the transaction is invalid [#6593](https://github.com/hyperledger/besu/pull/6593)
+- Added `block-test` subcommand to the evmtool which runs blockchain reference tests [#7293](https://github.com/hyperledger/besu/pull/7293)
+- removed PKI backed QBFT [#7310](https://github.com/hyperledger/besu/pull/7310)
+- Implement gnark-crypto for eip-2537 [#7316](https://github.com/hyperledger/besu/pull/7316)
+- Improve blob size transaction selector [#7312](https://github.com/hyperledger/besu/pull/7312)
+- Added EIP-7702 [#7237](https://github.com/hyperledger/besu/pull/7237)
+- Implement gnark-crypto for eip-196 [#7262](https://github.com/hyperledger/besu/pull/7262)
+- Add trie log pruner metrics [#7352](https://github.com/hyperledger/besu/pull/7352)
+- `--Xbonsai-parallel-tx-processing-enabled` option enables executing transactions in parallel during block processing for Bonsai nodes
+
+### Bug fixes
+- Fix `eth_call` deserialization to correctly ignore unknown fields in the transaction object. [#7323](https://github.com/hyperledger/besu/pull/7323)
+
+## 24.7.0
+
+### Upcoming Breaking Changes
+- Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
+- PKI-backed QBFT will be removed in a future version of Besu. Other forms of QBFT will remain unchanged.
+- --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
+- --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
+- `besu storage x-trie-log` subcommand is deprecated, use `besu storage trie-log` instead
 
 ### Breaking Changes
 - `Xp2p-peer-lower-bound` has been removed. [#7247](https://github.com/hyperledger/besu/pull/7247)
@@ -15,12 +50,17 @@
 - Update Docker base image to Ubuntu 24.04 [#7251](https://github.com/hyperledger/besu/pull/7251)
 - Add LUKSO as predefined network name [#7223](https://github.com/hyperledger/besu/pull/7223)
 - Refactored how code, initcode, and max stack size are configured in forks. [#7245](https://github.com/hyperledger/besu/pull/7245)
+- Nodes in a permissioned chain maintain (and retry) connections to bootnodes [#7257](https://github.com/hyperledger/besu/pull/7257)
+- Promote experimental `besu storage x-trie-log` subcommand to production-ready [#7278](https://github.com/hyperledger/besu/pull/7278)
+- Enhanced BFT round-change diagnostics [#7271](https://github.com/hyperledger/besu/pull/7271)
 
 ### Bug fixes
 - Validation errors ignored in accounts-allowlist and empty list [#7138](https://github.com/hyperledger/besu/issues/7138)
 - Fix "Invalid block detected" for BFT chains using Bonsai DB [#7204](https://github.com/hyperledger/besu/pull/7204)
 - Fix "Could not confirm best peer had pivot block" [#7109](https://github.com/hyperledger/besu/issues/7109)
 - Fix "Chain Download Halt" [#6884](https://github.com/hyperledger/besu/issues/6884)
+
+
 
 ## 24.6.0
 
