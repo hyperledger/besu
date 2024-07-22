@@ -16,6 +16,7 @@ package org.hyperledger.besu.evm.tracing;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.Log;
@@ -84,6 +85,17 @@ public interface OperationTracer {
    * @param transaction the transaction which will be processed
    */
   default void traceStartTransaction(final WorldView worldView, final Transaction transaction) {}
+
+  /**
+   * Trace the end of a transaction just before mining reward.
+   *
+   * @param worldView an immutable view of the execution context
+   * @param tx the transaction that just concluded
+   * @param miningReward the reward that the mining beneficiary will receive.
+   */
+  default void traceBeforeRewardTransaction(
+      final WorldView worldView, final Transaction tx, final Wei miningReward) {}
+  ;
 
   /**
    * Trace the end of a transaction.

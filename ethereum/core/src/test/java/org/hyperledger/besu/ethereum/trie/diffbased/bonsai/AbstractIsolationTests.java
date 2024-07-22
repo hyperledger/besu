@@ -105,7 +105,9 @@ public abstract class AbstractIsolationTests {
       MainnetProtocolSchedule.fromConfig(
           GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
           MiningParameters.MINING_DISABLED,
-          new BadBlockManager());
+          new BadBlockManager(),
+          false,
+          new NoOpMetricsSystem());
   protected final GenesisState genesisState =
       GenesisState.fromConfig(GenesisConfigFile.fromResource("/dev.json"), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
