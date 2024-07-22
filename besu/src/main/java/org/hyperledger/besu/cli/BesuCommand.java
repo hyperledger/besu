@@ -2238,18 +2238,32 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (dataStorageConfiguration == null) {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
     }
-    if (SyncMode.FULL.equals(syncMode)
+
+    if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
         && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())
         && dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()) {
+
+      if (CommandLineUtils.isOptionSet(
+          commandLine, DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED)) {
+        throw new ParameterException(
+            commandLine,
+            String.format(
+                "Cannot enable %s with --sync-mode=%s and --data-storage-format=%s. You must set %s or use a different sync-mode",
+                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+                SyncMode.FULL,
+                DataStorageFormat.BONSAI,
+                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
+      }
+
       dataStorageConfiguration =
           ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
               .withBonsaiLimitTrieLogsEnabled(false);
       logger.warn(
-          "Cannot enable {} with --sync-mode {} and --data-storage-format {}. {} has been automatically disabled.",
+          "Cannot enable {} with --sync-mode={} and --data-storage-format={}. {} has been set automatically.",
           DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED,
           SyncMode.FULL,
           DataStorageFormat.BONSAI,
-          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED);
+          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false");
     }
     return dataStorageConfiguration;
   }
