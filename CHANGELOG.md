@@ -23,7 +23,7 @@
 - Added EIP-7702 [#7237](https://github.com/hyperledger/besu/pull/7237)
 - Implement gnark-crypto for eip-196 [#7262](https://github.com/hyperledger/besu/pull/7262)
 - Add trie log pruner metrics [#7352](https://github.com/hyperledger/besu/pull/7352)
-- Automatically set bonsai-limit-trie-logs-enabled=false when sync-mode=FULL instead of startup error [#7357](https://github.com/hyperledger/besu/pull/7357)
+- Force bonsai-limit-trie-logs-enabled=false when sync-mode=FULL instead of startup error [#7357](https://github.com/hyperledger/besu/pull/7357)
 - `--Xbonsai-parallel-tx-processing-enabled` option enables executing transactions in parallel during block processing for Bonsai nodes
 
 ### Bug fixes

@@ -1294,11 +1294,10 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isFalse();
     verify(mockLogger)
         .warn(
-            "Cannot enable {} with --sync-mode={} and --data-storage-format={}. {} has been set automatically.",
-            "--bonsai-limit-trie-logs-enabled",
+            "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
+            "--bonsai-limit-trie-logs-enabled=false",
             SyncMode.FULL,
-            DataStorageFormat.BONSAI,
-            "--bonsai-limit-trie-logs-enabled=false");
+            DataStorageFormat.BONSAI);
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
