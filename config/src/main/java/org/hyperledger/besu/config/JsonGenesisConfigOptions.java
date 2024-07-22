@@ -49,6 +49,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
   private static final String ZERO_BASE_FEE_KEY = "zerobasefee";
   private static final String FIXED_BASE_FEE_KEY = "fixedbasefee";
+  private static final String WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS_KEY =
+      "withdrawalrequestpredeployaddress";
   private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
 
   private final ObjectNode configRoot;
@@ -439,6 +441,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public Optional<Address> getWithdrawalRequestPredeployAddress() {
+    Optional<String> inputAddress =
+        JsonUtil.getString(configRoot, WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS_KEY);
+    return inputAddress.map(Address::fromHexString);
+  }
+
+  @Override
   public Optional<Address> getDepositContractAddress() {
     Optional<String> inputAddress = JsonUtil.getString(configRoot, DEPOSIT_CONTRACT_ADDRESS_KEY);
     return inputAddress.map(Address::fromHexString);
@@ -492,6 +501,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
 
+    getWithdrawalRequestPredeployAddress()
+        .ifPresent(l -> builder.put("withdrawalRequestPredeployAddress", l));
     getDepositContractAddress().ifPresent(l -> builder.put("depositContractAddress", l));
 
     if (isClique()) {
