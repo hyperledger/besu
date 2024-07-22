@@ -2,7 +2,7 @@
   "config": {
     "londonBlock": 0
   },
-  "coinbase": "0x0000000000000000000000000000000000000000",
+  "coinbase": "0x0000000000000000000000000000000000000001",
   "difficulty": "0x0000001",
   "extraData": "",
   "gasLimit": "0x1C9C380",

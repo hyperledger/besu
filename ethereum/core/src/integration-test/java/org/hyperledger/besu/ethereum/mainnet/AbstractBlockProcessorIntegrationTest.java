@@ -65,6 +65,7 @@ class AbstractBlockProcessorIntegrationTest {
   private MainnetParallelBlockProcessor parallelBlockProcessor;
   private BlockProcessor blockProcessor;
   private DefaultBlockchain blockchain;
+  private Address coinbase;
 
   @BeforeEach
   public void setUp() {
@@ -72,13 +73,12 @@ class AbstractBlockProcessorIntegrationTest {
         ExecutionContextTestFixture.builder(GenesisConfigFile.fromResource("/genesis-bp-it.json"))
             .build();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
+    final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
     final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule
-            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
-            .getTransactionProcessor();
+        protocolSchedule.getByBlockHeader(blockHeader).getTransactionProcessor();
+    coinbase = blockHeader.getCoinbase();
     worldStateArchive = contextTestFixture.getStateArchive();
     blockchain = (DefaultBlockchain) contextTestFixture.getBlockchain();
-
     blockProcessor =
         new MainnetBlockProcessor(
             transactionProcessor,
@@ -132,6 +132,16 @@ class AbstractBlockProcessorIntegrationTest {
     processConfiltedSimpleTransfers2(parallelBlockProcessor);
   }
 
+  @Test
+  void processSequentialConfiltedSimpleTransfersWithCoinbase() {
+    processConfiltedSimpleTransfersWithCoinbase(blockProcessor);
+  }
+
+  @Test
+  void processParallelConfiltedSimpleTransfersWithCoinbase() {
+    processConfiltedSimpleTransfersWithCoinbase(parallelBlockProcessor);
+  }
+
   private void processSimpleTransfers(final BlockProcessor blockProcessor) {
     final KeyPair keyPair1 =
         SignatureAlgorithmFactory.getInstance()
@@ -157,7 +167,8 @@ class AbstractBlockProcessorIntegrationTest {
             0, 2_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_3, keyPair2);
 
     MutableWorldState worldState = worldStateArchive.getMutable();
-    BonsaiAccount account = (BonsaiAccount) worldState.get(transaction1.getSender());
+    BonsaiAccount senderAccount1 = (BonsaiAccount) worldState.get(transaction1.getSender());
+    BonsaiAccount senderAccount2 = (BonsaiAccount) worldState.get(transaction1.getSender());
 
     BlockHeader blockHeader =
         new BlockHeaderTestFixture()
@@ -174,7 +185,8 @@ class AbstractBlockProcessorIntegrationTest {
         blockProcessor.processBlock(
             blockchain, worldStateArchive.getMutable(), new Block(blockHeader, blockBody));
 
-    BonsaiAccount updatedAccount = (BonsaiAccount) worldState.get(transaction1.getSender());
+    BonsaiAccount updatedSenderAccount1 = (BonsaiAccount) worldState.get(transaction1.getSender());
+    BonsaiAccount updatedSenderAccount2 = (BonsaiAccount) worldState.get(transaction2.getSender());
 
     BonsaiAccount updatedAccount0x1 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_2));
@@ -184,7 +196,8 @@ class AbstractBlockProcessorIntegrationTest {
     assertTrue(result.isSuccessful());
     assertThat(updatedAccount0x1.getBalance()).isEqualTo(Wei.of(1_000_000_000_000_000_000L));
     assertThat(updatedAccount0x2.getBalance()).isEqualTo(Wei.of(2_000_000_000_000_000_000L));
-    assertThat(updatedAccount.getBalance()).isLessThan(account.getBalance());
+    assertThat(updatedSenderAccount1.getBalance()).isLessThan(senderAccount1.getBalance());
+    assertThat(updatedSenderAccount2.getBalance()).isLessThan(senderAccount2.getBalance());
   }
 
   private void processConfiltedSimpleTransfers1(final BlockProcessor blockProcessor) {
@@ -312,6 +325,68 @@ class AbstractBlockProcessorIntegrationTest {
                 UInt256.fromHexString(
                     ("0x00000000000000000000000000000000000000000000003627e8f7123739c024"))));
     assertThat(updatedAccount0x2.getBalance()).isEqualTo(Wei.of(2_000_000_000_000_000_000L));
+
+    assertThat(updatedAccount.getBalance()).isLessThan(account.getBalance());
+  }
+
+  private void processConfiltedSimpleTransfersWithCoinbase(final BlockProcessor blockProcessor) {
+    final KeyPair keyPair =
+        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
+    final KeyPair keyPair2 =
+        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
+
+    // Create three transactions with the same sender (conflicted transactions)
+    Transaction transaction1 =
+        createTransferTransaction(
+            0,
+            1_000_000_000_000_000_000L,
+            300000L,
+            5L,
+            7L,
+            ACCOUNT_2,
+            keyPair); // ACCOUNT_GENESIS_1 -> ACCOUNT_GENESIS_2
+    Transaction transaction2 =
+        createTransferTransaction(
+            0,
+            2_000_000_000_000_000_000L,
+            300000L,
+            5L,
+            7L,
+            coinbase.toHexString(),
+            keyPair2); // ACCOUNT_GENESIS_2 -> ACCOUNT_@
+
+    MutableWorldState worldState = worldStateArchive.getMutable();
+    BonsaiAccount account = (BonsaiAccount) worldState.get(transaction1.getSender());
+
+    BlockHeader blockHeader =
+        new BlockHeaderTestFixture()
+            .number(1L)
+            .stateRoot(
+                Hash.fromHexString(
+                    "0x94e99fa3c5e8c415fd76a52943d405844255dbc610f75e1b4fdc10211c0dd817"))
+            .gasLimit(30_000_000L)
+            .baseFeePerGas(Wei.of(5))
+            .buildHeader();
+    BlockBody blockBody =
+        new BlockBody(Arrays.asList(transaction1, transaction2), Collections.emptyList());
+    BlockProcessingResult result =
+        blockProcessor.processBlock(
+            blockchain, worldStateArchive.getMutable(), new Block(blockHeader, blockBody));
+
+    BonsaiAccount updatedAccount = (BonsaiAccount) worldState.get(transaction1.getSender());
+
+    BonsaiAccount updatedAccount0x2 =
+        (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_2));
+
+    BonsaiAccount updatedCoinbase = (BonsaiAccount) worldState.get(coinbase);
+
+    assertTrue(result.isSuccessful());
+    assertThat(updatedAccount0x2.getBalance()).isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+    assertThat(updatedCoinbase.getBalance())
+        .isEqualTo(
+            Wei.of(
+                UInt256.fromHexString(
+                    ("0x0000000000000000000000000000000000000000000000001bc8886498566008"))));
 
     assertThat(updatedAccount.getBalance()).isLessThan(account.getBalance());
   }
