@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -143,14 +144,8 @@ public class EOFLayoutTest {
           },
           {
             "EF0001 010004 0200010001 040003 00 00800000 FE DEADBEEF",
-            "Incomplete data section",
+            "Excess data section",
             "Dangling data after end of all sections",
-            1
-          },
-          {
-            "EF0001 010004 0200010001 040003 00 00800000 FE BEEF",
-            "Incomplete data section",
-            "Incomplete data section",
             1
           },
           {
@@ -343,9 +338,9 @@ public class EOFLayoutTest {
 
   @ParameterizedTest(name = "{1}")
   @MethodSource({
-    //    "correctContainers",
-    //    "containersWithFormatErrors",
-    //    "typeSectionTests",
+    "correctContainers",
+    "containersWithFormatErrors",
+    "typeSectionTests",
     "subContainers"
   })
   void test(
@@ -354,7 +349,7 @@ public class EOFLayoutTest {
       final String failureReason,
       final int expectedVersion) {
     final Bytes container = Bytes.fromHexString(containerString.replaceAll("[^a-fxA-F0-9]", ""));
-    final EOFLayout layout = EOFLayout.parseEOF(container);
+    final EOFLayout layout = EOFLayout.parseEOF(container, true);
 
     assertThat(layout.version()).isEqualTo(expectedVersion);
     assertThat(layout.invalidReason()).isEqualTo(failureReason);
@@ -366,5 +361,12 @@ public class EOFLayoutTest {
       assertThat(layout.isValid()).isTrue();
       assertThat(layout.getCodeSectionCount()).isNotZero();
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

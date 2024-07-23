@@ -28,6 +28,8 @@ import static org.hyperledger.besu.datatypes.Address.BLS12_MAP_FP2_TO_G2;
  */
 public class PragueGasCalculator extends CancunGasCalculator {
 
+  static final long PER_CONTRACT_CODE_BASE_COST = 2500L;
+
   /** Instantiates a new Prague Gas Calculator. */
   public PragueGasCalculator() {
     this(BLS12_MAP_FP2_TO_G2.toArrayUnsafe()[19]);
@@ -40,5 +42,10 @@ public class PragueGasCalculator extends CancunGasCalculator {
    */
   protected PragueGasCalculator(final int maxPrecompile) {
     super(maxPrecompile);
+  }
+
+  @Override
+  public long setCodeListGasCost(final int authorizationListLength) {
+    return PER_CONTRACT_CODE_BASE_COST * authorizationListLength;
   }
 }

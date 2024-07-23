@@ -15,18 +15,33 @@
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.ethereum.chain.Blockchain;
-import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.metrics.MetricsConfigurationModule;
 import org.hyperledger.besu.metrics.MetricsSystemModule;
 
-import java.util.function.Function;
 import javax.inject.Singleton;
 
 import dagger.Component;
 
+/**
+ * This is a Dagger component interface for the EVM (Ethereum Virtual Machine) tool. It is annotated
+ * with @Singleton to ensure that only a single instance of this component exists within the Dagger
+ * component graph.
+ *
+ * <p>The component is composed of several modules that provide the necessary dependencies for the
+ * EVM tool: - ProtocolModule: Provides the protocol specification. - GenesisFileModule: Provides
+ * the genesis file for the blockchain. - DataStoreModule: Provides the data store for blockchain
+ * data. - BlockchainModule: Provides the blockchain instance. - EvmToolCommandOptionsModule:
+ * Provides the command options for the EVM tool. - MetricsConfigurationModule and
+ * MetricsSystemModule: Provide the metrics system and its configuration.
+ *
+ * <p>The interface defines methods to get instances of key classes like ProtocolSpec, EVM,
+ * WorldUpdater, MutableWorldState, and Blockchain. These methods are used by Dagger to inject the
+ * returned instances where needed.
+ */
 @Singleton
 @Component(
     modules = {
@@ -40,11 +55,44 @@ import dagger.Component;
     })
 public interface EvmToolComponent {
 
-  Function<BlockHeader, ProtocolSpec> getProtocolSpec();
+  /**
+   * Retrieves the ProtocolSpec instance. ProtocolSpec defines the Ethereum protocol specifications,
+   * which includes the precompiled contracts, the gas calculator, the EVM, and the private nonce
+   * calculator.
+   *
+   * @return The ProtocolSpec instance.
+   */
+  ProtocolSpec getProtocolSpec();
 
+  /**
+   * Retrieves the EVM instance. EVM (Ethereum Virtual Machine) is responsible for executing the
+   * bytecode of smart contracts in Ethereum.
+   *
+   * @return The EVM instance.
+   */
+  EVM getEVM();
+
+  /**
+   * Retrieves the WorldUpdater instance. WorldUpdater is used to modify the world state, which
+   * includes the accounts and their associated storage and code.
+   *
+   * @return The WorldUpdater instance.
+   */
   WorldUpdater getWorldUpdater();
 
+  /**
+   * Retrieves the MutableWorldState instance. MutableWorldState represents the world state of
+   * Ethereum, which includes all accounts, their balances, nonces, codes, and storage.
+   *
+   * @return The MutableWorldState instance.
+   */
   MutableWorldState getWorldState();
 
+  /**
+   * Retrieves the Blockchain instance. Blockchain represents the Ethereum blockchain, which
+   * includes blocks, transactions, and the world state.
+   *
+   * @return The Blockchain instance.
+   */
   Blockchain getBlockchain();
 }

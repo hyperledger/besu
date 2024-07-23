@@ -20,13 +20,13 @@ import static org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec.TestR
 import static org.hyperledger.besu.evmtool.EOFTestSubCommand.COMMAND_NAME;
 
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
 import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec.TestResult;
+import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedules;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.code.CodeInvalid;
-import org.hyperledger.besu.evm.code.CodeV1;
-import org.hyperledger.besu.evm.code.CodeV1Validation;
 import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.util.LogConfigurator;
 
@@ -45,32 +45,39 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
+/** A PicoCli annotated command for running EOF validation reference tests. */
 @CommandLine.Command(
     name = COMMAND_NAME,
     description = "Runs EOF validation reference tests",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class EOFTestSubCommand implements Runnable {
+  /** The name of the EOF validation reference test command. */
   public static final String COMMAND_NAME = "eof-test";
+
   @CommandLine.ParentCommand private final EvmToolCommand parentCommand;
 
   // picocli does it magically
   @CommandLine.Parameters private final List<Path> eofTestFiles = new ArrayList<>();
 
   @CommandLine.Option(
-      names = {"--fork-name"},
-      description = "Limit execution to one fork.")
-  private String forkName = null;
-
-  @CommandLine.Option(
       names = {"--test-name"},
       description = "Limit execution to one test.")
   private String testVectorName = null;
 
+  EVM evm;
+  String fork = null;
+
+  /** Default constructor for the EOFTestSubCommand class. Sets the parent command to null. */
   public EOFTestSubCommand() {
     this(null);
   }
 
+  /**
+   * Constructor for the EOFTestSubCommand class with a parent command.
+   *
+   * @param parentCommand The parent command for this sub command.
+   */
   public EOFTestSubCommand(final EvmToolCommand parentCommand) {
     this.parentCommand = parentCommand;
   }
@@ -81,6 +88,14 @@ public class EOFTestSubCommand implements Runnable {
     // presume ethereum mainnet for reference and EOF tests
     SignatureAlgorithmFactory.setDefaultInstance();
     final ObjectMapper eofTestMapper = JsonUtils.createObjectMapper();
+
+    if (parentCommand.hasFork()) {
+      fork = parentCommand.getFork();
+    }
+    ProtocolSpec protocolSpec =
+        ReferenceTestProtocolSchedules.create()
+            .geSpecByName(fork == null ? EvmSpecVersion.PRAGUE.getName() : fork);
+    evm = protocolSpec.getEvm();
 
     final JavaType javaType =
         eofTestMapper
@@ -146,7 +161,8 @@ public class EOFTestSubCommand implements Runnable {
         String code = testVector.getValue().code();
         for (var testResult : testVector.getValue().results().entrySet()) {
           String expectedForkName = testResult.getKey();
-          if (forkName != null && !forkName.equals(expectedForkName)) {
+          if (fork != null && !fork.equals(expectedForkName)) {
+            System.out.println("Wrong fork - " + fork + " != " + expectedForkName);
             continue;
           }
           TestResult expectedResult = testResult.getValue();
@@ -192,6 +208,12 @@ public class EOFTestSubCommand implements Runnable {
     }
   }
 
+  /**
+   * Considers the given hexadecimal code string for EOF validation.
+   *
+   * @param hexCode The hexadecimal string representation of the code to be considered.
+   * @return The result of the EOF validation test.
+   */
   public TestResult considerCode(final String hexCode) {
     Bytes codeBytes;
     try {
@@ -210,15 +232,9 @@ public class EOFTestSubCommand implements Runnable {
       return failed("layout - " + layout.invalidReason());
     }
 
-    var code = CodeFactory.createCode(codeBytes, 1);
+    var code = evm.getCodeUncached(codeBytes);
     if (!code.isValid()) {
       return failed("validate " + ((CodeInvalid) code).getInvalidReason());
-    }
-    if (code instanceof CodeV1 codeV1) {
-      var result = CodeV1Validation.validate(codeV1.getEofLayout());
-      if (result != null) {
-        return (failed("deep validate error: " + result));
-      }
     }
 
     return passed();

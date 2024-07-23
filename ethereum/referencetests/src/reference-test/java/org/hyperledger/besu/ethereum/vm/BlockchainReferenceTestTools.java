@@ -90,10 +90,10 @@ public class BlockchainReferenceTestTools {
     params.ignore(
         "UncleFromSideChain_(Merge|Paris|Shanghai|Cancun|Prague|Osaka|Amsterdam|Bogota|Polis|Bangkok)");
 
-    // EOF tests don't have Prague stuff like deopsits right now
+    // EOF tests don't have Prague stuff like deposits right now
     params.ignore("/stEOF/");
 
-    // None of the Prague tests have withdrawls and deposits handling
+    // None of the Prague tests have withdrawals and deposits handling
     params.ignore("\\[Prague\\]");
   }
 

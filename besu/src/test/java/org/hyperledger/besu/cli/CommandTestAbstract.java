@@ -43,8 +43,6 @@ import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfigOptions;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.controller.NoopPluginServiceFactory;
@@ -73,7 +71,6 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
-import org.hyperledger.besu.pki.config.PkiKeyStoreConfiguration;
 import org.hyperledger.besu.plugin.services.PicoCLIOptions;
 import org.hyperledger.besu.plugin.services.StorageService;
 import org.hyperledger.besu.plugin.services.TransactionSelectionService;
@@ -234,9 +231,6 @@ public abstract class CommandTestAbstract {
   @Mock(lenient = true)
   protected BesuComponent mockBesuComponent;
 
-  @Mock protected PkiBlockCreationConfigurationProvider mockPkiBlockCreationConfigProvider;
-  @Mock protected PkiBlockCreationConfiguration mockPkiBlockCreationConfiguration;
-
   @Captor protected ArgumentCaptor<Collection<Bytes>> bytesCollectionCollector;
   @Captor protected ArgumentCaptor<Path> pathArgumentCaptor;
   @Captor protected ArgumentCaptor<String> stringArgumentCaptor;
@@ -251,7 +245,6 @@ public abstract class CommandTestAbstract {
   @Captor protected ArgumentCaptor<StorageProvider> storageProviderArgumentCaptor;
   @Captor protected ArgumentCaptor<EthProtocolConfiguration> ethProtocolConfigurationArgumentCaptor;
   @Captor protected ArgumentCaptor<DataStorageConfiguration> dataStorageConfigurationArgumentCaptor;
-  @Captor protected ArgumentCaptor<PkiKeyStoreConfiguration> pkiKeyStoreConfigurationArgumentCaptor;
   @Captor protected ArgumentCaptor<P2PConfiguration> p2PConfigurationArgumentCaptor;
 
   @Captor
@@ -281,10 +274,10 @@ public abstract class CommandTestAbstract {
     when(mockControllerBuilder.messagePermissioningProviders(any()))
         .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.privacyParameters(any())).thenReturn(mockControllerBuilder);
-    when(mockControllerBuilder.pkiBlockCreationConfiguration(any()))
-        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.clock(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.isRevertReasonEnabled(false)).thenReturn(mockControllerBuilder);
+    when(mockControllerBuilder.isParallelTxProcessingEnabled(false))
+        .thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.storageProvider(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.gasLimitCalculator(any())).thenReturn(mockControllerBuilder);
     when(mockControllerBuilder.requiredBlocks(any())).thenReturn(mockControllerBuilder);
@@ -380,10 +373,6 @@ public abstract class CommandTestAbstract {
         .when(mockBesuPluginContext.getService(TransactionSelectionService.class))
         .thenReturn(Optional.of(txSelectionService));
 
-    lenient()
-        .doReturn(mockPkiBlockCreationConfiguration)
-        .when(mockPkiBlockCreationConfigProvider)
-        .load(pkiKeyStoreConfigurationArgumentCaptor.capture());
     when(mockBesuComponent.getBesuCommandLogger()).thenReturn(mockLogger);
   }
 
@@ -479,7 +468,6 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            mockPkiBlockCreationConfigProvider,
             privacyPluginService);
       case PORT_CHECK:
         return new TestBesuCommand(
@@ -493,7 +481,6 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            mockPkiBlockCreationConfigProvider,
             privacyPluginService);
       default:
         return new TestBesuCommandWithoutPortCheck(
@@ -507,7 +494,6 @@ public abstract class CommandTestAbstract {
             environment,
             storageService,
             securityModuleService,
-            mockPkiBlockCreationConfigProvider,
             privacyPluginService);
     }
   }
@@ -548,7 +534,6 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
         final PrivacyPluginServiceImpl privacyPluginService) {
       super(
           besuComponent,
@@ -563,7 +548,6 @@ public abstract class CommandTestAbstract {
           securityModuleService,
           new PermissioningServiceImpl(),
           privacyPluginService,
-          pkiBlockCreationConfigProvider,
           rpcEndpointServiceImpl,
           new TransactionSelectionServiceImpl(),
           new TransactionPoolValidatorServiceImpl(),
@@ -649,7 +633,6 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
         final PrivacyPluginServiceImpl privacyPluginService) {
       super(
           besuComponent,
@@ -662,7 +645,6 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService,
-          pkiBlockCreationConfigProvider,
           privacyPluginService);
     }
 
@@ -685,7 +667,6 @@ public abstract class CommandTestAbstract {
         final Map<String, String> environment,
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
-        final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
         final PrivacyPluginServiceImpl privacyPluginService) {
       super(
           context,
@@ -698,7 +679,6 @@ public abstract class CommandTestAbstract {
           environment,
           storageService,
           securityModuleService,
-          pkiBlockCreationConfigProvider,
           privacyPluginService);
     }
 

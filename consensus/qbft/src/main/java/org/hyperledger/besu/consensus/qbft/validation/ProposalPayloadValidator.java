@@ -16,24 +16,14 @@ package org.hyperledger.besu.consensus.qbft.validation;
 
 import static com.google.common.base.Preconditions.checkState;
 
-import org.hyperledger.besu.consensus.common.bft.BftBlockInterface;
-import org.hyperledger.besu.consensus.common.bft.BftExtraDataCodec;
 import org.hyperledger.besu.consensus.common.bft.ConsensusRoundIdentifier;
 import org.hyperledger.besu.consensus.common.bft.payload.SignedData;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.payload.ProposalPayload;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftBlockHeaderFunctions;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraData;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.BlockValidator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
-import org.hyperledger.besu.pki.cms.CmsValidator;
-
-import java.util.Optional;
 
 import com.google.common.annotations.VisibleForTesting;
 import org.slf4j.Logger;
@@ -49,8 +39,6 @@ public class ProposalPayloadValidator {
   private final ConsensusRoundIdentifier targetRound;
   private final BlockValidator blockValidator;
   private final ProtocolContext protocolContext;
-  private final BftExtraDataCodec bftExtraDataCodec;
-  private final Optional<CmsValidator> cmsValidator;
 
   /**
    * Instantiates a new Proposal payload validator.
@@ -59,50 +47,17 @@ public class ProposalPayloadValidator {
    * @param targetRound the target round
    * @param blockValidator the block validator
    * @param protocolContext the protocol context
-   * @param bftExtraDataCodec the bft extra data codec
-   */
-  public ProposalPayloadValidator(
-      final Address expectedProposer,
-      final ConsensusRoundIdentifier targetRound,
-      final BlockValidator blockValidator,
-      final ProtocolContext protocolContext,
-      final BftExtraDataCodec bftExtraDataCodec) {
-    this(
-        expectedProposer,
-        targetRound,
-        blockValidator,
-        protocolContext,
-        bftExtraDataCodec,
-        protocolContext
-            .getConsensusContext(QbftContext.class)
-            .getPkiBlockCreationConfiguration()
-            .map(config -> new CmsValidator(config.getTrustStore())));
-  }
-
-  /**
-   * Instantiates a new Proposal payload validator.
-   *
-   * @param expectedProposer the expected proposer
-   * @param targetRound the target round
-   * @param blockValidator the block validator
-   * @param protocolContext the protocol context
-   * @param bftExtraDataCodec the bft extra data codec
-   * @param cmsValidator the cms validator
    */
   @VisibleForTesting
   public ProposalPayloadValidator(
       final Address expectedProposer,
       final ConsensusRoundIdentifier targetRound,
       final BlockValidator blockValidator,
-      final ProtocolContext protocolContext,
-      final BftExtraDataCodec bftExtraDataCodec,
-      final Optional<CmsValidator> cmsValidator) {
+      final ProtocolContext protocolContext) {
     this.expectedProposer = expectedProposer;
     this.targetRound = targetRound;
     this.blockValidator = blockValidator;
     this.protocolContext = protocolContext;
-    this.bftExtraDataCodec = bftExtraDataCodec;
-    this.cmsValidator = cmsValidator;
   }
 
   /**
@@ -135,13 +90,6 @@ public class ProposalPayloadValidator {
       return false;
     }
 
-    if (cmsValidator.isPresent()) {
-      return validateCms(
-          block,
-          protocolContext.getConsensusContext(QbftContext.class).getBlockInterface(),
-          cmsValidator.get());
-    }
-
     return true;
   }
 
@@ -161,27 +109,5 @@ public class ProposalPayloadValidator {
     }
 
     return true;
-  }
-
-  private boolean validateCms(
-      final Block block,
-      final BftBlockInterface bftBlockInterface,
-      final CmsValidator cmsValidator) {
-    final PkiQbftExtraData pkiExtraData =
-        (PkiQbftExtraData) bftBlockInterface.getExtraData(block.getHeader());
-
-    final Hash hashWithoutCms =
-        PkiQbftBlockHeaderFunctions.forCmsSignature((PkiQbftExtraDataCodec) bftExtraDataCodec)
-            .hash(block.getHeader());
-
-    LOG.debug("Validating CMS with signed hash {} in block {}", hashWithoutCms, block.getHash());
-
-    if (!cmsValidator.validate(pkiExtraData.getCms(), hashWithoutCms)) {
-      LOG.info("{}: invalid CMS in block {}", ERROR_PREFIX, block.getHash());
-      return false;
-    } else {
-      LOG.trace("Valid CMS in block {}", block.getHash());
-      return true;
-    }
   }
 }

@@ -24,17 +24,19 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.code.CodeFactory;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.operation.Operation;
 import org.hyperledger.besu.evm.operation.SelfDestructOperation;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -55,7 +57,7 @@ public class SelfDestructOperationTest {
   @Mock private WorldUpdater worldUpdater;
   @Mock private MutableAccount accountOriginator;
   @Mock private MutableAccount accountBeneficiary;
-  @Mock private EVM evm;
+  private final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
 
   private final SelfDestructOperation frontierOperation =
       new SelfDestructOperation(new ConstantinopleGasCalculator());
@@ -79,7 +81,7 @@ public class SelfDestructOperationTest {
             .sender(beneficiaryAddress)
             .value(Wei.ZERO)
             .apparentValue(Wei.ZERO)
-            .code(CodeFactory.createCode(SELFDESTRUCT_CODE, 0))
+            .code(evm.getCodeUncached(SELFDESTRUCT_CODE))
             .completer(__ -> {})
             .address(originatorAddress)
             .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
@@ -174,5 +176,12 @@ public class SelfDestructOperationTest {
       assertThat(messageFrame.getSelfDestructs()).isEmpty();
       assertThat(messageFrame.getCreates()).doesNotContain(orignatorAddress);
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

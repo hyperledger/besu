@@ -9,7 +9,7 @@ RUN apt-get update $NO_PROXY_CACHE  && \
   apt-get -o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0 \
     --no-install-recommends -q --assume-yes install ca-certificates-java=20190909*  && \
   apt-get -o Acquire::BrokenProxy=true -o Acquire::http::No-Cache=true -o Acquire::http::Pipeline-Depth=0 \
-    --no-install-recommends -q --assume-yes install openjdk-17-jre-headless=17*  && \
+    --no-install-recommends -q --assume-yes install openjdk-21-jre-headless=21*  && \
   # Clean apt cache  \
   apt-get clean  && \
   rm -rf /var/cache/apt/archives/* /var/cache/apt/archives/partial/*  && \

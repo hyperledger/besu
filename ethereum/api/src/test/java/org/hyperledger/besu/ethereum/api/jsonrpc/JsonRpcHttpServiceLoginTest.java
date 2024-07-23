@@ -138,7 +138,11 @@ public class JsonRpcHttpServiceLoginTest {
                 blockchainQueries,
                 synchronizer,
                 MainnetProtocolSchedule.fromConfig(
-                    genesisConfigOptions, MiningParameters.MINING_DISABLED, new BadBlockManager()),
+                    genesisConfigOptions,
+                    MiningParameters.MINING_DISABLED,
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
                 mock(TransactionPool.class),

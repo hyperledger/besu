@@ -15,8 +15,6 @@
 package org.hyperledger.besu.cli.options.stable;
 
 import static java.util.Arrays.asList;
-import static org.hyperledger.besu.cli.options.unstable.NetworkingOptions.PEER_LOWER_BOUND_FLAG;
-import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.ethereum.p2p.config.AutoDiscoverDefaultIP.autoDiscoverDefaultIP;
 
 import org.hyperledger.besu.cli.DefaultCommandValues;
@@ -205,13 +203,6 @@ public class P2POptions implements CLIOptions<P2PConfiguration> {
       }
     } catch (final UnknownHostException | SocketException e) {
       throw new CommandLine.ParameterException(commandLine, failMessage, e);
-    }
-    ensureValidPeerBoundParams(commandLine, logger);
-  }
-
-  private void ensureValidPeerBoundParams(final CommandLine commandLine, final Logger logger) {
-    if (isOptionSet(commandLine, PEER_LOWER_BOUND_FLAG)) {
-      logger.warn(PEER_LOWER_BOUND_FLAG + " is deprecated and will be removed soon.");
     }
   }
 

@@ -14,112 +14,103 @@
  */
 package org.hyperledger.besu.evm.code;
 
-import static org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode.INITCODE;
-
 import org.hyperledger.besu.evm.Code;
+import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 
 import javax.annotation.Nonnull;
 
-import com.google.errorprone.annotations.InlineMe;
 import org.apache.tuweni.bytes.Bytes;
 
 /** The Code factory. */
-public final class CodeFactory {
+public class CodeFactory {
 
   /** The constant EOF_LEAD_BYTE. */
   public static final byte EOF_LEAD_BYTE = -17; // 0xEF in signed byte form
 
-  private CodeFactory() {
-    // factory class, no instantiations.
+  /** Maximum EOF version that can be produced. Legacy is considered EOF version zero. */
+  protected final int maxEofVersion;
+
+  /** Maximum size of the code stream that can be produced, including all header bytes. */
+  protected final int maxContainerSize;
+
+  /** The EOF validator against which EOF layouts will be validated. */
+  EOFValidator eofValidator;
+
+  /**
+   * Create a code factory.
+   *
+   * @param maxEofVersion Maximum EOF version that can be set
+   * @param maxContainerSize Maximum size of a container that will be parsed.
+   */
+  public CodeFactory(final int maxEofVersion, final int maxContainerSize) {
+    this.maxEofVersion = maxEofVersion;
+    this.maxContainerSize = maxContainerSize;
+
+    eofValidator = new CodeV1Validation(maxContainerSize);
   }
 
   /**
    * Create Code.
    *
    * @param bytes the bytes
-   * @param maxEofVersion the max eof version
    * @return the code
    */
-  public static Code createCode(final Bytes bytes, final int maxEofVersion) {
-    return createCode(bytes, maxEofVersion, false, false);
+  public Code createCode(final Bytes bytes) {
+    return createCode(bytes, false);
   }
 
   /**
    * Create Code.
    *
    * @param bytes the bytes
-   * @param maxEofVersion the max eof version
-   * @param legacyCreation Allow some corner cases. `EF` and not `EF00` code
-   * @deprecated use the no boolean or two boolean variant
-   * @return the code
-   */
-  @Deprecated(since = "24.4.1")
-  @InlineMe(
-      replacement = "CodeFactory.createCode(bytes, maxEofVersion, legacyCreation, false)",
-      imports = "org.hyperledger.besu.evm.code.CodeFactory")
-  public static Code createCode(
-      final Bytes bytes, final int maxEofVersion, final boolean legacyCreation) {
-    return createCode(bytes, maxEofVersion, legacyCreation, false);
-  }
-
-  /**
-   * Create Code.
-   *
-   * @param bytes the bytes
-   * @param maxEofVersion the max eof version
-   * @param legacyCreation Allow some corner cases. `EF` and not `EF00` code
    * @param createTransaction This is in a create transaction, allow dangling data
    * @return the code
    */
-  public static Code createCode(
-      final Bytes bytes,
-      final int maxEofVersion,
-      final boolean legacyCreation,
-      final boolean createTransaction) {
-    if (maxEofVersion == 0) {
-      return new CodeV0(bytes);
-    } else if (maxEofVersion == 1) {
-      int codeSize = bytes.size();
-      if (codeSize > 0 && bytes.get(0) == EOF_LEAD_BYTE) {
-        if (codeSize == 1 && !legacyCreation) {
+  public Code createCode(final Bytes bytes, final boolean createTransaction) {
+    return switch (maxEofVersion) {
+      case 0 -> new CodeV0(bytes);
+      case 1 -> createV1Code(bytes, createTransaction);
+      default -> new CodeInvalid(bytes, "Unsupported max code version " + maxEofVersion);
+    };
+  }
+
+  private @Nonnull Code createV1Code(final Bytes bytes, final boolean createTransaction) {
+    int codeSize = bytes.size();
+    if (codeSize > 0 && bytes.get(0) == EOF_LEAD_BYTE) {
+      if (codeSize < 3) {
+        return new CodeInvalid(bytes, "EOF Container too short");
+      }
+      if (bytes.get(1) != 0) {
+        if (createTransaction) {
+          // because some 0xef code made it to mainnet, this is only an error at contract creation
+          // time
+          return new CodeInvalid(bytes, "Incorrect second byte");
+        } else {
           return new CodeV0(bytes);
         }
-        if (codeSize < 3) {
-          return new CodeInvalid(bytes, "EOF Container too short");
-        }
-        if (bytes.get(1) != 0) {
-          if (legacyCreation) {
-            // because some 0xef code made it to mainnet, this is only an error at contract create
-            return new CodeInvalid(bytes, "Incorrect second byte");
-          } else {
-            return new CodeV0(bytes);
-          }
-        }
-        int version = bytes.get(2);
-        if (version != 1) {
-          return new CodeInvalid(bytes, "Unsupported EOF Version: " + version);
-        }
-
-        final EOFLayout layout = EOFLayout.parseEOF(bytes, !createTransaction);
-        if (createTransaction) {
-          layout.containerMode().set(INITCODE);
-        }
-        return createCode(layout, createTransaction);
-      } else {
-        return new CodeV0(bytes);
       }
+      int version = bytes.get(2);
+      if (version != 1) {
+        return new CodeInvalid(bytes, "Unsupported EOF Version: " + version);
+      }
+
+      final EOFLayout layout = EOFLayout.parseEOF(bytes, !createTransaction);
+      if (createTransaction) {
+        layout.containerMode().set(EOFContainerMode.INITCODE);
+      }
+      return createCode(layout);
     } else {
-      return new CodeInvalid(bytes, "Unsupported max code version " + maxEofVersion);
+      return new CodeV0(bytes);
     }
   }
 
   @Nonnull
-  static Code createCode(final EOFLayout layout, final boolean createTransaction) {
+  Code createCode(final EOFLayout layout) {
     if (!layout.isValid()) {
       return new CodeInvalid(layout.container(), "Invalid EOF Layout: " + layout.invalidReason());
     }
 
-    final String validationError = CodeV1Validation.validate(layout);
+    final String validationError = eofValidator.validate(layout);
     if (validationError != null) {
       return new CodeInvalid(layout.container(), "EOF Code Invalid : " + validationError);
     }

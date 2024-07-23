@@ -85,6 +85,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
 
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
 
+  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
+
   /**
    * Parse block propagation range.
    *
@@ -304,6 +306,14 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean checkpointPostMergeSyncEnabled =
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
+  @CommandLine.Option(
+      names = SNAP_SYNC_BFT_ENABLED_FLAG,
+      hidden = true,
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      description = "Snap sync enabled for BFT chains (default: ${DEFAULT-VALUE})")
+  private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
+
   private SynchronizerOptions() {}
 
   /**
@@ -313,6 +323,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isSnapsyncServerEnabled() {
     return snapsyncServerEnabled;
+  }
+
+  /**
+   * Flag to know whether the Snap sync should be enabled for a BFT chain
+   *
+   * @return true if snap sync for BFT is enabled
+   */
+  public boolean isSnapSyncBftEnabled() {
+    return snapsyncBftEnabled;
   }
 
   /**
@@ -342,7 +361,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     options.downloaderParallelism = config.getDownloaderParallelism();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
-    options.fastSyncPivotDistance = config.getFastSyncPivotDistance();
+    options.fastSyncPivotDistance = config.getSyncPivotDistance();
     options.fastSyncFullValidationRate = config.getFastSyncFullValidationRate();
     options.worldStateHashCountPerRequest = config.getWorldStateHashCountPerRequest();
     options.worldStateRequestParallelism = config.getWorldStateRequestParallelism();
@@ -365,6 +384,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
     options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
+    options.snapsyncBftEnabled = config.getSnapSyncConfiguration().isSnapSyncBftEnabled();
     return options;
   }
 
@@ -380,7 +400,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.downloaderParallelism(downloaderParallelism);
     builder.transactionsParallelism(transactionsParallelism);
     builder.computationParallelism(computationParallelism);
-    builder.fastSyncPivotDistance(fastSyncPivotDistance);
+    builder.syncPivotDistance(fastSyncPivotDistance);
     builder.fastSyncFullValidationRate(fastSyncFullValidationRate);
     builder.worldStateHashCountPerRequest(worldStateHashCountPerRequest);
     builder.worldStateRequestParallelism(worldStateRequestParallelism);
@@ -397,6 +417,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
             .isSnapServerEnabled(snapsyncServerEnabled)
+            .isSnapSyncBftEnabled(snapsyncBftEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
@@ -454,7 +475,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
             SNAP_SERVER_ENABLED_FLAG,
-            OptionParser.format(snapsyncServerEnabled));
+            OptionParser.format(snapsyncServerEnabled),
+            SNAP_SYNC_BFT_ENABLED_FLAG,
+            OptionParser.format(snapsyncBftEnabled));
     return value;
   }
 }

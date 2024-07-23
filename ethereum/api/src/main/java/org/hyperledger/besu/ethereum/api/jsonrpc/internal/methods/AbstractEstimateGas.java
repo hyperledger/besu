@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -92,16 +91,6 @@ public abstract class AbstractEstimateGas implements JsonRpcMethod {
     final long gasStipend = operationTracer.getStipendNeeded();
     final long gasUsedByTransaction = result.result().getEstimateGasUsedByTransaction();
     return ((long) ((gasUsedByTransaction + gasStipend) * subCallMultiplier));
-  }
-
-  protected JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final JsonCallParameter callParams = request.getRequiredParameter(0, JsonCallParameter.class);
-    if (callParams.getGasPrice() != null
-        && (callParams.getMaxFeePerGas().isPresent()
-            || callParams.getMaxPriorityFeePerGas().isPresent())) {
-      throw new InvalidJsonRpcParameters("gasPrice cannot be used with baseFee or maxFeePerGas");
-    }
-    return callParams;
   }
 
   protected JsonRpcErrorResponse errorResponse(

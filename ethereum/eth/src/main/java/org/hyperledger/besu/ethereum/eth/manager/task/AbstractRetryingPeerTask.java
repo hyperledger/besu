@@ -67,8 +67,20 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
     this.metricsSystem = metricsSystem;
   }
 
-  public void assignPeer(final EthPeer peer) {
-    assignedPeer = Optional.of(peer);
+  /**
+   * Assign the peer to be used for the task.
+   *
+   * @param peer The peer to assign to the task.
+   * @return True if the peer was assigned, false otherwise.
+   */
+  public boolean assignPeer(final EthPeer peer) {
+    if (isSuitablePeer(peer)) {
+      assignedPeer = Optional.of(peer);
+      return true;
+    } else {
+      assignedPeer = Optional.empty();
+      return false;
+    }
   }
 
   public Optional<EthPeer> getAssignedPeer() {
@@ -122,15 +134,18 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
           () ->
               ethContext
                   .getScheduler()
+                  // wait for a new peer for up to 5 seconds
                   .timeout(waitTask, Duration.ofSeconds(5))
+                  // execute the task again
                   .whenComplete((r, t) -> executeTaskTimed()));
       return;
     }
 
-    LOG.debug(
-        "Retrying after recoverable failure from peer task {}: {}",
-        this.getClass().getSimpleName(),
-        cause.getMessage());
+    LOG.atDebug()
+        .setMessage("Retrying after recoverable failure from peer task {}: {}")
+        .addArgument(this.getClass().getSimpleName())
+        .addArgument(cause.getMessage())
+        .log();
     // Wait before retrying on failure
     executeSubTask(
         () ->
@@ -163,5 +178,9 @@ public abstract class AbstractRetryingPeerTask<T> extends AbstractEthTask<T> {
 
   public int getMaxRetries() {
     return maxRetries;
+  }
+
+  protected boolean isSuitablePeer(final EthPeer peer) {
+    return true;
   }
 }
