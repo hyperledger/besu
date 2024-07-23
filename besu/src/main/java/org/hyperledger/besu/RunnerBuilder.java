@@ -215,7 +215,7 @@ public class RunnerBuilder {
   }
 
   /**
-   * P2P Configuration Configuration.
+   * P2P Configuration.
    *
    * @param p2PConfiguration the p2pConfiguration
    * @return the runner builder
