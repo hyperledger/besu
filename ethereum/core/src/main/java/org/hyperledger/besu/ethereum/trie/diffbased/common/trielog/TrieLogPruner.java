@@ -96,10 +96,6 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
   }
 
   private void preloadQueueWithTimeout() {
-    LOG.atInfo()
-        .setMessage("Attempting to load first {} trie logs from database...")
-        .addArgument(loadingLimit)
-        .log();
 
     final AtomicBoolean timeoutOccurred = new AtomicBoolean(false);
     final Runnable timeoutTask =
@@ -111,57 +107,67 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
               .log();
         };
 
-    try (final Stream<byte[]> trieLogKeysStream =
-            rootWorldStateStorage.streamTrieLogKeys(loadingLimit);
-        final ScheduledExecutorService preloadExecutor = Executors.newScheduledThreadPool(1)) {
+    LOG.atInfo()
+        .setMessage("Attempting to load first {} trie logs from database...")
+        .addArgument(loadingLimit)
+        .log();
 
-      final List<byte[]> trieLogKeys = trieLogKeysStream.toList();
+    try (final ScheduledExecutorService preloadExecutor = Executors.newScheduledThreadPool(1)) {
 
-      LOG.atInfo().log(
-          "Loaded {} trie logs from database, determining if any can be pruned...",
-          trieLogKeys.size());
+      final ScheduledFuture<?> timeoutFuture =
+          preloadExecutor.schedule(timeoutTask, PRELOAD_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
       LOG.atInfo()
           .setMessage(
               "Trie log loading will timeout after {} seconds. If this is timing out, consider using `besu storage trie-log prune` subcommand, see https://besu.hyperledger.org/public-networks/how-to/bonsai-limit-trie-logs")
           .addArgument(PRELOAD_TIMEOUT_IN_SECONDS)
           .log();
-      final ScheduledFuture<?> timeoutFuture =
-          preloadExecutor.schedule(timeoutTask, PRELOAD_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
 
-      final AtomicLong addToPruneQueueCount = new AtomicLong();
-      final AtomicLong orphansPruned = new AtomicLong();
-      trieLogKeys.forEach(
-          blockHashAsBytes -> {
-            if (timeoutOccurred.get()) {
-              throw new RuntimeException(
-                  new TimeoutException("Timeout occurred while preloading trie log prune queue"));
-            }
-            final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
-            final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
-            if (header.isPresent()) {
-              addToPruneQueue(header.get().getNumber(), blockHash);
-              addToPruneQueueCount.getAndIncrement();
-            } else {
-              // prune orphaned blocks (sometimes created during block production)
-              rootWorldStateStorage.pruneTrieLog(blockHash);
-              orphansPruned.getAndIncrement();
-              prunedOrphanCounter.inc();
-            }
-          });
+      try (final Stream<byte[]> trieLogKeysStream =
+          rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
 
-      timeoutFuture.cancel(true);
-      LOG.atDebug().log("Pruned {} orphaned trie logs from database...", orphansPruned.intValue());
-      LOG.atInfo().log(
-          "Added {} trie logs to prune queue. Commencing pruning of eligible trie logs...",
-          addToPruneQueueCount.intValue());
-      int prunedCount = pruneFromQueue();
-      LOG.atInfo().log("Pruned {} trie logs.", prunedCount);
-    } catch (Exception e) {
-      if (e.getCause() != null && e.getCause() instanceof TimeoutException) {
+        final List<byte[]> trieLogKeys = trieLogKeysStream.toList();
+
+        LOG.atInfo()
+            .setMessage("Loaded {} trie logs from database, determining if any can be pruned...")
+            .addArgument(trieLogKeys.size())
+            .log();
+
+        final AtomicLong addToPruneQueueCount = new AtomicLong();
+        final AtomicLong orphansPruned = new AtomicLong();
+        trieLogKeys.forEach(
+            blockHashAsBytes -> {
+              if (timeoutOccurred.get()) {
+                throw new RuntimeException(
+                    new TimeoutException("Timeout occurred while preloading trie log prune queue"));
+              }
+              final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
+              final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
+              if (header.isPresent()) {
+                addToPruneQueue(header.get().getNumber(), blockHash);
+                addToPruneQueueCount.getAndIncrement();
+              } else {
+                // prune orphaned blocks (sometimes created during block production)
+                rootWorldStateStorage.pruneTrieLog(blockHash);
+                orphansPruned.getAndIncrement();
+                prunedOrphanCounter.inc();
+              }
+            });
+
+        timeoutFuture.cancel(true);
+        LOG.atDebug().log(
+            "Pruned {} orphaned trie logs from database...", orphansPruned.intValue());
+        LOG.atInfo().log(
+            "Added {} trie logs to prune queue. Commencing pruning of eligible trie logs...",
+            addToPruneQueueCount.intValue());
         int prunedCount = pruneFromQueue();
-        LOG.atInfo().log("Operation timed out, but still pruned {} trie logs.", prunedCount);
-      } else {
-        LOG.error("Error loading trie logs from database, nothing pruned", e);
+        LOG.atInfo().log("Pruned {} trie logs.", prunedCount);
+      } catch (Exception e) {
+        if (e.getCause() != null && e.getCause() instanceof TimeoutException) {
+          int prunedCount = pruneFromQueue();
+          LOG.atInfo().log("Operation timed out, but still pruned {} trie logs.", prunedCount);
+        } else {
+          LOG.error("Error loading trie logs from database, nothing pruned", e);
+        }
       }
     }
   }
