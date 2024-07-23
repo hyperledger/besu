@@ -90,13 +90,127 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     this.evmConfiguration = evmConfiguration;
   }
 
-  protected void cloneFromUpdater(final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+  public void cloneFromUpdater(final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
     accountsToUpdate.putAll(source.getAccountsToUpdate());
     codeToUpdate.putAll(source.codeToUpdate);
     storageToClear.addAll(source.storageToClear);
     storageToUpdate.putAll(source.storageToUpdate);
     updatedAccounts.putAll(source.updatedAccounts);
     deletedAccounts.addAll(source.deletedAccounts);
+    this.isAccumulatorStateChanged = true;
+  }
+
+  /**
+   * Integrates prior state changes from an external source into the current state. This method
+   * retrieves state modifications from the specified source and adds them to the current state's
+   * list of modifications. It does not remove any existing elements in the current state's
+   * modification list. If a modification has been made in both the current state and the source,
+   * the modification from the source will be taken. This approach ensures that the source's state
+   * changes are prioritized and overrides any conflicting changes in the current state.
+   *
+   * @param source The source accumulator
+   */
+  public void importStateChangesFromSource(
+      final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+    source
+        .getAccountsToUpdate()
+        .forEach(
+            (address, diffBasedValue) -> {
+              ACCOUNT copyPrior =
+                  diffBasedValue.getPrior() != null
+                      ? copyAccount(diffBasedValue.getPrior(), this, false)
+                      : null;
+              ACCOUNT copyUpdated =
+                  diffBasedValue.getUpdated() != null
+                      ? copyAccount(diffBasedValue.getUpdated(), this, true)
+                      : null;
+              accountsToUpdate.put(address, new DiffBasedValue<>(copyPrior, copyUpdated));
+            });
+    source
+        .getCodeToUpdate()
+        .forEach(
+            (address, diffBasedValue) -> {
+              codeToUpdate.put(
+                  address,
+                  new DiffBasedValue<>(diffBasedValue.getPrior(), diffBasedValue.getUpdated()));
+            });
+    source
+        .getStorageToUpdate()
+        .forEach(
+            (address, slots) -> {
+              StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageConsumingMap =
+                  storageToUpdate.computeIfAbsent(
+                      address,
+                      k ->
+                          new StorageConsumingMap<>(
+                              address, new ConcurrentHashMap<>(), storagePreloader));
+              slots.forEach(
+                  (storageSlotKey, uInt256DiffBasedValue) -> {
+                    storageConsumingMap.put(
+                        storageSlotKey,
+                        new DiffBasedValue<>(
+                            uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getUpdated()));
+                  });
+            });
+    storageToClear.addAll(source.storageToClear);
+
+    this.isAccumulatorStateChanged = true;
+  }
+
+  /**
+   * Imports unchanged state data from an external source into the current state. This method
+   * focuses on integrating state data from the specified source that has been read but not
+   * modified.
+   *
+   * <p>The method ensures that only new, unmodified data from the source is added to the current
+   * state. If a state data has already been read or modified in the current state, it will not be
+   * added again to avoid overwriting any existing modifications.
+   *
+   * @param source The source accumulator
+   */
+  public void importPriorStateFromSource(
+      final DiffBasedWorldStateUpdateAccumulator<ACCOUNT> source) {
+
+    source
+        .getAccountsToUpdate()
+        .forEach(
+            (address, diffBasedValue) -> {
+              ACCOUNT copyPrior =
+                  diffBasedValue.getPrior() != null
+                      ? copyAccount(diffBasedValue.getPrior(), this, false)
+                      : null;
+              ACCOUNT copyUpdated =
+                  diffBasedValue.getPrior() != null
+                      ? copyAccount(diffBasedValue.getPrior(), this, true)
+                      : null;
+              accountsToUpdate.putIfAbsent(address, new DiffBasedValue<>(copyPrior, copyUpdated));
+            });
+    source
+        .getCodeToUpdate()
+        .forEach(
+            (address, diffBasedValue) -> {
+              codeToUpdate.putIfAbsent(
+                  address,
+                  new DiffBasedValue<>(diffBasedValue.getPrior(), diffBasedValue.getPrior()));
+            });
+    source
+        .getStorageToUpdate()
+        .forEach(
+            (address, slots) -> {
+              StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> storageConsumingMap =
+                  storageToUpdate.computeIfAbsent(
+                      address,
+                      k ->
+                          new StorageConsumingMap<>(
+                              address, new ConcurrentHashMap<>(), storagePreloader));
+              slots.forEach(
+                  (storageSlotKey, uInt256DiffBasedValue) -> {
+                    storageConsumingMap.putIfAbsent(
+                        storageSlotKey,
+                        new DiffBasedValue<>(
+                            uInt256DiffBasedValue.getPrior(), uInt256DiffBasedValue.getPrior()));
+                  });
+            });
     this.isAccumulatorStateChanged = true;
   }
 
@@ -108,7 +222,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     return storagePreloader;
   }
 
-  protected EvmConfiguration getEvmConfiguration() {
+  public EvmConfiguration getEvmConfiguration() {
     return evmConfiguration;
   }
 
@@ -136,7 +250,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       accountsToUpdate.put(address, diffBasedValue);
     } else if (diffBasedValue.getUpdated() != null) {
       if (diffBasedValue.getUpdated().isEmpty()) {
-        return track(new UpdateTrackingAccount<>(diffBasedValue.getUpdated()));
+        return authorizedCodeService.processMutableAccount(
+            this, track(new UpdateTrackingAccount<>(diffBasedValue.getUpdated())), address);
       } else {
         throw new IllegalStateException("Cannot create an account when one already exists");
       }
@@ -153,7 +268,8 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
             Hash.EMPTY,
             true);
     diffBasedValue.setUpdated(newAccount);
-    return track(new UpdateTrackingAccount<>(newAccount));
+    return authorizedCodeService.processMutableAccount(
+        this, track(new UpdateTrackingAccount<>(newAccount)), address);
   }
 
   @Override
@@ -232,6 +348,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
   @Override
   public void commit() {
     this.isAccumulatorStateChanged = true;
+
     for (final Address deletedAddress : getDeletedAccounts()) {
       final DiffBasedValue<ACCOUNT> accountValue =
           accountsToUpdate.computeIfAbsent(
@@ -303,7 +420,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
               final ACCOUNT updatedAccount;
               final DiffBasedValue<ACCOUNT> updatedAccountValue =
                   accountsToUpdate.get(updatedAddress);
-
               final Map<StorageSlotKey, DiffBasedValue<UInt256>> pendingStorageUpdates =
                   storageToUpdate.computeIfAbsent(
                       updatedAddress,
@@ -355,12 +471,6 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
               if (tracked.getStorageWasCleared()) {
                 storageToClear.add(updatedAddress);
                 pendingStorageUpdates.clear();
-              }
-
-              // This is especially to avoid unnecessary computation for withdrawals and
-              // self-destruct beneficiaries
-              if (updatedAccount.getUpdatedStorage().isEmpty()) {
-                return;
               }
 
               // parallel stream here may cause database corruption

@@ -18,6 +18,7 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -30,10 +31,18 @@ public class LineaProtocolSpecs {
       final boolean enableRevertReason,
       final GenesisConfigOptions genesisConfigOptions,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters) {
+      final MiningParameters miningParameters,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
 
     return MainnetProtocolSpecs.londonDefinition(
-            chainId, enableRevertReason, genesisConfigOptions, evmConfiguration, miningParameters)
+            chainId,
+            enableRevertReason,
+            genesisConfigOptions,
+            evmConfiguration,
+            miningParameters,
+            isParallelTxProcessingEnabled,
+            metricsSystem)
         // some Linea evm opcodes behave differently.
         .evmBuilder(
             (gasCalculator, jdCacheConfig) ->

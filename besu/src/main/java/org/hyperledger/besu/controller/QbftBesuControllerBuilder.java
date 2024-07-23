@@ -44,7 +44,6 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
@@ -330,7 +329,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         bftExtraDataCodec().get(),
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   @Override
@@ -388,7 +389,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         new ForkingValidatorProvider(
             blockchain, qbftForksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
-    return new QbftContext(validatorProvider, epochManager, bftBlockInterface().get());
+    return new BftContext(validatorProvider, epochManager, bftBlockInterface().get());
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {

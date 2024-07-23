@@ -165,10 +165,6 @@ public class BlockchainReferenceTestCaseSpec {
         @JsonProperty("nonce") final String nonce,
         @JsonProperty("withdrawalsRoot") final String withdrawalsRoot,
         @JsonProperty("requestsRoot") final String requestsRoot,
-        @JsonProperty("dataGasUsed")
-            final String dataGasUsed, // TODO: remove once reference tests have been updated
-        @JsonProperty("excessDataGas")
-            final String excessDataGas, // TODO: remove once reference tests have been updated
         @JsonProperty("blobGasUsed") final String blobGasUsed,
         @JsonProperty("excessBlobGas") final String excessBlobGas,
         @JsonProperty("parentBeaconBlockRoot") final String parentBeaconBlockRoot,
@@ -195,12 +191,8 @@ public class BlockchainReferenceTestCaseSpec {
           Hash.fromHexString(mixHash), // mixHash
           Bytes.fromHexStringLenient(nonce).toLong(),
           withdrawalsRoot != null ? Hash.fromHexString(withdrawalsRoot) : null,
-          dataGasUsed != null
-              ? Long.decode(dataGasUsed)
-              : blobGasUsed != null ? Long.decode(blobGasUsed) : 0,
-          excessDataGas != null
-              ? BlobGas.fromHexString(excessDataGas)
-              : excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
+          blobGasUsed != null ? Long.decode(blobGasUsed) : 0,
+          excessBlobGas != null ? BlobGas.fromHexString(excessBlobGas) : null,
           parentBeaconBlockRoot != null ? Bytes32.fromHexString(parentBeaconBlockRoot) : null,
           requestsRoot != null ? Hash.fromHexString(requestsRoot) : null,
           new BlockHeaderFunctions() {

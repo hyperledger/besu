@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.privacy.PrivateTransactionValidator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.NavigableMap;
@@ -45,6 +46,8 @@ public class ProtocolScheduleBuilder {
   private final EvmConfiguration evmConfiguration;
   private final MiningParameters miningParameters;
   private final BadBlockManager badBlockManager;
+  private final boolean isParallelTxProcessingEnabled;
+  private final MetricsSystem metricsSystem;
 
   public ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
@@ -54,7 +57,9 @@ public class ProtocolScheduleBuilder {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     this(
         config,
         Optional.of(defaultChainId),
@@ -63,7 +68,9 @@ public class ProtocolScheduleBuilder {
         isRevertReasonEnabled,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   public ProtocolScheduleBuilder(
@@ -73,7 +80,9 @@ public class ProtocolScheduleBuilder {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     this(
         config,
         Optional.empty(),
@@ -82,7 +91,9 @@ public class ProtocolScheduleBuilder {
         isRevertReasonEnabled,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   private ProtocolScheduleBuilder(
@@ -93,7 +104,9 @@ public class ProtocolScheduleBuilder {
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
@@ -102,6 +115,8 @@ public class ProtocolScheduleBuilder {
     this.defaultChainId = defaultChainId;
     this.miningParameters = miningParameters;
     this.badBlockManager = badBlockManager;
+    this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
+    this.metricsSystem = metricsSystem;
   }
 
   public ProtocolSchedule createProtocolSchedule() {
@@ -121,7 +136,9 @@ public class ProtocolScheduleBuilder {
             config.getEcip1017EraRounds(),
             evmConfiguration.overrides(
                 config.getContractSizeLimit(), OptionalInt.empty(), config.getEvmStackSize()),
-            miningParameters);
+            miningParameters,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
 
     validateForkOrdering();
 
@@ -203,7 +220,8 @@ public class ProtocolScheduleBuilder {
                   protocolSchedule,
                   BuilderMapEntry.MilestoneType.BLOCK_NUMBER,
                   classicBlockNumber,
-                  ClassicProtocolSpecs.classicRecoveryInitDefinition(evmConfiguration),
+                  ClassicProtocolSpecs.classicRecoveryInitDefinition(
+                      evmConfiguration, isParallelTxProcessingEnabled, metricsSystem),
                   Function.identity());
               protocolSchedule.putBlockNumberMilestone(
                   classicBlockNumber + 1, originalProtocolSpec);

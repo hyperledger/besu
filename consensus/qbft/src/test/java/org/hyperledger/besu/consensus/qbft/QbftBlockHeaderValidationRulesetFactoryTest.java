@@ -19,6 +19,7 @@ import static java.util.Collections.singletonList;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.consensus.common.bft.BftContextBuilder.setupContextWithBftExtraDataEncoder;
 
+import org.hyperledger.besu.consensus.common.bft.BftContext;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
@@ -45,8 +46,7 @@ public class QbftBlockHeaderValidationRulesetFactoryTest {
     return new ProtocolContext(
         null,
         null,
-        setupContextWithBftExtraDataEncoder(
-            QbftContext.class, validators, new QbftExtraDataCodec()),
+        setupContextWithBftExtraDataEncoder(BftContext.class, validators, new QbftExtraDataCodec()),
         new BadBlockManager());
   }
 

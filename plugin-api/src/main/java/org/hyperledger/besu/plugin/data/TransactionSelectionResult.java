@@ -53,6 +53,7 @@ public class TransactionSelectionResult {
   private enum BaseStatus implements Status {
     SELECTED,
     BLOCK_FULL(true, false),
+    BLOBS_FULL(false, false),
     BLOCK_OCCUPANCY_ABOVE_THRESHOLD(true, false),
     BLOCK_SELECTION_TIMEOUT(true, false),
     TX_EVALUATION_TOO_LONG(true, true),
@@ -96,6 +97,10 @@ public class TransactionSelectionResult {
   public static final TransactionSelectionResult BLOCK_FULL =
       new TransactionSelectionResult(BaseStatus.BLOCK_FULL);
 
+  /** The block already contains the max number of allowed blobs. */
+  public static final TransactionSelectionResult BLOBS_FULL =
+      new TransactionSelectionResult(BaseStatus.BLOBS_FULL);
+
   /** There was no more time to add transaction to the block */
   public static final TransactionSelectionResult BLOCK_SELECTION_TIMEOUT =
       new TransactionSelectionResult(BaseStatus.BLOCK_SELECTION_TIMEOUT);
@@ -117,6 +122,13 @@ public class TransactionSelectionResult {
    */
   public static final TransactionSelectionResult TX_TOO_LARGE_FOR_REMAINING_GAS =
       TransactionSelectionResult.invalidTransient("TX_TOO_LARGE_FOR_REMAINING_GAS");
+
+  /**
+   * The transaction has not been selected since there is not enough remaining blob gas in the block
+   * to fit the blobs of the tx, but selection should continue.
+   */
+  public static final TransactionSelectionResult TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS =
+      TransactionSelectionResult.invalidTransient("TX_TOO_LARGE_FOR_REMAINING_BLOB_GAS");
 
   /**
    * The transaction has not been selected since its current price is below the configured min
