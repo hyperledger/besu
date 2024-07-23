@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -94,8 +95,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final Path homeDirectory;
   private KeyPair keyPair;
   private final Properties portsProperties = new Properties();
-  private final Boolean p2pEnabled;
-  private final int p2pPort;
+
+  private final P2PConfiguration p2PConfiguration;
   private final Optional<TLSConfiguration> tlsConfiguration;
   private final NetworkingConfiguration networkingConfiguration;
   private final boolean revertReasonEnabled;
@@ -116,7 +117,6 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   private final GenesisConfigurationProvider genesisConfigProvider;
   private final boolean devMode;
   private final NetworkName network;
-  private final boolean discoveryEnabled;
   private final List<URI> bootnodes = new ArrayList<>();
   private final boolean bootnodeEligible;
   private final boolean secp256k1Native;
@@ -137,6 +137,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   public BesuNode(
       final String name,
       final Optional<Path> dataPath,
+      final P2PConfiguration p2PConfiguration,
       final MiningParameters miningParameters,
       final TransactionPoolConfiguration txPoolConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
@@ -151,11 +152,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       final boolean devMode,
       final NetworkName network,
       final GenesisConfigurationProvider genesisConfigProvider,
-      final boolean p2pEnabled,
-      final int p2pPort,
       final Optional<TLSConfiguration> tlsConfiguration,
       final NetworkingConfiguration networkingConfiguration,
-      final boolean discoveryEnabled,
       final boolean bootnodeEligible,
       final boolean revertReasonEnabled,
       final boolean secp256k1Native,
@@ -200,11 +198,9 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
     this.genesisConfigProvider = genesisConfigProvider;
     this.devMode = devMode;
     this.network = network;
-    this.p2pEnabled = p2pEnabled;
-    this.p2pPort = p2pPort;
+    this.p2PConfiguration = p2PConfiguration;
     this.tlsConfiguration = tlsConfiguration;
     this.networkingConfiguration = networkingConfiguration;
-    this.discoveryEnabled = discoveryEnabled;
     this.bootnodeEligible = bootnodeEligible;
     this.revertReasonEnabled = revertReasonEnabled;
     this.secp256k1Native = secp256k1Native;
@@ -290,7 +286,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
   }
 
   public String getP2pPort() {
-    return String.valueOf(p2pPort);
+    return String.valueOf(p2PConfiguration.getPort());
   }
 
   private String getRuntimeP2pPort() {
@@ -299,6 +295,10 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
       throw new IllegalStateException("Requested p2p port before ports properties was written");
     }
     return port;
+  }
+
+  public P2PConfiguration getP2PConfiguration() {
+    return p2PConfiguration;
   }
 
   private String getDiscoveryPort() {
@@ -647,7 +647,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   @Override
   public boolean isP2pEnabled() {
-    return p2pEnabled;
+    return p2PConfiguration.isP2pEnabled();
   }
 
   public Optional<TLSConfiguration> getTLSConfiguration() {
@@ -716,7 +716,7 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
 
   @Override
   public boolean isDiscoveryEnabled() {
-    return discoveryEnabled;
+    return p2PConfiguration.isDiscoveryEnabled();
   }
 
   Optional<PermissioningConfiguration> getPermissioningConfiguration() {
@@ -769,8 +769,8 @@ public class BesuNode implements NodeConfiguration, RunnableNode, AutoCloseable 
         .add("name", name)
         .add("homeDirectory", homeDirectory)
         .add("keyPair", keyPair)
-        .add("p2pEnabled", p2pEnabled)
-        .add("discoveryEnabled", discoveryEnabled)
+        .add("p2pEnabled", p2PConfiguration.isP2pEnabled())
+        .add("discoveryEnabled", p2PConfiguration.isDiscoveryEnabled())
         .add("privacyEnabled", privacyParameters.isEnabled())
         .toString();
   }

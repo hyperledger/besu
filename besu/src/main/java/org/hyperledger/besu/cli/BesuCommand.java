@@ -15,7 +15,6 @@
 package org.hyperledger.besu.cli;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
@@ -25,6 +24,7 @@ import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
 import static org.hyperledger.besu.controller.BesuController.DATABASE_PATH;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEFAULT_ENGINE_JSON_RPC_PORT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
+import static org.hyperledger.besu.ethereum.p2p.config.AutoDiscoverDefaultIP.autoDiscoverDefaultIP;
 import static org.hyperledger.besu.metrics.BesuMetricCategory.DEFAULT_METRIC_CATEGORIES;
 import static org.hyperledger.besu.metrics.MetricsProtocol.PROMETHEUS;
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PORT;
@@ -41,8 +41,6 @@ import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.cli.config.ProfilesCompletionCandidates;
 import org.hyperledger.besu.cli.converter.MetricCategoryConverter;
-import org.hyperledger.besu.cli.converter.PercentageConverter;
-import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
@@ -55,6 +53,7 @@ import org.hyperledger.besu.cli.options.stable.GraphQlOptions;
 import org.hyperledger.besu.cli.options.stable.JsonRpcHttpOptions;
 import org.hyperledger.besu.cli.options.stable.LoggingLevelOption;
 import org.hyperledger.besu.cli.options.stable.NodePrivateKeyFileOption;
+import org.hyperledger.besu.cli.options.stable.P2POptions;
 import org.hyperledger.besu.cli.options.stable.P2PTLSConfigOptions;
 import org.hyperledger.besu.cli.options.stable.PermissionsOptions;
 import org.hyperledger.besu.cli.options.stable.PluginsConfigurationOptions;
@@ -125,6 +124,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolCo
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.mainnet.FrontierTargetingGasLimitCalculator;
 import org.hyperledger.besu.ethereum.p2p.config.DiscoveryConfiguration;
+import org.hyperledger.besu.ethereum.p2p.config.P2PConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.p2p.peers.StaticNodesParser;
@@ -200,7 +200,6 @@ import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
 import org.hyperledger.besu.util.PermissioningConfigurationValidator;
-import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 
@@ -208,11 +207,8 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigInteger;
-import java.net.InetAddress;
-import java.net.SocketException;
 import java.net.URI;
 import java.net.URL;
-import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.util.ArrayList;
@@ -240,7 +236,6 @@ import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
 import io.vertx.core.json.DecodeException;
 import io.vertx.core.metrics.MetricsOptions;
-import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -337,9 +332,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private RocksDBPlugin rocksDBPlugin;
 
-  private int maxPeers;
-  private int maxRemoteInitiatedPeers;
-
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
 
@@ -384,156 +376,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   // P2P Discovery Option Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold P2P Discovery Options|@%n")
-  P2PDiscoveryOptionGroup p2PDiscoveryOptionGroup = new P2PDiscoveryOptionGroup();
+  P2POptions p2POptions = new P2POptions();
 
   private final TransactionSelectionServiceImpl transactionSelectionServiceImpl;
   private final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl;
   private final TransactionSimulationServiceImpl transactionSimulationServiceImpl;
   private final BlockchainServiceImpl blockchainServiceImpl;
-
-  static class P2PDiscoveryOptionGroup {
-
-    // Public IP stored to prevent having to research it each time we need it.
-    private InetAddress autoDiscoveredDefaultIP = null;
-
-    // Completely disables P2P within Besu.
-    @Option(
-        names = {"--p2p-enabled"},
-        description = "Enable P2P functionality (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Boolean p2pEnabled = true;
-
-    // Boolean option to indicate if peers should NOT be discovered, default to
-    // false indicates that
-    // the peers should be discovered by default.
-    //
-    // This negative option is required because of the nature of the option that is
-    // true when
-    // added on the command line. You can't do --option=false, so false is set as
-    // default
-    // and you have not to set the option at all if you want it false.
-    // This seems to be the only way it works with Picocli.
-    // Also many other software use the same negative option scheme for false
-    // defaults
-    // meaning that it's probably the right way to handle disabling options.
-    @Option(
-        names = {"--discovery-enabled"},
-        description = "Enable P2P discovery (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Boolean peerDiscoveryEnabled = true;
-
-    // A list of bootstrap nodes can be passed
-    // and a hardcoded list will be used otherwise by the Runner.
-    // NOTE: we have no control over default value here.
-    @Option(
-        names = {"--bootnodes"},
-        paramLabel = "<enode://id@host:port>",
-        description =
-            "Comma separated enode URLs for P2P discovery bootstrap. "
-                + "Default is a predefined list.",
-        split = ",",
-        arity = "0..*")
-    private final List<String> bootNodes = null;
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @Option(
-        names = {"--p2p-host"},
-        paramLabel = MANDATORY_HOST_FORMAT_HELP,
-        description = "IP address this node advertises to its peers (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private String p2pHost = autoDiscoverDefaultIP().getHostAddress();
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @Option(
-        names = {"--p2p-interface"},
-        paramLabel = MANDATORY_HOST_FORMAT_HELP,
-        description =
-            "The network interface address on which this node listens for P2P communication (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private String p2pInterface = NetworkUtility.INADDR_ANY;
-
-    @Option(
-        names = {"--p2p-port"},
-        paramLabel = MANDATORY_PORT_FORMAT_HELP,
-        description = "Port on which to listen for P2P communication (default: ${DEFAULT-VALUE})",
-        arity = "1")
-    private final Integer p2pPort = EnodeURLImpl.DEFAULT_LISTENING_PORT;
-
-    @Option(
-        names = {"--max-peers", "--p2p-peer-upper-bound"},
-        paramLabel = MANDATORY_INTEGER_FORMAT_HELP,
-        description = "Maximum P2P connections that can be established (default: ${DEFAULT-VALUE})")
-    private final Integer maxPeers = DEFAULT_MAX_PEERS;
-
-    @Option(
-        names = {"--remote-connections-limit-enabled"},
-        description =
-            "Whether to limit the number of P2P connections initiated remotely. (default: ${DEFAULT-VALUE})")
-    private final Boolean isLimitRemoteWireConnectionsEnabled = true;
-
-    @Option(
-        names = {"--remote-connections-max-percentage"},
-        paramLabel = MANDATORY_DOUBLE_FORMAT_HELP,
-        description =
-            "The maximum percentage of P2P connections that can be initiated remotely. Must be between 0 and 100 inclusive. (default: ${DEFAULT-VALUE})",
-        arity = "1",
-        converter = PercentageConverter.class)
-    private final Percentage maxRemoteConnectionsPercentage =
-        Fraction.fromFloat(DEFAULT_FRACTION_REMOTE_WIRE_CONNECTIONS_ALLOWED).toPercentage();
-
-    @SuppressWarnings({"FieldCanBeFinal", "FieldMayBeFinal"}) // PicoCLI requires non-final Strings.
-    @CommandLine.Option(
-        names = {"--discovery-dns-url"},
-        description = "Specifies the URL to use for DNS discovery")
-    private String discoveryDnsUrl = null;
-
-    @Option(
-        names = {"--random-peer-priority-enabled"},
-        description =
-            "Allow for incoming connections to be prioritized randomly. This will prevent (typically small, stable) networks from forming impenetrable peer cliques. (default: ${DEFAULT-VALUE})")
-    private final Boolean randomPeerPriority = Boolean.FALSE;
-
-    @Option(
-        names = {"--banned-node-ids", "--banned-node-id"},
-        paramLabel = MANDATORY_NODE_ID_FORMAT_HELP,
-        description = "A list of node IDs to ban from the P2P network.",
-        split = ",",
-        arity = "1..*")
-    void setBannedNodeIds(final List<String> values) {
-      try {
-        bannedNodeIds =
-            values.stream()
-                .filter(value -> !value.isEmpty())
-                .map(EnodeURLImpl::parseNodeId)
-                .collect(Collectors.toList());
-      } catch (final IllegalArgumentException e) {
-        throw new ParameterException(
-            new CommandLine(this),
-            "Invalid ids supplied to '--banned-node-ids'. " + e.getMessage());
-      }
-    }
-
-    private Collection<Bytes> bannedNodeIds = new ArrayList<>();
-
-    // Used to discover the default IP of the client.
-    // Loopback IP is used by default as this is how smokeTests require it to be
-    // and it's probably a good security behaviour to default only on the localhost.
-    private InetAddress autoDiscoverDefaultIP() {
-      autoDiscoveredDefaultIP =
-          Optional.ofNullable(autoDiscoveredDefaultIP).orElseGet(InetAddress::getLoopbackAddress);
-
-      return autoDiscoveredDefaultIP;
-    }
-
-    @Option(
-        names = {"--net-restrict"},
-        arity = "1..*",
-        split = ",",
-        converter = SubnetInfoConverter.class,
-        description =
-            "Comma-separated list of allowed IP subnets (e.g., '192.168.1.0/24,10.0.0.0/8').")
-    private List<SubnetInfo> allowedSubnets;
-  }
 
   @Option(
       names = {"--sync-mode"},
@@ -907,6 +755,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
 
   private EthNetworkConfig ethNetworkConfig;
+  private P2PConfiguration p2pConfiguration;
   private JsonRpcConfiguration jsonRpcConfiguration;
   private JsonRpcConfiguration engineJsonRpcConfiguration;
   private GraphQLConfiguration graphQLConfiguration;
@@ -1327,13 +1176,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Runner buildRunner() {
     return synchronize(
         besuController,
-        p2PDiscoveryOptionGroup.p2pEnabled,
+        p2pConfiguration,
         p2pTLSConfiguration,
-        p2PDiscoveryOptionGroup.peerDiscoveryEnabled,
         ethNetworkConfig,
-        p2PDiscoveryOptionGroup.p2pHost,
-        p2PDiscoveryOptionGroup.p2pInterface,
-        p2PDiscoveryOptionGroup.p2pPort,
         graphQLConfiguration,
         jsonRpcConfiguration,
         engineJsonRpcConfiguration,
@@ -1530,12 +1375,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void validateOptions() {
     validateRequiredOptions();
     issueOptionWarnings();
-    validateP2PInterface(p2PDiscoveryOptionGroup.p2pInterface);
+    validateP2POptions();
     validateMiningParams();
     validateNatParams();
     validateNetStatsParams();
     validateDnsOptionsParams();
-    ensureValidPeerBoundParams();
     validateRpcOptionsParams();
     validateRpcWsOptions();
     validateChainDataPruningParams();
@@ -1563,6 +1407,16 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
       }
     }
+  }
+
+  private void validateP2POptions() {
+    p2POptions.validate(commandLine, logger);
+    validateP2PInterface();
+  }
+
+  /** Validates P2P interface IP address/host name. Visible for testing. */
+  protected void validateP2PInterface() {
+    p2POptions.validateP2PInterface(commandLine, logger);
   }
 
   private void validateApiOptions() {
@@ -1593,22 +1447,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private void validateMiningParams() {
     miningOptions.validate(
         commandLine, genesisConfigOptionsSupplier.get(), isMergeEnabled(), logger);
-  }
-
-  /**
-   * Validates P2P interface IP address/host name. Visible for testing.
-   *
-   * @param p2pInterface IP Address/host name
-   */
-  protected void validateP2PInterface(final String p2pInterface) {
-    final String failMessage = "The provided --p2p-interface is not available: " + p2pInterface;
-    try {
-      if (!NetworkUtility.isNetworkInterfaceAvailable(p2pInterface)) {
-        throw new ParameterException(commandLine, failMessage);
-      }
-    } catch (final UnknownHostException | SocketException e) {
-      throw new ParameterException(commandLine, failMessage, e);
-    }
   }
 
   private void validateGraphQlOptions() {
@@ -1650,23 +1488,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
           this.commandLine,
           "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled"
               + " or specify dns is enabled (--Xdns-enabled)");
-    }
-  }
-
-  private void ensureValidPeerBoundParams() {
-    maxPeers = p2PDiscoveryOptionGroup.maxPeers;
-    final Boolean isLimitRemoteWireConnectionsEnabled =
-        p2PDiscoveryOptionGroup.isLimitRemoteWireConnectionsEnabled;
-    if (isLimitRemoteWireConnectionsEnabled) {
-      final float fraction =
-          Fraction.fromPercentage(p2PDiscoveryOptionGroup.maxRemoteConnectionsPercentage)
-              .getValue();
-      checkState(
-          fraction >= 0.0 && fraction <= 1.0,
-          "Fraction of remote connections allowed must be between 0.0 and 1.0 (inclusive).");
-      maxRemoteInitiatedPeers = Math.round(fraction * maxPeers);
-    } else {
-      maxRemoteInitiatedPeers = maxPeers;
     }
   }
 
@@ -1716,24 +1537,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void issueOptionWarnings() {
-
-    // Check that P2P options are able to work
-    CommandLineUtils.checkOptionDependencies(
-        logger,
-        commandLine,
-        "--p2p-enabled",
-        !p2PDiscoveryOptionGroup.p2pEnabled,
-        asList(
-            "--bootnodes",
-            "--discovery-enabled",
-            "--max-peers",
-            "--banned-node-id",
-            "--banned-node-ids",
-            "--p2p-host",
-            "--p2p-interface",
-            "--p2p-port",
-            "--remote-connections-max-percentage"));
-
     if (SyncMode.isFullSync(getDefaultSyncModeIfNotSet())
         && isOptionSet(commandLine, "--sync-min-peers")) {
       logger.warn("--sync-min-peers is ignored in FULL sync-mode");
@@ -1763,17 +1566,18 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void configure() throws Exception {
+    p2pConfiguration = p2POptions.toDomainObject();
+
     checkPortClash();
     checkIfRequiredPortsAreAvailable();
     syncMode = getDefaultSyncModeIfNotSet();
     versionCompatibilityProtection = getDefaultVersionCompatibilityProtectionIfNotSet();
 
-    ethNetworkConfig = updateNetworkConfig(network);
-
+    ethNetworkConfig = updateNetworkConfig(network, p2pConfiguration);
     jsonRpcConfiguration =
         jsonRpcHttpOptions.jsonRpcConfiguration(
             hostsAllowlist,
-            p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
+            autoDiscoverDefaultIP().getHostAddress(),
             unstableRPCOptions.getHttpTimeoutSec());
     if (isEngineApiEnabled()) {
       engineJsonRpcConfiguration =
@@ -1784,12 +1588,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     graphQLConfiguration =
         graphQlOptions.graphQLConfiguration(
             hostsAllowlist,
-            p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
+            autoDiscoverDefaultIP().getHostAddress(),
             unstableRPCOptions.getHttpTimeoutSec());
     webSocketConfiguration =
         rpcWebsocketOptions.webSocketConfiguration(
             hostsAllowlist,
-            p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
+            autoDiscoverDefaultIP().getHostAddress(),
             unstableRPCOptions.getWsTimeoutSec());
     jsonRpcIpcConfiguration =
         jsonRpcIpcConfiguration(
@@ -1886,8 +1690,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .withMiningParameters(miningParametersSupplier.get())
         .withJsonRpcHttpOptions(jsonRpcHttpOptions);
     final KeyValueStorageProvider storageProvider = keyValueStorageProvider(keyValueStorageName);
+    final P2PConfiguration p2PConfiguration = p2POptions.toDomainObject();
     return controllerBuilderFactory
-        .fromEthNetworkConfig(updateNetworkConfig(network), getDefaultSyncModeIfNotSet())
+        .fromEthNetworkConfig(
+            updateNetworkConfig(network, p2PConfiguration), getDefaultSyncModeIfNotSet())
+        .p2PConfiguration(p2PConfiguration)
         .synchronizerConfiguration(buildSyncConfig())
         .ethProtocolConfiguration(unstableEthProtocolOptions.toDomainObject())
         .networkConfiguration(unstableNetworkingOptions.toDomainObject())
@@ -1911,9 +1718,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .requiredBlocks(requiredBlocks)
         .reorgLoggingThreshold(reorgLoggingThreshold)
         .evmConfiguration(unstableEvmOptions.toDomainObject())
-        .maxPeers(p2PDiscoveryOptionGroup.maxPeers)
-        .maxRemotelyInitiatedPeers(maxRemoteInitiatedPeers)
-        .randomPeerPriority(p2PDiscoveryOptionGroup.randomPeerPriority)
         .chainPruningConfiguration(unstableChainPruningOptions.toDomainObject())
         .cacheLastBlocks(numberOfblocksToCache)
         .genesisStateHashCacheEnabled(genesisStateHashCacheEnabled);
@@ -1925,7 +1729,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     final JsonRpcConfiguration engineConfig =
         jsonRpcHttpOptions.jsonRpcConfiguration(
             allowCallsFrom,
-            p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress(),
+            autoDiscoverDefaultIP().getHostAddress(),
             unstableRPCOptions.getWsTimeoutSec());
     engineConfig.setPort(engineListenPort);
     engineConfig.setRpcApis(Arrays.asList("ENGINE", "ETH"));
@@ -1992,7 +1796,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .enabled(metricsOptionGroup.isMetricsEnabled)
         .host(
             Strings.isNullOrEmpty(metricsOptionGroup.metricsHost)
-                ? p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress()
+                ? autoDiscoverDefaultIP().getHostAddress()
                 : metricsOptionGroup.metricsHost)
         .port(metricsOptionGroup.metricsPort)
         .protocol(metricsOptionGroup.metricsProtocol)
@@ -2000,7 +1804,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .pushEnabled(metricsOptionGroup.isMetricsPushEnabled)
         .pushHost(
             Strings.isNullOrEmpty(metricsOptionGroup.metricsPushHost)
-                ? p2PDiscoveryOptionGroup.autoDiscoverDefaultIP().getHostAddress()
+                ? autoDiscoverDefaultIP().getHostAddress()
                 : metricsOptionGroup.metricsPushHost)
         .pushPort(metricsOptionGroup.metricsPushPort)
         .pushInterval(metricsOptionGroup.metricsPushInterval)
@@ -2264,13 +2068,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   // Blockchain synchronization from peers.
   private Runner synchronize(
       final BesuController controller,
-      final boolean p2pEnabled,
+      final P2PConfiguration p2pConfiguration,
       final Optional<TLSConfiguration> p2pTLSConfiguration,
-      final boolean peerDiscoveryEnabled,
       final EthNetworkConfig ethNetworkConfig,
-      final String p2pAdvertisedHost,
-      final String p2pListenInterface,
-      final int p2pListenPort,
       final GraphQLConfiguration graphQLConfiguration,
       final JsonRpcConfiguration jsonRpcConfiguration,
       final JsonRpcConfiguration engineJsonRpcConfiguration,
@@ -2291,16 +2091,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         runnerBuilder
             .vertx(vertx)
             .besuController(controller)
-            .p2pEnabled(p2pEnabled)
+            .p2PConfiguration(p2pConfiguration)
             .natMethod(natMethod)
             .natManagerServiceName(unstableNatOptions.getNatManagerServiceName())
             .natMethodFallbackEnabled(unstableNatOptions.getNatMethodFallbackEnabled())
-            .discovery(peerDiscoveryEnabled)
             .ethNetworkConfig(ethNetworkConfig)
             .permissioningConfiguration(permissioningConfiguration)
-            .p2pAdvertisedHost(p2pAdvertisedHost)
-            .p2pListenInterface(p2pListenInterface)
-            .p2pListenPort(p2pListenPort)
             .networkingConfiguration(unstableNetworkingOptions.toDomainObject())
             .legacyForkId(unstableEthProtocolOptions.toDomainObject().isLegacyEth64ForkIdEnabled())
             .graphQLConfiguration(graphQLConfiguration)
@@ -2311,7 +2107,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .apiConfiguration(apiConfiguration)
             .pidPath(pidPath)
             .dataDir(dataDir())
-            .bannedNodeIds(p2PDiscoveryOptionGroup.bannedNodeIds)
             .metricsSystem(metricsSystem)
             .permissioningService(permissioningService)
             .metricsConfiguration(metricsConfiguration)
@@ -2323,7 +2118,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .storageProvider(keyValueStorageProvider(keyValueStorageName))
             .rpcEndpointService(rpcEndpointServiceImpl)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
-            .allowedSubnets(p2PDiscoveryOptionGroup.allowedSubnets)
             .build();
 
     addShutdownHook(runner);
@@ -2367,7 +2161,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
                 "BesuCommand-Shutdown-Hook"));
   }
 
-  private EthNetworkConfig updateNetworkConfig(final NetworkName network) {
+  private EthNetworkConfig updateNetworkConfig(
+      final NetworkName network, final P2PConfiguration p2pConfig) {
     final EthNetworkConfig.Builder builder =
         new EthNetworkConfig.Builder(EthNetworkConfig.getNetworkConfig(network));
 
@@ -2398,7 +2193,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         }
       }
 
-      if (p2PDiscoveryOptionGroup.bootNodes == null) {
+      if (p2pConfig.getBootNodes() == null) {
         builder.setBootNodes(new ArrayList<>());
       }
       builder.setDnsDiscoveryUrl(null);
@@ -2410,8 +2205,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       builder.setNetworkId(networkId);
     }
 
-    if (p2PDiscoveryOptionGroup.discoveryDnsUrl != null) {
-      builder.setDnsDiscoveryUrl(p2PDiscoveryOptionGroup.discoveryDnsUrl);
+    if (p2pConfig.getDiscoveryDnsUrl() != null) {
+      builder.setDnsDiscoveryUrl(p2pConfig.getDiscoveryDnsUrl());
     } else {
       final Optional<String> discoveryDnsUrlFromGenesis =
           genesisConfigOptionsSupplier.get().getDiscoveryOptions().getDiscoveryDnsUrl();
@@ -2419,9 +2214,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     List<EnodeURL> listBootNodes = null;
-    if (p2PDiscoveryOptionGroup.bootNodes != null) {
+    if (p2pConfig.getBootNodes() != null) {
       try {
-        listBootNodes = buildEnodes(p2PDiscoveryOptionGroup.bootNodes, getEnodeDnsConfiguration());
+        listBootNodes = buildEnodes(p2pConfig.getBootNodes(), getEnodeDnsConfiguration());
       } catch (final IllegalArgumentException e) {
         throw new ParameterException(commandLine, e.getMessage());
       }
@@ -2433,7 +2228,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
     if (listBootNodes != null) {
-      if (!p2PDiscoveryOptionGroup.peerDiscoveryEnabled) {
+      if (!p2pConfig.isDiscoveryEnabled()) {
         logger.warn("Discovery disabled: bootnodes will be ignored.");
       }
       DiscoveryConfiguration.assertValidBootnodes(listBootNodes);
@@ -2568,12 +2363,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .filter(port -> port > 0)
         .forEach(
             port -> {
-              if (port.equals(p2PDiscoveryOptionGroup.p2pPort)
+              if (port.equals(p2pConfiguration.getPort())
                   && (NetworkUtility.isPortUnavailableForTcp(port)
                       || NetworkUtility.isPortUnavailableForUdp(port))) {
                 unavailablePorts.add(port);
               }
-              if (!port.equals(p2PDiscoveryOptionGroup.p2pPort)
+              if (!port.equals(p2pConfiguration.getPort())
                   && NetworkUtility.isPortUnavailableForTcp(port)) {
                 unavailablePorts.add(port);
               }
@@ -2593,8 +2388,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   private List<Integer> getEffectivePorts() {
     final List<Integer> effectivePorts = new ArrayList<>();
-    addPortIfEnabled(
-        effectivePorts, p2PDiscoveryOptionGroup.p2pPort, p2PDiscoveryOptionGroup.p2pEnabled);
+    addPortIfEnabled(effectivePorts, p2pConfiguration.getPort(), p2pConfiguration.isP2pEnabled());
     addPortIfEnabled(
         effectivePorts, graphQlOptions.getGraphQLHttpPort(), graphQlOptions.isGraphQLHttpEnabled());
     addPortIfEnabled(
