@@ -131,10 +131,6 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
 
     try (final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
 
-      LOG.atInfo()
-          .setMessage("Loaded trie logs from database, determining if any can be pruned...")
-          .log();
-
       final AtomicLong addToPruneQueueCount = new AtomicLong();
       final AtomicLong orphansPruned = new AtomicLong();
       trieLogKeys.forEach(
