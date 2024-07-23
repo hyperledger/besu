@@ -2233,7 +2233,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return miningParameters;
   }
 
-  private DataStorageConfiguration getDataStorageConfiguration() {
+  public DataStorageConfiguration getDataStorageConfiguration() {
     if (dataStorageConfiguration == null) {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
     }
