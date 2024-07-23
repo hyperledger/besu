@@ -56,9 +56,9 @@ public class BesuNodeFactory {
   private final NodeConfigurationFactory node = new NodeConfigurationFactory();
 
   private final P2PConfiguration P2P_DISABLED =
-      P2PConfiguration.builder().p2pEnabled(false).build();
+      P2PConfiguration.builder().port(0).p2pEnabled(false).build();
   private final P2PConfiguration DISCOVERY_DISABLED =
-      P2PConfiguration.builder().discoveryEnabled(false).build();
+      P2PConfiguration.builder().port(0).discoveryEnabled(false).build();
 
   public BesuNode create(final BesuNodeConfiguration config) throws IOException {
     return new BesuNode(
