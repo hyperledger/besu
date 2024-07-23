@@ -487,7 +487,7 @@ public class PeerDiscoveryController {
   private void refreshTable() {
     final Bytes target = Peer.randomId();
 
-    final List<DiscoveryPeer> initialPeers;
+    final List<DiscoveryPeer> initialPeers = peerTable.nearestBondedPeers(Peer.randomId(), 16);
     if (includeBootnodesOnPeerRefresh) {
       bootstrapNodes.stream()
           .filter(p -> p.getStatus() != PeerDiscoveryStatus.BONDED)
@@ -495,13 +495,7 @@ public class PeerDiscoveryController {
 
       // If configured to retry bootnodes during peer table refresh, include them
       // in the initial peers list.
-      initialPeers =
-          Stream.concat(
-                  bootstrapNodes.stream(),
-                  peerTable.nearestBondedPeers(Peer.randomId(), 16).stream())
-              .collect(Collectors.toList());
-    } else {
-      initialPeers = peerTable.nearestBondedPeers(Peer.randomId(), 16);
+      initialPeers.addAll(bootstrapNodes);
     }
     recursivePeerRefreshState.start(initialPeers, target);
     lastRefreshTime = System.currentTimeMillis();
