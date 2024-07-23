@@ -28,7 +28,7 @@ import java.util.function.Function;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 
-/** An Merkle Patricial Trie. */
+/** A Merkle Patricia Trie. */
 public interface MerkleTrie<K, V> {
 
   Bytes EMPTY_TRIE_NODE = RLP.NULL;

@@ -376,6 +376,7 @@ public class BlockDataGenerator {
       case EIP1559 -> eip1559Transaction(payload, to);
       case ACCESS_LIST -> accessListTransaction(payload, to);
       case BLOB -> blobTransaction(payload, to);
+      case SET_CODE -> null;
         // no default, all types accounted for.
     };
   }

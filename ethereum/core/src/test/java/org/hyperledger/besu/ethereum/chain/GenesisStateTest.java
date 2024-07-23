@@ -29,11 +29,10 @@ import org.hyperledger.besu.evm.account.Account;
 
 import java.util.stream.Stream;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.Resources;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.bouncycastle.util.encoders.Hex;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -64,12 +63,11 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  public void createFromJsonWithAllocs(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  public void createFromJsonWithAllocs(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
-            Resources.toString(GenesisStateTest.class.getResource("genesis1.json"), Charsets.UTF_8),
+            GenesisStateTest.class.getResource("genesis1.json"),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot())
@@ -95,12 +93,11 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void createFromJsonNoAllocs(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void createFromJsonNoAllocs(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
-            Resources.toString(GenesisStateTest.class.getResource("genesis2.json"), Charsets.UTF_8),
+            GenesisStateTest.class.getResource("genesis2.json"),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getStateRoot()).isEqualTo(Hash.EMPTY_TRIE_HASH);
@@ -114,12 +111,11 @@ final class GenesisStateTest {
   private void assertContractInvariants(
       final DataStorageConfiguration dataStorageConfiguration,
       final String sourceFile,
-      final String blockHash)
-      throws Exception {
+      final String blockHash) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
-            Resources.toString(GenesisStateTest.class.getResource(sourceFile), Charsets.UTF_8),
+            GenesisStateTest.class.getResource(sourceFile),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash()).isEqualTo(Hash.fromHexString(blockHash));
@@ -141,8 +137,7 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void createFromJsonWithContract(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void createFromJsonWithContract(final DataStorageConfiguration dataStorageConfiguration) {
     assertContractInvariants(
         dataStorageConfiguration,
         "genesis3.json",
@@ -151,13 +146,11 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void createFromJsonWithNonce(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void createFromJsonWithNonce(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
-            Resources.toString(
-                GenesisStateTest.class.getResource("genesisNonce.json"), Charsets.UTF_8),
+            GenesisStateTest.class.getResource("genesisNonce.json"),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())
@@ -168,13 +161,11 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void encodeOlympicBlock(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void encodeOlympicBlock(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
-            Resources.toString(
-                GenesisStateTest.class.getResource("genesis-olympic.json"), Charsets.UTF_8),
+            GenesisStateTest.class.getResource("genesis-olympic.json"),
             ProtocolScheduleFixture.MAINNET);
     final BytesValueRLPOutput tmp = new BytesValueRLPOutput();
     genesisState.getBlock().writeTo(tmp);
@@ -190,13 +181,11 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void genesisFromShanghai(final DataStorageConfiguration dataStorageConfiguration)
-      throws Exception {
+  void genesisFromShanghai(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
-            Resources.toString(
-                GenesisStateTest.class.getResource("genesis_shanghai.json"), Charsets.UTF_8),
+            GenesisStateTest.class.getResource("genesis_shanghai.json"),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())
@@ -241,12 +230,11 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void genesisFromCancun(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
+  void genesisFromCancun(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
-            Resources.toString(
-                GenesisStateTest.class.getResource("genesis_cancun.json"), Charsets.UTF_8),
+            GenesisStateTest.class.getResource("genesis_cancun.json"),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())
@@ -292,12 +280,11 @@ final class GenesisStateTest {
 
   @ParameterizedTest
   @ArgumentsSource(GenesisStateTestArguments.class)
-  void genesisFromPrague(final DataStorageConfiguration dataStorageConfiguration) throws Exception {
+  void genesisFromPrague(final DataStorageConfiguration dataStorageConfiguration) {
     final GenesisState genesisState =
-        GenesisState.fromJson(
+        GenesisState.fromJsonSource(
             dataStorageConfiguration,
-            Resources.toString(
-                GenesisStateTest.class.getResource("genesis_prague.json"), Charsets.UTF_8),
+            GenesisStateTest.class.getResource("genesis_prague.json"),
             ProtocolScheduleFixture.MAINNET);
     final BlockHeader header = genesisState.getBlock().getHeader();
     assertThat(header.getHash())
@@ -344,5 +331,12 @@ final class GenesisStateTest {
         .isEqualTo(
             Hash.fromHexString(
                 "0x56e81f171bcc55a6ff8345e692c0f86e5b48e01b996cadc001622fb5e363b421"));
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

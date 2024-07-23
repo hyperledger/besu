@@ -38,7 +38,6 @@ import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
 
@@ -137,11 +136,24 @@ public class ReadyTransactions extends AbstractSequentialTransactionsLayer {
     return true;
   }
 
+  /**
+   * Return the full content of this layer, organized as a list of sender pending txs. For each
+   * sender the collection pending txs is ordered by nonce asc.
+   *
+   * <p>Returned sender list order detail: first the sender of the tx with the highest max gas
+   * price.
+   *
+   * @return a list of sender pending txs
+   */
   @Override
-  public Stream<PendingTransaction> stream() {
+  public List<SenderPendingTransactions> getBySender() {
     return orderByMaxFee.descendingSet().stream()
         .map(PendingTransaction::getSender)
-        .flatMap(sender -> txsBySender.get(sender).values().stream());
+        .map(
+            sender ->
+                new SenderPendingTransactions(
+                    sender, List.copyOf(txsBySender.get(sender).values())))
+        .toList();
   }
 
   @Override

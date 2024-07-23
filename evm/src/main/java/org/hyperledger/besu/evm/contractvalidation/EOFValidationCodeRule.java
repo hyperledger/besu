@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.evm.contractvalidation;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.code.CodeInvalid;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
@@ -35,11 +36,9 @@ public class EOFValidationCodeRule implements ContractValidationRule {
   private static final Logger LOG = LoggerFactory.getLogger(EOFValidationCodeRule.class);
 
   final int maxEofVersion;
-  final boolean inCreateTransaction;
 
-  private EOFValidationCodeRule(final int maxEofVersion, final boolean inCreateTransaction) {
+  private EOFValidationCodeRule(final int maxEofVersion) {
     this.maxEofVersion = maxEofVersion;
-    this.inCreateTransaction = inCreateTransaction;
   }
 
   /**
@@ -47,19 +46,20 @@ public class EOFValidationCodeRule implements ContractValidationRule {
    *
    * @param contractCode the contract code to validate
    * @param frame the message frame to use for context
+   * @param evm The EVM against which the validation should be considered against
    * @return Either an empty optional on success, or an optional containing one of the invalid
    *     reasons.
    */
   @Override
   public Optional<ExceptionalHaltReason> validate(
-      final Bytes contractCode, final MessageFrame frame) {
-    Code code = CodeFactory.createCode(contractCode, maxEofVersion, inCreateTransaction);
+      final Bytes contractCode, final MessageFrame frame, final EVM evm) {
+    Code code = evm.getCode(Hash.hash(contractCode), contractCode);
     if (!code.isValid()) {
       LOG.trace("EOF Validation Error: {}", ((CodeInvalid) code).getInvalidReason());
       return Optional.of(ExceptionalHaltReason.INVALID_CODE);
     }
 
-    if (frame.getCode().getEofVersion() > code.getEofVersion()) {
+    if (frame.getCode().getEofVersion() != code.getEofVersion()) {
       LOG.trace(
           "Cannot deploy older eof versions: initcode version - {} runtime code version - {}",
           frame.getCode().getEofVersion(),
@@ -74,11 +74,21 @@ public class EOFValidationCodeRule implements ContractValidationRule {
    * Create EOF validation.
    *
    * @param maxEofVersion Maximum EOF version to validate
-   * @param inCreateTransaction Is this inside a create transaction?
+   * @return The EOF validation contract validation rule.
+   * @deprecated use {@link #from(EVM)}
+   */
+  @Deprecated(forRemoval = true, since = "24.6.1")
+  public static ContractValidationRule of(final int maxEofVersion) {
+    return new EOFValidationCodeRule(maxEofVersion);
+  }
+
+  /**
+   * Create EOF validation.
+   *
+   * @param evm The EVM for which we are enforcing the rule
    * @return The EOF validation contract validation rule.
    */
-  public static ContractValidationRule of(
-      final int maxEofVersion, final boolean inCreateTransaction) {
-    return new EOFValidationCodeRule(maxEofVersion, inCreateTransaction);
+  public static ContractValidationRule from(final EVM evm) {
+    return new EOFValidationCodeRule(evm.getMaxEOFVersion());
   }
 }

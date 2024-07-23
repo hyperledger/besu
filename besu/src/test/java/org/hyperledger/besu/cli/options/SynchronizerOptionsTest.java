@@ -38,9 +38,9 @@ public class SynchronizerOptionsTest
   @Override
   protected SynchronizerConfiguration.Builder createCustomizedDomainObject() {
     return SynchronizerConfiguration.builder()
-        .fastSyncPivotDistance(SynchronizerConfiguration.DEFAULT_PIVOT_DISTANCE_FROM_HEAD + 10)
+        .syncPivotDistance(SynchronizerConfiguration.DEFAULT_PIVOT_DISTANCE_FROM_HEAD + 10)
         .fastSyncFullValidationRate(SynchronizerConfiguration.DEFAULT_FULL_VALIDATION_RATE / 2)
-        .fastSyncMinimumPeerCount(SynchronizerConfiguration.DEFAULT_FAST_SYNC_MINIMUM_PEERS + 2)
+        .syncMinimumPeerCount(SynchronizerConfiguration.DEFAULT_SYNC_MINIMUM_PEERS + 2)
         .worldStateHashCountPerRequest(
             SynchronizerConfiguration.DEFAULT_WORLD_STATE_HASH_COUNT_PER_REQUEST + 2)
         .worldStateRequestParallelism(
@@ -94,7 +94,7 @@ public class SynchronizerOptionsTest
 
   @Override
   protected List<String> getFieldsToIgnore() {
-    return Arrays.asList("fastSyncMinimumPeerCount");
+    return Arrays.asList("syncMinimumPeerCount");
   }
 
   @Override

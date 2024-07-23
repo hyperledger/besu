@@ -19,7 +19,7 @@ import "./EventEmitter.sol";
 // compile with:
 // solc CrossContractReader.sol --bin --abi --optimize --overwrite -o .
 // then create web3j wrappers with:
-// web3j solidity generate -b ./generated/CrossContractReader.bin -a ./generated/CrossContractReader.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
+// web3j generate solidity -b ./generated/CrossContractReader.bin -a ./generated/CrossContractReader.abi -o ../../../../../ -p org.hyperledger.besu.tests.web3j.generated
 contract CrossContractReader {
     uint counter;
 

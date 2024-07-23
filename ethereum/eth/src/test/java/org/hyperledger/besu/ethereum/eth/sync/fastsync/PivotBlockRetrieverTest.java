@@ -45,6 +45,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -288,15 +289,15 @@ public class PivotBlockRetrieverTest {
 
     final CompletableFuture<FastSyncState> future = pivotBlockRetriever.downloadPivotBlockHeader();
     peerA.respond(responder);
-    peerB.respondTimes(emptyResponder, 2);
+    peerB.respondTimes(emptyResponder, 4);
 
     // PeerA should have responded, while peerB is being retried, peerC shouldn't have been queried
     // yet
     assertThat(future).isNotCompleted();
     assertThat(peerC.hasOutstandingRequests()).isFalse();
 
-    // After exhausting retries for peerB, we should try peerC
-    peerB.respondTimes(emptyResponder, 2);
+    // After exhausting retries (max retries is 5) for peerB, we should try peerC
+    peerB.respondTimes(emptyResponder, 1);
     peerC.respond(responder);
 
     assertThat(future)
@@ -424,5 +425,12 @@ public class PivotBlockRetrieverTest {
     }
 
     return RespondingEthPeer.blockchainResponder(mockBlockchain);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

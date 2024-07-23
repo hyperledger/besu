@@ -14,7 +14,9 @@
  */
 package org.hyperledger.besu.evm.tracing;
 
+import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
+import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.Log;
@@ -23,6 +25,7 @@ import org.hyperledger.besu.evm.worldstate.WorldView;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -84,6 +87,17 @@ public interface OperationTracer {
   default void traceStartTransaction(final WorldView worldView, final Transaction transaction) {}
 
   /**
+   * Trace the end of a transaction just before mining reward.
+   *
+   * @param worldView an immutable view of the execution context
+   * @param tx the transaction that just concluded
+   * @param miningReward the reward that the mining beneficiary will receive.
+   */
+  default void traceBeforeRewardTransaction(
+      final WorldView worldView, final Transaction tx, final Wei miningReward) {}
+  ;
+
+  /**
    * Trace the end of a transaction.
    *
    * @param worldView an immutable view of the execution context
@@ -92,6 +106,7 @@ public interface OperationTracer {
    * @param output the bytes output from the transaction
    * @param logs the logs emitted by this transaction
    * @param gasUsed the gas used by the entire transaction
+   * @param selfDestructs the set of addresses that self-destructed during the transaction
    * @param timeNs the time in nanoseconds it took to execute the transaction
    */
   default void traceEndTransaction(
@@ -101,6 +116,7 @@ public interface OperationTracer {
       final Bytes output,
       final List<Log> logs,
       final long gasUsed,
+      final Set<Address> selfDestructs,
       final long timeNs) {}
 
   /**

@@ -39,8 +39,10 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -86,7 +88,8 @@ class MainnetTransactionProcessorTest {
         warmCoinbase,
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
-        CoinbaseFeePriceCalculator.frontier());
+        CoinbaseFeePriceCalculator.frontier(),
+        new AuthorityProcessor(Optional.of(BigInteger.ONE)));
   }
 
   @Test
@@ -216,6 +219,7 @@ class MainnetTransactionProcessorTest {
         final Bytes output,
         final List<Log> logs,
         final long gasUsed,
+        final Set<Address> selfDestructs,
         final long timeNs) {
       this.traceEndTxCalled = true;
     }

@@ -88,6 +88,7 @@ import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.ethereum.p2p.network.ProtocolManager;
 import org.hyperledger.besu.ethereum.p2p.peers.DefaultPeer;
 import org.hyperledger.besu.ethereum.p2p.peers.EnodeDnsConfiguration;
+import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionSubnet;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissionsDenylist;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
@@ -146,6 +147,7 @@ import com.google.common.base.Strings;
 import graphql.GraphQL;
 import io.vertx.core.Vertx;
 import io.vertx.core.VertxOptions;
+import org.apache.commons.net.util.SubnetUtils.SubnetInfo;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.slf4j.Logger;
@@ -192,6 +194,7 @@ public class RunnerBuilder {
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
+  private List<SubnetInfo> allowedSubnets = new ArrayList<>();
 
   /** Instantiates a new Runner builder. */
   public RunnerBuilder() {}
@@ -590,6 +593,17 @@ public class RunnerBuilder {
   }
 
   /**
+   * Add subnet configuration
+   *
+   * @param allowedSubnets the allowedSubnets
+   * @return the runner builder
+   */
+  public RunnerBuilder allowedSubnets(final List<SubnetInfo> allowedSubnets) {
+    this.allowedSubnets = allowedSubnets;
+    return this;
+  }
+
+  /**
    * Build Runner instance.
    *
    * @return the runner
@@ -648,6 +662,10 @@ public class RunnerBuilder {
     final PeerPermissionsDenylist bannedNodes = PeerPermissionsDenylist.create();
     bannedNodeIds.forEach(bannedNodes::add);
 
+    PeerPermissionSubnet peerPermissionSubnet = new PeerPermissionSubnet(allowedSubnets);
+    final PeerPermissions defaultPeerPermissions =
+        PeerPermissions.combine(peerPermissionSubnet, bannedNodes);
+
     final List<EnodeURL> bootnodes = discoveryConfiguration.getBootnodes();
 
     final Synchronizer synchronizer = besuController.getSynchronizer();
@@ -667,8 +685,10 @@ public class RunnerBuilder {
     final PeerPermissions peerPermissions =
         nodePermissioningController
             .map(nodePC -> new PeerPermissionsAdapter(nodePC, bootnodes, context.getBlockchain()))
-            .map(nodePerms -> PeerPermissions.combine(nodePerms, bannedNodes))
-            .orElse(bannedNodes);
+            .map(nodePerms -> PeerPermissions.combine(nodePerms, defaultPeerPermissions))
+            .orElse(defaultPeerPermissions);
+
+    final EthPeers ethPeers = besuController.getEthPeers();
 
     LOG.info("Detecting NAT service.");
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
@@ -676,7 +696,6 @@ public class RunnerBuilder {
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
     final NetworkBuilder activeNetwork =
         caps -> {
-          final EthPeers ethPeers = besuController.getEthPeers();
           return DefaultP2PNetwork.builder()
               .vertx(vertx)
               .nodeKey(nodeKey)
@@ -691,8 +710,8 @@ public class RunnerBuilder {
               .blockchain(context.getBlockchain())
               .blockNumberForks(besuController.getGenesisConfigOptions().getForkBlockNumbers())
               .timestampForks(besuController.getGenesisConfigOptions().getForkBlockTimestamps())
-              .allConnectionsSupplier(ethPeers::getAllConnections)
-              .allActiveConnectionsSupplier(ethPeers::getAllActiveConnections)
+              .allConnectionsSupplier(ethPeers::streamAllConnections)
+              .allActiveConnectionsSupplier(ethPeers::streamAllActiveConnections)
               .maxPeers(ethPeers.getMaxPeers())
               .build();
         };
@@ -703,9 +722,10 @@ public class RunnerBuilder {
             .subProtocols(subProtocols)
             .network(p2pEnabled ? activeNetwork : inactiveNetwork)
             .metricsSystem(metricsSystem)
+            .ethPeersShouldConnect(ethPeers::shouldTryToConnect)
             .build();
 
-    besuController.getEthPeers().setRlpxAgent(networkRunner.getRlpxAgent());
+    ethPeers.setRlpxAgent(networkRunner.getRlpxAgent());
 
     final P2PNetwork network = networkRunner.getNetwork();
     // ForkId in Ethereum Node Record needs updating when we transition to a new protocol spec
@@ -772,7 +792,20 @@ public class RunnerBuilder {
       LOG.debug("added ethash observer: {}", stratumServer.get());
     }
 
-    sanitizePeers(network, staticNodes)
+    final Stream<EnodeURL> maintainedPeers;
+    if (besuController.getGenesisConfigOptions().isPoa()) {
+      // In a permissioned chain Besu should maintain connections to both static nodes and
+      // bootnodes, which includes retries periodically
+      maintainedPeers =
+          sanitizePeers(
+              network,
+              Stream.concat(staticNodes.stream(), bootnodes.stream()).collect(Collectors.toList()));
+      LOG.debug("Added bootnodes to the maintained peer list");
+    } else {
+      // In a public chain only maintain connections to static nodes
+      maintainedPeers = sanitizePeers(network, staticNodes);
+    }
+    maintainedPeers
         .map(DefaultPeer::fromEnodeURL)
         .forEach(peerNetwork::addMaintainedConnectionPeer);
 

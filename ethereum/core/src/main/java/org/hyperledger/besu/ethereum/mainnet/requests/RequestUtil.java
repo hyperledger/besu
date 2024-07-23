@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.mainnet.requests;
 
+import org.hyperledger.besu.ethereum.core.ConsolidationRequest;
 import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
@@ -52,23 +53,33 @@ public class RequestUtil {
     return requests.map(r -> filterRequestsOfType(r, WithdrawalRequest.class));
   }
 
+  public static Optional<List<ConsolidationRequest>> getConsolidationRequests(
+      final Optional<List<Request>> requests) {
+    return requests.map(r -> filterRequestsOfType(r, ConsolidationRequest.class));
+  }
+
   /**
-   * Combines two optional lists of requests into a single optional list.
+   * Combines multiple optional lists of requests into a single optional list.
    *
    * @param maybeDepositRequests Optional list of deposit requests.
    * @param maybeWithdrawalRequest Optional list of withdrawal requests.
-   * @return An Optional containing the combined list of requests, or an empty Optional if both
-   *     inputs are empty.
+   * @param maybeConsolidationRequest Optional list of withdrawal requests.
+   * @return An Optional containing the combined list of requests, or an empty Optional if all input
+   *     lists are empty.
    */
   public static Optional<List<Request>> combine(
       final Optional<List<Request>> maybeDepositRequests,
-      final Optional<List<Request>> maybeWithdrawalRequest) {
-    if (maybeDepositRequests.isEmpty() && maybeWithdrawalRequest.isEmpty()) {
+      final Optional<List<Request>> maybeWithdrawalRequest,
+      final Optional<List<Request>> maybeConsolidationRequest) {
+    if (maybeDepositRequests.isEmpty()
+        && maybeWithdrawalRequest.isEmpty()
+        && maybeConsolidationRequest.isEmpty()) {
       return Optional.empty();
     }
     List<Request> requests = new ArrayList<>();
     maybeDepositRequests.ifPresent(requests::addAll);
     maybeWithdrawalRequest.ifPresent(requests::addAll);
+    maybeConsolidationRequest.ifPresent(requests::addAll);
     return Optional.of(requests);
   }
 }

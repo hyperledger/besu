@@ -51,6 +51,7 @@ engine-jwt-disabled=true
 engine-jwt-secret="/tmp/jwt.hex"
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org"
+net-restrict=["none"]
 
 # chain
 network="MAINNET"
@@ -171,6 +172,7 @@ privacy-multi-tenancy-enabled=true
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-flexible-groups-enabled=false
+privacy-nonce-always-increments=false
 
 # Transaction Pool
 tx-pool="layered"

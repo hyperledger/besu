@@ -18,7 +18,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -36,6 +35,7 @@ import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.DefaultProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Collection;
 import java.util.List;
@@ -45,6 +45,7 @@ import java.util.stream.Stream;
 
 import com.google.common.collect.Streams;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.runner.RunWith;
@@ -138,7 +139,7 @@ public class ForkIdsNetworkConfigTest {
   @MethodSource("parameters")
   public void testForkId(final NetworkName chainName, final List<ForkId> expectedForkIds) {
     final GenesisConfigFile genesisConfigFile =
-        GenesisConfigFile.fromConfig(EthNetworkConfig.jsonConfig(chainName));
+        GenesisConfigFile.fromResource(chainName.getGenesisFile());
     final MilestoneStreamingTransitionProtocolSchedule schedule = createSchedule(genesisConfigFile);
     final GenesisState genesisState = GenesisState.fromConfig(genesisConfigFile, schedule);
     final Blockchain mockBlockchain = mock(Blockchain.class);
@@ -177,12 +178,21 @@ public class ForkIdsNetworkConfigTest {
         new MilestoneStreamingProtocolSchedule(
             (DefaultProtocolSchedule)
                 MainnetProtocolSchedule.fromConfig(
-                    configOptions, MiningParameters.MINING_DISABLED, new BadBlockManager()));
+                    configOptions,
+                    MiningParameters.MINING_DISABLED,
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
             (DefaultProtocolSchedule)
                 MergeProtocolSchedule.create(
-                    configOptions, false, MiningParameters.MINING_DISABLED, new BadBlockManager()));
+                    configOptions,
+                    false,
+                    MiningParameters.MINING_DISABLED,
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()));
     final MilestoneStreamingTransitionProtocolSchedule schedule =
         new MilestoneStreamingTransitionProtocolSchedule(
             preMergeProtocolSchedule, postMergeProtocolSchedule);
@@ -207,5 +217,12 @@ public class ForkIdsNetworkConfigTest {
       return transitionUtils.dispatchFunctionAccordingToMergeState(
           MilestoneStreamingProtocolSchedule::streamMilestoneBlocks);
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

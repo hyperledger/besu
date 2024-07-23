@@ -357,6 +357,7 @@ public class TransactionPoolFactory {
               miningParameters);
     }
 
-    return new LayeredPendingTransactions(transactionPoolConfiguration, pendingTransactionsSorter);
+    return new LayeredPendingTransactions(
+        transactionPoolConfiguration, pendingTransactionsSorter, ethScheduler);
   }
 }
