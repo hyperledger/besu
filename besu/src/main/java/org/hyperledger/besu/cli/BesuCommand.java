@@ -513,6 +513,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       }
     }
 
+    // Boolean option to set that in a PoA network the bootnodes should always be queried during
+    // peer table refresh. If this flag is disabled bootnodes are only sent FINDN requests on first
+    // startup, meaning that an offline bootnode or network outage at the client can prevent it
+    // discovering any peers without a restart.
+    @Option(
+        names = {"--poa-discovery-retry-bootnodes"},
+        description =
+            "Always use of bootnodes for discovery in PoA networks. Disabling this reverts "
+                + " to the same behaviour as non-PoA networks, where neighbours are only discovered from bootnodes on first startup."
+                + "(default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Boolean poaDiscoveryRetryBootnodes = true;
+
     private Collection<Bytes> bannedNodeIds = new ArrayList<>();
 
     // Used to discover the default IP of the client.
@@ -2324,6 +2337,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .rpcEndpointService(rpcEndpointServiceImpl)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .allowedSubnets(p2PDiscoveryOptionGroup.allowedSubnets)
+            .poaDiscoveryRetryBootnodes(p2PDiscoveryOptionGroup.poaDiscoveryRetryBootnodes)
             .build();
 
     addShutdownHook(runner);
