@@ -230,12 +230,12 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
         } catch (final Exception e) {
           // if we fail we must clean up the updater
           diffBasedUpdater.reset();
-          LOG.debug(
-              "State rolling failed on "
-                  + mutableState.getWorldStateStorage().getClass().getSimpleName()
-                  + " for block hash "
-                  + blockHash,
-              e);
+          LOG.atDebug()
+              .setMessage("State rolling failed on {} for block hash {}")
+              .addArgument(mutableState.getWorldStateStorage().getClass().getSimpleName())
+              .addArgument(blockHash)
+              .addArgument(e)
+              .log();
 
           return Optional.empty();
         }

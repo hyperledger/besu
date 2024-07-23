@@ -19,6 +19,9 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
+import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Comparator;
@@ -45,6 +48,9 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
   private final Consumer<Runnable> executeAsync;
   private final long numBlocksToRetain;
   private final boolean requireFinalizedBlock;
+  private final Counter addedToPruneQueueCounter;
+  private final Counter prunedFromQueueCounter;
+  private final Counter prunedOrphanCounter;
 
   private final Multimap<Long, Hash> trieLogBlocksAndForksByDescendingBlockNumber =
       TreeMultimap.create(Comparator.reverseOrder(), Comparator.naturalOrder());
@@ -55,7 +61,8 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
       final Consumer<Runnable> executeAsync,
       final long numBlocksToRetain,
       final int pruningLimit,
-      final boolean requireFinalizedBlock) {
+      final boolean requireFinalizedBlock,
+      final MetricsSystem metricsSystem) {
     this.rootWorldStateStorage = rootWorldStateStorage;
     this.blockchain = blockchain;
     this.executeAsync = executeAsync;
@@ -63,6 +70,17 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
     this.pruningLimit = pruningLimit;
     this.loadingLimit = pruningLimit; // same as pruningLimit for now
     this.requireFinalizedBlock = requireFinalizedBlock;
+    this.addedToPruneQueueCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.PRUNER,
+            "trie_log_added_to_prune_queue",
+            "trie log added to prune queue");
+    this.prunedFromQueueCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.PRUNER, "trie_log_pruned_from_queue", "trie log pruned from queue");
+    this.prunedOrphanCounter =
+        metricsSystem.createCounter(
+            BesuMetricCategory.PRUNER, "trie_log_pruned_orphan", "trie log pruned orphan");
   }
 
   public int initialize() {
@@ -88,6 +106,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
               // prune orphaned blocks (sometimes created during block production)
               rootWorldStateStorage.pruneTrieLog(blockHash);
               orphansPruned.getAndIncrement();
+              prunedOrphanCounter.inc();
             }
           });
       LOG.atDebug().log("Pruned {} orphaned trie logs from database...", orphansPruned.intValue());
@@ -106,6 +125,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
         .addArgument(blockHash)
         .log();
     trieLogBlocksAndForksByDescendingBlockNumber.put(blockNumber, blockHash);
+    addedToPruneQueueCounter.inc();
   }
 
   public synchronized int pruneFromQueue() {
@@ -155,6 +175,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
         });
 
     wasPruned.keySet().forEach(trieLogBlocksAndForksByDescendingBlockNumber::removeAll);
+    prunedFromQueueCounter.inc(wasPruned.size());
 
     LOG.atTrace()
         .setMessage("pruned {} trie logs for blocks {}")

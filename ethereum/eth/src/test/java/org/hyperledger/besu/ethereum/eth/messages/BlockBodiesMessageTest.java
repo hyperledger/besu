@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.rlp.RLP;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.io.IOException;
 import java.nio.ByteBuffer;
@@ -60,7 +61,9 @@ public final class BlockBodiesMessageTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
   }
 
   @Test

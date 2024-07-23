@@ -710,7 +710,11 @@ public class EthPeer implements Comparable<EthPeer> {
       }
     }
     // Otherwise, keep older connection
-    LOG.trace("comparing timestamps " + a.getInitiatedAt() + " with " + b.getInitiatedAt());
+    LOG.atTrace()
+        .setMessage("comparing timestamps {} with {}")
+        .addArgument(a.getInitiatedAt())
+        .addArgument(b.getInitiatedAt())
+        .log();
     return a.getInitiatedAt() < b.getInitiatedAt() ? -1 : 1;
   }
 

@@ -68,7 +68,6 @@ import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
 import org.hyperledger.besu.cli.options.unstable.NativeLibraryOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
-import org.hyperledger.besu.cli.options.unstable.PkiBlockCreationOptions;
 import org.hyperledger.besu.cli.options.unstable.PrivacyPluginOptions;
 import org.hyperledger.besu.cli.options.unstable.RPCOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
@@ -92,8 +91,6 @@ import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.MergeConfigOptions;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfigurationProvider;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
 import org.hyperledger.besu.crypto.Blake2bfMessageDigest;
@@ -331,7 +328,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       new PreSynchronizationTaskRunner();
 
   private final Set<Integer> allocatedPorts = new HashSet<>();
-  private final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider;
   private final Supplier<GenesisConfigFile> genesisConfigFileSupplier =
       Suppliers.memoize(this::readGenesisConfigFile);
   private final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier =
@@ -919,8 +915,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Mixin private P2PTLSConfigOptions p2pTLSConfigOptions;
 
-  @Mixin private PkiBlockCreationOptions pkiBlockCreationOptions;
-
   // Plugins Configuration Option Group
   @CommandLine.ArgGroup(validate = false)
   PluginsConfigurationOptions pluginsConfigurationOptions = new PluginsConfigurationOptions();
@@ -985,7 +979,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new SecurityModuleServiceImpl(),
         new PermissioningServiceImpl(),
         new PrivacyPluginServiceImpl(),
-        new PkiBlockCreationConfigurationProvider(),
         new RpcEndpointServiceImpl(),
         new TransactionSelectionServiceImpl(),
         new TransactionPoolValidatorServiceImpl(),
@@ -1008,7 +1001,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param securityModuleService instance of SecurityModuleServiceImpl
    * @param permissioningService instance of PermissioningServiceImpl
    * @param privacyPluginService instance of PrivacyPluginServiceImpl
-   * @param pkiBlockCreationConfigProvider instance of PkiBlockCreationConfigurationProvider
    * @param rpcEndpointServiceImpl instance of RpcEndpointServiceImpl
    * @param transactionSelectionServiceImpl instance of TransactionSelectionServiceImpl
    * @param transactionValidatorServiceImpl instance of TransactionValidatorServiceImpl
@@ -1029,7 +1021,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final SecurityModuleServiceImpl securityModuleService,
       final PermissioningServiceImpl permissioningService,
       final PrivacyPluginServiceImpl privacyPluginService,
-      final PkiBlockCreationConfigurationProvider pkiBlockCreationConfigProvider,
       final RpcEndpointServiceImpl rpcEndpointServiceImpl,
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
@@ -1050,7 +1041,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.privacyPluginService = privacyPluginService;
     this.pluginCommonConfiguration = new BesuConfigurationImpl();
     besuPluginContext.addService(BesuConfiguration.class, pluginCommonConfiguration);
-    this.pkiBlockCreationConfigProvider = pkiBlockCreationConfigProvider;
     this.rpcEndpointServiceImpl = rpcEndpointServiceImpl;
     this.transactionSelectionServiceImpl = transactionSelectionServiceImpl;
     this.transactionValidatorServiceImpl = transactionValidatorServiceImpl;
@@ -1569,7 +1559,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateApiOptions();
     validateConsensusSyncCompatibilityOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
-    pkiBlockCreationOptions.checkPkiBlockCreationOptionsDependencies(logger, commandLine);
   }
 
   private void validateConsensusSyncCompatibilityOptions() {
@@ -1923,9 +1912,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .metricsSystem(metricsSystem.get())
         .messagePermissioningProviders(permissioningService.getMessagePermissioningProviders())
         .privacyParameters(privacyParameters())
-        .pkiBlockCreationConfiguration(maybePkiBlockCreationConfiguration())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
+        .isParallelTxProcessingEnabled(
+            dataStorageConfiguration.getUnstable().isParallelTxProcessingEnabled())
         .storageProvider(storageProvider)
         .gasLimitCalculator(
             miningParametersSupplier.get().getTargetGasLimit().isPresent()
@@ -2193,12 +2183,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    */
   public StorageProvider getStorageProvider() {
     return keyValueStorageProvider(keyValueStorageName);
-  }
-
-  private Optional<PkiBlockCreationConfiguration> maybePkiBlockCreationConfiguration() {
-    return pkiBlockCreationOptions
-        .asDomainConfig(commandLine)
-        .map(pkiBlockCreationConfigProvider::load);
   }
 
   private SynchronizerConfiguration buildSyncConfig() {
