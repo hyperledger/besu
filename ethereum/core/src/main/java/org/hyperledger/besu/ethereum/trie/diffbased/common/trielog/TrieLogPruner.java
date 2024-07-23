@@ -25,7 +25,6 @@ import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Comparator;
-import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
@@ -97,22 +96,23 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
 
   private void preloadQueueWithTimeout() {
 
-    final AtomicBoolean timeoutOccurred = new AtomicBoolean(false);
-    final Runnable timeoutTask =
-        () -> {
-          timeoutOccurred.set(true);
-          LOG.atWarn()
-              .setMessage("Timeout occurred while loading {} trie logs from database")
-              .addArgument(loadingLimit)
-              .log();
-        };
-
     LOG.atInfo()
         .setMessage("Attempting to load first {} trie logs from database...")
         .addArgument(loadingLimit)
         .log();
 
     try (final ScheduledExecutorService preloadExecutor = Executors.newScheduledThreadPool(1)) {
+
+      final AtomicBoolean timeoutOccurred = new AtomicBoolean(false);
+      final Runnable timeoutTask =
+          () -> {
+            timeoutOccurred.set(true);
+            LOG.atWarn()
+                .setMessage(
+                    "Timeout occurred while loading and processing {} trie logs from database")
+                .addArgument(loadingLimit)
+                .log();
+          };
 
       final ScheduledFuture<?> timeoutFuture =
           preloadExecutor.schedule(timeoutTask, PRELOAD_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
@@ -122,14 +122,11 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
           .addArgument(PRELOAD_TIMEOUT_IN_SECONDS)
           .log();
 
-      try (final Stream<byte[]> trieLogKeysStream =
+      try (final Stream<byte[]> trieLogKeys =
           rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
 
-        final List<byte[]> trieLogKeys = trieLogKeysStream.toList();
-
         LOG.atInfo()
-            .setMessage("Loaded {} trie logs from database, determining if any can be pruned...")
-            .addArgument(trieLogKeys.size())
+            .setMessage("Loaded trie logs from database, determining if any can be pruned...")
             .log();
 
         final AtomicLong addToPruneQueueCount = new AtomicLong();
