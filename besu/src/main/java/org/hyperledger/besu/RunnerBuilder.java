@@ -195,6 +195,7 @@ public class RunnerBuilder {
   private boolean legacyForkIdEnabled;
   private Optional<EnodeDnsConfiguration> enodeDnsConfiguration;
   private List<SubnetInfo> allowedSubnets = new ArrayList<>();
+  private boolean poaDiscoveryRetryBootnodes = true;
 
   /** Instantiates a new Runner builder. */
   public RunnerBuilder() {}
@@ -604,6 +605,17 @@ public class RunnerBuilder {
   }
 
   /**
+   * Flag to indicate if peer table refreshes should always query bootnodes
+   *
+   * @param poaDiscoveryRetryBootnodes whether to always query bootnodes
+   * @return the runner builder
+   */
+  public RunnerBuilder poaDiscoveryRetryBootnodes(final boolean poaDiscoveryRetryBootnodes) {
+    this.poaDiscoveryRetryBootnodes = poaDiscoveryRetryBootnodes;
+    return this;
+  }
+
+  /**
    * Build Runner instance.
    *
    * @return the runner
@@ -625,6 +637,8 @@ public class RunnerBuilder {
         bootstrap = ethNetworkConfig.bootNodes();
       }
       discoveryConfiguration.setBootnodes(bootstrap);
+      discoveryConfiguration.setIncludeBootnodesOnPeerRefresh(
+          besuController.getGenesisConfigOptions().isPoa() && poaDiscoveryRetryBootnodes);
       LOG.info("Resolved {} bootnodes.", bootstrap.size());
       LOG.debug("Bootnodes = {}", bootstrap);
       discoveryConfiguration.setDnsDiscoveryURL(ethNetworkConfig.dnsDiscoveryUrl());
@@ -694,6 +708,7 @@ public class RunnerBuilder {
     final boolean fallbackEnabled = natMethod == NatMethod.AUTO || natMethodFallbackEnabled;
     final NatService natService = new NatService(buildNatManager(natMethod), fallbackEnabled);
     final NetworkBuilder inactiveNetwork = caps -> new NoopP2PNetwork();
+
     final NetworkBuilder activeNetwork =
         caps -> {
           return DefaultP2PNetwork.builder()
