@@ -33,6 +33,7 @@ public class DiscoveryConfiguration {
   private String dnsDiscoveryURL;
   private boolean discoveryV5Enabled = false;
   private boolean filterOnEnrForkId = NetworkingConfiguration.DEFAULT_FILTER_ON_ENR_FORK_ID;
+  private boolean includeBootnodesOnPeerRefresh = true;
 
   public static DiscoveryConfiguration create() {
     return new DiscoveryConfiguration();
@@ -85,6 +86,16 @@ public class DiscoveryConfiguration {
   public DiscoveryConfiguration setBootnodes(final List<EnodeURL> bootnodes) {
     assertValidBootnodes(bootnodes);
     this.bootnodes = bootnodes;
+    return this;
+  }
+
+  public boolean getIncludeBootnodesOnPeerRefresh() {
+    return includeBootnodesOnPeerRefresh;
+  }
+
+  public DiscoveryConfiguration setIncludeBootnodesOnPeerRefresh(
+      final boolean includeBootnodesOnPeerRefresh) {
+    this.includeBootnodesOnPeerRefresh = includeBootnodesOnPeerRefresh;
     return this;
   }
 

@@ -274,6 +274,7 @@ public abstract class PeerDiscoveryAgent {
         .filterOnEnrForkId((config.isFilterOnEnrForkIdEnabled()))
         .rlpxAgent(rlpxAgent)
         .peerTable(peerTable)
+        .includeBootnodesOnPeerRefresh(config.getIncludeBootnodesOnPeerRefresh())
         .build();
   }
 
