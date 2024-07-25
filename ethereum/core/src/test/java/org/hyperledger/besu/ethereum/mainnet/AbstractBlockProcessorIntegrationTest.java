@@ -78,7 +78,9 @@ class AbstractBlockProcessorIntegrationTest {
   @BeforeEach
   public void setUp() {
     final ExecutionContextTestFixture contextTestFixture =
-        ExecutionContextTestFixture.builder(GenesisConfigFile.fromResource("/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
+        ExecutionContextTestFixture.builder(
+                GenesisConfigFile.fromResource(
+                    "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
             .build();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
     final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
