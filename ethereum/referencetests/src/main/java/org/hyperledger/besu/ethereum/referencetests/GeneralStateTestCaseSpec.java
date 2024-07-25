@@ -73,7 +73,7 @@ public class GeneralStateTestCaseSpec {
                 .blockHeaderFunctions(MAINNET_FUNCTIONS)
                 .buildBlockHeader();
         final List<Supplier<Transaction>> txSupplierList =
-                List.of(() -> versionedTransaction.get(p.indexes));
+            List.of(() -> versionedTransaction.get(p.indexes));
         specs.add(
             new GeneralStateTestCaseEipSpec(
                 eip,
