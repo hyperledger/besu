@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Transaction;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 public class GeneralStateTestCaseEipSpec {
@@ -33,7 +34,7 @@ public class GeneralStateTestCaseEipSpec {
   // anything
   // is run, which isn't friendly and 2) this makes it harder to parallelize this step. Anyway, this
   // is why this is a supplier: calling get() actually does the signing.
-  private final Supplier<Transaction> transactionSupplier;
+  private final List<Supplier<Transaction>> transactionSuppliers;
 
   private final ReferenceTestWorldState initialWorldState;
 
@@ -51,7 +52,7 @@ public class GeneralStateTestCaseEipSpec {
 
   GeneralStateTestCaseEipSpec(
       final String fork,
-      final Supplier<Transaction> transactionSupplier,
+      final List<Supplier<Transaction>> transactionSuppliers,
       final ReferenceTestWorldState initialWorldState,
       final Hash expectedRootHash,
       final Hash expectedLogsHash,
@@ -61,7 +62,7 @@ public class GeneralStateTestCaseEipSpec {
       final int valueIndex,
       final String expectException) {
     this.fork = fork;
-    this.transactionSupplier = transactionSupplier;
+    this.transactionSuppliers = transactionSuppliers;
     this.initialWorldState = initialWorldState;
     this.expectedRootHash = expectedRootHash;
     this.expectedLogsHash = expectedLogsHash;
@@ -88,9 +89,13 @@ public class GeneralStateTestCaseEipSpec {
     return expectedLogsHash;
   }
 
-  public Transaction getTransaction() {
+  public int getTransactionsCount() {
+    return transactionSuppliers.size();
+  }
+
+  public Transaction getTransaction(final int txIndex) {
     try {
-      return transactionSupplier.get();
+      return transactionSuppliers.get(txIndex).get();
     } catch (RuntimeException re) {
       // some tests specify invalid transactions.  We throw exceptions in
       // GeneralStateTests but they are encoded in BlockchainTests, so we
