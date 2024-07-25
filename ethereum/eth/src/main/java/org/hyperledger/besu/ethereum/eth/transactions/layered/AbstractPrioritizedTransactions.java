@@ -24,13 +24,17 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 /**
  * Holds the current set of executable pending transactions, that are candidate for inclusion on
@@ -138,6 +142,13 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   @Override
+  protected void internalPenalize(final PendingTransaction penalizedTx) {
+    orderByFee.remove(penalizedTx);
+    penalizedTx.decrementScore();
+    orderByFee.add(penalizedTx);
+  }
+
+  @Override
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
@@ -186,6 +197,60 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
                 new SenderPendingTransactions(
                     sender, List.copyOf(txsBySender.get(sender).values())))
         .toList();
+  }
+
+  /**
+   * Returns pending txs by sender and ordered by score desc. In case a sender has pending txs with
+   * different scores, then in nonce sequence, every time there is a score decrease, his pending txs
+   * will be put in a new entry with that score. For example if a sender has 3 pending txs (where
+   * the first number is the nonce and the score is between parenthesis): 0(127), 1(126), 2(127),
+   * then for he there will be 2 entries:
+   *
+   * <ul>
+   *   <li>0(127)
+   *   <li>1(126), 2(127)
+   * </ul>
+   *
+   * @return pending txs by sender and ordered by score desc
+   */
+  public NavigableMap<Byte, List<SenderPendingTransactions>> getByScore() {
+    final var sendersToAdd = new HashSet<>(txsBySender.keySet());
+    return orderByFee.descendingSet().stream()
+        .map(PendingTransaction::getSender)
+        .filter(sendersToAdd::remove)
+        .flatMap(sender -> splitByScore(sender, txsBySender.get(sender)).entrySet().stream())
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (a, b) -> {
+                  a.addAll(b);
+                  return a;
+                },
+                TreeMap::new))
+        .descendingMap();
+  }
+
+  private Map<Byte, List<SenderPendingTransactions>> splitByScore(
+      final Address sender, final NavigableMap<Long, PendingTransaction> txsBySender) {
+    final var splitByScore = new HashMap<Byte, List<SenderPendingTransactions>>();
+    byte currScore = txsBySender.firstEntry().getValue().getScore();
+    var currSplit = new ArrayList<PendingTransaction>();
+    for (final var entry : txsBySender.entrySet()) {
+      if (entry.getValue().getScore() < currScore) {
+        // score decreased, we need to save current split and start a new one
+        splitByScore
+            .computeIfAbsent(currScore, k -> new ArrayList<>())
+            .add(new SenderPendingTransactions(sender, currSplit));
+        currSplit = new ArrayList<>();
+        currScore = entry.getValue().getScore();
+      }
+      currSplit.add(entry.getValue());
+    }
+    splitByScore
+        .computeIfAbsent(currScore, k -> new ArrayList<>())
+        .add(new SenderPendingTransactions(sender, currSplit));
+    return splitByScore;
   }
 
   @Override

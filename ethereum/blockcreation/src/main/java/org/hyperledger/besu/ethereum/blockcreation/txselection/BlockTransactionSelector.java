@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALID_TX_EVALUATION_TOO_LONG;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 
@@ -419,11 +420,14 @@ public class BlockTransactionSelector {
 
     final var pendingTransaction = evaluationContext.getPendingTransaction();
 
-    // check if this tx took too much to evaluate, and in case remove it from the pool
+    // check if this tx took too much to evaluate, and in case it was invalid remove it from the
+    // pool, otherwise penalize it.
     final TransactionSelectionResult actualResult =
         isTimeout.get()
-            ? transactionTookTooLong(evaluationContext)
-                ? TX_EVALUATION_TOO_LONG
+            ? transactionTookTooLong(evaluationContext, selectionResult)
+                ? selectionResult.discard()
+                    ? INVALID_TX_EVALUATION_TOO_LONG
+                    : TX_EVALUATION_TOO_LONG
                 : BLOCK_SELECTION_TIMEOUT
             : selectionResult;
 
@@ -441,16 +445,21 @@ public class BlockTransactionSelector {
     return actualResult;
   }
 
-  private boolean transactionTookTooLong(final TransactionEvaluationContext evaluationContext) {
+  private boolean transactionTookTooLong(
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionSelectionResult selectionResult) {
     final var evaluationTimer = evaluationContext.getEvaluationTimer();
     if (evaluationTimer.elapsed(TimeUnit.MILLISECONDS) > blockTxsSelectionMaxTime) {
       LOG.atWarn()
           .setMessage(
-              "Transaction {} is too late for inclusion, evaluated in {} that is over the max limit of {}ms"
-                  + ", removing it from the pool")
+              "Transaction {} is too late for inclusion, with result {}, evaluated in {} that is over the max limit of {}ms"
+                  + ", {}")
           .addArgument(evaluationContext.getPendingTransaction()::getHash)
+          .addArgument(selectionResult)
           .addArgument(evaluationTimer)
           .addArgument(blockTxsSelectionMaxTime)
+          .addArgument(
+              selectionResult.discard() ? "removing it from the pool" : "penalizing it in the pool")
           .log();
       return true;
     }
