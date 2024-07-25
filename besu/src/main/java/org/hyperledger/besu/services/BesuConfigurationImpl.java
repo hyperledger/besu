@@ -31,7 +31,7 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   private DataStorageConfiguration dataStorageConfiguration;
 
   // defaults
-  private MiningParameters miningParameters = MiningParameters.newDefault();
+  private MiningParameters miningParameters;
   private Optional<String> rpcHttpHost = Optional.of("http://localhost");
   private Optional<Integer> rpcHttpPort = Optional.of(8545);
 

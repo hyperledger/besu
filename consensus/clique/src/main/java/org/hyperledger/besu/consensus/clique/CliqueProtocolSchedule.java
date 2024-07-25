@@ -63,11 +63,11 @@ public class CliqueProtocolSchedule {
    * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
-   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
+   * @param miningParameters tx selection settings
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -77,10 +77,10 @@ public class CliqueProtocolSchedule {
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final MiningParameters miningParameters) {
 
     final CliqueConfigOptions cliqueConfig = config.getCliqueConfigOptions();
 
@@ -110,15 +110,15 @@ public class CliqueProtocolSchedule {
 
     return new ProtocolScheduleBuilder(
             config,
-            DEFAULT_CHAIN_ID,
+            Optional.of(DEFAULT_CHAIN_ID),
             specAdapters,
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
-            miningParameters,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem)
+            metricsSystem,
+            miningParameters)
         .createProtocolSchedule();
   }
 
@@ -130,11 +130,11 @@ public class CliqueProtocolSchedule {
    * @param nodeKey the node key
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param evmConfiguration the evm configuration
-   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
+   * @param miningParameters tx selection settings
    * @return the protocol schedule
    */
   @VisibleForTesting
@@ -144,10 +144,10 @@ public class CliqueProtocolSchedule {
       final NodeKey nodeKey,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final MiningParameters miningParameters) {
     return create(
         config,
         forksSchedule,
@@ -155,10 +155,10 @@ public class CliqueProtocolSchedule {
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
         evmConfiguration,
-        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        miningParameters);
   }
 
   private static ProtocolSpecBuilder applyCliqueSpecificModifications(

@@ -103,7 +103,7 @@ public class TestContext {
   public Block createBlockForProposal(
       final BlockHeader parent, final long timestamp, final Address proposer) {
     final Block block =
-        finalState.getBlockCreatorFactory().create(parent, 0).createBlock(timestamp).getBlock();
+        finalState.getBlockCreatorFactory().create(0).createBlock(timestamp, parent).getBlock();
 
     final BlockHeaderBuilder headerBuilder = BlockHeaderBuilder.fromHeader(block.getHeader());
     headerBuilder

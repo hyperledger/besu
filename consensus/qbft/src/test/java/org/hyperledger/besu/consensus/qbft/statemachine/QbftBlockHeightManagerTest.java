@@ -121,6 +121,7 @@ public class QbftBlockHeightManagerTest {
   @Mock private DefaultBlockchain blockchain;
   @Mock private FutureRoundProposalMessageValidator futureRoundProposalMessageValidator;
   @Mock private ValidatorMulticaster validatorMulticaster;
+  @Mock private BlockHeader parentHeader;
 
   @Captor private ArgumentCaptor<MessageData> sentMessageArgCaptor;
 
@@ -158,7 +159,7 @@ public class QbftBlockHeightManagerTest {
     when(finalState.getBlockTimer()).thenReturn(blockTimer);
     when(finalState.getQuorum()).thenReturn(3);
     when(finalState.getValidatorMulticaster()).thenReturn(validatorMulticaster);
-    when(blockCreator.createBlock(anyLong()))
+    when(blockCreator.createBlock(anyLong(), any()))
         .thenReturn(
             new BlockCreationResult(
                 createdBlock, new TransactionSelectionResults(), new BlockCreationTiming()));
@@ -179,15 +180,15 @@ public class QbftBlockHeightManagerTest {
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
             new StubGenesisConfigOptions(),
-            BigInteger.ONE,
+            Optional.of(BigInteger.ONE),
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            MiningParameters.MINING_DISABLED);
 
     ProtocolSchedule protocolSchedule =
         new BftProtocolSchedule(
@@ -210,7 +211,8 @@ public class QbftBlockHeightManagerTest {
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
-                  bftExtraDataCodec);
+                  bftExtraDataCodec,
+                  parentHeader);
             });
 
     when(roundFactory.createNewRoundWithState(any(), any()))
@@ -227,7 +229,8 @@ public class QbftBlockHeightManagerTest {
                   messageFactory,
                   messageTransmitter,
                   roundTimer,
-                  bftExtraDataCodec);
+                  bftExtraDataCodec,
+                  parentHeader);
             });
   }
 

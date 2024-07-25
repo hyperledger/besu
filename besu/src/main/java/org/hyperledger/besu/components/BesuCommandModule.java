@@ -21,6 +21,7 @@ import org.hyperledger.besu.chainimport.JsonBlockImporter;
 import org.hyperledger.besu.chainimport.RlpBlockImporter;
 import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.controller.BesuController;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.services.BesuPluginContextImpl;
 
@@ -63,6 +64,12 @@ public class BesuCommandModule {
   @Singleton
   MetricsConfiguration provideMetricsConfiguration(final BesuCommand provideFrom) {
     return provideFrom.metricsConfiguration();
+  }
+
+  @Provides
+  @Singleton
+  MiningParameters provideMiningParameters(final BesuCommand provideFrom) {
+    return provideFrom.getMiningParameters();
   }
 
   @Provides

@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.chain.BadBlockManager;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.chain.GenesisState;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
+import org.hyperledger.besu.ethereum.core.components.EthereumCoreComponent;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.BlockImportResult;
@@ -49,6 +50,11 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import javax.inject.Singleton;
+
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
 
 public class BlockchainSetupUtil {
   private final GenesisState genesisState;
@@ -141,10 +147,10 @@ public class BlockchainSetupUtil {
     return MainnetProtocolSchedule.fromConfig(
         genesisConfigFile.getConfigOptions(),
         EvmConfiguration.DEFAULT,
-        MiningParameters.newDefault(),
         new BadBlockManager(),
         false,
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        MiningParameters.newDefault());
   }
 
   private static ProtocolContext mainnetProtocolContextProvider(
@@ -262,5 +268,17 @@ public class BlockchainSetupUtil {
 
   private interface ProtocolContextProvider {
     ProtocolContext get(MutableBlockchain blockchain, WorldStateArchive worldStateArchive);
+  }
+
+  @Singleton
+  @Component(modules = {DefaultMiningParameters.class})
+  interface BlockchainTestCoreComponent extends EthereumCoreComponent {}
+
+  @Module
+  static class DefaultMiningParameters {
+    @Provides
+    MiningParameters provideMiningParameters() {
+      return MiningParameters.newDefault();
+    }
   }
 }

@@ -47,79 +47,33 @@ public class ProtocolScheduleBuilder {
   private final PrivacyParameters privacyParameters;
   private final boolean isRevertReasonEnabled;
   private final EvmConfiguration evmConfiguration;
-  private final MiningParameters miningParameters;
   private final BadBlockManager badBlockManager;
   private final boolean isParallelTxProcessingEnabled;
   private final MetricsSystem metricsSystem;
+  // private final EthereumCoreComponent context;
+  private final MiningParameters miningParameters;
 
   public ProtocolScheduleBuilder(
-      final GenesisConfigOptions config,
-      final BigInteger defaultChainId,
-      final ProtocolSpecAdapters protocolSpecAdapters,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
-    this(
-        config,
-        Optional.of(defaultChainId),
-        protocolSpecAdapters,
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        miningParameters,
-        badBlockManager,
-        isParallelTxProcessingEnabled,
-        metricsSystem);
-  }
-
-  public ProtocolScheduleBuilder(
-      final GenesisConfigOptions config,
-      final ProtocolSpecAdapters protocolSpecAdapters,
-      final PrivacyParameters privacyParameters,
-      final boolean isRevertReasonEnabled,
-      final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager,
-      final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
-    this(
-        config,
-        Optional.empty(),
-        protocolSpecAdapters,
-        privacyParameters,
-        isRevertReasonEnabled,
-        evmConfiguration,
-        miningParameters,
-        badBlockManager,
-        isParallelTxProcessingEnabled,
-        metricsSystem);
-  }
-
-  private ProtocolScheduleBuilder(
       final GenesisConfigOptions config,
       final Optional<BigInteger> defaultChainId,
       final ProtocolSpecAdapters protocolSpecAdapters,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
       final EvmConfiguration evmConfiguration,
-      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final MiningParameters miningParameters) {
     this.config = config;
     this.protocolSpecAdapters = protocolSpecAdapters;
     this.privacyParameters = privacyParameters;
     this.isRevertReasonEnabled = isRevertReasonEnabled;
     this.evmConfiguration = evmConfiguration;
     this.defaultChainId = defaultChainId;
-    this.miningParameters = miningParameters;
     this.badBlockManager = badBlockManager;
     this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
     this.metricsSystem = metricsSystem;
+    this.miningParameters = miningParameters;
   }
 
   public ProtocolSchedule createProtocolSchedule() {

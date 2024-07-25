@@ -98,10 +98,10 @@ public class MainnetBesuControllerBuilder extends BesuControllerBuilder {
         privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
-        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem);
+        metricsSystem,
+        super.miningParameters);
   }
 
   @Override

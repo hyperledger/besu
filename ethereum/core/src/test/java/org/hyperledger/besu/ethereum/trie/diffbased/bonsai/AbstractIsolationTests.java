@@ -104,10 +104,10 @@ public abstract class AbstractIsolationTests {
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
-          MiningParameters.MINING_DISABLED,
           new BadBlockManager(),
           false,
-          new NoOpMetricsSystem());
+          new NoOpMetricsSystem(),
+          MiningParameters.MINING_DISABLED);
   protected final GenesisState genesisState =
       GenesisState.fromConfig(GenesisConfigFile.fromResource("/dev.json"), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -259,7 +259,6 @@ public abstract class AbstractIsolationTests {
         final TransactionPool transactionPool,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
-        final BlockHeader parentHeader,
         final EthScheduler ethScheduler) {
       super(
           miningParameters,
@@ -268,12 +267,10 @@ public abstract class AbstractIsolationTests {
           transactionPool,
           protocolContext,
           protocolSchedule,
-          parentHeader,
           ethScheduler);
     }
 
     static TestBlockCreator forHeader(
-        final BlockHeader parentHeader,
         final ProtocolContext protocolContext,
         final ProtocolSchedule protocolSchedule,
         final TransactionPool transactionPool,
@@ -298,12 +295,12 @@ public abstract class AbstractIsolationTests {
           transactionPool,
           protocolContext,
           protocolSchedule,
-          parentHeader,
           ethScheduler);
     }
 
     @Override
-    protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
+    protected BlockHeader createFinalBlockHeader(
+        final SealableBlockHeader sealableBlockHeader, final Optional<BlockHeader> parentHeader) {
       return BlockHeaderBuilder.create()
           .difficulty(Difficulty.ZERO)
           .mixHash(Hash.ZERO)
@@ -331,8 +328,8 @@ public abstract class AbstractIsolationTests {
   protected Block forTransactions(
       final List<Transaction> transactions, final BlockHeader forHeader) {
     return TestBlockCreator.forHeader(
-            forHeader, protocolContext, protocolSchedule, transactionPool, ethScheduler)
-        .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis())
+            protocolContext, protocolSchedule, transactionPool, ethScheduler)
+        .createBlock(transactions, Collections.emptyList(), System.currentTimeMillis(), forHeader)
         .getBlock();
   }
 

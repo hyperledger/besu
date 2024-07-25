@@ -25,6 +25,7 @@ import org.hyperledger.besu.cli.DefaultCommandValues;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ExportSubCommand;
 import org.hyperledger.besu.cli.subcommands.blocks.BlocksSubCommand.ImportSubCommand;
 import org.hyperledger.besu.cli.util.VersionProvider;
+import org.hyperledger.besu.components.DaggerBesuComponent;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -257,6 +258,7 @@ public class BlocksSubCommand implements Runnable {
             .setupControllerBuilder()
             // set to mainnet genesis block so validation rules won't reject it.
             .clock(Clock.fixed(Instant.ofEpochSecond(startTime), ZoneOffset.UTC))
+            .besuComponent(DaggerBesuComponent.create())
             .miningParameters(getMiningParameters())
             .build();
       } catch (final Exception e) {
@@ -376,6 +378,7 @@ public class BlocksSubCommand implements Runnable {
           .parentCommand
           .setupControllerBuilder()
           .miningParameters(MiningParameters.newDefault())
+          .besuComponent(DaggerBesuComponent.create())
           .build();
     }
 

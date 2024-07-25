@@ -105,10 +105,10 @@ public class CliqueBlockCreatorTest {
             proposerNodeKey,
             false,
             EvmConfiguration.DEFAULT,
-            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            MiningParameters.MINING_DISABLED);
 
     final Address otherAddress = Util.publicKeyToAddress(otherKeyPair.getPublicKey());
     validatorList.add(otherAddress);
@@ -155,11 +155,11 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            blockchain.getChainHeadHeader(),
             epochManager,
             ethScheduler);
 
-    final Block createdBlock = blockCreator.createBlock(5L).getBlock();
+    final Block createdBlock =
+        blockCreator.createBlock(5L, blockchain.getChainHeadHeader()).getBlock();
 
     assertThat(CliqueHelpers.getProposerOfBlock(createdBlock.getHeader()))
         .isEqualTo(proposerAddress);
@@ -184,11 +184,11 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            blockchain.getChainHeadHeader(),
             epochManager,
             ethScheduler);
 
-    final Block createdBlock = blockCreator.createBlock(0L).getBlock();
+    final Block createdBlock =
+        blockCreator.createBlock(0L, blockchain.getChainHeadHeader()).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.ADD_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(a1);
   }
@@ -218,11 +218,11 @@ public class CliqueBlockCreatorTest {
             protocolContext,
             protocolSchedule,
             proposerNodeKey,
-            blockchain.getChainHeadHeader(),
             epochManager,
             ethScheduler);
 
-    final Block createdBlock = blockCreator.createBlock(0L).getBlock();
+    final Block createdBlock =
+        blockCreator.createBlock(0L, blockchain.getChainHeadHeader()).getBlock();
     assertThat(createdBlock.getHeader().getNonce()).isEqualTo(CliqueBlockInterface.DROP_NONCE);
     assertThat(createdBlock.getHeader().getCoinbase()).isEqualTo(Address.fromHexString("0"));
   }

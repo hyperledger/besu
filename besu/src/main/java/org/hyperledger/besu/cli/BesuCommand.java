@@ -42,6 +42,7 @@ import org.hyperledger.besu.cli.converter.SubnetInfoConverter;
 import org.hyperledger.besu.cli.custom.JsonRPCAllowlistHostsProperty;
 import org.hyperledger.besu.cli.error.BesuExecutionExceptionHandler;
 import org.hyperledger.besu.cli.error.BesuParameterExceptionHandler;
+import org.hyperledger.besu.cli.options.MetricsOptionGroup;
 import org.hyperledger.besu.cli.options.MiningOptions;
 import org.hyperledger.besu.cli.options.TransactionPoolOptions;
 import org.hyperledger.besu.cli.options.stable.ApiConfigurationOptions;
@@ -2176,7 +2177,12 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return txPoolConfBuilder.build();
   }
 
-  private MiningParameters getMiningParameters() {
+  /**
+   * Adds transaction selection service to mining options and setsup metrics
+   *
+   * @return mining parameters parsed out of config
+   */
+  public MiningParameters getMiningParameters() {
     miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
     final var miningParameters = miningOptions.toDomainObject();
     getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())
