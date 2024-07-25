@@ -143,6 +143,7 @@ public class PeerDiscoveryController {
   private final AtomicBoolean peerTableIsDirty = new AtomicBoolean(false);
   private OptionalLong cleanTableTimerId = OptionalLong.empty();
   private RecursivePeerRefreshState recursivePeerRefreshState;
+  private final boolean includeBootnodesOnPeerRefresh;
 
   private PeerDiscoveryController(
       final NodeKey nodeKey,
@@ -159,7 +160,8 @@ public class PeerDiscoveryController {
       final MetricsSystem metricsSystem,
       final Optional<Cache<Bytes, Packet>> maybeCacheForEnrRequests,
       final boolean filterOnEnrForkId,
-      final RlpxAgent rlpxAgent) {
+      final RlpxAgent rlpxAgent,
+      final boolean includeBootnodesOnPeerRefresh) {
     this.timerUtil = timerUtil;
     this.nodeKey = nodeKey;
     this.localPeer = localPeer;
@@ -173,6 +175,7 @@ public class PeerDiscoveryController {
     this.discoveryProtocolLogger = new DiscoveryProtocolLogger(metricsSystem);
     this.peerPermissions = new PeerDiscoveryPermissions(localPeer, peerPermissions);
     this.rlpxAgent = rlpxAgent;
+    this.includeBootnodesOnPeerRefresh = includeBootnodesOnPeerRefresh;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.NETWORK,
@@ -483,7 +486,17 @@ public class PeerDiscoveryController {
    */
   private void refreshTable() {
     final Bytes target = Peer.randomId();
+
     final List<DiscoveryPeer> initialPeers = peerTable.nearestBondedPeers(Peer.randomId(), 16);
+    if (includeBootnodesOnPeerRefresh) {
+      bootstrapNodes.stream()
+          .filter(p -> p.getStatus() != PeerDiscoveryStatus.BONDED)
+          .forEach(p -> p.setStatus(PeerDiscoveryStatus.KNOWN));
+
+      // If configured to retry bootnodes during peer table refresh, include them
+      // in the initial peers list.
+      initialPeers.addAll(bootstrapNodes);
+    }
     recursivePeerRefreshState.start(initialPeers, target);
     lastRefreshTime = System.currentTimeMillis();
   }
@@ -816,6 +829,7 @@ public class PeerDiscoveryController {
     private long cleanPeerTableIntervalMs = MILLISECONDS.convert(1, TimeUnit.MINUTES);
     private final List<DiscoveryPeer> bootstrapNodes = new ArrayList<>();
     private PeerTable peerTable;
+    private boolean includeBootnodesOnPeerRefresh = true;
 
     // Required dependencies
     private NodeKey nodeKey;
@@ -849,7 +863,8 @@ public class PeerDiscoveryController {
           metricsSystem,
           Optional.of(cachedEnrRequests),
           filterOnEnrForkId,
-          rlpxAgent);
+          rlpxAgent,
+          includeBootnodesOnPeerRefresh);
     }
 
     private void validate() {
@@ -951,6 +966,11 @@ public class PeerDiscoveryController {
     public Builder rlpxAgent(final RlpxAgent rlpxAgent) {
       checkNotNull(rlpxAgent);
       this.rlpxAgent = rlpxAgent;
+      return this;
+    }
+
+    public Builder includeBootnodesOnPeerRefresh(final boolean includeBootnodesOnPeerRefresh) {
+      this.includeBootnodesOnPeerRefresh = includeBootnodesOnPeerRefresh;
       return this;
     }
   }

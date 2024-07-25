@@ -805,6 +805,28 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void poaDiscoveryRetryBootnodesValueTrueMustBeUsed() {
+    parseCommand("--poa-discovery-retry-bootnodes", "true");
+
+    verify(mockRunnerBuilder).poaDiscoveryRetryBootnodes(eq(true));
+    verify(mockRunnerBuilder).build();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void poaDiscoveryRetryBootnodesValueFalseMustBeUsed() {
+    parseCommand("--poa-discovery-retry-bootnodes", "false");
+
+    verify(mockRunnerBuilder).poaDiscoveryRetryBootnodes(eq(false));
+    verify(mockRunnerBuilder).build();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void callingWithBootnodesOptionButNoValueMustPassEmptyBootnodeList() {
     parseCommand("--bootnodes");
 
