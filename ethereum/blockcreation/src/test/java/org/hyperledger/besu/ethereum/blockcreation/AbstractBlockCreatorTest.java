@@ -304,15 +304,15 @@ abstract class AbstractBlockCreatorTest {
             .protocolSchedule(
                 new ProtocolScheduleBuilder(
                         genesisConfigFile.getConfigOptions(),
-                        BigInteger.valueOf(42),
+                        Optional.of(BigInteger.valueOf(42)),
                         protocolSpecAdapters,
                         PrivacyParameters.DEFAULT,
                         false,
                         EvmConfiguration.DEFAULT,
-                        MiningParameters.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        new NoOpMetricsSystem())
+                        new NoOpMetricsSystem(),
+                        MiningParameters.MINING_DISABLED)
                     .createProtocolSchedule())
             .build();
 
@@ -386,7 +386,8 @@ abstract class AbstractBlockCreatorTest {
     }
 
     @Override
-    protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
+    protected BlockHeader createFinalBlockHeader(
+        final SealableBlockHeader sealableBlockHeader, final Optional<BlockHeader> blockHeader) {
       return BlockHeaderBuilder.create()
           .difficulty(Difficulty.ZERO)
           .populateFrom(sealableBlockHeader)
