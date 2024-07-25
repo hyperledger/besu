@@ -104,10 +104,10 @@ public abstract class AbstractIsolationTests {
   protected final ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
-          MiningParameters.MINING_DISABLED,
           new BadBlockManager(),
           false,
-          new NoOpMetricsSystem());
+          new NoOpMetricsSystem(),
+          MiningParameters.MINING_DISABLED);
   protected final GenesisState genesisState =
       GenesisState.fromConfig(GenesisConfigFile.fromResource("/dev.json"), protocolSchedule);
   protected final MutableBlockchain blockchain = createInMemoryBlockchain(genesisState.getBlock());
@@ -300,7 +300,8 @@ public abstract class AbstractIsolationTests {
     }
 
     @Override
-    protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
+    protected BlockHeader createFinalBlockHeader(
+        final SealableBlockHeader sealableBlockHeader, final Optional<BlockHeader> parentHeader) {
       return BlockHeaderBuilder.create()
           .difficulty(Difficulty.ZERO)
           .mixHash(Hash.ZERO)

@@ -108,7 +108,9 @@ public class BftBlockCreator extends AbstractBlockCreator {
   }
 
   @Override
-  protected BlockHeader createFinalBlockHeader(final SealableBlockHeader sealableBlockHeader) {
+  protected BlockHeader createFinalBlockHeader(
+      final SealableBlockHeader sealableBlockHeader,
+      final Optional<BlockHeader> maybeParentHeader) {
     final BlockHeaderBuilder builder =
         BlockHeaderBuilder.create()
             .populateFrom(sealableBlockHeader)

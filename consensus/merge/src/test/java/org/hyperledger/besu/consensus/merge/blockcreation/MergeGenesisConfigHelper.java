@@ -56,9 +56,9 @@ public interface MergeGenesisConfigHelper {
     return MergeProtocolSchedule.create(
         getPosGenesisConfigFile().getConfigOptions(),
         false,
-        MiningParameters.MINING_DISABLED,
         new BadBlockManager(),
         false,
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        MiningParameters.MINING_DISABLED);
   }
 }

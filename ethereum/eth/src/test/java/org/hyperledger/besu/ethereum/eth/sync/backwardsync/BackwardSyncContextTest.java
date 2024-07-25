@@ -95,10 +95,10 @@ public class BackwardSyncContextTest {
   private ProtocolSchedule protocolSchedule =
       MainnetProtocolSchedule.fromConfig(
           new StubGenesisConfigOptions(),
-          MiningParameters.MINING_DISABLED,
           new BadBlockManager(),
           false,
-          new NoOpMetricsSystem());
+          new NoOpMetricsSystem(),
+          MiningParameters.MINING_DISABLED);
 
   @Spy
   private ProtocolSpec protocolSpec =

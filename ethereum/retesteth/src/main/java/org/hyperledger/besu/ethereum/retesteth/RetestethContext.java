@@ -37,6 +37,8 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitV
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.Unstable;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.components.CoinbaseModule;
+import org.hyperledger.besu.ethereum.core.components.EthereumCoreComponent;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.manager.EthContext;
 import org.hyperledger.besu.ethereum.eth.manager.EthMessages;
@@ -79,9 +81,13 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.function.Supplier;
+import javax.inject.Singleton;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import dagger.Component;
+import dagger.Module;
+import dagger.Provides;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -163,10 +169,10 @@ public class RetestethContext {
         MainnetProtocolSchedule.fromConfig(
             jsonGenesisConfigOptions,
             EvmConfiguration.DEFAULT,
-            miningParameters,
             badBlockManager,
             false,
-            new NoOpMetricsSystem());
+            new NoOpMetricsSystem(),
+            DaggerRetestethContext_RetestEthCoreComponent.create().getMiningParameters());
     if ("NoReward".equalsIgnoreCase(sealEngine)) {
       protocolSchedule = new NoRewardProtocolScheduleWrapper(protocolSchedule, badBlockManager);
     }
@@ -270,7 +276,7 @@ public class RetestethContext {
             syncState,
             transactionPoolConfiguration,
             new BlobCache(),
-            MiningParameters.newDefault());
+            DaggerRetestethContext_RetestEthCoreComponent.create().getMiningParameters());
 
     if (LOG.isTraceEnabled()) {
       LOG.trace("Genesis Block {} ", genesisState.getBlock());
@@ -366,5 +372,17 @@ public class RetestethContext {
 
   public PoWSolver getEthHashSolver() {
     return poWSolver;
+  }
+
+  @Singleton
+  @Component(modules = {DefaultMiningParams.class, CoinbaseModule.class})
+  public interface RetestEthCoreComponent extends EthereumCoreComponent {}
+
+  @Module
+  static class DefaultMiningParams {
+    @Provides
+    MiningParameters provideMiningParameters() {
+      return MiningParameters.newDefault();
+    }
   }
 }

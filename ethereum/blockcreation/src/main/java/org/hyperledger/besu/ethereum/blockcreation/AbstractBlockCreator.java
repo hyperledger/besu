@@ -311,7 +311,8 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
 
       final SealableBlockHeader sealableBlockHeader = builder.buildSealableBlockHeader();
 
-      final BlockHeader blockHeader = createFinalBlockHeader(sealableBlockHeader);
+      final BlockHeader blockHeader =
+          createFinalBlockHeader(sealableBlockHeader, Optional.of(parentHeader));
 
       final Optional<List<Withdrawal>> withdrawals =
           withdrawalsCanBeProcessed ? maybeWithdrawals : Optional.empty();
@@ -533,7 +534,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
   }
 
   protected abstract BlockHeader createFinalBlockHeader(
-      final SealableBlockHeader sealableBlockHeader);
+      final SealableBlockHeader sealableBlockHeader, final Optional<BlockHeader> maybeParentHeader);
 
   @FunctionalInterface
   protected interface MiningBeneficiaryCalculator {

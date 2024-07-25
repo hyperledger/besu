@@ -179,20 +179,20 @@ public class ForkIdsNetworkConfigTest {
             (DefaultProtocolSchedule)
                 MainnetProtocolSchedule.fromConfig(
                     configOptions,
-                    MiningParameters.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    new NoOpMetricsSystem()));
+                    new NoOpMetricsSystem(),
+                    MiningParameters.MINING_DISABLED));
     MilestoneStreamingProtocolSchedule postMergeProtocolSchedule =
         new MilestoneStreamingProtocolSchedule(
             (DefaultProtocolSchedule)
                 MergeProtocolSchedule.create(
                     configOptions,
                     false,
-                    MiningParameters.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    new NoOpMetricsSystem()));
+                    new NoOpMetricsSystem(),
+                    MiningParameters.MINING_DISABLED));
     final MilestoneStreamingTransitionProtocolSchedule schedule =
         new MilestoneStreamingTransitionProtocolSchedule(
             preMergeProtocolSchedule, postMergeProtocolSchedule);
