@@ -24,7 +24,6 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -63,7 +62,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       arity = "1")
   private Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
-  private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
+  /** The bonsai limit trie logs enabled option name */
+  public static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
 
   /** The bonsai trie logs pruning window size. */
   public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
@@ -147,20 +147,10 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * Validates the data storage options
    *
    * @param commandLine the full commandLine to check all the options specified by the user
-   * @param syncMode the sync mode
    */
-  public void validate(final CommandLine commandLine, final SyncMode syncMode) {
+  public void validate(final CommandLine commandLine) {
     if (DataStorageFormat.BONSAI == dataStorageFormat) {
       if (bonsaiLimitTrieLogsEnabled) {
-        if (SyncMode.FULL == syncMode) {
-          throw new CommandLine.ParameterException(
-              commandLine,
-              String.format(
-                  "Cannot enable %s with sync-mode %s. You must set %s or use a different sync-mode",
-                  BONSAI_LIMIT_TRIE_LOGS_ENABLED,
-                  SyncMode.FULL,
-                  BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
-        }
         if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
           throw new CommandLine.ParameterException(
               commandLine,
