@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.mainnet.parallelization.MainnetParallelBloc
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiAccount;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
 import java.math.BigInteger;
 import java.util.Arrays;
@@ -81,6 +82,7 @@ class AbstractBlockProcessorIntegrationTest {
         ExecutionContextTestFixture.builder(
                 GenesisConfigFile.fromResource(
                     "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
+            .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
     final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
