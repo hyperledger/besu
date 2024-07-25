@@ -45,6 +45,19 @@ public interface TransactionsLayer {
 
   void remove(PendingTransaction pendingTransaction, RemovalReason reason);
 
+  /**
+   * Penalize a pending transaction. Penalization could be applied to notify the txpool that this
+   * pending tx has some temporary issues that prevent it from being included in a block, and so it
+   * should be de-prioritized in some ways, so it will be re-evaluated only after non penalized
+   * pending txs. For example: if during the evaluation for block inclusion, the pending tx is
+   * excluded because the sender has not enough balance to send it, this could be a transient issue
+   * since later the sender could receive some funds, but in any case we penalize the pending tx, so
+   * it is pushed down in the order of prioritized pending txs.
+   *
+   * @param penalizedTransaction the tx to penalize
+   */
+  void penalize(PendingTransaction penalizedTransaction);
+
   void blockAdded(
       FeeMarket feeMarket,
       BlockHeader blockHeader,

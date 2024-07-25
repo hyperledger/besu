@@ -303,6 +303,11 @@ public class SparseTransactions extends AbstractTransactionsLayer {
     }
   }
 
+  @Override
+  protected void internalPenalize(final PendingTransaction penalizedTx) {
+    // intentionally no-op
+  }
+
   private void deleteGap(final Address sender) {
     orderByGap.get(gapBySender.remove(sender)).remove(sender);
   }
