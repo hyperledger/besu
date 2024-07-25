@@ -463,6 +463,18 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     }
   }
 
+  @Override
+  public void penalize(final PendingTransaction penalizedTransaction) {
+    if (pendingTransactions.containsKey(penalizedTransaction.getHash())) {
+      internalPenalize(penalizedTransaction);
+      metrics.incrementPenalized(penalizedTransaction, name());
+    } else {
+      nextLayer.penalize(penalizedTransaction);
+    }
+  }
+
+  protected abstract void internalPenalize(final PendingTransaction pendingTransaction);
+
   /**
    * How many txs of a specified type can be promoted? This make sense when a max number of txs of a
    * type can be included in a single block (ex. blob txs), to avoid filling the layer with more txs
