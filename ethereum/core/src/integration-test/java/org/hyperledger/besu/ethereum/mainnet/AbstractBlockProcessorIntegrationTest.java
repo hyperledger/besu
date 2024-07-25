@@ -194,6 +194,7 @@ class AbstractBlockProcessorIntegrationTest {
   void processSequentialAccountReadThenUpdateTxWithTwoAccounts() {
     processAccountReadThenUpdateTxWithTwoAccounts(blockProcessor);
   }
+
   @Test
   void processParallelAccountReadThenUpdateTxWithTwoAccounts() {
     processAccountReadThenUpdateTxWithTwoAccounts(parallelBlockProcessor);
@@ -203,13 +204,11 @@ class AbstractBlockProcessorIntegrationTest {
   void processSequentialAccountUpdateThenReadTeTxWithTwoAccounts() {
     processAccountUpdateThenReadTxWithTwoAccounts(blockProcessor);
   }
+
   @Test
   void processParallelAccountUpdateThenReadTTxWithTwoAccounts() {
     processAccountUpdateThenReadTxWithTwoAccounts(parallelBlockProcessor);
   }
-
-
-
 
   private void processSimpleTransfers(final BlockProcessor blockProcessor) {
     final KeyPair keyPair1 =
@@ -604,92 +603,90 @@ class AbstractBlockProcessorIntegrationTest {
 
   void processAccountReadThenUpdateTxWithTwoAccounts(final BlockProcessor blockProcessor) {
     final KeyPair keyPair1 =
-            generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
+        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
     final KeyPair keyPair2 =
-            generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
+        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer = // ACCOUNT_GENESIS_1 -> CONTRACT_ADDRESS
-            createTransferTransaction(
-                    0,
-                    1_000_000_000_000_000_000L,
-                    300000L,
-                    5L,
-                    7L,
-                    "0x00000000000000000000000000000000000fffff",
-                    keyPair1);
+        createTransferTransaction(
+            0,
+            1_000_000_000_000_000_000L,
+            300000L,
+            5L,
+            7L,
+            "0x00000000000000000000000000000000000fffff",
+            keyPair1);
     Transaction getcontractBalanceTransaction =
-            createContractReadAccountTransaction(1, contractAddress, "getBalance", keyPair1, ACCOUNT_2);
+        createContractReadAccountTransaction(1, contractAddress, "getBalance", keyPair1, ACCOUNT_2);
 
     Transaction sendEthFromContractTransaction =
-            createContractUpdateAccountTransaction(
-                    0, contractAddress, "transferTo", keyPair2, ACCOUNT_3, 500_000_000_000_000_000L);
+        createContractUpdateAccountTransaction(
+            0, contractAddress, "transferTo", keyPair2, ACCOUNT_3, 500_000_000_000_000_000L);
 
     Block blockWithTransactions =
-            createBlockWithTransactions(
-                    "0x3c2366a28dadbcef39ba04cde7bc30a5dccfce1e478a5c2602f5a28ab9498e6c",
-                    transactionTransfer,
-                    getcontractBalanceTransaction,
-                    sendEthFromContractTransaction);
+        createBlockWithTransactions(
+            "0x3c2366a28dadbcef39ba04cde7bc30a5dccfce1e478a5c2602f5a28ab9498e6c",
+            transactionTransfer,
+            getcontractBalanceTransaction,
+            sendEthFromContractTransaction);
     MutableWorldState worldState = worldStateArchive.getMutable();
 
     BlockProcessingResult blockProcessingResult =
-            blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);
 
     assertTrue(blockProcessingResult.isSuccessful());
 
     // Verify the state
     BonsaiAccount contractAccount = (BonsaiAccount) worldState.get(contractAddress);
     BonsaiAccount updatedAccount3 =
-            (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_3));
+        (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_3));
     assertThat(contractAccount.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
     assertThat(updatedAccount3.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
   }
-
 
   void processAccountUpdateThenReadTxWithTwoAccounts(final BlockProcessor blockProcessor) {
     final KeyPair keyPair1 =
-            generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
+        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
     final KeyPair keyPair2 =
-            generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
+        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer = // ACCOUNT_GENESIS_1 -> CONTRACT_ADDRESS
-            createTransferTransaction(
-                    0,
-                    1_000_000_000_000_000_000L,
-                    300000L,
-                    5L,
-                    7L,
-                    "0x00000000000000000000000000000000000fffff",
-                    keyPair1);
+        createTransferTransaction(
+            0,
+            1_000_000_000_000_000_000L,
+            300000L,
+            5L,
+            7L,
+            "0x00000000000000000000000000000000000fffff",
+            keyPair1);
 
     Transaction sendEthFromContractTransaction =
-            createContractUpdateAccountTransaction(
-                    0, contractAddress, "transferTo", keyPair2, ACCOUNT_3, 500_000_000_000_000_000L);
+        createContractUpdateAccountTransaction(
+            0, contractAddress, "transferTo", keyPair2, ACCOUNT_3, 500_000_000_000_000_000L);
 
     Transaction getcontractBalanceTransaction =
-            createContractReadAccountTransaction(1, contractAddress, "getBalance", keyPair1, ACCOUNT_2);
+        createContractReadAccountTransaction(1, contractAddress, "getBalance", keyPair1, ACCOUNT_2);
 
     Block blockWithTransactions =
-            createBlockWithTransactions(
-                    "0x3c2366a28dadbcef39ba04cde7bc30a5dccfce1e478a5c2602f5a28ab9498e6c",
-                    transactionTransfer,
-                    sendEthFromContractTransaction,
-                    getcontractBalanceTransaction);
+        createBlockWithTransactions(
+            "0x3c2366a28dadbcef39ba04cde7bc30a5dccfce1e478a5c2602f5a28ab9498e6c",
+            transactionTransfer,
+            sendEthFromContractTransaction,
+            getcontractBalanceTransaction);
     MutableWorldState worldState = worldStateArchive.getMutable();
 
     BlockProcessingResult blockProcessingResult =
-            blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);
+        blockProcessor.processBlock(blockchain, worldState, blockWithTransactions);
 
     assertTrue(blockProcessingResult.isSuccessful());
 
     // Verify the state
     BonsaiAccount contractAccount = (BonsaiAccount) worldState.get(contractAddress);
     BonsaiAccount updatedAccount3 =
-            (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_3));
+        (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_3));
     assertThat(contractAccount.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
     assertThat(updatedAccount3.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
   }
-
 
   private Transaction createContractUpdateSlotTransaction(
       final int nonce,
