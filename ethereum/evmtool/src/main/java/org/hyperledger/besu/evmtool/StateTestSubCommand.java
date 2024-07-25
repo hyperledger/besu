@@ -232,7 +232,7 @@ public class StateTestSubCommand implements Runnable {
       }
 
       final BlockHeader blockHeader = spec.getBlockHeader();
-      final Transaction transaction = spec.getTransaction();
+      final Transaction transaction = spec.getTransaction(0);
       final ObjectNode summaryLine = objectMapper.createObjectNode();
       if (transaction == null) {
         if (parentCommand.showJsonAlloc || parentCommand.showJsonResults) {

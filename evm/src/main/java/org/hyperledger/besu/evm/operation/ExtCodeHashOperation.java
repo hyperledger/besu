@@ -34,13 +34,26 @@ public class ExtCodeHashOperation extends AbstractOperation {
   // // 0x9dbf3648db8210552e9c4f75c6a1c3057c0ca432043bd648be15fe7be05646f5
   static final Hash EOF_REPLACEMENT_HASH = Hash.hash(ExtCodeCopyOperation.EOF_REPLACEMENT_CODE);
 
+  private final boolean enableEIP3540;
+
   /**
    * Instantiates a new Ext code hash operation.
    *
    * @param gasCalculator the gas calculator
    */
   public ExtCodeHashOperation(final GasCalculator gasCalculator) {
+    this(gasCalculator, false);
+  }
+
+  /**
+   * Instantiates a new Ext code copy operation.
+   *
+   * @param gasCalculator the gas calculator
+   * @param enableEIP3540 enable EIP-3540 semantics (don't copy EOF)
+   */
+  public ExtCodeHashOperation(final GasCalculator gasCalculator, final boolean enableEIP3540) {
     super(0x3F, "EXTCODEHASH", 1, 1, gasCalculator);
+    this.enableEIP3540 = enableEIP3540;
   }
 
   /**
@@ -71,7 +84,10 @@ public class ExtCodeHashOperation extends AbstractOperation {
           frame.pushStackItem(Bytes.EMPTY);
         } else {
           final Bytes code = account.getCode();
-          if (code.size() >= 2 && code.get(0) == EOFLayout.EOF_PREFIX_BYTE && code.get(1) == 0) {
+          if (enableEIP3540
+              && code.size() >= 2
+              && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+              && code.get(1) == 0) {
             frame.pushStackItem(EOF_REPLACEMENT_HASH);
           } else {
             frame.pushStackItem(account.getCodeHash());

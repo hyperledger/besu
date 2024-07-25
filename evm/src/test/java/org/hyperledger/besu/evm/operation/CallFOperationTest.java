@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.operations;
+package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.testutils.OperationsTestUtils.mockCode;
@@ -24,19 +24,17 @@ import org.hyperledger.besu.evm.code.CodeSection;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.ReturnStack;
-import org.hyperledger.besu.evm.operation.Operation;
-import org.hyperledger.besu.evm.operation.RetFOperation;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
-class RetFOperationTest {
+class CallFOperationTest {
 
   @Test
-  void retFHappyPath() {
+  void callFHappyPath() {
     final GasCalculator gasCalculator = mock(GasCalculator.class);
-    final Code mockCode = mockCode("00" + "b1" + "00");
+    final Code mockCode = mockCode("00" + "b0" + "0001" + "00");
 
     final CodeSection codeSection = new CodeSection(0, 1, 2, 3, 0);
     when(mockCode.getCodeSection(1)).thenReturn(codeSection);
@@ -45,21 +43,19 @@ class RetFOperationTest {
         new TestMessageFrameBuilder()
             .code(mockCode)
             .pc(1)
-            .section(1)
             .initialGas(10L)
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
-            .pushStackItem(Bytes.EMPTY)
             .build();
-    messageFrame.pushReturnStackItem(new ReturnStack.ReturnStackItem(2, 3));
 
-    RetFOperation retF = new RetFOperation(gasCalculator);
-    Operation.OperationResult retFResult = retF.execute(messageFrame, null);
+    CallFOperation callF = new CallFOperation(gasCalculator);
+    Operation.OperationResult callfResult = callF.execute(messageFrame, null);
 
-    assertThat(retFResult.getHaltReason()).isNull();
-    assertThat(retFResult.getPcIncrement()).isEqualTo(1);
-    assertThat(messageFrame.getSection()).isEqualTo(2);
-    assertThat(messageFrame.getPC()).isEqualTo(3);
-    assertThat(messageFrame.returnStackSize()).isZero();
+    assertThat(callfResult.getHaltReason()).isNull();
+    assertThat(callfResult.getPcIncrement()).isEqualTo(1);
+    assertThat(messageFrame.getSection()).isEqualTo(1);
+    assertThat(messageFrame.getPC()).isEqualTo(-1);
+    assertThat(messageFrame.returnStackSize()).isEqualTo(1);
+    assertThat(messageFrame.peekReturnStack()).isEqualTo(new ReturnStack.ReturnStackItem(0, 3));
   }
 }
