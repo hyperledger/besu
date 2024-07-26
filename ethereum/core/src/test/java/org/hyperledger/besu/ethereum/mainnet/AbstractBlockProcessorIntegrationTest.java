@@ -70,6 +70,12 @@ class AbstractBlockProcessorIntegrationTest {
   private static final String ACCOUNT_6 = "0x0000000000000000000000000000000000000006";
   private static final String CONTRACT_ADDRESS = "0x00000000000000000000000000000000000fffff";
 
+  private static final KeyPair keyPair1 =
+      generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
+
+  private static final KeyPair keyPair2 =
+      generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
+
   private WorldStateArchive worldStateArchive;
   private MainnetParallelBlockProcessor parallelBlockProcessor;
   private BlockProcessor blockProcessor;
@@ -215,11 +221,6 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   private void processSimpleTransfers(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair1 =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-    final KeyPair keyPair2 =
-        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
-
     // Create two non conflicted transactions
     Transaction transactionTransfer1 = // ACCOUNT_GENESIS_1 -> ACCOUNT_2
         createTransferTransaction(
@@ -259,19 +260,16 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   private void processConflictedSimpleTransfers1(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-
     // Create three transactions with the same sender
     Transaction transferTransaction1 = // ACCOUNT_GENESIS_1 -> ACCOUNT_4
         createTransferTransaction(
-            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_4, keyPair);
+            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_4, keyPair1);
     Transaction transferTransaction2 = // ACCOUNT_GENESIS_1 -> ACCOUNT_5
         createTransferTransaction(
-            1, 2_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_5, keyPair);
+            1, 2_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_5, keyPair1);
     Transaction transferTransaction3 = // ACCOUNT_GENESIS_1 -> ACCOUNT_6
         createTransferTransaction(
-            2, 3_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_6, keyPair);
+            2, 3_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_6, keyPair1);
 
     MutableWorldState worldState = worldStateArchive.getMutable();
     BonsaiAccount senderAccount = (BonsaiAccount) worldState.get(transferTransaction1.getSender());
@@ -304,21 +302,7 @@ class AbstractBlockProcessorIntegrationTest {
     assertThat(updatedSenderAccount.getBalance()).isLessThan(senderAccount.getBalance());
   }
 
-  private static KeyPair generateKeyPair(final String privateKeyHex) {
-    final KeyPair keyPair =
-        SignatureAlgorithmFactory.getInstance()
-            .createKeyPair(
-                SECPPrivateKey.create(
-                    Bytes32.fromHexString(privateKeyHex), SignatureAlgorithm.ALGORITHM));
-    return keyPair;
-  }
-
   private void processConfiltedSimpleTransfers2(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-    final KeyPair keyPair2 =
-        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
-
     // Create conflicted transfer transactions
     Transaction transferTransaction1 =
         createTransferTransaction(
@@ -328,7 +312,7 @@ class AbstractBlockProcessorIntegrationTest {
             5L,
             7L,
             ACCOUNT_GENESIS_2,
-            keyPair); // ACCOUNT_GENESIS_1 -> ACCOUNT_GENESIS_2
+            keyPair1); // ACCOUNT_GENESIS_1 -> ACCOUNT_GENESIS_2
     Transaction transferTransaction2 =
         createTransferTransaction(
             0,
@@ -378,11 +362,6 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   private void processConflictedSimpleTransfersWithCoinbase(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-    final KeyPair keyPair2 =
-        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
-
     // Create conflicted transactions using coinbase
     Transaction transferTransaction1 =
         createTransferTransaction(
@@ -392,7 +371,7 @@ class AbstractBlockProcessorIntegrationTest {
             5L,
             7L,
             ACCOUNT_2,
-            keyPair); // ACCOUNT_GENESIS_1 -> ACCOUNT_2
+            keyPair1); // ACCOUNT_GENESIS_1 -> ACCOUNT_2
     Transaction transferTransaction2 =
         createTransferTransaction(
             0,
@@ -436,12 +415,7 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   void processContractSlotUpdateThenReadTx(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair1 =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-    final KeyPair keyPair2 =
-        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
-    Address contractAddress =
-        Address.fromHexStringStrict("0x00000000000000000000000000000000000fffff");
+    Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
 
     // create conflicted transactions on the same slot (update then read)
     Transaction setSlot1Transaction =
@@ -478,12 +452,7 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   void processSlotReadThenUpdateTx(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair1 =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-    final KeyPair keyPair2 =
-        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
-    Address contractAddress =
-        Address.fromHexStringStrict("0x00000000000000000000000000000000000fffff");
+    Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
 
     Transaction getSlot1Transaction =
         createContractUpdateSlotTransaction(
@@ -519,20 +488,10 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   void processAccountReadThenUpdateTx(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair1 =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-    final KeyPair keyPair2 =
-        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer = // ACCOUNT_GENESIS_1 -> CONTRACT_ADDRESS
         createTransferTransaction(
-            0,
-            1_000_000_000_000_000_000L,
-            300000L,
-            5L,
-            7L,
-            "0x00000000000000000000000000000000000fffff",
-            keyPair1);
+            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, CONTRACT_ADDRESS, keyPair1);
     Transaction getcontractBalanceTransaction =
         createContractReadAccountTransaction(1, contractAddress, "getBalance", keyPair1, ACCOUNT_2);
 
@@ -562,20 +521,10 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   void processAccountUpdateThenReadTx(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair1 =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-    final KeyPair keyPair2 =
-        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer =
         createTransferTransaction(
-            0,
-            1_000_000_000_000_000_000L,
-            300000L,
-            5L,
-            7L,
-            "0x00000000000000000000000000000000000fffff",
-            keyPair1);
+            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, CONTRACT_ADDRESS, keyPair1);
 
     Transaction sendEthFromContractTransaction =
         createContractUpdateAccountTransaction(
@@ -606,20 +555,10 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   void processAccountReadThenUpdateTxWithTwoAccounts(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair1 =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-    final KeyPair keyPair2 =
-        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer = // ACCOUNT_GENESIS_1 -> CONTRACT_ADDRESS
         createTransferTransaction(
-            0,
-            1_000_000_000_000_000_000L,
-            300000L,
-            5L,
-            7L,
-            "0x00000000000000000000000000000000000fffff",
-            keyPair1);
+            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, CONTRACT_ADDRESS, keyPair1);
     Transaction getcontractBalanceTransaction =
         createContractReadAccountTransaction(1, contractAddress, "getBalance", keyPair1, ACCOUNT_2);
 
@@ -649,20 +588,10 @@ class AbstractBlockProcessorIntegrationTest {
   }
 
   void processAccountUpdateThenReadTxWithTwoAccounts(final BlockProcessor blockProcessor) {
-    final KeyPair keyPair1 =
-        generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
-    final KeyPair keyPair2 =
-        generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer = // ACCOUNT_GENESIS_1 -> CONTRACT_ADDRESS
         createTransferTransaction(
-            0,
-            1_000_000_000_000_000_000L,
-            300000L,
-            5L,
-            7L,
-            "0x00000000000000000000000000000000000fffff",
-            keyPair1);
+            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, CONTRACT_ADDRESS, keyPair1);
 
     Transaction sendEthFromContractTransaction =
         createContractUpdateAccountTransaction(
@@ -690,6 +619,15 @@ class AbstractBlockProcessorIntegrationTest {
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_3));
     assertThat(contractAccount.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
     assertThat(updatedAccount3.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
+  }
+
+  private static KeyPair generateKeyPair(final String privateKeyHex) {
+    final KeyPair keyPair =
+        SignatureAlgorithmFactory.getInstance()
+            .createKeyPair(
+                SECPPrivateKey.create(
+                    Bytes32.fromHexString(privateKeyHex), SignatureAlgorithm.ALGORITHM));
+    return keyPair;
   }
 
   private Transaction createContractUpdateSlotTransaction(
