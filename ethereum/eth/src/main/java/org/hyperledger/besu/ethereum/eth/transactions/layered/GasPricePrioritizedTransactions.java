@@ -56,7 +56,8 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
 
   @Override
   protected int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
-    return comparing(PendingTransaction::hasPriority)
+    return comparing(PendingTransaction::getScore)
+        .thenComparing(PendingTransaction::hasPriority)
         .thenComparing(PendingTransaction::getGasPrice)
         .thenComparing(PendingTransaction::getSequence)
         .compare(pt1, pt2);
@@ -78,21 +79,33 @@ public class GasPricePrioritizedTransactions extends AbstractPrioritizedTransact
   }
 
   @Override
-  public String internalLogStats() {
+  protected String internalLogStats() {
     if (orderByFee.isEmpty()) {
       return "GasPrice Prioritized: Empty";
     }
 
+    final PendingTransaction highest = orderByFee.last();
+    final PendingTransaction lowest = orderByFee.first();
+
     return "GasPrice Prioritized: "
         + "count: "
         + pendingTransactions.size()
-        + " space used: "
+        + ", space used: "
         + spaceUsed
-        + " unique senders: "
+        + ", unique senders: "
         + txsBySender.size()
-        + ", highest fee tx: "
-        + orderByFee.last().getTransaction().getGasPrice().get().toHumanReadableString()
-        + ", lowest fee tx: "
-        + orderByFee.first().getTransaction().getGasPrice().get().toHumanReadableString();
+        + ", highest priority tx: [score: "
+        + highest.getScore()
+        + ", gas price: "
+        + highest.getTransaction().getGasPrice().get().toHumanReadableString()
+        + ", hash: "
+        + highest.getHash()
+        + "], lowest priority tx: [score: "
+        + lowest.getScore()
+        + ", gas price: "
+        + lowest.getTransaction().getGasPrice().get().toHumanReadableString()
+        + ", hash: "
+        + lowest.getHash()
+        + "]";
   }
 }

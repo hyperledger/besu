@@ -12,20 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.operations;
+package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.BlockValues;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.IstanbulGasCalculator;
+import org.hyperledger.besu.evm.gascalculator.PragueGasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
-import org.hyperledger.besu.evm.operation.ExtCodeHashOperation;
 import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.testutils.FakeBlockValues;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
@@ -36,22 +35,24 @@ import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
 
-class ExtCodeHashOperationTest {
+class ExtCodeSizeOperationTest {
 
   private static final Address REQUESTED_ADDRESS = Address.fromHexString("0x22222222");
 
   private final ToyWorld toyWorld = new ToyWorld();
   private final WorldUpdater worldStateUpdater = toyWorld.updater();
 
-  private final ExtCodeHashOperation operation =
-      new ExtCodeHashOperation(new ConstantinopleGasCalculator());
-  private final ExtCodeHashOperation operationIstanbul =
-      new ExtCodeHashOperation(new IstanbulGasCalculator());
+  private final ExtCodeSizeOperation operation =
+      new ExtCodeSizeOperation(new ConstantinopleGasCalculator(), false);
+  private final ExtCodeSizeOperation operationIstanbul =
+      new ExtCodeSizeOperation(new IstanbulGasCalculator(), false);
+  private final ExtCodeSizeOperation operationEOF =
+      new ExtCodeSizeOperation(new PragueGasCalculator(), true);
 
   @Test
-  void shouldCharge400Gas() {
+  void shouldCharge700Gas() {
     final OperationResult result = operation.execute(createMessageFrame(REQUESTED_ADDRESS), null);
-    assertThat(result.getGasCost()).isEqualTo(400L);
+    assertThat(result.getGasCost()).isEqualTo(700L);
   }
 
   @Test
@@ -68,9 +69,9 @@ class ExtCodeHashOperationTest {
   }
 
   @Test
-  void shouldReturnHashOfEmptyDataWhenAccountExistsButDoesNotHaveCode() {
+  void shouldReturnSizeOfEmptyDataWhenAccountExistsButDoesNotHaveCode() {
     worldStateUpdater.getOrCreate(REQUESTED_ADDRESS).setBalance(Wei.of(1));
-    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.EMPTY);
+    assertThat(executeOperation(REQUESTED_ADDRESS).toInt()).isZero();
   }
 
   @Test
@@ -85,23 +86,23 @@ class ExtCodeHashOperationTest {
   }
 
   @Test
-  void shouldReturnEmptyCodeHashWhenPrecompileHasBalance() {
+  void shouldReturnEmptyCodeSizeWhenPrecompileHasBalance() {
     // Sending money to a precompile causes it to exist in the world state archive.
     worldStateUpdater.getOrCreate(Address.ECREC).setBalance(Wei.of(10));
-    assertThat(executeOperation(Address.ECREC)).isEqualTo(Hash.EMPTY);
+    assertThat(executeOperation(Address.ECREC).toInt()).isZero();
   }
 
   @Test
-  void shouldGetHashOfAccountCodeWhenCodeIsPresent() {
+  void shouldGetSizeOfAccountCodeWhenCodeIsPresent() {
     final Bytes code = Bytes.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
-    assertThat(executeOperation(REQUESTED_ADDRESS)).isEqualTo(Hash.hash(code));
+    assertThat(executeOperation(REQUESTED_ADDRESS).toInt()).isEqualTo(3);
   }
 
   @Test
   void shouldZeroOutLeftMostBitsToGetAddress() {
-    // If EXTCODEHASH of A is X, then EXTCODEHASH of A + 2**160 is X.
+    // If EXTCODESIZE of A is X, then EXTCODESIZE of A + 2**160 is X.
     final Bytes code = Bytes.fromHexString("0xabcdef");
     final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
     account.setCode(code);
@@ -110,7 +111,51 @@ class ExtCodeHashOperationTest {
             .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
     final MessageFrame frame = createMessageFrame(value);
     operation.execute(frame, null);
-    assertThat(frame.getStackItem(0)).isEqualTo(Hash.hash(code));
+    assertThat(frame.getStackItem(0).toInt()).isEqualTo(3);
+  }
+
+  @Test
+  void shouldGetNonEOFSize() {
+    final Bytes code = Bytes.fromHexString("0xEFF09f918bf09f9fa9");
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
+    account.setCode(code);
+    final UInt256 value =
+        UInt256.fromBytes(Words.fromAddress(REQUESTED_ADDRESS))
+            .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
+
+    final MessageFrame frame = createMessageFrame(value);
+    operation.execute(frame, null);
+    assertThat(frame.getStackItem(0).toInt()).isEqualTo(9);
+
+    final MessageFrame frameIstanbul = createMessageFrame(value);
+    operationIstanbul.execute(frameIstanbul, null);
+    assertThat(frame.getStackItem(0).toInt()).isEqualTo(9);
+
+    final MessageFrame frameEOF = createMessageFrame(value);
+    operationEOF.execute(frameEOF, null);
+    assertThat(frame.getStackItem(0).toInt()).isEqualTo(9);
+  }
+
+  @Test
+  void shouldGetEOFSize() {
+    final Bytes code = Bytes.fromHexString("0xEF009f918bf09f9fa9");
+    final MutableAccount account = worldStateUpdater.getOrCreate(REQUESTED_ADDRESS);
+    account.setCode(code);
+    final UInt256 value =
+        UInt256.fromBytes(Words.fromAddress(REQUESTED_ADDRESS))
+            .add(UInt256.valueOf(2).pow(UInt256.valueOf(160)));
+
+    final MessageFrame frame = createMessageFrame(value);
+    operation.execute(frame, null);
+    assertThat(frame.getStackItem(0).toInt()).isEqualTo(9);
+
+    final MessageFrame frameIstanbul = createMessageFrame(value);
+    operationIstanbul.execute(frameIstanbul, null);
+
+    assertThat(frameIstanbul.getStackItem(0).toInt()).isEqualTo(9);
+    final MessageFrame frameEOF = createMessageFrame(value);
+    operationEOF.execute(frameEOF, null);
+    assertThat(frameEOF.getStackItem(0).toInt()).isEqualTo(2);
   }
 
   private Bytes executeOperation(final Address requestedAddress) {
