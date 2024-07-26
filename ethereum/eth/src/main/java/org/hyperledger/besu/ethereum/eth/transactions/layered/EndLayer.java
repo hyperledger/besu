@@ -86,6 +86,9 @@ public class EndLayer implements TransactionsLayer {
   public void remove(final PendingTransaction pendingTransaction, final RemovalReason reason) {}
 
   @Override
+  public void penalize(final PendingTransaction penalizedTx) {}
+
+  @Override
   public void blockAdded(
       final FeeMarket feeMarket,
       final BlockHeader blockHeader,
