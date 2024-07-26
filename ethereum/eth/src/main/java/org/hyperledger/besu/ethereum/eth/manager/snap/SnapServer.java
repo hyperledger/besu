@@ -513,10 +513,12 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                   // first element in paths is account
                   if (triePath.size() == 1) {
                     // if there is only one path, presume it should be compact encoded account path
-                    var trieNode =
-                        storage
-                            .getTrieNodeUnsafe(CompactEncoding.decode(triePath.getFirst()))
-                            .orElse(Bytes.EMPTY);
+                    final Bytes location = CompactEncoding.decode(triePath.get(0));
+                    var optStorage = storage.getTrieNodeUnsafe(location);
+                    if (optStorage.isEmpty() && location.isEmpty()) {
+                      optStorage = Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+                    }
+                    var trieNode = optStorage.orElse(Bytes.EMPTY);
                     if (!trieNodes.isEmpty()
                         && (sumListBytes(trieNodes) + trieNode.size() > maxResponseBytes
                             || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
@@ -541,11 +543,13 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
                     List<Bytes> storagePaths = triePath.subList(1, triePath.size());
                     for (var path : storagePaths) {
-                      var trieNode =
-                          storage
-                              .getTrieNodeUnsafe(
-                                  Bytes.concatenate(accountPrefix, CompactEncoding.decode(path)))
-                              .orElse(Bytes.EMPTY);
+                      final Bytes location = CompactEncoding.decode(path);
+                      var optStorage =
+                          storage.getTrieNodeUnsafe(Bytes.concatenate(accountPrefix, location));
+                      if (optStorage.isEmpty() && location.isEmpty()) {
+                        optStorage = Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
+                      }
+                      var trieNode = optStorage.orElse(Bytes.EMPTY);
                       if (!trieNodes.isEmpty()
                           && sumListBytes(trieNodes) + trieNode.size() > maxResponseBytes) {
                         break;
