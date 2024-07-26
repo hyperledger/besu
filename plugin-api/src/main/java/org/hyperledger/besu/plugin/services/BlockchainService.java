@@ -87,4 +87,18 @@ public interface BlockchainService extends BesuService {
    * @return the block hash of the finalized block
    */
   Optional<Hash> getFinalizedBlock();
+
+  /**
+   * Set the finalized block
+   *
+   * @param blockHash Hash of the finalized block
+   */
+  void setFinalizedBlock(Hash blockHash);
+
+  /**
+   * Set the safe block
+   *
+   * @param blockHash Hash of the safe block
+   */
+  void setSafeBlock(Hash blockHash);
 }

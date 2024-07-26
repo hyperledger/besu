@@ -135,6 +135,16 @@ public class BlockchainServiceImpl implements BlockchainService {
     return blockchain.getFinalized();
   }
 
+  @Override
+  public void setFinalizedBlock(final Hash blockHash) {
+    blockchain.setFinalized(blockHash);
+  }
+
+  @Override
+  public void setSafeBlock(final Hash blockHash) {
+    blockchain.setSafeBlock(blockHash);
+  }
+
   private static BlockContext blockContext(
       final Supplier<BlockHeader> blockHeaderSupplier,
       final Supplier<BlockBody> blockBodySupplier) {
