@@ -46,6 +46,7 @@ public interface BlockAwareOperationTracer extends OperationTracer {
    *
    * @param blockHeader the header of the block which is traced
    * @param blockBody the body of the block which is traced
+   * @param worldState the world state after the block has been processed
    */
   default void traceEndBlock(
       final BlockHeader blockHeader, final BlockBody blockBody, final WorldState worldState) {}
