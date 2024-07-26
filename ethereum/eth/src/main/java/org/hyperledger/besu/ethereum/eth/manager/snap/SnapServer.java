@@ -513,8 +513,10 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                   // first element in paths is account
                   if (triePath.size() == 1) {
                     // if there is only one path, presume it should be compact encoded account path
-                    final Bytes location = CompactEncoding.decode(triePath.getFirst());
-                    var trieNode = storage.getTrieNodeUnsafe(location).orElse(Bytes.EMPTY);
+                    var trieNode =
+                        storage
+                            .getTrieNodeUnsafe(CompactEncoding.decode(triePath.getFirst()))
+                            .orElse(Bytes.EMPTY);
                     if (!trieNodes.isEmpty()
                         && (sumListBytes(trieNodes) + trieNode.size() > maxResponseBytes
                             || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
@@ -539,10 +541,10 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
                     List<Bytes> storagePaths = triePath.subList(1, triePath.size());
                     for (var path : storagePaths) {
-                      final Bytes location = CompactEncoding.decode(path);
                       var trieNode =
                           storage
-                              .getTrieNodeUnsafe(Bytes.concatenate(accountPrefix, location))
+                              .getTrieNodeUnsafe(
+                                  Bytes.concatenate(accountPrefix, CompactEncoding.decode(path)))
                               .orElse(Bytes.EMPTY);
                       if (!trieNodes.isEmpty()
                           && sumListBytes(trieNodes) + trieNode.size() > maxResponseBytes) {

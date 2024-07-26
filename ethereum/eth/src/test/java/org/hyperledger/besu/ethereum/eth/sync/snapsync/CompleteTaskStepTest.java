@@ -40,7 +40,6 @@ import org.junit.jupiter.api.Test;
 public class CompleteTaskStepTest {
 
   private static final Hash HASH = Hash.hash(Bytes.of(1, 2, 3));
-  private static final Bytes LOCATION = Bytes.of(1);
 
   private final SnapSyncProcessState snapSyncState = mock(SnapSyncProcessState.class);
   private final SnapWorldDownloadState downloadState = mock(SnapWorldDownloadState.class);
@@ -60,7 +59,7 @@ public class CompleteTaskStepTest {
   public void shouldMarkAccountTrieNodeTaskAsFailedIfItDoesNotHaveData() {
     final StubTask task =
         new StubTask(
-            SnapDataRequest.createAccountTrieNodeDataRequest(HASH, LOCATION, new HashSet<>()));
+            SnapDataRequest.createAccountTrieNodeDataRequest(HASH, Bytes.EMPTY, new HashSet<>()));
 
     completeTaskStep.markAsCompleteOrFailed(downloadState, task);
 
@@ -74,7 +73,7 @@ public class CompleteTaskStepTest {
   public void shouldMarkAccountTrieNodeTaskCompleteIfItDoesNotHaveDataAndExpired() {
     final StubTask task =
         new StubTask(
-            SnapDataRequest.createAccountTrieNodeDataRequest(HASH, LOCATION, new HashSet<>()));
+            SnapDataRequest.createAccountTrieNodeDataRequest(HASH, Bytes.EMPTY, new HashSet<>()));
 
     when(snapSyncState.isExpired(any())).thenReturn(true);
 
@@ -86,24 +85,10 @@ public class CompleteTaskStepTest {
   }
 
   @Test
-  public void shouldMarkAccountTrieNodeTaskCompleteIfItDoesNotHaveDataAndNoLocation() {
-    final StubTask task =
-        new StubTask(
-            SnapDataRequest.createAccountTrieNodeDataRequest(HASH, Bytes.EMPTY, new HashSet<>()));
-
-    when(snapSyncState.isExpired(any())).thenReturn(false);
-
-    completeTaskStep.markAsCompleteOrFailed(downloadState, task);
-
-    assertThat(task.isCompleted()).isTrue();
-    verify(downloadState).notifyTaskAvailable();
-    verify(downloadState).checkCompletion(blockHeader);
-  }
-
-  @Test
   public void shouldMarkStorageTrieNodeTaskAsFailedIfItDoesNotHaveData() {
     final StubTask task =
-        new StubTask(SnapDataRequest.createStorageTrieNodeDataRequest(HASH, HASH, HASH, LOCATION));
+        new StubTask(
+            SnapDataRequest.createStorageTrieNodeDataRequest(HASH, HASH, HASH, Bytes.EMPTY));
 
     completeTaskStep.markAsCompleteOrFailed(downloadState, task);
 
@@ -116,25 +101,10 @@ public class CompleteTaskStepTest {
   @Test
   public void shouldMarkStorageTrieNodeTaskCompleteIfItDoesNotHaveDataAndExpired() {
     final StubTask task =
-        new StubTask(SnapDataRequest.createStorageTrieNodeDataRequest(HASH, HASH, HASH, LOCATION));
-
-    when(snapSyncState.isExpired(any())).thenReturn(true);
-
-    completeTaskStep.markAsCompleteOrFailed(downloadState, task);
-
-    assertThat(task.isCompleted()).isTrue();
-    assertThat(task.isFailed()).isFalse();
-
-    verify(downloadState).checkCompletion(blockHeader);
-  }
-
-  @Test
-  public void shouldMarkStorageTrieNodeTaskCompleteIfItDoesNotHaveDataAndNoLocation() {
-    final StubTask task =
         new StubTask(
             SnapDataRequest.createStorageTrieNodeDataRequest(HASH, HASH, HASH, Bytes.EMPTY));
 
-    when(snapSyncState.isExpired(any())).thenReturn(false);
+    when(snapSyncState.isExpired(any())).thenReturn(true);
 
     completeTaskStep.markAsCompleteOrFailed(downloadState, task);
 

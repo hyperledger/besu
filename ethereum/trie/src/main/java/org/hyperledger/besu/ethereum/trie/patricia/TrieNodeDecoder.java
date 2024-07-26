@@ -60,7 +60,7 @@ public class TrieNodeDecoder {
    * @return A list of nodes and node references embedded in the given rlp.
    */
   public static List<Node<Bytes>> decodeNodes(final Bytes location, final Bytes nodeRlp) {
-    if (nodeRlp.equals(MerkleTrie.EMPTY_TRIE_NODE) || nodeRlp.isEmpty()) {
+    if (nodeRlp.equals(MerkleTrie.EMPTY_TRIE_NODE)) {
       return new ArrayList<>();
     }
     final Node<Bytes> node = decode(location, nodeRlp);
