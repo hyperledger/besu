@@ -49,6 +49,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
@@ -234,8 +235,8 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .map(
               storage -> {
                 LOGGER.trace("obtained worldstate in {}", stopWatch);
-                StatefulPredicate shouldContinuePredicate =
-                    new StatefulPredicate(
+                ResponseSizePredicate shouldContinuePredicate =
+                    new ResponseSizePredicate(
                         "account",
                         stopWatch,
                         maxResponseBytes,
@@ -330,20 +331,6 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .map(
               storage -> {
                 LOGGER.trace("obtained worldstate in {}", stopWatch);
-                // reusable predicate to limit by rec count and bytes:
-                var statefulPredicate =
-                    new StatefulPredicate(
-                        "storage",
-                        stopWatch,
-                        maxResponseBytes,
-                        (pair) -> {
-                          var slotRlpOutput = new BytesValueRLPOutput();
-                          slotRlpOutput.startList();
-                          slotRlpOutput.writeBytes(pair.getFirst());
-                          slotRlpOutput.writeBytes(pair.getSecond());
-                          slotRlpOutput.endList();
-                          return slotRlpOutput.encodedSize();
-                        });
 
                 // only honor start and end hash if request is for a single account's storage:
                 Bytes32 startKeyBytes, endKeyBytes;
@@ -358,15 +345,32 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                       !(startKeyBytes.equals(Hash.ZERO) && endKeyBytes.equals(HASH_LAST));
                 }
 
+                // reusable predicate to limit by rec count and bytes:
+                var responsePredicate =
+                    new ResponseSizePredicate(
+                        "storage",
+                        stopWatch,
+                        maxResponseBytes,
+                        (pair) -> {
+                          var slotRlpOutput = new BytesValueRLPOutput();
+                          slotRlpOutput.startList();
+                          slotRlpOutput.writeBytes(pair.getFirst());
+                          slotRlpOutput.writeBytes(pair.getSecond());
+                          slotRlpOutput.endList();
+                          return slotRlpOutput.encodedSize();
+                        });
+
                 ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
                 List<Bytes> proofNodes = new ArrayList<>();
                 final var worldStateProof =
                     new WorldStateProofProvider(new WorldStateStorageCoordinator(storage));
 
                 for (var forAccountHash : range.hashes()) {
+                  var endKeyPredicate = new EndKeyPredicate(endKeyBytes);
+                  var accountStoragePredicate = endKeyPredicate.and(responsePredicate);
                   var accountStorages =
                       storage.streamFlatStorages(
-                          Hash.wrap(forAccountHash), startKeyBytes, endKeyBytes, statefulPredicate);
+                          Hash.wrap(forAccountHash), startKeyBytes, accountStoragePredicate);
 
                   //// address partial range queries that return empty
                   if (accountStorages.isEmpty() && isPartialRange) {
@@ -386,7 +390,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
                   // if a partial storage range was requested, or we interrupted storage due to
                   // request limits, send proofs:
-                  if (isPartialRange || !statefulPredicate.shouldGetMore()) {
+                  if (isPartialRange || !responsePredicate.shouldGetMore()) {
                     // send a proof for the left side range origin
                     proofNodes.addAll(
                         worldStateProof.getStorageProofRelatedNodes(
@@ -403,7 +407,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     }
                   }
 
-                  if (!statefulPredicate.shouldGetMore()) {
+                  if (!responsePredicate.shouldGetMore()) {
                     break;
                   }
                 }
@@ -462,7 +466,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           if (optCode.isPresent()) {
             if (!codeBytes.isEmpty()
                 && (sumListBytes(codeBytes) + optCode.get().size() > maxResponseBytes
-                    || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
+                    || stopWatch.getTime() > ResponseSizePredicate.MAX_MILLIS_PER_REQUEST)) {
               break;
             }
             codeBytes.add(optCode.get());
@@ -521,7 +525,8 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     if (optStorage.isPresent()) {
                       if (!trieNodes.isEmpty()
                           && (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes
-                              || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
+                              || stopWatch.getTime()
+                                  > ResponseSizePredicate.MAX_MILLIS_PER_REQUEST)) {
                         break;
                       }
                       trieNodes.add(optStorage.get());
@@ -578,7 +583,30 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     }
   }
 
-  static class StatefulPredicate implements Predicate<Pair<Bytes32, Bytes>> {
+  static class EndKeyPredicate implements Predicate<Pair<Bytes32, Bytes>> {
+    final Bytes endKey;
+    final AtomicReference<Bytes> lastKey = new AtomicReference<>(Bytes32.ZERO);
+
+    EndKeyPredicate(final Bytes endKey) {
+      this.endKey = endKey;
+    }
+
+    @Override
+    public boolean test(final Pair<Bytes32, Bytes> pair) {
+      Bytes32 key = pair.getFirst();
+      int compareTo = endKey.compareTo(key);
+      int lastKeyCompareTo = endKey.compareTo(lastKey.getAndSet(pair.getFirst()));
+      LOGGER.info(
+          "endKey {} key {} compareTo {}, lastCompareTo {}",
+          endKey,
+          key,
+          compareTo,
+          lastKeyCompareTo);
+      return lastKeyCompareTo > 0;
+    }
+  }
+
+  static class ResponseSizePredicate implements Predicate<Pair<Bytes32, Bytes>> {
     // default to a max of 4 seconds per request
     static final long MAX_MILLIS_PER_REQUEST = 4000;
 
@@ -592,7 +620,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
     final int maxResponseBytesFudgeFactor;
     final String forWhat;
 
-    StatefulPredicate(
+    ResponseSizePredicate(
         final String forWhat,
         final StopWatch stopWatch,
         final int maxResponseBytes,

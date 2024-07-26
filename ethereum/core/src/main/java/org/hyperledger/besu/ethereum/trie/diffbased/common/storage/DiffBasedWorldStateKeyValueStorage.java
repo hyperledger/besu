@@ -153,6 +153,14 @@ public abstract class DiffBasedWorldStateKeyValueStorage
             composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, takeWhile);
   }
 
+  public NavigableMap<Bytes32, Bytes> streamFlatStorages(
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return getFlatDbStrategy()
+        .streamStorageFlatDatabase(composedWorldStateStorage, accountHash, startKeyHash, takeWhile);
+  }
+
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
     return composedWorldStateStorage
         .get(TRIE_BRANCH_STORAGE, WORLD_ROOT_HASH_KEY)

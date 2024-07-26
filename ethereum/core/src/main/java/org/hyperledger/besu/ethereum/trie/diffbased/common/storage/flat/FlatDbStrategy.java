@@ -240,6 +240,34 @@ public abstract class FlatDbStrategy {
             .takeWhile(takeWhile));
   }
 
+  /** streams raw storage Bytes using a specified predicate filter and value mapper. */
+  public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+    return toNavigableMap(
+        storageToPairStream(storage, accountHash, startKeyHash, RLP::encodeValue)
+            .takeWhile(takeWhile));
+  }
+
+  private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
+      final SegmentedKeyValueStorage storage,
+      final Hash accountHash,
+      final Bytes startKeyHash,
+      final Function<Bytes, Bytes> valueMapper) {
+
+    return storage
+        .streamFromKey(
+            ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, startKeyHash).toArrayUnsafe())
+        .takeWhile(pair -> Bytes.wrap(pair.getKey()).slice(0, Hash.SIZE).equals(accountHash))
+        .map(
+            pair ->
+                new Pair<>(
+                    Bytes32.wrap(Bytes.wrap(pair.getKey()).slice(Hash.SIZE)),
+                    valueMapper.apply(Bytes.wrap(pair.getValue()).trimLeadingZeros())));
+  }
+
   private static Stream<Pair<Bytes32, Bytes>> storageToPairStream(
       final SegmentedKeyValueStorage storage,
       final Hash accountHash,
