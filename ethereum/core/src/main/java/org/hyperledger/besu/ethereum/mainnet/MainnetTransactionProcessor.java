@@ -42,6 +42,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.processor.AbstractMessageProcessor;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
+import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Deque;
@@ -80,6 +81,8 @@ public class MainnetTransactionProcessor {
   protected final FeeMarket feeMarket;
   private final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator;
 
+  private final Optional<AuthorityProcessor> maybeAuthorityProcessor;
+
   public MainnetTransactionProcessor(
       final GasCalculator gasCalculator,
       final TransactionValidatorFactory transactionValidatorFactory,
@@ -90,6 +93,30 @@ public class MainnetTransactionProcessor {
       final int maxStackSize,
       final FeeMarket feeMarket,
       final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator) {
+    this(
+        gasCalculator,
+        transactionValidatorFactory,
+        contractCreationProcessor,
+        messageCallProcessor,
+        clearEmptyAccounts,
+        warmCoinbase,
+        maxStackSize,
+        feeMarket,
+        coinbaseFeePriceCalculator,
+        null);
+  }
+
+  public MainnetTransactionProcessor(
+      final GasCalculator gasCalculator,
+      final TransactionValidatorFactory transactionValidatorFactory,
+      final AbstractMessageProcessor contractCreationProcessor,
+      final AbstractMessageProcessor messageCallProcessor,
+      final boolean clearEmptyAccounts,
+      final boolean warmCoinbase,
+      final int maxStackSize,
+      final FeeMarket feeMarket,
+      final CoinbaseFeePriceCalculator coinbaseFeePriceCalculator,
+      final AuthorityProcessor maybeAuthorityProcessor) {
     this.gasCalculator = gasCalculator;
     this.transactionValidatorFactory = transactionValidatorFactory;
     this.contractCreationProcessor = contractCreationProcessor;
@@ -99,6 +126,7 @@ public class MainnetTransactionProcessor {
     this.maxStackSize = maxStackSize;
     this.feeMarket = feeMarket;
     this.coinbaseFeePriceCalculator = coinbaseFeePriceCalculator;
+    this.maybeAuthorityProcessor = Optional.ofNullable(maybeAuthorityProcessor);
   }
 
   /**
@@ -259,6 +287,8 @@ public class MainnetTransactionProcessor {
       final PrivateMetadataUpdater privateMetadataUpdater,
       final Wei blobGasPrice) {
     try {
+      final AuthorizedCodeService authorizedCodeService = new AuthorizedCodeService();
+      worldState.setAuthorizedCodeService(authorizedCodeService);
       final var transactionValidator = transactionValidatorFactory.get();
       LOG.trace("Starting execution of {}", transaction);
       ValidationResult<TransactionInvalidReason> validationResult =
@@ -332,15 +362,19 @@ public class MainnetTransactionProcessor {
               transaction.getPayload(), transaction.isContractCreation());
       final long accessListGas =
           gasCalculator.accessListGasCost(accessListEntries.size(), accessListStorageCount);
-      final long gasAvailable = transaction.getGasLimit() - intrinsicGas - accessListGas;
+      final long setCodeGas = gasCalculator.setCodeListGasCost(transaction.authorizationListSize());
+      final long gasAvailable =
+          transaction.getGasLimit() - intrinsicGas - accessListGas - setCodeGas;
       LOG.trace(
-          "Gas available for execution {} = {} - {} - {} (limit - intrinsic - accessList)",
+          "Gas available for execution {} = {} - {} - {} - {} (limit - intrinsic - accessList - setCode)",
           gasAvailable,
           transaction.getGasLimit(),
           intrinsicGas,
-          accessListGas);
+          accessListGas,
+          setCodeGas);
 
       final WorldUpdater worldUpdater = worldState.updater();
+      worldUpdater.setAuthorizedCodeService(authorizedCodeService);
       final ImmutableMap.Builder<String, Object> contextVariablesBuilder =
           ImmutableMap.<String, Object>builder()
               .put(KEY_IS_PERSISTING_PRIVATE_STATE, isPersistingPrivateState)
@@ -374,6 +408,15 @@ public class MainnetTransactionProcessor {
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
+      } else if (transaction.getAuthorizationList().isPresent()) {
+        if (maybeAuthorityProcessor.isEmpty()) {
+          throw new RuntimeException("Authority processor is required for 7702 transactions");
+        }
+
+        maybeAuthorityProcessor
+            .get()
+            .addContractToAuthority(worldUpdater, authorizedCodeService, transaction);
+        addressList.addAll(authorizedCodeService.getAuthorities());
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
       }
@@ -392,6 +435,7 @@ public class MainnetTransactionProcessor {
                 .contract(contractAddress)
                 .inputData(initCodeBytes.slice(code.getSize()))
                 .code(code)
+                .authorizedCodeService(authorizedCodeService)
                 .build();
       } else {
         @SuppressWarnings("OptionalGetWithoutIsPresent") // isContractCall tests isPresent
@@ -407,6 +451,7 @@ public class MainnetTransactionProcessor {
                     maybeContract
                         .map(c -> messageCallProcessor.getCodeFromEVM(c.getCodeHash(), c.getCode()))
                         .orElse(CodeV0.EMPTY_CODE))
+                .authorizedCodeService(authorizedCodeService)
                 .build();
       }
       Deque<MessageFrame> messageFrameStack = initialFrame.getMessageFrameStack();
@@ -462,7 +507,6 @@ public class MainnetTransactionProcessor {
       final long gasUsedByTransaction = transaction.getGasLimit() - initialFrame.getRemainingGas();
 
       // update the coinbase
-      final var coinbase = worldState.getOrCreate(miningBeneficiary);
       final long usedGas = transaction.getGasLimit() - refundedGas;
       final CoinbaseFeePriceCalculator coinbaseCalculator;
       if (blockHeader.getBaseFee().isPresent()) {
@@ -484,7 +528,11 @@ public class MainnetTransactionProcessor {
       final Wei coinbaseWeiDelta =
           coinbaseCalculator.price(usedGas, transactionGasPrice, blockHeader.getBaseFee());
 
+      operationTracer.traceBeforeRewardTransaction(worldUpdater, transaction, coinbaseWeiDelta);
+
+      final var coinbase = worldState.getOrCreate(miningBeneficiary);
       coinbase.incrementBalance(coinbaseWeiDelta);
+      authorizedCodeService.resetAuthorities();
 
       operationTracer.traceEndTransaction(
           worldUpdater,

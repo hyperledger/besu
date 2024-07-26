@@ -27,6 +27,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -65,17 +66,30 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
    *     milestone starting points
    * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return an initialised TransitionProtocolSchedule using post-merge defaults
    */
   public static TransitionProtocolSchedule fromConfig(
       final GenesisConfigOptions genesisConfigOptions,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     ProtocolSchedule preMergeProtocolSchedule =
-        MainnetProtocolSchedule.fromConfig(genesisConfigOptions, miningParameters, badBlockManager);
+        MainnetProtocolSchedule.fromConfig(
+            genesisConfigOptions,
+            miningParameters,
+            badBlockManager,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
     ProtocolSchedule postMergeProtocolSchedule =
         MergeProtocolSchedule.create(
-            genesisConfigOptions, false, miningParameters, badBlockManager);
+            genesisConfigOptions,
+            false,
+            miningParameters,
+            badBlockManager,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
     return new TransitionProtocolSchedule(
         preMergeProtocolSchedule, postMergeProtocolSchedule, PostMergeContext.get());
   }

@@ -35,6 +35,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ConsolidationRequest;
 import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
+import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
@@ -212,6 +213,69 @@ public class T8nExecutor {
               builder.accessList(entries);
             }
 
+            if (txNode.has("authorizationList")) {
+              JsonNode authorizationList = txNode.get("authorizationList");
+
+              if (!authorizationList.isArray()) {
+                out.printf(
+                    "TX json node unparseable: expected authorizationList to be an array - %s%n",
+                    txNode);
+                continue;
+              }
+
+              List<org.hyperledger.besu.datatypes.SetCodeAuthorization> authorizations =
+                  new ArrayList<>(authorizationList.size());
+              for (JsonNode entryAsJson : authorizationList) {
+                final BigInteger authorizationChainId =
+                    Bytes.fromHexStringLenient(entryAsJson.get("chainId").textValue())
+                        .toUnsignedBigInteger();
+                final Address authorizationAddress =
+                    Address.fromHexString(entryAsJson.get("address").textValue());
+
+                JsonNode nonces = entryAsJson.get("nonce");
+
+                if (nonces == null) {
+                  out.printf(
+                      "TX json node unparseable: expected nonce field to be provided - %s%n",
+                      txNode);
+                  continue;
+                }
+
+                List<Long> authorizationNonces;
+                if (nonces.isArray()) {
+                  authorizationNonces = new ArrayList<>(nonces.size());
+                  for (JsonNode nonceAsJson : nonces) {
+                    authorizationNonces.add(
+                        Bytes.fromHexStringLenient(nonceAsJson.textValue()).toLong());
+                  }
+                } else {
+                  authorizationNonces =
+                      List.of(Bytes.fromHexStringLenient(nonces.textValue()).toLong());
+                }
+
+                final byte authorizationV =
+                    Bytes.fromHexStringLenient(entryAsJson.get("v").textValue())
+                        .toUnsignedBigInteger()
+                        .byteValueExact();
+                final BigInteger authorizationR =
+                    Bytes.fromHexStringLenient(entryAsJson.get("r").textValue())
+                        .toUnsignedBigInteger();
+                final BigInteger authorizationS =
+                    Bytes.fromHexStringLenient(entryAsJson.get("s").textValue())
+                        .toUnsignedBigInteger();
+
+                authorizations.add(
+                    SetCodeAuthorization.createSetCodeAuthorizationEntry(
+                        authorizationChainId,
+                        authorizationAddress,
+                        authorizationNonces,
+                        authorizationV,
+                        authorizationR,
+                        authorizationS));
+              }
+              builder.setCodeTransactionPayloads(authorizations);
+            }
+
             if (txNode.has("blobVersionedHashes")) {
               JsonNode blobVersionedHashes = txNode.get("blobVersionedHashes");
               if (!blobVersionedHashes.isArray()) {
@@ -255,7 +319,10 @@ public class T8nExecutor {
                           Bytes.fromHexStringLenient(txNode.get("s").textValue())
                               .toUnsignedBigInteger(),
                           v.byteValueExact()));
-              transactions.add(builder.build());
+
+              final Transaction tx = builder.build();
+
+              transactions.add(tx);
             }
           }
         } else {

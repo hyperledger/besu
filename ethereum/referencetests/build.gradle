@@ -194,6 +194,7 @@ dependencies {
   referenceTestImplementation project(path: ':config')
   referenceTestImplementation project(path: ':datatypes')
   referenceTestImplementation project(path: ':ethereum:core')
+  referenceTestImplementation project(path: ':metrics:core')
   referenceTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(path: ':ethereum:rlp')
   referenceTestImplementation project(path: ':ethereum:rlp', configuration: 'testSupportArtifacts')
@@ -203,7 +204,7 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:2.1.1:fixtures@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:3.0.0:fixtures_stable@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.tmio:tuweni-bytes'

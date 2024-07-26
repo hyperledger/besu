@@ -159,6 +159,12 @@ public class LayersTest extends BaseTransactionPoolTest {
     assertScenario(scenario, BLOB_TX_POOL_CONFIG);
   }
 
+  @ParameterizedTest
+  @MethodSource("providerPenalized")
+  void penalized(final Scenario scenario) {
+    assertScenario(scenario);
+  }
+
   private void assertScenario(final Scenario scenario) {
     assertScenario(scenario, DEFAULT_TX_POOL_CONFIG);
   }
@@ -1256,6 +1262,79 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedSparseForSenders()));
   }
 
+  static Stream<Arguments> providerPenalized() {
+    return Stream.of(
+        Arguments.of(
+            new Scenario("single sender, single tx")
+                .addForSender(S1, 0)
+                .expectedPrioritizedForSender(S1, 0)
+                .penalizeForSender(S1, 0)
+                .expectedPrioritizedForSender(S1, 0)),
+        Arguments.of(
+            new Scenario("single sender penalize last")
+                .addForSender(S1, 0, 1)
+                .expectedPrioritizedForSender(S1, 0, 1)
+                .penalizeForSender(S1, 1)
+                .expectedPrioritizedForSender(S1, 0, 1)),
+        Arguments.of(
+            new Scenario("single sender penalize first")
+                .addForSender(S1, 0, 1)
+                .expectedPrioritizedForSender(S1, 0, 1)
+                .penalizeForSender(S1, 0, 1)
+                // even if 0 has less score it is always the first for the sender
+                // since otherwise there is a nonce gap
+                .expectedPrioritizedForSender(S1, 0, 1)),
+        Arguments.of(
+            new Scenario("multiple senders, penalize top")
+                .addForSenders(S1, 0, S2, 0)
+                // remember S2 pays more fees
+                .expectedPrioritizedForSenders(S2, 0, S1, 0)
+                .penalizeForSender(S2, 0)
+                .expectedPrioritizedForSenders(S1, 0, S2, 0)),
+        Arguments.of(
+            new Scenario("multiple senders, penalize bottom")
+                .addForSenders(S1, 0, S2, 0)
+                .expectedPrioritizedForSenders(S2, 0, S1, 0)
+                .penalizeForSender(S1, 0)
+                .expectedPrioritizedForSenders(S2, 0, S1, 0)),
+        Arguments.of(
+            new Scenario("multiple senders, penalize middle")
+                .addForSenders(S1, 0, S2, 0, S3, 0)
+                .expectedPrioritizedForSenders(S3, 0, S2, 0, S1, 0)
+                .penalizeForSender(S2, 0)
+                .expectedPrioritizedForSenders(S3, 0, S1, 0, S2, 0)),
+        Arguments.of(
+            new Scenario("single sender, promote from ready")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)
+                .penalizeForSender(S1, 3)
+                .confirmedForSenders(S1, 0)
+                // even if penalized 3 is promoted to avoid nonce gap
+                .expectedPrioritizedForSender(S1, 1, 2, 3)
+                .expectedReadyForSender(S1, 4, 5)),
+        Arguments.of(
+            new Scenario("multiple senders, overflow to ready")
+                .addForSenders(S1, 0, S2, 0, S3, 0)
+                .expectedPrioritizedForSenders(S3, 0, S2, 0, S1, 0)
+                .expectedReadyForSenders()
+                .penalizeForSender(S3, 0)
+                .addForSender(S1, 1)
+                .expectedPrioritizedForSenders(S2, 0, S1, 0, S1, 1)
+                // S3(0) is demoted to ready even if it is paying more fees,
+                // since has a lower score
+                .expectedReadyForSender(S3, 0)),
+        Arguments.of(
+            new Scenario("multiple senders, overflow to sparse")
+                .addForSenders(S1, 0, S2, 0, S3, 0, S1, 1, S2, 1, S3, 1)
+                .expectedPrioritizedForSenders(S3, 0, S3, 1, S2, 0)
+                .expectedReadyForSenders(S2, 1, S1, 0, S1, 1)
+                .penalizeForSender(S2, 1)
+                .addForSender(S2, 2)
+                .expectedReadyForSenders(S1, 0, S1, 1, S2, 1)
+                .expectedSparseForSender(S2, 2)));
+  }
+
   private static BlockHeader mockBlockHeader() {
     final BlockHeader blockHeader = mock(BlockHeader.class);
     when(blockHeader.getBaseFee()).thenReturn(Optional.of(BASE_FEE));
@@ -1377,6 +1456,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                     case ACCESS_LIST -> createAccessListPendingTransaction(sender, n);
                     case EIP1559 -> createEIP1559PendingTransaction(sender, n);
                     case BLOB -> createBlobPendingTransaction(sender, n);
+                    case SET_CODE -> throw new UnsupportedOperationException();
                   });
     }
 
@@ -1510,10 +1590,12 @@ public class LayersTest extends BaseTransactionPoolTest {
 
     private void assertExpectedPrioritized(
         final AbstractPrioritizedTransactions prioLayer, final List<PendingTransaction> expected) {
-      assertThat(prioLayer.getBySender())
-          .describedAs("Prioritized")
-          .flatExtracting(SenderPendingTransactions::pendingTransactions)
-          .containsExactlyElementsOf(expected);
+      final var flatOrder =
+          prioLayer.getByScore().values().stream()
+              .flatMap(List::stream)
+              .flatMap(spt -> spt.pendingTransactions().stream())
+              .toList();
+      assertThat(flatOrder).describedAs("Prioritized").containsExactlyElementsOf(expected);
     }
 
     private void assertExpectedReady(
@@ -1577,6 +1659,23 @@ public class LayersTest extends BaseTransactionPoolTest {
                 final var pendingTx = getOrCreate(sender, EIP1559, n);
                 actions.add(
                     (pending, prio, ready, sparse, dropped) -> prio.remove(pendingTx, INVALIDATED));
+              });
+      return this;
+    }
+
+    public Scenario penalizeForSender(final Sender sender, final long... nonce) {
+      Arrays.stream(nonce)
+          .forEach(
+              n -> {
+                actions.add(
+                    (pending, prio, ready, sparse, dropped) -> {
+                      final var senderTxs = prio.getAllFor(sender.address);
+                      Arrays.stream(nonce)
+                          .mapToObj(
+                              n2 -> senderTxs.stream().filter(pt -> pt.getNonce() == n2).findAny())
+                          .map(Optional::get)
+                          .forEach(prio::penalize);
+                    });
               });
       return this;
     }

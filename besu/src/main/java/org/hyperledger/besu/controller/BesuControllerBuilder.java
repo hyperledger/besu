@@ -203,6 +203,9 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
 
   private int numberOfBlocksToCache = 0;
 
+  /** whether parallel transaction processing is enabled or not */
+  protected boolean isParallelTxProcessingEnabled;
+
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
 
@@ -513,6 +516,20 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   }
 
   /**
+   * Sets whether parallel transaction processing is enabled. When parallel transaction processing
+   * is enabled, transactions within a block can be processed in parallel and potentially improving
+   * performance
+   *
+   * @param isParallelTxProcessingEnabled true to enable parallel transaction
+   * @return the besu controller
+   */
+  public BesuControllerBuilder isParallelTxProcessingEnabled(
+      final boolean isParallelTxProcessingEnabled) {
+    this.isParallelTxProcessingEnabled = isParallelTxProcessingEnabled;
+    return this;
+  }
+
+  /**
    * Build besu controller.
    *
    * @return the besu controller
@@ -793,7 +810,8 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             scheduler::executeServiceTask,
             dataStorageConfiguration.getBonsaiMaxLayersToLoad(),
             dataStorageConfiguration.getBonsaiTrieLogPruningWindowSize(),
-            isProofOfStake);
+            isProofOfStake,
+            metricsSystem);
     trieLogPruner.initialize();
 
     return trieLogPruner;
