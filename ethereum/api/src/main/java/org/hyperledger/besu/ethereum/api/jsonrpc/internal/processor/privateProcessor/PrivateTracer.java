@@ -79,11 +79,6 @@ public class PrivateTracer {
     }
 
     @Override
-    public void persist(final BlockHeader blockHeader) {
-      mutableWorldState.persist(blockHeader);
-    }
-
-    @Override
     public WorldUpdater updater() {
       return mutableWorldState.updater();
     }
@@ -116,5 +111,8 @@ public class PrivateTracer {
     public void close() throws Exception {
       mutableWorldState.close();
     }
+
+    @Override
+    public void persist(final BlockHeader blockHeader) {}
   }
 }

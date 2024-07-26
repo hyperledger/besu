@@ -41,10 +41,6 @@ import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Stream;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ArrayNode;
-
 public abstract class AbstractPrivateTraceByHash implements JsonRpcMethod {
 
   protected final Supplier<PrivateBlockTracer> blockTracerSupplier;
@@ -137,7 +133,7 @@ public abstract class AbstractPrivateTraceByHash implements JsonRpcMethod {
                     .trace(
                         mutableWorldState,
                         block,
-                        new DebugOperationTracer(new TraceOptions(false, false, true), true),
+                        new DebugOperationTracer(new TraceOptions(false, false, true), false),
                         enclaveKey,
                         privacyGroupId,
                         privateBlockMetadata)
@@ -157,13 +153,6 @@ public abstract class AbstractPrivateTraceByHash implements JsonRpcMethod {
     return PrivateTraceGenerator.generateFromTransactionTraceAndBlock(
             this.protocolSchedule, transactionTrace, block)
         .map(PrivateFlatTrace.class::cast);
-  }
-
-  protected JsonNode arrayNodeFromTraceStream(final Stream<PrivateFlatTrace> traceStream) {
-    final ObjectMapper mapper = new ObjectMapper();
-    final ArrayNode resultArrayNode = mapper.createArrayNode();
-    traceStream.forEachOrdered(resultArrayNode::addPOJO);
-    return resultArrayNode;
   }
 
   private void verifyPrivacyGroupMatchesAuthenticatedEnclaveKey(

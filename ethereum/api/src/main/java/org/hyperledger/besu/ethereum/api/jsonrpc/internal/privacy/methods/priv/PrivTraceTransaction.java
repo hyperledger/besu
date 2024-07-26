@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.Privac
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.privateTracing.PrivateFlatTrace;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
@@ -30,7 +31,11 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import java.util.function.Supplier;
+import java.util.stream.Stream;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,5 +74,12 @@ public class PrivTraceTransaction extends AbstractPrivateTraceByHash implements 
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
         arrayNodeFromTraceStream(resultByTransactionHash(transactionHash, requestContext)));
+  }
+
+  protected JsonNode arrayNodeFromTraceStream(final Stream<PrivateFlatTrace> traceStream) {
+    final ObjectMapper mapper = new ObjectMapper();
+    final ArrayNode resultArrayNode = mapper.createArrayNode();
+    traceStream.forEachOrdered(resultArrayNode::addPOJO);
+    return resultArrayNode;
   }
 }

@@ -17,9 +17,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.priva
 import static com.fasterxml.jackson.annotation.JsonInclude.Include.NON_NULL;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateTransactionTrace;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.Trace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.Action;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.tracing.flat.Result;
+import org.hyperledger.besu.ethereum.debug.TraceFrame;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -135,7 +137,22 @@ public class PrivateFlatTrace implements Trace {
   static PrivateFlatTrace.Builder freshBuilder(final PrivateTransactionTrace transactionTrace) {
     return PrivateFlatTrace.builder()
         .resultBuilder(Result.builder())
-        .actionBuilder(Action.Builder.from(transactionTrace));
+        .actionBuilder(from(transactionTrace));
+  }
+
+  public static Action.Builder from(final PrivateTransactionTrace trace) {
+    final Action.Builder builder =
+        Action.builder()
+            .from(trace.getPrivateTransaction().getSender().toHexString())
+            .value(Quantity.create(trace.getPrivateTransaction().getValue()));
+    if (!trace.getTraceFrames().isEmpty()) {
+      final TraceFrame traceFrame = trace.getTraceFrames().get(0);
+      builder.gas(
+          "0x"
+              + Long.toHexString(
+                  traceFrame.getGasRemaining() + (traceFrame.getPrecompiledGasCost().orElse(0L))));
+    }
+    return builder;
   }
 
   public Action getAction() {

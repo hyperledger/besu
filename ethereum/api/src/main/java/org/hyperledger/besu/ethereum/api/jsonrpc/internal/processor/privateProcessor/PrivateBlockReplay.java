@@ -14,12 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor;
 
-import static org.hyperledger.besu.ethereum.mainnet.feemarket.ExcessBlobGasCalculator.calculateExcessBlobGasForParent;
-
-import org.hyperledger.besu.datatypes.BlobGas;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockBody;
@@ -38,17 +32,14 @@ public class PrivateBlockReplay {
 
   private final ProtocolSchedule protocolSchedule;
   private final Blockchain blockchain;
-  private final ProtocolContext protocolContext;
   private final PrivacyController privacyController;
 
   public PrivateBlockReplay(
       final ProtocolSchedule protocolSchedule,
       final Blockchain blockchain,
-      final ProtocolContext protocolContext,
       final PrivacyController privacyController) {
     this.protocolSchedule = protocolSchedule;
     this.blockchain = blockchain;
-    this.protocolContext = protocolContext;
     this.privacyController = privacyController;
   }
 
@@ -61,15 +52,6 @@ public class PrivateBlockReplay {
         block.getHeader(),
         block.getBody(),
         (body, header, blockchain, transactionProcessor, protocolSpec) -> {
-          final Wei dataGasPrice =
-              protocolSpec
-                  .getFeeMarket()
-                  .blobGasPricePerGas(
-                      blockchain
-                          .getBlockHeader(header.getParentHash())
-                          .map(parent -> calculateExcessBlobGasForParent(protocolSpec, parent))
-                          .orElse(BlobGas.ZERO));
-
           final List<PrivateTransactionTrace> transactionTraces =
               privateBlockMetadata.getPrivateTransactionMetadataList().stream()
                   .map(
@@ -84,22 +66,12 @@ public class PrivateBlockReplay {
                                           executedPrivateTransaction,
                                           header,
                                           blockchain,
-                                          transactionProcessor,
-                                          dataGasPrice))
+                                          transactionProcessor))
                               .orElse(null))
                   .toList();
 
           return Optional.of(new PrivateBlockTrace(transactionTraces));
         });
-  }
-
-  public <T> Optional<T> performActionWithBlock(final Hash blockHash, final BlockAction<T> action) {
-    Optional<Block> maybeBlock = getBlock(blockHash);
-    if (maybeBlock.isEmpty()) {
-      maybeBlock = protocolContext.getBadBlockManager().getBadBlock(blockHash);
-    }
-    return maybeBlock.flatMap(
-        block -> performActionWithBlock(block.getHeader(), block.getBody(), action));
   }
 
   private <T> Optional<T> performActionWithBlock(
@@ -115,17 +87,6 @@ public class PrivateBlockReplay {
         protocolSpec.getPrivateTransactionProcessor();
 
     return action.perform(body, header, blockchain, transactionProcessor, protocolSpec);
-  }
-
-  private Optional<Block> getBlock(final Hash blockHash) {
-    final BlockHeader blockHeader = blockchain.getBlockHeader(blockHash).orElse(null);
-    if (blockHeader != null) {
-      final BlockBody blockBody = blockchain.getBlockBody(blockHeader.getHash()).orElse(null);
-      if (blockBody != null) {
-        return Optional.of(new Block(blockHeader, blockBody));
-      }
-    }
-    return Optional.empty();
   }
 
   @FunctionalInterface
@@ -144,7 +105,6 @@ public class PrivateBlockReplay {
         ExecutedPrivateTransaction transaction,
         BlockHeader blockHeader,
         Blockchain blockchain,
-        PrivateTransactionProcessor transactionProcessor,
-        Wei dataGasPrice);
+        PrivateTransactionProcessor transactionProcessor);
   }
 }

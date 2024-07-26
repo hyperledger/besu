@@ -33,7 +33,6 @@ public class PrivateBlockTracer {
   private final PrivateBlockReplay blockReplay;
   // Either the initial block state or the state of the prior TX, including miner rewards.
   private WorldUpdater chainedUpdater;
-  private WorldUpdater privateChainedUpdater;
 
   public PrivateBlockTracer(final PrivateBlockReplay blockReplay) {
     this.blockReplay = blockReplay;
@@ -57,18 +56,17 @@ public class PrivateBlockTracer {
       final PrivateTracer.TraceableState mutableWorldState,
       final DebugOperationTracer tracer,
       final String privacyGroupId) {
-    return (transaction, header, blockchain, transactionProcessor, dataGasPrice) -> {
+    return (transaction, header, blockchain, transactionProcessor) -> {
       // if we have no prior updater, it must be the first TX, so use the block's initial state
       if (chainedUpdater == null) {
         chainedUpdater = mutableWorldState.updater();
-        privateChainedUpdater = mutableWorldState.privateUpdater();
 
       } else if (chainedUpdater instanceof StackedUpdater<?, ?> stackedUpdater) {
         stackedUpdater.markTransactionBoundary();
       }
       // create an updater for just this tx
       chainedUpdater = chainedUpdater.updater();
-      privateChainedUpdater = mutableWorldState.privateUpdater();
+      WorldUpdater privateChainedUpdater = mutableWorldState.privateUpdater();
       final TransactionProcessingResult result =
           transactionProcessor.processTransaction(
               chainedUpdater,

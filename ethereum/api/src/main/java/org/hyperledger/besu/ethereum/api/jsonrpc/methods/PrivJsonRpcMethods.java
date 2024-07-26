@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 
-import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -50,18 +49,15 @@ import java.util.Map;
 public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
   private final FilterManager filterManager;
-  private final ProtocolContext protocolContext;
 
   public PrivJsonRpcMethods(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
       final TransactionPool transactionPool,
       final PrivacyParameters privacyParameters,
-      final FilterManager filterManager,
-      final ProtocolContext protocolContext) {
+      final FilterManager filterManager) {
     super(blockchainQueries, protocolSchedule, transactionPool, privacyParameters);
     this.filterManager = filterManager;
-    this.protocolContext = protocolContext;
   }
 
   @Override
@@ -77,10 +73,7 @@ public class PrivJsonRpcMethods extends PrivacyApiGroupJsonRpcMethods {
 
     final PrivateBlockReplay blockReplay =
         new PrivateBlockReplay(
-            getProtocolSchedule(),
-            getBlockchainQueries().getBlockchain(),
-            protocolContext,
-            privacyController);
+            getProtocolSchedule(), getBlockchainQueries().getBlockchain(), privacyController);
     final Map<String, JsonRpcMethod> RPC_METHODS =
         mapOf(
             new PrivCall(getBlockchainQueries(), privacyController, privacyIdProvider),
