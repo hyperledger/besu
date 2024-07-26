@@ -593,16 +593,7 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
 
     @Override
     public boolean test(final Pair<Bytes32, Bytes> pair) {
-      Bytes32 key = pair.getFirst();
-      int compareTo = endKey.compareTo(key);
-      int lastKeyCompareTo = endKey.compareTo(lastKey.getAndSet(pair.getFirst()));
-      LOGGER.info(
-          "endKey {} key {} compareTo {}, lastCompareTo {}",
-          endKey,
-          key,
-          compareTo,
-          lastKeyCompareTo);
-      return lastKeyCompareTo > 0;
+      return endKey.compareTo(lastKey.getAndSet(pair.getFirst())) > 0;
     }
   }
 
