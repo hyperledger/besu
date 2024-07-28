@@ -518,15 +518,13 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     if (optStorage.isEmpty() && location.isEmpty()) {
                       optStorage = Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
                     }
-                    if (optStorage.isPresent()) {
-                      if (!trieNodes.isEmpty()
-                          && (sumListBytes(trieNodes) + optStorage.get().size() > maxResponseBytes
-                              || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
-                        break;
-                      }
-                      trieNodes.add(optStorage.get());
+                    var trieNode = optStorage.orElse(Bytes.EMPTY);
+                    if (!trieNodes.isEmpty()
+                        && (sumListBytes(trieNodes) + trieNode.size() > maxResponseBytes
+                            || stopWatch.getTime() > StatefulPredicate.MAX_MILLIS_PER_REQUEST)) {
+                      break;
                     }
-
+                    trieNodes.add(trieNode);
                   } else {
                     // There must be at least one element in the path otherwise it is invalid
                     if (triePath.isEmpty()) {
@@ -537,7 +535,11 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                     // otherwise the first element should be account hash, and subsequent paths
                     // are compact encoded account storage paths
 
-                    final Bytes accountPrefix = Bytes32.leftPad(triePath.getFirst());
+                    final Bytes32 accountPrefix = Bytes32.leftPad(triePath.getFirst());
+                    var optAccount = storage.getAccount(Hash.wrap(accountPrefix));
+                    if (optAccount.isEmpty()) {
+                      continue;
+                    }
 
                     List<Bytes> storagePaths = triePath.subList(1, triePath.size());
                     for (var path : storagePaths) {
@@ -547,14 +549,12 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                       if (optStorage.isEmpty() && location.isEmpty()) {
                         optStorage = Optional.of(MerkleTrie.EMPTY_TRIE_NODE);
                       }
-                      if (optStorage.isPresent()) {
-                        if (!trieNodes.isEmpty()
-                            && sumListBytes(trieNodes) + optStorage.get().size()
-                                > maxResponseBytes) {
-                          break;
-                        }
-                        trieNodes.add(optStorage.get());
+                      var trieNode = optStorage.orElse(Bytes.EMPTY);
+                      if (!trieNodes.isEmpty()
+                          && sumListBytes(trieNodes) + trieNode.size() > maxResponseBytes) {
+                        break;
                       }
+                      trieNodes.add(trieNode);
                     }
                   }
                 }
