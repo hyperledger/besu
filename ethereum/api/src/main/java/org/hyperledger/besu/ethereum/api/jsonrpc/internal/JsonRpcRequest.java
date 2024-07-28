@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,7 +52,8 @@ public class JsonRpcRequest {
     this.method = method;
     this.params = params;
     if (method == null) {
-      throw new InvalidJsonRpcRequestException("Field 'method' is required");
+      throw new InvalidJsonRpcRequestException(
+          "Field 'method' is required", RpcErrorType.INVALID_METHOD_PARAMS);
     }
   }
 
@@ -130,15 +132,18 @@ public class JsonRpcRequest {
     return Objects.hash(id, method, Arrays.hashCode(params), version, isNotification);
   }
 
-  public <T> T getRequiredParameter(final int index, final Class<T> paramClass) {
+  public <T> T getRequiredParameter(final int index, final Class<T> paramClass)
+      throws JsonRpcParameter.JsonRpcParameterException {
     return parameterAccessor.required(params, index, paramClass);
   }
 
-  public <T> Optional<T> getOptionalParameter(final int index, final Class<T> paramClass) {
+  public <T> Optional<T> getOptionalParameter(final int index, final Class<T> paramClass)
+      throws JsonRpcParameter.JsonRpcParameterException {
     return parameterAccessor.optional(params, index, paramClass);
   }
 
-  public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> paramClass) {
+  public <T> Optional<List<T>> getOptionalList(final int index, final Class<T> paramClass)
+      throws JsonRpcParameter.JsonRpcParameterException {
     return parameterAccessor.optionalList(params, index, paramClass);
   }
 

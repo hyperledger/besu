@@ -14,13 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+
 public class InvalidJsonRpcParameters extends InvalidJsonRpcRequestException {
 
-  public InvalidJsonRpcParameters(final String s) {
-    super(s);
+  public InvalidJsonRpcParameters(final String s, final RpcErrorType rpcErrorType) {
+    super(s, rpcErrorType);
   }
 
-  public InvalidJsonRpcParameters(final String message, final Throwable cause) {
-    super(message, cause);
+  public InvalidJsonRpcParameters(
+      final String message, final RpcErrorType rpcErrorType, final Throwable cause) {
+    super(message, rpcErrorType, cause);
   }
 }

@@ -78,7 +78,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid transaction parameter");
   }
 
   @Test
@@ -88,7 +88,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid transaction parameter");
   }
 
   @Test
@@ -99,7 +99,7 @@ public class EeaSendRawTransactionTest extends BaseEeaSendRawTransaction {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid transaction parameter");
   }
 
   @Test

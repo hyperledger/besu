@@ -198,7 +198,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas fields");
+    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas used field");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -218,7 +218,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas fields");
+    assertThat(jsonRpcError.getData()).isEqualTo("Missing excess blob gas field");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 

@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
 import java.util.Optional;
@@ -51,10 +50,5 @@ public class EngineForkchoiceUpdatedV1 extends AbstractEngineForkchoiceUpdated {
   @Override
   protected boolean requireTerminalPoWBlockValidation() {
     return true;
-  }
-
-  @Override
-  protected RpcErrorType getInvalidParametersError() {
-    return RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES;
   }
 }

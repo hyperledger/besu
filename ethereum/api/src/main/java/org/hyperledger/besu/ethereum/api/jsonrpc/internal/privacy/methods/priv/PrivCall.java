@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -53,14 +54,25 @@ public class PrivCall extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(2, BlockParameter.class);
+    try {
+      return request.getRequiredParameter(2, BlockParameter.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
   }
 
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
     final JsonCallParameter callParams = validateAndGetCallParams(request);
-    final String privacyGroupId = request.getRequiredParameter(0, String.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = request.getRequiredParameter(0, String.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter", RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS, e);
+    }
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
@@ -99,9 +111,16 @@ public class PrivCall extends AbstractBlockParameterMethod {
   }
 
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final JsonCallParameter callParams = request.getRequiredParameter(1, JsonCallParameter.class);
+    final JsonCallParameter callParams;
+    try {
+      callParams = request.getRequiredParameter(1, JsonCallParameter.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid call parameters", RpcErrorType.INVALID_CALL_PARAMS);
+    }
     if (callParams.getTo() == null) {
-      throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
+      throw new InvalidJsonRpcParameters(
+          "Missing \"to\" field in call arguments", RpcErrorType.INVALID_CALL_PARAMS);
     }
     return callParams;
   }

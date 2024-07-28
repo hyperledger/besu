@@ -56,11 +56,11 @@ public class EngineNewPayloadV2 extends AbstractEngineNewPayload {
       final Optional<String> maybeBeaconBlockRootParam) {
     if (payloadParameter.getBlobGasUsed() != null) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "non-null BlobGasUsed pre-cancun");
+          RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS, "non-null BlobGasUsed pre-cancun");
     }
     if (payloadParameter.getExcessBlobGas() != null) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "non-null ExcessBlobGas pre-cancun");
+          RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS, "non-null ExcessBlobGas pre-cancun");
     }
     return ValidationResult.valid();
   }

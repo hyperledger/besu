@@ -257,7 +257,7 @@ public class WebSocketMessageHandlerTest {
     final JsonRpcRequestContext expectedRequest =
         new JsonRpcRequestContext(requestJson.mapTo(WebSocketRpcRequest.class));
     when(jsonRpcMethodMock.response(eq(expectedRequest)))
-        .thenThrow(new InvalidJsonRpcParameters(""));
+        .thenThrow(new InvalidJsonRpcParameters("", RpcErrorType.INVALID_PARAMS));
     final JsonRpcErrorResponse expectedResponse =
         new JsonRpcErrorResponse(1, RpcErrorType.INVALID_PARAMS);
 

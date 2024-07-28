@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters;
 
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-
 import java.util.List;
 import java.util.Optional;
 
@@ -40,12 +38,13 @@ public class JsonRpcParameter {
    * @param <T> The type of parameter.
    * @return Returns the parameter cast as T if available, otherwise throws exception.
    */
-  public <T> T required(final Object[] params, final int index, final Class<T> paramClass) {
-    return optional(params, index, paramClass)
-        .orElseThrow(
-            () ->
-                new InvalidJsonRpcParameters(
-                    "Missing required json rpc parameter at index " + index));
+  public <T> T required(final Object[] params, final int index, final Class<T> paramClass)
+      throws JsonRpcParameterException {
+    Optional<T> result = optional(params, index, paramClass);
+    if (result.isEmpty()) {
+      throw new JsonRpcParameterException("Missing required json rpc parameter at index " + index);
+    }
+    return result.get();
   }
 
   /**
@@ -59,8 +58,8 @@ public class JsonRpcParameter {
    * @return Returns the parameter cast as T if available.
    */
   @SuppressWarnings("unchecked")
-  public <T> Optional<T> optional(
-      final Object[] params, final int index, final Class<T> paramClass) {
+  public <T> Optional<T> optional(final Object[] params, final int index, final Class<T> paramClass)
+      throws JsonRpcParameterException {
     if (params == null || params.length <= index || params[index] == null) {
       return Optional.empty();
     }
@@ -76,7 +75,7 @@ public class JsonRpcParameter {
         final String json = mapper.writeValueAsString(rawParam);
         param = mapper.readValue(json, paramClass);
       } catch (final JsonProcessingException e) {
-        throw new InvalidJsonRpcParameters(
+        throw new JsonRpcParameterException(
             String.format(
                 "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
                 index, rawParam, rawParam.getClass().getName(), paramClass.getName()),
@@ -88,7 +87,8 @@ public class JsonRpcParameter {
   }
 
   public <T> Optional<List<T>> optionalList(
-      final Object[] params, final int index, final Class<T> listClass) {
+      final Object[] params, final int index, final Class<T> listClass)
+      throws JsonRpcParameterException {
     if (params == null || params.length <= index || params[index] == null) {
       return Optional.empty();
     }
@@ -99,7 +99,7 @@ public class JsonRpcParameter {
         List<T> returnedList = mapper.readValue(listJson, new TypeReference<List<T>>() {});
         return Optional.of(returnedList);
       } catch (JsonProcessingException e) {
-        throw new InvalidJsonRpcParameters(
+        throw new JsonRpcParameterException(
             String.format(
                 "Invalid json rpc parameter at index %d. Supplied value was: '%s' of type: '%s' - expected type: '%s'",
                 index, rawParam, rawParam.getClass().getName(), listClass.getName()),
@@ -107,5 +107,15 @@ public class JsonRpcParameter {
       }
     }
     return Optional.empty();
+  }
+
+  public static class JsonRpcParameterException extends Exception {
+    public JsonRpcParameterException(final String message) {
+      super(message);
+    }
+
+    public JsonRpcParameterException(final String message, final Throwable cause) {
+      super(message, cause);
+    }
   }
 }

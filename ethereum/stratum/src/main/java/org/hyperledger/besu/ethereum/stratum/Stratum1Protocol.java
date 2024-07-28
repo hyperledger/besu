@@ -17,7 +17,10 @@ package org.hyperledger.besu.ethereum.stratum;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 import org.hyperledger.besu.ethereum.blockcreation.PoWMiningCoordinator;
 import org.hyperledger.besu.ethereum.mainnet.DirectAcyclicGraphSeed;
@@ -170,13 +173,29 @@ public class Stratum1Protocol implements StratumProtocol {
 
   private void handleMiningSubmit(final JsonRpcRequest message, final Consumer<String> sender) {
     LOG.debug("Miner submitted solution {}", message);
+    long nonce = 0;
+    try {
+      nonce = Bytes.fromHexString(message.getRequiredParameter(2, String.class)).getLong(0);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid nonce parameter", RpcErrorType.INVALID_NONCE_PARAMS, e);
+    }
+    Hash mixHash = null;
+    try {
+      mixHash = Hash.fromHexString(message.getRequiredParameter(4, String.class));
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid mix hash parameter", RpcErrorType.INVALID_MIX_HASH_PARAMS, e);
+    }
+    Bytes powHash = null;
+    try {
+      powHash = Bytes.fromHexString(message.getRequiredParameter(3, String.class));
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid PoW hash parameter", RpcErrorType.INVALID_POW_HASH_PARAMS, e);
+    }
     boolean result = false;
-    final PoWSolution solution =
-        new PoWSolution(
-            Bytes.fromHexString(message.getRequiredParameter(2, String.class)).getLong(0),
-            Hash.fromHexString(message.getRequiredParameter(4, String.class)),
-            null,
-            Bytes.fromHexString(message.getRequiredParameter(3, String.class)));
+    final PoWSolution solution = new PoWSolution(nonce, mixHash, null, powHash);
     if (currentInput.getPrePowHash().equals(solution.getPowHash())) {
       result = submitCallback.apply(solution);
     }

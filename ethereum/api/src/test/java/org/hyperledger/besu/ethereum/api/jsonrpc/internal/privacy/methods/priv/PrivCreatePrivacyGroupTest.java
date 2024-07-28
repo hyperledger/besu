@@ -231,7 +231,7 @@ public class PrivCreatePrivacyGroupTest {
         catchThrowableOfType(
             () -> privCreatePrivacyGroup.response(request), InvalidJsonRpcParameters.class);
 
-    assertThat(response.getMessage()).contains("Invalid json rpc parameter at index 0");
+    assertThat(response.getMessage()).contains("Invalid create privacy group parameter");
   }
 
   @Test
@@ -249,7 +249,7 @@ public class PrivCreatePrivacyGroupTest {
         catchThrowableOfType(
             () -> privCreatePrivacyGroup.response(request), InvalidJsonRpcParameters.class);
 
-    assertThat(response.getMessage()).isEqualTo("Missing required json rpc parameter at index 0");
+    assertThat(response.getMessage()).isEqualTo("Invalid create privacy group parameter");
   }
 
   @Test

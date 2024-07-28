@@ -13,7 +13,7 @@
     "id": 415,
     "error": {
       "code": -32602,
-      "message": "Invalid params"
+      "message": "Invalid trace type params"
     }
   },
   "statusCode": 200

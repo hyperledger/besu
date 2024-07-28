@@ -55,14 +55,19 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       final EnginePayloadParameter payloadParameter,
       final Optional<List<String>> maybeVersionedHashParam,
       final Optional<String> maybeBeaconBlockRootParam) {
-    if (payloadParameter.getBlobGasUsed() == null || payloadParameter.getExcessBlobGas() == null) {
-      return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing blob gas fields");
+    if (payloadParameter.getBlobGasUsed() == null) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS, "Missing blob gas used field");
+    } else if (payloadParameter.getExcessBlobGas() == null) {
+      return ValidationResult.invalid(
+          RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS, "Missing excess blob gas field");
     } else if (maybeVersionedHashParam == null || maybeVersionedHashParam.isEmpty()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "Missing versioned hashes field");
+          RpcErrorType.INVALID_VERSIONED_HASH_PARAMS, "Missing versioned hashes field");
     } else if (maybeBeaconBlockRootParam.isEmpty()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root field");
+          RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
+          "Missing parent beacon block root field");
     } else {
       return ValidationResult.valid();
     }

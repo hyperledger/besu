@@ -735,7 +735,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
   }
 
   protected RpcErrorType expectedInvalidPayloadError() {
-    return RpcErrorType.INVALID_PARAMS;
+    return RpcErrorType.INVALID_WITHDRAWALS_PARAMS;
   }
 
   private JsonRpcResponse resp(

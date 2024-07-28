@@ -57,7 +57,7 @@ public class EthSendRawTransactionTest {
             new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -70,7 +70,7 @@ public class EthSendRawTransactionTest {
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "eth_sendRawTransaction", null));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -84,7 +84,7 @@ public class EthSendRawTransactionTest {
             new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {null}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -100,7 +100,8 @@ public class EthSendRawTransactionTest {
             new JsonRpcRequest("2.0", "eth_sendRawTransaction", new String[] {rawTransaction}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(
+            request.getRequest().getId(), RpcErrorType.INVALID_TRANSACTION_PARAMS);
 
     final JsonRpcResponse actualResponse = method.response(request);
 

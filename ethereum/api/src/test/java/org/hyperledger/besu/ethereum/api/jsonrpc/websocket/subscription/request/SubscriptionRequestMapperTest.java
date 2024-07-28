@@ -83,7 +83,7 @@ public class SubscriptionRequestMapperTest {
         .isInstanceOf(InvalidSubscriptionRequestException.class)
         .getCause()
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid subscription type parameter");
   }
 
   @Test
@@ -138,7 +138,7 @@ public class SubscriptionRequestMapperTest {
         .isInstanceOf(InvalidSubscriptionRequestException.class)
         .getCause()
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid subscription parameter");
   }
 
   @Test
@@ -290,7 +290,7 @@ public class SubscriptionRequestMapperTest {
         .isInstanceOf(InvalidSubscriptionRequestException.class)
         .getCause()
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid filter parameters");
   }
 
   @Test
@@ -303,7 +303,7 @@ public class SubscriptionRequestMapperTest {
         .isInstanceOf(InvalidSubscriptionRequestException.class)
         .getCause()
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid filter parameters");
   }
 
   @Test
@@ -372,7 +372,7 @@ public class SubscriptionRequestMapperTest {
         .isInstanceOf(InvalidSubscriptionRequestException.class)
         .getCause()
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid subscription type parameter");
   }
 
   @Test

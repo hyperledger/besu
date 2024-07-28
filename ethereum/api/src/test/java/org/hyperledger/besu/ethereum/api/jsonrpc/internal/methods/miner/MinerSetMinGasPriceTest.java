@@ -48,7 +48,7 @@ public class MinerSetMinGasPriceTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(),
             new JsonRpcError(
-                RpcErrorType.INVALID_PARAMS,
+                RpcErrorType.INVALID_MIN_GAS_PRICE_PARAMS,
                 "Illegal character '-' found at index 0 in hex binary representation"));
 
     final JsonRpcResponse actual = method.response(request);

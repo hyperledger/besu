@@ -12,7 +12,7 @@
     "id": 1,
     "error" : {
       "code" : -32602,
-      "message" : "Invalid params"
+      "message" : "Invalid transaction params (missing or incorrect)"
     }
   },
   "statusCode": 200

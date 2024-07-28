@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -49,8 +51,20 @@ public class PrivNewFilter implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
-    final String privacyGroupId = request.getRequiredParameter(0, String.class);
-    final FilterParameter filter = request.getRequiredParameter(1, FilterParameter.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = request.getRequiredParameter(0, String.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter", RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS, e);
+    }
+    final FilterParameter filter;
+    try {
+      filter = request.getRequiredParameter(1, FilterParameter.class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid filter parameter", RpcErrorType.INVALID_FILTER_PARAMS, e);
+    }
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
     if (privacyController instanceof MultiTenancyPrivacyController) {
@@ -60,7 +74,8 @@ public class PrivNewFilter implements JsonRpcMethod {
     }
 
     if (!filter.isValid()) {
-      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          request.getRequest().getId(), RpcErrorType.INVALID_FILTER_PARAMS);
     }
 
     final String logFilterId =
