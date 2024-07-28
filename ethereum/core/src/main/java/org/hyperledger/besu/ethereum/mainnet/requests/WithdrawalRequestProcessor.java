@@ -35,10 +35,10 @@ public class WithdrawalRequestProcessor
   private static final int WITHDRAWAL_REQUEST_BYTES_SIZE =
       ADDRESS_BYTES + PUBLIC_KEY_BYTES + AMOUNT_BYTES;
 
-  private final Address withdrawakRequestPredeployAddress;
+  private final Address withdrawalRequestPredeployAddress;
 
   public WithdrawalRequestProcessor(final Address withdrawalRequestPredeployAddress) {
-    this.withdrawakRequestPredeployAddress = withdrawalRequestPredeployAddress;
+    this.withdrawalRequestPredeployAddress = withdrawalRequestPredeployAddress;
   }
 
   /**
@@ -48,7 +48,7 @@ public class WithdrawalRequestProcessor
    */
   @Override
   protected Address getCallAddress() {
-    return withdrawakRequestPredeployAddress;
+    return withdrawalRequestPredeployAddress;
   }
 
   /**
