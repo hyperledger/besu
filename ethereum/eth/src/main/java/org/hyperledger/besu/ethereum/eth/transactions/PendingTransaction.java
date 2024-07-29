@@ -50,18 +50,20 @@ public abstract class PendingTransaction
   private final Transaction transaction;
   private final long addedAt;
   private final long sequence; // Allows prioritization based on order transactions are added
+  private volatile byte score;
 
   private int memorySize = NOT_INITIALIZED;
 
   private PendingTransaction(
-      final Transaction transaction, final long addedAt, final long sequence) {
+      final Transaction transaction, final long addedAt, final long sequence, final byte score) {
     this.transaction = transaction;
     this.addedAt = addedAt;
     this.sequence = sequence;
+    this.score = score;
   }
 
   private PendingTransaction(final Transaction transaction, final long addedAt) {
-    this(transaction, addedAt, TRANSACTIONS_ADDED.getAndIncrement());
+    this(transaction, addedAt, TRANSACTIONS_ADDED.getAndIncrement(), Byte.MAX_VALUE);
   }
 
   public static PendingTransaction newPendingTransaction(
@@ -121,6 +123,20 @@ public abstract class PendingTransaction
       memorySize = computeMemorySize();
     }
     return memorySize;
+  }
+
+  public byte getScore() {
+    return score;
+  }
+
+  public void decrementScore() {
+    // use temp var to avoid non-atomic update of volatile var
+    final byte newScore = (byte) (score - 1);
+
+    // check to avoid underflow
+    if (newScore < score) {
+      score = newScore;
+    }
   }
 
   public abstract PendingTransaction detachedCopy();
@@ -255,6 +271,8 @@ public abstract class PendingTransaction
         + isReceivedFromLocalSource()
         + ", hasPriority="
         + hasPriority()
+        + ", score="
+        + score
         + '}';
   }
 
@@ -267,6 +285,8 @@ public abstract class PendingTransaction
         + isReceivedFromLocalSource()
         + ", hasPriority="
         + hasPriority()
+        + ", score="
+        + score
         + ", "
         + transaction.toTraceLog()
         + "}";
@@ -282,13 +302,13 @@ public abstract class PendingTransaction
       this(transaction, System.currentTimeMillis());
     }
 
-    private Local(final long sequence, final Transaction transaction) {
-      super(transaction, System.currentTimeMillis(), sequence);
+    private Local(final long sequence, final byte score, final Transaction transaction) {
+      super(transaction, System.currentTimeMillis(), sequence, score);
     }
 
     @Override
     public PendingTransaction detachedCopy() {
-      return new Local(getSequence(), getTransaction().detachedCopy());
+      return new Local(getSequence(), getScore(), getTransaction().detachedCopy());
     }
 
     @Override
@@ -310,13 +330,13 @@ public abstract class PendingTransaction
         super(transaction, addedAt);
       }
 
-      public Priority(final long sequence, final Transaction transaction) {
-        super(sequence, transaction);
+      public Priority(final long sequence, final byte score, final Transaction transaction) {
+        super(sequence, score, transaction);
       }
 
       @Override
       public PendingTransaction detachedCopy() {
-        return new Priority(getSequence(), getTransaction().detachedCopy());
+        return new Priority(getSequence(), getScore(), getTransaction().detachedCopy());
       }
 
       @Override
@@ -336,13 +356,13 @@ public abstract class PendingTransaction
       this(transaction, System.currentTimeMillis());
     }
 
-    private Remote(final long sequence, final Transaction transaction) {
-      super(transaction, System.currentTimeMillis(), sequence);
+    private Remote(final long sequence, final byte score, final Transaction transaction) {
+      super(transaction, System.currentTimeMillis(), sequence, score);
     }
 
     @Override
     public PendingTransaction detachedCopy() {
-      return new Remote(getSequence(), getTransaction().detachedCopy());
+      return new Remote(getSequence(), getScore(), getTransaction().detachedCopy());
     }
 
     @Override
@@ -364,13 +384,13 @@ public abstract class PendingTransaction
         super(transaction, addedAt);
       }
 
-      public Priority(final long sequence, final Transaction transaction) {
-        super(sequence, transaction);
+      public Priority(final long sequence, final byte score, final Transaction transaction) {
+        super(sequence, score, transaction);
       }
 
       @Override
       public PendingTransaction detachedCopy() {
-        return new Priority(getSequence(), getTransaction().detachedCopy());
+        return new Priority(getSequence(), getScore(), getTransaction().detachedCopy());
       }
 
       @Override

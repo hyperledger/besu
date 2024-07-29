@@ -18,6 +18,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.GenesisHash;
 import static org.hyperledger.besu.ethereum.forkid.ForkIdTestUtil.mockBlockchain;
 
+import org.hyperledger.besu.ethereum.chain.Blockchain;
+
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -77,6 +79,13 @@ public class ForkIdBackwardCompatibilityTest {
             8L,
             Arrays.asList(0L, 0L, 4L, 5L, 6L),
             true,
+            null),
+        Arguments.of(
+            "no forks and legacyEth64=true",
+            GenesisHash.PRIVATE,
+            8L,
+            Collections.emptyList(),
+            true,
             null));
   }
 
@@ -90,13 +99,11 @@ public class ForkIdBackwardCompatibilityTest {
       final boolean legacyEth64,
       final ForkId wantForkId) {
     LOG.info("Running test case {}", name);
+    final Blockchain blockchain = mockBlockchain(genesisHash, head, 0);
     final ForkIdManager forkIdManager =
-        new ForkIdManager(
-            mockBlockchain(genesisHash, head, 0), forks, Collections.emptyList(), legacyEth64);
+        new ForkIdManager(blockchain, forks, Collections.emptyList(), legacyEth64);
     final ForkId legacyForkId =
-        legacyEth64
-            ? new LegacyForkIdManager(mockBlockchain(genesisHash, head, 0), forks).getLatestForkId()
-            : null;
+        legacyEth64 ? new LegacyForkIdManager(blockchain, forks).getLatestForkId() : null;
     assertThat(forkIdManager.getForkIdForChainHead())
         .isEqualTo(legacyEth64 ? legacyForkId : wantForkId);
   }
