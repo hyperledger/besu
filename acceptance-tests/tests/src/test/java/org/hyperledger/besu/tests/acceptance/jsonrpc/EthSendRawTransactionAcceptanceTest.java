@@ -80,7 +80,9 @@ public class EthSendRawTransactionAcceptanceTest extends AcceptanceTestBase {
   @Test
   public void shouldFailToSendWithInvalidRlp() {
     final String invalidRawTx = "0x5555";
-    strictNode.verify(eth.expectEthSendRawTransactionException(invalidRawTx, "Invalid params"));
+    strictNode.verify(
+        eth.expectEthSendRawTransactionException(
+            invalidRawTx, "Invalid transaction params (missing or incorrect)"));
   }
 
   @Test
