@@ -37,7 +37,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_BLOCK_PARAMS(-32602, "Invalid block, unable to parse RLP"),
   INVALID_BLOCK_COUNT_PARAMS(-32602, "Invalid block count params"),
   INVALID_BLOCK_HASH_PARAMS(-32602, "Invalid block hash params"),
-  INVALID_BLOCK_INDEX_PARAMS(-32602, "Invalid black index params"),
+  INVALID_BLOCK_INDEX_PARAMS(-32602, "Invalid block index params"),
   INVALID_BLOCK_NUMBER_PARAMS(-32602, "Invalid block number params"),
   INVALID_CALL_PARAMS(-32602, "Invalid call params"),
   INVALID_CONSOLIDATION_REQUEST_PARAMS(-32602, "Invalid consolidation request params"),
