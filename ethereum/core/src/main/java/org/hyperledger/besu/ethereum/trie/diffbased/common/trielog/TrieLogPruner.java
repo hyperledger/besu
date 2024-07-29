@@ -98,6 +98,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
   @VisibleForTesting
   void preloadQueueWithTimeout(final int timeoutInSeconds) {
 
+    LOG.info("Trie log pruner queue preload starting...");
     LOG.atInfo()
         .setMessage("Attempting to load first {} trie logs from database...")
         .addArgument(loadingLimit)
@@ -125,6 +126,7 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
             .log();
       }
     }
+    LOG.info("Trie log pruner queue preload complete.");
   }
 
   private void preloadQueue() {
@@ -153,12 +155,14 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
           "Added {} trie logs to prune queue. Commencing pruning of eligible trie logs...",
           addToPruneQueueCount.intValue());
       int prunedCount = pruneFromQueue();
-      LOG.atInfo().log("Pruned {} trie logs.", prunedCount);
+      LOG.atInfo().log("Pruned {} trie logs", prunedCount);
     } catch (Exception e) {
+      LOG.warn(e.getClass().getSimpleName() + " occurred while preloading queue", e);
       if (e instanceof InterruptedException) {
+        LOG.info("Operation interrupted, but will attempt to prune what's in the queue so far...");
         int prunedCount = pruneFromQueue();
         if (prunedCount > 0) {
-          LOG.atInfo().log("Operation interrupted, but still pruned {} trie logs.", prunedCount);
+          LOG.atInfo().log("...pruned {} trie logs", prunedCount);
         }
       } else {
         LOG.error("Error loading trie logs from database, nothing pruned", e);
