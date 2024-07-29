@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
 
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
+
 import com.fasterxml.jackson.annotation.JsonGetter;
 
 public interface JsonRpcResponse {
@@ -23,5 +25,5 @@ public interface JsonRpcResponse {
     return "2.0";
   }
 
-  JsonRpcResponseType getType();
+  RpcResponseType getType();
 }
