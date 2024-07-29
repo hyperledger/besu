@@ -52,11 +52,13 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
   public static final Bytes AUTHORIZER_PRIVATE_KEY =
       Bytes.fromHexString("11f2e7b6a734ab03fa682450e0d4681d18a944f8b83c99bf7b9b4de6c0f35ea1");
 
-  private final Account otherAccount =
+  private final Account transactionSponsor =
       accounts.createAccount(
           Address.fromHexStringStrict("a05b21E5186Ce93d2a226722b85D6e550Ac7D6E3"));
-  public static final Bytes OTHER_ACCOUNT_PRIVATE_KEY =
+  public static final Bytes TRANSACTION_SPONSOR_PRIVATE_KEY =
       Bytes.fromHexString("3a4ff6d22d7502ef2452368165422861c01a0f72f851793b372b87888dc3c453");
+
+  private final Account otherAccount = accounts.createAccount("otherAccount");
 
   private BesuNode besuNode;
   private PragueAcceptanceTestHelper testHelper;
@@ -104,12 +106,13 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
             .gasLimit(1000000)
             .to(Address.fromHexStringStrict(authorizer.getAddress()))
             .value(Wei.ZERO)
-            .payload(Bytes32.leftPad(Bytes.fromHexString(otherAccount.getAddress())))
+            .payload(Bytes32.leftPad(Bytes.fromHexString(transactionSponsor.getAddress())))
             .accessList(List.of())
             .setCodeTransactionPayloads(List.of(authorization))
             .signAndBuild(
                 secp256k1.createKeyPair(
-                    secp256k1.createPrivateKey(OTHER_ACCOUNT_PRIVATE_KEY.toUnsignedBigInteger())));
+                    secp256k1.createPrivateKey(
+                        TRANSACTION_SPONSOR_PRIVATE_KEY.toUnsignedBigInteger())));
 
     final String txHash =
         besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
@@ -126,7 +129,7 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
     final BigInteger txCost =
         maybeTransactionReceipt.get().getGasUsed().multiply(new BigInteger(gasPriceWithout0x, 16));
     BigInteger expectedSponsorBalance = new BigInteger("180000000000000000000000").subtract(txCost);
-    cluster.verify(otherAccount.balanceEquals(Amount.wei(expectedSponsorBalance)));
+    cluster.verify(transactionSponsor.balanceEquals(Amount.wei(expectedSponsorBalance)));
   }
 
   /**
@@ -178,13 +181,13 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
     assertThat(maybeTransactionReceipt).isPresent();
 
     // verify that the balance of the other account has not changed
-    cluster.verify(otherAccount.balanceEquals(Amount.ether(90000)));
+    cluster.verify(otherAccount.balanceEquals(0));
 
     final String gasPriceWithout0x =
         maybeTransactionReceipt.get().getEffectiveGasPrice().substring(2);
     final BigInteger txCost =
         maybeTransactionReceipt.get().getGasUsed().multiply(new BigInteger(gasPriceWithout0x, 16));
-    BigInteger expectedSponsorBalance = new BigInteger("90000000000000000000000").subtract(txCost);
-    cluster.verify(authorizer.balanceEquals(Amount.wei(expectedSponsorBalance)));
+    BigInteger expectedSenderBalance = new BigInteger("90000000000000000000000").subtract(txCost);
+    cluster.verify(authorizer.balanceEquals(Amount.wei(expectedSenderBalance)));
   }
 }
