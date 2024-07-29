@@ -78,7 +78,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
     final Path dataDir = node.homeDirectory();
 
     final List<String> params = new ArrayList<>();
-    params.add("build/install/besu/bin/besu-untuned");
+    params.add("build/install/besu/bin/besu");
 
     params.add("--data-path");
     params.add(dataDir.toAbsolutePath().toString());
