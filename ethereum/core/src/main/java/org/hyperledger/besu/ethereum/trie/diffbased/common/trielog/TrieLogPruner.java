@@ -161,13 +161,11 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
       int prunedCount = pruneFromQueue();
       LOG.atInfo().log("Pruned {} trie logs", prunedCount);
     } catch (Exception e) {
-      LOG.warn(e.getClass().getSimpleName() + " occurred while preloading queue", e);
-      if (e.getCause() != null && e.getCause() instanceof InterruptedException) {
+      if (e instanceof InterruptedException
+          || (e.getCause() != null && e.getCause() instanceof InterruptedException)) {
         LOG.info("Operation interrupted, but will attempt to prune what's in the queue so far...");
         int prunedCount = pruneFromQueue();
-        if (prunedCount > 0) {
-          LOG.atInfo().log("...pruned {} trie logs", prunedCount);
-        }
+        LOG.atInfo().log("...pruned {} trie logs", prunedCount);
         Thread.currentThread().interrupt(); // Preserve interrupt status
       } else {
         LOG.error("Error loading trie logs from database, nothing pruned", e);

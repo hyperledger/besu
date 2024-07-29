@@ -123,6 +123,8 @@ public class TrieLogPrunerTest {
 
     // Then
     assertThat(elapsedTime).isLessThan(timeoutInMillis * 2);
+    verify(worldState, times(1)).pruneTrieLog(key(1));
+    verify(worldState, times(1)).pruneTrieLog(key(2));
   }
 
   @Test
