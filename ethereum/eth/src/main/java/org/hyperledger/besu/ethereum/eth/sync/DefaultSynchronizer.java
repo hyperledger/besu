@@ -42,6 +42,7 @@ import org.hyperledger.besu.plugin.data.SyncStatus;
 import org.hyperledger.besu.plugin.services.BesuEvents;
 import org.hyperledger.besu.plugin.services.BesuEvents.SyncStatusListener;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.util.log.FramedLogMessage;
 
 import java.io.PrintWriter;
@@ -67,6 +68,8 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   private final AtomicBoolean running = new AtomicBoolean(false);
   private final Optional<BlockPropagationManager> blockPropagationManager;
   private final Supplier<Optional<FastSyncDownloader<?>>> fastSyncFactory;
+  private final OperationTimer overallSyncTimer;
+  private OperationTimer.TimingContext overallSyncTimingContext;
   private Optional<FastSyncDownloader<?>> fastSyncDownloader;
   private final Optional<FullSyncDownloader> fullSyncDownloader;
   private final ProtocolContext protocolContext;
@@ -190,6 +193,11 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
         "in_sync",
         "Whether or not the local node has caught up to the best known peer",
         () -> getSyncStatus().isPresent() ? 0 : 1);
+    overallSyncTimer =
+        metricsSystem.createTimer(
+            BesuMetricCategory.SYNCHRONIZER,
+            "world_state_and_chain_sync_duration",
+            "Time taken to finish world state and chain sync");
   }
 
   public TrailingPeerRequirements calculateTrailingPeerRequirements() {
@@ -205,6 +213,9 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
   public CompletableFuture<Void> start() {
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
+
+      overallSyncTimingContext = overallSyncTimer.startTimer();
+
       blockPropagationManager.ifPresent(
           manager -> {
             if (!manager.isRunning()) {
@@ -390,6 +401,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     blockPropagationManager.ifPresent(BlockPropagationManager::stop);
     LOG.info("Stopping the pruner.");
     running.set(false);
+    overallSyncTimingContext.stopTimer();
     return null;
   }
 

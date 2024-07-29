@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
@@ -53,6 +54,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
   private final AtomicReference<FastWorldDownloadState> downloadState = new AtomicReference<>();
 
   private Optional<CompleteTaskStep> maybeCompleteTask = Optional.empty();
+  private OperationTimer.TimingContext syncTimingContext;
 
   public FastWorldStateDownloader(
       final EthContext ethContext,
@@ -131,13 +133,24 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
           header.getHash(),
           stateRoot);
 
+      if (syncTimingContext == null) {
+        syncTimingContext =
+            metricsSystem
+                .createTimer(
+                    BesuMetricCategory.SYNCHRONIZER,
+                    "fast_world_state_sync_duration",
+                    "Time taken to finish FastWorldState sync")
+                .startTimer();
+      }
+
       final FastWorldDownloadState newDownloadState =
           new FastWorldDownloadState(
               worldStateStorageCoordinator,
               taskCollection,
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
-              clock);
+              clock,
+              syncTimingContext);
       this.downloadState.set(newDownloadState);
 
       if (!newDownloadState.downloadWasResumed()) {

@@ -93,10 +93,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       return Optional.empty();
     }
 
-    final SnapSyncProcessState snapSyncState =
-        new SnapSyncProcessState(
-            fastSyncStateStorage.loadState(
-                ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
+    final SnapSyncProcessState snapSyncState = new SnapSyncProcessState(fastSyncState);
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection();

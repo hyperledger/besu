@@ -27,6 +27,7 @@ import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.util.ExceptionUtils;
 
@@ -51,7 +52,9 @@ public class PipelineChainDownloader implements ChainDownloader {
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
   private final Counter pipelineCompleteCounter;
   private final Counter pipelineErrorCounter;
+  private final MetricsSystem metricsSystem;
   private Pipeline<?> currentDownloadPipeline;
+  private OperationTimer.TimingContext chainDownloadTimer;
 
   public PipelineChainDownloader(
       final SyncState syncState,
@@ -63,6 +66,7 @@ public class PipelineChainDownloader implements ChainDownloader {
     this.syncTargetManager = syncTargetManager;
     this.downloadPipelineFactory = downloadPipelineFactory;
     this.scheduler = scheduler;
+    this.metricsSystem = metricsSystem;
 
     final LabelledMetric<Counter> labelledCounter =
         metricsSystem.createLabelledCounter(
@@ -79,6 +83,13 @@ public class PipelineChainDownloader implements ChainDownloader {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("Cannot start a chain download twice");
     }
+    chainDownloadTimer =
+        metricsSystem
+            .createTimer(
+                BesuMetricCategory.SYNCHRONIZER,
+                "chain_download_duration",
+                "time it takes to download the chain")
+            .startTimer();
     return performDownload();
   }
 
@@ -111,6 +122,7 @@ public class PipelineChainDownloader implements ChainDownloader {
       return performDownload();
     } else {
       LOG.info("PipelineChain download complete");
+      chainDownloadTimer.stopTimer();
       return completedFuture(null);
     }
   }
