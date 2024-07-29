@@ -14,7 +14,13 @@
  */
 package org.hyperledger.besu.plugin.services.rpc;
 
+/** Represent a Json RPC response */
 public interface RpcResponse {
 
+  /**
+   * Get the response type
+   *
+   * @return the response type
+   */
   RpcResponseType getType();
 }
