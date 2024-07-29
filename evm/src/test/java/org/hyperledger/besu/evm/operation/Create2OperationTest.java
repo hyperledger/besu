@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu.
+ * Copyright ConsenSys AG.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evm.operations;
+package org.hyperledger.besu.evm.operation;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.evm.MainnetEVMs.DEV_NET_CHAIN_ID;
@@ -25,6 +25,7 @@ import static org.mockito.Mockito.when;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.account.MutableAccount;
@@ -34,7 +35,7 @@ import org.hyperledger.besu.evm.gascalculator.ConstantinopleGasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.internal.Words;
 import org.hyperledger.besu.evm.log.Log;
-import org.hyperledger.besu.evm.operation.CreateOperation;
+import org.hyperledger.besu.evm.operation.Operation.OperationResult;
 import org.hyperledger.besu.evm.processor.ContractCreationProcessor;
 import org.hyperledger.besu.evm.testutils.TestMessageFrameBuilder;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -47,18 +48,23 @@ import javax.annotation.Nonnull;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
-class CreateOperationTest {
+public class Create2OperationTest {
 
+  private MessageFrame messageFrame;
   private final WorldUpdater worldUpdater = mock(WorldUpdater.class);
   private final MutableAccount account = mock(MutableAccount.class);
-  private final MutableAccount newAccount = mock(MutableAccount.class);
-  private final CreateOperation operation =
-      new CreateOperation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
-  private final CreateOperation maxInitCodeOperation =
-      new CreateOperation(
-          new ConstantinopleGasCalculator(), MainnetEVMs.SHANGHAI_INIT_CODE_SIZE_LIMIT);
   private final EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  private final MutableAccount newAccount = mock(MutableAccount.class);
+
+  private final Create2Operation operation =
+      new Create2Operation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
+
+  private final Create2Operation maxInitCodeOperation =
+      new Create2Operation(
+          new ConstantinopleGasCalculator(), MainnetEVMs.SHANGHAI_INIT_CODE_SIZE_LIMIT);
 
   private static final String TOPIC =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 FFs
@@ -77,108 +83,132 @@ class CreateOperationTest {
   public static final Bytes SIMPLE_EOF =
       Bytes.fromHexString("0xEF00010100040200010001040000000080000000");
   public static final String SENDER = "0xdeadc0de00000000000000000000000000000000";
+  private static final int SHANGHAI_CREATE_GAS = 41240 + (0xc000 / 32) * 6;
 
-  private static final int SHANGHAI_CREATE_GAS = 41240;
+  public static Object[][] params() {
+    return new Object[][] {
+      {
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x00",
+        "0x4D1A2e2bB4F88F0250f26Ffff098B0b30B26BF38",
+        32006
+      },
+      {
+        "0xdeadbeef00000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x00",
+        "0xB928f69Bb1D91Cd65274e3c79d8986362984fDA3",
+        32006
+      },
+      {
+        "0xdeadbeef00000000000000000000000000000000",
+        "0x000000000000000000000000feed000000000000000000000000000000000000",
+        "0x00",
+        "0xD04116cDd17beBE565EB2422F2497E06cC1C9833",
+        32006
+      },
+      {
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0xdeadbeef",
+        "0x70f2b2914A2a4b783FaEFb75f459A580616Fcb5e",
+        32006
+      },
+      {
+        "0x00000000000000000000000000000000deadbeef",
+        "0x00000000000000000000000000000000000000000000000000000000cafebabe",
+        "0xdeadbeef",
+        "0x60f3f640a8508fC6a86d45DF051962668E1e8AC7",
+        32006
+      },
+      {
+        "0x00000000000000000000000000000000deadbeef",
+        "0x00000000000000000000000000000000000000000000000000000000cafebabe",
+        "0xdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeefdeadbeef",
+        "0x1d8bfDC5D46DC4f61D6b6115972536eBE6A8854C",
+        32012
+      },
+      {
+        "0x0000000000000000000000000000000000000000",
+        "0x0000000000000000000000000000000000000000000000000000000000000000",
+        "0x",
+        "0xE33C0C7F7df4809055C3ebA6c09CFe4BaF1BD9e0",
+        32000
+      }
+    };
+  }
 
-  @Test
-  void createFromMemoryMutationSafe() {
+  public void setUp(final String sender, final String salt, final String code) {
 
-    // Given:  Execute a CREATE operation with a contract that logs in the constructor
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final Bytes codeBytes = Bytes.fromHexString(code);
+    final UInt256 memoryLength = UInt256.valueOf(codeBytes.size());
+    messageFrame =
+        MessageFrame.builder()
+            .type(MessageFrame.Type.CONTRACT_CREATION)
+            .contract(Address.ZERO)
+            .inputData(Bytes.EMPTY)
+            .sender(Address.fromHexString(sender))
+            .value(Wei.ZERO)
+            .apparentValue(Wei.ZERO)
+            .code(evm.getCodeUncached(codeBytes))
+            .completer(__ -> {})
+            .address(Address.fromHexString(sender))
+            .blockHashLookup(n -> Hash.hash(Words.longBytes(n)))
+            .blockValues(mock(BlockValues.class))
+            .gasPrice(Wei.ZERO)
+            .miningBeneficiary(Address.ZERO)
+            .originator(Address.ZERO)
+            .initialGas(100_000L)
+            .worldUpdater(worldUpdater)
+            .build();
+    messageFrame.pushStackItem(UInt256.fromHexString(salt));
+    messageFrame.pushStackItem(memoryLength);
+    messageFrame.pushStackItem(memoryOffset);
+    messageFrame.pushStackItem(UInt256.ZERO);
+    messageFrame.expandMemory(0, 500);
+    messageFrame.writeMemory(memoryOffset.trimLeadingZeros().toInt(), code.length(), codeBytes);
 
-    when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
     when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(worldUpdater.get(any())).thenReturn(account);
-    when(worldUpdater.getSenderAccount(any())).thenReturn(account);
-    when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
-    when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
-    when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
-
-    final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
-    operation.execute(messageFrame, evm);
-    final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
-    final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm, false, List.of(), 0, List.of());
-    ccp.process(createFrame, OperationTracer.NO_TRACING);
-
-    final Log log = createFrame.getLogs().get(0);
-    final String calculatedTopic = log.getTopics().get(0).toUnprefixedHexString();
-    assertThat(calculatedTopic).isEqualTo(TOPIC);
-
-    // WHEN the memory that the create operation was executed from is altered.
-    messageFrame.writeMemory(
-        memoryOffset.trimLeadingZeros().toInt(),
-        SIMPLE_CREATE.size(),
-        Bytes.random(SIMPLE_CREATE.size()));
-
-    // THEN the logs still have the expected topic
-    final String calculatedTopicAfter = log.getTopics().get(0).toUnprefixedHexString();
-    assertThat(calculatedTopicAfter).isEqualTo(TOPIC);
   }
 
-  @Test
-  void nonceTooLarge() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
-
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(account.getNonce()).thenReturn(-1L);
-
-    final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
-    operation.execute(messageFrame, evm);
-
-    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+  @ParameterizedTest
+  @MethodSource("params")
+  void shouldCalculateAddress(
+      final String sender,
+      final String salt,
+      final String code,
+      final String expectedAddress,
+      final int ignoredExpectedGas) {
+    setUp(sender, salt, code);
+    final Address targetContractAddress =
+        operation.targetContractAddress(
+            messageFrame, evm.getCodeUncached(Bytes.fromHexString(code)));
+    assertThat(targetContractAddress).isEqualTo(Address.fromHexString(expectedAddress));
   }
 
-  @Test
-  void messageFrameStackTooDeep() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1025);
-
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(account.getNonce()).thenReturn(55L);
-
-    final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
-    operation.execute(messageFrame, evm);
-
-    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
-  }
-
-  @Test
-  void notEnoughValue() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame =
-        testMemoryFrame(memoryOffset, memoryLength, UInt256.valueOf(1), 1);
-    final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
-    for (int i = 0; i < 1025; i++) {
-      messageFrameStack.add(messageFrame);
-    }
-
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(account.getNonce()).thenReturn(55L);
-
-    final EVM evm = MainnetEVMs.london(EvmConfiguration.DEFAULT);
-    operation.execute(messageFrame, evm);
-
-    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
+  @ParameterizedTest
+  @MethodSource("params")
+  void shouldCalculateGasPrice(
+      final String sender,
+      final String salt,
+      final String code,
+      final String ignoredExpectedAddress,
+      final int expectedGas) {
+    setUp(sender, salt, code);
+    final OperationResult result = operation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isNull();
+    assertThat(result.getGasCost()).isEqualTo(expectedGas);
   }
 
   @Test
   void shanghaiMaxInitCodeSizeCreate() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc000");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -190,11 +220,11 @@ class CreateOperationTest {
     when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
-    final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = maxInitCodeOperation.execute(messageFrame, evm);
+    final EVM myEVM = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
+    var result = maxInitCodeOperation.execute(messageFrame, myEVM);
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     final ContractCreationProcessor ccp =
-        new ContractCreationProcessor(evm, false, List.of(), 0, List.of());
+        new ContractCreationProcessor(myEVM, false, List.of(), 0, List.of());
     ccp.process(createFrame, OperationTracer.NO_TRACING);
 
     final Log log = createFrame.getLogs().get(0);
@@ -207,7 +237,7 @@ class CreateOperationTest {
   void shanghaiMaxInitCodeSizePlus1Create() {
     final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
     final UInt256 memoryLength = UInt256.fromHexString("0xc001");
-    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength, UInt256.ZERO, 1);
+    final MessageFrame messageFrame = testMemoryFrame(memoryOffset, memoryLength);
 
     when(account.getNonce()).thenReturn(55L);
     when(account.getBalance()).thenReturn(Wei.ZERO);
@@ -216,6 +246,7 @@ class CreateOperationTest {
     when(worldUpdater.getSenderAccount(any())).thenReturn(account);
     when(worldUpdater.getOrCreate(any())).thenReturn(newAccount);
     when(newAccount.getCode()).thenReturn(Bytes.EMPTY);
+    when(newAccount.isStorageEmpty()).thenReturn(true);
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
@@ -223,36 +254,8 @@ class CreateOperationTest {
     assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
   }
 
-  @Test
-  void eofV1CannotCall() {
-    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
-    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
-    final MessageFrame messageFrame =
-        new TestMessageFrameBuilder()
-            .code(evm.getCodeUncached(SIMPLE_EOF))
-            .pushStackItem(memoryLength)
-            .pushStackItem(memoryOffset)
-            .pushStackItem(Bytes.EMPTY)
-            .worldUpdater(worldUpdater)
-            .build();
-    messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_CREATE);
-
-    when(account.getBalance()).thenReturn(Wei.ZERO);
-    when(worldUpdater.getAccount(any())).thenReturn(account);
-    when(worldUpdater.get(any())).thenReturn(account);
-
-    final EVM evm = MainnetEVMs.cancun(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = operation.execute(messageFrame, evm);
-    assertThat(result.getHaltReason()).isEqualTo(INVALID_OPERATION);
-    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
-  }
-
   @Nonnull
-  private MessageFrame testMemoryFrame(
-      final UInt256 memoryOffset,
-      final UInt256 memoryLength,
-      final UInt256 value,
-      final int depth) {
+  private MessageFrame testMemoryFrame(final UInt256 memoryOffset, final UInt256 memoryLength) {
     final MessageFrame messageFrame =
         MessageFrame.builder()
             .type(MessageFrame.Type.CONTRACT_CREATION)
@@ -272,16 +275,44 @@ class CreateOperationTest {
             .initialGas(100000L)
             .worldUpdater(worldUpdater)
             .build();
+    messageFrame.pushStackItem(Bytes.EMPTY);
     messageFrame.pushStackItem(memoryLength);
     messageFrame.pushStackItem(memoryOffset);
-    messageFrame.pushStackItem(value);
+    messageFrame.pushStackItem(UInt256.ZERO);
     messageFrame.expandMemory(0, 500);
     messageFrame.writeMemory(
         memoryOffset.trimLeadingZeros().toInt(), SIMPLE_CREATE.size(), SIMPLE_CREATE);
     final Deque<MessageFrame> messageFrameStack = messageFrame.getMessageFrameStack();
-    while (messageFrameStack.size() < depth) {
+    if (messageFrameStack.isEmpty()) {
       messageFrameStack.push(messageFrame);
     }
     return messageFrame;
+  }
+
+  @Test
+  void eofV1CannotCall() {
+    final UInt256 memoryOffset = UInt256.fromHexString("0xFF");
+    final UInt256 memoryLength = UInt256.valueOf(SIMPLE_CREATE.size());
+
+    Code eofCode = evm.getCodeUncached(SIMPLE_EOF);
+    assertThat(eofCode.isValid()).isTrue();
+
+    final MessageFrame messageFrame =
+        new TestMessageFrameBuilder()
+            .code(eofCode)
+            .pushStackItem(Bytes.EMPTY)
+            .pushStackItem(memoryLength)
+            .pushStackItem(memoryOffset)
+            .pushStackItem(Bytes.EMPTY)
+            .worldUpdater(worldUpdater)
+            .build();
+    messageFrame.writeMemory(memoryOffset.toLong(), memoryLength.toLong(), SIMPLE_CREATE);
+
+    when(account.getBalance()).thenReturn(Wei.ZERO);
+    when(worldUpdater.getAccount(any())).thenReturn(account);
+
+    var result = operation.execute(messageFrame, evm);
+    assertThat(result.getHaltReason()).isEqualTo(INVALID_OPERATION);
+    assertThat(messageFrame.getStackItem(0).trimLeadingZeros()).isEqualTo(Bytes.EMPTY);
   }
 }
