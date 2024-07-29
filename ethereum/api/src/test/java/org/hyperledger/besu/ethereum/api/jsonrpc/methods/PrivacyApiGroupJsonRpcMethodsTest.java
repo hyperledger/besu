@@ -19,8 +19,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.PRIVACY_NOT_ENABLED;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponse;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -28,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.MultiTenancyRpcMethodDecorator;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -35,6 +34,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyPrivacyController;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.plugin.services.privacy.PrivateMarkerTransactionFactory;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.Map;
 import java.util.Optional;
@@ -140,7 +140,7 @@ public class PrivacyApiGroupJsonRpcMethodsTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "priv_method", null));
     final JsonRpcResponse response = privMethod.response(request);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.ERROR);
 
     JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getErrorType()).isEqualTo(PRIVACY_NOT_ENABLED);

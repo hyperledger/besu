@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes.rpc;
+package org.hyperledger.besu.plugin.services.rpc;
 
 import java.util.Optional;
 

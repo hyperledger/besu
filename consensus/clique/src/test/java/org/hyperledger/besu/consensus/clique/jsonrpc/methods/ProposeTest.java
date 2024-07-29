@@ -23,14 +23,14 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponse;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,7 +59,7 @@ public class ProposeTest {
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a1))
         .isEqualTo(VoteType.ADD);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
   }
@@ -72,7 +72,7 @@ public class ProposeTest {
     final JsonRpcResponse response = propose.response(requestWithParams(a0, true));
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.ERROR);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getErrorType()).isEqualTo(RpcErrorType.INVALID_REQUEST);
   }
@@ -86,7 +86,7 @@ public class ProposeTest {
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a1))
         .isEqualTo(VoteType.DROP);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
   }
@@ -99,7 +99,7 @@ public class ProposeTest {
     final JsonRpcResponse response = propose.response(requestWithParams(a0, false));
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0)).isNull();
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.ERROR);
     final JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) response;
     assertThat(errorResponse.getErrorType()).isEqualTo(RpcErrorType.INVALID_REQUEST);
   }
@@ -114,7 +114,7 @@ public class ProposeTest {
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a1))
         .isEqualTo(VoteType.ADD);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
   }
@@ -129,7 +129,7 @@ public class ProposeTest {
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a1))
         .isEqualTo(VoteType.DROP);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
   }
@@ -144,7 +144,7 @@ public class ProposeTest {
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a1))
         .isEqualTo(VoteType.ADD);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
   }
@@ -159,7 +159,7 @@ public class ProposeTest {
 
     assertThat(validatorProvider.getVoteProviderAtHead().get().getProposals().get(a0))
         .isEqualTo(VoteType.DROP);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final JsonRpcSuccessResponse successResponse = (JsonRpcSuccessResponse) response;
     assertThat(successResponse.getResult()).isEqualTo(true);
   }

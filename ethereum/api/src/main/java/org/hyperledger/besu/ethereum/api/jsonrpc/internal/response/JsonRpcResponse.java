@@ -12,27 +12,16 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.datatypes.rpc;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
+
+import org.hyperledger.besu.plugin.services.rpc.RpcResponse;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
 
-/** Represent a Json RPC response */
-public interface JsonRpcResponse {
+public interface JsonRpcResponse extends RpcResponse {
 
-  /**
-   * The JsonRPC version
-   *
-   * @return the version
-   */
   @JsonGetter("jsonrpc")
   default String getVersion() {
     return "2.0";
   }
-
-  /**
-   * Get the response type
-   *
-   * @return the response type
-   */
-  JsonRpcResponseType getType();
 }

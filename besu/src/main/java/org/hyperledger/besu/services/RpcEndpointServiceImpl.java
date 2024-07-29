@@ -17,7 +17,6 @@ package org.hyperledger.besu.services;
 import static com.google.common.base.Preconditions.checkArgument;
 import static com.google.common.base.Preconditions.checkNotNull;
 
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
@@ -27,6 +26,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.plugin.services.RpcEndpointService;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcResponse;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.Collection;
 import java.util.HashMap;
@@ -90,7 +90,7 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
       }
 
       @Override
-      public JsonRpcResponseType getType() {
+      public RpcResponseType getType() {
         return response.getType();
       }
     };

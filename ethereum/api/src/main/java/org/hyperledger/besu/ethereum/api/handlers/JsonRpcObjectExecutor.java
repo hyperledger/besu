@@ -16,14 +16,14 @@ package org.hyperledger.besu.ethereum.api.handlers;
 
 import static io.netty.handler.codec.http.HttpHeaderValues.APPLICATION_JSON;
 
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponse;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonResponseStreamer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.context.ContextKey;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.io.IOException;
 
@@ -70,7 +70,7 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
       final RoutingContext ctx)
       throws IOException {
     response.setStatusCode(status(jsonRpcResponse).code());
-    if (jsonRpcResponse.getType() == JsonRpcResponseType.NONE) {
+    if (jsonRpcResponse.getType() == RpcResponseType.NONE) {
       response.end();
     } else {
       try (final JsonResponseStreamer streamer =

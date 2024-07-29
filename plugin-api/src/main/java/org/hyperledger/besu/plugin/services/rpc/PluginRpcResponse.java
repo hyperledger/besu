@@ -14,10 +14,8 @@
  */
 package org.hyperledger.besu.plugin.services.rpc;
 
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponse;
-
 /** The interface Plugin rpc response. */
-public interface PluginRpcResponse extends JsonRpcResponse {
+public interface PluginRpcResponse extends RpcResponse {
 
   /**
    * Get the result, unfortunately there is no typing yet, so call must know how to interact with

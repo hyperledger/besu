@@ -16,13 +16,13 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.retesteth.RetestethContext;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.io.IOException;
 
@@ -69,7 +69,7 @@ public class TestImportRawBlockTest {
                 "2.0", TestImportRawBlock.METHOD_NAME, new Object[] {rawBlockRLPString}));
 
     final var response = test_importRawBlock.response(request);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.ERROR);
     assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualTo(RpcErrorType.BLOCK_IMPORT_ERROR);
   }
@@ -84,7 +84,7 @@ public class TestImportRawBlockTest {
                 "2.0", TestImportRawBlock.METHOD_NAME, new Object[] {rawBlockRLPString}));
 
     final var response = test_importRawBlock.response(request);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.ERROR);
     assertThat(((JsonRpcErrorResponse) response).getErrorType())
         .isEqualTo(RpcErrorType.BLOCK_RLP_IMPORT_ERROR);
   }
@@ -100,7 +100,7 @@ public class TestImportRawBlockTest {
                 "2.0", TestImportRawBlock.METHOD_NAME, new Object[] {rawBlockRLPString}));
 
     final var response = test_importRawBlock.response(request);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
   }
 
   @Test
@@ -118,11 +118,11 @@ public class TestImportRawBlockTest {
             new JsonRpcRequest("2.0", TestRewindToBlock.METHOD_NAME, new Object[] {0L}));
 
     final var response = test_importRawBlock.response(request);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final var rewindResponse = test_rewindToBlock.response(requestRewind);
-    assertThat(rewindResponse.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(rewindResponse.getType()).isEqualTo(RpcResponseType.SUCCESS);
     final var reimportResponse = test_importRawBlock.response(request);
-    assertThat(reimportResponse.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(reimportResponse.getType()).isEqualTo(RpcResponseType.SUCCESS);
 
     assertThat(context.getBlockchain().getChainHead().getHeight()).isEqualTo(1L);
   }

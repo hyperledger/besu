@@ -474,6 +474,11 @@ public class StubGenesisConfigOptions implements GenesisConfigOptions, Cloneable
   }
 
   @Override
+  public Optional<Address> getWithdrawalRequestContractAddress() {
+    return Optional.empty();
+  }
+
+  @Override
   public Optional<Address> getDepositContractAddress() {
     return Optional.empty();
   }

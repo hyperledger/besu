@@ -540,6 +540,13 @@ public interface GenesisConfigOptions {
   boolean isFixedBaseFee();
 
   /**
+   * The withdrawal request predeploy address
+   *
+   * @return the withdrawal request predeploy address
+   */
+  Optional<Address> getWithdrawalRequestContractAddress();
+
+  /**
    * The deposit contract address that should be in the logger field in Receipt of Deposit
    * transaction
    *

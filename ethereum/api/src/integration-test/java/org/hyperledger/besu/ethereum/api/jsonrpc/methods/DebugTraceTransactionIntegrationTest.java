@@ -17,15 +17,15 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponse;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.BlockchainImporter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcTestMethodsFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 import org.hyperledger.besu.testutil.BlockTestUtil;
 
 import java.util.Map;
@@ -69,7 +69,7 @@ public class DebugTraceTransactionIntegrationTest {
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", DEBUG_TRACE_TRANSACTION, params));
 
     final JsonRpcResponse response = method.response(request);
-    assertThat(response.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(response.getType()).isEqualTo(RpcResponseType.SUCCESS);
     DebugTraceTransactionResult debugTraceTransactionResult =
         (DebugTraceTransactionResult) ((JsonRpcSuccessResponse) response).getResult();
     assertThat(debugTraceTransactionResult.getGas()).isEqualTo(23705L);

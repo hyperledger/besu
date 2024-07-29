@@ -21,12 +21,11 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponse;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
@@ -41,6 +40,7 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.List;
 
@@ -146,7 +146,7 @@ public class EthGetBlockByNumberTest {
   @Test
   public void errorWhenAskingFinalizedButFinalizedIsNotPresent() {
     JsonRpcResponse resp = method.response(requestWithParams("finalized", "false"));
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(resp.getType()).isEqualTo(RpcResponseType.ERROR);
     JsonRpcErrorResponse errorResp = (JsonRpcErrorResponse) resp;
     assertThat(errorResp.getErrorType()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
   }
@@ -154,7 +154,7 @@ public class EthGetBlockByNumberTest {
   @Test
   public void errorWhenAskingSafeButSafeIsNotPresent() {
     JsonRpcResponse resp = method.response(requestWithParams("safe", "false"));
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(resp.getType()).isEqualTo(RpcResponseType.ERROR);
     JsonRpcErrorResponse errorResp = (JsonRpcErrorResponse) resp;
     assertThat(errorResp.getErrorType()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
   }
@@ -181,7 +181,7 @@ public class EthGetBlockByNumberTest {
 
   private void assertSuccess(final String tag, final long height) {
     JsonRpcResponse resp = method.response(requestWithParams(tag, "false"));
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(resp.getType()).isEqualTo(RpcResponseType.SUCCESS);
     JsonRpcSuccessResponse successResp = (JsonRpcSuccessResponse) resp;
     BlockResult blockResult = (BlockResult) successResp.getResult();
     assertThat(blockResult.getHash())

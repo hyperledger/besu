@@ -16,12 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.ipc;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_REQUEST;
 
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponse;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -155,7 +155,7 @@ public class JsonRpcIpcService {
                                                 .filter(
                                                     jsonRpcResponse ->
                                                         jsonRpcResponse.getType()
-                                                            != JsonRpcResponseType.NONE)
+                                                            != RpcResponseType.NONE)
                                                 .toArray(JsonRpcResponse[]::new);
 
                                         socket.write(

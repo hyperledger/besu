@@ -25,8 +25,6 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponse;
-import org.hyperledger.besu.datatypes.rpc.JsonRpcResponseType;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequest;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
@@ -34,10 +32,12 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 import org.hyperledger.besu.ethereum.privacy.RestrictedDefaultPrivacyController;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -91,7 +91,7 @@ public class PrivDebugGetStateRootTest {
     when(privacyController.findPrivacyGroupByGroupId(anyString(), anyString()))
         .thenReturn(Optional.empty());
     final JsonRpcResponse response = method.response(request("not_base64", "latest"));
-    assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
+    assertThat(response.getType()).isEqualByComparingTo(RpcResponseType.ERROR);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
         .contains(FIND_PRIVACY_GROUP_ERROR.getMessage());
   }
@@ -102,7 +102,7 @@ public class PrivDebugGetStateRootTest {
         .thenReturn(Optional.empty());
     final String invalidGroupId = Base64.toBase64String("invalid_group_id".getBytes(UTF_8));
     final JsonRpcResponse response = method.response(request(invalidGroupId, "latest"));
-    assertThat(response.getType()).isEqualByComparingTo(JsonRpcResponseType.ERROR);
+    assertThat(response.getType()).isEqualByComparingTo(RpcResponseType.ERROR);
     assertThat(((JsonRpcErrorResponse) response).getError().getMessage())
         .contains(FIND_PRIVACY_GROUP_ERROR.getMessage());
   }
