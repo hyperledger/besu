@@ -132,22 +132,22 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void testSequentiaConfiltedTransfers1() {
-    processConflictedSimpleTransfers1(blockProcessor);
+    processConflictedSimpleTransfersSameSender(blockProcessor);
   }
 
   @Test
   void testParallelConfiltedTransfers1() {
-    processConflictedSimpleTransfers1(parallelBlockProcessor);
+    processConflictedSimpleTransfersSameSender(parallelBlockProcessor);
   }
 
   @Test
   void testSequentiaConfiltedTransfers2() {
-    processConfiltedSimpleTransfers2(blockProcessor);
+    processConfiltedSimpleTransfersSameAddressReceiverAndSender(blockProcessor);
   }
 
   @Test
   void testParallelConfiltedTransfers2() {
-    processConfiltedSimpleTransfers2(parallelBlockProcessor);
+    processConfiltedSimpleTransfersSameAddressReceiverAndSender(parallelBlockProcessor);
   }
 
   @Test
@@ -259,7 +259,7 @@ class AbstractBlockProcessorIntegrationTest {
     assertThat(updatedSenderAccount2.getBalance()).isLessThan(senderAccount2.getBalance());
   }
 
-  private void processConflictedSimpleTransfers1(final BlockProcessor blockProcessor) {
+  private void processConflictedSimpleTransfersSameSender(final BlockProcessor blockProcessor) {
     // Create three transactions with the same sender
     Transaction transferTransaction1 = // ACCOUNT_GENESIS_1 -> ACCOUNT_4
         createTransferTransaction(
@@ -302,7 +302,7 @@ class AbstractBlockProcessorIntegrationTest {
     assertThat(updatedSenderAccount.getBalance()).isLessThan(senderAccount.getBalance());
   }
 
-  private void processConfiltedSimpleTransfers2(final BlockProcessor blockProcessor) {
+  private void processConfiltedSimpleTransfersSameAddressReceiverAndSender(final BlockProcessor blockProcessor) {
     // Create conflicted transfer transactions
     Transaction transferTransaction1 =
         createTransferTransaction(
