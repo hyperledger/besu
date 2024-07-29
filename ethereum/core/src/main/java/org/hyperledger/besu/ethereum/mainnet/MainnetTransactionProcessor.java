@@ -306,7 +306,6 @@ public class MainnetTransactionProcessor {
       }
 
       final Address senderAddress = transaction.getSender();
-
       final MutableAccount sender = worldState.getOrCreateSenderAccount(senderAddress);
 
       validationResult =
@@ -317,6 +316,19 @@ public class MainnetTransactionProcessor {
       }
 
       operationTracer.tracePrepareTransaction(worldState, transaction);
+
+      final Set<Address> addressList = new BytesTrieSet<>(Address.SIZE);
+
+      if (transaction.getAuthorizationList().isPresent()) {
+        if (maybeAuthorityProcessor.isEmpty()) {
+          throw new RuntimeException("Authority processor is required for 7702 transactions");
+        }
+
+        maybeAuthorityProcessor
+            .get()
+            .addContractToAuthority(worldState, authorizedCodeService, transaction);
+        addressList.addAll(authorizedCodeService.getAuthorities());
+      }
 
       final long previousNonce = sender.incrementNonce();
       LOG.trace(
@@ -343,7 +355,6 @@ public class MainnetTransactionProcessor {
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());
       // we need to keep a separate hash set of addresses in case they specify no storage.
       // No-storage is a common pattern, especially for Externally Owned Accounts
-      final Set<Address> addressList = new BytesTrieSet<>(Address.SIZE);
       final Multimap<Address, Bytes32> storageList = HashMultimap.create();
       int accessListStorageCount = 0;
       for (final var entry : accessListEntries) {
@@ -408,15 +419,6 @@ public class MainnetTransactionProcessor {
       if (transaction.getVersionedHashes().isPresent()) {
         commonMessageFrameBuilder.versionedHashes(
             Optional.of(transaction.getVersionedHashes().get().stream().toList()));
-      } else if (transaction.getAuthorizationList().isPresent()) {
-        if (maybeAuthorityProcessor.isEmpty()) {
-          throw new RuntimeException("Authority processor is required for 7702 transactions");
-        }
-
-        maybeAuthorityProcessor
-            .get()
-            .addContractToAuthority(worldUpdater, authorizedCodeService, transaction);
-        addressList.addAll(authorizedCodeService.getAuthorities());
       } else {
         commonMessageFrameBuilder.versionedHashes(Optional.empty());
       }
