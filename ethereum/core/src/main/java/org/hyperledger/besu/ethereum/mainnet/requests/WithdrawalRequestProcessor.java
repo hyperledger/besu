@@ -26,7 +26,7 @@ import org.apache.tuweni.units.bigints.UInt64;
 public class WithdrawalRequestProcessor
     extends AbstractSystemCallRequestProcessor<WithdrawalRequest> {
 
-  public static final Address DEFAULT_WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS =
+  public static final Address DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS =
       Address.fromHexString("0x00A3ca265EBcb825B45F985A16CEFB49958cE017");
 
   private static final int ADDRESS_BYTES = 20;
@@ -35,10 +35,10 @@ public class WithdrawalRequestProcessor
   private static final int WITHDRAWAL_REQUEST_BYTES_SIZE =
       ADDRESS_BYTES + PUBLIC_KEY_BYTES + AMOUNT_BYTES;
 
-  private final Address withdrawalRequestPredeployAddress;
+  private final Address withdrawalRequestContractAddress;
 
-  public WithdrawalRequestProcessor(final Address withdrawalRequestPredeployAddress) {
-    this.withdrawalRequestPredeployAddress = withdrawalRequestPredeployAddress;
+  public WithdrawalRequestProcessor(final Address withdrawalRequestContractAddress) {
+    this.withdrawalRequestContractAddress = withdrawalRequestContractAddress;
   }
 
   /**
@@ -48,7 +48,7 @@ public class WithdrawalRequestProcessor
    */
   @Override
   protected Address getCallAddress() {
-    return withdrawalRequestPredeployAddress;
+    return withdrawalRequestContractAddress;
   }
 
   /**

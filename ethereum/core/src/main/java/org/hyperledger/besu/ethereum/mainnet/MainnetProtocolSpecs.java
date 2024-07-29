@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 import static org.hyperledger.besu.ethereum.mainnet.requests.DepositRequestProcessor.DEFAULT_DEPOSIT_CONTRACT_ADDRESS;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsProcessors;
 import static org.hyperledger.besu.ethereum.mainnet.requests.MainnetRequestsValidator.pragueRequestsValidator;
-import static org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestProcessor.DEFAULT_WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS;
+import static org.hyperledger.besu.ethereum.mainnet.requests.WithdrawalRequestProcessor.DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS;
 
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.PowAlgorithm;
@@ -767,10 +767,10 @@ public abstract class MainnetProtocolSpecs {
       final boolean isParallelTxProcessingEnabled,
       final MetricsSystem metricsSystem) {
 
-    final Address withdrawalRequestPredeployAddress =
+    final Address withdrawalRequestContractAddress =
         genesisConfigOptions
-            .getWithdrawalRequestPredeployAddress()
-            .orElse(DEFAULT_WITHDRAWAL_REQUEST_PREDEPLOY_ADDRESS);
+            .getWithdrawalRequestContractAddress()
+            .orElse(DEFAULT_WITHDRAWAL_REQUEST_CONTRACT_ADDRESS);
     final Address depositContractAddress =
         genesisConfigOptions.getDepositContractAddress().orElse(DEFAULT_DEPOSIT_CONTRACT_ADDRESS);
 
@@ -797,7 +797,7 @@ public abstract class MainnetProtocolSpecs {
         .requestsValidator(pragueRequestsValidator(depositContractAddress))
         // EIP-7002 Withdrawals / EIP-6610 Deposits / EIP-7685 Requests
         .requestProcessorCoordinator(
-            pragueRequestsProcessors(withdrawalRequestPredeployAddress, depositContractAddress))
+            pragueRequestsProcessors(withdrawalRequestContractAddress, depositContractAddress))
 
         // change to accept EIP-7702 transactions
         .transactionValidatorFactoryBuilder(

@@ -333,28 +333,28 @@ class GenesisConfigOptionsTest {
   }
 
   @Test
-  void shouldGetWithdrawalRequestPredeployAddress() {
+  void shouldGetWithdrawalRequestContractAddress() {
     final GenesisConfigOptions config =
         fromConfigOptions(
             singletonMap(
-                "withdrawalRequestPredeployAddress", "0x00000000219ab540356cbb839cbe05303d7705fa"));
-    assertThat(config.getWithdrawalRequestPredeployAddress())
+                "withdrawalRequestContractAddress", "0x00000000219ab540356cbb839cbe05303d7705fa"));
+    assertThat(config.getWithdrawalRequestContractAddress())
         .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
   }
 
   @Test
-  void shouldNotHaveWithdrawalRequestPredeployAddressWhenEmpty() {
+  void shouldNotHaveWithdrawalRequestContractAddressWhenEmpty() {
     final GenesisConfigOptions config = fromConfigOptions(emptyMap());
-    assertThat(config.getWithdrawalRequestPredeployAddress()).isEmpty();
+    assertThat(config.getWithdrawalRequestContractAddress()).isEmpty();
   }
 
   @Test
-  void asMapIncludesWithdrawalRequestPredeployAddress() {
+  void asMapIncludesWithdrawalRequestContractAddress() {
     final GenesisConfigOptions config =
-        fromConfigOptions(Map.of("withdrawalRequestPredeployAddress", "0x0"));
+        fromConfigOptions(Map.of("withdrawalRequestContractAddress", "0x0"));
 
     assertThat(config.asMap())
-        .containsOnlyKeys("withdrawalRequestPredeployAddress")
+        .containsOnlyKeys("withdrawalRequestContractAddress")
         .containsValue(Address.ZERO);
   }
 

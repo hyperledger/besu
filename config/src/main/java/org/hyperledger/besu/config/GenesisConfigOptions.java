@@ -530,7 +530,7 @@ public interface GenesisConfigOptions {
    *
    * @return the withdrawal request predeploy address
    */
-  Optional<Address> getWithdrawalRequestPredeployAddress();
+  Optional<Address> getWithdrawalRequestContractAddress();
 
   /**
    * The deposit contract address that should be in the logger field in Receipt of Deposit
