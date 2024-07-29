@@ -137,6 +137,10 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
       final AtomicLong orphansPruned = new AtomicLong();
       trieLogKeys.forEach(
           blockHashAsBytes -> {
+            if (Thread.currentThread().isInterrupted()) {
+              throw new RuntimeException(
+                  new InterruptedException("Thread interrupted during trie log processing."));
+            }
             final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
             final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
             if (header.isPresent()) {
@@ -158,12 +162,13 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
       LOG.atInfo().log("Pruned {} trie logs", prunedCount);
     } catch (Exception e) {
       LOG.warn(e.getClass().getSimpleName() + " occurred while preloading queue", e);
-      if (e instanceof InterruptedException) {
+      if (e.getCause() != null && e.getCause() instanceof InterruptedException) {
         LOG.info("Operation interrupted, but will attempt to prune what's in the queue so far...");
         int prunedCount = pruneFromQueue();
         if (prunedCount > 0) {
           LOG.atInfo().log("...pruned {} trie logs", prunedCount);
         }
+        Thread.currentThread().interrupt(); // Preserve interrupt status
       } else {
         LOG.error("Error loading trie logs from database, nothing pruned", e);
       }
