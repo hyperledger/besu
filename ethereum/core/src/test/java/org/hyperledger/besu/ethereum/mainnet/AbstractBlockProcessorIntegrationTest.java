@@ -302,7 +302,8 @@ class AbstractBlockProcessorIntegrationTest {
     assertThat(updatedSenderAccount.getBalance()).isLessThan(senderAccount.getBalance());
   }
 
-  private void processConfiltedSimpleTransfersSameAddressReceiverAndSender(final BlockProcessor blockProcessor) {
+  private void processConfiltedSimpleTransfersSameAddressReceiverAndSender(
+      final BlockProcessor blockProcessor) {
     // Create conflicted transfer transactions
     Transaction transferTransaction1 =
         createTransferTransaction(
