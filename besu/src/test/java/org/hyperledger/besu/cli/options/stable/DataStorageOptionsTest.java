@@ -56,14 +56,6 @@ public class DataStorageOptionsTest
   }
 
   @Test
-  public void bonsaiTrieLogPruningWindowSizeShouldBePositive2() {
-    internalTestFailure(
-        "Cannot enable --bonsai-limit-trie-logs-enabled with sync-mode FULL. You must set --bonsai-limit-trie-logs-enabled=false or use a different sync-mode",
-        "--sync-mode",
-        "FULL");
-  }
-
-  @Test
   public void bonsaiTrieLogPruningWindowSizeShouldBePositive() {
     internalTestFailure(
         "--bonsai-trie-logs-pruning-window-size=0 must be greater than 0",

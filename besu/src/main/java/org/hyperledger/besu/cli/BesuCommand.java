@@ -139,6 +139,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -1587,7 +1588,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateDataStorageOptions() {
-    dataStorageOptions.validate(commandLine, syncMode);
+    dataStorageOptions.validate(commandLine);
   }
 
   private void validateRequiredOptions() {
@@ -2254,6 +2255,32 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   public DataStorageConfiguration getDataStorageConfiguration() {
     if (dataStorageConfiguration == null) {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
+    }
+
+    if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
+        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())
+        && dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()) {
+
+      if (CommandLineUtils.isOptionSet(
+          commandLine, DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED)) {
+        throw new ParameterException(
+            commandLine,
+            String.format(
+                "Cannot enable %s with --sync-mode=%s and --data-storage-format=%s. You must set %s or use a different sync-mode",
+                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+                SyncMode.FULL,
+                DataStorageFormat.BONSAI,
+                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
+      }
+
+      dataStorageConfiguration =
+          ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
+              .withBonsaiLimitTrieLogsEnabled(false);
+      logger.warn(
+          "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
+          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false",
+          SyncMode.FULL,
+          DataStorageFormat.BONSAI);
     }
     return dataStorageConfiguration;
   }
