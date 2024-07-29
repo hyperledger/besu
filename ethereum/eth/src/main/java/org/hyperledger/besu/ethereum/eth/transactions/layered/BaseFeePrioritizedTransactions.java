@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -66,7 +65,8 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
 
   @Override
   protected int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
-    return Comparator.comparing(PendingTransaction::hasPriority)
+    return Comparator.comparing(PendingTransaction::getScore)
+        .thenComparing(PendingTransaction::hasPriority)
         .thenComparing(
             (PendingTransaction pendingTransaction) ->
                 pendingTransaction.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee))
@@ -195,8 +195,8 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       return "Basefee Prioritized: Empty";
     }
 
-    final Transaction highest = orderByFee.last().getTransaction();
-    final Transaction lowest = orderByFee.first().getTransaction();
+    final PendingTransaction highest = orderByFee.last();
+    final PendingTransaction lowest = orderByFee.first();
 
     return "Basefee Prioritized: "
         + "count: "
@@ -205,16 +205,26 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         + spaceUsed
         + ", unique senders: "
         + txsBySender.size()
-        + ", highest priority tx: [max fee: "
-        + highest.getMaxGasPrice().toHumanReadableString()
+        + ", highest priority tx: [score: "
+        + highest.getScore()
+        + ", max fee: "
+        + highest.getTransaction().getMaxGasPrice().toHumanReadableString()
         + ", curr prio fee: "
-        + highest.getEffectivePriorityFeePerGas(nextBlockBaseFee).toHumanReadableString()
+        + highest
+            .getTransaction()
+            .getEffectivePriorityFeePerGas(nextBlockBaseFee)
+            .toHumanReadableString()
         + ", hash: "
         + highest.getHash()
-        + "], lowest priority tx: [max fee: "
-        + lowest.getMaxGasPrice().toHumanReadableString()
+        + "], lowest priority tx: [score: "
+        + lowest.getScore()
+        + ", max fee: "
+        + lowest.getTransaction().getMaxGasPrice().toHumanReadableString()
         + ", curr prio fee: "
-        + lowest.getEffectivePriorityFeePerGas(nextBlockBaseFee).toHumanReadableString()
+        + lowest
+            .getTransaction()
+            .getEffectivePriorityFeePerGas(nextBlockBaseFee)
+            .toHumanReadableString()
         + ", hash: "
         + lowest.getHash()
         + "], next block base fee: "
