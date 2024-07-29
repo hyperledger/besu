@@ -45,7 +45,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_DATA_PARAMS(-32602, "Invalid data params"),
   INVALID_DEPOSIT_REQUEST_PARAMS(-32602, "Invalid deposit request"),
   INVALID_ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_PARAMS(
-          -32602, "Invalid engine exchange transition configuration params"),
+      -32602, "Invalid engine exchange transition configuration params"),
   INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS(-32602, "Invalid engine forkchoice updated params"),
   INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMETER(-32602, "Invalid engine payload attributes params"),
   INVALID_ENGINE_PAYLOAD_PARAMETER(-32602, "Invalid engine payload params"),
@@ -67,7 +67,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_MIX_HASH_PARAMS(-32602, "Invalid mix hash params"),
   INVALID_NONCE_PARAMS(-32602, "Invalid nonce params"),
   INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS(
-          -32602, "Invalid parent beacon block root (missing or incorrect)"),
+      -32602, "Invalid parent beacon block root (missing or incorrect)"),
   INVALID_PARAM_COUNT(-32602, "Invalid number of params"),
   INVALID_PAYLOAD_ID_PARAMS(-32602, "Invalid payload id params"),
   INVALID_PENDING_TRANSACTIONS_PARAMS(-32602, "Invalid pending transactions params"),
