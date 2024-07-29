@@ -78,11 +78,11 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * At the beginning of the test both the authorizer and the other account have a balance of 90000
-   * ETH. The authorizer creates an authorization for a contract that send all its ETH to any given
-   * address. The other account sponsors the 7702 transaction and sends all the ETH from the
-   * authorizer to itself. The authorizer balance should be 0 and the transaction sponsor balance
-   * should be 180000 ETH minus the transaction costs.
+   * At the beginning of the test both the authorizer and the transaction sponsor have a balance of
+   * 90000 ETH. The authorizer creates an authorization for a contract that send all its ETH to any
+   * given address. The transaction sponsor sponsors the 7702 transaction and sends all the ETH from
+   * the authorizer to itself. The authorizer balance should be 0 and the transaction sponsor's
+   * balance should be 180000 ETH minus the transaction costs.
    */
   @Test
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
@@ -133,7 +133,7 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
   }
 
   /**
-   * The authorizer creates an authorization for a contract that send all its ETH to any given
+   * The authorizer creates an authorization for a contract that sends all its ETH to any given
    * address. But the nonce is 1 and the authorization list is processed before the nonce increase
    * of the sender. Therefore, the authorization should be invalid and will be ignored. No balance
    * change, except for a decrease for paying the transaction cost should occur.
