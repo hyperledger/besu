@@ -18,8 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.entry;
 import static org.awaitility.Awaitility.await;
 import static org.hyperledger.besu.ethereum.core.MiningParameters.DEFAULT_NON_POA_BLOCK_TXS_SELECTION_MAX_TIME;
-import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE;
+import static org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason.NONCE_TOO_LOW;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALID_TX_EVALUATION_TOO_LONG;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.PRIORITY_FEE_PER_GAS_BELOW_CURRENT_MIN;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
@@ -223,7 +224,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
             GenesisConfigFile.fromResource("/dev.json").getConfigOptions(),
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
     final MainnetTransactionProcessor mainnetTransactionProcessor =
         protocolSchedule.getByBlockHeader(blockHeader(0)).getTransactionProcessor();
 
@@ -294,7 +297,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
       final Transaction tx = createTransaction(i, Wei.of(7), 100_000);
       transactionsToInject.add(tx);
       if (i == 1) {
-        ensureTransactionIsInvalid(tx, TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
+        ensureTransactionIsInvalid(tx, TransactionInvalidReason.NONCE_TOO_LOW);
       } else {
         ensureTransactionIsValid(tx);
       }
@@ -309,8 +312,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsOnly(
             entry(
                 invalidTx,
-                TransactionSelectionResult.invalid(
-                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE.name())));
+                TransactionSelectionResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW.name())));
     assertThat(results.getSelectedTransactions().size()).isEqualTo(4);
     assertThat(results.getSelectedTransactions().contains(invalidTx)).isFalse();
     assertThat(results.getReceipts().size()).isEqualTo(4);
@@ -566,8 +568,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
     ensureTransactionIsValid(validTransaction, 21_000, 0);
     final Transaction invalidTransaction = createTransaction(3, Wei.of(10), 21_000);
-    ensureTransactionIsInvalid(
-        invalidTransaction, TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE);
+    ensureTransactionIsInvalid(invalidTransaction, TransactionInvalidReason.NONCE_TOO_LOW);
 
     transactionPool.addRemoteTransactions(List.of(validTransaction, invalidTransaction));
 
@@ -580,8 +581,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         .containsOnly(
             entry(
                 invalidTransaction,
-                TransactionSelectionResult.invalid(
-                    TransactionInvalidReason.UPFRONT_COST_EXCEEDS_BALANCE.name())));
+                TransactionSelectionResult.invalid(TransactionInvalidReason.NONCE_TOO_LOW.name())));
   }
 
   @Test
@@ -946,7 +946,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   @ParameterizedTest
   @MethodSource("subsetOfPendingTransactionsIncludedWhenTxSelectionMaxTimeIsOver")
-  public void pendingTransactionsThatTakesTooLongToEvaluateIsDroppedFromThePool(
+  public void pendingTransactionsThatTakesTooLongToEvaluateIsPenalized(
       final boolean isPoa,
       final boolean preProcessingTooLate,
       final boolean processingTooLate,
@@ -959,7 +959,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         postProcessingTooLate,
         900,
         TX_EVALUATION_TOO_LONG,
-        true);
+        false);
   }
 
   private void internalBlockSelectionTimeoutSimulation(
@@ -1083,7 +1083,7 @@ public abstract class AbstractBlockTransactionSelectorTest {
         500,
         BLOCK_SELECTION_TIMEOUT,
         false,
-        UPFRONT_COST_EXCEEDS_BALANCE);
+        NONCE_TOO_LOW);
   }
 
   @ParameterizedTest
@@ -1100,9 +1100,9 @@ public abstract class AbstractBlockTransactionSelectorTest {
         processingTooLate,
         postProcessingTooLate,
         900,
-        TX_EVALUATION_TOO_LONG,
+        INVALID_TX_EVALUATION_TOO_LONG,
         true,
-        UPFRONT_COST_EXCEEDS_BALANCE);
+        NONCE_TOO_LOW);
   }
 
   private void internalBlockSelectionTimeoutSimulationInvalidTxs(
@@ -1421,15 +1421,17 @@ public abstract class AbstractBlockTransactionSelectorTest {
 
   private static class PluginTransactionSelectionResult extends TransactionSelectionResult {
     private enum PluginStatus implements Status {
-      PLUGIN_INVALID(false, true),
-      PLUGIN_INVALID_TRANSIENT(false, false);
+      PLUGIN_INVALID(false, true, false),
+      PLUGIN_INVALID_TRANSIENT(false, false, true);
 
       private final boolean stop;
       private final boolean discard;
+      private final boolean penalize;
 
-      PluginStatus(final boolean stop, final boolean discard) {
+      PluginStatus(final boolean stop, final boolean discard, final boolean penalize) {
         this.stop = stop;
         this.discard = discard;
+        this.penalize = penalize;
       }
 
       @Override
@@ -1440,6 +1442,11 @@ public abstract class AbstractBlockTransactionSelectorTest {
       @Override
       public boolean discard() {
         return discard;
+      }
+
+      @Override
+      public boolean penalize() {
+        return penalize;
       }
     }
 

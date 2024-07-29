@@ -24,7 +24,6 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -63,7 +62,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       arity = "1")
   private Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
-  private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
+  /** The bonsai limit trie logs enabled option name */
+  public static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
 
   /** The bonsai trie logs pruning window size. */
   public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
@@ -122,6 +122,14 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             "Enables code storage using code hash instead of by account hash. (default: ${DEFAULT-VALUE})")
     private boolean bonsaiCodeUsingCodeHashEnabled = DEFAULT_BONSAI_CODE_USING_CODE_HASH_ENABLED;
 
+    @CommandLine.Option(
+        hidden = true,
+        names = {"--Xbonsai-parallel-tx-processing-enabled"},
+        arity = "1",
+        description =
+            "Enables parallelization of transactions to optimize processing speed by concurrently loading and executing necessary data in advance. (default: ${DEFAULT-VALUE})")
+    private Boolean isParallelTxProcessingEnabled = false;
+
     /** Default Constructor. */
     Unstable() {}
   }
@@ -139,43 +147,41 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * Validates the data storage options
    *
    * @param commandLine the full commandLine to check all the options specified by the user
-   * @param syncMode the sync mode
    */
-  public void validate(final CommandLine commandLine, final SyncMode syncMode) {
-    if (DataStorageFormat.BONSAI == dataStorageFormat && bonsaiLimitTrieLogsEnabled) {
-      if (SyncMode.FULL == syncMode) {
-        throw new CommandLine.ParameterException(
-            commandLine,
-            String.format(
-                "Cannot enable %s with sync-mode %s. You must set %s or use a different sync-mode",
-                BONSAI_LIMIT_TRIE_LOGS_ENABLED,
-                SyncMode.FULL,
-                BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
+  public void validate(final CommandLine commandLine) {
+    if (DataStorageFormat.BONSAI == dataStorageFormat) {
+      if (bonsaiLimitTrieLogsEnabled) {
+        if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
+          throw new CommandLine.ParameterException(
+              commandLine,
+              String.format(
+                  BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
+                  MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
+        }
+        if (bonsaiTrieLogPruningWindowSize <= 0) {
+          throw new CommandLine.ParameterException(
+              commandLine,
+              String.format(
+                  BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
+                  bonsaiTrieLogPruningWindowSize));
+        }
+        if (bonsaiTrieLogPruningWindowSize <= bonsaiMaxLayersToLoad) {
+          throw new CommandLine.ParameterException(
+              commandLine,
+              String.format(
+                  BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
+                      + "=%d must be greater than "
+                      + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
+                      + "=%d",
+                  bonsaiTrieLogPruningWindowSize,
+                  bonsaiMaxLayersToLoad));
+        }
       }
-      if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
+    } else {
+      if (unstableOptions.isParallelTxProcessingEnabled) {
         throw new CommandLine.ParameterException(
             commandLine,
-            String.format(
-                BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD + " minimum value is %d",
-                MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT));
-      }
-      if (bonsaiTrieLogPruningWindowSize <= 0) {
-        throw new CommandLine.ParameterException(
-            commandLine,
-            String.format(
-                BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE + "=%d must be greater than 0",
-                bonsaiTrieLogPruningWindowSize));
-      }
-      if (bonsaiTrieLogPruningWindowSize <= bonsaiMaxLayersToLoad) {
-        throw new CommandLine.ParameterException(
-            commandLine,
-            String.format(
-                BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE
-                    + "=%d must be greater than "
-                    + BONSAI_STORAGE_FORMAT_MAX_LAYERS_TO_LOAD
-                    + "=%d",
-                bonsaiTrieLogPruningWindowSize,
-                bonsaiMaxLayersToLoad));
+            "Transaction parallelization is not supported unless operating in a 'diffbased' mode, such as Bonsai.");
       }
     }
   }
@@ -198,6 +204,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
         domainObject.getUnstable().getBonsaiFullFlatDbEnabled();
     dataStorageOptions.unstableOptions.bonsaiCodeUsingCodeHashEnabled =
         domainObject.getUnstable().getBonsaiCodeStoredByCodeHashEnabled();
+    dataStorageOptions.unstableOptions.isParallelTxProcessingEnabled =
+        domainObject.getUnstable().isParallelTxProcessingEnabled();
 
     return dataStorageOptions;
   }
@@ -214,6 +222,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
             ImmutableDataStorageConfiguration.Unstable.builder()
                 .bonsaiFullFlatDbEnabled(unstableOptions.bonsaiFullFlatDbEnabled)
                 .bonsaiCodeStoredByCodeHashEnabled(unstableOptions.bonsaiCodeUsingCodeHashEnabled)
+                .isParallelTxProcessingEnabled(unstableOptions.isParallelTxProcessingEnabled)
                 .build())
         .build();
   }

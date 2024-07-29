@@ -139,6 +139,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
+import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.evm.precompile.AbstractAltBnPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.BigIntegerModularExponentiationPrecompiledContract;
 import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
@@ -512,6 +513,19 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             "Invalid ids supplied to '--banned-node-ids'. " + e.getMessage());
       }
     }
+
+    // Boolean option to set that in a PoA network the bootnodes should always be queried during
+    // peer table refresh. If this flag is disabled bootnodes are only sent FINDN requests on first
+    // startup, meaning that an offline bootnode or network outage at the client can prevent it
+    // discovering any peers without a restart.
+    @Option(
+        names = {"--poa-discovery-retry-bootnodes"},
+        description =
+            "Always use of bootnodes for discovery in PoA networks. Disabling this reverts "
+                + " to the same behaviour as non-PoA networks, where neighbours are only discovered from bootnodes on first startup."
+                + "(default: ${DEFAULT-VALUE})",
+        arity = "1")
+    private final Boolean poaDiscoveryRetryBootnodes = true;
 
     private Collection<Bytes> bannedNodeIds = new ArrayList<>();
 
@@ -1574,7 +1588,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private void validateDataStorageOptions() {
-    dataStorageOptions.validate(commandLine, syncMode);
+    dataStorageOptions.validate(commandLine);
   }
 
   private void validateRequiredOptions() {
@@ -1901,6 +1915,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         .privacyParameters(privacyParameters())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(isRevertReasonEnabled)
+        .isParallelTxProcessingEnabled(
+            dataStorageConfiguration.getUnstable().isParallelTxProcessingEnabled())
         .storageProvider(storageProvider)
         .gasLimitCalculator(
             miningParametersSupplier.get().getTargetGasLimit().isPresent()
@@ -2231,9 +2247,40 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return miningParameters;
   }
 
-  private DataStorageConfiguration getDataStorageConfiguration() {
+  /**
+   * Get the data storage configuration
+   *
+   * @return the data storage configuration
+   */
+  public DataStorageConfiguration getDataStorageConfiguration() {
     if (dataStorageConfiguration == null) {
       dataStorageConfiguration = dataStorageOptions.toDomainObject();
+    }
+
+    if (SyncMode.FULL.equals(getDefaultSyncModeIfNotSet())
+        && DataStorageFormat.BONSAI.equals(dataStorageConfiguration.getDataStorageFormat())
+        && dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()) {
+
+      if (CommandLineUtils.isOptionSet(
+          commandLine, DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED)) {
+        throw new ParameterException(
+            commandLine,
+            String.format(
+                "Cannot enable %s with --sync-mode=%s and --data-storage-format=%s. You must set %s or use a different sync-mode",
+                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED,
+                SyncMode.FULL,
+                DataStorageFormat.BONSAI,
+                DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
+      }
+
+      dataStorageConfiguration =
+          ImmutableDataStorageConfiguration.copyOf(dataStorageConfiguration)
+              .withBonsaiLimitTrieLogsEnabled(false);
+      logger.warn(
+          "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
+          DataStorageOptions.BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false",
+          SyncMode.FULL,
+          DataStorageFormat.BONSAI);
     }
     return dataStorageConfiguration;
   }
@@ -2322,6 +2369,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .rpcEndpointService(rpcEndpointServiceImpl)
             .enodeDnsConfiguration(getEnodeDnsConfiguration())
             .allowedSubnets(p2PDiscoveryOptionGroup.allowedSubnets)
+            .poaDiscoveryRetryBootnodes(p2PDiscoveryOptionGroup.poaDiscoveryRetryBootnodes)
             .build();
 
     addShutdownHook(runner);

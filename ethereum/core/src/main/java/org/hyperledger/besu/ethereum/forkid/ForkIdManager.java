@@ -79,8 +79,7 @@ public class ForkIdManager {
             .sorted()
             .collect(Collectors.toUnmodifiableList());
     final List<Long> allForkNumbers =
-        Stream.concat(blockNumberForks.stream(), timestampForks.stream())
-            .collect(Collectors.toList());
+        Stream.concat(blockNumberForks.stream(), timestampForks.stream()).toList();
     this.forkNext = createForkIds();
     this.allForkIds =
         Stream.concat(blockNumbersForkIds.stream(), timestampsForkIds.stream())
@@ -93,7 +92,7 @@ public class ForkIdManager {
   public ForkId getForkIdForChainHead() {
     if (legacyEth64) {
       return blockNumbersForkIds.isEmpty()
-          ? null
+          ? new ForkId(genesisHashCrc, 0)
           : blockNumbersForkIds.get(blockNumbersForkIds.size() - 1);
     }
     final BlockHeader header = chainHeadSupplier.get();
