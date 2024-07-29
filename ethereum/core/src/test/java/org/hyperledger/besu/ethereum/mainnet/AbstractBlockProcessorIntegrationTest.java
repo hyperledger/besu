@@ -78,7 +78,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   private WorldStateArchive worldStateArchive;
   private MainnetParallelBlockProcessor parallelBlockProcessor;
-  private BlockProcessor blockProcessor;
+  private MainnetBlockProcessor sequentialBlockProcessor;
   private DefaultBlockchain blockchain;
   private Address coinbase;
 
@@ -97,7 +97,7 @@ class AbstractBlockProcessorIntegrationTest {
     coinbase = blockHeader.getCoinbase();
     worldStateArchive = contextTestFixture.getStateArchive();
     blockchain = (DefaultBlockchain) contextTestFixture.getBlockchain();
-    blockProcessor =
+    sequentialBlockProcessor =
         new MainnetBlockProcessor(
             transactionProcessor,
             protocolSchedule
@@ -122,7 +122,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void testSequentialBlockProcessingwithTransfers() {
-    processSimpleTransfers(blockProcessor);
+    processSimpleTransfers(sequentialBlockProcessor);
   }
 
   @Test
@@ -132,7 +132,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void testSequentiaConfiltedTransfers1() {
-    processConflictedSimpleTransfersSameSender(blockProcessor);
+    processConflictedSimpleTransfersSameSender(sequentialBlockProcessor);
   }
 
   @Test
@@ -142,7 +142,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void testSequentiaConfiltedTransfers2() {
-    processConfiltedSimpleTransfersSameAddressReceiverAndSender(blockProcessor);
+    processConfiltedSimpleTransfersSameAddressReceiverAndSender(sequentialBlockProcessor);
   }
 
   @Test
@@ -152,7 +152,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void processSequentialConflictedSimpleTransfersWithCoinbase() {
-    processConflictedSimpleTransfersWithCoinbase(blockProcessor);
+    processConflictedSimpleTransfersWithCoinbase(sequentialBlockProcessor);
   }
 
   @Test
@@ -162,7 +162,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void processSequentialContractSlotUpdateThenReadTx() {
-    processContractSlotUpdateThenReadTx(blockProcessor);
+    processContractSlotUpdateThenReadTx(sequentialBlockProcessor);
   }
 
   @Test
@@ -172,7 +172,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void processSequentialSlotReadThenUpdateTx() {
-    processSlotReadThenUpdateTx(blockProcessor);
+    processSlotReadThenUpdateTx(sequentialBlockProcessor);
   }
 
   @Test
@@ -182,7 +182,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void processSequentialAccountReadThenUpdateTx() {
-    processAccountReadThenUpdateTx(blockProcessor);
+    processAccountReadThenUpdateTx(sequentialBlockProcessor);
   }
 
   @Test
@@ -192,7 +192,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void processSequentialAccountUpdateThenReadTx() {
-    processAccountUpdateThenReadTx(blockProcessor);
+    processAccountUpdateThenReadTx(sequentialBlockProcessor);
   }
 
   @Test
@@ -202,7 +202,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void processSequentialAccountReadThenUpdateTxWithTwoAccounts() {
-    processAccountReadThenUpdateTxWithTwoAccounts(blockProcessor);
+    processAccountReadThenUpdateTxWithTwoAccounts(sequentialBlockProcessor);
   }
 
   @Test
@@ -212,7 +212,7 @@ class AbstractBlockProcessorIntegrationTest {
 
   @Test
   void processSequentialAccountUpdateThenReadTeTxWithTwoAccounts() {
-    processAccountUpdateThenReadTxWithTwoAccounts(blockProcessor);
+    processAccountUpdateThenReadTxWithTwoAccounts(sequentialBlockProcessor);
   }
 
   @Test
