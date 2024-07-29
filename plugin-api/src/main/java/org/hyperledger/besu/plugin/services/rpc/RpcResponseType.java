@@ -16,7 +16,7 @@ package org.hyperledger.besu.plugin.services.rpc;
 
 /** Various types of responses that the RPC component may produce. */
 public enum RpcResponseType {
-  /** no response */
+  /** No response */
   NONE,
   /** Successful response */
   SUCCESS,
