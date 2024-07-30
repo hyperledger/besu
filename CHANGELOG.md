@@ -12,6 +12,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Expose set finalized/safe block in plugin api BlockchainService. These method can be used by plugins to set finalized/safe block for a PoA network (such as QBFT, IBFT and Clique).[#7382](https://github.com/hyperledger/besu/pull/7382)
 
 ### Bug fixes
 
