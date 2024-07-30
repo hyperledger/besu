@@ -249,7 +249,7 @@ class AbstractBlockProcessorIntegrationTest {
 
     BonsaiAccount updatedAccount0x1 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_2));
-    BonsaiAccount updatedAccount0x2 =
+    BonsaiAccount updatedAccount0x3 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_3));
 
     assertTrue(blockProcessingResult.isSuccessful());
