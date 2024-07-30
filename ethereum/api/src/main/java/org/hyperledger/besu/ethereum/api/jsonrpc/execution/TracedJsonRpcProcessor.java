@@ -19,11 +19,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
@@ -52,7 +52,7 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
       final Span metricSpan,
       final JsonRpcRequestContext request) {
     JsonRpcResponse jsonRpcResponse = rpcProcessor.process(id, method, metricSpan, request);
-    if (JsonRpcResponseType.ERROR == jsonRpcResponse.getType()) {
+    if (RpcResponseType.ERROR == jsonRpcResponse.getType()) {
       JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) jsonRpcResponse;
       this.rpcErrorsCounter.labels(method.getName(), errorResponse.getErrorType().name()).inc();
       switch (errorResponse.getErrorType()) {
