@@ -14,7 +14,6 @@
  */
 package org.hyperledger.besu.services;
 
-import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -43,7 +42,6 @@ public class BlockchainServiceImpl implements BlockchainService {
   private ProtocolContext protocolContext;
   private ProtocolSchedule protocolSchedule;
   private MutableBlockchain blockchain;
-  private Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier;
 
   /** Instantiates a new Blockchain service implementation. */
   public BlockchainServiceImpl() {}
@@ -53,16 +51,11 @@ public class BlockchainServiceImpl implements BlockchainService {
    *
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
-   * @param genesisConfigOptionsSupplier the genesis config options supplier
    */
-  public void init(
-      final ProtocolContext protocolContext,
-      final ProtocolSchedule protocolSchedule,
-      final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier) {
+  public void init(final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.blockchain = protocolContext.getBlockchain();
-    this.genesisConfigOptionsSupplier = genesisConfigOptionsSupplier;
   }
 
   /**
