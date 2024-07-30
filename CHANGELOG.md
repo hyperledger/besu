@@ -15,6 +15,7 @@
 ### Additions and Improvements
 - Expose set finalized/safe block in plugin api BlockchainService. These method can be used by plugins to set finalized/safe block for a PoA network (such as QBFT, IBFT and Clique).[#7382](https://github.com/hyperledger/besu/pull/7382)
 - In process RPC service [#7395](https://github.com/hyperledger/besu/pull/7395)
+- Added support for tracing private transactions using `priv_traceTransaction` API. [#6161](https://github.com/hyperledger/besu/pull/6161)
 
 ### Bug fixes
 

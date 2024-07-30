@@ -69,10 +69,11 @@ public abstract class AbstractPrivateTraceByHash implements JsonRpcMethod {
   }
 
   public Stream<PrivateFlatTrace> resultByTransactionHash(
-      final Hash transactionHash, final JsonRpcRequestContext requestContext) {
+      final String privacyGroupId,
+      final Hash transactionHash,
+      final JsonRpcRequestContext requestContext) {
 
     final String enclaveKey = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
-    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
     if (privacyController instanceof MultiTenancyPrivacyController) {
       verifyPrivacyGroupMatchesAuthenticatedEnclaveKey(
           requestContext, privacyGroupId, Optional.empty());

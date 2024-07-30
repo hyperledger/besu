@@ -21,8 +21,10 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceTransaction;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockTracer;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.privacy.privateTracing.PrivateFlatTrace;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.PrivacyQueries;
@@ -67,13 +69,19 @@ public class PrivTraceTransaction extends AbstractPrivateTraceByHash implements 
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-
+    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
     final Hash transactionHash = requestContext.getRequiredParameter(1, Hash.class);
     LOG.trace("Received RPC rpcName={} txHash={}", getName(), transactionHash);
 
+    if (privacyGroupId.isEmpty() || transactionHash.isEmpty()) {
+      return new JsonRpcErrorResponse(
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+    }
+
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
-        arrayNodeFromTraceStream(resultByTransactionHash(transactionHash, requestContext)));
+        arrayNodeFromTraceStream(
+            resultByTransactionHash(privacyGroupId, transactionHash, requestContext)));
   }
 
   protected JsonNode arrayNodeFromTraceStream(final Stream<PrivateFlatTrace> traceStream) {

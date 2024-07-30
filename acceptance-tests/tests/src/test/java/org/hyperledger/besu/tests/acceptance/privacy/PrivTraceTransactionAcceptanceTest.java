@@ -78,9 +78,6 @@ public class PrivTraceTransactionAcceptanceTest extends ParameterizedEnclaveTest
     final String privacyGroupId = createPrivacyGroup();
     final SimpleStorage simpleStorageContract = deploySimpleStorageContract(privacyGroupId);
 
-    /*
-     Updating the contract value
-    */
     Hash transactionHash =
         Hash.fromHexString(doTransaction(privacyGroupId, simpleStorageContract, 0));
 
