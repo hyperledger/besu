@@ -46,12 +46,15 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.apache.tuweni.units.bigints.UInt256;
 import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.web3j.abi.FunctionEncoder;
 import org.web3j.abi.datatypes.Function;
 import org.web3j.abi.datatypes.Type;
@@ -97,127 +100,106 @@ class AbstractBlockProcessorIntegrationTest {
     coinbase = blockHeader.getCoinbase();
     worldStateArchive = contextTestFixture.getStateArchive();
     blockchain = (DefaultBlockchain) contextTestFixture.getBlockchain();
-    sequentialBlockProcessor =
-        new MainnetBlockProcessor(
-            transactionProcessor,
-            protocolSchedule
-                .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
-                .getTransactionReceiptFactory(),
-            Wei.of(2_000_000_000_000_000L),
-            BlockHeader::getCoinbase,
-            false,
-            protocolSchedule);
-    parallelBlockProcessor =
-        new MainnetParallelBlockProcessor(
-            transactionProcessor,
-            protocolSchedule
-                .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
-                .getTransactionReceiptFactory(),
-            Wei.of(2_000_000_000_000_000L),
-            BlockHeader::getCoinbase,
-            false,
-            protocolSchedule,
-            new NoOpMetricsSystem());
   }
 
-  @Test
-  void testSequentialBlockProcessingwithTransfers() {
-    processSimpleTransfers(sequentialBlockProcessor);
+  private static Stream<Arguments> blockProcessorProvider() {
+    final ExecutionContextTestFixture contextTestFixture =
+            ExecutionContextTestFixture.builder(
+                            GenesisConfigFile.fromResource(
+                                    "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
+                    .dataStorageFormat(DataStorageFormat.BONSAI)
+                    .build();
+    final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
+    final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
+    final MainnetTransactionProcessor transactionProcessor =
+            protocolSchedule.getByBlockHeader(blockHeader).getTransactionProcessor();
+
+    final BlockProcessor sequentialBlockProcessor =
+            new MainnetBlockProcessor(
+                    transactionProcessor,
+                    protocolSchedule
+                            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
+                            .getTransactionReceiptFactory(),
+                    Wei.of(2_000_000_000_000_000L),
+                    BlockHeader::getCoinbase,
+                    false,
+                    protocolSchedule);
+
+    final BlockProcessor parallelBlockProcessor =
+            new MainnetParallelBlockProcessor(
+                    transactionProcessor,
+                    protocolSchedule
+                            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
+                            .getTransactionReceiptFactory(),
+                    Wei.of(2_000_000_000_000_000L),
+                    BlockHeader::getCoinbase,
+                    false,
+                    protocolSchedule,
+                    new NoOpMetricsSystem());
+
+    return Stream.of(Arguments.of("sequential", sequentialBlockProcessor), Arguments.of("parallel", parallelBlockProcessor));
   }
 
-  @Test
-  void testParallelBlockProcessingWithTransfers() {
-    processSimpleTransfers(parallelBlockProcessor);
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testBlockProcessingWithTransfers(final String ignoredName, final BlockProcessor blockProcessor) {
+    processSimpleTransfers(blockProcessor);
   }
 
-  @Test
-  void testSequentiaConfiltedTransfers1() {
-    processConflictedSimpleTransfersSameSender(sequentialBlockProcessor);
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testProcessConflictedSimpleTransfersSameSender(final String ignoredName, final BlockProcessor blockProcessor) {
+    processConflictedSimpleTransfersSameSender(blockProcessor);
   }
 
-  @Test
-  void testParallelConfiltedTransfers1() {
-    processConflictedSimpleTransfersSameSender(parallelBlockProcessor);
+
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testProcessConflictedSimpleTransfersSameAddressReceiverAndSender(final String ignoredName, final BlockProcessor blockProcessor) {
+    processConflictedSimpleTransfersSameAddressReceiverAndSender(blockProcessor);
   }
 
-  @Test
-  void testSequentiaConfiltedTransfers2() {
-    processConfiltedSimpleTransfersSameAddressReceiverAndSender(sequentialBlockProcessor);
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testProcessConflictedSimpleTransfersWithCoinbase(final String ignoredName,final BlockProcessor blockProcessor) {
+    processConflictedSimpleTransfersWithCoinbase(blockProcessor);
   }
 
-  @Test
-  void testParallelConfiltedTransfers2() {
-    processConfiltedSimpleTransfersSameAddressReceiverAndSender(parallelBlockProcessor);
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testProcessContractSlotUpdateThenReadTx(final String ignoredName, final BlockProcessor blockProcessor) {
+    processContractSlotUpdateThenReadTx(blockProcessor);
   }
 
-  @Test
-  void processSequentialConflictedSimpleTransfersWithCoinbase() {
-    processConflictedSimpleTransfersWithCoinbase(sequentialBlockProcessor);
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testProcessSlotReadThenUpdateTx(final String ignoredName, final BlockProcessor blockProcessor) {
+    processSlotReadThenUpdateTx(blockProcessor);
   }
 
-  @Test
-  void processParallelConflictedSimpleTransfersWithCoinbase() {
-    processConflictedSimpleTransfersWithCoinbase(parallelBlockProcessor);
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testProcessAccountReadThenUpdateTx(final String ignoredName, final BlockProcessor blockProcessor) {
+    processAccountReadThenUpdateTx(blockProcessor);
   }
 
-  @Test
-  void processSequentialContractSlotUpdateThenReadTx() {
-    processContractSlotUpdateThenReadTx(sequentialBlockProcessor);
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testProcessAccountUpdateThenReadTx(final String ignoredName, final BlockProcessor blockProcessor) {
+    processAccountUpdateThenReadTx(blockProcessor);
   }
 
-  @Test
-  void processParallelContractSlotUpdateThenReadTx() {
-    processContractSlotUpdateThenReadTx(parallelBlockProcessor);
+
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testProcessAccountReadThenUpdateTxWithTwoAccounts(final String ignoredName, final BlockProcessor blockProcessor) {
+    processAccountReadThenUpdateTxWithTwoAccounts(blockProcessor);
   }
 
-  @Test
-  void processSequentialSlotReadThenUpdateTx() {
-    processSlotReadThenUpdateTx(sequentialBlockProcessor);
-  }
-
-  @Test
-  void processParallelSlotReadThenUpdateTx() {
-    processSlotReadThenUpdateTx(parallelBlockProcessor);
-  }
-
-  @Test
-  void processSequentialAccountReadThenUpdateTx() {
-    processAccountReadThenUpdateTx(sequentialBlockProcessor);
-  }
-
-  @Test
-  void processParallelAccountReadThenUpdateTx() {
-    processAccountReadThenUpdateTx(parallelBlockProcessor);
-  }
-
-  @Test
-  void processSequentialAccountUpdateThenReadTx() {
-    processAccountUpdateThenReadTx(sequentialBlockProcessor);
-  }
-
-  @Test
-  void processParallelAccountUpdateThenReadTx() {
-    processAccountUpdateThenReadTx(parallelBlockProcessor);
-  }
-
-  @Test
-  void processSequentialAccountReadThenUpdateTxWithTwoAccounts() {
-    processAccountReadThenUpdateTxWithTwoAccounts(sequentialBlockProcessor);
-  }
-
-  @Test
-  void processParallelAccountReadThenUpdateTxWithTwoAccounts() {
-    processAccountReadThenUpdateTxWithTwoAccounts(parallelBlockProcessor);
-  }
-
-  @Test
-  void processSequentialAccountUpdateThenReadTeTxWithTwoAccounts() {
-    processAccountUpdateThenReadTxWithTwoAccounts(sequentialBlockProcessor);
-  }
-
-  @Test
-  void processParallelAccountUpdateThenReadTTxWithTwoAccounts() {
-    processAccountUpdateThenReadTxWithTwoAccounts(parallelBlockProcessor);
+  @ParameterizedTest(name = "{index}: {0}")
+  @MethodSource("blockProcessorProvider")
+  void testProcessAccountUpdateThenReadTeTxWithTwoAccounts(final String ignoredName, final BlockProcessor blockProcessor) {
+    processAccountUpdateThenReadTxWithTwoAccounts(blockProcessor);
   }
 
   private void processSimpleTransfers(final BlockProcessor blockProcessor) {
@@ -247,14 +229,14 @@ class AbstractBlockProcessorIntegrationTest {
     BonsaiAccount updatedSenderAccount2 =
         (BonsaiAccount) worldState.get(transactionTransfer2.getSender());
 
-    BonsaiAccount updatedAccount0x1 =
+    BonsaiAccount updatedAccount0x2 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_2));
     BonsaiAccount updatedAccount0x3 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_3));
 
     assertTrue(blockProcessingResult.isSuccessful());
-    assertThat(updatedAccount0x1.getBalance()).isEqualTo(Wei.of(1_000_000_000_000_000_000L));
-    assertThat(updatedAccount0x2.getBalance()).isEqualTo(Wei.of(2_000_000_000_000_000_000L));
+    assertThat(updatedAccount0x2.getBalance()).isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+    assertThat(updatedAccount0x3.getBalance()).isEqualTo(Wei.of(2_000_000_000_000_000_000L));
     assertThat(updatedSenderAccount1.getBalance()).isLessThan(senderAccount1.getBalance());
     assertThat(updatedSenderAccount2.getBalance()).isLessThan(senderAccount2.getBalance());
   }
@@ -287,22 +269,22 @@ class AbstractBlockProcessorIntegrationTest {
     BonsaiAccount updatedSenderAccount =
         (BonsaiAccount) worldState.get(transferTransaction1.getSender());
 
-    BonsaiAccount updatedAccount0x1 =
+    BonsaiAccount updatedAccount0x4 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_4));
-    BonsaiAccount updatedAccount0x2 =
+    BonsaiAccount updatedAccount0x5 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_5));
-    BonsaiAccount updatedAccount0x3 =
+    BonsaiAccount updatedAccount0x6 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_6));
 
     assertTrue(blockProcessingResult.isSuccessful());
-    assertThat(updatedAccount0x1.getBalance()).isEqualTo(Wei.of(1_000_000_000_000_000_000L));
-    assertThat(updatedAccount0x2.getBalance()).isEqualTo(Wei.of(2_000_000_000_000_000_000L));
-    assertThat(updatedAccount0x3.getBalance()).isEqualTo(Wei.of(3_000_000_000_000_000_000L));
+    assertThat(updatedAccount0x4.getBalance()).isEqualTo(Wei.of(1_000_000_000_000_000_000L));
+    assertThat(updatedAccount0x5.getBalance()).isEqualTo(Wei.of(2_000_000_000_000_000_000L));
+    assertThat(updatedAccount0x6.getBalance()).isEqualTo(Wei.of(3_000_000_000_000_000_000L));
 
     assertThat(updatedSenderAccount.getBalance()).isLessThan(senderAccount.getBalance());
   }
 
-  private void processConfiltedSimpleTransfersSameAddressReceiverAndSender(
+  private void processConflictedSimpleTransfersSameAddressReceiverAndSender(
       final BlockProcessor blockProcessor) {
     // Create conflicted transfer transactions
     Transaction transferTransaction1 =
@@ -515,10 +497,10 @@ class AbstractBlockProcessorIntegrationTest {
 
     // Verify the state
     BonsaiAccount contractAccount = (BonsaiAccount) worldState.get(contractAddress);
-    BonsaiAccount updatedAccount2 =
+    BonsaiAccount updatedAccount0x2 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_2));
     assertThat(contractAccount.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
-    assertThat(updatedAccount2.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
+    assertThat(updatedAccount0x2.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
   }
 
   void processAccountUpdateThenReadTx(final BlockProcessor blockProcessor) {
@@ -548,11 +530,11 @@ class AbstractBlockProcessorIntegrationTest {
 
     // Verify the state
     BonsaiAccount contractAccount = (BonsaiAccount) worldState.get(contractAddress);
-    BonsaiAccount updatedAccount2 =
+    BonsaiAccount updatedAccount0x2 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_2));
 
     assertThat(contractAccount.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
-    assertThat(updatedAccount2.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
+    assertThat(updatedAccount0x2.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
   }
 
   void processAccountReadThenUpdateTxWithTwoAccounts(final BlockProcessor blockProcessor) {
@@ -582,10 +564,10 @@ class AbstractBlockProcessorIntegrationTest {
 
     // Verify the state
     BonsaiAccount contractAccount = (BonsaiAccount) worldState.get(contractAddress);
-    BonsaiAccount updatedAccount3 =
+    BonsaiAccount updatedAccount0x3 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_3));
     assertThat(contractAccount.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
-    assertThat(updatedAccount3.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
+    assertThat(updatedAccount0x3.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
   }
 
   void processAccountUpdateThenReadTxWithTwoAccounts(final BlockProcessor blockProcessor) {
@@ -616,10 +598,10 @@ class AbstractBlockProcessorIntegrationTest {
 
     // Verify the state
     BonsaiAccount contractAccount = (BonsaiAccount) worldState.get(contractAddress);
-    BonsaiAccount updatedAccount3 =
+    BonsaiAccount updatedAccount0x3 =
         (BonsaiAccount) worldState.get(Address.fromHexStringStrict(ACCOUNT_3));
     assertThat(contractAccount.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
-    assertThat(updatedAccount3.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
+    assertThat(updatedAccount0x3.getBalance()).isEqualTo(Wei.of(500_000_000_000_000_000L));
   }
 
   private static KeyPair generateKeyPair(final String privateKeyHex) {
