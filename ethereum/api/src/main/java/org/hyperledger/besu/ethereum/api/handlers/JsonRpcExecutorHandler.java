@@ -77,6 +77,7 @@ public class JsonRpcExecutorHandler {
                                   .whenComplete((result, throwable) -> {
                                     if (throwable != null) {
                                       if (throwable instanceof TimeoutException) {
+                                        LOG.error("JSON-RPC execution timed out after {} milliseconds", timeoutMillis);
                                         handleJsonRpcError(ctx, null, RpcErrorType.TIMEOUT_ERROR);
                                       } else {
                                         final String method = executor.getRpcMethodName(ctx);
