@@ -21,9 +21,11 @@ import org.hyperledger.besu.consensus.common.validator.VoteType;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -51,7 +53,13 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     checkState(
         validatorProvider.getVoteProviderAtHead().isPresent(), "Ibft requires a vote provider");
-    final Address validatorAddress = requestContext.getRequiredParameter(0, Address.class);
+    final Address validatorAddress;
+    try {
+      validatorAddress = requestContext.getRequiredParameter(0, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
     final Boolean add = requestContext.getRequiredParameter(1, Boolean.class);
     LOG.trace(
         "Received RPC rpcName={} voteType={} address={}",

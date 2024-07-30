@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -65,7 +66,13 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
           requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
 
-    final Address address = requestContext.getRequiredParameter(0, Address.class);
+    final Address address;
+    try {
+      address = requestContext.getRequiredParameter(0, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
     final String privateFrom = requestContext.getRequiredParameter(1, String.class);
     final String[] privateFor = requestContext.getRequiredParameter(2, String[].class);
 

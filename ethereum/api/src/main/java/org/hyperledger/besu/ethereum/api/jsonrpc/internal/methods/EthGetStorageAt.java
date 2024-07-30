@@ -18,8 +18,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UInt256Parameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -42,7 +44,13 @@ public class EthGetStorageAt extends AbstractBlockParameterOrBlockHashMethod {
 
   @Override
   protected String resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
-    final Address address = request.getRequiredParameter(0, Address.class);
+    final Address address;
+    try {
+      address = request.getRequiredParameter(0, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
     final UInt256 position = request.getRequiredParameter(1, UInt256Parameter.class).getValue();
     return blockchainQueries
         .get()
