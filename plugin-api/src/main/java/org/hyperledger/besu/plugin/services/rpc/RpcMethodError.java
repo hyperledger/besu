@@ -23,9 +23,7 @@ import java.util.Optional;
  */
 public interface RpcMethodError {
 
-  /**
-   * The error code for all invalid params
-   */
+  /** The error code for all invalid params */
   static final int INVALID_PARAMS_ERROR_CODE = -32602;
 
   /**
