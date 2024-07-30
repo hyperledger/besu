@@ -214,6 +214,14 @@ public abstract class FlatDbStrategy {
         accountsToPairStream(storage, startKeyHash, endKeyHash).takeWhile(takeWhile));
   }
 
+  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
+      final SegmentedKeyValueStorage storage,
+      final Bytes startKeyHash,
+      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+
+    return toNavigableMap(accountsToPairStream(storage, startKeyHash).takeWhile(takeWhile));
+  }
+
   /** streams RLP encoded storage values using a specified stream limit. */
   public NavigableMap<Bytes32, Bytes> streamStorageFlatDatabase(
       final SegmentedKeyValueStorage storage,
@@ -291,6 +299,13 @@ public abstract class FlatDbStrategy {
       final SegmentedKeyValueStorage storage, final Bytes startKeyHash, final Bytes32 endKeyHash) {
     return storage
         .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe(), endKeyHash.toArrayUnsafe())
+        .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
+  }
+
+  private static Stream<Pair<Bytes32, Bytes>> accountsToPairStream(
+      final SegmentedKeyValueStorage storage, final Bytes startKeyHash) {
+    return storage
+        .streamFromKey(ACCOUNT_INFO_STATE, startKeyHash.toArrayUnsafe())
         .map(pair -> new Pair<>(Bytes32.wrap(pair.getKey()), Bytes.wrap(pair.getValue())));
   }
 

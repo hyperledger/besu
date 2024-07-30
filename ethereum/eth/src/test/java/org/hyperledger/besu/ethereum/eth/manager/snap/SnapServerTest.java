@@ -214,8 +214,7 @@ public class SnapServerTest {
     var rangeData =
         getAndVerifyAccountRangeData(
             (AccountRangeMessage) snapServer.constructGetAccountRangeResponse(tinyRangeLimit),
-            // TODO: after sorting out the request fudge factor, adjust this assertion to match
-            acctCount * 90 / 100 - 1);
+            acctCount);
 
     // assert proofs are valid for the requested range
     assertThat(assertIsValidAccountRangeProof(Hash.ZERO, rangeData)).isTrue();
@@ -343,7 +342,7 @@ public class SnapServerTest {
   @Test
   public void assertStorageLimitRangeResponse() {
     // assert we limit the range response according to bytessize
-    final int storageSlotSize = 70;
+    final int storageSlotSize = 69;
     final int storageSlotCount = 16;
     insertTestAccounts(acct1, acct2, acct3, acct4);
 
@@ -375,7 +374,7 @@ public class SnapServerTest {
     var secondAccountStorages = slotsData.slots().last();
     // expecting to see only 6 since request was limited to 16 slots
     // TODO: after sorting out the request fudge factor, adjust this assertion to match
-    assertThat(secondAccountStorages.size()).isEqualTo(6 * 90 / 100 - 1);
+    assertThat(secondAccountStorages.size()).isEqualTo(6);
     // proofs required for interrupted storage range:
     assertThat(slotsData.proofs().size()).isNotEqualTo(0);
 
