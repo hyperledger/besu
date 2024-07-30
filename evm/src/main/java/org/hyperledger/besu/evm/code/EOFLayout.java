@@ -395,12 +395,12 @@ public record EOFLayout(
 
     EOFLayout[] subContainers = new EOFLayout[containerSectionCount];
     for (int i = 0; i < containerSectionCount; i++) {
-      int subcontianerSize = containerSectionSizes[i];
-      if (subcontianerSize != inputStream.skip(subcontianerSize)) {
+      int subcontainerSize = containerSectionSizes[i];
+      if (subcontainerSize != inputStream.skip(subcontainerSize)) {
         return invalidLayout(step.container, version, "incomplete subcontainer");
       }
-      Bytes subcontainer = step.container.slice(pos, subcontianerSize);
-      pos += subcontianerSize;
+      Bytes subcontainer = step.container.slice(pos, subcontainerSize);
+      pos += subcontainerSize;
       queue.add(new EOFParseStep(subcontainer, false, i, step, subContainers));
     }
 
