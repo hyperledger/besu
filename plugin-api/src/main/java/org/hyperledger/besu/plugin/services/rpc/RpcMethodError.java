@@ -23,6 +23,8 @@ import java.util.Optional;
  */
 public interface RpcMethodError {
 
+  static final int INVALID_PARAMS_ERROR_CODE = -32602;
+
   /**
    * Retrieves the error code associated with the RPC error.
    *
