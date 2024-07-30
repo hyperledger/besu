@@ -334,20 +334,6 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .map(
               storage -> {
                 LOGGER.trace("obtained worldstate in {}", stopWatch);
-
-                // only honor start and end hash if request is for a single account's storage:
-                Bytes32 startKeyBytes, endKeyBytes;
-                boolean isPartialRange = false;
-                if (range.hashes().size() > 1) {
-                  startKeyBytes = Bytes32.ZERO;
-                  endKeyBytes = HASH_LAST;
-                } else {
-                  startKeyBytes = range.startKeyHash();
-                  endKeyBytes = range.endKeyHash();
-                  isPartialRange =
-                      !(startKeyBytes.equals(Hash.ZERO) && endKeyBytes.equals(HASH_LAST));
-                }
-
                 // reusable predicate to limit by rec count and bytes:
                 var responsePredicate =
                     new ResponseSizePredicate(
@@ -362,6 +348,19 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
                           slotRlpOutput.endList();
                           return slotRlpOutput.encodedSize();
                         });
+
+                // only honor start and end hash if request is for a single account's storage:
+                Bytes32 startKeyBytes, endKeyBytes;
+                boolean isPartialRange = false;
+                if (range.hashes().size() > 1) {
+                  startKeyBytes = Bytes32.ZERO;
+                  endKeyBytes = HASH_LAST;
+                } else {
+                  startKeyBytes = range.startKeyHash();
+                  endKeyBytes = range.endKeyHash();
+                  isPartialRange =
+                      !(startKeyBytes.equals(Hash.ZERO) && endKeyBytes.equals(HASH_LAST));
+                }
 
                 ArrayDeque<NavigableMap<Bytes32, Bytes>> collectedStorages = new ArrayDeque<>();
                 List<Bytes> proofNodes = new ArrayList<>();
@@ -651,16 +650,16 @@ class SnapServer implements BesuEvents.InitialSyncCompletionListener {
           .addArgument(byteLimit::get)
           .addArgument(recordLimit::get)
           .log();
-      //      if (stopWatch.getTime() > MAX_MILLIS_PER_REQUEST) {
-      //        shouldContinue.set(false);
-      //        LOGGER.warn(
-      //            "{} took too long, stopped at {} ms with {} records and {} bytes",
-      //            forWhat,
-      //            stopWatch.formatTime(),
-      //            recordLimit.get(),
-      //            byteLimit.get());
-      //        return false;
-      //      }
+      if (stopWatch.getTime() > MAX_MILLIS_PER_REQUEST) {
+        shouldContinue.set(false);
+        LOGGER.warn(
+            "{} took too long, stopped at {} ms with {} records and {} bytes",
+            forWhat,
+            stopWatch.formatTime(),
+            recordLimit.get(),
+            byteLimit.get());
+        return false;
+      }
 
       var underRecordLimit = recordLimit.addAndGet(1) <= MAX_ENTRIES_PER_REQUEST;
       var underByteLimit =

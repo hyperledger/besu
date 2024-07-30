@@ -207,16 +207,6 @@ public abstract class FlatDbStrategy {
   public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
       final SegmentedKeyValueStorage storage,
       final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
-
-    return toNavigableMap(
-        accountsToPairStream(storage, startKeyHash, endKeyHash).takeWhile(takeWhile));
-  }
-
-  public NavigableMap<Bytes32, Bytes> streamAccountFlatDatabase(
-      final SegmentedKeyValueStorage storage,
-      final Bytes startKeyHash,
       final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
 
     return toNavigableMap(accountsToPairStream(storage, startKeyHash).takeWhile(takeWhile));

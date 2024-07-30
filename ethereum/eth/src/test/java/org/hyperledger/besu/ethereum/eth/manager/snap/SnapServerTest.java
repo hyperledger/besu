@@ -373,7 +373,6 @@ public class SnapServerTest {
     assertThat(firstAccountStorages.size()).isEqualTo(10);
     var secondAccountStorages = slotsData.slots().last();
     // expecting to see only 6 since request was limited to 16 slots
-    // TODO: after sorting out the request fudge factor, adjust this assertion to match
     assertThat(secondAccountStorages.size()).isEqualTo(6);
     // proofs required for interrupted storage range:
     assertThat(slotsData.proofs().size()).isNotEqualTo(0);
