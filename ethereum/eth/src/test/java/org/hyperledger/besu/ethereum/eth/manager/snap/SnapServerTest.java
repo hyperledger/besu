@@ -579,7 +579,7 @@ public class SnapServerTest {
   public void assertStorageTrieShortAccountHashPathRequest() {
     Bytes accountShortHash = Bytes.fromHexStringLenient("0x40");
     Hash accountFullHash = Hash.wrap(Bytes32.leftPad(accountShortHash));
-    SnapTestAccount testAccount = createTestContractAccount(accountFullHash, 0, inMemoryStorage);
+    SnapTestAccount testAccount = createTestContractAccount(accountFullHash, 1, inMemoryStorage);
     insertTestAccounts(testAccount);
     var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
     var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
