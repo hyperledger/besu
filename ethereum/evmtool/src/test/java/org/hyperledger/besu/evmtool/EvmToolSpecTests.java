@@ -62,6 +62,10 @@ public class EvmToolSpecTests {
     return findSpecFiles(new String[] {"b11r"});
   }
 
+  public static Object[][] codeValidateTests() {
+    return findSpecFiles(new String[] {"code-validate"});
+  }
+
   public static Object[][] prettyPrintTests() {
     return findSpecFiles(new String[] {"pretty-print"});
   }
@@ -122,6 +126,7 @@ public class EvmToolSpecTests {
   @MethodSource({
     "blocktestTests",
     "b11rTests",
+    "codeValidateTests",
     "prettyPrintTests",
     "stateTestTests",
     "t8nTests",
