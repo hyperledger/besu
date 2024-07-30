@@ -73,10 +73,10 @@ class AbstractBlockProcessorIntegrationTest {
   private static final String ACCOUNT_6 = "0x0000000000000000000000000000000000000006";
   private static final String CONTRACT_ADDRESS = "0x00000000000000000000000000000000000fffff";
 
-  private static final KeyPair keyPair1 =
+  private static final KeyPair ACCOUNT_GENESIS_1_KEYPAIR =
       generateKeyPair("c87509a1c067bbde78beb793e6fa76530b6382a4c0241e5e4a9ec0a0f44dc0d3");
 
-  private static final KeyPair keyPair2 =
+  private static final KeyPair ACCOUNT_GENESIS_2_KEYPAIR =
       generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
 
   private WorldStateArchive worldStateArchive;
@@ -104,101 +104,111 @@ class AbstractBlockProcessorIntegrationTest {
 
   private static Stream<Arguments> blockProcessorProvider() {
     final ExecutionContextTestFixture contextTestFixture =
-            ExecutionContextTestFixture.builder(
-                            GenesisConfigFile.fromResource(
-                                    "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
-                    .dataStorageFormat(DataStorageFormat.BONSAI)
-                    .build();
+        ExecutionContextTestFixture.builder(
+                GenesisConfigFile.fromResource(
+                    "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
+            .dataStorageFormat(DataStorageFormat.BONSAI)
+            .build();
     final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
     final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
     final MainnetTransactionProcessor transactionProcessor =
-            protocolSchedule.getByBlockHeader(blockHeader).getTransactionProcessor();
+        protocolSchedule.getByBlockHeader(blockHeader).getTransactionProcessor();
 
     final BlockProcessor sequentialBlockProcessor =
-            new MainnetBlockProcessor(
-                    transactionProcessor,
-                    protocolSchedule
-                            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
-                            .getTransactionReceiptFactory(),
-                    Wei.of(2_000_000_000_000_000L),
-                    BlockHeader::getCoinbase,
-                    false,
-                    protocolSchedule);
+        new MainnetBlockProcessor(
+            transactionProcessor,
+            protocolSchedule
+                .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
+                .getTransactionReceiptFactory(),
+            Wei.of(2_000_000_000_000_000L),
+            BlockHeader::getCoinbase,
+            false,
+            protocolSchedule);
 
     final BlockProcessor parallelBlockProcessor =
-            new MainnetParallelBlockProcessor(
-                    transactionProcessor,
-                    protocolSchedule
-                            .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
-                            .getTransactionReceiptFactory(),
-                    Wei.of(2_000_000_000_000_000L),
-                    BlockHeader::getCoinbase,
-                    false,
-                    protocolSchedule,
-                    new NoOpMetricsSystem());
+        new MainnetParallelBlockProcessor(
+            transactionProcessor,
+            protocolSchedule
+                .getByBlockHeader(new BlockHeaderTestFixture().number(0L).buildHeader())
+                .getTransactionReceiptFactory(),
+            Wei.of(2_000_000_000_000_000L),
+            BlockHeader::getCoinbase,
+            false,
+            protocolSchedule,
+            new NoOpMetricsSystem());
 
-    return Stream.of(Arguments.of("sequential", sequentialBlockProcessor), Arguments.of("parallel", parallelBlockProcessor));
+    return Stream.of(
+        Arguments.of("sequential", sequentialBlockProcessor),
+        Arguments.of("parallel", parallelBlockProcessor));
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testBlockProcessingWithTransfers(final String ignoredName, final BlockProcessor blockProcessor) {
+  void testBlockProcessingWithTransfers(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processSimpleTransfers(blockProcessor);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessConflictedSimpleTransfersSameSender(final String ignoredName, final BlockProcessor blockProcessor) {
+  void testProcessConflictedSimpleTransfersSameSender(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processConflictedSimpleTransfersSameSender(blockProcessor);
   }
 
-
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessConflictedSimpleTransfersSameAddressReceiverAndSender(final String ignoredName, final BlockProcessor blockProcessor) {
+  void testProcessConflictedSimpleTransfersSameAddressReceiverAndSender(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processConflictedSimpleTransfersSameAddressReceiverAndSender(blockProcessor);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessConflictedSimpleTransfersWithCoinbase(final String ignoredName,final BlockProcessor blockProcessor) {
+  void testProcessConflictedSimpleTransfersWithCoinbase(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processConflictedSimpleTransfersWithCoinbase(blockProcessor);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessContractSlotUpdateThenReadTx(final String ignoredName, final BlockProcessor blockProcessor) {
+  void testProcessContractSlotUpdateThenReadTx(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processContractSlotUpdateThenReadTx(blockProcessor);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessSlotReadThenUpdateTx(final String ignoredName, final BlockProcessor blockProcessor) {
+  void testProcessSlotReadThenUpdateTx(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processSlotReadThenUpdateTx(blockProcessor);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountReadThenUpdateTx(final String ignoredName, final BlockProcessor blockProcessor) {
+  void testProcessAccountReadThenUpdateTx(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processAccountReadThenUpdateTx(blockProcessor);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountUpdateThenReadTx(final String ignoredName, final BlockProcessor blockProcessor) {
+  void testProcessAccountUpdateThenReadTx(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processAccountUpdateThenReadTx(blockProcessor);
   }
 
-
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountReadThenUpdateTxWithTwoAccounts(final String ignoredName, final BlockProcessor blockProcessor) {
+  void testProcessAccountReadThenUpdateTxWithTwoAccounts(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processAccountReadThenUpdateTxWithTwoAccounts(blockProcessor);
   }
 
   @ParameterizedTest(name = "{index}: {0}")
   @MethodSource("blockProcessorProvider")
-  void testProcessAccountUpdateThenReadTeTxWithTwoAccounts(final String ignoredName, final BlockProcessor blockProcessor) {
+  void testProcessAccountUpdateThenReadTeTxWithTwoAccounts(
+      final String ignoredName, final BlockProcessor blockProcessor) {
     processAccountUpdateThenReadTxWithTwoAccounts(blockProcessor);
   }
 
@@ -206,10 +216,10 @@ class AbstractBlockProcessorIntegrationTest {
     // Create two non conflicted transactions
     Transaction transactionTransfer1 = // ACCOUNT_GENESIS_1 -> ACCOUNT_2
         createTransferTransaction(
-            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_2, keyPair1);
+            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_2, ACCOUNT_GENESIS_1_KEYPAIR);
     Transaction transactionTransfer2 = // ACCOUNT_GENESIS_2 -> ACCOUNT_3
         createTransferTransaction(
-            0, 2_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_3, keyPair2);
+            0, 2_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_3, ACCOUNT_GENESIS_2_KEYPAIR);
 
     MutableWorldState worldState = worldStateArchive.getMutable();
     BonsaiAccount senderAccount1 = (BonsaiAccount) worldState.get(transactionTransfer1.getSender());
@@ -245,13 +255,13 @@ class AbstractBlockProcessorIntegrationTest {
     // Create three transactions with the same sender
     Transaction transferTransaction1 = // ACCOUNT_GENESIS_1 -> ACCOUNT_4
         createTransferTransaction(
-            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_4, keyPair1);
+            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_4, ACCOUNT_GENESIS_1_KEYPAIR);
     Transaction transferTransaction2 = // ACCOUNT_GENESIS_1 -> ACCOUNT_5
         createTransferTransaction(
-            1, 2_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_5, keyPair1);
+            1, 2_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_5, ACCOUNT_GENESIS_1_KEYPAIR);
     Transaction transferTransaction3 = // ACCOUNT_GENESIS_1 -> ACCOUNT_6
         createTransferTransaction(
-            2, 3_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_6, keyPair1);
+            2, 3_000_000_000_000_000_000L, 300000L, 5L, 7L, ACCOUNT_6, ACCOUNT_GENESIS_1_KEYPAIR);
 
     MutableWorldState worldState = worldStateArchive.getMutable();
     BonsaiAccount senderAccount = (BonsaiAccount) worldState.get(transferTransaction1.getSender());
@@ -295,7 +305,7 @@ class AbstractBlockProcessorIntegrationTest {
             5L,
             7L,
             ACCOUNT_GENESIS_2,
-            keyPair1); // ACCOUNT_GENESIS_1 -> ACCOUNT_GENESIS_2
+            ACCOUNT_GENESIS_1_KEYPAIR); // ACCOUNT_GENESIS_1 -> ACCOUNT_GENESIS_2
     Transaction transferTransaction2 =
         createTransferTransaction(
             0,
@@ -304,7 +314,7 @@ class AbstractBlockProcessorIntegrationTest {
             5L,
             7L,
             ACCOUNT_2,
-            keyPair2); // ACCOUNT_GENESIS_2 -> ACCOUNT_2
+            ACCOUNT_GENESIS_2_KEYPAIR); // ACCOUNT_GENESIS_2 -> ACCOUNT_2
 
     MutableWorldState worldState = worldStateArchive.getMutable();
     BonsaiAccount transferTransaction1Sender =
@@ -354,7 +364,7 @@ class AbstractBlockProcessorIntegrationTest {
             5L,
             7L,
             ACCOUNT_2,
-            keyPair1); // ACCOUNT_GENESIS_1 -> ACCOUNT_2
+            ACCOUNT_GENESIS_1_KEYPAIR); // ACCOUNT_GENESIS_1 -> ACCOUNT_2
     Transaction transferTransaction2 =
         createTransferTransaction(
             0,
@@ -363,7 +373,7 @@ class AbstractBlockProcessorIntegrationTest {
             5L,
             7L,
             coinbase.toHexString(),
-            keyPair2); // ACCOUNT_GENESIS_2 -> COINBASE
+            ACCOUNT_GENESIS_2_KEYPAIR); // ACCOUNT_GENESIS_2 -> COINBASE
 
     MutableWorldState worldState = worldStateArchive.getMutable();
     BonsaiAccount transferTransaction1Sender =
@@ -403,16 +413,16 @@ class AbstractBlockProcessorIntegrationTest {
     // create conflicted transactions on the same slot (update then read)
     Transaction setSlot1Transaction =
         createContractUpdateSlotTransaction(
-            0, contractAddress, "setSlot1", keyPair1, Optional.of(100));
+            0, contractAddress, "setSlot1", ACCOUNT_GENESIS_1_KEYPAIR, Optional.of(100));
     Transaction getSlot1Transaction =
         createContractUpdateSlotTransaction(
-            0, contractAddress, "getSlot1", keyPair2, Optional.empty());
+            0, contractAddress, "getSlot1", ACCOUNT_GENESIS_2_KEYPAIR, Optional.empty());
     Transaction setSlot3Transaction =
         createContractUpdateSlotTransaction(
-            1, contractAddress, "setSlot2", keyPair1, Optional.of(200));
+            1, contractAddress, "setSlot2", ACCOUNT_GENESIS_1_KEYPAIR, Optional.of(200));
     Transaction setSlot4Transaction =
         createContractUpdateSlotTransaction(
-            2, contractAddress, "setSlot3", keyPair1, Optional.of(300));
+            2, contractAddress, "setSlot3", ACCOUNT_GENESIS_1_KEYPAIR, Optional.of(300));
 
     Block blockWithTransactions =
         createBlockWithTransactions(
@@ -439,16 +449,16 @@ class AbstractBlockProcessorIntegrationTest {
 
     Transaction getSlot1Transaction =
         createContractUpdateSlotTransaction(
-            0, contractAddress, "getSlot1", keyPair1, Optional.empty());
+            0, contractAddress, "getSlot1", ACCOUNT_GENESIS_1_KEYPAIR, Optional.empty());
     Transaction setSlot1Transaction =
         createContractUpdateSlotTransaction(
-            0, contractAddress, "setSlot1", keyPair2, Optional.of(1000));
+            0, contractAddress, "setSlot1", ACCOUNT_GENESIS_2_KEYPAIR, Optional.of(1000));
     Transaction setSlo2Transaction =
         createContractUpdateSlotTransaction(
-            1, contractAddress, "setSlot2", keyPair1, Optional.of(2000));
+            1, contractAddress, "setSlot2", ACCOUNT_GENESIS_1_KEYPAIR, Optional.of(2000));
     Transaction setSlot3Transaction =
         createContractUpdateSlotTransaction(
-            2, contractAddress, "setSlot3", keyPair1, Optional.of(3000));
+            2, contractAddress, "setSlot3", ACCOUNT_GENESIS_1_KEYPAIR, Optional.of(3000));
 
     Block blockWithTransactions =
         createBlockWithTransactions(
@@ -474,13 +484,25 @@ class AbstractBlockProcessorIntegrationTest {
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer = // ACCOUNT_GENESIS_1 -> CONTRACT_ADDRESS
         createTransferTransaction(
-            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, CONTRACT_ADDRESS, keyPair1);
+            0,
+            1_000_000_000_000_000_000L,
+            300000L,
+            5L,
+            7L,
+            CONTRACT_ADDRESS,
+            ACCOUNT_GENESIS_1_KEYPAIR);
     Transaction getcontractBalanceTransaction =
-        createContractReadAccountTransaction(1, contractAddress, "getBalance", keyPair1, ACCOUNT_2);
+        createContractReadAccountTransaction(
+            1, contractAddress, "getBalance", ACCOUNT_GENESIS_1_KEYPAIR, ACCOUNT_2);
 
     Transaction sendEthFromContractTransaction =
         createContractUpdateAccountTransaction(
-            0, contractAddress, "transferTo", keyPair2, ACCOUNT_2, 500_000_000_000_000_000L);
+            0,
+            contractAddress,
+            "transferTo",
+            ACCOUNT_GENESIS_2_KEYPAIR,
+            ACCOUNT_2,
+            500_000_000_000_000_000L);
 
     Block blockWithTransactions =
         createBlockWithTransactions(
@@ -507,14 +529,26 @@ class AbstractBlockProcessorIntegrationTest {
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer =
         createTransferTransaction(
-            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, CONTRACT_ADDRESS, keyPair1);
+            0,
+            1_000_000_000_000_000_000L,
+            300000L,
+            5L,
+            7L,
+            CONTRACT_ADDRESS,
+            ACCOUNT_GENESIS_1_KEYPAIR);
 
     Transaction sendEthFromContractTransaction =
         createContractUpdateAccountTransaction(
-            1, contractAddress, "transferTo", keyPair1, ACCOUNT_2, 500_000_000_000_000_000L);
+            1,
+            contractAddress,
+            "transferTo",
+            ACCOUNT_GENESIS_1_KEYPAIR,
+            ACCOUNT_2,
+            500_000_000_000_000_000L);
 
     Transaction getcontractBalanceTransaction =
-        createContractReadAccountTransaction(0, contractAddress, "getBalance", keyPair2, ACCOUNT_2);
+        createContractReadAccountTransaction(
+            0, contractAddress, "getBalance", ACCOUNT_GENESIS_2_KEYPAIR, ACCOUNT_2);
 
     Block blockWithTransactions =
         createBlockWithTransactions(
@@ -541,13 +575,25 @@ class AbstractBlockProcessorIntegrationTest {
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer = // ACCOUNT_GENESIS_1 -> CONTRACT_ADDRESS
         createTransferTransaction(
-            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, CONTRACT_ADDRESS, keyPair1);
+            0,
+            1_000_000_000_000_000_000L,
+            300000L,
+            5L,
+            7L,
+            CONTRACT_ADDRESS,
+            ACCOUNT_GENESIS_1_KEYPAIR);
     Transaction getcontractBalanceTransaction =
-        createContractReadAccountTransaction(1, contractAddress, "getBalance", keyPair1, ACCOUNT_2);
+        createContractReadAccountTransaction(
+            1, contractAddress, "getBalance", ACCOUNT_GENESIS_1_KEYPAIR, ACCOUNT_2);
 
     Transaction sendEthFromContractTransaction =
         createContractUpdateAccountTransaction(
-            0, contractAddress, "transferTo", keyPair2, ACCOUNT_3, 500_000_000_000_000_000L);
+            0,
+            contractAddress,
+            "transferTo",
+            ACCOUNT_GENESIS_2_KEYPAIR,
+            ACCOUNT_3,
+            500_000_000_000_000_000L);
 
     Block blockWithTransactions =
         createBlockWithTransactions(
@@ -574,14 +620,26 @@ class AbstractBlockProcessorIntegrationTest {
     Address contractAddress = Address.fromHexStringStrict(CONTRACT_ADDRESS);
     Transaction transactionTransfer = // ACCOUNT_GENESIS_1 -> CONTRACT_ADDRESS
         createTransferTransaction(
-            0, 1_000_000_000_000_000_000L, 300000L, 5L, 7L, CONTRACT_ADDRESS, keyPair1);
+            0,
+            1_000_000_000_000_000_000L,
+            300000L,
+            5L,
+            7L,
+            CONTRACT_ADDRESS,
+            ACCOUNT_GENESIS_1_KEYPAIR);
 
     Transaction sendEthFromContractTransaction =
         createContractUpdateAccountTransaction(
-            0, contractAddress, "transferTo", keyPair2, ACCOUNT_3, 500_000_000_000_000_000L);
+            0,
+            contractAddress,
+            "transferTo",
+            ACCOUNT_GENESIS_2_KEYPAIR,
+            ACCOUNT_3,
+            500_000_000_000_000_000L);
 
     Transaction getcontractBalanceTransaction =
-        createContractReadAccountTransaction(1, contractAddress, "getBalance", keyPair1, ACCOUNT_2);
+        createContractReadAccountTransaction(
+            1, contractAddress, "getBalance", ACCOUNT_GENESIS_1_KEYPAIR, ACCOUNT_2);
 
     Block blockWithTransactions =
         createBlockWithTransactions(
