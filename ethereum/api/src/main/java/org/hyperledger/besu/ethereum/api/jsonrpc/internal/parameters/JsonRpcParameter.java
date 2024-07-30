@@ -40,7 +40,8 @@ public class JsonRpcParameter {
    * @param <T> The type of parameter.
    * @return Returns the parameter cast as T if available, otherwise throws exception.
    */
-  //TODO: update to throw JsonRpcParameterException as a checked exception, forcing callers to handle it to supply appropriate context
+  // TODO: update to throw JsonRpcParameterException as a checked exception, forcing callers to
+  // handle it to supply appropriate context
   public <T> T required(final Object[] params, final int index, final Class<T> paramClass) {
     return optional(params, index, paramClass)
         .orElseThrow(
@@ -59,7 +60,8 @@ public class JsonRpcParameter {
    * @param <T> The type of parameter.
    * @return Returns the parameter cast as T if available.
    */
-  //TODO: update to throw JsonRpcParameterException as a checked exception, forcing callers to handle it to supply appropriate context
+  // TODO: update to throw JsonRpcParameterException as a checked exception, forcing callers to
+  // handle it to supply appropriate context
   @SuppressWarnings("unchecked")
   public <T> Optional<T> optional(
       final Object[] params, final int index, final Class<T> paramClass) {
@@ -89,7 +91,8 @@ public class JsonRpcParameter {
     return Optional.of(param);
   }
 
-  //TODO: update to throw JsonRpcParameterException as a checked exception, forcing callers to handle it to supply appropriate context
+  // TODO: update to throw JsonRpcParameterException as a checked exception, forcing callers to
+  // handle it to supply appropriate context
   public <T> Optional<List<T>> optionalList(
       final Object[] params, final int index, final Class<T> listClass) {
     if (params == null || params.length <= index || params[index] == null) {

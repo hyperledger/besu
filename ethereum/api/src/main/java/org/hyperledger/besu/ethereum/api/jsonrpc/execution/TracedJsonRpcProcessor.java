@@ -57,7 +57,7 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
       this.rpcErrorsCounter.labels(method.getName(), errorResponse.getErrorType().name()).inc();
       switch (errorResponse.getErrorType()) {
         case INVALID_PARAMS:
-        case INVALID_ACCOUNTS_PARAMS:
+        case INVALID_ACCOUNT_PARAMS:
         case INVALID_ADDRESS_HASH_PARAMS:
         case INVALID_ADDRESS_PARAMS:
         case INVALID_AUTH_PARAMS:
@@ -75,9 +75,9 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
         case INVALID_DEPOSIT_REQUEST_PARAMS:
         case INVALID_ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_PARAMS:
         case INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS:
-        case INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMETER:
-        case INVALID_ENGINE_PAYLOAD_PARAMETER:
-        case INVALID_ENGINE_PREPARE_PAYLOAD_PARAMETER:
+        case INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMS:
+        case INVALID_ENGINE_PAYLOAD_PARAMS:
+        case INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS:
         case INVALID_ENODE_PARAMS:
         case INVALID_EXCESS_BLOB_GAS_PARAMS:
         case INVALID_EXTRA_DATA_PARAMS:
@@ -105,12 +105,12 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
         case INVALID_PRIVATE_FROM_PARAMS:
         case INVALID_PRIVATE_FOR_PARAMS:
         case INVALID_REMOTE_CAPABILITIES_PARAMS:
-        case INVALID_REWARD_PERCENTILES_PARAMETER:
+        case INVALID_REWARD_PERCENTILES_PARAMS:
         case INVALID_SEALER_ID_PARAMS:
         case INVALID_STORAGE_KEYS_PARAMS:
         case INVALID_SUBSCRIPTION_PARAMS:
         case INVALID_TARGET_GAS_LIMIT_PARAMS:
-        case INVALID_TIMESTAMP_PARAMETER:
+        case INVALID_TIMESTAMP_PARAMS:
         case INVALID_TRACE_CALL_MANY_PARAMS:
         case INVALID_TRACE_NUMBERS_PARAMS:
         case INVALID_TRACE_TYPE_PARAMS:
