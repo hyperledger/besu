@@ -22,7 +22,7 @@ public class InvalidJsonRpcParameters extends InvalidJsonRpcRequestException {
     super(s);
   }
 
-  public InvalidJsonRpcParameters(String message, RpcErrorType rpcErrorType) {
+  public InvalidJsonRpcParameters(final String message, final RpcErrorType rpcErrorType) {
     super(message, rpcErrorType);
   }
 
@@ -30,7 +30,8 @@ public class InvalidJsonRpcParameters extends InvalidJsonRpcRequestException {
     super(message, cause);
   }
 
-  public InvalidJsonRpcParameters(String message, RpcErrorType rpcErrorType, Throwable cause) {
+  public InvalidJsonRpcParameters(
+      final String message, final RpcErrorType rpcErrorType, final Throwable cause) {
     super(message, rpcErrorType, cause);
   }
 }
