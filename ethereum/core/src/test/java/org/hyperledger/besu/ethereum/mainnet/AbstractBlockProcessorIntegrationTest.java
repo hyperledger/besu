@@ -80,8 +80,6 @@ class AbstractBlockProcessorIntegrationTest {
       generateKeyPair("fc5141e75bf622179f8eedada7fab3e2e6b3e3da8eb9df4f46d84df22df7430e");
 
   private WorldStateArchive worldStateArchive;
-  private MainnetParallelBlockProcessor parallelBlockProcessor;
-  private MainnetBlockProcessor sequentialBlockProcessor;
   private DefaultBlockchain blockchain;
   private Address coinbase;
 
