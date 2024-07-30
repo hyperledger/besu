@@ -51,7 +51,7 @@ public class PermRemoveAccountsFromAllowlist implements JsonRpcMethod {
       accountsList = requestContext.getRequiredParameter(0, List.class);
     } catch (Exception e) { //TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid accounts list parameter", RpcErrorType.INVALID_ACCOUNTS_PARAMS, e);
+              "Invalid accounts list parameter", RpcErrorType.INVALID_ACCOUNT_PARAMS, e);
     }
 
     if (allowlistController.isPresent()) {
