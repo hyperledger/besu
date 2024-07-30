@@ -91,10 +91,7 @@ class AbstractBlockProcessorIntegrationTest {
                     "/org/hyperledger/besu/ethereum/mainnet/genesis-bp-it.json"))
             .dataStorageFormat(DataStorageFormat.BONSAI)
             .build();
-    final ProtocolSchedule protocolSchedule = contextTestFixture.getProtocolSchedule();
     final BlockHeader blockHeader = new BlockHeaderTestFixture().number(0L).buildHeader();
-    final MainnetTransactionProcessor transactionProcessor =
-        protocolSchedule.getByBlockHeader(blockHeader).getTransactionProcessor();
     coinbase = blockHeader.getCoinbase();
     worldStateArchive = contextTestFixture.getStateArchive();
     blockchain = (DefaultBlockchain) contextTestFixture.getBlockchain();
