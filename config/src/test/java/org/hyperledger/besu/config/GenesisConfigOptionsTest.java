@@ -333,6 +333,32 @@ class GenesisConfigOptionsTest {
   }
 
   @Test
+  void shouldGetWithdrawalRequestContractAddress() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(
+            singletonMap(
+                "withdrawalRequestContractAddress", "0x00000000219ab540356cbb839cbe05303d7705fa"));
+    assertThat(config.getWithdrawalRequestContractAddress())
+        .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
+  }
+
+  @Test
+  void shouldNotHaveWithdrawalRequestContractAddressWhenEmpty() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getWithdrawalRequestContractAddress()).isEmpty();
+  }
+
+  @Test
+  void asMapIncludesWithdrawalRequestContractAddress() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(Map.of("withdrawalRequestContractAddress", "0x0"));
+
+    assertThat(config.asMap())
+        .containsOnlyKeys("withdrawalRequestContractAddress")
+        .containsValue(Address.ZERO);
+  }
+
+  @Test
   void shouldGetDepositContractAddress() {
     final GenesisConfigOptions config =
         fromConfigOptions(
