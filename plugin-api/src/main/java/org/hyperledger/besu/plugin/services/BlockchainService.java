@@ -89,16 +89,10 @@ public interface BlockchainService extends BesuService {
   Optional<Hash> getFinalizedBlock();
 
   /**
-   * Set the finalized block
+   * Set the finalized block for POA networks
    *
    * @param blockHash Hash of the finalized block
+   * @throws UnsupportedOperationException if the network is not a POA network
    */
   void setFinalizedBlock(Hash blockHash);
-
-  /**
-   * Set the safe block
-   *
-   * @param blockHash Hash of the safe block
-   */
-  void setSafeBlock(Hash blockHash);
 }

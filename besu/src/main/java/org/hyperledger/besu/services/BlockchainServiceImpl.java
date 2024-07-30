@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.services;
 
+import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.ProtocolContext;
@@ -41,20 +42,26 @@ public class BlockchainServiceImpl implements BlockchainService {
   private ProtocolContext protocolContext;
   private ProtocolSchedule protocolSchedule;
   private MutableBlockchain blockchain;
+  private Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier;
 
   /** Instantiates a new Blockchain service implementation. */
   public BlockchainServiceImpl() {}
 
   /**
-   * Instantiates a new Blockchain service.
+   * Initialize the Blockchain service.
    *
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
+   * @param genesisConfigOptionsSupplier the genesis config options supplier
    */
-  public void init(final ProtocolContext protocolContext, final ProtocolSchedule protocolSchedule) {
+  public void init(
+      final ProtocolContext protocolContext,
+      final ProtocolSchedule protocolSchedule,
+      final Supplier<GenesisConfigOptions> genesisConfigOptionsSupplier) {
     this.protocolContext = protocolContext;
     this.protocolSchedule = protocolSchedule;
     this.blockchain = protocolContext.getBlockchain();
+    this.genesisConfigOptionsSupplier = genesisConfigOptionsSupplier;
   }
 
   /**
@@ -137,12 +144,13 @@ public class BlockchainServiceImpl implements BlockchainService {
 
   @Override
   public void setFinalizedBlock(final Hash blockHash) {
-    blockchain.setFinalized(blockHash);
-  }
-
-  @Override
-  public void setSafeBlock(final Hash blockHash) {
-    blockchain.setSafeBlock(blockHash);
+    if (genesisConfigOptionsSupplier != null) {
+      final var genesisConfigOptions = genesisConfigOptionsSupplier.get();
+      if (genesisConfigOptions != null && genesisConfigOptions.isPoa()) {
+        blockchain.setFinalized(blockHash);
+      }
+    }
+    throw new UnsupportedOperationException("Finalization is only supported for POA networks");
   }
 
   private static BlockContext blockContext(
