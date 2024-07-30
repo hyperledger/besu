@@ -38,7 +38,7 @@ public class AuthorityProcessor {
   }
 
   public void addContractToAuthority(
-      final WorldUpdater worldUpdater,
+      final WorldUpdater worldState,
       final AuthorizedCodeService authorizedCodeService,
       final Transaction transaction) {
 
@@ -60,7 +60,7 @@ public class AuthorityProcessor {
                           }
 
                           final Optional<MutableAccount> maybeAccount =
-                              Optional.ofNullable(worldUpdater.getAccount(authorityAddress));
+                              Optional.ofNullable(worldState.getAccount(authorityAddress));
                           final long accountNonce =
                               maybeAccount.map(AccountState::getNonce).orElse(0L);
 
@@ -74,7 +74,7 @@ public class AuthorityProcessor {
                           }
 
                           Optional<Account> codeAccount =
-                              Optional.ofNullable(worldUpdater.get(payload.address()));
+                              Optional.ofNullable(worldState.get(payload.address()));
                           final Bytes code;
                           if (codeAccount.isPresent()) {
                             code = codeAccount.get().getCode();
