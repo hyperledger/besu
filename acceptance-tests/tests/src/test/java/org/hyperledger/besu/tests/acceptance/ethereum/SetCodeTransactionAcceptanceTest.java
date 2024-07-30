@@ -34,6 +34,7 @@ import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.web3j.protocol.core.methods.response.TransactionReceipt;
@@ -57,6 +58,8 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
   public static final Bytes TRANSACTION_SPONSOR_PRIVATE_KEY =
       Bytes.fromHexString("3a4ff6d22d7502ef2452368165422861c01a0f72f851793b372b87888dc3c453");
 
+  private final Account otherAccount = accounts.createAccount("otherAccount");
+
   private BesuNode besuNode;
   private PragueAcceptanceTestHelper testHelper;
 
@@ -68,11 +71,17 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
     testHelper = new PragueAcceptanceTestHelper(besuNode, ethTransactions);
   }
 
+  @AfterEach
+  void tearDown() {
+    besuNode.close();
+    cluster.close();
+  }
+
   /**
    * At the beginning of the test both the authorizer and the transaction sponsor have a balance of
    * 90000 ETH. The authorizer creates an authorization for a contract that send all its ETH to any
-   * given address. The transaction sponsor created a 7702 transaction with it and sends all the ETH
-   * from the authorizer to itself. The authorizer balance should be 0 and the transaction sponsor
+   * given address. The transaction sponsor sponsors the 7702 transaction and sends all the ETH from
+   * the authorizer to itself. The authorizer balance should be 0 and the transaction sponsor's
    * balance should be 180000 ETH minus the transaction costs.
    */
   @Test
@@ -121,5 +130,64 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
         maybeTransactionReceipt.get().getGasUsed().multiply(new BigInteger(gasPriceWithout0x, 16));
     BigInteger expectedSponsorBalance = new BigInteger("180000000000000000000000").subtract(txCost);
     cluster.verify(transactionSponsor.balanceEquals(Amount.wei(expectedSponsorBalance)));
+  }
+
+  /**
+   * The authorizer creates an authorization for a contract that sends all its ETH to any given
+   * address. But the nonce is 1 and the authorization list is processed before the nonce increase
+   * of the sender. Therefore, the authorization should be invalid and will be ignored. No balance
+   * change, except for a decrease for paying the transaction cost should occur.
+   */
+  @Test
+  public void shouldCheckNonceBeforeNonceIncreaseOfSender() throws IOException {
+
+    cluster.verify(authorizer.balanceEquals(Amount.ether(90000)));
+
+    final org.hyperledger.besu.datatypes.SetCodeAuthorization authorization =
+        SetCodeAuthorization.builder()
+            .chainId(BigInteger.valueOf(20211))
+            .nonces(
+                Optional.of(
+                    1L)) // nonce is 1, but because it is validated before the nonce increase, it
+            // should be 0
+            .address(SEND_ALL_ETH_CONTRACT_ADDRESS)
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(AUTHORIZER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final Transaction tx =
+        Transaction.builder()
+            .type(TransactionType.SET_CODE)
+            .chainId(BigInteger.valueOf(20211))
+            .nonce(0)
+            .maxPriorityFeePerGas(Wei.of(1000000000))
+            .maxFeePerGas(Wei.fromHexString("0x02540BE400"))
+            .gasLimit(1000000)
+            .to(Address.fromHexStringStrict(authorizer.getAddress()))
+            .value(Wei.ZERO)
+            .payload(Bytes32.leftPad(Bytes.fromHexString(otherAccount.getAddress())))
+            .accessList(List.of())
+            .setCodeTransactionPayloads(List.of(authorization))
+            .signAndBuild(
+                secp256k1.createKeyPair(
+                    secp256k1.createPrivateKey(AUTHORIZER_PRIVATE_KEY.toUnsignedBigInteger())));
+
+    final String txHash =
+        besuNode.execute(ethTransactions.sendRawTransaction(tx.encoded().toHexString()));
+    testHelper.buildNewBlock();
+
+    Optional<TransactionReceipt> maybeTransactionReceipt =
+        besuNode.execute(ethTransactions.getTransactionReceipt(txHash));
+    assertThat(maybeTransactionReceipt).isPresent();
+
+    // verify that the balance of the other account has not changed
+    cluster.verify(otherAccount.balanceEquals(0));
+
+    final String gasPriceWithout0x =
+        maybeTransactionReceipt.get().getEffectiveGasPrice().substring(2);
+    final BigInteger txCost =
+        maybeTransactionReceipt.get().getGasUsed().multiply(new BigInteger(gasPriceWithout0x, 16));
+    BigInteger expectedSenderBalance = new BigInteger("90000000000000000000000").subtract(txCost);
+    cluster.verify(authorizer.balanceEquals(Amount.wei(expectedSenderBalance)));
   }
 }
