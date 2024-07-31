@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -58,8 +59,14 @@ public class DebugAccountRange implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final BlockParameterOrBlockHash blockParameterOrBlockHash =
-        requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+    final BlockParameterOrBlockHash blockParameterOrBlockHash;
+    try {
+      blockParameterOrBlockHash =
+              requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+              "Invalid block parameter or block hash parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
     final String addressHash;
     try {
       addressHash = requestContext.getRequiredParameter(2, String.class);

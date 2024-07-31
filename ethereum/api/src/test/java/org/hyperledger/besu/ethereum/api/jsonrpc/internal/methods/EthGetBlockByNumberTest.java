@@ -129,8 +129,7 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenNumberParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("invalid", "true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage(
-            "Invalid json rpc parameter at index 0. Supplied value was: 'invalid' of type: 'java.lang.String' - expected type: 'org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter'");
+        .hasMessage("Invalid block parameter");
     verifyNoMoreInteractions(blockchainQueries);
   }
 

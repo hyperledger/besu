@@ -129,7 +129,7 @@ class EthGetProofTest {
 
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Missing required json rpc parameter at index 2");
+        .hasMessageContaining("Invalid block or block hash parameter");
   }
 
   @Test

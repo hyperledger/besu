@@ -79,7 +79,7 @@ public class EthGetUncleByBlockNumberAndIndexTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid block parameter");
   }
 
   @Test
