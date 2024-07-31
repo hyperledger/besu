@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.trielog;
+package org.hyperledger.besu.ethereum.trie.diffbased.common.trielog;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -26,9 +26,6 @@ import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogAddedEvent;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogLayer;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.Optional;
@@ -43,6 +40,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.InOrder;
 import org.mockito.Mockito;
+import org.mockito.internal.stubbing.answers.AnswersWithDelay;
 
 public class TrieLogPrunerTest {
 
@@ -80,6 +78,53 @@ public class TrieLogPrunerTest {
     // Then
     verify(worldState, times(1)).streamTrieLogKeys(2);
     verify(worldState, times(1)).pruneTrieLog(header2.getBlockHash());
+  }
+
+  @Test
+  public void preloadQueueWithTimeout_handles_timeout_during_streamTrieLogKeys() {
+    // Given
+    final int timeoutInSeconds = 1;
+    final long timeoutInMillis = timeoutInSeconds * 1000;
+    final int loadingLimit = 2;
+    TrieLogPruner trieLogPruner =
+        new TrieLogPruner(
+            worldState, blockchain, executeAsync, 3, loadingLimit, false, new NoOpMetricsSystem());
+
+    // Simulate a long-running operation
+    when(worldState.streamTrieLogKeys(loadingLimit))
+        .thenAnswer(new AnswersWithDelay(timeoutInMillis * 2, invocation -> Stream.empty()));
+
+    // When
+    long startTime = System.currentTimeMillis();
+    trieLogPruner.preloadQueueWithTimeout(timeoutInSeconds);
+    long elapsedTime = System.currentTimeMillis() - startTime;
+
+    // Then
+    assertThat(elapsedTime).isLessThan(timeoutInMillis * 2);
+  }
+
+  @Test
+  public void preloadQueueWithTimeout_handles_timeout_during_getBlockHeader() {
+    // Given
+    final int timeoutInSeconds = 1;
+    final long timeoutInMillis = timeoutInSeconds * 1000;
+    TrieLogPruner trieLogPruner = setupPrunerAndFinalizedBlock(3, 1);
+
+    // Simulate a long-running operation
+    when(blockchain.getBlockHeader(any(Hash.class)))
+        // delay on first invocation, then return empty
+        .thenAnswer(new AnswersWithDelay(timeoutInMillis * 2, invocation -> Optional.empty()))
+        .thenReturn(Optional.empty());
+
+    // When
+    long startTime = System.currentTimeMillis();
+    trieLogPruner.preloadQueueWithTimeout(timeoutInSeconds);
+    long elapsedTime = System.currentTimeMillis() - startTime;
+
+    // Then
+    assertThat(elapsedTime).isLessThan(timeoutInMillis * 2);
+    verify(worldState, times(1)).pruneTrieLog(key(1));
+    verify(worldState, times(1)).pruneTrieLog(key(2));
   }
 
   @Test

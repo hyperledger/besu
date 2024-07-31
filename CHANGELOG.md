@@ -7,6 +7,7 @@
 - --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
 - --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
 - `besu storage x-trie-log` subcommand is deprecated, use `besu storage trie-log` instead
+- Allow configuration of Withdrawal Request Contract Address via genesis configuration [#7356](https://github.com/hyperledger/besu/pull/7356)
 
 ### Breaking Changes
 
