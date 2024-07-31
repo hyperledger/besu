@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer.TraceableState;
@@ -73,10 +72,10 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
     final BlockParameterOrBlockHash blockParameterOrBlockHash;
     try {
       blockParameterOrBlockHash =
-              requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+          requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid block or block hash parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block or block hash parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
     final int transactionIndex = requestContext.getRequiredParameter(1, Integer.class);
     final Address accountAddress;

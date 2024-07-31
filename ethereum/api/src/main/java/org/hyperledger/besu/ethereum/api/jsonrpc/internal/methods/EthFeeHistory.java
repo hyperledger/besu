@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -98,7 +97,7 @@ public class EthFeeHistory implements JsonRpcMethod {
       highestBlock = request.getRequiredParameter(1, BlockParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid highest block parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid highest block parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
     final Optional<List<Double>> maybeRewardPercentiles =
         request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
