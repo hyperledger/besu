@@ -230,7 +230,7 @@ public class CallParameter {
   public static CallParameter fromTransaction(final Transaction tx) {
     return new CallParameter(
         tx.getSender(),
-        tx.getTo().orElseGet(() -> null),
+        tx.getTo().orElse(null),
         tx.getGasLimit(),
         tx.getGasPrice().orElse(Wei.ZERO),
         tx.getMaxPriorityFeePerGas(),

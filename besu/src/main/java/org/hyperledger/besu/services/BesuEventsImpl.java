@@ -41,14 +41,11 @@ import org.apache.tuweni.units.bigints.UInt256;
 
 /** A concrete implementation of BesuEvents used in Besu plugin framework. */
 public class BesuEventsImpl implements BesuEvents {
-  private Blockchain blockchain;
-  private BlockBroadcaster blockBroadcaster;
-  private TransactionPool transactionPool;
-  private SyncState syncState;
-  private BadBlockManager badBlockManager;
-
-  /** Default constructor */
-  public BesuEventsImpl() {}
+  private final Blockchain blockchain;
+  private final BlockBroadcaster blockBroadcaster;
+  private final TransactionPool transactionPool;
+  private final SyncState syncState;
+  private final BadBlockManager badBlockManager;
 
   /**
    * Constructor for BesuEventsImpl
@@ -59,7 +56,7 @@ public class BesuEventsImpl implements BesuEvents {
    * @param syncState An instance of SyncState
    * @param badBlockManager A cache of bad blocks encountered on the network
    */
-  public void init(
+  public BesuEventsImpl(
       final Blockchain blockchain,
       final BlockBroadcaster blockBroadcaster,
       final TransactionPool transactionPool,

@@ -56,8 +56,8 @@ import org.slf4j.LoggerFactory;
 
 /** The Merge besu controller builder. */
 public class MergeBesuControllerBuilder extends BesuControllerBuilder {
-  private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
   private final AtomicReference<SyncState> syncState = new AtomicReference<>();
+  private static final Logger LOG = LoggerFactory.getLogger(MergeBesuControllerBuilder.class);
 
   /** Default constructor. */
   public MergeBesuControllerBuilder() {}
