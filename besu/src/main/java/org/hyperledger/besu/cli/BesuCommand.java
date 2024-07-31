@@ -63,6 +63,7 @@ import org.hyperledger.besu.cli.options.unstable.ChainPruningOptions;
 import org.hyperledger.besu.cli.options.unstable.DnsOptions;
 import org.hyperledger.besu.cli.options.unstable.EthProtocolOptions;
 import org.hyperledger.besu.cli.options.unstable.EvmOptions;
+import org.hyperledger.besu.cli.options.unstable.InProcessRpcOptions;
 import org.hyperledger.besu.cli.options.unstable.IpcOptions;
 import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NatOptions;
@@ -107,6 +108,7 @@ import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
@@ -660,6 +662,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   @CommandLine.ArgGroup(validate = false, heading = "@|bold JSON-RPC Websocket Options|@%n")
   RpcWebsocketOptions rpcWebsocketOptions = new RpcWebsocketOptions();
 
+  // In-Process RPC Options
+  @CommandLine.ArgGroup(validate = false, heading = "@|bold In-Process RPC Options|@%n")
+  InProcessRpcOptions inProcessRpcOptions = InProcessRpcOptions.create();
+
   // Privacy Options Group
   @CommandLine.ArgGroup(validate = false, heading = "@|bold Privacy Options|@%n")
   PrivacyOptionGroup privacyOptionGroup = new PrivacyOptionGroup();
@@ -926,6 +932,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration;
+  private InProcessRpcConfiguration inProcessRpcConfiguration;
   private ApiConfiguration apiConfiguration;
   private MetricsConfiguration metricsConfiguration;
   private Optional<PermissioningConfiguration> permissioningConfiguration;
@@ -1353,6 +1360,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         engineJsonRpcConfiguration,
         webSocketConfiguration,
         jsonRpcIpcConfiguration,
+        inProcessRpcConfiguration,
         apiConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
@@ -1370,6 +1378,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             besuController.getProtocolContext().getWorldStateArchive(),
             besuController.getProtocolSchedule(),
             apiConfiguration.getGasCap()));
+    rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
 
     besuPluginContext.addService(
         BesuEvents.class,
@@ -1810,6 +1819,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             unstableIpcOptions.isEnabled(),
             unstableIpcOptions.getIpcPath(),
             unstableIpcOptions.getRpcIpcApis());
+    inProcessRpcConfiguration = inProcessRpcOptions.toDomainObject();
     apiConfiguration = apiConfigurationOptions.apiConfiguration();
     dataStorageConfiguration = getDataStorageConfiguration();
     // hostsWhitelist is a hidden option. If it is specified, add the list to hostAllowlist
@@ -2321,6 +2331,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final JsonRpcConfiguration engineJsonRpcConfiguration,
       final WebSocketConfiguration webSocketConfiguration,
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration,
+      final InProcessRpcConfiguration inProcessRpcConfiguration,
       final ApiConfiguration apiConfiguration,
       final MetricsConfiguration metricsConfiguration,
       final Optional<PermissioningConfiguration> permissioningConfiguration,
@@ -2353,6 +2364,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             .engineJsonRpcConfiguration(engineJsonRpcConfiguration)
             .webSocketConfiguration(webSocketConfiguration)
             .jsonRpcIpcConfiguration(jsonRpcIpcConfiguration)
+            .inProcessRpcConfiguration(inProcessRpcConfiguration)
             .apiConfiguration(apiConfiguration)
             .pidPath(pidPath)
             .dataDir(dataDir())
