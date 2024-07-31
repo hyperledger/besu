@@ -124,9 +124,8 @@ public class PermAddAccountsToAllowlistTest {
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
-        .hasNoCause()
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid accounts list parameter");
   }
 
   private JsonRpcRequestContext request(final List<String> accounts) {
