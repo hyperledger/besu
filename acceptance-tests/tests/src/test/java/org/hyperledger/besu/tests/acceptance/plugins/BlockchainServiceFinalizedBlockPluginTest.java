@@ -32,6 +32,8 @@ import okhttp3.RequestBody;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBase {
 
@@ -50,8 +52,8 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   }
 
   @Test
-  @DisplayName("updateFinalizedBlockV1 can be called to set finalized block")
-  public void canCallRocMethod() throws IOException {
+  @DisplayName("Calling updateFinalizedBlockV1 can be called to set finalized block")
+  public void canUpdateFinalizedBlock() throws IOException {
     pluginNode.verify(blockchain.minimumHeight(20));
 
     // RPC Call. Set the finalized block number to 18 (0x12)
@@ -62,6 +64,47 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
     ObjectNode blockNumberResult =
         callTestMethod("eth_getBlockByNumber", List.of("FINALIZED", true));
     assertThat(blockNumberResult.get("result").get("number").asText()).isEqualTo("0x12");
+  }
+
+  @Test
+  @DisplayName("Calling updateFinalizedBlockV1 with non-existing block number returns error")
+  public void nonExistingBlockNumberReturnsError() throws IOException {
+    pluginNode.verify(blockchain.minimumHeight(20));
+
+    ObjectNode resultJson = callTestMethod("updater_updateFinalizedBlockV1", List.of(250L));
+
+    assertThat(resultJson.get("error").get("code").asInt()).isEqualTo(-32000);
+    assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Block not found");
+    assertThat(resultJson.get("error").get("data").asText())
+        .isEqualTo("Block not found in the local chain: 250");
+  }
+
+  @ParameterizedTest(name = "{index} - blockNumber={0}")
+  @ValueSource(longs = {-1, 0})
+  @DisplayName("Calling updateFinalizedBlockV1 with block number <= 0 returns error")
+  public void invalidBlockNumberReturnsError(final long blockNumber) throws IOException {
+    pluginNode.verify(blockchain.minimumHeight(5));
+
+    ObjectNode resultJson = callTestMethod("updater_updateFinalizedBlockV1", List.of(blockNumber));
+
+    assertThat(resultJson.get("error").get("code").asInt()).isEqualTo(-32602);
+    assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Invalid params");
+    assertThat(resultJson.get("error").get("data").asText())
+        .isEqualTo("Block number must be greater than 0");
+  }
+
+  @Test
+  @DisplayName("Calling updateFinalizedBlockV1 with invalid block number type returns error")
+  public void invalidBlockNumberTypeReturnsError() throws IOException {
+    pluginNode.verify(blockchain.minimumHeight(5));
+
+    ObjectNode resultJson = callTestMethod("updater_updateFinalizedBlockV1", List.of("testblock"));
+
+    assertThat(resultJson.get("error").get("code").asInt()).isEqualTo(-32602);
+    assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Invalid params");
+    assertThat(resultJson.get("error").get("data").asText())
+        .isEqualTo(
+            "Invalid json rpc parameter at index 0. Supplied value was: 'testblock' of type: 'java.lang.String' - expected type: 'java.lang.Long'");
   }
 
   private ObjectNode callTestMethod(final String method, final List<Object> params)
