@@ -52,59 +52,80 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   }
 
   @Test
-  @DisplayName("Calling updateFinalizedBlockV1 will set finalized block")
+  @DisplayName("Calling update{Finalized/Safe}BlockV1 will set block")
   public void canUpdateFinalizedBlock() throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(20));
+    pluginNode.verify(blockchain.minimumHeight(5));
 
-    // RPC Call. Set the finalized block number to 18 (0x12)
-    ObjectNode resultJson = callTestMethod("updater_updateFinalizedBlockV1", List.of(18L));
+    // RPC Call. Set the safe block number to 3
+    final ObjectNode resultJson = callTestMethod("updater_updateSafeBlockV1", List.of(3L));
     assertThat(resultJson.get("result").asBoolean()).isTrue();
 
+    // RPC Call. Set the finalized block number to 4
+    final ObjectNode finalizedResultJson =
+        callTestMethod("updater_updateFinalizedBlockV1", List.of(4L));
+    assertThat(finalizedResultJson.get("result").asBoolean()).isTrue();
+
+    final ObjectNode blockNumberSafeResult =
+        callTestMethod("eth_getBlockByNumber", List.of("SAFE", true));
+    assertThat(blockNumberSafeResult.get("result").get("number").asText()).isEqualTo("0x3");
+
     // Verify the value was set
-    ObjectNode blockNumberResult =
+    final ObjectNode blockNumberFinalizedResult =
         callTestMethod("eth_getBlockByNumber", List.of("FINALIZED", true));
-    assertThat(blockNumberResult.get("result").get("number").asText()).isEqualTo("0x12");
+    assertThat(blockNumberFinalizedResult.get("result").get("number").asText()).isEqualTo("0x4");
   }
 
   @Test
-  @DisplayName("Calling updateFinalizedBlockV1 with non-existing block number returns error")
+  @DisplayName("Calling update{Finalized/Safe}BlockV1 with non-existing block number returns error")
   public void nonExistingBlockNumberReturnsError() throws IOException {
-    pluginNode.verify(blockchain.minimumHeight(20));
+    pluginNode.verify(blockchain.minimumHeight(5));
 
-    ObjectNode resultJson = callTestMethod("updater_updateFinalizedBlockV1", List.of(250L));
+    final ObjectNode[] resultsJson = new ObjectNode[2];
+    resultsJson[0] = callTestMethod("updater_updateFinalizedBlockV1", List.of(250L));
+    resultsJson[1] = callTestMethod("updater_updateSafeBlockV1", List.of(250L));
 
-    assertThat(resultJson.get("error").get("code").asInt()).isEqualTo(-32000);
-    assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Block not found");
-    assertThat(resultJson.get("error").get("data").asText())
-        .isEqualTo("Block not found in the local chain: 250");
+    for (int i = 0; i < resultsJson.length; i++) {
+      assertThat(resultsJson[i].get("error").get("code").asInt()).isEqualTo(-32000);
+      assertThat(resultsJson[i].get("error").get("message").asText()).isEqualTo("Block not found");
+      assertThat(resultsJson[i].get("error").get("data").asText())
+          .isEqualTo("Block not found in the local chain: 250");
+    }
   }
 
   @ParameterizedTest(name = "{index} - blockNumber={0}")
   @ValueSource(longs = {-1, 0})
-  @DisplayName("Calling updateFinalizedBlockV1 with block number <= 0 returns error")
+  @DisplayName("Calling update{Finalized/Safe}BlockV1 with block number <= 0 returns error")
   public void invalidBlockNumberReturnsError(final long blockNumber) throws IOException {
     pluginNode.verify(blockchain.minimumHeight(5));
 
-    ObjectNode resultJson = callTestMethod("updater_updateFinalizedBlockV1", List.of(blockNumber));
+    final ObjectNode[] resultsJson = new ObjectNode[2];
+    resultsJson[0] = callTestMethod("updater_updateFinalizedBlockV1", List.of(blockNumber));
+    resultsJson[1] = callTestMethod("updater_updateSafeBlockV1", List.of(blockNumber));
 
-    assertThat(resultJson.get("error").get("code").asInt()).isEqualTo(-32602);
-    assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Invalid params");
-    assertThat(resultJson.get("error").get("data").asText())
-        .isEqualTo("Block number must be greater than 0");
+    for (int i = 0; i < resultsJson.length; i++) {
+      assertThat(resultsJson[i].get("error").get("code").asInt()).isEqualTo(-32602);
+      assertThat(resultsJson[i].get("error").get("message").asText()).isEqualTo("Invalid params");
+      assertThat(resultsJson[i].get("error").get("data").asText())
+          .isEqualTo("Block number must be greater than 0");
+    }
   }
 
   @Test
-  @DisplayName("Calling updateFinalizedBlockV1 with invalid block number type returns error")
+  @DisplayName("Calling update{Finalized/Safe}BlockV1 with invalid block number type returns error")
   public void invalidBlockNumberTypeReturnsError() throws IOException {
     pluginNode.verify(blockchain.minimumHeight(5));
 
-    ObjectNode resultJson = callTestMethod("updater_updateFinalizedBlockV1", List.of("testblock"));
+    final ObjectNode[] resultsJson = new ObjectNode[2];
+    resultsJson[0] = callTestMethod("updater_updateFinalizedBlockV1", List.of("testblock"));
+    resultsJson[1] = callTestMethod("updater_updateSafeBlockV1", List.of("testblock"));
 
-    assertThat(resultJson.get("error").get("code").asInt()).isEqualTo(-32602);
-    assertThat(resultJson.get("error").get("message").asText()).isEqualTo("Invalid params");
-    assertThat(resultJson.get("error").get("data").asText())
-        .isEqualTo(
-            "Invalid json rpc parameter at index 0. Supplied value was: 'testblock' of type: 'java.lang.String' - expected type: 'java.lang.Long'");
+    for (int i = 0; i < resultsJson.length; i++) {
+      assertThat(resultsJson[i].get("error").get("code").asInt()).isEqualTo(-32602);
+      assertThat(resultsJson[i].get("error").get("message").asText()).isEqualTo("Invalid params");
+      assertThat(resultsJson[i].get("error").get("data").asText())
+          .isEqualTo(
+              "Invalid json rpc parameter at index 0. Supplied value was: 'testblock' of type: 'java.lang.String' - expected type: 'java.lang.Long'");
+    }
   }
 
   private ObjectNode callTestMethod(final String method, final List<Object> params)

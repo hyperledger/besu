@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.tests.acceptance.plugins;
 
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.plugin.BesuContext;
@@ -35,7 +36,8 @@ public class TestBlockchainServiceFinalizedPlugin implements BesuPlugin {
   private static final Logger LOG =
       LoggerFactory.getLogger(TestBlockchainServiceFinalizedPlugin.class);
   private static final String RPC_NAMESPACE = "updater";
-  private static final String RPC_METHOD_NAME = "updateFinalizedBlockV1";
+  private static final String RPC_METHOD_FINALIZED_BLOCK = "updateFinalizedBlockV1";
+  private static final String RPC_METHOD_SAFE_BLOCK = "updateSafeBlockV1";
 
   @Override
   public void register(final BesuContext besuContext) {
@@ -59,7 +61,10 @@ public class TestBlockchainServiceFinalizedPlugin implements BesuPlugin {
 
     final FinalizationUpdaterRpcMethod rpcMethod =
         new FinalizationUpdaterRpcMethod(blockchainService);
-    rpcEndpointService.registerRPCEndpoint(RPC_NAMESPACE, RPC_METHOD_NAME, rpcMethod::execute);
+    rpcEndpointService.registerRPCEndpoint(
+        RPC_NAMESPACE, RPC_METHOD_FINALIZED_BLOCK, rpcMethod::setFinalizedBlock);
+    rpcEndpointService.registerRPCEndpoint(
+        RPC_NAMESPACE, RPC_METHOD_SAFE_BLOCK, rpcMethod::setSafeBlock);
   }
 
   @Override
@@ -80,31 +85,45 @@ public class TestBlockchainServiceFinalizedPlugin implements BesuPlugin {
       this.blockchainService = blockchainService;
     }
 
-    Boolean execute(final PluginRpcRequest request) {
-      final Long finalizedBlockNumber = parseResult(request);
+    Boolean setFinalizedBlock(final PluginRpcRequest request) {
+      return setFinalizedOrSafeBlock(request, true);
+    }
+
+    Boolean setSafeBlock(final PluginRpcRequest request) {
+      return setFinalizedOrSafeBlock(request, false);
+    }
+
+    private Boolean setFinalizedOrSafeBlock(
+        final PluginRpcRequest request, final boolean isFinalized) {
+      final Long blockNumberToSet = parseResult(request);
 
       // lookup finalized block by number in local chain
       final Optional<BlockContext> finalizedBlock =
-          blockchainService.getBlockByNumber(finalizedBlockNumber);
+          blockchainService.getBlockByNumber(blockNumberToSet);
       if (finalizedBlock.isEmpty()) {
         throw new PluginRpcEndpointException(
             RpcErrorType.BLOCK_NOT_FOUND,
-            "Block not found in the local chain: " + finalizedBlockNumber);
+            "Block not found in the local chain: " + blockNumberToSet);
       }
 
       try {
-        blockchainService.setFinalizedBlock(finalizedBlock.get().getBlockHeader().getBlockHash());
+        final Hash blockHash = finalizedBlock.get().getBlockHeader().getBlockHash();
+        if (isFinalized) {
+          blockchainService.setFinalizedBlock(blockHash);
+        } else {
+          blockchainService.setSafeBlock(blockHash);
+        }
       } catch (final IllegalArgumentException e) {
         throw new PluginRpcEndpointException(
             RpcErrorType.BLOCK_NOT_FOUND,
-            "Block not found in the local chain: " + finalizedBlockNumber);
+            "Block not found in the local chain: " + blockNumberToSet);
       } catch (final UnsupportedOperationException e) {
         throw new PluginRpcEndpointException(
             RpcErrorType.METHOD_NOT_ENABLED,
             "Method not enabled for PoS network: setFinalizedBlock");
       } catch (final Exception e) {
         throw new PluginRpcEndpointException(
-            RpcErrorType.INTERNAL_ERROR, "Error setting finalized block: " + finalizedBlockNumber);
+            RpcErrorType.INTERNAL_ERROR, "Error setting finalized block: " + blockNumberToSet);
       }
 
       return Boolean.TRUE;
