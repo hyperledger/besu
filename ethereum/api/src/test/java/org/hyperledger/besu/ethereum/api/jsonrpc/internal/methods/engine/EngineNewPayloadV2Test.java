@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
@@ -149,8 +150,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
     var resp =
         resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
-    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("non-null BlobGasUsed pre-cancun");
+    assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_BLOB_GAS_USED_PARAMS.getCode());
+    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas used field");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
