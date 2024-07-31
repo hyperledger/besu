@@ -1,0 +1,61 @@
+/*
+ * Copyright ConsenSys AG.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+apply plugin: 'java-library'
+apply plugin: 'jacoco'
+
+jar {
+  archiveBaseName = 'besu-test-fuzz'
+  manifest {
+    attributes(
+      'Specification-Title': archiveBaseName,
+      'Specification-Version': project.version,
+      'Implementation-Title': archiveBaseName,
+      'Implementation-Version': calculateVersion()
+      )
+  }
+}
+
+dependencies {
+  implementation project(':crypto:algorithms')
+  implementation project(':datatypes')
+  implementation project(':ethereum:referencetests')
+  implementation project(':evm')
+
+  implementation 'com.fasterxml.jackson.core:jackson-databind'
+  implementation 'com.gitlab.javafuzz:core'
+  implementation 'io.tmio:tuweni-bytes'
+  implementation 'org.jacoco:org.jacoco.agent'
+  implementation 'org.jacoco:org.jacoco.core'
+}
+
+
+tasks.register("fuzzeof", JavaExec) {
+  def srcFiles = '../ethereum/referencetests/src/reference-test/external-resources/EOFTests'
+  def corpusPath = "$buildDir/generated/corpus"
+  inputs.dir(srcFiles)
+  outputs.dir(corpusPath)
+  dependsOn(testClasses)
+  mainClass = 'org.hyperledger.besu.evmtool.fuzz.FuzzEOFContainer'
+  classpath = sourceSets.test.runtimeClasspath
+  args = [
+    corpusPath,
+    srcFiles
+  ]
+}
+
+jacoco {
+  applyTo fuzzeof
+}

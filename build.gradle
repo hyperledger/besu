@@ -160,6 +160,10 @@ allprojects {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
     }
+    maven {
+      url 'https://gitlab.com/api/v4/projects/19871573/packages/maven'
+      content { includeGroupByRegex('com\\.gitlab\\.javafuzz(\\..*)?') }
+    }
 
     mavenCentral()
 
