@@ -144,12 +144,12 @@ public class PrivacyReorgTest {
   private PrivacyParameters privacyParameters;
   private Enclave mockEnclave;
   private Transaction privacyMarkerTransaction;
-  private final PrivacyReorgTestComponent context =
+  private final PrivacyReorgTestComponent component =
       DaggerPrivacyReorgTest_PrivacyReorgTestComponent.create();
 
-  private final BesuController besuController = context.getBesuController();
+  private final BesuController besuController = component.getBesuController();
   private final PrivateStateRootResolver privateStateRootResolver =
-      context.getPrivacyParameters().getPrivateStateRootResolver();
+      component.getPrivacyParameters().getPrivateStateRootResolver();
 
   @BeforeEach
   public void setUp() throws IOException {
@@ -197,7 +197,7 @@ public class PrivacyReorgTest {
     final ProtocolContext protocolContext = besuController.getProtocolContext();
     final DefaultBlockchain blockchain = (DefaultBlockchain) protocolContext.getBlockchain();
     final PrivateStateStorage privateStateStorage =
-        context.getPrivacyParameters().getPrivateStateStorage();
+        component.getPrivacyParameters().getPrivateStateStorage();
 
     final Block firstBlock =
         gen.block(

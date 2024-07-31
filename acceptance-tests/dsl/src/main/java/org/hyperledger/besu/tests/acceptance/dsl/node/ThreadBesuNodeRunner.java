@@ -132,9 +132,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     AcceptanceTestBesuComponent component =
         DaggerThreadBesuNodeRunner_AcceptanceTestBesuComponent.create();
 
-    // final StorageServiceImpl storageService = new StorageServiceImpl();
-    // storageService.registerKeyValueStorage(new
-    // InMemoryStoragePlugin.InMemoryKeyValueStorageFactory("memory"));
     final TransactionSimulationServiceImpl transactionSimulationServiceImpl =
         new TransactionSimulationServiceImpl();
     final TransactionSelectionServiceImpl transactionSelectionServiceImpl =
@@ -437,7 +434,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
       besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
 
       besuPluginContext.registerPlugins(new PluginConfiguration(pluginsPath));
-      // commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
       // register built-in plugins
       new RocksDBPlugin().register(besuPluginContext);

@@ -37,7 +37,6 @@ public class BesuConfigurationImpl implements BesuConfiguration {
   private Optional<Integer> rpcHttpPort = Optional.of(8545);
 
   /** Default Constructor. */
-  @Inject
   public BesuConfigurationImpl() {}
 
   /**
