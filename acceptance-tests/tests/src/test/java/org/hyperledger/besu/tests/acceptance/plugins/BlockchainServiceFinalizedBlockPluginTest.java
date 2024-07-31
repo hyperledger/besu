@@ -52,7 +52,7 @@ public class BlockchainServiceFinalizedBlockPluginTest extends AcceptanceTestBas
   }
 
   @Test
-  @DisplayName("Calling updateFinalizedBlockV1 can be called to set finalized block")
+  @DisplayName("Calling updateFinalizedBlockV1 will set finalized block")
   public void canUpdateFinalizedBlock() throws IOException {
     pluginNode.verify(blockchain.minimumHeight(20));
 
