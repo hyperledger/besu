@@ -88,9 +88,15 @@ public class EthFeeHistory implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
     final Object requestId = request.getRequest().getId();
 
-    final int blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
+    final int blockCount;
+    try {
+      blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block count parameter", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
+    }
     if (isInvalidBlockCount(blockCount)) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_BLOCK_COUNT_PARAMS);
     }
     final BlockParameter highestBlock;
     try {
