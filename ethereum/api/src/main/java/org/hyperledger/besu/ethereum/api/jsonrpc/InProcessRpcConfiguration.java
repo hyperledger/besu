@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,16 +12,25 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
+package org.hyperledger.besu.ethereum.api.jsonrpc;
 
-import org.hyperledger.besu.plugin.services.rpc.RpcResponse;
+import java.util.HashSet;
+import java.util.Set;
 
-import com.fasterxml.jackson.annotation.JsonGetter;
+import org.immutables.value.Value;
 
-public interface JsonRpcResponse extends RpcResponse {
+@Value.Immutable
+public interface InProcessRpcConfiguration {
+  boolean DEFAULT_IN_PROCESS_RPC_ENABLED = false;
+  Set<String> DEFAULT_IN_PROCESS_RPC_APIS = new HashSet<>(RpcApis.DEFAULT_RPC_APIS);
 
-  @JsonGetter("jsonrpc")
-  default String getVersion() {
-    return "2.0";
+  @Value.Default
+  default boolean isEnabled() {
+    return DEFAULT_IN_PROCESS_RPC_ENABLED;
+  }
+
+  @Value.Default
+  default Set<String> getInProcessRpcApis() {
+    return DEFAULT_IN_PROCESS_RPC_APIS;
   }
 }
