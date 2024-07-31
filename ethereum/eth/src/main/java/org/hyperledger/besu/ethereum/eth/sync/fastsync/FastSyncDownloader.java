@@ -31,6 +31,7 @@ import org.hyperledger.besu.util.ExceptionUtils;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.Duration;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
@@ -90,8 +91,8 @@ public class FastSyncDownloader<REQUEST> {
   }
 
   protected CompletableFuture<FastSyncState> start(final FastSyncState fastSyncState) {
-    worldStateStorageCoordinator.applyOnMatchingStrategy(
-        DataStorageFormat.BONSAI,
+    worldStateStorageCoordinator.applyOnMatchingStrategies(
+        List.of(DataStorageFormat.BONSAI, DataStorageFormat.BONSAI_ARCHIVE),
         worldStateKeyValueStorage -> {
           BonsaiWorldStateKeyValueStorage onBonsai =
               (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage;

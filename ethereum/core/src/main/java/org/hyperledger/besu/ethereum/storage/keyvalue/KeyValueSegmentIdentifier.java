@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.storage.keyvalue;
 
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI;
+import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.BONSAI_ARCHIVE;
 import static org.hyperledger.besu.plugin.services.storage.DataStorageFormat.FOREST;
 
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -30,11 +31,17 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
   PRIVATE_TRANSACTIONS(new byte[] {3}),
   PRIVATE_STATE(new byte[] {4}),
   PRUNING_STATE(new byte[] {5}, EnumSet.of(FOREST)),
-  ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI), false, true, false),
-  CODE_STORAGE(new byte[] {7}, EnumSet.of(BONSAI)),
-  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI), false, true, false),
-  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI), false, true, false),
-  TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI), true, false, true),
+  ACCOUNT_INFO_STATE(new byte[] {6}, EnumSet.of(BONSAI, BONSAI_ARCHIVE), false, true, false),
+  CODE_STORAGE(new byte[] {7}, EnumSet.of(BONSAI, BONSAI_ARCHIVE)),
+  ACCOUNT_STORAGE_STORAGE(new byte[] {8}, EnumSet.of(BONSAI, BONSAI_ARCHIVE), false, true, false),
+  TRIE_BRANCH_STORAGE(new byte[] {9}, EnumSet.of(BONSAI, BONSAI_ARCHIVE), false, true, false),
+  TRIE_LOG_STORAGE(new byte[] {10}, EnumSet.of(BONSAI, BONSAI_ARCHIVE), true, false, true),
+  ACCOUNT_FREEZER_STATE(
+      "ACCOUNT_FREEZER_STATE".getBytes(StandardCharsets.UTF_8),
+      EnumSet.of(BONSAI_ARCHIVE),
+      true,
+      false,
+      true),
   VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
   // previously supported GoQuorum private states

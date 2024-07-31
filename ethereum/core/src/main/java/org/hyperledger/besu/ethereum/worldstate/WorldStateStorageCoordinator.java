@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldSt
 import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.function.Consumer;
 import java.util.function.Function;
@@ -74,7 +75,7 @@ public class WorldStateStorageCoordinator {
   }
 
   public boolean isMatchingFlatMode(final FlatDbMode flatDbMode) {
-    if (getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+    if (getDataStorageFormat().isBonsaiFormat()) {
       final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
           (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();
       return bonsaiWorldStateStorageStrategy.getFlatDbMode().equals(flatDbMode);
@@ -84,8 +85,8 @@ public class WorldStateStorageCoordinator {
 
   public void applyOnMatchingFlatMode(
       final FlatDbMode flatDbMode, final Consumer<BonsaiWorldStateKeyValueStorage> onStrategy) {
-    applyOnMatchingStrategy(
-        DataStorageFormat.BONSAI,
+    applyOnMatchingStrategies(
+        List.of(DataStorageFormat.BONSAI, DataStorageFormat.BONSAI_ARCHIVE),
         worldStateKeyValueStorage -> {
           final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
               (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();
@@ -96,8 +97,8 @@ public class WorldStateStorageCoordinator {
   }
 
   public void applyWhenFlatModeEnabled(final Consumer<BonsaiWorldStateKeyValueStorage> onStrategy) {
-    applyOnMatchingStrategy(
-        DataStorageFormat.BONSAI,
+    applyOnMatchingStrategies(
+        List.of(DataStorageFormat.BONSAI, DataStorageFormat.BONSAI_ARCHIVE),
         worldStateKeyValueStorage -> {
           final BonsaiWorldStateKeyValueStorage bonsaiWorldStateStorageStrategy =
               (BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage();
@@ -115,10 +116,18 @@ public class WorldStateStorageCoordinator {
     }
   }
 
+  public void applyOnMatchingStrategies(
+      final List<DataStorageFormat> dataStorageFormats,
+      final Consumer<WorldStateKeyValueStorage> onStrategy) {
+    if (dataStorageFormats.contains(getDataStorageFormat())) {
+      onStrategy.accept(worldStateKeyValueStorage());
+    }
+  }
+
   public <RESPONSE> RESPONSE applyForStrategy(
       final Function<BonsaiWorldStateKeyValueStorage, RESPONSE> onBonsai,
       final Function<ForestWorldStateKeyValueStorage, RESPONSE> onForest) {
-    if (getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+    if (getDataStorageFormat().isBonsaiFormat()) {
       return onBonsai.apply(((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage()));
     } else {
       return onForest.apply(((ForestWorldStateKeyValueStorage) worldStateKeyValueStorage()));
@@ -128,7 +137,7 @@ public class WorldStateStorageCoordinator {
   public void consumeForStrategy(
       final Consumer<BonsaiWorldStateKeyValueStorage> onBonsai,
       final Consumer<ForestWorldStateKeyValueStorage> onForest) {
-    if (getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+    if (getDataStorageFormat().isBonsaiFormat()) {
       onBonsai.accept(((BonsaiWorldStateKeyValueStorage) worldStateKeyValueStorage()));
     } else {
       onForest.accept(((ForestWorldStateKeyValueStorage) worldStateKeyValueStorage()));

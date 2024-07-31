@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStatePreimageStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentIdentifier;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
@@ -82,7 +81,7 @@ public class KeyValueStorageProvider implements StorageProvider {
   @Override
   public WorldStateKeyValueStorage createWorldStateStorage(
       final DataStorageConfiguration dataStorageConfiguration) {
-    if (dataStorageConfiguration.getDataStorageFormat().equals(DataStorageFormat.BONSAI)) {
+    if (dataStorageConfiguration.getDataStorageFormat().isBonsaiFormat()) {
       return new BonsaiWorldStateKeyValueStorage(this, metricsSystem, dataStorageConfiguration);
     } else {
       return new ForestWorldStateKeyValueStorage(

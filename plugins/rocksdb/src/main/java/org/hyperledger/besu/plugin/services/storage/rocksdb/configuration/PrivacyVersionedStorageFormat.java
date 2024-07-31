@@ -44,7 +44,13 @@ public enum PrivacyVersionedStorageFormat implements VersionedStorageFormat {
    * Current Bonsai version, with receipts using compaction, in order to make Receipts use less disk
    * space
    */
-  BONSAI_WITH_RECEIPT_COMPACTION(BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION, 2);
+  BONSAI_WITH_RECEIPT_COMPACTION(BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION, 2),
+  /**
+   * Bonsai archive version, with receipts using compaction, in order to make Receipts use less disk
+   * space
+   */
+  BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION(
+      BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION, 3);
 
   private final VersionedStorageFormat baseVersionedStorageFormat;
   private final OptionalInt privacyVersion;
@@ -66,6 +72,7 @@ public enum PrivacyVersionedStorageFormat implements VersionedStorageFormat {
     return switch (configuration.getDatabaseFormat()) {
       case FOREST -> FOREST_WITH_RECEIPT_COMPACTION;
       case BONSAI -> BONSAI_WITH_RECEIPT_COMPACTION;
+      case BONSAI_ARCHIVE -> BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
     };
   }
 

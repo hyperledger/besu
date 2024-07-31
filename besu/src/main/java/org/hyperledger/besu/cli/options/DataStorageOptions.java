@@ -47,7 +47,7 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
   @Option(
       names = {DATA_STORAGE_FORMAT},
       description =
-          "Format to store trie data in.  Either FOREST or BONSAI (default: ${DEFAULT-VALUE}).",
+          "Format to store trie data in.  Either FOREST, BONSAI or BONSAI_ARCHIVE (default: ${DEFAULT-VALUE}).",
       arity = "1")
   private DataStorageFormat dataStorageFormat = DataStorageFormat.BONSAI;
 

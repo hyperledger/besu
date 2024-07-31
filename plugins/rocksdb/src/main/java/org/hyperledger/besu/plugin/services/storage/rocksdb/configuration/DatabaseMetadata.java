@@ -239,7 +239,7 @@ public class DatabaseMetadata {
                         "Unsupported database with format FOREST and version "
                             + versionedStorageFormat.getVersion());
               };
-          case BONSAI ->
+          case BONSAI, BONSAI_ARCHIVE ->
               switch (versionedStorageFormat.getVersion()) {
                 case 1 -> PrivacyVersionedStorageFormat.BONSAI_ORIGINAL;
                 case 2 -> PrivacyVersionedStorageFormat.BONSAI_WITH_VARIABLES;

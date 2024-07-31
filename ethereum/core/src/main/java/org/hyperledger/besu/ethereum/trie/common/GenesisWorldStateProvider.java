@@ -28,7 +28,6 @@ import org.hyperledger.besu.ethereum.trie.forest.worldview.ForestMutableWorldSta
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.kvstore.SegmentedInMemoryKeyValueStorage;
 
@@ -44,8 +43,7 @@ public class GenesisWorldStateProvider {
    */
   public static MutableWorldState createGenesisWorldState(
       final DataStorageConfiguration dataStorageConfiguration) {
-    if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat()
-        == DataStorageFormat.BONSAI) {
+    if (Objects.requireNonNull(dataStorageConfiguration).getDataStorageFormat().isBonsaiFormat()) {
       return createGenesisBonsaiWorldState();
     } else {
       return createGenesisForestWorldState();

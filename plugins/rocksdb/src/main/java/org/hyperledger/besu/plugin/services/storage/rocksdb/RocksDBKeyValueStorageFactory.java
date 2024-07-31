@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.plugin.services.storage.rocksdb;
 
+import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_WITH_RECEIPT_COMPACTION;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.BONSAI_WITH_VARIABLES;
 import static org.hyperledger.besu.plugin.services.storage.rocksdb.configuration.BaseVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION;
@@ -57,7 +58,10 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
 
   private static final Logger LOG = LoggerFactory.getLogger(RocksDBKeyValueStorageFactory.class);
   private static final EnumSet<BaseVersionedStorageFormat> SUPPORTED_VERSIONED_FORMATS =
-      EnumSet.of(FOREST_WITH_RECEIPT_COMPACTION, BONSAI_WITH_RECEIPT_COMPACTION);
+      EnumSet.of(
+          FOREST_WITH_RECEIPT_COMPACTION,
+          BONSAI_WITH_RECEIPT_COMPACTION,
+          BONSAI_ARCHIVE_WITH_RECEIPT_COMPACTION);
   private static final String NAME = "rocksdb";
   private final RocksDBMetricsFactory rocksDBMetricsFactory;
   private DatabaseMetadata databaseMetadata;
@@ -160,7 +164,7 @@ public class RocksDBKeyValueStorageFactory implements KeyValueStorageFactory {
                   metricsSystem,
                   rocksDBMetricsFactory);
         }
-        case BONSAI -> {
+        case BONSAI, BONSAI_ARCHIVE -> {
           LOG.debug("BONSAI mode detected, Using OptimisticTransactionDB.");
           segmentedStorage =
               new OptimisticRocksDBColumnarKeyValueStorage(

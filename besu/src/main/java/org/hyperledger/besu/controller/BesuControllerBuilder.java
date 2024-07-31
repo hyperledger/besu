@@ -1104,6 +1104,15 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       final BonsaiCachedMerkleTrieLoader bonsaiCachedMerkleTrieLoader) {
     return switch (dataStorageConfiguration.getDataStorageFormat()) {
       case BONSAI -> {
+        yield new BonsaiWorldStateProvider(
+            worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class),
+            blockchain,
+            Optional.of(dataStorageConfiguration.getBonsaiMaxLayersToLoad()),
+            bonsaiCachedMerkleTrieLoader,
+            besuComponent.map(BesuComponent::getBesuPluginContext).orElse(null),
+            evmConfiguration);
+      }
+      case BONSAI_ARCHIVE -> {
         final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
             worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
 

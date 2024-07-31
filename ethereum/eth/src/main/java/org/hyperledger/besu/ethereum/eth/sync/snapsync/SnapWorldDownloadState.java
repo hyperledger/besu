@@ -258,8 +258,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   /** Method to reload the healing process of the trie */
   public synchronized void reloadTrieHeal() {
     // Clear the flat database and trie log from the world state storage if needed
-    worldStateStorageCoordinator.applyOnMatchingStrategy(
-        DataStorageFormat.BONSAI,
+    worldStateStorageCoordinator.applyOnMatchingStrategies(
+        List.of(DataStorageFormat.BONSAI, DataStorageFormat.BONSAI_ARCHIVE),
         worldStateKeyValueStorage -> {
           final BonsaiWorldStateKeyValueStorage strategy =
               worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
