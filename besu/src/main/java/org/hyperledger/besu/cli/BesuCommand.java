@@ -393,7 +393,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl;
   private final TransactionSimulationServiceImpl transactionSimulationServiceImpl;
   private final BlockchainServiceImpl blockchainServiceImpl;
-  private final BesuEventsImpl besuEventsImpl;
 
   static class P2PDiscoveryOptionGroup {
 
@@ -992,8 +991,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         new TransactionSelectionServiceImpl(),
         new TransactionPoolValidatorServiceImpl(),
         new TransactionSimulationServiceImpl(),
-        new BlockchainServiceImpl(),
-        new BesuEventsImpl());
+        new BlockchainServiceImpl());
   }
 
   /**
@@ -1016,7 +1014,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
    * @param transactionValidatorServiceImpl instance of TransactionValidatorServiceImpl
    * @param transactionSimulationServiceImpl instance of TransactionSimulationServiceImpl
    * @param blockchainServiceImpl instance of BlockchainServiceImpl
-   * @param besuEventsImpl instance of BesuEventsImpl
    */
   @VisibleForTesting
   protected BesuCommand(
@@ -1036,8 +1033,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       final TransactionSelectionServiceImpl transactionSelectionServiceImpl,
       final TransactionPoolValidatorServiceImpl transactionValidatorServiceImpl,
       final TransactionSimulationServiceImpl transactionSimulationServiceImpl,
-      final BlockchainServiceImpl blockchainServiceImpl,
-      final BesuEventsImpl besuEventsImpl) {
+      final BlockchainServiceImpl blockchainServiceImpl) {
     this.besuComponent = besuComponent;
     this.logger = besuComponent.getBesuCommandLogger();
     this.rlpBlockImporter = rlpBlockImporter;
@@ -1058,7 +1054,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     this.transactionValidatorServiceImpl = transactionValidatorServiceImpl;
     this.transactionSimulationServiceImpl = transactionSimulationServiceImpl;
     this.blockchainServiceImpl = blockchainServiceImpl;
-    this.besuEventsImpl = besuEventsImpl;
   }
 
   /**
@@ -1317,7 +1312,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.addService(
         TransactionSimulationService.class, transactionSimulationServiceImpl);
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);
-    besuPluginContext.addService(BesuEvents.class, besuEventsImpl);
 
     // register built-in plugins
     rocksDBPlugin = new RocksDBPlugin();
@@ -1386,13 +1380,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             apiConfiguration.getGasCap()));
     rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
 
-    besuEventsImpl.init(
-        besuController.getProtocolContext().getBlockchain(),
-        besuController.getProtocolManager().getBlockBroadcaster(),
-        besuController.getTransactionPool(),
-        besuController.getSyncState(),
-        besuController.getProtocolContext().getBadBlockManager());
-
+    besuPluginContext.addService(
+        BesuEvents.class,
+        new BesuEventsImpl(
+            besuController.getProtocolContext().getBlockchain(),
+            besuController.getProtocolManager().getBlockBroadcaster(),
+            besuController.getTransactionPool(),
+            besuController.getSyncState(),
+            besuController.getProtocolContext().getBadBlockManager()));
     besuPluginContext.addService(MetricsSystem.class, getMetricsSystem());
 
     besuPluginContext.addService(BlockchainService.class, blockchainServiceImpl);

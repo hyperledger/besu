@@ -16,6 +16,8 @@ package org.hyperledger.besu.tests.acceptance.dsl.node.configuration;
 
 import static java.util.Arrays.asList;
 import static java.util.stream.Collectors.toList;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ADMIN;
+import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.IBFT;
 
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.datatypes.Wei;
@@ -43,6 +45,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -331,12 +334,20 @@ public class BesuNodeFactory {
   }
 
   public BesuNode createPluginsNode(
-      final String name, final List<String> plugins, final List<String> extraCLIOptions)
+      final String name,
+      final List<String> plugins,
+      final List<String> extraCLIOptions,
+      final String... extraRpcApis)
       throws IOException {
+
+    final List<String> enableRpcApis = new ArrayList<>(Arrays.asList(extraRpcApis));
+    enableRpcApis.addAll(List.of(IBFT.name(), ADMIN.name()));
+
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
-            .jsonRpcConfiguration(node.createJsonRpcWithIbft2AdminEnabledConfig())
+            .jsonRpcConfiguration(
+                node.createJsonRpcWithRpcApiEnabledConfig(enableRpcApis.toArray(String[]::new)))
             .webSocketConfiguration(node.createWebSocketEnabledConfig())
             .plugins(plugins)
             .extraCLIOptions(extraCLIOptions)

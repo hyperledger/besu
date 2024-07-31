@@ -28,6 +28,7 @@ import org.hyperledger.besu.plugin.services.rpc.PluginRpcRequest;
 import org.hyperledger.besu.plugin.services.rpc.PluginRpcResponse;
 import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Locale;
@@ -36,8 +37,13 @@ import java.util.NoSuchElementException;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /** The RPC endpoint service implementation. */
 public class RpcEndpointServiceImpl implements RpcEndpointService {
+  private static final Logger LOG = LoggerFactory.getLogger(RpcEndpointServiceImpl.class);
+
   private final Map<String, Function<PluginRpcRequest, ?>> rpcMethods = new HashMap<>();
   private Map<String, JsonRpcMethod> inProcessRpcMethods;
 
@@ -70,6 +76,13 @@ public class RpcEndpointServiceImpl implements RpcEndpointService {
     checkNotNull(
         inProcessRpcMethods,
         "Service not initialized yet, this method must be called after plugin 'beforeExternalServices' call completes");
+
+    LOG.atTrace()
+        .setMessage("Calling method:{} with params:{}")
+        .addArgument(methodName)
+        .addArgument(() -> Arrays.toString(params))
+        .log();
+
     final var method = inProcessRpcMethods.get(methodName);
 
     if (method == null) {

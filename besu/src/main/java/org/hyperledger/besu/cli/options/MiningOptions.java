@@ -227,7 +227,6 @@ public class MiningOptions implements CLIOptions<MiningParameters> {
       final GenesisConfigOptions genesisConfigOptions,
       final boolean isMergeEnabled,
       final Logger logger) {
-
     if (Boolean.TRUE.equals(isMiningEnabled) && coinbase == null) {
       throw new ParameterException(
           commandLine,
