@@ -121,7 +121,7 @@ public class DiscardTest {
     final Discard discard = new Discard(validatorProvider);
 
     assertThatThrownBy(() -> discard.response(requestWithParams()))
-        .hasMessage("Invalid address parameter")
+        .hasMessage("Invalid address parameter (index 0)")
         .isInstanceOf(InvalidJsonRpcParameters.class);
   }
 

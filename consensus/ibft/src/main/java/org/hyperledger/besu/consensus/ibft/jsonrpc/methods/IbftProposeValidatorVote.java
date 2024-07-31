@@ -58,7 +58,7 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
       validatorAddress = requestContext.getRequiredParameter(0, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
     final Boolean add = requestContext.getRequiredParameter(1, Boolean.class);
     LOG.trace(
