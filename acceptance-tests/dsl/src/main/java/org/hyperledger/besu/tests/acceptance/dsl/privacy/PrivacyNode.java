@@ -106,6 +106,7 @@ public class PrivacyNode implements AutoCloseable {
             besuConfig.getEngineRpcConfiguration(),
             besuConfig.getWebSocketConfiguration(),
             besuConfig.getJsonRpcIpcConfiguration(),
+            besuConfig.getInProcessRpcConfiguration(),
             besuConfig.getMetricsConfiguration(),
             besuConfig.getPermissioningConfiguration(),
             besuConfig.getApiConfiguration(),

@@ -34,6 +34,7 @@ import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
@@ -188,6 +189,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     builder.dataDirectory(dataDir);
     builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
     builder.privacyParameters(node.getPrivacyParameters());
+    final InProcessRpcConfiguration inProcessRpcConfiguration = node.inProcessRpcConfiguration();
 
     node.getGenesisConfig()
         .map(GenesisConfigFile::fromConfig)
@@ -228,7 +230,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .besuPluginContext(besuPluginContext)
         .autoLogBloomCaching(false)
         .storageProvider(besuController.getStorageProvider())
-        .rpcEndpointService(rpcEndpointServiceImpl);
+        .rpcEndpointService(rpcEndpointServiceImpl)
+        .inProcessRpcConfiguration(inProcessRpcConfiguration);
     node.engineRpcConfiguration().ifPresent(runnerBuilder::engineJsonRpcConfiguration);
     // besuPluginContext.registerPlugins(commonPluginConfiguration.);
     besuPluginContext.beforeExternalServices();
@@ -244,6 +247,9 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             besuController.getTransactionPool(),
             besuController.getSyncState(),
             besuController.getProtocolContext().getBadBlockManager()));
+
+    rpcEndpointServiceImpl.init(runner.getInProcessRpcMethods());
+
     besuPluginContext.startPlugins();
 
     runner.startEthereumMainLoop();
