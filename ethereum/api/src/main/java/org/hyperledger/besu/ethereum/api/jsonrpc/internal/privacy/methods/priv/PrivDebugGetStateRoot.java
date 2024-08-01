@@ -65,7 +65,7 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
       return request.getRequiredParameter(1, BlockParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
   }
 

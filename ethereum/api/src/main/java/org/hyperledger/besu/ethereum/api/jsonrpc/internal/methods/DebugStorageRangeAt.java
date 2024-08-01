@@ -75,7 +75,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
           requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block or block hash parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block or block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
     final int transactionIndex = requestContext.getRequiredParameter(1, Integer.class);
     final Address accountAddress;
@@ -83,7 +83,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       accountAddress = requestContext.getRequiredParameter(2, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid account address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid account address parameter (index 2)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
     final Hash startKey =
         Hash.fromHexStringLenient(requestContext.getRequiredParameter(3, String.class));

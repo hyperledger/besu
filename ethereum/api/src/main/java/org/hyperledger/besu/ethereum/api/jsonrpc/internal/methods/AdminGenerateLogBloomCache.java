@@ -45,7 +45,7 @@ public class AdminGenerateLogBloomCache implements JsonRpcMethod {
       startBlockParam = requestContext.getOptionalParameter(0, BlockParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid start block parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid start block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
     final long startBlock;
     if (startBlockParam.isEmpty() || startBlockParam.get().isEarliest()) {
@@ -62,7 +62,7 @@ public class AdminGenerateLogBloomCache implements JsonRpcMethod {
       stopBlockParam = requestContext.getOptionalParameter(1, BlockParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid stop block parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid stop block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
     final long stopBlock;
     if (stopBlockParam.isEmpty()) {

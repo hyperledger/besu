@@ -62,7 +62,7 @@ public class EthCall extends AbstractBlockParameterOrBlockHashMethod {
       return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block or block hash parameters", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block or block hash parameters (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
   }
 

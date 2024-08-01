@@ -71,7 +71,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
       return requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block or block hash parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block or block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
   }
 
@@ -84,7 +84,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
       address = requestContext.getRequiredParameter(2, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid address parameter (index 2)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
 
     Optional<BlockWithMetadata<TransactionWithMetadata, Hash>> block =

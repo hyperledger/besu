@@ -39,7 +39,7 @@ public class EthGetBlockTransactionCountByNumber extends AbstractBlockParameterM
       return request.getRequiredParameter(0, BlockParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block parameters", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block parameters (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
   }
 
