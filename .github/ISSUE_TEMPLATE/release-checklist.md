@@ -18,7 +18,9 @@ assignees: ''
 - [ ] Sign-off with team; announce the tag in #besu-release in Discord
   - [ ] Targeting this tag for the burn-in: https://github.com/hyperledger/besu/releases/tag/24.4.0-RC2
 - [ ] Consensys staff start burn-in using this tag
-- [ ] Sign off burn-in; convey burn-in results in #besu-release in Discord
+- [ ] Seek sign off for burn-in
+  - [ ] Pass? Go ahead and complete the release process
+  - [ ] Fail? Put a message in #besu-release in Discord indicating the release will be aborted because it failed burn-in 
 - [ ] Using the same git sha, create a calver tag for the FULL RELEASE, example format `24.4.0`
 - [ ] Using the FULL RELEASE tag, create a release in github to trigger the workflows. Once published:
     - this is now public and notifies subscribed users
