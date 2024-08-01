@@ -50,7 +50,7 @@ public class GeneralStateTestCaseEipSpec {
   private final int valueIndex;
   private final String expectException;
 
-  GeneralStateTestCaseEipSpec(
+  public GeneralStateTestCaseEipSpec(
       final String fork,
       final List<Supplier<Transaction>> transactionSuppliers,
       final ReferenceTestWorldState initialWorldState,
