@@ -111,7 +111,7 @@ class EthGetProofTest {
 
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid address parameter");
+        .hasMessageContaining("Invalid address parameter (index 0)");
   }
 
   @Test

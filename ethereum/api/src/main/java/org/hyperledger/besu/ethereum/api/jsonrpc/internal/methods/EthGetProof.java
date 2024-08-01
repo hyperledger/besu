@@ -66,7 +66,7 @@ public class EthGetProof extends AbstractBlockParameterOrBlockHashMethod {
       address = requestContext.getRequiredParameter(0, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
     final List<UInt256> storageKeys = getStorageKeys(requestContext);
 

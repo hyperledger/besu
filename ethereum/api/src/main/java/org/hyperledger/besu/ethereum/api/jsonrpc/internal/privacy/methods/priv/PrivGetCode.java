@@ -65,7 +65,7 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
       address = request.getRequiredParameter(1, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid address parameter (index 1)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());

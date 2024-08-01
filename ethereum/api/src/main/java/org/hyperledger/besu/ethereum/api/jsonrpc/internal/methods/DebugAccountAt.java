@@ -84,7 +84,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
       address = requestContext.getRequiredParameter(2, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid address parameter (index 2)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
 
     Optional<BlockWithMetadata<TransactionWithMetadata, Hash>> block =

@@ -58,14 +58,14 @@ public class QbftDiscardValidatorVoteTest {
   public void exceptionWhenNoParamsSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams()))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid validator address parameter");
+        .hasMessage("Invalid validator address parameter (index 0)");
   }
 
   @Test
   public void exceptionWhenInvalidAddressParameterSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("InvalidAddress")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid validator address parameter");
+        .hasMessageContaining("Invalid validator address parameter (index 0)");
   }
 
   @Test
