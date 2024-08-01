@@ -17,18 +17,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermAddAccountsToAllowlist;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermAddAccountsToWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermAddNodesToAllowlist;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermAddNodesToWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermGetAccountsAllowlist;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermGetAccountsWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermGetNodesAllowlist;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermGetNodesWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermReloadPermissionsFromFile;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromAllowlist;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveAccountsFromWhitelist;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromAllowlist;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning.PermRemoveNodesFromWhitelist;
 import org.hyperledger.besu.ethereum.permissioning.AccountLocalConfigPermissioningController;
 import org.hyperledger.besu.ethereum.permissioning.NodeLocalConfigPermissioningController;
 
@@ -55,17 +49,11 @@ public class PermJsonRpcMethods extends ApiGroupJsonRpcMethods {
   @Override
   protected Map<String, JsonRpcMethod> create() {
     return mapOf(
-        new PermAddNodesToWhitelist(nodeAllowlistController),
         new PermAddNodesToAllowlist(nodeAllowlistController),
-        new PermRemoveNodesFromWhitelist(nodeAllowlistController),
         new PermRemoveNodesFromAllowlist(nodeAllowlistController),
-        new PermGetNodesWhitelist(nodeAllowlistController),
         new PermGetNodesAllowlist(nodeAllowlistController),
-        new PermGetAccountsWhitelist(accountsAllowlistController),
         new PermGetAccountsAllowlist(accountsAllowlistController),
-        new PermAddAccountsToWhitelist(accountsAllowlistController),
         new PermAddAccountsToAllowlist(accountsAllowlistController),
-        new PermRemoveAccountsFromWhitelist(accountsAllowlistController),
         new PermRemoveAccountsFromAllowlist(accountsAllowlistController),
         new PermReloadPermissionsFromFile(accountsAllowlistController, nodeAllowlistController));
   }

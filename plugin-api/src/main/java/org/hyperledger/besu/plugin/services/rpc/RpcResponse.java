@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,12 +12,15 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.ethereum.api.jsonrpc.internal.response;
+package org.hyperledger.besu.plugin.services.rpc;
 
-/** Various types of responses that the JSON-RPC component may produce. */
-public enum JsonRpcResponseType {
-  NONE,
-  SUCCESS,
-  ERROR,
-  UNAUTHORIZED
+/** Represent a Json RPC response */
+public interface RpcResponse {
+
+  /**
+   * Get the response type
+   *
+   * @return the response type
+   */
+  RpcResponseType getType();
 }

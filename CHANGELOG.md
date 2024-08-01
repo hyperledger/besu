@@ -7,11 +7,29 @@
 - --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
 - --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
 - `besu storage x-trie-log` subcommand is deprecated, use `besu storage trie-log` instead
+- Allow configuration of Withdrawal Request Contract Address via genesis configuration [#7356](https://github.com/hyperledger/besu/pull/7356)
+
+### Breaking Changes
+- Remove long-deprecated `perm*whitelist*` methods [#7401](https://github.com/hyperledger/besu/pull/7401)
+
+### Additions and Improvements
+- Expose set finalized/safe block in plugin api BlockchainService. These method can be used by plugins to set finalized/safe block for a PoA network (such as QBFT, IBFT and Clique).[#7382](https://github.com/hyperledger/besu/pull/7382)
+- In process RPC service [#7395](https://github.com/hyperledger/besu/pull/7395)
+
+### Bug fixes
+
+## 24.7.1
 
 ### Breaking Changes
 - Remove deprecated sync modes (X_SNAP and X_CHECKPOINT). Use SNAP and CHECKPOINT instead [#7309](https://github.com/hyperledger/besu/pull/7309)
 - Remove PKI-backed QBFT (deprecated in 24.5.1) Other forms of QBFT remain unchanged. [#7293](https://github.com/hyperledger/besu/pull/7293)
 - Do not maintain connections to PoA bootnodes [#7358](https://github.com/hyperledger/besu/pull/7358). See [#7314](https://github.com/hyperledger/besu/pull/7314) for recommended alternative behaviour.
+
+### Upcoming Breaking Changes
+- Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
+- --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
+- --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
+- `besu storage x-trie-log` subcommand is deprecated, use `besu storage trie-log` instead
 
 ### Additions and Improvements
 - `--Xsnapsync-bft-enabled` option enables experimental support for snap sync with IBFT/QBFT permissioned Bonsai-DB chains [#7140](https://github.com/hyperledger/besu/pull/7140)
@@ -27,7 +45,7 @@
 - Force bonsai-limit-trie-logs-enabled=false when sync-mode=FULL instead of startup error [#7357](https://github.com/hyperledger/besu/pull/7357)
 - `--Xbonsai-parallel-tx-processing-enabled` option enables executing transactions in parallel during block processing for Bonsai nodes
 - Reduce default trie log pruning window size from 30,000 to 5,000 [#7365](https://github.com/hyperledger/besu/pull/7365)
-- Add option `--poa-discovery-retry-bootnodes` for PoA networks to always use bootnodes during peer refresh, not just on first start [#7314](https://github.com/hyperledger/besu/pull/7314) 
+- Add option `--poa-discovery-retry-bootnodes` for PoA networks to always use bootnodes during peer refresh, not just on first start [#7314](https://github.com/hyperledger/besu/pull/7314)
 
 ### Bug fixes
 - Fix `eth_call` deserialization to correctly ignore unknown fields in the transaction object. [#7323](https://github.com/hyperledger/besu/pull/7323)
