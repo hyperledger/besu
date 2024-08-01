@@ -58,7 +58,7 @@ public class QbftProposeValidatorVoteTest {
   public void exceptionWhenNoParamsSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams()))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid validator address parameter");
+        .hasMessage("Invalid validator address parameter (index 0)");
   }
 
   @Test

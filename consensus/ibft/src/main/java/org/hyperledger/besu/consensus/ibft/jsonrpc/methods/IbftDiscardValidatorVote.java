@@ -57,7 +57,7 @@ public class IbftDiscardValidatorVote implements JsonRpcMethod {
       validatorAddress = requestContext.getRequiredParameter(0, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid validator address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid validator address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
     LOG.trace("Received RPC rpcName={} address={}", getName(), validatorAddress);
     validatorProvider.getVoteProviderAtHead().get().discardVote(validatorAddress);

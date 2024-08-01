@@ -62,7 +62,7 @@ public class MinerSetCoinbaseTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid address parameter");
+        .hasMessage("Invalid address parameter (index 0)");
   }
 
   @Test
