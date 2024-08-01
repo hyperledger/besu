@@ -51,7 +51,7 @@ public class TestMineBlocks implements JsonRpcMethod {
       blocksToMine = requestContext.getRequiredParameter(0, Long.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid blocks to mine", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
+          "Invalid blocks to mine (index 0)", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
     }
     while (blocksToMine-- > 0) {
       if (!mineNewBlock()) {

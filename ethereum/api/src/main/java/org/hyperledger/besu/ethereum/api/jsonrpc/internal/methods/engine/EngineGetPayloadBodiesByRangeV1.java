@@ -65,7 +65,7 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
       count = request.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block count params", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
+          "Invalid block count params (index 1)", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
     }
     final Object reqId = request.getRequest().getId();
 
