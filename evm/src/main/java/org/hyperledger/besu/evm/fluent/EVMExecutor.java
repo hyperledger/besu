@@ -755,6 +755,7 @@ public class EVMExecutor {
           })
           .process(messageFrame, tracer);
     }
+    initialMessageFrame.getSelfDestructs().forEach(worldUpdater::deleteAccount);
     if (commitWorldState) {
       worldUpdater.commit();
     }
