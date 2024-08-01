@@ -26,16 +26,17 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
@@ -91,43 +92,44 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
   }
 
   public void initialize() {
-    preloadQueueWithTimeout();
+    preloadQueueWithTimeout(PRELOAD_TIMEOUT_IN_SECONDS);
   }
 
-  private void preloadQueueWithTimeout() {
+  @VisibleForTesting
+  void preloadQueueWithTimeout(final int timeoutInSeconds) {
 
+    LOG.info("Trie log pruner queue preload starting...");
     LOG.atInfo()
         .setMessage("Attempting to load first {} trie logs from database...")
         .addArgument(loadingLimit)
         .log();
 
-    try (final ScheduledExecutorService preloadExecutor = Executors.newScheduledThreadPool(1)) {
+    try (final ExecutorService preloadExecutor = Executors.newSingleThreadExecutor()) {
+      final Future<?> future = preloadExecutor.submit(this::preloadQueue);
 
-      final AtomicBoolean timeoutOccurred = new AtomicBoolean(false);
-      final Runnable timeoutTask =
-          () -> {
-            timeoutOccurred.set(true);
-            LOG.atWarn()
-                .setMessage(
-                    "Timeout occurred while loading and processing {} trie logs from database")
-                .addArgument(loadingLimit)
-                .log();
-          };
-
-      final ScheduledFuture<?> timeoutFuture =
-          preloadExecutor.schedule(timeoutTask, PRELOAD_TIMEOUT_IN_SECONDS, TimeUnit.SECONDS);
       LOG.atInfo()
           .setMessage(
               "Trie log pruning will timeout after {} seconds. If this is timing out, consider using `besu storage trie-log prune` subcommand, see https://besu.hyperledger.org/public-networks/how-to/bonsai-limit-trie-logs")
-          .addArgument(PRELOAD_TIMEOUT_IN_SECONDS)
+          .addArgument(timeoutInSeconds)
           .log();
 
-      preloadQueue(timeoutOccurred, timeoutFuture);
+      try {
+        future.get(timeoutInSeconds, TimeUnit.SECONDS);
+      } catch (InterruptedException | ExecutionException e) {
+        LOG.error("Error loading trie logs from database", e);
+        future.cancel(true);
+      } catch (TimeoutException e) {
+        future.cancel(true);
+        LOG.atWarn()
+            .setMessage("Timeout occurred while loading and processing {} trie logs from database")
+            .addArgument(loadingLimit)
+            .log();
+      }
     }
+    LOG.info("Trie log pruner queue preload complete.");
   }
 
-  private void preloadQueue(
-      final AtomicBoolean timeoutOccurred, final ScheduledFuture<?> timeoutFuture) {
+  private void preloadQueue() {
 
     try (final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
 
@@ -135,9 +137,9 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
       final AtomicLong orphansPruned = new AtomicLong();
       trieLogKeys.forEach(
           blockHashAsBytes -> {
-            if (timeoutOccurred.get()) {
+            if (Thread.currentThread().isInterrupted()) {
               throw new RuntimeException(
-                  new TimeoutException("Timeout occurred while preloading trie log prune queue"));
+                  new InterruptedException("Thread interrupted during trie log processing."));
             }
             final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
             final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
@@ -152,17 +154,19 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
             }
           });
 
-      timeoutFuture.cancel(true);
       LOG.atDebug().log("Pruned {} orphaned trie logs from database...", orphansPruned.intValue());
       LOG.atInfo().log(
           "Added {} trie logs to prune queue. Commencing pruning of eligible trie logs...",
           addToPruneQueueCount.intValue());
       int prunedCount = pruneFromQueue();
-      LOG.atInfo().log("Pruned {} trie logs.", prunedCount);
+      LOG.atInfo().log("Pruned {} trie logs", prunedCount);
     } catch (Exception e) {
-      if (e.getCause() != null && e.getCause() instanceof TimeoutException) {
+      if (e instanceof InterruptedException
+          || (e.getCause() != null && e.getCause() instanceof InterruptedException)) {
+        LOG.info("Operation interrupted, but will attempt to prune what's in the queue so far...");
         int prunedCount = pruneFromQueue();
-        LOG.atInfo().log("Operation timed out, but still pruned {} trie logs.", prunedCount);
+        LOG.atInfo().log("...pruned {} trie logs", prunedCount);
+        Thread.currentThread().interrupt(); // Preserve interrupt status
       } else {
         LOG.error("Error loading trie logs from database, nothing pruned", e);
       }
