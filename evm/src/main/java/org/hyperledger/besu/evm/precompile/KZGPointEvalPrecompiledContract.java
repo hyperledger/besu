@@ -140,7 +140,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
             null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
       }
     } catch (RuntimeException kzgFailed) {
-      System.out.println(kzgFailed.getMessage());
+      LOG.debug("Native KZG failed", kzgFailed);
 
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
