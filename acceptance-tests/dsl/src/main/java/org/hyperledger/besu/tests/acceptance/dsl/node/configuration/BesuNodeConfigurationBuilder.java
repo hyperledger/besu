@@ -24,6 +24,8 @@ import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.ImmutableApiConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.ImmutableInProcessRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.JwtAlgorithm;
@@ -70,6 +72,8 @@ public class BesuNodeConfigurationBuilder {
   private JsonRpcConfiguration engineRpcConfiguration = JsonRpcConfiguration.createEngineDefault();
   private WebSocketConfiguration webSocketConfiguration = WebSocketConfiguration.createDefault();
   private JsonRpcIpcConfiguration jsonRpcIpcConfiguration = new JsonRpcIpcConfiguration();
+  private InProcessRpcConfiguration inProcessRpcConfiguration =
+      ImmutableInProcessRpcConfiguration.builder().build();
   private MetricsConfiguration metricsConfiguration = MetricsConfiguration.builder().build();
   private Optional<PermissioningConfiguration> permissioningConfiguration = Optional.empty();
   private ApiConfiguration apiConfiguration = ImmutableApiConfiguration.builder().build();
@@ -255,6 +259,12 @@ public class BesuNodeConfigurationBuilder {
   public BesuNodeConfigurationBuilder jsonRpcIpcConfiguration(
       final JsonRpcIpcConfiguration jsonRpcIpcConfiguration) {
     this.jsonRpcIpcConfiguration = jsonRpcIpcConfiguration;
+    return this;
+  }
+
+  public BesuNodeConfigurationBuilder inProcessRpcConfiguration(
+      final InProcessRpcConfiguration inProcessRpcConfiguration) {
+    this.inProcessRpcConfiguration = inProcessRpcConfiguration;
     return this;
   }
 
@@ -516,6 +526,7 @@ public class BesuNodeConfigurationBuilder {
         Optional.of(engineRpcConfiguration),
         webSocketConfiguration,
         jsonRpcIpcConfiguration,
+        inProcessRpcConfiguration,
         metricsConfiguration,
         permissioningConfiguration,
         apiConfiguration,
