@@ -55,14 +55,14 @@ public class Propose implements JsonRpcMethod {
       address = requestContext.getRequiredParameter(0, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
     final Boolean auth;
     try {
       auth = requestContext.getRequiredParameter(1, Boolean.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid auth parameter", RpcErrorType.INVALID_AUTH_PARAMS, e);
+          "Invalid auth parameter (index 1)", RpcErrorType.INVALID_AUTH_PARAMS, e);
     }
     if (address.equals(CliqueBlockInterface.NO_VOTE_SUBJECT)) {
       return new JsonRpcErrorResponse(

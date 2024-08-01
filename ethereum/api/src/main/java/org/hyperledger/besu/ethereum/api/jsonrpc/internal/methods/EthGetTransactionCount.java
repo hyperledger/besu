@@ -62,7 +62,7 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
       address = request.getRequiredParameter(0, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
     final long pendingNonce =
         transactionPoolSupplier.get().getNextNonceForSender(address).orElse(0);
@@ -85,7 +85,7 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
       address = request.getRequiredParameter(0, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
     final long transactionCount = getBlockchainQueries().getTransactionCount(address, blockHash);
 

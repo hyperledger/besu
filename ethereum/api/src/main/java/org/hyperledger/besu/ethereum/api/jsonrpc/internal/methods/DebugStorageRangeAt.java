@@ -77,7 +77,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       accountAddress = requestContext.getRequiredParameter(2, Address.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid account address parameter", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid account address parameter (index 2)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
     final Hash startKey =
         Hash.fromHexStringLenient(requestContext.getRequiredParameter(3, String.class));

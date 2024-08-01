@@ -56,7 +56,7 @@ public class IbftProposeValidatorVoteTest {
   public void exceptionWhenNoParamsSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams()))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid address parameter");
+        .hasMessage("Invalid address parameter (index 0)");
   }
 
   @Test
@@ -70,7 +70,7 @@ public class IbftProposeValidatorVoteTest {
   public void exceptionWhenNoAddressSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid address parameter");
+        .hasMessageContaining("Invalid address parameter (index 0)");
   }
 
   @Test
