@@ -59,7 +59,7 @@ public class EthGetBlockReceipts extends AbstractBlockParameterOrBlockHashMethod
       return request.getRequiredParameter(0, BlockParameterOrBlockHash.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block or block hash parameters", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block or block hash parameters (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
   }
 

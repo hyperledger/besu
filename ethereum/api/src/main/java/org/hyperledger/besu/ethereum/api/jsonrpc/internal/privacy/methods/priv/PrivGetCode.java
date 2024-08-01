@@ -52,7 +52,7 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
       return request.getRequiredParameter(2, BlockParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block parameter (index 2)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
   }
 

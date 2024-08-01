@@ -47,7 +47,7 @@ public class EthGetBalance extends AbstractBlockParameterOrBlockHashMethod {
       return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block or block hash parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block or block hash parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
   }
 

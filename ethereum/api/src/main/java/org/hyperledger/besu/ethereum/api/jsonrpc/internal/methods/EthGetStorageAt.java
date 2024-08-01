@@ -43,7 +43,7 @@ public class EthGetStorageAt extends AbstractBlockParameterOrBlockHashMethod {
       return request.getRequiredParameter(2, BlockParameterOrBlockHash.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid block or block hash parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid block or block hash parameter (index 2)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
   }
 

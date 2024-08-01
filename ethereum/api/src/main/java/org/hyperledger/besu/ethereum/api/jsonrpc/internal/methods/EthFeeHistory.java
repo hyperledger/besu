@@ -97,7 +97,7 @@ public class EthFeeHistory implements JsonRpcMethod {
       highestBlock = request.getRequiredParameter(1, BlockParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid highest block parameter", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+          "Invalid highest block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
     final Optional<List<Double>> maybeRewardPercentiles =
         request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
