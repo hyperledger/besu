@@ -525,9 +525,7 @@ class CodeV1Test {
             "double jumpi",
             "Operation 0xF3 requires stack of 2 but may only have 1 items",
             0,
-            List.of(
-                List.of(
-                    "5f 5f e10005 5f 5f e10000 f3", 0, 0x80, 1))));
+            List.of(List.of("5f 5f e10005 5f 5f e10000 f3", 0, 0x80, 1))));
   }
 
   static Stream<Arguments> stackRJumpForward() {
