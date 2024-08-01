@@ -16,6 +16,7 @@ package org.hyperledger.besu.tests.acceptance.dsl.transaction.miner;
 
 import org.web3j.protocol.Web3jService;
 import org.web3j.protocol.core.Request;
+import org.web3j.protocol.core.methods.response.EthGasPrice;
 
 public class MinerRequestFactory {
 
@@ -39,5 +40,9 @@ public class MinerRequestFactory {
         null,
         web3jService,
         org.web3j.protocol.core.methods.response.VoidResponse.class);
+  }
+
+  Request<?, EthGasPrice> minerGetMinGasPrice() {
+    return new Request<>("miner_getMinGasPrice", null, web3jService, EthGasPrice.class);
   }
 }

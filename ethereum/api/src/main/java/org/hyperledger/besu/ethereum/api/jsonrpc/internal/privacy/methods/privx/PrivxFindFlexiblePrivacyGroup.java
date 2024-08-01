@@ -61,7 +61,7 @@ public class PrivxFindFlexiblePrivacyGroup implements JsonRpcMethod {
       addresses = requestContext.getRequiredParameter(0, String[].class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid address parameters", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+          "Invalid address parameters (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
 
     LOG.trace("Finding a privacy group with members {}", Arrays.toString(addresses));
