@@ -21,6 +21,7 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -49,7 +50,13 @@ public class Propose implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     checkState(
         validatorProvider.getVoteProviderAtHead().isPresent(), "Clique requires a vote provider");
-    final Address address = requestContext.getRequiredParameter(0, Address.class);
+    final Address address;
+    try {
+      address = requestContext.getRequiredParameter(0, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
     final Boolean auth = requestContext.getRequiredParameter(1, Boolean.class);
     if (address.equals(CliqueBlockInterface.NO_VOTE_SUBJECT)) {
       return new JsonRpcErrorResponse(
