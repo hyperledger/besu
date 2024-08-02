@@ -110,6 +110,11 @@ public class PrettyPrintSubCommand implements Runnable {
           if (validatedCode instanceof CodeInvalid codeInvalid) {
             parentCommand.out.println("EOF code is invalid - " + codeInvalid.getInvalidReason());
           }
+          if (layout.container().size() != container.size()) {
+            parentCommand.out.println(
+                "EOF code is invalid - dangling data after container - "
+                    + container.slice(layout.container().size()).toHexString());
+          }
         } else {
           parentCommand.out.println("EOF layout is invalid - " + layout.invalidReason());
         }
