@@ -123,7 +123,7 @@ public class RevertMetadataSubCommand implements Runnable {
             switch (dataStorageFormat) {
               case FOREST -> 1;
               case BONSAI -> 2;
-              case VERKLE -> 3;
+              case VERKLE, VERKLE_TRANSITION -> 3;
             };
 
         @JsonSerialize

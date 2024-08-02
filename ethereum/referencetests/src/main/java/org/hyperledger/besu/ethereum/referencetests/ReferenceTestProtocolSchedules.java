@@ -83,6 +83,10 @@ public class ReferenceTestProtocolSchedules {
     builder.put(
         "ShanghaiToCancunAtTime15k",
         createSchedule(genesisStub.clone().shanghaiTime(0).cancunTime(15000)));
+    //TODO: remove once verkle execution spec tests have verkle fork name
+    builder.put(
+        "ShanghaiToPragueAtTime32",
+        createSchedule(genesisStub.clone().shanghaiTime(0).pragueTime(32)));
     builder.put("Cancun", createSchedule(genesisStub.clone().cancunTime(0)));
     // also load KZG file for mainnet
     KZGPointEvalPrecompiledContract.init();

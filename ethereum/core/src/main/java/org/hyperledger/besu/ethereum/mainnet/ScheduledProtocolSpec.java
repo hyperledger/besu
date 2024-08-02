@@ -29,7 +29,7 @@ public interface ScheduledProtocolSpec {
 
   ProtocolSpec spec();
 
-  public record Hardfork(String name, long milestone) implements Comparable<Hardfork> {
+  record Hardfork(String name, long milestone) implements Comparable<Hardfork> {
     @Override
     public int compareTo(final Hardfork h) {
       if (h == null) { // all non-null hardforks are greater than null

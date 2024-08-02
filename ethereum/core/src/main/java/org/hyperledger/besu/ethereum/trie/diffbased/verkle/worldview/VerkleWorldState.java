@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.VERKLE_TRIE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -192,7 +192,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
             stateTrie.commit(
                 (location, hash, value) -> {
                   writeTrieNode(
-                      TRIE_BRANCH_STORAGE,
+                      VERKLE_TRIE_STORAGE,
                       bonsaiUpdater.getWorldStateTransaction(),
                       location,
                       value);
