@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evmtool.fuzz;
+package org.hyperledger.besu.testfuzz;
 
 import org.hyperledger.besu.crypto.Hash;
 
@@ -33,6 +33,7 @@ import org.jacoco.core.data.ISessionInfoVisitor;
 import org.jacoco.core.data.SessionInfo;
 
 /** Ported from javafuzz because JaCoCo APIs changed. */
+@SuppressWarnings({"java:S106", "CallToPrintStackTrace"}) // we use lots the console, on purpose
 public class Fuzzer {
   private final AbstractFuzzTarget target;
   private final Corpus corpus;
@@ -106,8 +107,7 @@ public class Fuzzer {
    * @throws IllegalAccessException if the wrong version of jacoco is loaded
    * @throws NoSuchAlgorithmException if our favorite hash algo is not loaded
    */
-  // sonar wants loops to end, but this code should loop until interrupted
-  @SuppressWarnings("java:S2189")
+  @SuppressWarnings("java:S2189") // the endless loop is on purpose
   public void start()
       throws InvocationTargetException, IllegalAccessException, NoSuchAlgorithmException {
     System.out.printf("#0 READ units: %d%n", this.corpus.getLength());
@@ -118,7 +118,7 @@ public class Fuzzer {
 
     while (true) {
       byte[] buf = this.corpus.generateInput();
-      // Next version will run this in a different thread.
+      // The next version will run this in a different thread.
       try {
         this.target.fuzz(buf);
       } catch (Exception e) {

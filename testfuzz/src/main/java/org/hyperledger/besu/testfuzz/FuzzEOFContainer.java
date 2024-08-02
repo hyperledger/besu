@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.evmtool.fuzz;
+package org.hyperledger.besu.testfuzz;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
@@ -25,14 +25,10 @@ import org.hyperledger.besu.evm.code.EOFLayout;
 import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 
-import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.InputStreamReader;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
@@ -41,7 +37,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
-import com.fasterxml.jackson.core.JacksonException;
 import com.fasterxml.jackson.core.JsonParser.Feature;
 import com.fasterxml.jackson.core.util.DefaultIndenter;
 import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
@@ -55,6 +50,7 @@ import com.gitlab.javafuzz.core.AbstractFuzzTarget;
 import org.apache.tuweni.bytes.Bytes;
 
 /** Fuzzes the parsing and validation of an EOF container. */
+@SuppressWarnings({"java:S106", "CallToPrintStackTrace"}) // we use lots the console, on purpose
 public class FuzzEOFContainer implements Runnable {
 
   static final ObjectMapper eofTestMapper = createObjectMapper();
@@ -160,24 +156,23 @@ public class FuzzEOFContainer implements Runnable {
     final Map<String, EOFTestCaseSpec> eofTests;
     try {
       eofTests = eofTestMapper.readValue(f, javaType);
-    } catch (JacksonException e) {
-      System.out.println("not EOF!");
-      // preseume parse failed because it's a corpus file
-      return false;
-
     } catch (IOException e) {
-      System.out.println("Invalid file " + f + ": " + e.getMessage());
+      // presume parse failed because it's a corpus file
       return false;
     }
     for (var entry : eofTests.entrySet()) {
+      int index = 0;
       for (var vector : entry.getValue().getVector().entrySet()) {
         try (FileOutputStream fos =
             new FileOutputStream(
                 new File(
-                    initialCorpus, f.getName() + "_" + entry.getKey() + "_" + vector.getKey()))) {
+                    initialCorpus,
+                    f.toPath().getFileName() + "_" + (index++) + "_" + vector.getKey()))) {
           fos.write(Bytes.fromHexString(vector.getValue().code()).toArrayUnsafe());
         } catch (IOException e) {
           System.out.println("Invalid file " + f + ": " + e.getMessage());
+          e.printStackTrace();
+          System.exit(1);
         }
       }
     }
@@ -186,40 +181,24 @@ public class FuzzEOFContainer implements Runnable {
 
   static class EOFFuzz extends AbstractFuzzTarget {
 
-    record ExternalClient(String name, BufferedReader reader, PrintWriter writer) {}
-
     List<ExternalClient> externalClients = new ArrayList<>();
     EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
 
     public EOFFuzz() throws IOException {
       // evm1 build bin must be in the path
-      addClient("evm1", "evmone-eofparse");
+      externalClients.add(new StreamingClient("evm1", "evmone-eofparse"));
       // geth build bin must be in the path
-      addClient("geth", "eofdump", "eofparser");
-    }
-
-    private void addClient(final String clientName, final String... command) throws IOException {
-      Process p = new ProcessBuilder().redirectErrorStream(true).command(command).start();
-      externalClients.add(
-          new ExternalClient(
-              clientName,
-              new BufferedReader(new InputStreamReader(p.getInputStream(), StandardCharsets.UTF_8)),
-              new PrintWriter(p.getOutputStream(), true, StandardCharsets.UTF_8)));
+      externalClients.add(new StreamingClient("geth", "eofdump", "eofparser"));
     }
 
     @Override
     public void fuzz(final byte[] bytes) {
       Bytes eofUnderTest = Bytes.wrap(bytes);
+      String eofUnderTestHexString = eofUnderTest.toHexString();
       Code code = evm.getCodeUncached(eofUnderTest);
       Map<String, String> results = new HashMap<>();
       for (var client : externalClients) {
-        try {
-          client.writer.println(eofUnderTest.toHexString());
-          String line = client.reader.readLine();
-          results.put(client.name, line);
-        } catch (IOException ioe) {
-          throw new RuntimeException(ioe);
-        }
+        results.put(client.getName(), client.differentialFuzz(eofUnderTestHexString));
       }
       boolean mismatch = false;
       boolean besuValid = false;
@@ -230,7 +209,6 @@ public class FuzzEOFContainer implements Runnable {
         EOFLayout layout = EOFLayout.parseEOF(eofUnderTest);
         if (layout.isValid()) {
           besuReason = "Besu Parsing Error";
-          System.out.println(layout.isValid());
           System.out.println(layout.version());
           System.out.println(layout.invalidReason());
           System.out.println(code.getEofVersion());
