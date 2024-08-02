@@ -60,7 +60,6 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
         case INVALID_ACCOUNT_PARAMS:
         case INVALID_ADDRESS_HASH_PARAMS:
         case INVALID_ADDRESS_PARAMS:
-        case INVALID_AUTH_PARAMS:
         case INVALID_BLOB_COUNT:
         case INVALID_BLOB_GAS_USED_PARAMS:
         case INVALID_BLOCK_PARAMS:
@@ -104,6 +103,7 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
         case INVALID_PRIVACY_GROUP_PARAMS:
         case INVALID_PRIVATE_FROM_PARAMS:
         case INVALID_PRIVATE_FOR_PARAMS:
+        case INVALID_PROPOSAL_PARAMS:
         case INVALID_REMOTE_CAPABILITIES_PARAMS:
         case INVALID_REWARD_PERCENTILES_PARAMS:
         case INVALID_SEALER_ID_PARAMS:
