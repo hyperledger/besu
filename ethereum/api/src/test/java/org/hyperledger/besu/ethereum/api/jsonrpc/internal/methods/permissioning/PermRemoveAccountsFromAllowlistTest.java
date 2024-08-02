@@ -126,7 +126,7 @@ public class PermRemoveAccountsFromAllowlistTest {
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid accounts list parameter");
+        .hasMessage("Invalid accounts list parameter (index 0)");
   }
 
   private JsonRpcRequestContext request(final List<String> accounts) {
