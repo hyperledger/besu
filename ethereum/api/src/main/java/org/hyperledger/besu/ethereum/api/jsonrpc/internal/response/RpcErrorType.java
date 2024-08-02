@@ -31,7 +31,6 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_ACCOUNT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid account params"),
   INVALID_ADDRESS_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid address hash params"),
   INVALID_ADDRESS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid address params"),
-  INVALID_AUTH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid auth params"),
   INVALID_BLOB_COUNT(
       INVALID_PARAMS_ERROR_CODE,
       "Invalid blob count (blob transactions must have at least one blob)"),
@@ -89,6 +88,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_PRIVACY_GROUP_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid privacy group params"),
   INVALID_PRIVATE_FROM_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid private from params"),
   INVALID_PRIVATE_FOR_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid private for params"),
+  INVALID_PROPOSAL_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid proposal params"),
   INVALID_REMOTE_CAPABILITIES_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid remote capabilities params"),
   INVALID_REWARD_PERCENTILES_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid reward percentiles params"),
