@@ -522,7 +522,7 @@ class CodeV1Test {
             0,
             List.of(List.of("50 00", 0, 0x80, 1))),
         Arguments.of(
-            "double jumpi",
+            "double rjumpi",
             "Operation 0xF3 requires stack of 2 but may only have 1 items",
             0,
             List.of(List.of("5f 5f e10005 5f 5f e10000 f3", 0, 0x80, 1))));
