@@ -515,13 +515,13 @@ public class CodeV1Validation implements EOFValidator {
             } else {
               if (stack_min[targetPC] != currentMin) {
                 return format(
-                    "Stack minimum violation on backwards jump from %d to %d, %d != %d",
-                    currentPC, targetPC, stack_min[currentPC], currentMax);
+                    "Stack minimum violation on backwards RJUMP from %d to %d, %d != %d",
+                    currentPC, targetPC, stack_min[targetPC], currentMin);
               }
               if (stack_max[targetPC] != currentMax) {
                 return format(
-                    "Stack maximum violation on backwards jump from %d to %d, %d != %d",
-                    currentPC, targetPC, stack_max[currentPC], currentMax);
+                    "Stack maximum violation on backwards RJUMP from %d to %d, %d != %d",
+                    currentPC, targetPC, stack_max[targetPC], currentMax);
               }
             }
 
@@ -542,13 +542,13 @@ public class CodeV1Validation implements EOFValidator {
             } else {
               if (stack_min[targetPCi] != currentMin) {
                 return format(
-                    "Stack minimum violation on backwards jump from %d to %d, %d != %d",
-                    currentPC, targetPCi, stack_min[currentPC], currentMin);
+                    "Stack minimum violation on backwards RJUMPI from %d to %d, %d != %d",
+                    currentPC, targetPCi, stack_min[targetPCi], currentMin);
               }
               if (stack_max[targetPCi] != currentMax) {
                 return format(
-                    "Stack maximum violation on backwards jump from %d to %d, %d != %d",
-                    currentPC, targetPCi, stack_max[currentPC], currentMax);
+                    " 2 Stack maximum violation on backwards RJUMPI from %d to %d, %d != %d",
+                    currentPC, targetPCi, stack_max[targetPCi], currentMax);
               }
             }
             break;
@@ -568,13 +568,13 @@ public class CodeV1Validation implements EOFValidator {
               } else {
                 if (stack_min[targetPCv] != currentMin) {
                   return format(
-                      "Stack minimum violation on backwards jump from %d to %d, %d != %d",
-                      currentPC, targetPCv, stack_min[currentPC], currentMin);
+                      "Stack minimum violation on backwards RJUMPV from %d to %d, %d != %d",
+                      currentPC, targetPCv, stack_min[targetPCv], currentMin);
                 }
                 if (stack_max[targetPCv] != currentMax) {
                   return format(
-                      "Stack maximum violation on backwards jump from %d to %d, %d != %d",
-                      currentPC, targetPCv, stack_max[currentPC], currentMax);
+                      "Stack maximum violation on backwards RJUMPV from %d to %d, %d != %d",
+                      currentPC, targetPCv, stack_max[targetPCv], currentMax);
                 }
               }
             }

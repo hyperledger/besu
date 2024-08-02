@@ -189,6 +189,17 @@ public class FuzzEOFContainer implements Runnable {
       externalClients.add(new StreamingClient("evm1", "evmone-eofparse"));
       // geth build bin must be in the path
       externalClients.add(new StreamingClient("geth", "eofdump", "eofparser"));
+      // revm target/release must be in the path
+      externalClients.add(new StreamingClient("revm", "revme", "bytecode"));
+      // externalClients.add(
+      //    new SingleQueryClient(
+      //        "revm",
+      //        "Validation:\\s+Ok\\(\\s*\\((\\w*)",
+      //        1,
+      //        "(Validation:\\s*Err\\(\\s*\\w+\\(\\s*|Decoding Error: )(\\w*)",
+      //        2,
+      //        "revme",
+      //        "bytecode"));
     }
 
     @Override
@@ -197,10 +208,14 @@ public class FuzzEOFContainer implements Runnable {
       String eofUnderTestHexString = eofUnderTest.toHexString();
       Code code = evm.getCodeUncached(eofUnderTest);
       Map<String, String> results = new HashMap<>();
-      for (var client : externalClients) {
-        results.put(client.getName(), client.differentialFuzz(eofUnderTestHexString));
-      }
       boolean mismatch = false;
+      for (var client : externalClients) {
+        String value = client.differentialFuzz(eofUnderTestHexString);
+        results.put(client.getName(), value);
+        if (value.startsWith("fail: ")) {
+          mismatch = true; // if an external client fails, always report it as an error
+        }
+      }
       boolean besuValid = false;
       String besuReason;
       if (!code.isValid()) {

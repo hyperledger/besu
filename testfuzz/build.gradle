@@ -48,7 +48,7 @@ tasks.register("fuzzeof", JavaExec) {
   inputs.dir(srcFiles)
   outputs.dir(corpusPath)
   dependsOn(testClasses)
-  mainClass = 'org.hyperledger.besu.evmtool.fuzz.FuzzEOFContainer'
+  mainClass = 'org.hyperledger.besu.testfuzz.FuzzEOFContainer'
   classpath = sourceSets.test.runtimeClasspath
   args = [
     corpusPath,
