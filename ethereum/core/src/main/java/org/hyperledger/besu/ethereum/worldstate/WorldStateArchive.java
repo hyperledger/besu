@@ -36,6 +36,13 @@ public interface WorldStateArchive extends Closeable {
 
   Optional<MutableWorldState> getMutable(BlockHeader blockHeader, boolean isPersistingState);
 
+  /**
+   * default implementation of this method that is not timestamp/fork aware
+   */
+  default Optional<MutableWorldState> getMutable(BlockHeader blockHeader, boolean isPersistingState, long timestamp) {
+    return getMutable(blockHeader, isPersistingState);
+  }
+
   Optional<MutableWorldState> getMutable(Hash rootHash, Hash blockHash);
 
   MutableWorldState getMutable();

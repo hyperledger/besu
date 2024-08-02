@@ -17,28 +17,23 @@ import org.slf4j.LoggerFactory;
 
 public class VerkleTransitionWorldStateKeyValueStorage
     implements WorldStateKeyValueStorage,
-        VerkleTransitionContext.VerkleTransitionSubscriber,
         AutoCloseable {
   private static final Logger LOG =
       LoggerFactory.getLogger(VerkleTransitionWorldStateKeyValueStorage.class);
 
   final BonsaiWorldStateKeyValueStorage bonsaiKeyValueStorage;
   final VerkleWorldStateKeyValueStorage verkleKeyValueStorage;
-  final AtomicReference<DiffBasedWorldStateKeyValueStorage> activeWorldStateStorage;
-  final VerkleTransitionContext transitionContext;
-  final Long subscriberId;
+  final long blockTimestamp;
 
   public VerkleTransitionWorldStateKeyValueStorage(
       final StorageProvider provider,
+      final long blockTimestamp,
       final MetricsSystem metricsSystem,
       final DataStorageConfiguration dataStorageConfiguration) {
     this.bonsaiKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(provider, metricsSystem, dataStorageConfiguration);
     this.verkleKeyValueStorage = new VerkleWorldStateKeyValueStorage(provider, metricsSystem);
-    this.transitionContext = dataStorageConfiguration.getVerkleTransitionContext().orElseThrow();
-    // initialize with bonsai, rely on subscriber to update this:
-    this.activeWorldStateStorage = new AtomicReference<>(bonsaiKeyValueStorage);
-    this.subscriberId = transitionContext.subscribe(this);
+    this.blockTimestamp = blockTimestamp;
   }
 
   @Override
@@ -56,42 +51,13 @@ public class VerkleTransitionWorldStateKeyValueStorage
 
   @Override
   public Updater updater() {
-    if (transitionContext.isBeforeTransition()) {
-      // pre-transition send bonsai
-      return bonsaiKeyValueStorage.updater();
-    } else {
-      // post transition send verkle
-      return verkleKeyValueStorage.updater();
-    }
+    // if we are in transition, we should only use the verkle updater, merkle trie should be frozen
+    return verkleKeyValueStorage.updater();
   }
 
   @Override
   public void clear() {
     bonsaiKeyValueStorage.clear();
     verkleKeyValueStorage.clear();
-  }
-
-  /** On transition started, switch active storage to verkle. */
-  @Override
-  public void onTransitionStarted() {
-    activeWorldStateStorage.set(verkleKeyValueStorage);
-  }
-
-  /** On transition reverted, revert to bonsai active storage, and truncate verkle storage. */
-  @Override
-  public void onTransitionReverted() {
-    activeWorldStateStorage.set(bonsaiKeyValueStorage);
-    // truncate verkle trie if we are transitioning back (due to a reorg perhaps)
-    verkleKeyValueStorage.clear();
-    verkleKeyValueStorage.clearTrieLog();
-    LOG.info("Truncated verkle trie on transition revert");
-  }
-
-  /** Truncate bonsai trie on transition finalized. */
-  @Override
-  public void onTransitionFinalized() {
-    bonsaiKeyValueStorage.clear();
-    bonsaiKeyValueStorage.clearTrieLog();
-    LOG.info("Truncated bonsai trie on transition complete");
   }
 }

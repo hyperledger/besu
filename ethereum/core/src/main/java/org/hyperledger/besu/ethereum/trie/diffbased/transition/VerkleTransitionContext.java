@@ -7,12 +7,12 @@ import static org.hyperledger.besu.ethereum.trie.diffbased.transition.VerkleTran
 import org.hyperledger.besu.ethereum.trie.diffbased.transition.storage.VerkleTransitionWorldStateKeyValueStorage;
 import org.hyperledger.besu.util.Subscribers;
 
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-/** TODO: this should be a singleton managed by dagger */
 public class VerkleTransitionContext {
   enum TransitionStatus {
     PRE_TRANSITION,
@@ -26,6 +26,23 @@ public class VerkleTransitionContext {
 
   // start in PRE_TRANSITION, rely on startup checks to correctly set the current state
   final AtomicReference<TransitionStatus> transitionStatus = new AtomicReference<>(PRE_TRANSITION);
+  final AtomicLong latestTimestamp = new AtomicLong(System.currentTimeMillis());
+
+
+
+// TODO: consider construction when implementing verkle batch conversions
+
+//  final long transitionStartTime;
+//
+//  private static AtomicReference<VerkleTransitionContext> singleton = new AtomicReference<>();
+//
+//  public synchronized static VerkleTransitionContext {
+//
+//  }
+//
+//  private VerkleTransitionContext(long transitionStartTime) {
+//    this.transitionStartTime = transitionStartTime;
+//  }
 
   public long subscribe(VerkleTransitionSubscriber subscriber) {
     return subscribers.subscribe(subscriber);
@@ -43,9 +60,8 @@ public class VerkleTransitionContext {
   public boolean isFinalized() {
     return transitionStatus.get() == FINALIZED;
   }
-  ;
 
-  public synchronized boolean startTransition() {
+  public boolean  markTransition(long blockTimestamp) {
     if (transitionStatus.get() == PRE_TRANSITION) {
       transitionStatus.set(STARTED);
       subscribers.forEach(VerkleTransitionSubscriber::onTransitionStarted);
