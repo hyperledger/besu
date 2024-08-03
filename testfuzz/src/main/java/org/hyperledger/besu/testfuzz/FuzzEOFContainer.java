@@ -32,7 +32,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -185,12 +185,15 @@ public class FuzzEOFContainer implements Runnable {
     EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
 
     public EOFFuzz() throws IOException {
-      // evm1 build bin must be in the path
-      externalClients.add(new StreamingClient("evm1", "evmone-eofparse"));
       // geth build bin must be in the path
-      externalClients.add(new StreamingClient("geth", "eofdump", "eofparser"));
+      //      externalClients.add(new StreamingClient("geth", "eofdump", "eofparser"));
       // revm target/release must be in the path
       externalClients.add(new StreamingClient("revm", "revme", "bytecode"));
+      externalClients.add(
+          new StreamingClient(
+              "etjs",
+              "/opt/homebrew/bin/tsx",
+              "../../../ethereumjs/ethereumjs-monorepo/packages/evm/scripts/eofContainerValidator.ts"));
       // externalClients.add(
       //    new SingleQueryClient(
       //        "revm",
@@ -200,6 +203,8 @@ public class FuzzEOFContainer implements Runnable {
       //        2,
       //        "revme",
       //        "bytecode"));
+      // evm1 build bin must be in the path
+      externalClients.add(new StreamingClient("evm1", "evmone-eofparse"));
     }
 
     @Override
@@ -207,7 +212,7 @@ public class FuzzEOFContainer implements Runnable {
       Bytes eofUnderTest = Bytes.wrap(bytes);
       String eofUnderTestHexString = eofUnderTest.toHexString();
       Code code = evm.getCodeUncached(eofUnderTest);
-      Map<String, String> results = new HashMap<>();
+      Map<String, String> results = new LinkedHashMap<>();
       boolean mismatch = false;
       for (var client : externalClients) {
         String value = client.differentialFuzz(eofUnderTestHexString);

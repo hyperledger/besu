@@ -85,7 +85,7 @@ public class Fuzzer {
     long endTime = System.currentTimeMillis();
     long execs_per_second = -1;
     if ((endTime - this.lastSampleTime) != 0) {
-      execs_per_second = (this.executionsInSample / (endTime - this.lastSampleTime)) * 1000;
+      execs_per_second = (this.executionsInSample * 1000 / (endTime - this.lastSampleTime));
     }
     this.lastSampleTime = endTime;
     this.executionsInSample = 0;
