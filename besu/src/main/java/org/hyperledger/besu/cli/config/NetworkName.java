@@ -31,6 +31,9 @@ public enum NetworkName {
   /** LUKSO mainnet network name. */
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
 
+  /** EPHEMERY network name. */
+  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135)),
+
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
   /** Future EIPs network name. */
