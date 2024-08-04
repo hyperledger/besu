@@ -25,6 +25,9 @@ public class EstimateGasOperationTracer implements OperationTracer {
 
   private long sStoreStipendNeeded = 0L;
 
+  /** Default constructor. */
+  public EstimateGasOperationTracer() {}
+
   @Override
   public void tracePostExecution(final MessageFrame frame, final OperationResult operationResult) {
     if (frame.getCurrentOperation() instanceof SStoreOperation sStoreOperation

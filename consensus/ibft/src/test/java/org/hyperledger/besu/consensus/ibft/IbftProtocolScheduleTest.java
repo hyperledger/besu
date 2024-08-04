@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -45,6 +45,7 @@ import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 import java.util.Collection;
@@ -103,7 +104,9 @@ public class IbftProtocolScheduleTest {
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
         MiningParameters.MINING_DISABLED,
-        new BadBlockManager());
+        new BadBlockManager(),
+        false,
+        new NoOpMetricsSystem());
   }
 
   private boolean validateHeader(

@@ -16,12 +16,26 @@ package org.hyperledger.besu.ethereum.api.graphql.internal.response;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+/**
+ * Represents a GraphQL error response. This class extends the GraphQLResponse class and overrides
+ * the getType method to return ERROR.
+ */
 public class GraphQLErrorResponse extends GraphQLResponse {
 
+  /**
+   * Constructs a new GraphQLErrorResponse with the specified errors.
+   *
+   * @param errors the errors to be included in the response.
+   */
   public GraphQLErrorResponse(final Object errors) {
     super(errors);
   }
 
+  /**
+   * Returns the type of this GraphQL response.
+   *
+   * @return GraphQLResponseType.ERROR, indicating that this is an error response.
+   */
   @Override
   @JsonIgnore
   public GraphQLResponseType getType() {

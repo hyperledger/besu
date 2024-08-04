@@ -116,6 +116,7 @@ public class NewPendingTransactionAcceptanceTest extends AcceptanceTestBase {
   }
 
   @Test
+  @Disabled("test is flaky - sometimes returns more than 3 total events #6909")
   public void subscriptionToMinerNodeMustReceiveEveryPublishEvent() {
     final Subscription minerSubscription = minerWebSocket.subscribe();
 

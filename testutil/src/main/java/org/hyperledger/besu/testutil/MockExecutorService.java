@@ -36,6 +36,14 @@ public class MockExecutorService implements ExecutorService {
 
   private final List<ExecutorTask<?>> tasks = new ArrayList<>();
 
+  /** Default constructor */
+  public MockExecutorService() {}
+
+  /**
+   * Gets tasks.
+   *
+   * @return the tasks
+   */
   /**
    * Gets futures.
    *

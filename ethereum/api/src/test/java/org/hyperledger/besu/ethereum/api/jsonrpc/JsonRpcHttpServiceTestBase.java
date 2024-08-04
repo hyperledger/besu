@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.ethereum.api.jsonrpc;
 
 import static org.mockito.Mockito.mock;
@@ -119,7 +118,9 @@ public class JsonRpcHttpServiceTestBase {
                     new StubGenesisConfigOptions().constantinopleBlock(0).chainId(CHAIN_ID),
                     EvmConfiguration.DEFAULT,
                     MiningParameters.MINING_DISABLED,
-                    new BadBlockManager()),
+                    new BadBlockManager(),
+                    false,
+                    new NoOpMetricsSystem()),
                 mock(ProtocolContext.class),
                 mock(FilterManager.class),
                 mock(TransactionPool.class),

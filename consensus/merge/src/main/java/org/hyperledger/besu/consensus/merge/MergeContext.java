@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -18,7 +18,6 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
-import org.hyperledger.besu.ethereum.core.BlockWithReceipts;
 import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 
@@ -167,7 +166,7 @@ public interface MergeContext extends ConsensusContext {
    * @param payloadId the payload identifier
    * @return the optional block with receipts
    */
-  Optional<BlockWithReceipts> retrieveBlockById(final PayloadIdentifier payloadId);
+  Optional<PayloadWrapper> retrievePayloadById(final PayloadIdentifier payloadId);
 
   /**
    * Is configured for a post-merge from genesis.

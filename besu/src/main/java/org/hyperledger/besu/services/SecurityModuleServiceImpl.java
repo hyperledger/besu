@@ -21,9 +21,15 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Supplier;
+import javax.inject.Inject;
 
 /** The Security module service implementation. */
 public class SecurityModuleServiceImpl implements SecurityModuleService {
+
+  /** Default Constructor. */
+  @Inject
+  public SecurityModuleServiceImpl() {}
+
   private final Map<String, Supplier<SecurityModule>> securityModuleSuppliers =
       new ConcurrentHashMap<>();
 

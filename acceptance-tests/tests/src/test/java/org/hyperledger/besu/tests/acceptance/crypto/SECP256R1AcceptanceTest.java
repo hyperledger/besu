@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.tests.acceptance.crypto;
 
@@ -67,6 +66,12 @@ public class SECP256R1AcceptanceTest extends AcceptanceTestBase {
         besu.createNodeWithNonDefaultSignatureAlgorithm(
             "otherNode", GENESIS_FILE, otherNodeKeyPair, List.of(minerNode));
     noDiscoveryCluster.addNode(otherNode);
+
+    minerNode.verify(net.awaitPeerCount(1));
+    otherNode.verify(net.awaitPeerCount(1));
+
+    final var minerChainHead = minerNode.execute(ethTransactions.block());
+    otherNode.verify(blockchain.minimumHeight(minerChainHead.getNumber().longValue()));
   }
 
   @Test

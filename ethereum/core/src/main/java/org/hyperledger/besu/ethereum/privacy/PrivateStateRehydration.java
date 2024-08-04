@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivacyGroupHeadBlockMap;
 import org.hyperledger.besu.ethereum.privacy.storage.PrivateStateStorage;
+import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.util.LinkedHashMap;
@@ -166,6 +167,7 @@ public class PrivateStateRehydration {
           privateStateStorage,
           privateStateRootResolver,
           block,
+          new CachingBlockHashLookup(blockHeader, blockchain),
           pmtHashToPrivateTransactionMap,
           block.getBody().getOmmers());
 

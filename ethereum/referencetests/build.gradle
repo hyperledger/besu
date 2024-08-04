@@ -34,6 +34,7 @@ def blockchainReferenceTests = tasks.register("blockchainReferenceTests")  {
     "BlockchainTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/blockchain",
     "BlockchainReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.blockchain",
     ("BlockchainTests/InvalidBlocks/bcExpectSection") // exclude test for test filling tool
     )
 }
@@ -50,6 +51,7 @@ def eipBlockchainReferenceTests = tasks.register("eipBlockchainReferenceTests") 
     "EIPTests${File.separatorChar}BlockchainTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
     "EIPBlockchainReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.eip",
     )
 }
 
@@ -65,6 +67,7 @@ def eipStateReferenceTests = tasks.register("eipStateReferenceTests")  {
     "EIPTests${File.separatorChar}StateTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eip",
     "EIPStateReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.eip",
     )
 }
 
@@ -80,13 +83,24 @@ def executionSpecTests = tasks.register("executionSpecTests") {
 
   inputs.files fileTree(referenceTestsPath), fileTree(generatedTestsPath)
   outputs.files generatedTestsPath
+  // generate blockchain_tests:
   generateTestFiles(
-    fileTree(referenceTestsPath + "/fixtures"),
+    fileTree(referenceTestsPath + "/fixtures/blockchain_tests"),
     file("src/reference-test/templates/BlockchainReferenceTest.java.template"),
     "fixtures",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
-    "ExecutionSpecTest",
-    ("fixtures/example/example") // exclude test for test filling tool
+    "ExecutionSpecBlockchainTest",
+    "org.hyperledger.besu.ethereum.vm.executionspec",
+    )
+
+  // generate state_tests:
+  generateTestFiles(
+    fileTree(referenceTestsPath + "/fixtures/state_tests"),
+    file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
+    "fixtures",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/executionspec",
+    "ExecutionSpecStateTest",
+    "org.hyperledger.besu.ethereum.vm.executionspec",
     )
 }
 
@@ -101,7 +115,8 @@ def generalstateReferenceTests = tasks.register("generalstateReferenceTests")  {
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
     "GeneralStateTests",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
-    "GeneralStateReferenceTest"
+    "GeneralStateReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.generalstate",
     )
 }
 
@@ -116,7 +131,24 @@ def generalstateRegressionReferenceTests = tasks.register("generalstateRegressio
     file("src/reference-test/templates/GeneralStateReferenceTest.java.template"),
     "regressions",
     "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/generalstate",
-    "GeneralStateRegressionReferenceTest"
+    "GeneralStateRegressionReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.generalstate"
+    )
+}
+
+def eofReferenceTests = tasks.register("eofReferenceTests") {
+  final referenceTestsPath = "src/reference-test/external-resources/EOFTests"
+  final generatedTestsPath = "$buildDir/generated/sources/reference-test/$name/java"
+  inputs.files fileTree(referenceTestsPath),
+    fileTree(generatedTestsPath)
+  outputs.files generatedTestsPath
+  generateTestFiles(
+    fileTree(referenceTestsPath),
+    file("src/reference-test/templates/EOFReferenceTest.java.template"),
+    "EOFTests",
+    "$generatedTestsPath/org/hyperledger/besu/ethereum/vm/eof",
+    "EOFReferenceTest",
+    "org.hyperledger.besu.ethereum.vm.eof"
     )
 }
 
@@ -131,7 +163,8 @@ sourceSets {
         eipStateReferenceTests,
         executionSpecTests,
         generalstateReferenceTests,
-        generalstateRegressionReferenceTests
+        generalstateRegressionReferenceTests,
+        eofReferenceTests
     }
     resources {
       srcDirs 'src/reference-test/resources',
@@ -161,6 +194,7 @@ dependencies {
   referenceTestImplementation project(path: ':config')
   referenceTestImplementation project(path: ':datatypes')
   referenceTestImplementation project(path: ':ethereum:core')
+  referenceTestImplementation project(path: ':metrics:core')
   referenceTestImplementation project(path: ':ethereum:core', configuration: 'testSupportArtifacts')
   referenceTestImplementation project(path: ':ethereum:rlp')
   referenceTestImplementation project(path: ':ethereum:rlp', configuration: 'testSupportArtifacts')
@@ -170,7 +204,7 @@ dependencies {
   referenceTestImplementation project(path: ':testutil')
   referenceTestImplementation project(path: ':util')
   // the following will be resolved via custom ivy repository declared in root build.gradle
-  referenceTestImplementation 'ethereum:execution-spec-tests:0.2.5:fixtures@tar.gz'
+  referenceTestImplementation 'ethereum:execution-spec-tests:3.0.0:fixtures_stable@tar.gz'
   referenceTestImplementation 'com.fasterxml.jackson.core:jackson-databind'
   referenceTestImplementation 'com.google.guava:guava'
   referenceTestImplementation 'io.tmio:tuweni-bytes'
@@ -198,7 +232,7 @@ tasks.register('validateReferenceTestSubmodule') {
   description = "Checks that the reference tests submodule is not accidentally changed"
   doLast {
     def result = new ByteArrayOutputStream()
-    def expectedHash = '52ddcbcef0d58ec7de6b768b564725391a30b934'
+    def expectedHash = 'faf33b471465d3c6cdc3d04fbd690895f78d33f2'
     def submodulePath = java.nio.file.Path.of("${rootProject.projectDir}", "ethereum/referencetests/src/reference-test/external-resources").toAbsolutePath()
     try {
       exec {
@@ -234,32 +268,36 @@ following commands:
 }
 processResources.dependsOn('validateReferenceTestSubmodule')
 
-def generateTestFiles(FileTree jsonPath, File templateFile, String pathstrip, String destination, String namePrefix, String ... excludedPath) {
+def generateTestFiles(
+  FileTree jsonPath,
+  File templateFile,
+  String pathstrip,
+  String destination,
+  String namePrefix,
+  String packageString,
+  String ... excludedPath) {
   mkdir(destination)
   def referenceTestTemplate = templateFile.text
 
-  // This is how many json files to include in each test file
-  def fileSets = jsonPath.getFiles().collate(5)
-
-  fileSets.eachWithIndex { fileSet, idx ->
-    def paths = []
-    fileSet.each { testJsonFile ->
-      def parentFile = testJsonFile.getParentFile()
-      def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
-      if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
-        def pathFile = testJsonFile.getPath()
-        paths << pathFile.substring(pathFile.indexOf(pathstrip))
-      }
+  def paths = []
+  jsonPath.getFiles().forEach { testJsonFile ->
+    def parentFile = testJsonFile.getParentFile()
+    def parentPathFile = parentFile.getPath().substring(parentFile.getPath().indexOf(pathstrip))
+    if (!testJsonFile.getName().toString().startsWith(".") && !excludedPath.contains(parentPathFile)) {
+      def pathFile = testJsonFile.getPath()
+      paths << pathFile.substring(pathFile.indexOf(pathstrip))
     }
+  }
 
+  paths.collate(5).eachWithIndex { tests, idx ->
     def testFile = file(destination + "/" + namePrefix + "_" + idx + ".java")
 
-
-    def allPaths = '"' + paths.join('", "') + '"'
+    def allPaths = '"' + tests.join('",\n        "') + '"'
 
     def testFileContents = referenceTestTemplate
       .replaceAll("%%TESTS_FILE%%", allPaths)
       .replaceAll("%%TESTS_NAME%%", namePrefix + "_" + idx)
+      .replaceAll("%%PACKAGE_NAME%%", packageString)
     testFile.newWriter().withWriter { w -> w << testFileContents }
   }
 }

@@ -31,11 +31,14 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.util.Optional;
 
 /** Defines the protocol behaviours for a blockchain using a QBFT consensus mechanism. */
 public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder {
+  /** Default constructor */
+  QbftProtocolScheduleBuilder() {}
 
   /**
    * Create protocol schedule.
@@ -48,6 +51,9 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param evmConfiguration the evm configuration
    * @param miningParameters The mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -58,7 +64,9 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     return new QbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
@@ -68,7 +76,9 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             bftExtraDataCodec,
             evmConfiguration,
             miningParameters,
-            badBlockManager);
+            badBlockManager,
+            isParallelTxProcessingEnabled,
+            metricsSystem);
   }
 
   /**
@@ -80,6 +90,9 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param evmConfiguration the evm configuration
    * @param miningParameters The mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -88,7 +101,9 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         qbftForksSchedule,
@@ -97,7 +112,9 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         bftExtraDataCodec,
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   /**
@@ -109,6 +126,9 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param bftExtraDataCodec the bft extra data codec
    * @param miningParameters The mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
+   * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
+   * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
+   *     calls
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -117,7 +137,9 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final MiningParameters miningParameters,
-      final BadBlockManager badBlockManager) {
+      final BadBlockManager badBlockManager,
+      final boolean isParallelTxProcessingEnabled,
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         qbftForksSchedule,
@@ -126,7 +148,9 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   @Override

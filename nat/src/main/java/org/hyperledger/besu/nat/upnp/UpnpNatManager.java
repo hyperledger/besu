@@ -101,7 +101,10 @@ public class UpnpNatManager extends AbstractNatManager {
         new BesuUpnpRegistryListener() {
           @Override
           public void remoteDeviceAdded(final Registry registry, final RemoteDevice device) {
-            LOG.debug("UPnP Device discovered: " + device.getDetails().getFriendlyName());
+            LOG.atDebug()
+                .setMessage("UPnP Device discovered: {}")
+                .addArgument(device.getDetails().getFriendlyName())
+                .log();
             inspectDeviceRecursive(device, recognizedServices.keySet());
           }
         };
@@ -466,7 +469,7 @@ public class UpnpNatManager extends AbstractNatManager {
       futures.add(future);
     }
 
-    // return a future that completes succeessfully only when each of our port delete requests
+    // return a future that completes successfully only when each of our port delete requests
     // complete
     return CompletableFuture.allOf(futures.toArray(new CompletableFuture<?>[0]));
   }

@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.BlockBodyValidator;
 import org.hyperledger.besu.ethereum.mainnet.BlockHeaderValidator;
@@ -35,14 +36,36 @@ import java.util.Optional;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+/**
+ * The MainnetBlockValidator class implements the BlockValidator interface for the Mainnet Ethereum
+ * network. It validates and processes blocks according to the rules of the Mainnet Ethereum
+ * network.
+ */
 public class MainnetBlockValidator implements BlockValidator {
 
   private static final Logger LOG = LoggerFactory.getLogger(MainnetBlockValidator.class);
+
+  /** The BlockHeaderValidator used to validate block headers. */
   protected final BlockHeaderValidator blockHeaderValidator;
+
+  /** The BlockBodyValidator used to validate block bodies. */
   protected final BlockBodyValidator blockBodyValidator;
+
+  /** The BlockProcessor used to process blocks. */
   protected final BlockProcessor blockProcessor;
+
+  /** The BadBlockManager used to manage bad blocks. */
   protected final BadBlockManager badBlockManager;
 
+  /**
+   * Constructs a new MainnetBlockValidator with the given BlockHeaderValidator, BlockBodyValidator,
+   * BlockProcessor, and BadBlockManager.
+   *
+   * @param blockHeaderValidator the BlockHeaderValidator used to validate block headers
+   * @param blockBodyValidator the BlockBodyValidator used to validate block bodies
+   * @param blockProcessor the BlockProcessor used to process blocks
+   * @param badBlockManager the BadBlockManager used to manage bad blocks
+   */
   public MainnetBlockValidator(
       final BlockHeaderValidator blockHeaderValidator,
       final BlockBodyValidator blockBodyValidator,
@@ -144,15 +167,17 @@ public class MainnetBlockValidator implements BlockValidator {
       } else {
         List<TransactionReceipt> receipts =
             result.getYield().map(BlockProcessingOutputs::getReceipts).orElse(new ArrayList<>());
+        Optional<List<Request>> maybeRequests =
+            result.getYield().flatMap(BlockProcessingOutputs::getRequests);
         if (!blockBodyValidator.validateBody(
-            context, block, receipts, worldState.rootHash(), ommerValidationMode)) {
+            context, block, receipts, maybeRequests, worldState.rootHash(), ommerValidationMode)) {
           result = new BlockProcessingResult("failed to validate output of imported block");
           handleFailedBlockProcessing(block, result, shouldRecordBadBlock);
           return result;
         }
 
         return new BlockProcessingResult(
-            Optional.of(new BlockProcessingOutputs(worldState, receipts)));
+            Optional.of(new BlockProcessingOutputs(worldState, receipts, maybeRequests)));
       }
     } catch (MerkleTrieException ex) {
       context
@@ -226,6 +251,7 @@ public class MainnetBlockValidator implements BlockValidator {
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
+      final Optional<List<Request>> requests,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode) {
     final BlockHeader header = block.getHeader();
@@ -235,7 +261,8 @@ public class MainnetBlockValidator implements BlockValidator {
       return false;
     }
 
-    if (!blockBodyValidator.validateBodyLight(context, block, receipts, ommerValidationMode)) {
+    if (!blockBodyValidator.validateBodyLight(
+        context, block, receipts, requests, ommerValidationMode)) {
       badBlockManager.addBadBlock(
           block, BadBlockCause.fromValidationFailure("Failed body validation (light)"));
       return false;

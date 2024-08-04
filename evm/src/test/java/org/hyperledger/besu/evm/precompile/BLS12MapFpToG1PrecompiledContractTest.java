@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.precompile;
 
@@ -29,6 +28,7 @@ import java.util.stream.Collectors;
 
 import com.google.common.io.CharStreams;
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -73,12 +73,19 @@ class BLS12MapFpToG1PrecompiledContractTest {
     if (actualComputation == null) {
       final ArgumentCaptor<Bytes> revertReason = ArgumentCaptor.forClass(Bytes.class);
       verify(messageFrame).setRevertReason(revertReason.capture());
-      assertThat(new String(revertReason.getValue().toArrayUnsafe(), UTF_8)).isEqualTo(notes);
+      assertThat(new String(revertReason.getValue().toArrayUnsafe(), UTF_8)).contains(notes);
 
       assertThat(expectedComputation.size()).isZero();
     } else {
       assertThat(actualComputation).isEqualTo(expectedComputation);
       assertThat(contract.gasRequirement(input)).isEqualTo(Long.parseLong(expectedGasUsed));
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

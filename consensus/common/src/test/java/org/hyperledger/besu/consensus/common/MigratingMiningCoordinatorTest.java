@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -30,7 +30,6 @@ import org.hyperledger.besu.consensus.common.bft.blockcreation.BftBlockCreatorFa
 import org.hyperledger.besu.consensus.common.bft.blockcreation.BftMiningCoordinator;
 import org.hyperledger.besu.consensus.common.bft.statemachine.BftEventHandler;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
-import org.hyperledger.besu.ethereum.blockcreation.NoopMiningCoordinator;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
 import org.hyperledger.besu.ethereum.core.Block;
@@ -40,7 +39,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import java.util.List;
 import java.util.function.Consumer;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -123,7 +121,7 @@ public class MigratingMiningCoordinatorTest {
 
   @Test
   public void onBlockAddedShouldNotDelegateWhenDelegateIsNoop() {
-    NoopMiningCoordinator mockNoopCoordinator = mock(NoopMiningCoordinator.class);
+    MiningCoordinator mockNoopCoordinator = mock(MiningCoordinator.class);
     coordinatorSchedule = createCoordinatorSchedule(mockNoopCoordinator, coordinator2);
     when(blockHeader.getNumber()).thenReturn(GENESIS_BLOCK_NUMBER);
 
@@ -161,11 +159,6 @@ public class MigratingMiningCoordinatorTest {
         MIGRATION_BLOCK_NUMBER,
         coordinator2,
         coordinator1);
-
-    verifyDelegation(
-        c -> c.setExtraData(Bytes.EMPTY), GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);
-    verifyDelegation(
-        c -> c.setExtraData(Bytes.EMPTY), MIGRATION_BLOCK_NUMBER, coordinator2, coordinator1);
 
     verifyDelegation(
         MiningCoordinator::getCoinbase, GENESIS_BLOCK_NUMBER, coordinator1, coordinator2);

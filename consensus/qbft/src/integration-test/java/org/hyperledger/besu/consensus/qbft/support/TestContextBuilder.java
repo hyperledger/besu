@@ -23,6 +23,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import org.hyperledger.besu.config.BftFork;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonQbftConfigOptions;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.config.QbftConfigOptions;
@@ -61,7 +62,6 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffe
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
 import org.hyperledger.besu.consensus.qbft.MutableQbftConfigOptions;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
@@ -115,7 +115,6 @@ import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.Subscribers;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.Clock;
 import java.time.Instant;
@@ -365,8 +364,9 @@ public class TestContextBuilder {
   }
 
   private GenesisState createGenesisBlock(final String genesisFile) throws IOException {
-    final String json = Files.readString(Path.of(genesisFile));
-    return GenesisState.fromJson(json, ProtocolScheduleFixture.MAINNET);
+    return GenesisState.fromConfig(
+        GenesisConfigFile.fromSource(Path.of(genesisFile).toUri().toURL()),
+        ProtocolScheduleFixture.MAINNET);
   }
 
   private static ControllerAndState createControllerAndFinalState(
@@ -437,7 +437,9 @@ public class TestContextBuilder {
             BFT_EXTRA_DATA_ENCODER,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =
@@ -457,7 +459,7 @@ public class TestContextBuilder {
         new ProtocolContext(
             blockChain,
             worldStateArchive,
-            new QbftContext(validatorProvider, epochManager, blockInterface, Optional.empty()),
+            new BftContext(validatorProvider, epochManager, blockInterface),
             new BadBlockManager());
 
     final TransactionPoolConfiguration poolConf =

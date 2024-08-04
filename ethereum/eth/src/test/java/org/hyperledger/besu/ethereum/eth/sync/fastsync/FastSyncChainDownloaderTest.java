@@ -44,6 +44,7 @@ import java.util.concurrent.locks.LockSupport;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -95,7 +96,9 @@ public class FastSyncChainDownloaderTest {
 
   @AfterEach
   public void tearDown() {
-    ethProtocolManager.stop();
+    if (ethProtocolManager != null) {
+      ethProtocolManager.stop();
+    }
   }
 
   private ChainDownloader downloader(
@@ -221,5 +224,12 @@ public class FastSyncChainDownloaderTest {
     assertThat(localBlockchain.getChainHeadBlockNumber()).isEqualTo(pivotBlockNumber);
     assertThat(localBlockchain.getChainHeadHeader())
         .isEqualTo(otherBlockchain.getBlockHeader(pivotBlockNumber).get());
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

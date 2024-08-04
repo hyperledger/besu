@@ -17,9 +17,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -53,7 +55,13 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
   protected String resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
     final String privacyGroupId = request.getRequiredParameter(0, String.class);
-    final Address address = request.getRequiredParameter(1, Address.class);
+    final Address address;
+    try {
+      address = request.getRequiredParameter(1, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter (index 1)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 

@@ -22,7 +22,8 @@
  * transactions that could be selected for a future block proposal, and at the same time, without
  * penalizing legitimate unordered transactions, that are only temporary non-executable.
  *
- * <p>It is disabled by default, to enable use the option {@code Xlayered-tx-pool=true}
+ * <p>It is enabled by default on public networks, to switch to another implementation use the
+ * option {@code tx-pool}
  *
  * <p>The main idea is to organize the txpool in an arbitrary number of layers, where each layer has
  * specific rules and constraints that determine if a transaction belong or not to that layer and
@@ -38,6 +39,14 @@
  * transactions are removed since confirmed in a block, transactions from the next layer are
  * promoted until there is space.
  *
+ * <p>Some layers could make use of the score of a pending transactions, to push back in the rank
+ * those pending transactions that have been penalized.
+ *
+ * <p>Layers are not thread safe, since they are not meant to be accessed directly, and all the
+ * synchronization is managed at the level of {@link
+ * org.hyperledger.besu.ethereum.eth.transactions.layered.LayeredPendingTransactions
+ * LayeredPendingTransactions} class.
+ *
  * <p>The current implementation is based on 3 layers, plus the last one that just drop every
  * transaction when the previous layers are full. The 3 layers are, in order:
  *
@@ -48,20 +57,20 @@
  * </ul>
  *
  * <p>Prioritized: This is where candidate transactions are selected for creating a new block.
- * Transactions ordered by the effective priority fee, and it is limited by size, 2000 by default,
- * to reduce the overhead of the sorting and because that number is enough to fill any block, at the
- * current gas limit. Does not allow nonce gaps, and the first transaction for each sender must be
- * the next one for that sender. Eviction is done removing the transaction with the higher nonce for
- * the sender of the less valuable transaction, to avoid creating nonce gaps, evicted transactions
- * go into the next layer Ready.
+ * Transactions ordered by score and then effective priority fee, and it is limited by size, 2000 by
+ * default, to reduce the overhead of the sorting and because that number is enough to fill any
+ * block, at the current gas limit. Does not allow nonce gaps, and the first transaction for each
+ * sender must be the next one for that sender. Eviction is done removing the transaction with the
+ * higher nonce for the sender of the less score and less effective priority fee transaction, to
+ * avoid creating nonce gaps, evicted transactions go into the next layer Ready.
  *
  * <p>Ready: Similar to the Prioritized, it does not allow nonce gaps, and the first transaction for
  * each sender must be the next one for that sender, but it is limited by space instead of count,
  * thus allowing many more transactions, think about this layer like a buffer for the Prioritized.
  * Since it is meant to keep ten to hundreds of thousand of transactions, it does not have a full
  * ordering, like the previous, but only the first transaction for each sender is ordered using a
- * stable value that is the max fee per gas. Eviction is the same as the Prioritized, and evicted
- * transaction go into the next layer Sparse.
+ * stable value that is score and then max fee per gas. Eviction is the same as the Prioritized, and
+ * evicted transaction go into the next layer Sparse.
  *
  * <p>Sparse: This is the first layer where nonce gaps are allowed and where the first transaction
  * for a sender could not be the next expected one for that sender. The main purpose of this layer

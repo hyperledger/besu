@@ -12,7 +12,6 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.services;
 
 import org.hyperledger.besu.plugin.services.PermissioningService;
@@ -20,6 +19,7 @@ import org.hyperledger.besu.plugin.services.permissioning.NodeConnectionPermissi
 import org.hyperledger.besu.plugin.services.permissioning.NodeMessagePermissioningProvider;
 
 import java.util.List;
+import javax.inject.Inject;
 
 import com.google.common.collect.Lists;
 
@@ -28,6 +28,10 @@ public class PermissioningServiceImpl implements PermissioningService {
 
   private final List<NodeConnectionPermissioningProvider> connectionPermissioningProviders =
       Lists.newArrayList();
+
+  /** Default Constructor. */
+  @Inject
+  public PermissioningServiceImpl() {}
 
   @Override
   public void registerNodePermissioningProvider(

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,6 +19,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -138,7 +139,7 @@ public abstract class AbstractBftBesuControllerBuilderTest {
         .when(synchronizerConfiguration.getBlockPropagationRange())
         .thenReturn(Range.closed(1L, 2L));
 
-    setupBftGenesisConfigOptions();
+    setupBftGenesisConfigFile();
 
     bftBesuControllerBuilder =
         createBftControllerBuilder()
@@ -157,10 +158,11 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             .storageProvider(storageProvider)
             .gasLimitCalculator(gasLimitCalculator)
             .evmConfiguration(EvmConfiguration.DEFAULT)
+            .besuComponent(mock(BesuComponent.class))
             .networkConfiguration(NetworkingConfiguration.create());
   }
 
-  protected abstract void setupBftGenesisConfigOptions() throws JsonProcessingException;
+  protected abstract void setupBftGenesisConfigFile() throws JsonProcessingException;
 
   protected abstract BesuControllerBuilder createBftControllerBuilder();
 
@@ -187,7 +189,6 @@ public abstract class AbstractBftBesuControllerBuilderTest {
             Wei.ZERO,
             Hash.EMPTY,
             0,
-            null,
             null,
             null,
             null,

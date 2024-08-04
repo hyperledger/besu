@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -19,7 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
-import org.hyperledger.besu.ethereum.core.Transaction;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
@@ -43,6 +43,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
   public BaseFeePrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
       final Supplier<BlockHeader> chainHeadHeaderSupplier,
+      final EthScheduler ethScheduler,
       final TransactionsLayer nextLayer,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
@@ -51,14 +52,21 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       final BlobCache blobCache,
       final MiningParameters miningParameters) {
     super(
-        poolConfig, nextLayer, metrics, transactionReplacementTester, blobCache, miningParameters);
+        poolConfig,
+        ethScheduler,
+        nextLayer,
+        metrics,
+        transactionReplacementTester,
+        blobCache,
+        miningParameters);
     this.nextBlockBaseFee =
         Optional.of(calculateNextBlockBaseFee(feeMarket, chainHeadHeaderSupplier.get()));
   }
 
   @Override
   protected int compareByFee(final PendingTransaction pt1, final PendingTransaction pt2) {
-    return Comparator.comparing(PendingTransaction::hasPriority)
+    return Comparator.comparing(PendingTransaction::getScore)
+        .thenComparing(PendingTransaction::hasPriority)
         .thenComparing(
             (PendingTransaction pendingTransaction) ->
                 pendingTransaction.getTransaction().getEffectivePriorityFeePerGas(nextBlockBaseFee))
@@ -187,8 +195,8 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
       return "Basefee Prioritized: Empty";
     }
 
-    final Transaction highest = orderByFee.last().getTransaction();
-    final Transaction lowest = orderByFee.first().getTransaction();
+    final PendingTransaction highest = orderByFee.last();
+    final PendingTransaction lowest = orderByFee.first();
 
     return "Basefee Prioritized: "
         + "count: "
@@ -197,16 +205,26 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
         + spaceUsed
         + ", unique senders: "
         + txsBySender.size()
-        + ", highest priority tx: [max fee: "
-        + highest.getMaxGasPrice().toHumanReadableString()
+        + ", highest priority tx: [score: "
+        + highest.getScore()
+        + ", max fee: "
+        + highest.getTransaction().getMaxGasPrice().toHumanReadableString()
         + ", curr prio fee: "
-        + highest.getEffectivePriorityFeePerGas(nextBlockBaseFee).toHumanReadableString()
+        + highest
+            .getTransaction()
+            .getEffectivePriorityFeePerGas(nextBlockBaseFee)
+            .toHumanReadableString()
         + ", hash: "
         + highest.getHash()
-        + "], lowest priority tx: [max fee: "
-        + lowest.getMaxGasPrice().toHumanReadableString()
+        + "], lowest priority tx: [score: "
+        + lowest.getScore()
+        + ", max fee: "
+        + lowest.getTransaction().getMaxGasPrice().toHumanReadableString()
         + ", curr prio fee: "
-        + lowest.getEffectivePriorityFeePerGas(nextBlockBaseFee).toHumanReadableString()
+        + lowest
+            .getTransaction()
+            .getEffectivePriorityFeePerGas(nextBlockBaseFee)
+            .toHumanReadableString()
         + ", hash: "
         + lowest.getHash()
         + "], next block base fee: "

@@ -21,6 +21,12 @@ import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 
+/**
+ * Implementation of the GraphQLDataFetcherContext interface.
+ *
+ * <p>This class provides access to various components of the system such as the transaction pool,
+ * blockchain queries, mining coordinator, synchronizer, and protocol schedule.
+ */
 public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext {
 
   private final BlockchainQueries blockchainQueries;
@@ -30,6 +36,12 @@ public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext 
   private final TransactionPool transactionPool;
   private final IsAliveHandler isAliveHandler;
 
+  /**
+   * Constructor that takes a GraphQLDataFetcherContext and an IsAliveHandler.
+   *
+   * @param context the GraphQLDataFetcherContext
+   * @param isAliveHandler the IsAliveHandler
+   */
   public GraphQLDataFetcherContextImpl(
       final GraphQLDataFetcherContext context, final IsAliveHandler isAliveHandler) {
     this(
@@ -41,6 +53,16 @@ public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext 
         isAliveHandler);
   }
 
+  /**
+   * Constructor that takes a BlockchainQueries, ProtocolSchedule, TransactionPool,
+   * MiningCoordinator, and Synchronizer.
+   *
+   * @param blockchainQueries the BlockchainQueries
+   * @param protocolSchedule the ProtocolSchedule
+   * @param transactionPool the TransactionPool
+   * @param miningCoordinator the MiningCoordinator
+   * @param synchronizer the Synchronizer
+   */
   public GraphQLDataFetcherContextImpl(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,
@@ -56,6 +78,17 @@ public class GraphQLDataFetcherContextImpl implements GraphQLDataFetcherContext 
         new IsAliveHandler(true));
   }
 
+  /**
+   * Constructor that takes a BlockchainQueries, ProtocolSchedule, TransactionPool,
+   * MiningCoordinator, Synchronizer, and IsAliveHandler.
+   *
+   * @param blockchainQueries the BlockchainQueries
+   * @param protocolSchedule the ProtocolSchedule
+   * @param transactionPool the TransactionPool
+   * @param miningCoordinator the MiningCoordinator
+   * @param synchronizer the Synchronizer
+   * @param isAliveHandler the IsAliveHandler
+   */
   public GraphQLDataFetcherContextImpl(
       final BlockchainQueries blockchainQueries,
       final ProtocolSchedule protocolSchedule,

@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doAnswer;
 import static org.mockito.Mockito.when;
@@ -28,7 +29,6 @@ import org.hyperledger.besu.ethereum.core.feemarket.CoinbaseFeePriceCalculator;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.transaction.TransactionInvalidReason;
 import org.hyperledger.besu.ethereum.trie.MerkleTrieException;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -39,8 +39,10 @@ import org.hyperledger.besu.evm.tracing.OperationTracer;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 
+import java.math.BigInteger;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Stream;
 
@@ -86,7 +88,8 @@ class MainnetTransactionProcessorTest {
         warmCoinbase,
         MAX_STACK_SIZE,
         FeeMarket.legacy(),
-        CoinbaseFeePriceCalculator.frontier());
+        CoinbaseFeePriceCalculator.frontier(),
+        new AuthorityProcessor(Optional.of(BigInteger.ONE)));
   }
 
   @Test
@@ -216,6 +219,7 @@ class MainnetTransactionProcessorTest {
         final Bytes output,
         final List<Log> logs,
         final long gasUsed,
+        final Set<Address> selfDestructs,
         final long timeNs) {
       this.traceEndTxCalled = true;
     }

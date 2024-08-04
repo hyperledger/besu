@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -22,6 +22,9 @@ import java.util.Optional;
  * decoder function.
  */
 public interface RpcMethodError {
+
+  /** The error code for all invalid params */
+  static final int INVALID_PARAMS_ERROR_CODE = -32602;
 
   /**
    * Retrieves the error code associated with the RPC error.

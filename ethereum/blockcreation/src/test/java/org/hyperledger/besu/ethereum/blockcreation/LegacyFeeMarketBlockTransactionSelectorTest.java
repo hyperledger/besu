@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -36,23 +36,19 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
 import java.time.ZoneId;
 import java.util.function.Function;
 
-import org.junit.jupiter.api.Disabled;
-
-@Disabled(
-    "disabled since it's flaky with a timeout see https://github.com/hyperledger/besu/issues/6850")
 public class LegacyFeeMarketBlockTransactionSelectorTest
     extends AbstractBlockTransactionSelectorTest {
 
   @Override
   protected GenesisConfigFile getGenesisConfigFile() {
-    return GenesisConfigFile.genesisFileFromResources(
-        "/block-transaction-selector/gas-price-genesis.json");
+    return GenesisConfigFile.fromResource("/block-transaction-selector/gas-price-genesis.json");
   }
 
   @Override
@@ -65,7 +61,9 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager())
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem())
         .createProtocolSchedule();
   }
 

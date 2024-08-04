@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.evmtool;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -67,12 +65,29 @@ import picocli.CommandLine.Option;
 import picocli.CommandLine.Parameters;
 import picocli.CommandLine.ParentCommand;
 
+/**
+ * This class, StateTestSubCommand, is a command-line interface (CLI) command that executes an
+ * Ethereum State Test. It implements the Runnable interface, meaning it can be used in a thread of
+ * execution.
+ *
+ * <p>The class is annotated with @CommandLine.Command, which is a PicoCLI annotation that
+ * designates this class as a command-line command. The annotation parameters define the command's
+ * name, description, whether it includes standard help options, and the version provider.
+ *
+ * <p>The command's functionality is defined in the run() method, which is overridden from the
+ * Runnable interface.
+ */
 @Command(
     name = COMMAND_NAME,
     description = "Execute an Ethereum State Test.",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class StateTestSubCommand implements Runnable {
+  /**
+   * The name of the command for the StateTestSubCommand. This constant is used as the name
+   * parameter in the @CommandLine.Command annotation. It defines the command name that users should
+   * enter on the command line to invoke this command.
+   */
   public static final String COMMAND_NAME = "state-test";
 
   static final Supplier<ReferenceTestProtocolSchedules> referenceTestProtocolSchedules =
@@ -114,6 +129,10 @@ public class StateTestSubCommand implements Runnable {
   // picocli does it magically
   @Parameters private final List<Path> stateTestFiles = new ArrayList<>();
 
+  /**
+   * Default constructor for the StateTestSubCommand class. This constructor doesn't take any
+   * arguments and initializes the parentCommand to null. PicoCLI requires this constructor.
+   */
   @SuppressWarnings("unused")
   public StateTestSubCommand() {
     // PicoCLI requires this
@@ -213,7 +232,7 @@ public class StateTestSubCommand implements Runnable {
       }
 
       final BlockHeader blockHeader = spec.getBlockHeader();
-      final Transaction transaction = spec.getTransaction();
+      final Transaction transaction = spec.getTransaction(0);
       final ObjectNode summaryLine = objectMapper.createObjectNode();
       if (transaction == null) {
         if (parentCommand.showJsonAlloc || parentCommand.showJsonResults) {
@@ -310,7 +329,9 @@ public class StateTestSubCommand implements Runnable {
               "validationError",
               "Exception '" + spec.getExpectException() + "' was expected but did not occur");
         }
-
+        if (!result.getValidationResult().isValid()) {
+          summaryLine.put("error", result.getValidationResult().getErrorMessage());
+        }
         if (parentCommand.showJsonAlloc) {
           EvmToolCommand.dumpWorldState(worldState, parentCommand.out);
         }

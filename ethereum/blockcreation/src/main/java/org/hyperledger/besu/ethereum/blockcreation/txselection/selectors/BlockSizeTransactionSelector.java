@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -89,15 +89,8 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
   private boolean transactionTooLargeForBlock(
       final Transaction transaction,
       final TransactionSelectionResults transactionSelectionResults) {
-    final long blobGasUsed = context.gasCalculator().blobGasCost(transaction.getBlobCount());
 
-    if (blobGasUsed
-        > context.gasLimitCalculator().currentBlobGasLimit()
-            - transactionSelectionResults.getCumulativeBlobGasUsed()) {
-      return true;
-    }
-
-    return transaction.getGasLimit() + blobGasUsed
+    return transaction.getGasLimit()
         > context.processableBlockHeader().getGasLimit()
             - transactionSelectionResults.getCumulativeGasUsed();
   }

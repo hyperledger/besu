@@ -24,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import java.math.BigInteger;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.OptionalInt;
 import java.util.OptionalLong;
@@ -48,6 +49,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   private static final String CHECKPOINT_CONFIG_KEY = "checkpoint";
   private static final String ZERO_BASE_FEE_KEY = "zerobasefee";
   private static final String FIXED_BASE_FEE_KEY = "fixedbasefee";
+  private static final String WITHDRAWAL_REQUEST_CONTRACT_ADDRESS_KEY =
+      "withdrawalrequestcontractaddress";
   private static final String DEPOSIT_CONTRACT_ADDRESS_KEY = "depositcontractaddress";
 
   private final ObjectNode configRoot;
@@ -288,6 +291,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public OptionalLong getCancunEOFTime() {
+    return getOptionalLong("cancuneoftime");
+  }
+
+  @Override
   public OptionalLong getCancunTime() {
     return getOptionalLong("cancuntime");
   }
@@ -295,6 +303,11 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   @Override
   public OptionalLong getPragueTime() {
     return getOptionalLong("praguetime");
+  }
+
+  @Override
+  public OptionalLong getPragueEOFTime() {
+    return getOptionalLong("pragueeoftime");
   }
 
   @Override
@@ -428,6 +441,13 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
   }
 
   @Override
+  public Optional<Address> getWithdrawalRequestContractAddress() {
+    Optional<String> inputAddress =
+        JsonUtil.getString(configRoot, WITHDRAWAL_REQUEST_CONTRACT_ADDRESS_KEY);
+    return inputAddress.map(Address::fromHexString);
+  }
+
+  @Override
   public Optional<Address> getDepositContractAddress() {
     Optional<String> inputAddress = JsonUtil.getString(configRoot, DEPOSIT_CONTRACT_ADDRESS_KEY);
     return inputAddress.map(Address::fromHexString);
@@ -455,7 +475,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getMergeNetSplitBlockNumber().ifPresent(l -> builder.put("mergeNetSplitBlock", l));
     getShanghaiTime().ifPresent(l -> builder.put("shanghaiTime", l));
     getCancunTime().ifPresent(l -> builder.put("cancunTime", l));
+    getCancunEOFTime().ifPresent(l -> builder.put("cancunEOFTime", l));
     getPragueTime().ifPresent(l -> builder.put("pragueTime", l));
+    getPragueEOFTime().ifPresent(l -> builder.put("pragueEOFTime", l));
     getTerminalBlockNumber().ifPresent(l -> builder.put("terminalBlockNumber", l));
     getTerminalBlockHash().ifPresent(h -> builder.put("terminalBlockHash", h.toHexString()));
     getFutureEipsTime().ifPresent(l -> builder.put("futureEipsTime", l));
@@ -479,6 +501,8 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
     getEvmStackSize().ifPresent(l -> builder.put("evmstacksize", l));
     getEcip1017EraRounds().ifPresent(l -> builder.put("ecip1017EraRounds", l));
 
+    getWithdrawalRequestContractAddress()
+        .ifPresent(l -> builder.put("withdrawalRequestContractAddress", l));
     getDepositContractAddress().ifPresent(l -> builder.put("depositContractAddress", l));
 
     if (isClique()) {
@@ -603,7 +627,9 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         Stream.of(
             getShanghaiTime(),
             getCancunTime(),
+            getCancunEOFTime(),
             getPragueTime(),
+            getPragueEOFTime(),
             getFutureEipsTime(),
             getExperimentalEipsTime());
     // when adding forks add an entry to ${REPO_ROOT}/config/src/test/resources/all_forks.json
@@ -614,5 +640,19 @@ public class JsonGenesisConfigOptions implements GenesisConfigOptions {
         .distinct()
         .sorted()
         .toList();
+  }
+
+  @Override
+  public boolean equals(final Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final JsonGenesisConfigOptions that = (JsonGenesisConfigOptions) o;
+    return Objects.equals(configRoot, that.configRoot)
+        && Objects.equals(configOverrides, that.configOverrides);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(configRoot, configOverrides);
   }
 }
