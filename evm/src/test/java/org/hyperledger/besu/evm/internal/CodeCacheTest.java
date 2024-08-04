@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,13 +12,13 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-
 package org.hyperledger.besu.evm.internal;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.code.CodeFactory;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.operation.JumpDestOperation;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -30,10 +30,11 @@ class CodeCacheTest {
 
   @Test
   void testScale() {
+    EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
     final Bytes contractBytes =
         Bytes.fromHexString("0xDEAD" + op + "BEEF" + op + "B0B0" + op + "C0DE" + op + "FACE");
     final CodeScale scale = new CodeScale();
-    final Code contractCode = CodeFactory.createCode(contractBytes, 0, false);
+    final Code contractCode = evm.getCodeUncached(contractBytes);
     final int weight = scale.weigh(contractCode.getCodeHash(), contractCode);
     assertThat(weight)
         .isEqualTo(contractCode.getCodeHash().size() + (contractBytes.size() * 9 + 7) / 8);

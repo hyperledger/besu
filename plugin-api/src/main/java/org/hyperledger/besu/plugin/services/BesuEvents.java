@@ -94,6 +94,14 @@ public interface BesuEvents extends BesuService {
   void removeBlockReorgListener(long listenerIdentifier);
 
   /**
+   * Add an initial sync completion listener.
+   *
+   * @param listener to subscribe to initial sync completion events
+   * @return id of listener subscription
+   */
+  long addInitialSyncCompletionListener(final InitialSyncCompletionListener listener);
+
+  /**
    * Add a listener watching new transactions added to the node.
    *
    * @param transactionAddedListener The listener that will accept the Transaction object as the
@@ -250,7 +258,8 @@ public interface BesuEvents extends BesuService {
     /**
      * Invoked for each log (both added and removed) when a new block is added to the blockchain.
      *
-     * @param logWithMetadata the log with associated metadata. see https://eth.wiki/json-rpc/API
+     * @param logWithMetadata the log with associated metadata. see
+     *     https://ethereum.org/en/developers/docs/apis/json-rpc/
      */
     void onLogEmitted(LogWithMetadata logWithMetadata);
   }

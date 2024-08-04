@@ -15,19 +15,46 @@
 package org.hyperledger.besu.ethereum;
 
 import org.hyperledger.besu.ethereum.core.Block;
+import org.hyperledger.besu.ethereum.core.Request;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 
 import java.util.List;
+import java.util.Optional;
 
+/**
+ * The BlockValidator interface defines the methods for validating and processing blocks in the
+ * Ethereum protocol.
+ */
 public interface BlockValidator {
 
+  /**
+   * Validates and processes a block with the given context, block, header validation mode, and
+   * ommer validation mode.
+   *
+   * @param context the protocol context
+   * @param block the block to validate and process
+   * @param headerValidationMode the header validation mode
+   * @param ommerValidationMode the ommer validation mode
+   * @return the result of the block processing
+   */
   BlockProcessingResult validateAndProcessBlock(
       final ProtocolContext context,
       final Block block,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode);
 
+  /**
+   * Validates and processes a block with the given context, block, header validation mode, ommer
+   * validation mode, and persistence flag.
+   *
+   * @param context the protocol context
+   * @param block the block to validate and process
+   * @param headerValidationMode the header validation mode
+   * @param ommerValidationMode the ommer validation mode
+   * @param shouldPersist flag indicating whether the block should be persisted
+   * @return the result of the block processing
+   */
   BlockProcessingResult validateAndProcessBlock(
       final ProtocolContext context,
       final Block block,
@@ -35,6 +62,18 @@ public interface BlockValidator {
       final HeaderValidationMode ommerValidationMode,
       final boolean shouldPersist);
 
+  /**
+   * Validates and processes a block with the given context, block, header validation mode, ommer
+   * validation mode, persistence flag, and bad block recording flag.
+   *
+   * @param context the protocol context
+   * @param block the block to validate and process
+   * @param headerValidationMode the header validation mode
+   * @param ommerValidationMode the ommer validation mode
+   * @param shouldPersist flag indicating whether the block should be persisted
+   * @param shouldRecordBadBlock flag indicating whether bad blocks should be recorded
+   * @return the result of the block processing
+   */
   BlockProcessingResult validateAndProcessBlock(
       final ProtocolContext context,
       final Block block,
@@ -43,10 +82,23 @@ public interface BlockValidator {
       final boolean shouldPersist,
       final boolean shouldRecordBadBlock);
 
+  /**
+   * Performs fast block validation with the given context, block, transaction receipts, requests,
+   * header validation mode, and ommer validation mode.
+   *
+   * @param context the protocol context
+   * @param block the block to validate
+   * @param receipts the transaction receipts
+   * @param requests the requests
+   * @param headerValidationMode the header validation mode
+   * @param ommerValidationMode the ommer validation mode
+   * @return true if the block is valid, false otherwise
+   */
   boolean fastBlockValidation(
       final ProtocolContext context,
       final Block block,
       final List<TransactionReceipt> receipts,
+      final Optional<List<Request>> requests,
       final HeaderValidationMode headerValidationMode,
       final HeaderValidationMode ommerValidationMode);
 }

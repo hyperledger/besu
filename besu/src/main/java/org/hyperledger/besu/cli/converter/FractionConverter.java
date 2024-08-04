@@ -22,6 +22,9 @@ import picocli.CommandLine;
 /** The Fraction converter to convert floats in CLI. */
 public class FractionConverter implements CommandLine.ITypeConverter<Fraction> {
 
+  /** Default constructor. */
+  public FractionConverter() {}
+
   @Override
   public Fraction convert(final String value) throws FractionConversionException {
     try {

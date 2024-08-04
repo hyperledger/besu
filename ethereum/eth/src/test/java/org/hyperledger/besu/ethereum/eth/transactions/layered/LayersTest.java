@@ -36,6 +36,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Util;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
@@ -44,6 +45,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -56,6 +58,7 @@ import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.stream.Stream;
 
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -156,6 +159,12 @@ public class LayersTest extends BaseTransactionPoolTest {
     assertScenario(scenario, BLOB_TX_POOL_CONFIG);
   }
 
+  @ParameterizedTest
+  @MethodSource("providerPenalized")
+  void penalized(final Scenario scenario) {
+    assertScenario(scenario);
+  }
+
   private void assertScenario(final Scenario scenario) {
     assertScenario(scenario, DEFAULT_TX_POOL_CONFIG);
   }
@@ -165,9 +174,11 @@ public class LayersTest extends BaseTransactionPoolTest {
     final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
 
     final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
+    final EthScheduler ethScheduler = new EthScheduler(1, 4, 1, 1, new NoOpMetricsSystem());
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
             poolConfig,
+            ethScheduler,
             evictCollector,
             txPoolMetrics,
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
@@ -176,6 +187,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     final ReadyTransactions readyTransactions =
         new ReadyTransactions(
             poolConfig,
+            ethScheduler,
             sparseTransactions,
             txPoolMetrics,
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
@@ -185,6 +197,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         new BaseFeePrioritizedTransactions(
             poolConfig,
             LayersTest::mockBlockHeader,
+            ethScheduler,
             readyTransactions,
             txPoolMetrics,
             (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
@@ -193,7 +206,7 @@ public class LayersTest extends BaseTransactionPoolTest {
             MiningParameters.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE));
 
     final LayeredPendingTransactions pendingTransactions =
-        new LayeredPendingTransactions(poolConfig, prioritizedTransactions);
+        new LayeredPendingTransactions(poolConfig, prioritizedTransactions, ethScheduler);
 
     scenario.execute(
         pendingTransactions,
@@ -300,7 +313,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         Arguments.of(
             new Scenario("fill sparse 2")
                 .addForSender(S1, 5, 3, 2)
-                .expectedSparseForSender(S1, 5, 3, 2)),
+                .expectedSparseForSender(S1, 2, 3, 5)),
         Arguments.of(
             new Scenario("overflow sparse 1")
                 .addForSender(S1, 1, 2, 3, 4)
@@ -309,13 +322,13 @@ public class LayersTest extends BaseTransactionPoolTest {
         Arguments.of(
             new Scenario("overflow sparse 2")
                 .addForSender(S1, 4, 2, 3, 1)
-                .expectedSparseForSender(S1, 2, 3, 1)
+                .expectedSparseForSender(S1, 1, 2, 3)
                 .expectedDroppedForSender(S1, 4)),
         Arguments.of(
             new Scenario("overflow sparse 3")
                 .addForSender(S1, 0, 4, 2, 3, 5)
                 .expectedPrioritizedForSender(S1, 0)
-                .expectedSparseForSender(S1, 4, 2, 3)
+                .expectedSparseForSender(S1, 2, 3, 4)
                 .expectedDroppedForSender(S1, 5)));
   }
 
@@ -328,7 +341,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         Arguments.of(
             new Scenario("add first sparse")
                 .addForSenders(S1, 1, S2, 2)
-                .expectedSparseForSenders(S1, 1, S2, 2)),
+                .expectedSparseForSenders(S2, 2, S1, 1)),
         Arguments.of(
             new Scenario("fill prioritized 1")
                 .addForSender(S1, 0, 1, 2)
@@ -351,11 +364,11 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .addForSenders(S1, 2, S2, 1)
                 .expectedPrioritizedForSenders()
                 .expectedReadyForSenders()
-                .expectedSparseForSenders(S1, 2, S2, 1)
+                .expectedSparseForSenders(S2, 1, S1, 2)
                 .addForSenders(S2, 2, S1, 0)
                 .expectedPrioritizedForSender(S1, 0)
                 .expectedReadyForSenders()
-                .expectedSparseForSenders(S1, 2, S2, 1, S2, 2)
+                .expectedSparseForSenders(S2, 1, S2, 2, S1, 2)
                 .addForSenders(S1, 1)
                 .expectedPrioritizedForSenders(S1, 0, S1, 1, S1, 2)
                 .expectedReadyForSenders()
@@ -425,15 +438,15 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .addForSenders(S2, 0, S3, 2, S1, 1)
                 .expectedPrioritizedForSender(S2, 0)
                 .expectedReadyForSenders()
-                .expectedSparseForSenders(S3, 2, S1, 1)
+                .expectedSparseForSenders(S1, 1, S3, 2)
                 .addForSenders(S2, 1)
                 .expectedPrioritizedForSenders(S2, 0, S2, 1)
                 .expectedReadyForSenders()
-                .expectedSparseForSenders(S3, 2, S1, 1)
+                .expectedSparseForSenders(S1, 1, S3, 2)
                 .addForSenders(S3, 0)
                 .expectedPrioritizedForSenders(S3, 0, S2, 0, S2, 1)
                 .expectedReadyForSenders()
-                .expectedSparseForSenders(S3, 2, S1, 1)
+                .expectedSparseForSenders(S1, 1, S3, 2)
                 .addForSenders(S1, 0)
                 .expectedPrioritizedForSenders(S3, 0, S2, 0, S2, 1)
                 .expectedReadyForSenders(S1, 0, S1, 1)
@@ -446,7 +459,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .addForSenders(S4, 0, S4, 1, S3, 3)
                 .expectedPrioritizedForSenders(S4, 0, S4, 1, S3, 0)
                 .expectedReadyForSenders(S3, 1, S2, 0, S2, 1)
-                .expectedSparseForSenders(S3, 2, S1, 1, S1, 0)
+                .expectedSparseForSenders(S1, 0, S1, 1, S3, 2)
                 // ToDo: non optimal discard, worth to improve?
                 .expectedDroppedForSender(S3, 3)),
         Arguments.of(
@@ -807,7 +820,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         Arguments.of(
             new Scenario("out of order sequence with gap 1")
                 .addForSender(S1, 2, 1)
-                .expectedSparseForSender(S1, 2, 1)
+                .expectedSparseForSender(S1, 1, 2)
                 .expectedNextNonceForSenders(S1, null)),
         Arguments.of(
             new Scenario("out of order sequence with gap 2")
@@ -963,7 +976,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         Arguments.of(
             new Scenario("out of order sequence with gap 1")
                 .addForSender(S1, 2, 1)
-                .expectedSparseForSender(S1, 2, 1)
+                .expectedSparseForSender(S1, 1, 2)
                 .expectedSelectedTransactions()),
         Arguments.of(
             new Scenario("out of order sequence with gap 2")
@@ -1067,8 +1080,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .setAccountNonce(S1, 5)
                 .addForSender(S1, 7)
                 .expectedPrioritizedForSenders()
-                // remember that sparse are checked by oldest first
-                .expectedSparseForSender(S1, 8, 9, 7)));
+                .expectedSparseForSender(S1, 7, 8, 9)));
   }
 
   static Stream<Arguments> providerPrioritySenders() {
@@ -1189,7 +1201,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .addForSender(S3, 0)
                 .expectedSparseForSender(S3, 0)
                 .addForSender(SP1, 0)
-                .expectedSparseForSenders(S3, 0, SP1, 0)
+                .expectedSparseForSenders(SP1, 0, S3, 0)
                 .confirmedForSenders(SP2, 0)
                 .expectedPrioritizedForSender(SP2, 1, 2, 3)
                 .expectedReadyForSenders(SP2, 4, SP2, 5, SP1, 0)
@@ -1248,6 +1260,79 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedPrioritizedForSender(S1, 4)
                 .expectedReadyForSender(S1, 5, 6)
                 .expectedSparseForSenders()));
+  }
+
+  static Stream<Arguments> providerPenalized() {
+    return Stream.of(
+        Arguments.of(
+            new Scenario("single sender, single tx")
+                .addForSender(S1, 0)
+                .expectedPrioritizedForSender(S1, 0)
+                .penalizeForSender(S1, 0)
+                .expectedPrioritizedForSender(S1, 0)),
+        Arguments.of(
+            new Scenario("single sender penalize last")
+                .addForSender(S1, 0, 1)
+                .expectedPrioritizedForSender(S1, 0, 1)
+                .penalizeForSender(S1, 1)
+                .expectedPrioritizedForSender(S1, 0, 1)),
+        Arguments.of(
+            new Scenario("single sender penalize first")
+                .addForSender(S1, 0, 1)
+                .expectedPrioritizedForSender(S1, 0, 1)
+                .penalizeForSender(S1, 0, 1)
+                // even if 0 has less score it is always the first for the sender
+                // since otherwise there is a nonce gap
+                .expectedPrioritizedForSender(S1, 0, 1)),
+        Arguments.of(
+            new Scenario("multiple senders, penalize top")
+                .addForSenders(S1, 0, S2, 0)
+                // remember S2 pays more fees
+                .expectedPrioritizedForSenders(S2, 0, S1, 0)
+                .penalizeForSender(S2, 0)
+                .expectedPrioritizedForSenders(S1, 0, S2, 0)),
+        Arguments.of(
+            new Scenario("multiple senders, penalize bottom")
+                .addForSenders(S1, 0, S2, 0)
+                .expectedPrioritizedForSenders(S2, 0, S1, 0)
+                .penalizeForSender(S1, 0)
+                .expectedPrioritizedForSenders(S2, 0, S1, 0)),
+        Arguments.of(
+            new Scenario("multiple senders, penalize middle")
+                .addForSenders(S1, 0, S2, 0, S3, 0)
+                .expectedPrioritizedForSenders(S3, 0, S2, 0, S1, 0)
+                .penalizeForSender(S2, 0)
+                .expectedPrioritizedForSenders(S3, 0, S1, 0, S2, 0)),
+        Arguments.of(
+            new Scenario("single sender, promote from ready")
+                .addForSender(S1, 0, 1, 2, 3, 4, 5)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3, 4, 5)
+                .penalizeForSender(S1, 3)
+                .confirmedForSenders(S1, 0)
+                // even if penalized 3 is promoted to avoid nonce gap
+                .expectedPrioritizedForSender(S1, 1, 2, 3)
+                .expectedReadyForSender(S1, 4, 5)),
+        Arguments.of(
+            new Scenario("multiple senders, overflow to ready")
+                .addForSenders(S1, 0, S2, 0, S3, 0)
+                .expectedPrioritizedForSenders(S3, 0, S2, 0, S1, 0)
+                .expectedReadyForSenders()
+                .penalizeForSender(S3, 0)
+                .addForSender(S1, 1)
+                .expectedPrioritizedForSenders(S2, 0, S1, 0, S1, 1)
+                // S3(0) is demoted to ready even if it is paying more fees,
+                // since has a lower score
+                .expectedReadyForSender(S3, 0)),
+        Arguments.of(
+            new Scenario("multiple senders, overflow to sparse")
+                .addForSenders(S1, 0, S2, 0, S3, 0, S1, 1, S2, 1, S3, 1)
+                .expectedPrioritizedForSenders(S3, 0, S3, 1, S2, 0)
+                .expectedReadyForSenders(S2, 1, S1, 0, S1, 1)
+                .penalizeForSender(S2, 1)
+                .addForSender(S2, 2)
+                .expectedReadyForSenders(S1, 0, S1, 1, S2, 1)
+                .expectedSparseForSender(S2, 2)));
   }
 
   private static BlockHeader mockBlockHeader() {
@@ -1371,6 +1456,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                     case ACCESS_LIST -> createAccessListPendingTransaction(sender, n);
                     case EIP1559 -> createEIP1559PendingTransaction(sender, n);
                     case BLOB -> createBlobPendingTransaction(sender, n);
+                    case SET_CODE -> throw new UnsupportedOperationException();
                   });
     }
 
@@ -1504,23 +1590,28 @@ public class LayersTest extends BaseTransactionPoolTest {
 
     private void assertExpectedPrioritized(
         final AbstractPrioritizedTransactions prioLayer, final List<PendingTransaction> expected) {
-      assertThat(prioLayer.stream()).describedAs("Prioritized").containsExactlyElementsOf(expected);
+      final var flatOrder =
+          prioLayer.getByScore().values().stream()
+              .flatMap(List::stream)
+              .flatMap(spt -> spt.pendingTransactions().stream())
+              .toList();
+      assertThat(flatOrder).describedAs("Prioritized").containsExactlyElementsOf(expected);
     }
 
     private void assertExpectedReady(
         final ReadyTransactions readyLayer, final List<PendingTransaction> expected) {
-      assertThat(readyLayer.stream()).describedAs("Ready").containsExactlyElementsOf(expected);
+      assertThat(readyLayer.getBySender())
+          .describedAs("Ready")
+          .flatExtracting(SenderPendingTransactions::pendingTransactions)
+          .containsExactlyElementsOf(expected);
     }
 
     private void assertExpectedSparse(
         final SparseTransactions sparseLayer, final List<PendingTransaction> expected) {
-      // sparse txs are returned from the most recent to the oldest, so reverse it to make writing
-      // scenarios easier
-      final var sortedExpected = new ArrayList<>(expected);
-      Collections.reverse(sortedExpected);
-      assertThat(sparseLayer.stream())
+      assertThat(sparseLayer.getBySender())
           .describedAs("Sparse")
-          .containsExactlyElementsOf(sortedExpected);
+          .flatExtracting(SenderPendingTransactions::pendingTransactions)
+          .containsExactlyElementsOf(expected);
     }
 
     private void assertExpectedDropped(
@@ -1572,6 +1663,23 @@ public class LayersTest extends BaseTransactionPoolTest {
       return this;
     }
 
+    public Scenario penalizeForSender(final Sender sender, final long... nonce) {
+      Arrays.stream(nonce)
+          .forEach(
+              n -> {
+                actions.add(
+                    (pending, prio, ready, sparse, dropped) -> {
+                      final var senderTxs = prio.getAllFor(sender.address);
+                      Arrays.stream(nonce)
+                          .mapToObj(
+                              n2 -> senderTxs.stream().filter(pt -> pt.getNonce() == n2).findAny())
+                          .map(Optional::get)
+                          .forEach(prio::penalize);
+                    });
+              });
+      return this;
+    }
+
     public Scenario expectedSelectedTransactions(final Object... args) {
       List<PendingTransaction> expectedSelected = new ArrayList<>();
       for (int i = 0; i < args.length; i = i + 2) {
@@ -1581,7 +1689,9 @@ public class LayersTest extends BaseTransactionPoolTest {
       }
       actions.add(
           (pending, prio, ready, sparse, dropped) ->
-              assertThat(prio.stream()).containsExactlyElementsOf(expectedSelected));
+              assertThat(prio.getBySender())
+                  .flatExtracting(SenderPendingTransactions::pendingTransactions)
+                  .containsExactlyElementsOf(expectedSelected));
       return this;
     }
 
@@ -1611,5 +1721,12 @@ public class LayersTest extends BaseTransactionPoolTest {
       this.gasFeeMultiplier = gasFeeMultiplier;
       this.hasPriority = hasPriority;
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

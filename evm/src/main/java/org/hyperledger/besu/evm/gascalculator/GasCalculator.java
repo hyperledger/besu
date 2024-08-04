@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -145,6 +145,20 @@ public interface GasCalculator {
   long callOperationBaseGasCost();
 
   /**
+   * Returns the gas cost to transfer funds in a call operation.
+   *
+   * @return the gas cost to transfer funds in a call operation
+   */
+  long callValueTransferGasCost();
+
+  /**
+   * Returns the gas cost to create a new account.
+   *
+   * @return the gas cost to create a new account
+   */
+  long newAccountGasCost();
+
+  /**
    * Returns the gas cost for one of the various CALL operations.
    *
    * @param frame The current frame
@@ -226,6 +240,20 @@ public interface GasCalculator {
    * @return the amount of gas parent will provide its child CALL
    */
   long gasAvailableForChildCall(MessageFrame frame, long stipend, boolean transfersValue);
+
+  /**
+   * For EXT*CALL, the minimum amount of gas the parent must retain. First described in EIP-7069
+   *
+   * @return MIN_RETAINED_GAS
+   */
+  long getMinRetainedGas();
+
+  /**
+   * For EXT*CALL, the minimum amount of gas that a child must receive. First described in EIP-7069
+   *
+   * @return MIN_CALLEE_GAS
+   */
+  long getMinCalleeGas();
 
   /**
    * Returns the amount of gas the CREATE operation will consume.
@@ -615,6 +643,16 @@ public interface GasCalculator {
    * @return the new excess blob gas value
    */
   default long computeExcessBlobGas(final long parentExcessBlobGas, final long blobGasUsed) {
+    return 0L;
+  }
+
+  /**
+   * Returns the upfront gas cost for EIP 7702 operation.
+   *
+   * @param authorizationListLength The length of the authorization list
+   * @return the gas cost
+   */
+  default long setCodeListGasCost(final int authorizationListLength) {
     return 0L;
   }
 }

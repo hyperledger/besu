@@ -241,7 +241,7 @@ public class TomlConfigurationDefaultProviderTest {
                 providerUnderTest.defaultValue(
                     OptionSpec.builder("an-option").type(String.class).build()))
         .isInstanceOf(ParameterException.class)
-        .hasMessageContaining("Unable to read TOML configuration file");
+        .hasMessageContaining("Unable to read from empty TOML configuration file.");
   }
 
   @Test

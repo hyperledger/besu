@@ -105,7 +105,9 @@ public class CliqueMinerExecutorTest {
             false,
             EvmConfiguration.DEFAULT,
             MiningParameters.MINING_DISABLED,
-            new BadBlockManager());
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
     cliqueEthContext = mock(EthContext.class, RETURNS_DEEP_STUBS);
     blockHeaderBuilder = new BlockHeaderTestFixture();
   }
@@ -200,7 +202,7 @@ public class CliqueMinerExecutorTest {
             null,
             ethScheduler);
 
-    executor.setExtraData(modifiedVanityData);
+    miningParameters.setExtraData(modifiedVanityData);
     final Bytes extraDataBytes = executor.calculateExtraData(blockHeaderBuilder.buildHeader());
 
     final CliqueExtraData cliqueExtraData =

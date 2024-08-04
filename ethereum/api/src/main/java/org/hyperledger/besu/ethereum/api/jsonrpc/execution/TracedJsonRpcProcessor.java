@@ -19,11 +19,11 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestId;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import io.opentelemetry.api.trace.Span;
 import io.opentelemetry.api.trace.StatusCode;
@@ -52,11 +52,77 @@ public class TracedJsonRpcProcessor implements JsonRpcProcessor {
       final Span metricSpan,
       final JsonRpcRequestContext request) {
     JsonRpcResponse jsonRpcResponse = rpcProcessor.process(id, method, metricSpan, request);
-    if (JsonRpcResponseType.ERROR == jsonRpcResponse.getType()) {
+    if (RpcResponseType.ERROR == jsonRpcResponse.getType()) {
       JsonRpcErrorResponse errorResponse = (JsonRpcErrorResponse) jsonRpcResponse;
       this.rpcErrorsCounter.labels(method.getName(), errorResponse.getErrorType().name()).inc();
       switch (errorResponse.getErrorType()) {
         case INVALID_PARAMS:
+        case INVALID_ACCOUNT_PARAMS:
+        case INVALID_ADDRESS_HASH_PARAMS:
+        case INVALID_ADDRESS_PARAMS:
+        case INVALID_BLOB_COUNT:
+        case INVALID_BLOB_GAS_USED_PARAMS:
+        case INVALID_BLOCK_PARAMS:
+        case INVALID_BLOCK_COUNT_PARAMS:
+        case INVALID_BLOCK_HASH_PARAMS:
+        case INVALID_BLOCK_INDEX_PARAMS:
+        case INVALID_BLOCK_NUMBER_PARAMS:
+        case INVALID_CALL_PARAMS:
+        case INVALID_CONSOLIDATION_REQUEST_PARAMS:
+        case INVALID_CREATE_PRIVACY_GROUP_PARAMS:
+        case INVALID_DATA_PARAMS:
+        case INVALID_DEPOSIT_REQUEST_PARAMS:
+        case INVALID_ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_PARAMS:
+        case INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS:
+        case INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMS:
+        case INVALID_ENGINE_PAYLOAD_PARAMS:
+        case INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS:
+        case INVALID_ENODE_PARAMS:
+        case INVALID_EXCESS_BLOB_GAS_PARAMS:
+        case INVALID_EXTRA_DATA_PARAMS:
+        case INVALID_FILTER_PARAMS:
+        case INVALID_GAS_PRICE_PARAMS:
+        case INVALID_HASH_RATE_PARAMS:
+        case INVALID_ID_PARAMS:
+        case INVALID_IS_TRANSACTION_COMPLETE_PARAMS:
+        case INVALID_LOG_FILTER_PARAMS:
+        case INVALID_LOG_LEVEL_PARAMS:
+        case INVALID_MAX_RESULTS_PARAMS:
+        case INVALID_METHOD_PARAMS:
+        case INVALID_MIN_GAS_PRICE_PARAMS:
+        case INVALID_MIN_PRIORITY_FEE_PARAMS:
+        case INVALID_MIX_HASH_PARAMS:
+        case INVALID_NONCE_PARAMS:
+        case INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS:
+        case INVALID_PARAM_COUNT:
+        case INVALID_PAYLOAD_ID_PARAMS:
+        case INVALID_PENDING_TRANSACTIONS_PARAMS:
+        case INVAlID_PLUGIN_NAME_PARAMS:
+        case INVALID_POSITION_PARAMS:
+        case INVALID_POW_HASH_PARAMS:
+        case INVALID_PRIVACY_GROUP_PARAMS:
+        case INVALID_PRIVATE_FROM_PARAMS:
+        case INVALID_PRIVATE_FOR_PARAMS:
+        case INVALID_PROPOSAL_PARAMS:
+        case INVALID_REMOTE_CAPABILITIES_PARAMS:
+        case INVALID_REWARD_PERCENTILES_PARAMS:
+        case INVALID_SEALER_ID_PARAMS:
+        case INVALID_STORAGE_KEYS_PARAMS:
+        case INVALID_SUBSCRIPTION_PARAMS:
+        case INVALID_TARGET_GAS_LIMIT_PARAMS:
+        case INVALID_TIMESTAMP_PARAMS:
+        case INVALID_TRACE_CALL_MANY_PARAMS:
+        case INVALID_TRACE_NUMBERS_PARAMS:
+        case INVALID_TRACE_TYPE_PARAMS:
+        case INVALID_TRANSACTION_PARAMS:
+        case INVALID_TRANSACTION_HASH_PARAMS:
+        case INVALID_TRANSACTION_ID_PARAMS:
+        case INVALID_TRANSACTION_INDEX_PARAMS:
+        case INVALID_TRANSACTION_LIMIT_PARAMS:
+        case INVALID_TRANSACTION_TRACE_PARAMS:
+        case INVALID_VERSIONED_HASH_PARAMS:
+        case INVALID_VOTE_TYPE_PARAMS:
+        case INVALID_WITHDRAWALS_PARAMS:
           metricSpan.setStatus(StatusCode.ERROR, "Invalid Params");
           break;
         case UNAUTHORIZED:

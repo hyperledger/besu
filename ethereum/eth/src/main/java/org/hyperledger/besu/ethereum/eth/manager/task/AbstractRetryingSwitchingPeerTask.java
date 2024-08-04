@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -49,9 +49,12 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   }
 
   @Override
-  public void assignPeer(final EthPeer peer) {
-    super.assignPeer(peer);
-    triedPeers.add(peer);
+  public boolean assignPeer(final EthPeer peer) {
+    if (super.assignPeer(peer)) {
+      triedPeers.add(peer);
+      return true;
+    }
+    return false;
   }
 
   protected abstract CompletableFuture<T> executeTaskOnCurrentPeer(final EthPeer peer);
@@ -62,8 +65,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     final Optional<EthPeer> maybePeer =
         assignedPeer
             .filter(u -> getRetryCount() == 1) // first try with the assigned peer if present
-            .map(Optional::of)
-            .orElseGet(this::selectNextPeer); // otherwise, select a new one from the pool
+            .or(this::selectNextPeer); // otherwise select a new one from the pool
 
     if (maybePeer.isEmpty()) {
       LOG.atTrace()
@@ -101,7 +103,7 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
   @Override
   protected void handleTaskError(final Throwable error) {
     if (isPeerFailure(error)) {
-      getAssignedPeer().ifPresent(peer -> failedPeers.add(peer));
+      getAssignedPeer().ifPresent(failedPeers::add);
     }
     super.handleTaskError(error);
   }
@@ -124,10 +126,11 @@ public abstract class AbstractRetryingSwitchingPeerTask<T> extends AbstractRetry
     return maybeNextPeer;
   }
 
-  private Stream<EthPeer> remainingPeersToTry() {
+  protected Stream<EthPeer> remainingPeersToTry() {
     return getEthContext()
         .getEthPeers()
         .streamBestPeers()
+        .filter(this::isSuitablePeer)
         .filter(peer -> !triedPeers.contains(peer));
   }
 

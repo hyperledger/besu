@@ -1,5 +1,5 @@
 /*
- * Copyright contributors to Hyperledger Besu
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
@@ -38,11 +39,15 @@ public class RetFOperation extends AbstractOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
-    var exception = frame.returnFunction();
-    if (exception == null) {
-      return retfSuccess;
-    } else {
-      return new OperationResult(retfSuccess.gasCost, exception);
+    Code code = frame.getCode();
+    if (code.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
     }
+    var rStack = frame.getReturnStack();
+    var returnInfo = rStack.pop();
+    frame.setPC(returnInfo.pc());
+    frame.setSection(returnInfo.codeSectionIndex());
+
+    return retfSuccess;
   }
 }

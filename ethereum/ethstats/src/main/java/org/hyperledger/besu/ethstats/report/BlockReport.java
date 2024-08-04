@@ -21,15 +21,29 @@ import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import org.immutables.value.Value;
 
+/**
+ * This interface represents a block report. It provides methods to get the id and block result of
+ * the block report.
+ */
 @Value.Immutable
 @Value.Style(allParameters = true)
 @JsonSerialize(as = ImmutableBlockReport.class)
 @JsonDeserialize(as = ImmutableBlockReport.class)
 public interface BlockReport {
 
+  /**
+   * Gets the id of the block report.
+   *
+   * @return the id of the block report.
+   */
   @JsonProperty("id")
   String getId();
 
+  /**
+   * Gets the block result of the block report.
+   *
+   * @return the block result of the block report.
+   */
   @JsonProperty("block")
   BlockResult getBlock();
 }

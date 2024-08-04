@@ -11,9 +11,7 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
-
 package org.hyperledger.besu.ethereum.referencetests;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -85,6 +83,8 @@ public class ReferenceTestEnv extends BlockHeader {
 
   private final Bytes32 beaconRoot;
 
+  private final boolean isStateTest;
+
   /**
    * Public constructor.
    *
@@ -122,7 +122,8 @@ public class ReferenceTestEnv extends BlockHeader {
       @JsonProperty("parentGasLimit") final String parentGasLimit,
       @JsonProperty("parentGasUsed") final String parentGasUsed,
       @JsonProperty("parentTimestamp") final String parentTimestamp,
-      @JsonProperty("parentUncleHash") final String _parentUncleHash) {
+      @JsonProperty("parentUncleHash") final String _parentUncleHash,
+      @JsonProperty("isStateTest") final String isStateTest) {
     super(
         generateTestBlockHash(previousHash, number),
         Hash.EMPTY_LIST_HASH, // ommersHash
@@ -144,8 +145,7 @@ public class ReferenceTestEnv extends BlockHeader {
         currentBlobGasUsed == null ? null : Long.decode(currentBlobGasUsed),
         currentExcessBlobGas == null ? null : BlobGas.of(Long.decode(currentExcessBlobGas)),
         beaconRoot == null ? null : Bytes32.fromHexString(beaconRoot),
-        null, // depositsRoot
-        null, // exitsRoot
+        null, // requestsRoot
         new MainnetBlockHeaderFunctions());
     this.parentDifficulty = parentDifficulty;
     this.parentBaseFee = parentBaseFee;
@@ -167,10 +167,16 @@ public class ReferenceTestEnv extends BlockHeader {
                         Map.entry(
                             Long.decode(entry.getKey()), Hash.fromHexString(entry.getValue())))
                 .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
-    this.beaconRoot =
-        beaconRoot == null
-            ? (currentBeaconRoot == null ? null : Hash.fromHexString(currentBeaconRoot))
-            : Hash.fromHexString(beaconRoot);
+    if (beaconRoot == null) {
+      if (currentBeaconRoot == null) {
+        this.beaconRoot = null;
+      } else {
+        this.beaconRoot = Hash.fromHexString(currentBeaconRoot);
+      }
+    } else {
+      this.beaconRoot = Hash.fromHexString(beaconRoot);
+    }
+    this.isStateTest = Boolean.parseBoolean(isStateTest);
   }
 
   @Override
@@ -191,7 +197,7 @@ public class ReferenceTestEnv extends BlockHeader {
     }
   }
 
-  public BlockHeader updateFromParentValues(final ProtocolSpec protocolSpec) {
+  public BlockHeader parentBlockHeader(final ProtocolSpec protocolSpec) {
     var builder =
         BlockHeaderBuilder.fromHeader(this)
             .blockHeaderFunctions(protocolSpec.getBlockHeaderFunctions());
@@ -224,6 +230,8 @@ public class ReferenceTestEnv extends BlockHeader {
       builder.excessBlobGas(BlobGas.of(Long.decode(parentExcessBlobGas)));
       builder.blobGasUsed(Long.decode(parentBlobGasUsed));
     }
+    Hash grandParentHash = blockHashes.get(number - 2);
+    builder.parentHash(grandParentHash == null ? Hash.ZERO : grandParentHash);
 
     return builder.buildBlockHeader();
   }
@@ -234,6 +242,14 @@ public class ReferenceTestEnv extends BlockHeader {
 
   public Optional<Hash> getBlockhashByNumber(final long number) {
     return Optional.ofNullable(blockHashes.get(number));
+  }
+
+  public Map<Long, Hash> getBlockHashes() {
+    return blockHashes;
+  }
+
+  public boolean isStateTest() {
+    return isStateTest;
   }
 
   @Override

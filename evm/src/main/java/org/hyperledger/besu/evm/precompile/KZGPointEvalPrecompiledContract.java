@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -89,6 +89,9 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
     loaded.set(false);
   }
 
+  /** Default constructor. */
+  public KZGPointEvalPrecompiledContract() {}
+
   @Override
   public String getName() {
     return "KZGPointEval";
@@ -137,7 +140,7 @@ public class KZGPointEvalPrecompiledContract implements PrecompiledContract {
             null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));
       }
     } catch (RuntimeException kzgFailed) {
-      System.out.println(kzgFailed.getMessage());
+      LOG.debug("Native KZG failed", kzgFailed);
 
       return PrecompileContractResult.halt(
           null, Optional.of(ExceptionalHaltReason.PRECOMPILE_ERROR));

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -29,6 +29,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.evm.operation.InvalidOperation;
 import org.hyperledger.besu.evm.operation.PrevRanDaoOperation;
 import org.hyperledger.besu.evm.operation.Push0Operation;
+import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
 
@@ -48,7 +49,12 @@ public class MergeProtocolScheduleTest {
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
-            config, false, MiningParameters.MINING_DISABLED, new BadBlockManager());
+            config,
+            false,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     final ProtocolSpec homesteadSpec = protocolSchedule.getByBlockHeader(blockHeader(1));
     final ProtocolSpec londonSpec = protocolSchedule.getByBlockHeader(blockHeader(1559));
@@ -64,7 +70,12 @@ public class MergeProtocolScheduleTest {
     final GenesisConfigOptions config = GenesisConfigFile.mainnet().getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
-            config, false, MiningParameters.MINING_DISABLED, new BadBlockManager());
+            config,
+            false,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     final long lastParisBlockNumber = 17034869L;
     final ProtocolSpec parisSpec =
@@ -100,7 +111,12 @@ public class MergeProtocolScheduleTest {
     final GenesisConfigOptions config = GenesisConfigFile.fromConfig(jsonInput).getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
-            config, false, MiningParameters.MINING_DISABLED, new BadBlockManager());
+            config,
+            false,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     final ProtocolSpec parisSpec =
         protocolSchedule.getByBlockHeader(
@@ -128,7 +144,12 @@ public class MergeProtocolScheduleTest {
     final GenesisConfigOptions config = GenesisConfigFile.mainnet().getConfigOptions();
     final ProtocolSchedule protocolSchedule =
         MergeProtocolSchedule.create(
-            config, false, MiningParameters.MINING_DISABLED, new BadBlockManager());
+            config,
+            false,
+            MiningParameters.MINING_DISABLED,
+            new BadBlockManager(),
+            false,
+            new NoOpMetricsSystem());
 
     final long lastParisBlockNumber = 17034869L;
     final ProtocolSpec parisSpec =
@@ -160,7 +181,9 @@ public class MergeProtocolScheduleTest {
                 GenesisConfigFile.DEFAULT.getConfigOptions(),
                 false,
                 MiningParameters.MINING_DISABLED,
-                new BadBlockManager())
+                new BadBlockManager(),
+                false,
+                new NoOpMetricsSystem())
             .getByBlockHeader(blockHeader(0));
 
     assertThat(london.getName()).isEqualTo("Paris");

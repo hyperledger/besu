@@ -11,14 +11,22 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evmtool;
 
 import org.hyperledger.besu.util.LogConfigurator;
 
+/** The main entry point for the EVM (Ethereum Virtual Machine) tool. */
 public final class EvmTool {
 
+  /** Default constructor for the EvmTool class. */
+  public EvmTool() {}
+
+  /**
+   * The main entry point for the EVM (Ethereum Virtual Machine) tool.
+   *
+   * @param args The command line arguments.
+   */
   public static void main(final String... args) {
     LogConfigurator.setLevel("", "DEBUG");
     final EvmToolCommand evmToolCommand = new EvmToolCommand();

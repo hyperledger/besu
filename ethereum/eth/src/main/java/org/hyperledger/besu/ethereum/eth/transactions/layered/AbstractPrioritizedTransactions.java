@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -17,19 +17,24 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
+import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
+import java.util.TreeMap;
 import java.util.TreeSet;
 import java.util.function.BiFunction;
 import java.util.function.Predicate;
-import java.util.stream.Stream;
+import java.util.stream.Collectors;
 
 /**
  * Holds the current set of executable pending transactions, that are candidate for inclusion on
@@ -41,13 +46,20 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
 
   public AbstractPrioritizedTransactions(
       final TransactionPoolConfiguration poolConfig,
+      final EthScheduler ethScheduler,
       final TransactionsLayer prioritizedTransactions,
       final TransactionPoolMetrics metrics,
       final BiFunction<PendingTransaction, PendingTransaction, Boolean>
           transactionReplacementTester,
       final BlobCache blobCache,
       final MiningParameters miningParameters) {
-    super(poolConfig, prioritizedTransactions, transactionReplacementTester, metrics, blobCache);
+    super(
+        poolConfig,
+        ethScheduler,
+        prioritizedTransactions,
+        transactionReplacementTester,
+        metrics,
+        blobCache);
     this.orderByFee = new TreeSet<>(this::compareByFee);
     this.miningParameters = miningParameters;
   }
@@ -130,6 +142,13 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
   }
 
   @Override
+  protected void internalPenalize(final PendingTransaction penalizedTx) {
+    orderByFee.remove(penalizedTx);
+    penalizedTx.decrementScore();
+    orderByFee.add(penalizedTx);
+  }
+
+  @Override
   public List<PendingTransaction> promote(
       final Predicate<PendingTransaction> promotionFilter,
       final long freeSpace,
@@ -159,9 +178,79 @@ public abstract class AbstractPrioritizedTransactions extends AbstractSequential
     return remainingPromotionsPerType;
   }
 
+  /**
+   * Return the full content of this layer, organized as a list of sender pending txs. For each
+   * sender the collection pending txs is ordered by nonce asc.
+   *
+   * <p>Returned sender list order detail: first the sender of the most profitable tx.
+   *
+   * @return a list of sender pending txs
+   */
   @Override
-  public Stream<PendingTransaction> stream() {
-    return orderByFee.descendingSet().stream();
+  public List<SenderPendingTransactions> getBySender() {
+    final var sendersToAdd = new HashSet<>(txsBySender.keySet());
+    return orderByFee.descendingSet().stream()
+        .map(PendingTransaction::getSender)
+        .filter(sendersToAdd::remove)
+        .map(
+            sender ->
+                new SenderPendingTransactions(
+                    sender, List.copyOf(txsBySender.get(sender).values())))
+        .toList();
+  }
+
+  /**
+   * Returns pending txs by sender and ordered by score desc. In case a sender has pending txs with
+   * different scores, then in nonce sequence, every time there is a score decrease, his pending txs
+   * will be put in a new entry with that score. For example if a sender has 3 pending txs (where
+   * the first number is the nonce and the score is between parenthesis): 0(127), 1(126), 2(127),
+   * then for he there will be 2 entries:
+   *
+   * <ul>
+   *   <li>0(127)
+   *   <li>1(126), 2(127)
+   * </ul>
+   *
+   * @return pending txs by sender and ordered by score desc
+   */
+  public NavigableMap<Byte, List<SenderPendingTransactions>> getByScore() {
+    final var sendersToAdd = new HashSet<>(txsBySender.keySet());
+    return orderByFee.descendingSet().stream()
+        .map(PendingTransaction::getSender)
+        .filter(sendersToAdd::remove)
+        .flatMap(sender -> splitByScore(sender, txsBySender.get(sender)).entrySet().stream())
+        .collect(
+            Collectors.toMap(
+                Map.Entry::getKey,
+                Map.Entry::getValue,
+                (a, b) -> {
+                  a.addAll(b);
+                  return a;
+                },
+                TreeMap::new))
+        .descendingMap();
+  }
+
+  private Map<Byte, List<SenderPendingTransactions>> splitByScore(
+      final Address sender, final NavigableMap<Long, PendingTransaction> txsBySender) {
+    final var splitByScore = new HashMap<Byte, List<SenderPendingTransactions>>();
+    byte currScore = txsBySender.firstEntry().getValue().getScore();
+    var currSplit = new ArrayList<PendingTransaction>();
+    for (final var entry : txsBySender.entrySet()) {
+      if (entry.getValue().getScore() < currScore) {
+        // score decreased, we need to save current split and start a new one
+        splitByScore
+            .computeIfAbsent(currScore, k -> new ArrayList<>())
+            .add(new SenderPendingTransactions(sender, currSplit));
+        currSplit = new ArrayList<>();
+        currScore = entry.getValue().getScore();
+      }
+      currSplit.add(entry.getValue());
+    }
+    splitByScore
+        .computeIfAbsent(currScore, k -> new ArrayList<>())
+        .add(new SenderPendingTransactions(sender, currSplit));
+    return splitByScore;
   }
 
   @Override

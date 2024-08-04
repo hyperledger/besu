@@ -12,8 +12,8 @@
  */
 
 plugins {
-  id 'org.web3j' version '4.11.1'
-  id 'org.web3j.solidity' version '0.4.0'
+  id 'org.web3j' version '4.11.3'
+  id 'org.web3j.solidity' version '0.4.1'
 }
 
 web3j { generatedPackageName = 'org.hyperledger.besu.tests.web3j.generated' }
@@ -24,6 +24,7 @@ solidity {
   resolvePackages = false
   // TODO: remove the forced version, when DEV network is upgraded to support latest forks
   version '0.8.19'
+  evmVersion 'london'
 }
 
 dependencies {
@@ -79,6 +80,7 @@ dependencies {
   testImplementation 'org.web3j:besu'
   testImplementation 'org.web3j:core'
   testImplementation 'org.wiremock:wiremock'
+  testImplementation project(path: ':acceptance-tests:tests:shanghai')
 
   testRuntimeOnly 'org.junit.vintage:junit-vintage-engine'
 }
@@ -120,39 +122,12 @@ task acceptanceTest(type: Test) {
 
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
 }
-task acceptanceTestMainnet(type: Test) {
-  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
-  exclude '**/bft/**'
-  exclude '**/clique/**'
-  exclude '**/permissioning/**'
-  exclude '**/privacy/**'
-
-  useJUnitPlatform {}
-
-  dependsOn(rootProject.installDist)
-  setSystemProperties(test.getSystemProperties())
-  systemProperty 'acctests.runBesuAsProcess', 'true'
-  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
-  mustRunAfter rootProject.subprojects*.test
-  description = 'Runs MAINNET Besu acceptance tests (excluding permissioning, privacy and some other stable features).'
-  group = 'verification'
-
-  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
-
-  testLogging {
-    exceptionFormat = 'full'
-    showStackTraces = true
-    showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
-    showExceptions = true
-    showCauses = true
-  }
-
-  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
-}
 
 task acceptanceTestNotPrivacy(type: Test) {
   inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
   exclude '**/privacy/**'
+  exclude '**/permissioning/**'
+  exclude '**/bftsoak/**'
 
   useJUnitPlatform {}
 
@@ -161,7 +136,7 @@ task acceptanceTestNotPrivacy(type: Test) {
   systemProperty 'acctests.runBesuAsProcess', 'true'
   systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
   mustRunAfter rootProject.subprojects*.test
-  description = 'Runs MAINNET Besu acceptance tests (excluding privacy since they run nightly, and are being refactored).'
+  description = 'Runs MAINNET Besu acceptance tests (excluding specific non-mainnet suites).'
   group = 'verification'
 
   jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
@@ -198,6 +173,35 @@ task acceptanceTestCliqueBft(type: Test) {
     exceptionFormat = 'full'
     showStackTraces = true
     showStandardStreams = Boolean.getBoolean('acctests.showStandardStreams')
+    showExceptions = true
+    showCauses = true
+  }
+
+  doFirst { mkdir "${buildDir}/jvmErrorLogs" }
+}
+
+task acceptanceTestBftSoak(type: Test) {
+  inputs.property "integration.date", LocalTime.now() // so it runs at every invocation
+  include '**/bftsoak/**'
+
+  useJUnitPlatform {}
+
+  dependsOn(rootProject.installDist)
+  setSystemProperties(test.getSystemProperties())
+  systemProperty 'acctests.runBesuAsProcess', 'true'
+  // Set to any time > 60 minutes to run the soak test for longer
+  // systemProperty 'acctests.soakTimeMins', '120'
+  systemProperty 'java.security.properties', "${buildDir}/resources/test/acceptanceTesting.security"
+  mustRunAfter rootProject.subprojects*.test
+  description = 'Runs BFT soak test.'
+  group = 'verification'
+
+  jvmArgs "-XX:ErrorFile=${buildDir}/jvmErrorLogs/java_err_pid%p.log"
+
+  testLogging {
+    exceptionFormat = 'full'
+    showStackTraces = true
+    showStandardStreams = true
     showExceptions = true
     showCauses = true
   }
@@ -257,33 +261,4 @@ task acceptanceTestPermissioning(type: Test) {
   }
 
   doFirst { mkdir "${buildDir}/jvmErrorLogs" }
-}
-
-// temporary solution to get a list of tests
-// Gradle >8.3 has a supported test dry-run option to achieve the same result
-task listAcceptanceTestNotPrivacy {
-  doLast {
-    def testExecutionSpec = tasks.getByName("acceptanceTestNotPrivacy") as Test
-
-    def processor = new org.gradle.api.internal.tasks.testing.TestClassProcessor() {
-        void startProcessing(org.gradle.api.internal.tasks.testing.TestResultProcessor processor) {}
-        void stop() {}
-        void stopNow() {}
-
-        void processTestClass(org.gradle.api.internal.tasks.testing.TestClassRunInfo info) {
-          def splitName = info.getTestClassName().split("\\.");
-          def testClassName = splitName[splitName.length-1];
-          if(testClassName.endsWith("Test") && !testClassName.startsWith("Abstract")) {
-            println(info.getTestClassName())
-          }
-        }
-      }
-
-    def detector = new org.gradle.api.internal.tasks.testing.detection.DefaultTestClassScanner(testExecutionSpec.getCandidateClassFiles(), testExecutionSpec.getTestFramework().getDetector()?.tap {
-      setTestClasses(testExecutionSpec.getTestClassesDirs().getFiles())
-      setTestClasspath(Collections.unmodifiableSet(testExecutionSpec.getClasspath().getFiles()))
-    }, processor)
-
-    detector.run()
-  }
 }

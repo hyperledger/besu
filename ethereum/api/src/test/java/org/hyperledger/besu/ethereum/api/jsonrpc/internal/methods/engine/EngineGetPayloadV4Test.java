@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -21,6 +21,7 @@ import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import org.hyperledger.besu.consensus.merge.PayloadWrapper;
 import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.BlobGas;
@@ -70,8 +71,8 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
   public void before() {
     super.before();
     lenient()
-        .when(mergeContext.retrieveBlockById(mockPid))
-        .thenReturn(Optional.of(mockBlockWithReceiptsAndDeposits));
+        .when(mergeContext.retrievePayloadById(mockPid))
+        .thenReturn(Optional.of(mockPayloadWithDepositRequests));
     when(protocolContext.safeConsensusContext(Mockito.any())).thenReturn(Optional.of(mergeContext));
     this.method =
         new EngineGetPayloadV4(
@@ -132,11 +133,11 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
                     List.of(blobTx),
                     Collections.emptyList(),
                     Optional.of(Collections.emptyList()),
-                    Optional.of(Collections.emptyList()),
                     Optional.of(Collections.emptyList()))),
             List.of(blobReceipt));
+    PayloadWrapper payload = new PayloadWrapper(payloadIdentifier, block);
 
-    when(mergeContext.retrieveBlockById(payloadIdentifier)).thenReturn(Optional.of(block));
+    when(mergeContext.retrievePayloadById(payloadIdentifier)).thenReturn(Optional.of(payload));
 
     final var resp = resp(RpcMethod.ENGINE_GET_PAYLOAD_V4.getMethodName(), payloadIdentifier);
     assertThat(resp).isInstanceOf(JsonRpcSuccessResponse.class);
@@ -147,8 +148,9 @@ public class EngineGetPayloadV4Test extends AbstractEngineGetPayloadTest {
               assertThat(r.getResult()).isInstanceOf(EngineGetPayloadResultV4.class);
               final EngineGetPayloadResultV4 res = (EngineGetPayloadResultV4) r.getResult();
               assertThat(res.getExecutionPayload().getWithdrawals()).isNotNull();
-              assertThat(res.getExecutionPayload().getDeposits()).isNotNull();
-              assertThat(res.getExecutionPayload().getExits()).isNotNull();
+              assertThat(res.getExecutionPayload().getDepositRequests()).isNotNull();
+              assertThat(res.getExecutionPayload().getWithdrawalRequests()).isNotNull();
+              assertThat(res.getExecutionPayload().getConsolidationRequests()).isNotNull();
               assertThat(res.getExecutionPayload().getHash())
                   .isEqualTo(header.getHash().toString());
               assertThat(res.getBlockValue()).isEqualTo(Quantity.create(0));

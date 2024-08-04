@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.blockcreation.txselection;
 
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.BLOCK_SELECTION_TIMEOUT;
+import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.INVALID_TX_EVALUATION_TOO_LONG;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.SELECTED;
 import static org.hyperledger.besu.plugin.data.TransactionSelectionResult.TX_EVALUATION_TOO_LONG;
 
@@ -23,6 +24,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.AbstractTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobPriceTransactionSelector;
+import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlobSizeTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.BlockSizeTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.MinPriorityFeePerGasTransactionSelector;
 import org.hyperledger.besu.ethereum.blockcreation.txselection.selectors.PriceTransactionSelector;
@@ -39,11 +41,12 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.AbstractBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.BlockHashProcessor;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.ethereum.processing.TransactionProcessingResult;
-import org.hyperledger.besu.ethereum.vm.BlockHashLookup;
 import org.hyperledger.besu.ethereum.vm.CachingBlockHashLookup;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+import org.hyperledger.besu.evm.operation.BlockHashOperation.BlockHashLookup;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.plugin.data.TransactionSelectionResult;
 import org.hyperledger.besu.plugin.services.tracer.BlockAwareOperationTracer;
@@ -114,6 +117,7 @@ public class BlockTransactionSelector {
       final FeeMarket feeMarket,
       final GasCalculator gasCalculator,
       final GasLimitCalculator gasLimitCalculator,
+      final BlockHashProcessor blockHashProcessor,
       final PluginTransactionSelector pluginTransactionSelector,
       final EthScheduler ethScheduler) {
     this.transactionProcessor = transactionProcessor;
@@ -127,6 +131,7 @@ public class BlockTransactionSelector {
             miningParameters,
             gasCalculator,
             gasLimitCalculator,
+            blockHashProcessor,
             processableBlockHeader,
             feeMarket,
             blobGasPrice,
@@ -143,6 +148,7 @@ public class BlockTransactionSelector {
       final BlockSelectionContext context) {
     return List.of(
         new BlockSizeTransactionSelector(context),
+        new BlobSizeTransactionSelector(context),
         new PriceTransactionSelector(context),
         new BlobPriceTransactionSelector(context),
         new MinPriorityFeePerGasTransactionSelector(context),
@@ -161,7 +167,7 @@ public class BlockTransactionSelector {
   public TransactionSelectionResults buildTransactionListForBlock() {
     LOG.atDebug()
         .setMessage("Transaction pool stats {}")
-        .addArgument(blockSelectionContext.transactionPool().logStats())
+        .addArgument(blockSelectionContext.transactionPool()::logStats)
         .log();
     timeLimitedSelection();
     LOG.atTrace()
@@ -414,11 +420,14 @@ public class BlockTransactionSelector {
 
     final var pendingTransaction = evaluationContext.getPendingTransaction();
 
-    // check if this tx took too much to evaluate, and in case remove it from the pool
+    // check if this tx took too much to evaluate, and in case it was invalid remove it from the
+    // pool, otherwise penalize it.
     final TransactionSelectionResult actualResult =
         isTimeout.get()
-            ? transactionTookTooLong(evaluationContext)
-                ? TX_EVALUATION_TOO_LONG
+            ? transactionTookTooLong(evaluationContext, selectionResult)
+                ? selectionResult.discard()
+                    ? INVALID_TX_EVALUATION_TOO_LONG
+                    : TX_EVALUATION_TOO_LONG
                 : BLOCK_SELECTION_TIMEOUT
             : selectionResult;
 
@@ -436,16 +445,21 @@ public class BlockTransactionSelector {
     return actualResult;
   }
 
-  private boolean transactionTookTooLong(final TransactionEvaluationContext evaluationContext) {
+  private boolean transactionTookTooLong(
+      final TransactionEvaluationContext evaluationContext,
+      final TransactionSelectionResult selectionResult) {
     final var evaluationTimer = evaluationContext.getEvaluationTimer();
     if (evaluationTimer.elapsed(TimeUnit.MILLISECONDS) > blockTxsSelectionMaxTime) {
       LOG.atWarn()
           .setMessage(
-              "Transaction {} is too late for inclusion, evaluated in {} that is over the max limit of {}ms"
-                  + ", removing it from the pool")
+              "Transaction {} is too late for inclusion, with result {}, evaluated in {} that is over the max limit of {}ms"
+                  + ", {}")
           .addArgument(evaluationContext.getPendingTransaction()::getHash)
+          .addArgument(selectionResult)
           .addArgument(evaluationTimer)
           .addArgument(blockTxsSelectionMaxTime)
+          .addArgument(
+              selectionResult.discard() ? "removing it from the pool" : "penalizing it in the pool")
           .log();
       return true;
     }

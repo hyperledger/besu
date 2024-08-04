@@ -167,7 +167,7 @@ public class EthEstimateGasTest {
     mockTransientProcessorResultGasEstimate(1L, false, false);
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("gasPrice cannot be used with baseFee or maxFeePerGas");
+        .hasMessageContaining("gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
   }
 
   @Test
@@ -361,7 +361,7 @@ public class EthEstimateGasTest {
   }
 
   @Test
-  public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeDisabled() {
+  public void shouldNotIgnoreSenderBalanceAccountWhenStrictModeEnabled() {
     final JsonRpcRequestContext request =
         ethEstimateGasRequest(legacyTransactionCallParameter(Wei.ZERO, true));
     mockTransientProcessorResultGasEstimate(1L, false, true);
@@ -465,20 +465,15 @@ public class EthEstimateGasTest {
 
   private JsonCallParameter legacyTransactionCallParameter(
       final Wei gasPrice, final boolean isStrict) {
-    return new JsonCallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        0L,
-        gasPrice,
-        null,
-        null,
-        Wei.ZERO,
-        Bytes.EMPTY,
-        null,
-        isStrict,
-        null,
-        null,
-        null);
+    return new JsonCallParameter.JsonCallParameterBuilder()
+        .withFrom(Address.fromHexString("0x0"))
+        .withTo(Address.fromHexString("0x0"))
+        .withGas(0L)
+        .withGasPrice(gasPrice)
+        .withValue(Wei.ZERO)
+        .withInput(Bytes.EMPTY)
+        .withStrict(isStrict)
+        .build();
   }
 
   private CallParameter modifiedLegacyTransactionCallParameter(final Wei gasPrice) {
@@ -499,20 +494,16 @@ public class EthEstimateGasTest {
   }
 
   private JsonCallParameter eip1559TransactionCallParameter(final Optional<Wei> gasPrice) {
-    return new JsonCallParameter(
-        Address.fromHexString("0x0"),
-        Address.fromHexString("0x0"),
-        null,
-        gasPrice.orElse(null),
-        Wei.fromHexString("0x10"),
-        Wei.fromHexString("0x10"),
-        Wei.ZERO,
-        Bytes.EMPTY,
-        null,
-        false,
-        null,
-        null,
-        null);
+    return new JsonCallParameter.JsonCallParameterBuilder()
+        .withFrom(Address.fromHexString("0x0"))
+        .withTo(Address.fromHexString("0x0"))
+        .withGasPrice(gasPrice.orElse(null))
+        .withMaxPriorityFeePerGas(Wei.fromHexString("0x10"))
+        .withMaxFeePerGas(Wei.fromHexString("0x10"))
+        .withValue(Wei.ZERO)
+        .withInput(Bytes.EMPTY)
+        .withStrict(false)
+        .build();
   }
 
   private CallParameter modifiedEip1559TransactionCallParameter() {

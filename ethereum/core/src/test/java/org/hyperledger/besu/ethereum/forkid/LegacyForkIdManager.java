@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 import java.util.zip.CRC32;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -30,12 +29,13 @@ public class LegacyForkIdManager {
   private final Hash genesisHash;
   private final List<Long> forks;
   private List<ForkId> forkAndHashList;
+  private CRC32 crc;
+  private Bytes genesisHashCrc;
 
   public LegacyForkIdManager(final Blockchain blockchain, final List<Long> forks) {
     this.genesisHash = blockchain.getGenesisBlock().getHash();
     // de-dupe and sanitize forks
-    this.forks =
-        forks.stream().filter(fork -> fork > 0).distinct().collect(Collectors.toUnmodifiableList());
+    this.forks = forks.stream().filter(fork -> fork > 0).distinct().toList();
     createForkIds();
   }
 
@@ -44,10 +44,10 @@ public class LegacyForkIdManager {
   }
 
   public ForkId getLatestForkId() {
-    if (forkAndHashList.size() > 0) {
-      return forkAndHashList.get(forkAndHashList.size() - 1);
+    if (!forkAndHashList.isEmpty()) {
+      return forkAndHashList.getLast();
     }
-    return null;
+    return new ForkId(genesisHashCrc, 0);
   }
 
   public static ForkId readFrom(final RLPInput in) {
@@ -59,8 +59,9 @@ public class LegacyForkIdManager {
   }
 
   private void createForkIds() {
-    final CRC32 crc = new CRC32();
+    crc = new CRC32();
     crc.update(genesisHash.toArray());
+    genesisHashCrc = getCurrentCrcHash(crc);
     final List<Bytes> forkHashes = new ArrayList<>(List.of(getCurrentCrcHash(crc)));
     for (final Long fork : forks) {
       updateCrc(crc, fork);

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -26,7 +26,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
@@ -36,9 +35,12 @@ import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.core.BlockDataGenerator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
+import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.Synchronizer;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.util.List;
 
@@ -66,6 +68,7 @@ public class EthGetBlockByNumberTest {
   private EthGetBlockByNumber method;
   @Mock private Synchronizer synchronizer;
   @Mock private WorldStateArchive worldStateArchive;
+  @Mock private ProtocolSchedule protocolSchedule;
 
   @BeforeEach
   public void setUp() {
@@ -87,7 +90,10 @@ public class EthGetBlockByNumberTest {
             latestHeader.getStateRoot(), latestHeader.getHash()))
         .thenReturn(Boolean.TRUE);
 
-    blockchainQueries = spy(new BlockchainQueries(blockchain, worldStateArchive));
+    blockchainQueries =
+        spy(
+            new BlockchainQueries(
+                protocolSchedule, blockchain, worldStateArchive, MiningParameters.newDefault()));
 
     method = new EthGetBlockByNumber(blockchainQueries, blockResult, synchronizer);
   }
@@ -140,7 +146,7 @@ public class EthGetBlockByNumberTest {
   @Test
   public void errorWhenAskingFinalizedButFinalizedIsNotPresent() {
     JsonRpcResponse resp = method.response(requestWithParams("finalized", "false"));
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(resp.getType()).isEqualTo(RpcResponseType.ERROR);
     JsonRpcErrorResponse errorResp = (JsonRpcErrorResponse) resp;
     assertThat(errorResp.getErrorType()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
   }
@@ -148,7 +154,7 @@ public class EthGetBlockByNumberTest {
   @Test
   public void errorWhenAskingSafeButSafeIsNotPresent() {
     JsonRpcResponse resp = method.response(requestWithParams("safe", "false"));
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.ERROR);
+    assertThat(resp.getType()).isEqualTo(RpcResponseType.ERROR);
     JsonRpcErrorResponse errorResp = (JsonRpcErrorResponse) resp;
     assertThat(errorResp.getErrorType()).isEqualTo(RpcErrorType.UNKNOWN_BLOCK);
   }
@@ -175,7 +181,7 @@ public class EthGetBlockByNumberTest {
 
   private void assertSuccess(final String tag, final long height) {
     JsonRpcResponse resp = method.response(requestWithParams(tag, "false"));
-    assertThat(resp.getType()).isEqualTo(JsonRpcResponseType.SUCCESS);
+    assertThat(resp.getType()).isEqualTo(RpcResponseType.SUCCESS);
     JsonRpcSuccessResponse successResp = (JsonRpcSuccessResponse) resp;
     BlockResult blockResult = (BlockResult) successResp.getResult();
     assertThat(blockResult.getHash())

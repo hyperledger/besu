@@ -39,6 +39,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       "--Xsynchronizer-downloader-header-request-size";
   private static final String DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG =
       "--Xsynchronizer-downloader-checkpoint-timeouts-permitted";
+  private static final String DOWNLOADER_CHECKPOINT_RETRIES_FLAG =
+      "--Xsynchronizer-downloader-checkpoint-RETRIES";
   private static final String DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG =
       "--Xsynchronizer-downloader-chain-segment-size";
   private static final String DOWNLOADER_PARALLELISM_FLAG =
@@ -79,12 +81,11 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private static final String SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG =
       "--Xsnapsync-synchronizer-flat-slot-healed-count-per-request";
 
-  private static final String SNAP_FLAT_DB_HEALING_ENABLED_FLAG =
-      "--Xsnapsync-synchronizer-flat-db-healing-enabled";
-
   private static final String SNAP_SERVER_ENABLED_FLAG = "--Xsnapsync-server-enabled";
 
   private static final String CHECKPOINT_POST_MERGE_FLAG = "--Xcheckpoint-post-merge-enabled";
+
+  private static final String SNAP_SYNC_BFT_ENABLED_FLAG = "--Xsnapsync-bft-enabled";
 
   /**
    * Parse block propagation range.
@@ -132,12 +133,12 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SynchronizerConfiguration.DEFAULT_DOWNLOADER_HEADER_REQUEST_SIZE;
 
   @CommandLine.Option(
-      names = DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
+      names = {DOWNLOADER_CHECKPOINT_RETRIES_FLAG, DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG},
       hidden = true,
       paramLabel = "<INTEGER>",
       description =
           "Number of tries to attempt to download checkpoints before stopping (default: ${DEFAULT-VALUE})")
-  private int downloaderCheckpointTimeoutsPermitted =
+  private int downloaderCheckpointRetries =
       SynchronizerConfiguration.DEFAULT_DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED;
 
   @CommandLine.Option(
@@ -291,17 +292,10 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
       SnapSyncConfiguration.DEFAULT_LOCAL_FLAT_STORAGE_COUNT_TO_HEAL_PER_REQUEST;
 
   @CommandLine.Option(
-      names = SNAP_FLAT_DB_HEALING_ENABLED_FLAG,
-      hidden = true,
-      paramLabel = "<Boolean>",
-      description = "Snap sync flat db healing enabled (default: ${DEFAULT-VALUE})")
-  private Boolean snapsyncFlatDbHealingEnabled =
-      SnapSyncConfiguration.DEFAULT_IS_FLAT_DB_HEALING_ENABLED;
-
-  @CommandLine.Option(
       names = SNAP_SERVER_ENABLED_FLAG,
       hidden = true,
       paramLabel = "<Boolean>",
+      arity = "0..1",
       description = "Snap sync server enabled (default: ${DEFAULT-VALUE})")
   private Boolean snapsyncServerEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SERVER_ENABLED;
 
@@ -312,16 +306,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
   private Boolean checkpointPostMergeSyncEnabled =
       SynchronizerConfiguration.DEFAULT_CHECKPOINT_POST_MERGE_ENABLED;
 
-  private SynchronizerOptions() {}
+  @CommandLine.Option(
+      names = SNAP_SYNC_BFT_ENABLED_FLAG,
+      hidden = true,
+      paramLabel = "<Boolean>",
+      arity = "0..1",
+      description = "Snap sync enabled for BFT chains (default: ${DEFAULT-VALUE})")
+  private Boolean snapsyncBftEnabled = SnapSyncConfiguration.DEFAULT_SNAP_SYNC_BFT_ENABLED;
 
-  /**
-   * Flag to know whether the flat db healing feature is enabled or disabled.
-   *
-   * @return true is the flat db healing is enabled
-   */
-  public boolean isSnapsyncFlatDbHealingEnabled() {
-    return snapsyncFlatDbHealingEnabled;
-  }
+  private SynchronizerOptions() {}
 
   /**
    * Flag to know whether the Snap sync server feature is enabled or disabled.
@@ -330,6 +323,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
    */
   public boolean isSnapsyncServerEnabled() {
     return snapsyncServerEnabled;
+  }
+
+  /**
+   * Flag to know whether the Snap sync should be enabled for a BFT chain
+   *
+   * @return true if snap sync for BFT is enabled
+   */
+  public boolean isSnapSyncBftEnabled() {
+    return snapsyncBftEnabled;
   }
 
   /**
@@ -354,13 +356,12 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getDownloaderChangeTargetThresholdByHeight();
     options.downloaderChangeTargetThresholdByTd = config.getDownloaderChangeTargetThresholdByTd();
     options.downloaderHeaderRequestSize = config.getDownloaderHeaderRequestSize();
-    options.downloaderCheckpointTimeoutsPermitted =
-        config.getDownloaderCheckpointTimeoutsPermitted();
+    options.downloaderCheckpointRetries = config.getDownloaderCheckpointRetries();
     options.downloaderChainSegmentSize = config.getDownloaderChainSegmentSize();
     options.downloaderParallelism = config.getDownloaderParallelism();
     options.transactionsParallelism = config.getTransactionsParallelism();
     options.computationParallelism = config.getComputationParallelism();
-    options.fastSyncPivotDistance = config.getFastSyncPivotDistance();
+    options.fastSyncPivotDistance = config.getSyncPivotDistance();
     options.fastSyncFullValidationRate = config.getFastSyncFullValidationRate();
     options.worldStateHashCountPerRequest = config.getWorldStateHashCountPerRequest();
     options.worldStateRequestParallelism = config.getWorldStateRequestParallelism();
@@ -381,9 +382,9 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
         config.getSnapSyncConfiguration().getLocalFlatAccountCountToHealPerRequest();
     options.snapsyncFlatStorageHealedCountPerRequest =
         config.getSnapSyncConfiguration().getLocalFlatStorageCountToHealPerRequest();
-    options.snapsyncFlatDbHealingEnabled =
-        config.getSnapSyncConfiguration().isFlatDbHealingEnabled();
     options.checkpointPostMergeSyncEnabled = config.isCheckpointPostMergeEnabled();
+    options.snapsyncServerEnabled = config.getSnapSyncConfiguration().isSnapServerEnabled();
+    options.snapsyncBftEnabled = config.getSnapSyncConfiguration().isSnapSyncBftEnabled();
     return options;
   }
 
@@ -394,12 +395,12 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
     builder.downloaderChangeTargetThresholdByHeight(downloaderChangeTargetThresholdByHeight);
     builder.downloaderChangeTargetThresholdByTd(downloaderChangeTargetThresholdByTd);
     builder.downloaderHeadersRequestSize(downloaderHeaderRequestSize);
-    builder.downloaderCheckpointTimeoutsPermitted(downloaderCheckpointTimeoutsPermitted);
+    builder.downloaderCheckpointRetries(downloaderCheckpointRetries);
     builder.downloaderChainSegmentSize(downloaderChainSegmentSize);
     builder.downloaderParallelism(downloaderParallelism);
     builder.transactionsParallelism(transactionsParallelism);
     builder.computationParallelism(computationParallelism);
-    builder.fastSyncPivotDistance(fastSyncPivotDistance);
+    builder.syncPivotDistance(fastSyncPivotDistance);
     builder.fastSyncFullValidationRate(fastSyncFullValidationRate);
     builder.worldStateHashCountPerRequest(worldStateHashCountPerRequest);
     builder.worldStateRequestParallelism(worldStateRequestParallelism);
@@ -415,8 +416,8 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             .trienodeCountPerRequest(snapsyncTrieNodeCountPerRequest)
             .localFlatAccountCountToHealPerRequest(snapsyncFlatAccountHealedCountPerRequest)
             .localFlatStorageCountToHealPerRequest(snapsyncFlatStorageHealedCountPerRequest)
-            .isFlatDbHealingEnabled(snapsyncFlatDbHealingEnabled)
             .isSnapServerEnabled(snapsyncServerEnabled)
+            .isSnapSyncBftEnabled(snapsyncBftEnabled)
             .build());
     builder.checkpointPostMergeEnabled(checkpointPostMergeSyncEnabled);
 
@@ -436,7 +437,7 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             DOWNLOADER_HEADER_REQUEST_SIZE_FLAG,
             OptionParser.format(downloaderHeaderRequestSize),
             DOWNLOADER_CHECKPOINT_TIMEOUTS_PERMITTED_FLAG,
-            OptionParser.format(downloaderCheckpointTimeoutsPermitted),
+            OptionParser.format(downloaderCheckpointRetries),
             DOWNLOADER_CHAIN_SEGMENT_SIZE_FLAG,
             OptionParser.format(downloaderChainSegmentSize),
             DOWNLOADER_PARALLELISM_FLAG,
@@ -468,17 +469,15 @@ public class SynchronizerOptions implements CLIOptions<SynchronizerConfiguration
             SNAP_BYTECODE_COUNT_PER_REQUEST_FLAG,
             OptionParser.format(snapsyncBytecodeCountPerRequest),
             SNAP_TRIENODE_COUNT_PER_REQUEST_FLAG,
-            OptionParser.format(snapsyncTrieNodeCountPerRequest));
-    if (isSnapsyncFlatDbHealingEnabled()) {
-      value.addAll(
-          Arrays.asList(
-              SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
-              OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
-              SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
-              OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
-              SNAP_SERVER_ENABLED_FLAG,
-              OptionParser.format(snapsyncServerEnabled)));
-    }
+            OptionParser.format(snapsyncTrieNodeCountPerRequest),
+            SNAP_FLAT_ACCOUNT_HEALED_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncFlatAccountHealedCountPerRequest),
+            SNAP_FLAT_STORAGE_HEALED_COUNT_PER_REQUEST_FLAG,
+            OptionParser.format(snapsyncFlatStorageHealedCountPerRequest),
+            SNAP_SERVER_ENABLED_FLAG,
+            OptionParser.format(snapsyncServerEnabled),
+            SNAP_SYNC_BFT_ENABLED_FLAG,
+            OptionParser.format(snapsyncBftEnabled));
     return value;
   }
 }

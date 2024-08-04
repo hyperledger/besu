@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -43,7 +43,7 @@ import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
 import static org.mockito.quality.Strictness.LENIENT;
 
-import org.hyperledger.besu.config.StubGenesisConfigOptions;
+import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.crypto.KeyPair;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
@@ -91,6 +91,7 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.TransactionPoolValidatorService;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidator;
 import org.hyperledger.besu.plugin.services.txvalidator.PluginTransactionPoolValidatorFactory;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 import org.hyperledger.besu.util.number.Percentage;
 
 import java.math.BigInteger;
@@ -131,6 +132,8 @@ public abstract class AbstractTransactionPoolTest {
       SignatureAlgorithmFactory.getInstance().generateKeyPair();
   protected static final Wei BASE_FEE_FLOOR = Wei.of(7L);
   protected static final Wei DEFAULT_MIN_GAS_PRICE = Wei.of(50L);
+
+  protected final EthScheduler ethScheduler = new DeterministicEthScheduler();
 
   @Mock(answer = Answers.RETURNS_DEEP_STUBS)
   protected TransactionValidatorFactory transactionValidatorFactory;
@@ -188,19 +191,24 @@ public abstract class AbstractTransactionPoolTest {
   protected abstract ExecutionContextTestFixture createExecutionContextTestFixture();
 
   protected static ExecutionContextTestFixture createExecutionContextTestFixtureBaseFeeMarket() {
+    final var genesisConfigFile = GenesisConfigFile.fromResource("/txpool-test-genesis.json");
     final ProtocolSchedule protocolSchedule =
         new ProtocolScheduleBuilder(
-                new StubGenesisConfigOptions().londonBlock(0L).baseFeePerGas(10L),
+                genesisConfigFile.getConfigOptions(),
                 BigInteger.valueOf(1),
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 new PrivacyParameters(),
                 false,
                 EvmConfiguration.DEFAULT,
                 MiningParameters.MINING_DISABLED,
-                new BadBlockManager())
+                new BadBlockManager(),
+                false,
+                new NoOpMetricsSystem())
             .createProtocolSchedule();
     final ExecutionContextTestFixture executionContextTestFixture =
-        ExecutionContextTestFixture.builder().protocolSchedule(protocolSchedule).build();
+        ExecutionContextTestFixture.builder(genesisConfigFile)
+            .protocolSchedule(protocolSchedule)
+            .build();
 
     final Block block =
         new Block(
@@ -242,7 +250,7 @@ public abstract class AbstractTransactionPoolTest {
     doNothing().when(ethScheduler).scheduleSyncWorkerTask(syncTaskCapture.capture());
     doReturn(ethScheduler).when(ethContext).getScheduler();
 
-    peerTransactionTracker = new PeerTransactionTracker();
+    peerTransactionTracker = new PeerTransactionTracker(ethContext.getEthPeers());
     transactionBroadcaster =
         spy(
             new TransactionBroadcaster(

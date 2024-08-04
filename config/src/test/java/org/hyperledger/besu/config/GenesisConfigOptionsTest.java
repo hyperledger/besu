@@ -194,9 +194,23 @@ class GenesisConfigOptionsTest {
   }
 
   @Test
+  void shouldGetCancunEOFTime() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("cancunEOFTime", 1670470142));
+    assertThat(config.getCancunEOFTime()).hasValue(1670470142);
+  }
+
+  @Test
   void shouldGetPragueTime() {
     final GenesisConfigOptions config = fromConfigOptions(singletonMap("pragueTime", 1670470143));
     assertThat(config.getPragueTime()).hasValue(1670470143);
+  }
+
+  @Test
+  void shouldGetPragueEOFTime() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(singletonMap("pragueEOFTime", 1670470143));
+    assertThat(config.getPragueEOFTime()).hasValue(1670470143);
   }
 
   @Test
@@ -231,7 +245,9 @@ class GenesisConfigOptionsTest {
     assertThat(config.getMergeNetSplitBlockNumber()).isEmpty();
     assertThat(config.getShanghaiTime()).isEmpty();
     assertThat(config.getCancunTime()).isEmpty();
+    assertThat(config.getCancunEOFTime()).isEmpty();
     assertThat(config.getPragueTime()).isEmpty();
+    assertThat(config.getPragueEOFTime()).isEmpty();
     assertThat(config.getFutureEipsTime()).isEmpty();
     assertThat(config.getExperimentalEipsTime()).isEmpty();
   }
@@ -314,6 +330,32 @@ class GenesisConfigOptionsTest {
     final GenesisConfigOptions config = fromConfigOptions(Map.of("fixedbasefee", true));
 
     assertThat(config.asMap()).containsOnlyKeys("fixedBaseFee").containsValue(true);
+  }
+
+  @Test
+  void shouldGetWithdrawalRequestContractAddress() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(
+            singletonMap(
+                "withdrawalRequestContractAddress", "0x00000000219ab540356cbb839cbe05303d7705fa"));
+    assertThat(config.getWithdrawalRequestContractAddress())
+        .hasValue(Address.fromHexString("0x00000000219ab540356cbb839cbe05303d7705fa"));
+  }
+
+  @Test
+  void shouldNotHaveWithdrawalRequestContractAddressWhenEmpty() {
+    final GenesisConfigOptions config = fromConfigOptions(emptyMap());
+    assertThat(config.getWithdrawalRequestContractAddress()).isEmpty();
+  }
+
+  @Test
+  void asMapIncludesWithdrawalRequestContractAddress() {
+    final GenesisConfigOptions config =
+        fromConfigOptions(Map.of("withdrawalRequestContractAddress", "0x0"));
+
+    assertThat(config.asMap())
+        .containsOnlyKeys("withdrawalRequestContractAddress")
+        .containsValue(Address.ZERO);
   }
 
   @Test

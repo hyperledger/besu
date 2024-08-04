@@ -167,6 +167,18 @@ public class JsonRpcHttpServiceCorsTest {
   }
 
   @Test
+  public void requestWithAnyOriginAndEmptyActualOriginShouldSucceed() throws Exception {
+    jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("*");
+
+    final Request request =
+        new Request.Builder().url(jsonRpcHttpService.url()).header("Origin", "").build();
+
+    try (final Response response = client.newCall(request).execute()) {
+      assertThat(response.isSuccessful()).isTrue();
+    }
+  }
+
+  @Test
   public void requestFromBrowserExtensionShouldSucceedWhenCorsIsStar() throws Exception {
     jsonRpcHttpService = createJsonRpcHttpServiceWithAllowedDomains("*");
 

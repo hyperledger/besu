@@ -11,7 +11,6 @@
  * specific language governing permissions and limitations under the License.
  *
  * SPDX-License-Identifier: Apache-2.0
- *
  */
 package org.hyperledger.besu.evm.gascalculator;
 
@@ -33,6 +32,9 @@ public class ByzantiumGasCalculator extends SpuriousDragonGasCalculator {
 
   /** The constant MAX_FIRST_EXPONENT_BYTES. */
   public static final int MAX_FIRST_EXPONENT_BYTES = 32;
+
+  /** Default constructor. */
+  public ByzantiumGasCalculator() {}
 
   @Override
   public long modExpGasCost(final Bytes input) {

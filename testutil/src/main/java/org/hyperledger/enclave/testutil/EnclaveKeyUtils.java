@@ -34,6 +34,9 @@ import org.slf4j.LoggerFactory;
 public class EnclaveKeyUtils {
   private static final Logger LOG = LoggerFactory.getLogger(EnclaveKeyUtils.class);
 
+  /** Default constructor */
+  private EnclaveKeyUtils() {}
+
   /**
    * Utility method to load the enclave public key. Possible input values are the names of the *.pub
    * files in the resources folder.

@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -40,14 +40,18 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetBlockProcessor;
 import org.hyperledger.besu.ethereum.mainnet.MainnetTransactionProcessor;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
-import org.hyperledger.besu.ethereum.mainnet.ValidatorExitsValidator;
+import org.hyperledger.besu.ethereum.mainnet.blockhash.FrontierBlockHashProcessor;
+import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
+import org.hyperledger.besu.ethereum.mainnet.requests.RequestsValidatorCoordinator;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiWorldState;
+import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.exception.StorageException;
@@ -78,6 +82,8 @@ class BlockImportExceptionHandlingTest {
   private final BlockBodyValidator blockBodyValidator = mock(BlockBodyValidator.class);
   private final ProtocolContext protocolContext = mock(ProtocolContext.class);
   private final ProtocolSpec protocolSpec = mock(ProtocolSpec.class);
+  private final GasCalculator gasCalculator = mock(GasCalculator.class);
+  private final FeeMarket feeMarket = mock(FeeMarket.class);
   protected final MutableBlockchain blockchain = mock(MutableBlockchain.class);
   private final StorageProvider storageProvider = new InMemoryKeyValueStorageProvider();
 
@@ -99,7 +105,8 @@ class BlockImportExceptionHandlingTest {
               (BonsaiWorldStateProvider) worldStateArchive,
               (BonsaiWorldStateKeyValueStorage)
                   worldStateStorageCoordinator.worldStateKeyValueStorage(),
-              EvmConfiguration.DEFAULT));
+              EvmConfiguration.DEFAULT,
+              new DiffBasedWorldStateConfig()));
 
   private final BadBlockManager badBlockManager = new BadBlockManager();
 
@@ -110,8 +117,11 @@ class BlockImportExceptionHandlingTest {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
     when(protocolContext.getWorldStateArchive()).thenReturn(worldStateArchive);
     when(protocolSchedule.getByBlockHeader(any())).thenReturn(protocolSpec);
-    when(protocolSpec.getExitsValidator())
-        .thenReturn(new ValidatorExitsValidator.ProhibitedExits());
+    when(protocolSpec.getRequestsValidatorCoordinator())
+        .thenReturn(RequestsValidatorCoordinator.empty());
+    when(protocolSpec.getBlockHashProcessor()).thenReturn(new FrontierBlockHashProcessor());
+    when(protocolSpec.getGasCalculator()).thenReturn(gasCalculator);
+    when(protocolSpec.getFeeMarket()).thenReturn(feeMarket);
     mainnetBlockValidator =
         new MainnetBlockValidator(
             blockHeaderValidator, blockBodyValidator, blockProcessor, badBlockManager);
@@ -144,6 +154,7 @@ class BlockImportExceptionHandlingTest {
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(goodBlock),
+            any(),
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))
@@ -180,6 +191,7 @@ class BlockImportExceptionHandlingTest {
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(goodBlock),
+            any(),
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))
@@ -248,6 +260,7 @@ class BlockImportExceptionHandlingTest {
     when(blockBodyValidator.validateBody(
             eq(protocolContext),
             eq(goodBlock),
+            any(),
             any(),
             any(),
             eq(HeaderValidationMode.DETACHED_ONLY)))

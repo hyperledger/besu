@@ -20,10 +20,10 @@ import org.hyperledger.besu.ethereum.api.handlers.IsAliveHandler;
 import org.hyperledger.besu.ethereum.api.jsonrpc.execution.JsonRpcExecutor;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponseType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
+import org.hyperledger.besu.plugin.services.rpc.RpcResponseType;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -151,7 +151,7 @@ public class WebSocketMessageHandler {
                         jsonRpcBatchResponse.stream()
                             .filter(
                                 jsonRpcResponse ->
-                                    jsonRpcResponse.getType() != JsonRpcResponseType.NONE)
+                                    jsonRpcResponse.getType() != RpcResponseType.NONE)
                             .toArray(JsonRpcResponse[]::new);
                     replyToClient(websocket, completed);
                   })

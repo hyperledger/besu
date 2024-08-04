@@ -23,6 +23,9 @@ import java.security.SecureRandom;
 public class SecureRandomProvider {
   private static final SecureRandom publicSecureRandom = secureRandom();
 
+  /** Default constructor. */
+  private SecureRandomProvider() {}
+
   /**
    * Returns a shared instance of secure random intended to be used where the value is used publicly
    *

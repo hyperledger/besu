@@ -206,7 +206,7 @@ public class PrivateTransactionLocatorTest {
   }
 
   /*
-   Overrride enclave so it returns 404 when searching for a single tx (first call) and when
+   Override enclave so it returns 404 when searching for a single tx (first call) and when
    searching for the add blob (second call)
   */
   private void mockEnlaveNoSingleTxOrAddBlob() {

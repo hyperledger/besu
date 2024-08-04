@@ -29,6 +29,7 @@ nat-method="NONE"
 Xnat-kube-service-name="besu"
 Xnat-method-fallback-enabled=true
 discovery-enabled=false
+poa-discovery-retry-bootnodes=true
 bootnodes=[
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
   "enode://6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0@192.168.0.1:4567",
@@ -51,6 +52,7 @@ engine-jwt-disabled=true
 engine-jwt-secret="/tmp/jwt.hex"
 required-blocks=["8675309=123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"]
 discovery-dns-url="enrtree://AM5FCQLWIZX2QFPNJAP7VUERCCRNGRHWZG3YYHIUV7BVDQ5FDPRT2@nodes.example.org"
+net-restrict=["none"]
 
 # chain
 network="MAINNET"
@@ -171,6 +173,7 @@ privacy-multi-tenancy-enabled=true
 privacy-marker-transaction-signing-key-file="./signerKey"
 privacy-enable-database-migration=false
 privacy-flexible-groups-enabled=false
+privacy-nonce-always-increments=false
 
 # Transaction Pool
 tx-pool="layered"
@@ -213,11 +216,15 @@ ethstats-cacert-file="./root.cert"
 # Data storage
 data-storage-format="BONSAI"
 bonsai-historical-block-limit=512
+bonsai-limit-trie-logs-enabled=true
+bonsai-trie-logs-pruning-window-size=100_000
 receipt-compaction-enabled=true
 
 # feature flags
 Xsecp256k1-native-enabled=false
 Xaltbn128-native-enabled=false
+Xsnapsync-server-enabled=true
+Xbonsai-full-flat-db-enabled=true
 
 # compatibility flags
 compatibility-eth64-forkid-enabled=false

@@ -63,6 +63,9 @@ public interface BesuPlugin {
    */
   void start();
 
+  /** Hook to execute plugin setup code after external services */
+  default void afterExternalServicePostMainLoop() {}
+
   /**
    * Called when the plugin is being reloaded. This method will be called through a dedicated JSON
    * RPC endpoint. If not overridden this method does nothing for convenience. The plugin should
@@ -102,6 +105,6 @@ public interface BesuPlugin {
         Optional.ofNullable(pluginPackage.getImplementationVersion())
             .filter(version -> !version.isBlank())
             .orElse("<Unknown Version>");
-    return implTitle + "/v" + implVersion;
+    return implTitle + "/" + implVersion;
   }
 }

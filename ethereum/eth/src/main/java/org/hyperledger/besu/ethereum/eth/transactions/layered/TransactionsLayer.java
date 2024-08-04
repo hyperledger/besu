@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu Contributors.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -41,16 +41,31 @@ public interface TransactionsLayer {
 
   boolean contains(Transaction transaction);
 
-  List<PendingTransaction> getAll();
-
   TransactionAddedResult add(PendingTransaction pendingTransaction, int gap);
 
   void remove(PendingTransaction pendingTransaction, RemovalReason reason);
+
+  /**
+   * Penalize a pending transaction. Penalization could be applied to notify the txpool that this
+   * pending tx has some temporary issues that prevent it from being included in a block, and so it
+   * should be de-prioritized in some ways, so it will be re-evaluated only after non penalized
+   * pending txs. For example: if during the evaluation for block inclusion, the pending tx is
+   * excluded because the sender has not enough balance to send it, this could be a transient issue
+   * since later the sender could receive some funds, but in any case we penalize the pending tx, so
+   * it is pushed down in the order of prioritized pending txs.
+   *
+   * @param penalizedTransaction the tx to penalize
+   */
+  void penalize(PendingTransaction penalizedTransaction);
 
   void blockAdded(
       FeeMarket feeMarket,
       BlockHeader blockHeader,
       final Map<Address, Long> maxConfirmedNonceBySender);
+
+  List<PendingTransaction> getAll();
+
+  List<PendingTransaction> getAllFor(Address sender);
 
   List<Transaction> getAllLocal();
 
@@ -92,8 +107,6 @@ public interface TransactionsLayer {
   String logStats();
 
   String logSender(Address sender);
-
-  List<PendingTransaction> getAllFor(Address sender);
 
   enum RemovalReason {
     CONFIRMED,

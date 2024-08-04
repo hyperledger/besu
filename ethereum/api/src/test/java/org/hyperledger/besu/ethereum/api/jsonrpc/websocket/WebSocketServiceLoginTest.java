@@ -1,5 +1,5 @@
 /*
- * Copyright Hyperledger Besu contributors
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -176,7 +176,9 @@ public class WebSocketServiceLoginTest {
                     MainnetProtocolSchedule.fromConfig(
                         genesisConfigOptions,
                         MiningParameters.MINING_DISABLED,
-                        new BadBlockManager()),
+                        new BadBlockManager(),
+                        false,
+                        new NoOpMetricsSystem()),
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),

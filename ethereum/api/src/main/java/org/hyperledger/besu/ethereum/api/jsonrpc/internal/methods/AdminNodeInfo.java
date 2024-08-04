@@ -23,6 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSucces
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.chain.ChainHead;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.network.P2PNetwork;
 import org.hyperledger.besu.nat.NatService;
 import org.hyperledger.besu.nat.core.domain.NatPortMapping;
@@ -47,6 +48,7 @@ public class AdminNodeInfo implements JsonRpcMethod {
   private final P2PNetwork peerNetwork;
   private final BlockchainQueries blockchainQueries;
   private final NatService natService;
+  private final ProtocolSchedule protocolSchedule;
 
   public AdminNodeInfo(
       final String clientVersion,
@@ -54,13 +56,15 @@ public class AdminNodeInfo implements JsonRpcMethod {
       final GenesisConfigOptions genesisConfigOptions,
       final P2PNetwork peerNetwork,
       final BlockchainQueries blockchainQueries,
-      final NatService natService) {
+      final NatService natService,
+      final ProtocolSchedule protocolSchedule) {
     this.peerNetwork = peerNetwork;
     this.clientVersion = clientVersion;
     this.genesisConfigOptions = genesisConfigOptions;
     this.blockchainQueries = blockchainQueries;
     this.networkId = networkId;
     this.natService = natService;
+    this.protocolSchedule = protocolSchedule;
   }
 
   @Override
@@ -125,6 +129,9 @@ public class AdminNodeInfo implements JsonRpcMethod {
                 chainHead.getHash().toString(),
                 "network",
                 networkId)));
+
+    response.put(
+        "activeFork", protocolSchedule.getByBlockHeader(chainHead.getBlockHeader()).getName());
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), response);
   }
