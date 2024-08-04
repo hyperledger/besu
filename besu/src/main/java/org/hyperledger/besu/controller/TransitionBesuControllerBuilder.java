@@ -21,7 +21,6 @@ import org.hyperledger.besu.consensus.merge.TransitionBackwardSyncContext;
 import org.hyperledger.besu.consensus.merge.TransitionContext;
 import org.hyperledger.besu.consensus.merge.TransitionProtocolSchedule;
 import org.hyperledger.besu.consensus.merge.blockcreation.TransitionCoordinator;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -351,13 +350,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   }
 
   @Override
-  public BesuControllerBuilder pkiBlockCreationConfiguration(
-      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
-    super.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
-    return propagateConfig(z -> z.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration));
-  }
-
-  @Override
   public BesuControllerBuilder dataDirectory(final Path dataDirectory) {
     super.dataDirectory(dataDirectory);
     return propagateConfig(z -> z.dataDirectory(dataDirectory));
@@ -380,6 +372,13 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
   public BesuControllerBuilder isRevertReasonEnabled(final boolean isRevertReasonEnabled) {
     super.isRevertReasonEnabled(isRevertReasonEnabled);
     return propagateConfig(z -> z.isRevertReasonEnabled(isRevertReasonEnabled));
+  }
+
+  @Override
+  public BesuControllerBuilder isParallelTxProcessingEnabled(
+      final boolean isParallelTxProcessingEnabled) {
+    super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
+    return propagateConfig(z -> z.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
   }
 
   @Override

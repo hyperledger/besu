@@ -22,14 +22,18 @@ public class MainnetRequestsValidator {
       final Address depositContractAddress) {
     return new RequestsValidatorCoordinator.Builder()
         .addValidator(RequestType.WITHDRAWAL, new WithdrawalRequestValidator())
+        .addValidator(RequestType.CONSOLIDATION, new ConsolidationRequestValidator())
         .addValidator(RequestType.DEPOSIT, new DepositRequestValidator(depositContractAddress))
         .build();
   }
 
   public static RequestProcessorCoordinator pragueRequestsProcessors(
-      final Address depositContractAddress) {
+      final Address withdrawalRequestContractAddress, final Address depositContractAddress) {
     return new RequestProcessorCoordinator.Builder()
-        .addProcessor(RequestType.WITHDRAWAL, new WithdrawalRequestProcessor())
+        .addProcessor(
+            RequestType.WITHDRAWAL,
+            new WithdrawalRequestProcessor(withdrawalRequestContractAddress))
+        .addProcessor(RequestType.CONSOLIDATION, new ConsolidationRequestProcessor())
         .addProcessor(RequestType.DEPOSIT, new DepositRequestProcessor(depositContractAddress))
         .build();
   }

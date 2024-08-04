@@ -23,7 +23,6 @@ import org.hyperledger.besu.consensus.common.ForksSchedule;
 import org.hyperledger.besu.consensus.common.MigratingContext;
 import org.hyperledger.besu.consensus.common.MigratingMiningCoordinator;
 import org.hyperledger.besu.consensus.common.MigratingProtocolContext;
-import org.hyperledger.besu.consensus.qbft.pki.PkiBlockCreationConfiguration;
 import org.hyperledger.besu.cryptoservices.NodeKey;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ConsensusContext;
@@ -331,15 +330,6 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
   }
 
   @Override
-  public BesuControllerBuilder pkiBlockCreationConfiguration(
-      final Optional<PkiBlockCreationConfiguration> pkiBlockCreationConfiguration) {
-    besuControllerBuilderSchedule
-        .values()
-        .forEach(b -> b.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration));
-    return super.pkiBlockCreationConfiguration(pkiBlockCreationConfiguration);
-  }
-
-  @Override
   public BesuControllerBuilder dataDirectory(final Path dataDirectory) {
     besuControllerBuilderSchedule.values().forEach(b -> b.dataDirectory(dataDirectory));
     return super.dataDirectory(dataDirectory);
@@ -366,6 +356,15 @@ public class ConsensusScheduleBesuControllerBuilder extends BesuControllerBuilde
         .values()
         .forEach(b -> b.isRevertReasonEnabled(isRevertReasonEnabled));
     return super.isRevertReasonEnabled(isRevertReasonEnabled);
+  }
+
+  @Override
+  public BesuControllerBuilder isParallelTxProcessingEnabled(
+      final boolean isParallelTxProcessingEnabled) {
+    besuControllerBuilderSchedule
+        .values()
+        .forEach(b -> b.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled));
+    return super.isParallelTxProcessingEnabled(isParallelTxProcessingEnabled);
   }
 
   @Override

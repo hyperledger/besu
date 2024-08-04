@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.eth.sync;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -37,6 +38,7 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import java.util.stream.Stream;
 
 import org.assertj.core.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtensionContext;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
@@ -57,7 +59,9 @@ public class ChainHeadTrackerTest {
           false,
           EvmConfiguration.DEFAULT,
           MiningParameters.MINING_DISABLED,
-          new BadBlockManager());
+          new BadBlockManager(),
+          false,
+          new NoOpMetricsSystem());
 
   private final TrailingPeerLimiter trailingPeerLimiter = mock(TrailingPeerLimiter.class);
 
@@ -149,5 +153,12 @@ public class ChainHeadTrackerTest {
 
   private ChainState chainHeadState() {
     return respondingPeer.getEthPeer().chainState();
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

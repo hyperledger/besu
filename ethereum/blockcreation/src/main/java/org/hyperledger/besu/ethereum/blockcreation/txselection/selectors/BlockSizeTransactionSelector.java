@@ -89,15 +89,8 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
   private boolean transactionTooLargeForBlock(
       final Transaction transaction,
       final TransactionSelectionResults transactionSelectionResults) {
-    final long blobGasUsed = context.gasCalculator().blobGasCost(transaction.getBlobCount());
 
-    if (blobGasUsed
-        > context.gasLimitCalculator().currentBlobGasLimit()
-            - transactionSelectionResults.getCumulativeBlobGasUsed()) {
-      return true;
-    }
-
-    return transaction.getGasLimit() + blobGasUsed
+    return transaction.getGasLimit()
         > context.processableBlockHeader().getGasLimit()
             - transactionSelectionResults.getCumulativeGasUsed();
   }

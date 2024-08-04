@@ -44,7 +44,6 @@ import org.hyperledger.besu.consensus.common.bft.statemachine.BftFinalState;
 import org.hyperledger.besu.consensus.common.bft.statemachine.FutureMessageBuffer;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.consensus.common.validator.blockbased.BlockValidatorProvider;
-import org.hyperledger.besu.consensus.qbft.QbftContext;
 import org.hyperledger.besu.consensus.qbft.QbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.QbftForksSchedulesFactory;
 import org.hyperledger.besu.consensus.qbft.QbftGossip;
@@ -52,7 +51,6 @@ import org.hyperledger.besu.consensus.qbft.QbftProtocolScheduleBuilder;
 import org.hyperledger.besu.consensus.qbft.blockcreation.QbftBlockCreatorFactory;
 import org.hyperledger.besu.consensus.qbft.jsonrpc.QbftJsonRpcMethods;
 import org.hyperledger.besu.consensus.qbft.payload.MessageFactory;
-import org.hyperledger.besu.consensus.qbft.pki.PkiQbftExtraDataCodec;
 import org.hyperledger.besu.consensus.qbft.protocol.Istanbul100SubProtocol;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftBlockHeightManagerFactory;
 import org.hyperledger.besu.consensus.qbft.statemachine.QbftController;
@@ -113,11 +111,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   protected Supplier<BftExtraDataCodec> bftExtraDataCodec() {
     return Suppliers.memoize(
         () -> {
-          if (pkiBlockCreationConfiguration.isPresent()) {
-            return new PkiQbftExtraDataCodec();
-          } else {
-            return new QbftExtraDataCodec();
-          }
+          return new QbftExtraDataCodec();
         });
   }
 
@@ -341,7 +335,9 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         bftExtraDataCodec().get(),
         evmConfiguration,
         miningParameters,
-        badBlockManager);
+        badBlockManager,
+        isParallelTxProcessingEnabled,
+        metricsSystem);
   }
 
   @Override
@@ -399,8 +395,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         new ForkingValidatorProvider(
             blockchain, qbftForksSchedule, blockValidatorProvider, transactionValidatorProvider);
 
-    return new QbftContext(
-        validatorProvider, epochManager, bftBlockInterface().get(), pkiBlockCreationConfiguration);
+    return new BftContext(validatorProvider, epochManager, bftBlockInterface().get());
   }
 
   private BftValidatorOverrides convertBftForks(final List<QbftFork> bftForks) {

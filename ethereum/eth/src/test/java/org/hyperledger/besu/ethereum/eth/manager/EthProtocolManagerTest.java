@@ -64,6 +64,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.BlobCache;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolFactory;
+import org.hyperledger.besu.ethereum.forkid.ForkId;
 import org.hyperledger.besu.ethereum.forkid.ForkIdManager;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.PeerConnection;
@@ -93,6 +94,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+import java.util.zip.CRC32;
 
 import com.google.common.collect.Lists;
 import org.apache.tuweni.bytes.Bytes;
@@ -1136,7 +1138,7 @@ public final class EthProtocolManagerTest {
   }
 
   @Test
-  public void forkIdForChainHeadMayBeNull() {
+  public void forkIdForChainHeadLegacyNoForksNotEmpty() {
     final EthScheduler ethScheduler = mock(EthScheduler.class);
     try (final EthProtocolManager ethManager =
         EthProtocolManagerTestUtil.create(
@@ -1149,7 +1151,13 @@ public final class EthProtocolManagerTest {
             new ForkIdManager(
                 blockchain, Collections.emptyList(), Collections.emptyList(), true))) {
 
-      assertThat(ethManager.getForkIdAsBytesList()).isEmpty();
+      assertThat(ethManager.getForkIdAsBytesList()).isNotEmpty();
+      final CRC32 genesisHashCRC = new CRC32();
+      genesisHashCRC.update(blockchain.getGenesisBlock().getHash().toArray());
+      assertThat(ethManager.getForkIdAsBytesList())
+          .isEqualTo(
+              new ForkId(Bytes.ofUnsignedInt(genesisHashCRC.getValue()), 0L)
+                  .getForkIdAsBytesList());
     }
   }
 

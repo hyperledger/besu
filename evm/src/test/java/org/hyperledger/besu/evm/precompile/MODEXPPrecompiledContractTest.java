@@ -22,6 +22,7 @@ import org.hyperledger.besu.evm.gascalculator.BerlinGasCalculator;
 import org.hyperledger.besu.evm.gascalculator.ByzantiumGasCalculator;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
@@ -180,5 +181,12 @@ class MODEXPPrecompiledContractTest {
     final Bytes input = Bytes.fromHexString(inputString);
     assertThat(byzantiumContract.gasRequirement(input)).isEqualTo(eip198Gas);
     assertThat(berlinContract.gasRequirement(input)).isEqualTo(eip2565Gas);
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }
