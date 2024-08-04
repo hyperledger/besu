@@ -13,6 +13,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
+apply plugin: 'application'
 apply plugin: 'java-library'
 apply plugin: 'jacoco'
 
@@ -29,33 +30,81 @@ jar {
 }
 
 dependencies {
+  implementation project(':besu')
   implementation project(':crypto:algorithms')
   implementation project(':datatypes')
   implementation project(':ethereum:referencetests')
   implementation project(':evm')
+  implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.gitlab.javafuzz:core'
+  implementation 'info.picocli:picocli'
   implementation 'io.tmio:tuweni-bytes'
   implementation 'org.jacoco:org.jacoco.agent'
   implementation 'org.jacoco:org.jacoco.core'
 }
 
+application {
+  applicationName = 'BesuFuzz'
+  mainClass = 'org.hyperledger.besu.testfuzz.BesuFuzz'
+  applicationDefaultJvmArgs = [
+    '-javaagent:$APP_HOME/lib/jacocoagent.jar'
+  ]
+}
 
-tasks.register("fuzzeof", JavaExec) {
-  def srcFiles = '../ethereum/referencetests/src/reference-test/external-resources/EOFTests'
-  def corpusPath = "$buildDir/generated/corpus"
-  inputs.dir(srcFiles)
-  outputs.dir(corpusPath)
-  dependsOn(testClasses)
-  mainClass = 'org.hyperledger.besu.testfuzz.FuzzEOFContainer'
-  classpath = sourceSets.test.runtimeClasspath
+tasks.register("fuzzAll", JavaExec) {
+  classpath = sourceSets.main.runtimeClasspath
+  mainClass = 'org.hyperledger.besu.testfuzz.BesuFuzz'
   args = [
-    corpusPath,
-    srcFiles
+    "eof-container",
+    "--tests-dir=${projectDir}/../ethereum/referencetests/src/reference-test/external-resources/EOFTests",
+    "--corpus-dir=${buildDir}/generated/corpus",
+    "--client=evm1=evmone-eofparse",
+    "--client=revm=revme bytecode",
+    "--client=geth=eofdump eofparser",
+    "--client=etjs=tsx ../../../ethereumjs/ethereumjs-monorepo/packages/evm/scripts/eofContainerValidator.ts"
   ]
 }
 
 jacoco {
-  applyTo fuzzeof
+  applyTo run
+  applyTo fuzzAll
+}
+
+// Copies jacoco into the lib directory
+tasks.register("copyJacoco", Copy) {
+  // The jacocoagent.jar is embedded within the jar
+  from zipTree(configurations.jacocoAgent.singleFile).filter { it.name == 'jacocoagent.jar' }.singleFile
+  into layout.buildDirectory.dir("install/${application.applicationName}/lib")
+  doLast {
+    println "yohoho"
+  }
+}
+
+installDist.finalizedBy copyJacoco
+
+startScripts {
+  defaultJvmOpts = [
+    "-Dsecp256k1.randomize=false"
+  ]
+  unixStartScriptGenerator.template = resources.text.fromFile("${projectDir}/src/main/scripts/unixStartScript.txt")
+  windowsStartScriptGenerator.template = resources.text.fromFile("${projectDir}/src/main/scripts/windowsStartScript.txt")
+  doLast { tweakStartScript(startScripts) }
+}
+
+static def tweakStartScript(createScriptTask) {
+  def shortenWindowsClasspath = { line ->
+    line.replaceAll(/^set CLASSPATH=.*$/, "set CLASSPATH=%APP_HOME%/lib/*")
+  }
+
+  createScriptTask.unixScript.text = createScriptTask.unixScript.text.replace('BESU_HOME', '\$APP_HOME')
+  createScriptTask.windowsScript.text = createScriptTask.windowsScript.text.replace('BESU_HOME', '%~dp0..')
+
+  // Prevent the error originating from the 8191 chars limit on Windows
+  createScriptTask.windowsScript.text =
+    createScriptTask.windowsScript
+    .readLines()
+    .collect(shortenWindowsClasspath)
+    .join('\r\n')
 }

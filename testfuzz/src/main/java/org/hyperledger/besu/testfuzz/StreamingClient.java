@@ -24,11 +24,15 @@ class StreamingClient implements ExternalClient {
   final BufferedReader reader;
   final PrintWriter writer;
 
-  public StreamingClient(final String clientName, final String... command) throws IOException {
-    Process p = new ProcessBuilder().redirectErrorStream(true).command(command).start();
-    this.name = clientName;
-    this.reader = new BufferedReader(p.inputReader(StandardCharsets.UTF_8));
-    this.writer = new PrintWriter(p.getOutputStream(), true, StandardCharsets.UTF_8);
+  public StreamingClient(final String clientName, final String... command) {
+    try {
+      Process p = new ProcessBuilder().redirectErrorStream(true).command(command).start();
+      this.name = clientName;
+      this.reader = new BufferedReader(p.inputReader(StandardCharsets.UTF_8));
+      this.writer = new PrintWriter(p.getOutputStream(), true, StandardCharsets.UTF_8);
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
