@@ -684,9 +684,6 @@ def tweakStartScript(createScriptTask) {
 
 startScripts {
   defaultJvmOpts = applicationDefaultJvmArgs + [
-    "-XX:G1ConcRefinementThreads=2",
-    "-XX:G1HeapWastePercent=15",
-    "-XX:MaxGCPauseMillis=100",
     "-XX:StartFlightRecording,dumponexit=true,settings=default.jfc",
     "-Xlog:jfr*=off"
   ]
