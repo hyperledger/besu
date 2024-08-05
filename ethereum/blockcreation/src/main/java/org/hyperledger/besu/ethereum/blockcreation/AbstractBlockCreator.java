@@ -308,7 +308,7 @@ public abstract class AbstractBlockCreator implements AsyncBlockCreator {
               transactionResults.getSelectedTransactions(), ommers, withdrawals, maybeRequests);
       final Block block = new Block(blockHeader, blockBody);
 
-      operationTracer.traceEndBlock(blockHeader, blockBody);
+      operationTracer.traceEndBlock(blockHeader, blockBody, disposableWorldState);
       timings.register("blockAssembled");
       return new BlockCreationResult(block, transactionResults, timings);
     } catch (final SecurityModuleException ex) {

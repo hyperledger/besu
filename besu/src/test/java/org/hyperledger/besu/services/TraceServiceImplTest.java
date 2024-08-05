@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.core.BlockchainSetupUtil;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.evm.log.Log;
+import org.hyperledger.besu.evm.worldstate.WorldState;
 import org.hyperledger.besu.evm.worldstate.WorldView;
 import org.hyperledger.besu.plugin.data.BlockBody;
 import org.hyperledger.besu.plugin.data.BlockHeader;
@@ -128,7 +129,9 @@ class TraceServiceImplTest {
                       any(), eq(tx), anyBoolean(), any(), any(), anyLong(), any(), anyLong());
             });
 
-    verify(opTracer).traceEndBlock(tracedBlock.getHeader(), tracedBlock.getBody());
+    verify(opTracer)
+        .traceEndBlock(
+            tracedBlock.getHeader(), tracedBlock.getBody(), worldStateArchive.getMutable());
   }
 
   @Test
@@ -183,7 +186,11 @@ class TraceServiceImplTest {
                                 anyLong());
                       });
 
-              verify(opTracer).traceEndBlock(tracedBlock.getHeader(), tracedBlock.getBody());
+              verify(opTracer)
+                  .traceEndBlock(
+                      tracedBlock.getHeader(),
+                      tracedBlock.getBody(),
+                      worldStateArchive.getMutable());
             });
   }
 
@@ -319,7 +326,8 @@ class TraceServiceImplTest {
     }
 
     @Override
-    public void traceEndBlock(final BlockHeader blockHeader, final BlockBody blockBody) {
+    public void traceEndBlock(
+        final BlockHeader blockHeader, final BlockBody blockBody, final WorldState worldState) {
       if (!traceEndBlockCalled.add(blockHeader.getBlockHash())) {
         fail("traceEndBlock already called for block " + blockHeader);
       }
