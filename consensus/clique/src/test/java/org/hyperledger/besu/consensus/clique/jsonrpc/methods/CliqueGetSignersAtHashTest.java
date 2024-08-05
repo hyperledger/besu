@@ -101,7 +101,7 @@ public class CliqueGetSignersAtHashTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid block hash parameter (index 0)");
   }
 
   @Test

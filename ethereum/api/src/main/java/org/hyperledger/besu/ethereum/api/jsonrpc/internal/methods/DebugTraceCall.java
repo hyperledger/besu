@@ -18,11 +18,13 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
@@ -61,8 +63,13 @@ public class DebugTraceCall extends AbstractTraceCall {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    final Optional<BlockParameter> maybeBlockParameter =
-        request.getOptionalParameter(1, BlockParameter.class);
+    final Optional<BlockParameter> maybeBlockParameter;
+    try {
+      maybeBlockParameter = request.getOptionalParameter(1, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
 
     return maybeBlockParameter.orElse(BlockParameter.LATEST);
   }
