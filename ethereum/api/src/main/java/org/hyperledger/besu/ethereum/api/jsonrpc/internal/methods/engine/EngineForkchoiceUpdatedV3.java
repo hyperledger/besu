@@ -21,8 +21,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkc
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
+import org.hyperledger.besu.ethereum.mainnet.HardforkOrder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
@@ -33,7 +33,7 @@ import org.slf4j.LoggerFactory;
 
 public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
-  private final Optional<ScheduledProtocolSpec.Hardfork> supportedHardFork;
+  private final Optional<Long> maybeCancunMileStone;
   private static final Logger LOG = LoggerFactory.getLogger(EngineForkchoiceUpdatedV3.class);
 
   public EngineForkchoiceUpdatedV3(
@@ -43,11 +43,8 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
       final MergeMiningCoordinator mergeCoordinator,
       final EngineCallListener engineCallListener) {
     super(vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
-    this.supportedHardFork =
-        protocolSchedule.hardforkFor(
-            s ->
-                s.fork().name().equalsIgnoreCase("Cancun")
-                    || s.fork().name().equalsIgnoreCase("Prague"));
+
+    maybeCancunMileStone = protocolSchedule.milestoneFor(HardforkOrder.MainnetHardforkOrder.CANCUN);
   }
 
   @Override
@@ -80,18 +77,18 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    if (protocolSchedule.isPresent()) {
-      if (supportedHardFork.isPresent() && blockTimestamp >= supportedHardFork.get().milestone()) {
-        return ValidationResult.valid();
-      } else {
-        return ValidationResult.invalid(
-            RpcErrorType.UNSUPPORTED_FORK,
-            "Cancun configured to start at timestamp: " + supportedHardFork.get().milestone());
-      }
-    } else {
+    if (maybeCancunMileStone.isEmpty()) {
       return ValidationResult.invalid(
           RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
     }
+
+    if (blockTimestamp < maybeCancunMileStone.get()) {
+      return ValidationResult.invalid(
+          RpcErrorType.UNSUPPORTED_FORK,
+          "Cancun configured to start at timestamp: " + maybeCancunMileStone.get());
+    }
+
+    return ValidationResult.valid();
   }
 
   @Override
@@ -103,7 +100,7 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
     } else if (payloadAttributes.getTimestamp().longValue() == 0) {
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
-    } else if (payloadAttributes.getTimestamp() < supportedHardFork.get().milestone()) {
+    } else if (payloadAttributes.getTimestamp() < maybeCancunMileStone.get()) {
       return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
     } else {
       return Optional.empty();
