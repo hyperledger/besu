@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.HardforkOrder;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -30,6 +31,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 
 import java.math.BigInteger;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -42,6 +45,7 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   private static final Logger LOG = LoggerFactory.getLogger(TransitionProtocolSchedule.class);
   private final MergeContext mergeContext;
   private ProtocolContext protocolContext;
+  private final Map<HardforkOrder, Long> milestones = new HashMap<>();
 
   /**
    * Instantiates a new Transition protocol schedule.
@@ -239,6 +243,17 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     return transitionUtils.dispatchFunctionAccordingToMergeState(ProtocolSchedule::listMilestones);
+  }
+
+  @Override
+  public void setMilestones(final Map<HardforkOrder, Long> milestoneList) {
+    this.milestones.clear();
+    this.milestones.putAll(milestones);
+  }
+
+  @Override
+  public Optional<Long> milestoneFor(final HardforkOrder hardforkOrder) {
+    return Optional.ofNullable(milestones.get(hardforkOrder));
   }
 
   /**
