@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.web3j.utils.Strings;
 import picocli.CommandLine;
 import picocli.CommandLine.ParentCommand;
 
@@ -107,7 +108,10 @@ public class CodeValidateSubCommand implements Runnable {
       }
     } else {
       for (String code : cliCode) {
-        parentCommand.out.println(considerCode(code));
+        String validation = considerCode(code);
+        if (!Strings.isBlank(validation)) {
+          parentCommand.out.println(validation);
+        }
       }
     }
     parentCommand.out.flush();
@@ -116,7 +120,10 @@ public class CodeValidateSubCommand implements Runnable {
   private void checkCodeFromBufferedReader(final BufferedReader in) {
     try {
       for (String code = in.readLine(); code != null; code = in.readLine()) {
-        parentCommand.out.println(considerCode(code));
+        String validation = considerCode(code);
+        if (!Strings.isBlank(validation)) {
+          parentCommand.out.println(validation);
+        }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
