@@ -81,6 +81,7 @@ public class FastSyncDownloader<REQUEST> {
       throw new IllegalStateException("SyncDownloader already running");
     }
     LOG.info("Starting pivot-based sync");
+
     return start(initialFastSyncState);
   }
 
@@ -142,7 +143,7 @@ public class FastSyncDownloader<REQUEST> {
     synchronized (this) {
       if (running.compareAndSet(true, false)) {
         LOG.info("Stopping sync");
-        // Cancelling the world state download will also cause the chain download to be cancelled.
+        // Canceling the world state download will also cause the chain download to be cancelled.
         worldStateDownloader.cancel();
       }
     }

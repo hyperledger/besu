@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -102,13 +103,15 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final long minMillisBeforeStalling,
       final SnapSyncMetricsManager metricsManager,
       final Clock clock,
-      final EthContext ethContext) {
+      final EthContext ethContext,
+      final OperationTimer.TimingContext syncTimingContext) {
     super(
         worldStateStorageCoordinator,
         pendingRequests,
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
-        clock);
+        clock,
+        syncTimingContext);
     this.snapContext = snapContext;
     this.blockchain = blockchain;
     this.snapSyncState = snapSyncState;
@@ -151,11 +154,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
             "snap_world_state_pending_trie_node_requests_current",
             "Number of trie node pending requests for snap sync world state download",
             pendingTrieNodeRequests::size);
-  }
-
-  @Override
-  public synchronized void notifyTaskAvailable() {
-    notifyAll();
   }
 
   @Override
@@ -217,6 +215,10 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           // Clear the snap context
           snapContext.clear();
           internalFuture.complete(null);
+
+          // stop the metrics timer for the world download
+          syncTimingContext.stopTimer();
+
           return true;
         }
       }
