@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import java.util.Optional;
@@ -38,8 +40,13 @@ public class AdminGenerateLogBloomCache implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Optional<BlockParameter> startBlockParam =
-        requestContext.getOptionalParameter(0, BlockParameter.class);
+    final Optional<BlockParameter> startBlockParam;
+    try {
+      startBlockParam = requestContext.getOptionalParameter(0, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid start block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
     final long startBlock;
     if (startBlockParam.isEmpty() || startBlockParam.get().isEarliest()) {
       startBlock = 0;
@@ -50,8 +57,13 @@ public class AdminGenerateLogBloomCache implements JsonRpcMethod {
       startBlock = Long.MAX_VALUE;
     }
 
-    final Optional<BlockParameter> stopBlockParam =
-        requestContext.getOptionalParameter(1, BlockParameter.class);
+    final Optional<BlockParameter> stopBlockParam;
+    try {
+      stopBlockParam = requestContext.getOptionalParameter(1, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid stop block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
     final long stopBlock;
     if (stopBlockParam.isEmpty()) {
       if (startBlockParam.isEmpty()) {

@@ -497,7 +497,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (header.getBlobGasUsed().isPresent() && maybeVersionedHashes.isPresent()) {
       if (!validateBlobGasUsed(header, maybeVersionedHashes.get(), protocolSpec)) {
         return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS,
+            RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS,
             "Payload BlobGasUsed does not match calculated BlobGasUsed");
       }
     }

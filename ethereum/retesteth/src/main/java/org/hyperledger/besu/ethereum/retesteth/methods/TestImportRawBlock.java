@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -52,7 +53,13 @@ public class TestImportRawBlock implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final String input = requestContext.getRequiredParameter(0, String.class);
+    final String input;
+    try {
+      input = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
     final ProtocolContext protocolContext = this.context.getProtocolContext();
 
     final Block block;
