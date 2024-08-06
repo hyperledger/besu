@@ -51,9 +51,15 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
   @Override
   protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
       final Object requestId, final EnginePayloadAttributesParameter payloadAttributes) {
-    if (payloadAttributes.getTimestamp() >= cancunTimestamp) {
+    if (cancunMilestone.isEmpty()) {
+      LOG.error("Cancun hardfork milestone not found");
+      return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
+    }
+
+    if (payloadAttributes.getTimestamp() >= cancunMilestone.get()) {
       if (payloadAttributes.getParentBeaconBlockRoot() == null
           || payloadAttributes.getParentBeaconBlockRoot().isEmpty()) {
+        LOG.error("Cancun hardfork did not yet happen");
         return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
       } else {
         return Optional.of(

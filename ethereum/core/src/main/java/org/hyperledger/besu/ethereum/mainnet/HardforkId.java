@@ -14,9 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
-public interface HardforkOrder {
+public interface HardforkId {
 
-  enum MainnetHardforkOrder implements HardforkOrder {
+  String name();
+
+  enum MainnetHardforkId implements HardforkId {
     FRONTIER,
     HOMESTEAD,
     DAO_FORK,
@@ -41,7 +43,7 @@ public interface HardforkOrder {
     EXPERIMENTAL_EIPS
   }
 
-  enum ClassicHardforkOrder implements HardforkOrder {
+  enum ClassicHardforkId implements HardforkId {
     FRONTIER,
     HOMESTEAD,
     CLASSIC_TANGERINE_WHISTLE,

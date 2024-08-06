@@ -145,7 +145,7 @@ public class ProtocolScheduleBuilder {
     validateForkOrdering();
 
     final List<BuilderMapEntry> mileStones = createMilestones(specFactory);
-    final Map<HardforkOrder, Long> completeMileStoneList = buildFullMilestoneMap(mileStones);
+    final Map<HardforkId, Long> completeMileStoneList = buildFullMilestoneMap(mileStones);
     protocolSchedule.setMilestones(completeMileStoneList);
 
     final NavigableMap<Long, BuilderMapEntry> builders = buildFlattenedMilestoneMap(mileStones);
@@ -165,7 +165,7 @@ public class ProtocolScheduleBuilder {
                 builders.put(
                     modifierBlock,
                     new BuilderMapEntry(
-                        parent.hardforkOrder,
+                        parent.hardforkId,
                         parent.milestoneType,
                         modifierBlock,
                         parent.builder(),
@@ -327,11 +327,11 @@ public class ProtocolScheduleBuilder {
                 TreeMap::new));
   }
 
-  private Map<HardforkOrder, Long> buildFullMilestoneMap(final List<BuilderMapEntry> mileStones) {
+  private Map<HardforkId, Long> buildFullMilestoneMap(final List<BuilderMapEntry> mileStones) {
     return mileStones.stream()
         .collect(
             Collectors.toMap(
-                b -> b.hardforkOrder,
+                b -> b.hardforkId,
                 BuilderMapEntry::blockIdentifier,
                 (existing, replacement) -> existing));
   }
@@ -339,134 +339,134 @@ public class ProtocolScheduleBuilder {
   private List<BuilderMapEntry> createMilestones(final MainnetProtocolSpecFactory specFactory) {
     return Stream.of(
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.FRONTIER,
+                HardforkId.MainnetHardforkId.FRONTIER,
                 OptionalLong.of(0),
                 specFactory.frontierDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.HOMESTEAD,
+                HardforkId.MainnetHardforkId.HOMESTEAD,
                 config.getHomesteadBlockNumber(),
                 specFactory.homesteadDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.TANGERINE_WHISTLE,
+                HardforkId.MainnetHardforkId.TANGERINE_WHISTLE,
                 config.getTangerineWhistleBlockNumber(),
                 specFactory.tangerineWhistleDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.SPURIOUS_DRAGON,
+                HardforkId.MainnetHardforkId.SPURIOUS_DRAGON,
                 config.getSpuriousDragonBlockNumber(),
                 specFactory.spuriousDragonDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.BYZANTIUM,
+                HardforkId.MainnetHardforkId.BYZANTIUM,
                 config.getByzantiumBlockNumber(),
                 specFactory.byzantiumDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.CONSTANTINOPLE,
+                HardforkId.MainnetHardforkId.CONSTANTINOPLE,
                 config.getConstantinopleBlockNumber(),
                 specFactory.constantinopleDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.PETERSBURG,
+                HardforkId.MainnetHardforkId.PETERSBURG,
                 config.getPetersburgBlockNumber(),
                 specFactory.petersburgDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.ISTANBUL,
+                HardforkId.MainnetHardforkId.ISTANBUL,
                 config.getIstanbulBlockNumber(),
                 specFactory.istanbulDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.MUIR_GLACIER,
+                HardforkId.MainnetHardforkId.MUIR_GLACIER,
                 config.getMuirGlacierBlockNumber(),
                 specFactory.muirGlacierDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.BERLIN,
+                HardforkId.MainnetHardforkId.BERLIN,
                 config.getBerlinBlockNumber(),
                 specFactory.berlinDefinition()),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.LONDON,
+                HardforkId.MainnetHardforkId.LONDON,
                 config.getLondonBlockNumber(),
                 specFactory.londonDefinition(config)),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.ARROW_GLACIER,
+                HardforkId.MainnetHardforkId.ARROW_GLACIER,
                 config.getArrowGlacierBlockNumber(),
                 specFactory.arrowGlacierDefinition(config)),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.GRAY_GLACIER,
+                HardforkId.MainnetHardforkId.GRAY_GLACIER,
                 config.getGrayGlacierBlockNumber(),
                 specFactory.grayGlacierDefinition(config)),
             blockNumberMilestone(
-                HardforkOrder.MainnetHardforkOrder.PARIS,
+                HardforkId.MainnetHardforkId.PARIS,
                 config.getMergeNetSplitBlockNumber(),
                 specFactory.parisDefinition(config)),
             // Timestamp Forks
             timestampMilestone(
-                HardforkOrder.MainnetHardforkOrder.SHANGHAI,
+                HardforkId.MainnetHardforkId.SHANGHAI,
                 config.getShanghaiTime(),
                 specFactory.shanghaiDefinition(config)),
             timestampMilestone(
-                HardforkOrder.MainnetHardforkOrder.CANCUN,
+                HardforkId.MainnetHardforkId.CANCUN,
                 config.getCancunTime(),
                 specFactory.cancunDefinition(config)),
             timestampMilestone(
-                HardforkOrder.MainnetHardforkOrder.CANCUN_EOF,
+                HardforkId.MainnetHardforkId.CANCUN_EOF,
                 config.getCancunEOFTime(),
                 specFactory.cancunEOFDefinition(config)),
             timestampMilestone(
-                HardforkOrder.MainnetHardforkOrder.PRAGUE,
+                HardforkId.MainnetHardforkId.PRAGUE,
                 config.getPragueTime(),
                 specFactory.pragueDefinition(config)),
             timestampMilestone(
-                HardforkOrder.MainnetHardforkOrder.PRAGUE_EOF,
+                HardforkId.MainnetHardforkId.PRAGUE_EOF,
                 config.getPragueEOFTime(),
                 specFactory.pragueEOFDefinition(config)),
             timestampMilestone(
-                HardforkOrder.MainnetHardforkOrder.FUTURE_EIPS,
+                HardforkId.MainnetHardforkId.FUTURE_EIPS,
                 config.getFutureEipsTime(),
                 specFactory.futureEipsDefinition(config)),
             timestampMilestone(
-                HardforkOrder.MainnetHardforkOrder.EXPERIMENTAL_EIPS,
+                HardforkId.MainnetHardforkId.EXPERIMENTAL_EIPS,
                 config.getExperimentalEipsTime(),
                 specFactory.experimentalEipsDefinition(config)),
 
             // Classic Milestones
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.CLASSIC_TANGERINE_WHISTLE,
+                HardforkId.ClassicHardforkId.CLASSIC_TANGERINE_WHISTLE,
                 config.getEcip1015BlockNumber(),
                 specFactory.tangerineWhistleDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.DIE_HARD,
+                HardforkId.ClassicHardforkId.DIE_HARD,
                 config.getDieHardBlockNumber(),
                 specFactory.dieHardDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.GOTHAM,
+                HardforkId.ClassicHardforkId.GOTHAM,
                 config.getGothamBlockNumber(),
                 specFactory.gothamDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.DEFUSE_DIFFICULTY_BOMB,
+                HardforkId.ClassicHardforkId.DEFUSE_DIFFICULTY_BOMB,
                 config.getDefuseDifficultyBombBlockNumber(),
                 specFactory.defuseDifficultyBombDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.ATLANTIS,
+                HardforkId.ClassicHardforkId.ATLANTIS,
                 config.getAtlantisBlockNumber(),
                 specFactory.atlantisDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.AGHARTA,
+                HardforkId.ClassicHardforkId.AGHARTA,
                 config.getAghartaBlockNumber(),
                 specFactory.aghartaDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.PHOENIX,
+                HardforkId.ClassicHardforkId.PHOENIX,
                 config.getPhoenixBlockNumber(),
                 specFactory.phoenixDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.THANOS,
+                HardforkId.ClassicHardforkId.THANOS,
                 config.getThanosBlockNumber(),
                 specFactory.thanosDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.MAGNETO,
+                HardforkId.ClassicHardforkId.MAGNETO,
                 config.getMagnetoBlockNumber(),
                 specFactory.magnetoDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.MYSTIQUE,
+                HardforkId.ClassicHardforkId.MYSTIQUE,
                 config.getMystiqueBlockNumber(),
                 specFactory.mystiqueDefinition()),
             blockNumberMilestone(
-                HardforkOrder.ClassicHardforkOrder.SPIRAL,
+                HardforkId.ClassicHardforkId.SPIRAL,
                 config.getSpiralBlockNumber(),
                 specFactory.spiralDefinition()))
         .flatMap(Optional::stream)
@@ -474,23 +474,23 @@ public class ProtocolScheduleBuilder {
   }
 
   private Optional<BuilderMapEntry> timestampMilestone(
-      final HardforkOrder hardforkOrder,
+      final HardforkId hardforkId,
       final OptionalLong blockIdentifier,
       final ProtocolSpecBuilder builder) {
     return createMilestone(
-        hardforkOrder, blockIdentifier, builder, BuilderMapEntry.MilestoneType.TIMESTAMP);
+        hardforkId, blockIdentifier, builder, BuilderMapEntry.MilestoneType.TIMESTAMP);
   }
 
   private Optional<BuilderMapEntry> blockNumberMilestone(
-      final HardforkOrder hardforkOrder,
+      final HardforkId hardforkId,
       final OptionalLong blockIdentifier,
       final ProtocolSpecBuilder builder) {
     return createMilestone(
-        hardforkOrder, blockIdentifier, builder, BuilderMapEntry.MilestoneType.BLOCK_NUMBER);
+        hardforkId, blockIdentifier, builder, BuilderMapEntry.MilestoneType.BLOCK_NUMBER);
   }
 
   private Optional<BuilderMapEntry> createMilestone(
-      final HardforkOrder hardforkOrder,
+      final HardforkId hardforkId,
       final OptionalLong blockIdentifier,
       final ProtocolSpecBuilder builder,
       final BuilderMapEntry.MilestoneType milestoneType) {
@@ -500,7 +500,7 @@ public class ProtocolScheduleBuilder {
     final long blockVal = blockIdentifier.getAsLong();
     return Optional.of(
         new BuilderMapEntry(
-            hardforkOrder,
+            hardforkId,
             milestoneType,
             blockVal,
             builder,
@@ -544,7 +544,7 @@ public class ProtocolScheduleBuilder {
   }
 
   private record BuilderMapEntry(
-      HardforkOrder hardforkOrder,
+      HardforkId hardforkId,
       ProtocolScheduleBuilder.BuilderMapEntry.MilestoneType milestoneType,
       long blockIdentifier,
       ProtocolSpecBuilder builder,

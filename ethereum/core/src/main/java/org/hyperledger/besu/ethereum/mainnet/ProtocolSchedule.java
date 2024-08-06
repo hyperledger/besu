@@ -47,7 +47,7 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
 
   void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec);
 
-  default void setMilestones(final Map<HardforkOrder, Long> milestoneList) {
+  default void setMilestones(final Map<HardforkId, Long> milestoneList) {
     throw new UnsupportedOperationException("Not implemented");
   }
 
@@ -56,7 +56,7 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
     throw new UnsupportedOperationException("Not implemented");
   }
 
-  default Optional<Long> milestoneFor(final HardforkOrder hardforkOrder) {
+  default Optional<Long> milestoneFor(final HardforkId hardforkId) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

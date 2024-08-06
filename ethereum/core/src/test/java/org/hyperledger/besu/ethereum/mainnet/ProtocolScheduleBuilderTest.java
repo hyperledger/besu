@@ -16,11 +16,11 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkOrder.MainnetHardforkOrder.BERLIN;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkOrder.MainnetHardforkOrder.CANCUN;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkOrder.MainnetHardforkOrder.LONDON;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkOrder.MainnetHardforkOrder.PRAGUE;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkOrder.MainnetHardforkOrder.SHANGHAI;
+import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.BERLIN;
+import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.LONDON;
+import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.PRAGUE;
+import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;

@@ -41,7 +41,7 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   protected NavigableSet<ScheduledProtocolSpec> protocolSpecs =
       new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::fork).reversed());
 
-  private final Map<HardforkOrder, Long> milestones = new HashMap<>();
+  private final Map<HardforkId, Long> milestones = new HashMap<>();
 
   private final Optional<BigInteger> chainId;
 
@@ -102,7 +102,7 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public void setMilestones(final Map<HardforkOrder, Long> milestones) {
+  public void setMilestones(final Map<HardforkId, Long> milestones) {
     this.milestones.clear();
     this.milestones.putAll(milestones);
   }
@@ -128,8 +128,8 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   }
 
   @Override
-  public Optional<Long> milestoneFor(final HardforkOrder hardforkOrder) {
-    return Optional.ofNullable(milestones.get(hardforkOrder));
+  public Optional<Long> milestoneFor(final HardforkId hardforkId) {
+    return Optional.ofNullable(milestones.get(hardforkId));
   }
 
   @Override

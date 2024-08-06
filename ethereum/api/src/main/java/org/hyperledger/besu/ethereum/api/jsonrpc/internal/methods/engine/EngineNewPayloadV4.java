@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.PRAGUE;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -21,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePaylo
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.List;
@@ -31,7 +32,7 @@ import io.vertx.core.Vertx;
 
 public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
 
-  private final Optional<ScheduledProtocolSpec.Hardfork> prague;
+  private final Optional<Long> pragueMilestone;
 
   public EngineNewPayloadV4(
       final Vertx vertx,
@@ -42,7 +43,7 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
       final EngineCallListener engineCallListener) {
     super(
         vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
-    this.prague = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("prague"));
+    pragueMilestone = timestampSchedule.milestoneFor(PRAGUE);
   }
 
   @Override
@@ -72,17 +73,6 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    if (protocolSchedule.isPresent()) {
-      if (prague.isPresent() && blockTimestamp >= prague.get().milestone()) {
-        return ValidationResult.valid();
-      } else {
-        return ValidationResult.invalid(
-            RpcErrorType.UNSUPPORTED_FORK,
-            "Prague configured to start at timestamp: " + prague.get().milestone());
-      }
-    } else {
-      return ValidationResult.invalid(
-          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Prague fork set");
-    }
+    return ForkSupportHelper.validateForkSupported(PRAGUE, pragueMilestone, blockTimestamp);
   }
 }
