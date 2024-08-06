@@ -31,18 +31,12 @@ public class ForkSupportHelper {
       final Optional<Long> maybeForkMilestone,
       final long blockTimestamp) {
     if (maybeForkMilestone.isEmpty()) {
-      LOG.error("Configuration error, no schedule for {} fork set", hardforkId.name());
       return ValidationResult.invalid(
           RpcErrorType.UNSUPPORTED_FORK,
           "Configuration error, no schedule for " + hardforkId.name() + " fork set");
     }
 
     if (blockTimestamp < maybeForkMilestone.get()) {
-      LOG.error(
-          "{} configured to start at timestamp: {}, blocktimestamp: {}",
-          hardforkId.name(),
-          maybeForkMilestone.get(),
-          blockTimestamp);
       return ValidationResult.invalid(
           RpcErrorType.UNSUPPORTED_FORK,
           hardforkId.name() + " configured to start at timestamp: " + maybeForkMilestone.get());

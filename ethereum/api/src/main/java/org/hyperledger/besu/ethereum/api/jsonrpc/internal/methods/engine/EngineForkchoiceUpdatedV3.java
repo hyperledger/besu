@@ -92,7 +92,6 @@ public class EngineForkchoiceUpdatedV3 extends AbstractEngineForkchoiceUpdated {
     }
 
     if (cancunMilestone.isEmpty() || payloadAttributes.getTimestamp() < cancunMilestone.get()) {
-      LOG.error("Cancun hardfork invalid check");
       return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
     }
 
