@@ -20,12 +20,7 @@ import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class ForkSupportHelper {
-  private static final Logger LOG = LoggerFactory.getLogger(ForkSupportHelper.class);
-
   public static ValidationResult<RpcErrorType> validateForkSupported(
       final HardforkId hardforkId,
       final Optional<Long> maybeForkMilestone,
