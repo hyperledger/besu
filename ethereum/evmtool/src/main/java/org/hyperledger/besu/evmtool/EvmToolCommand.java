@@ -418,7 +418,7 @@ public class EvmToolCommand implements Runnable {
       if (codeBytes.isEmpty() && !createTransaction) {
         codeBytes = component.getWorldState().get(receiver).getCode();
       }
-      Code code = evm.getCodeForCreation(codeBytes);
+      Code code = createTransaction ? evm.getCodeForCreation(codeBytes) : evm.getCodeUncached(codeBytes);
       if (!code.isValid()) {
         out.println(((CodeInvalid) code).getInvalidReason());
         return;
