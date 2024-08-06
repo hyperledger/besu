@@ -23,7 +23,9 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.code.EOFLayout;
+import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 import org.hyperledger.besu.util.LogConfigurator;
 
 import java.io.BufferedReader;
@@ -37,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.web3j.utils.Strings;
 import picocli.CommandLine;
 import picocli.CommandLine.ParentCommand;
 
@@ -45,7 +48,7 @@ import picocli.CommandLine.ParentCommand;
  * fuzzing. It implements the Runnable interface and is annotated with the {@code
  * CommandLine.Command} annotation.
  */
-@SuppressWarnings({"ConstantValue", "DataFlowIssue"})
+@SuppressWarnings({"ConstantValue"})
 @CommandLine.Command(
     name = COMMAND_NAME,
     description = "Validates EVM code for fuzzing",
@@ -105,7 +108,10 @@ public class CodeValidateSubCommand implements Runnable {
       }
     } else {
       for (String code : cliCode) {
-        parentCommand.out.print(considerCode(code));
+        String validation = considerCode(code);
+        if (!Strings.isBlank(validation)) {
+          parentCommand.out.println(validation);
+        }
       }
     }
     parentCommand.out.flush();
@@ -114,7 +120,10 @@ public class CodeValidateSubCommand implements Runnable {
   private void checkCodeFromBufferedReader(final BufferedReader in) {
     try {
       for (String code = in.readLine(); code != null; code = in.readLine()) {
-        parentCommand.out.print(considerCode(code));
+        String validation = considerCode(code);
+        if (!Strings.isBlank(validation)) {
+          parentCommand.out.println(validation);
+        }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -140,7 +149,7 @@ public class CodeValidateSubCommand implements Runnable {
           Bytes.fromHexString(
               hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", ""));
     } catch (RuntimeException re) {
-      return "err: hex string -" + re + "\n";
+      return "err: hex string -" + re;
     }
     if (codeBytes.isEmpty()) {
       return "";
@@ -148,20 +157,22 @@ public class CodeValidateSubCommand implements Runnable {
 
     EOFLayout layout = evm.parseEOF(codeBytes);
     if (!layout.isValid()) {
-      return "err: layout - " + layout.invalidReason() + "\n";
+      return "err: layout - " + layout.invalidReason();
     }
 
     Code code = evm.getCodeUncached(codeBytes);
     if (code instanceof CodeInvalid codeInvalid) {
       return "err: " + codeInvalid.getInvalidReason();
+    } else if (EOFContainerMode.INITCODE.equals(
+        ((CodeV1) code).getEofLayout().containerMode().get())) {
+      return "err: code is valid initcode.  Runtime code expected";
     } else {
       return "OK "
           + IntStream.range(0, code.getCodeSectionCount())
               .mapToObj(code::getCodeSection)
               .map(cs -> code.getBytes().slice(cs.getEntryPoint(), cs.getLength()))
               .map(Bytes::toUnprefixedHexString)
-              .collect(Collectors.joining(","))
-          + "\n";
+              .collect(Collectors.joining(","));
     }
   }
 }
