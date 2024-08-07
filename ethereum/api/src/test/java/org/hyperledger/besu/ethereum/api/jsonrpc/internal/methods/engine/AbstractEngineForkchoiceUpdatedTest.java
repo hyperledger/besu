@@ -93,7 +93,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   private static final Vertx vertx = Vertx.vertx();
   private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
-  protected static final long CANCUN_MILESTONE = 1L;
+  protected static final long CANCUN_MILESTONE = 1_000_000L;
 
   private static final EngineForkchoiceUpdatedParameter mockFcuParam =
       new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash);
@@ -240,7 +240,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(defaultPayloadTimestamp()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -429,7 +429,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(defaultPayloadTimestamp()),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -491,7 +491,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             emptyList(),
@@ -516,7 +516,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -560,7 +560,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -596,7 +596,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             withdrawalParameters,
@@ -645,7 +645,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
     var payloadParams =
         new EnginePayloadAttributesParameter(
-            String.valueOf(System.currentTimeMillis()),
+            String.valueOf(mockHeader.getTimestamp() + 1),
             Bytes32.fromHexStringLenient("0xDEADBEEF").toHexString(),
             Address.ECREC.toString(),
             null,
@@ -774,5 +774,9 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     var errorResp = (JsonRpcErrorResponse) resp;
     assertThat(errorResp.getErrorType()).isEqualTo(jsonRpcError);
     assertThat(errorResp.getError().getMessage()).isEqualTo(jsonRpcError.getMessage());
+  }
+
+  protected long defaultPayloadTimestamp() {
+    return 1;
   }
 }

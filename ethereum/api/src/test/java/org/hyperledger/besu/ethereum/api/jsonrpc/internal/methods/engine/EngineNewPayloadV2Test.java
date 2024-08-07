@@ -19,7 +19,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameterTestFixture.WITHDRAWAL_PARAM_1;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.UNSUPPORTED_FORK;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.CANCUN;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.times;
@@ -196,8 +195,8 @@ public class EngineNewPayloadV2Test extends AbstractEngineNewPayloadTest {
 
   @Test
   public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterCancunMilestone() {
-    final long blockTimestamp = 2L;
-    when(protocolSchedule.milestoneFor(CANCUN)).thenReturn(Optional.of(1L));
+    // Cancun starte at timestamp 30
+    final long blockTimestamp = 31L;
     BlockHeader blockHeader =
         createBlockHeaderFixture(
                 Optional.of(Collections.emptyList()), Optional.empty(), Optional.empty())
