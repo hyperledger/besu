@@ -17,6 +17,7 @@
 - In process RPC service [#7395](https://github.com/hyperledger/besu/pull/7395)
 
 ### Bug fixes
+- Correct entrypoint in Docker evmtool [#7430](https://github.com/hyperledger/besu/pull/7430)
 
 ## 24.7.1
 

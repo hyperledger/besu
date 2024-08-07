@@ -1,0 +1,15 @@
+{
+  "cli": [
+    "--notime",
+    "--json",
+    "--create",
+    "--code",
+    "ef00010100040200010001040000000080000000c0de471fe5",
+    "--coinbase",
+    "4444588443C3A91288C5002483449ABA1054192B",
+    "--fork",
+    "CancunEOF"
+  ],
+  "stdin": "",
+  "stdout": "EOF Code Invalid : STOP is only a valid opcode in containers used for runtime operations.\n"
+}
