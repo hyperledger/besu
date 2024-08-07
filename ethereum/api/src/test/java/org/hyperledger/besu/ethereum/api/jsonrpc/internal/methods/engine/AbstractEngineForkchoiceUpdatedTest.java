@@ -19,6 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.INVALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
+import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.CANCUN;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.mock;
@@ -92,6 +93,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
 
   private static final Vertx vertx = Vertx.vertx();
   private static final Hash mockHash = Hash.hash(Bytes32.fromHexStringLenient("0x1337deadbeef"));
+  protected static final long CANCUN_MILESTONE = 1L;
 
   private static final EngineForkchoiceUpdatedParameter mockFcuParam =
       new EngineForkchoiceUpdatedParameter(mockHash, mockHash, mockHash);
@@ -100,14 +102,14 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
       new BlockHeaderTestFixture().baseFeePerGas(Wei.ONE);
 
   @Mock private ProtocolSpec protocolSpec;
-  @Mock private ProtocolSchedule protocolSchedule;
+  @Mock protected ProtocolSchedule protocolSchedule;
   @Mock private ProtocolContext protocolContext;
 
   @Mock private MergeContext mergeContext;
 
   @Mock protected MergeMiningCoordinator mergeCoordinator;
 
-  @Mock private MutableBlockchain blockchain;
+  @Mock protected MutableBlockchain blockchain;
 
   @Mock private EngineCallListener engineCallListener;
 
@@ -118,6 +120,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     when(protocolSpec.getWithdrawalsValidator())
         .thenReturn(new WithdrawalsValidator.ProhibitedWithdrawals());
     when(protocolSchedule.getForNextBlockHeader(any(), anyLong())).thenReturn(protocolSpec);
+    when(protocolSchedule.milestoneFor(CANCUN)).thenReturn(Optional.of(CANCUN_MILESTONE));
     this.method =
         methodFactory.create(
             vertx, protocolSchedule, protocolContext, mergeCoordinator, engineCallListener);
@@ -674,7 +677,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
-  private void setupValidForkchoiceUpdate(final BlockHeader mockHeader) {
+  protected void setupValidForkchoiceUpdate(final BlockHeader mockHeader) {
     when(blockchain.getBlockHeader(any())).thenReturn(Optional.of(mockHeader));
     when(mergeCoordinator.getOrSyncHeadByHash(mockHeader.getHash(), Hash.ZERO))
         .thenReturn(Optional.of(mockHeader));
@@ -738,7 +741,7 @@ public abstract class AbstractEngineForkchoiceUpdatedTest {
     return RpcErrorType.INVALID_PARAMS;
   }
 
-  private JsonRpcResponse resp(
+  protected JsonRpcResponse resp(
       final EngineForkchoiceUpdatedParameter forkchoiceParam,
       final Optional<EnginePayloadAttributesParameter> payloadParam) {
     return method.response(
