@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
+import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.CANCUN;
+
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
@@ -21,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePaylo
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.eth.manager.EthPeers;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.List;
@@ -31,7 +32,7 @@ import io.vertx.core.Vertx;
 
 public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
-  private final Optional<ScheduledProtocolSpec.Hardfork> cancun;
+  private final Optional<Long> cancunMilestone;
 
   public EngineNewPayloadV3(
       final Vertx vertx,
@@ -42,7 +43,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
       final EngineCallListener engineCallListener) {
     super(
         vertx, timestampSchedule, protocolContext, mergeCoordinator, ethPeers, engineCallListener);
-    this.cancun = timestampSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
+    this.cancunMilestone = timestampSchedule.milestoneFor(CANCUN);
   }
 
   @Override
@@ -70,18 +71,6 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
 
   @Override
   protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
-    if (protocolSchedule.isPresent()) {
-      if (cancun.isPresent()
-          && Long.compareUnsigned(blockTimestamp, cancun.get().milestone()) >= 0) {
-        return ValidationResult.valid();
-      } else {
-        return ValidationResult.invalid(
-            RpcErrorType.UNSUPPORTED_FORK,
-            "Cancun configured to start at timestamp: " + cancun.get().milestone());
-      }
-    } else {
-      return ValidationResult.invalid(
-          RpcErrorType.UNSUPPORTED_FORK, "Configuration error, no schedule for Cancun fork set");
-    }
+    return ForkSupportHelper.validateForkSupported(CANCUN, cancunMilestone, blockTimestamp);
   }
 }

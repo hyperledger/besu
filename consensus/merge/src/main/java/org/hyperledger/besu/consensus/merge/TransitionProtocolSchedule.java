@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.core.Difficulty;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
+import org.hyperledger.besu.ethereum.mainnet.HardforkId;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
@@ -239,6 +240,13 @@ public class TransitionProtocolSchedule implements ProtocolSchedule {
   @Override
   public String listMilestones() {
     return transitionUtils.dispatchFunctionAccordingToMergeState(ProtocolSchedule::listMilestones);
+  }
+
+  @Override
+  public Optional<Long> milestoneFor(final HardforkId hardforkId) {
+    return mergeContext.isPostMerge()
+        ? transitionUtils.getPostMergeObject().milestoneFor(hardforkId)
+        : transitionUtils.getPreMergeObject().milestoneFor(hardforkId);
   }
 
   /**
