@@ -137,7 +137,6 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
                             .isMiningEnabled(false)
                             .build())
                     .build(),
-                //                miningParameters.setMiningEnabled(false),
                 syncState,
                 ethProtocolManager),
             mergeBesuControllerBuilder.createTransitionMiningCoordinator(
