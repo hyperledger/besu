@@ -1,0 +1,17 @@
+{
+  "cli": [
+    "--notime",
+    "--json",
+    "--code",
+    "ef00010100040200010001040000000080000000",
+    "--coinbase",
+    "4444588443C3A91288C5002483449ABA1054192B",
+    "--fork",
+    "CancunEOF"
+  ],
+  "stdin": "",
+  "stdout": [
+    {"pc":0,"section":0,"op":0,"gas":"0x2540be400","gasCost":"0x0","memSize":0,"stack":[],"depth":1,"refund":0,"opName":"STOP"},
+    {"gasUser":"0x0","gasTotal":"0x0","output":"0x"}
+  ]
+}
