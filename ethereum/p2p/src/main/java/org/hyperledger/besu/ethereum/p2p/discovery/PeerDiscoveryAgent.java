@@ -36,6 +36,9 @@ import org.hyperledger.besu.ethereum.p2p.permissions.PeerPermissions;
 import org.hyperledger.besu.ethereum.p2p.rlpx.RlpxAgent;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.nat.NatService;
+import org.hyperledger.besu.nat.core.domain.NatPortMapping;
+import org.hyperledger.besu.nat.core.domain.NatServiceType;
+import org.hyperledger.besu.nat.core.domain.NetworkProtocol;
 import org.hyperledger.besu.plugin.data.EnodeURL;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -164,21 +167,30 @@ public abstract class PeerDiscoveryAgent {
           .thenApply(
               (InetSocketAddress localAddress) -> {
                 // Once listener is set up, finish initializing
-                final int discoveryPort = localAddress.getPort();
+                final int localDiscoveryPort = localAddress.getPort();
+                final int externalDiscoveryPort =
+                    localDiscoveryPort != 0
+                        ? natService
+                            .getPortMapping(NatServiceType.DISCOVERY, NetworkProtocol.UDP)
+                            .map(NatPortMapping::getExternalPort)
+                            .filter((externalPort) -> externalPort != 0)
+                            .orElse(localDiscoveryPort)
+                        : localDiscoveryPort;
+
                 final DiscoveryPeer ourNode =
                     DiscoveryPeer.fromEnode(
                         EnodeURLImpl.builder()
                             .nodeId(id)
                             .ipAddress(advertisedAddress)
                             .listeningPort(tcpPort)
-                            .discoveryPort(discoveryPort)
+                            .discoveryPort(externalDiscoveryPort)
                             .build());
                 this.localNode = Optional.of(ourNode);
-                isActive = true;
+                this.isActive = true;
                 LOG.info("P2P peer discovery agent started and listening on {}", localAddress);
                 updateNodeRecord();
                 startController(ourNode);
-                return discoveryPort;
+                return localDiscoveryPort;
               });
     } else {
       this.isActive = false;
@@ -283,15 +295,23 @@ public abstract class PeerDiscoveryAgent {
   }
 
   protected void handleIncomingPacket(final Endpoint sourceEndpoint, final Packet packet) {
-    final int udpPort = sourceEndpoint.getUdpPort();
+    final String host = deriveHost(sourceEndpoint, packet);
+
+    final int udpPort =
+        packet
+            .getPacketData(PingPacketData.class)
+            .flatMap(PingPacketData::getFrom)
+            .filter(endpoint -> endpoint.getHost().equals(host))
+            .map(Endpoint::getUdpPort)
+            .filter((packetDataUdpPort) -> packetDataUdpPort != 0)
+            .orElseGet(sourceEndpoint::getUdpPort);
+
     final int tcpPort =
         packet
             .getPacketData(PingPacketData.class)
             .flatMap(PingPacketData::getFrom)
             .flatMap(Endpoint::getTcpPort)
             .orElse(udpPort);
-
-    final String host = deriveHost(sourceEndpoint, packet);
 
     // Notify the peer controller.
     final DiscoveryPeer peer =
