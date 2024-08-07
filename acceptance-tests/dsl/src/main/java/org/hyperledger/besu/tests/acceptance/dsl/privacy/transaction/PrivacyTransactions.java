@@ -15,6 +15,7 @@
 package org.hyperledger.besu.tests.acceptance.dsl.privacy.transaction;
 
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.privacy.PrivacyGroupUtil;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.PrivacyNode;
 import org.hyperledger.besu.tests.acceptance.dsl.privacy.condition.PrivGetTransactionReceiptTransaction;
@@ -25,6 +26,7 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivDebugGe
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetCodeTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetLogsTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivGetTransaction;
+import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivTraceTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivGetFilterChangesTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivGetFilterLogsTransaction;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.filter.PrivNewFilterTransaction;
@@ -113,6 +115,11 @@ public class PrivacyTransactions {
   public PrivGetLogsTransaction privGetLogs(
       final String privacyGroupId, final LogFilterJsonParameter filterParameter) {
     return new PrivGetLogsTransaction(privacyGroupId, filterParameter);
+  }
+
+  public PrivTraceTransaction privTraceTransaction(
+      final String privacyGroupId, final Hash transactionHash) {
+    return new PrivTraceTransaction(privacyGroupId, transactionHash);
   }
 
   public RemoveFromFlexiblePrivacyGroupTransaction removeFromPrivacyGroup(

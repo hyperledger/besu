@@ -44,7 +44,6 @@ public class PrivJsonRpcMethodsTest {
   @Mock private TransactionPool transactionPool;
   @Mock private PrivacyParameters privacyParameters;
   @Mock private FilterManager filterManager;
-
   private PrivJsonRpcMethods privJsonRpcMethods;
 
   @BeforeEach
