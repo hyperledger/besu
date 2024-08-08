@@ -18,6 +18,7 @@
 
 ### Bug fixes
 - Correct entrypoint in Docker evmtool [#7430](https://github.com/hyperledger/besu/pull/7430)
+- Fix behaviour when starting in a pre-merge network [#7431](https://github.com/hyperledger/besu/pull/7431)
 
 ## 24.7.1
 
