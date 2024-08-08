@@ -128,16 +128,36 @@ public class QbftRound {
   }
 
   /**
+   * Create a block
+   *
+   * @param headerTimeStampSeconds of the block
+   * @return a Block
+   */
+  public Block createBlock(final long headerTimeStampSeconds) {
+    LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
+    return blockCreator.createBlock(headerTimeStampSeconds).getBlock();
+  }
+
+  /**
+   * Send proposal message.
+   *
+   * @param block to send
+   */
+  public void sendProposalMessage(final Block block) {
+    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
+    updateStateWithProposalAndTransmit(block);
+  }
+
+  /**
    * Create and send proposal message.
    *
    * @param headerTimeStampSeconds the header time stamp seconds
    */
   public void createAndSendProposalMessage(final long headerTimeStampSeconds) {
     LOG.debug("Creating proposed block. round={}", roundState.getRoundIdentifier());
-    final Block block = blockCreator.createBlock(headerTimeStampSeconds).getBlock();
+    final Block block = createBlock(headerTimeStampSeconds);
 
-    LOG.trace("Creating proposed block blockHeader={}", block.getHeader());
-    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
+    sendProposalMessage(block);
   }
 
   /**
@@ -154,7 +174,7 @@ public class QbftRound {
     final Block blockToPublish;
     if (bestPreparedCertificate.isEmpty()) {
       LOG.debug("Sending proposal with new block. round={}", roundState.getRoundIdentifier());
-      blockToPublish = blockCreator.createBlock(headerTimestamp).getBlock();
+      blockToPublish = createBlock(headerTimestamp);
     } else {
       LOG.debug(
           "Sending proposal from PreparedCertificate. round={}", roundState.getRoundIdentifier());
@@ -165,6 +185,15 @@ public class QbftRound {
         blockToPublish,
         roundChangeArtifacts.getRoundChanges(),
         bestPreparedCertificate.map(PreparedCertificate::getPrepares).orElse(emptyList()));
+  }
+
+  /**
+   * Update state with proposal and transmit.
+   *
+   * @param block the block
+   */
+  protected void updateStateWithProposalAndTransmit(final Block block) {
+    updateStateWithProposalAndTransmit(block, emptyList(), emptyList());
   }
 
   /**
