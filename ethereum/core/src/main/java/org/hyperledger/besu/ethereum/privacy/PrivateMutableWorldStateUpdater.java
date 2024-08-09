@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collection;
@@ -31,39 +30,35 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
 
   protected final WorldUpdater publicWorldUpdater;
   protected final WorldUpdater privateWorldUpdater;
-  private AuthorizedCodeService authorizedCodeService;
 
   public PrivateMutableWorldStateUpdater(
       final WorldUpdater publicWorldUpdater, final WorldUpdater privateWorldUpdater) {
     this.publicWorldUpdater = publicWorldUpdater;
     this.privateWorldUpdater = privateWorldUpdater;
-    this.authorizedCodeService = new AuthorizedCodeService();
   }
 
   @Override
   public MutableAccount createAccount(final Address address, final long nonce, final Wei balance) {
-    return authorizedCodeService.processMutableAccount(
-        this, privateWorldUpdater.createAccount(address, nonce, balance), address);
+    return privateWorldUpdater.createAccount(address, nonce, balance);
   }
 
   @Override
   public MutableAccount createAccount(final Address address) {
-    return authorizedCodeService.processMutableAccount(
-        this, privateWorldUpdater.createAccount(address), address);
+    return privateWorldUpdater.createAccount(address);
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
     final MutableAccount privateAccount = privateWorldUpdater.getAccount(address);
     if (privateAccount != null && !privateAccount.isEmpty()) {
-      return authorizedCodeService.processMutableAccount(this, privateAccount, address);
+      return privateAccount;
     }
     final MutableAccount publicAccount = publicWorldUpdater.getAccount(address);
     if (publicAccount != null && !publicAccount.isEmpty()) {
       publicAccount.becomeImmutable();
-      return authorizedCodeService.processMutableAccount(this, publicAccount, address);
+      return publicAccount;
     }
-    return authorizedCodeService.processMutableAccount(this, privateAccount, address);
+    return privateAccount;
   }
 
   @Override
@@ -108,10 +103,5 @@ public class PrivateMutableWorldStateUpdater implements WorldUpdater {
   @Override
   public Optional<WorldUpdater> parentUpdater() {
     return privateWorldUpdater.parentUpdater();
-  }
-
-  @Override
-  public void setAuthorizedCodeService(final AuthorizedCodeService authorizedCodeService) {
-    this.authorizedCodeService = authorizedCodeService;
   }
 }

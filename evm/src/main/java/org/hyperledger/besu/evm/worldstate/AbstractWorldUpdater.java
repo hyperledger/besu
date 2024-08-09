@@ -43,9 +43,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   private final W world;
   private final EvmConfiguration evmConfiguration;
 
-  /** The authorized code service. */
-  protected AuthorizedCodeService authorizedCodeService;
-
   /** The Updated accounts. */
   protected Map<Address, UpdateTrackingAccount<A>> updatedAccounts = new ConcurrentHashMap<>();
 
@@ -62,7 +59,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
   protected AbstractWorldUpdater(final W world, final EvmConfiguration evmConfiguration) {
     this.world = world;
     this.evmConfiguration = evmConfiguration;
-    this.authorizedCodeService = new AuthorizedCodeService();
   }
 
   /**
@@ -91,7 +87,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     final UpdateTrackingAccount<A> account = new UpdateTrackingAccount<>(address);
     account.setNonce(nonce);
     account.setBalance(balance);
-    return authorizedCodeService.processMutableAccount(this, track(account), address);
+    return track(account);
   }
 
   @Override
@@ -99,12 +95,12 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
-      return authorizedCodeService.processAccount(this, existing, address);
+      return existing;
     }
     if (deletedAccounts.contains(address)) {
       return null;
     }
-    return authorizedCodeService.processAccount(this, getForMutation(address), address);
+    return getForMutation(address);
   }
 
   @Override
@@ -112,7 +108,7 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // We may have updated it already, so check that first.
     final MutableAccount existing = updatedAccounts.get(address);
     if (existing != null) {
-      return authorizedCodeService.processMutableAccount(this, existing, address);
+      return existing;
     }
     if (deletedAccounts.contains(address)) {
       return null;
@@ -121,10 +117,9 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     // Otherwise, get it from our wrapped view and create a new update tracker.
     final A origin = getForMutation(address);
     if (origin == null) {
-      return authorizedCodeService.processMutableAccount(this, null, address);
+      return null;
     } else {
-      return authorizedCodeService.processMutableAccount(
-          this, track(new UpdateTrackingAccount<>(origin)), address);
+      return track(new UpdateTrackingAccount<>(origin));
     }
   }
 
@@ -168,11 +163,6 @@ public abstract class AbstractWorldUpdater<W extends WorldView, A extends Accoun
     } else {
       return Optional.empty();
     }
-  }
-
-  @Override
-  public void setAuthorizedCodeService(final AuthorizedCodeService authorizedCodeService) {
-    this.authorizedCodeService = authorizedCodeService;
   }
 
   /**

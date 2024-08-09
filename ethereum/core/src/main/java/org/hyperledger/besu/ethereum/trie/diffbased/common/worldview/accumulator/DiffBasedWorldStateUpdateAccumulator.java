@@ -250,8 +250,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
       accountsToUpdate.put(address, diffBasedValue);
     } else if (diffBasedValue.getUpdated() != null) {
       if (diffBasedValue.getUpdated().isEmpty()) {
-        return authorizedCodeService.processMutableAccount(
-            this, track(new UpdateTrackingAccount<>(diffBasedValue.getUpdated())), address);
+        return track(new UpdateTrackingAccount<>(diffBasedValue.getUpdated()));
       } else {
         throw new IllegalStateException("Cannot create an account when one already exists");
       }
@@ -268,8 +267,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
             Hash.EMPTY,
             true);
     diffBasedValue.setUpdated(newAccount);
-    return authorizedCodeService.processMutableAccount(
-        this, track(new UpdateTrackingAccount<>(newAccount)), address);
+    return track(new UpdateTrackingAccount<>(newAccount));
   }
 
   @Override
