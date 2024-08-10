@@ -413,9 +413,9 @@ public class TransitionBesuControllerBuilder extends BesuControllerBuilder {
     return propagateConfig(z -> z.dataStorageConfiguration(dataStorageConfiguration));
   }
 
-  private BesuControllerBuilder propagateConfig(final Consumer<BesuControllerBuilder> toPropogate) {
-    toPropogate.accept(preMergeBesuControllerBuilder);
-    toPropogate.accept(mergeBesuControllerBuilder);
+  private BesuControllerBuilder propagateConfig(final Consumer<BesuControllerBuilder> toPropagate) {
+    toPropagate.accept(preMergeBesuControllerBuilder);
+    toPropagate.accept(mergeBesuControllerBuilder);
     return this;
   }
 }
