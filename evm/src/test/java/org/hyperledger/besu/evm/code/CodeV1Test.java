@@ -30,7 +30,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 /**
- * These tests focus on code only validations, which are checked within the code runs themselves.
+ * These tests focus on code-only validations, which are checked within the code runs themselves.
  * Tests that depend on the EOF container (such as CallF into other sections) are in EOFLayoutTest.
  */
 class CodeV1Test {
@@ -520,7 +520,12 @@ class CodeV1Test {
             "Stack underflow",
             "Operation 0x50 requires stack of 1 but may only have 0 items",
             0,
-            List.of(List.of("50 00", 0, 0x80, 1))));
+            List.of(List.of("50 00", 0, 0x80, 1))),
+        Arguments.of(
+            "double rjumpi",
+            "Operation 0xF3 requires stack of 2 but may only have 1 items",
+            0,
+            List.of(List.of("5f 5f e10005 5f 5f e10000 f3", 0, 0x80, 1))));
   }
 
   static Stream<Arguments> stackRJumpForward() {

@@ -39,6 +39,7 @@ import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.web3j.utils.Strings;
 import picocli.CommandLine;
 import picocli.CommandLine.ParentCommand;
 
@@ -107,7 +108,10 @@ public class CodeValidateSubCommand implements Runnable {
       }
     } else {
       for (String code : cliCode) {
-        parentCommand.out.print(considerCode(code));
+        String validation = considerCode(code);
+        if (!Strings.isBlank(validation)) {
+          parentCommand.out.println(validation);
+        }
       }
     }
     parentCommand.out.flush();
@@ -116,7 +120,10 @@ public class CodeValidateSubCommand implements Runnable {
   private void checkCodeFromBufferedReader(final BufferedReader in) {
     try {
       for (String code = in.readLine(); code != null; code = in.readLine()) {
-        parentCommand.out.print(considerCode(code));
+        String validation = considerCode(code);
+        if (!Strings.isBlank(validation)) {
+          parentCommand.out.println(validation);
+        }
       }
     } catch (IOException e) {
       throw new RuntimeException(e);
@@ -142,7 +149,7 @@ public class CodeValidateSubCommand implements Runnable {
           Bytes.fromHexString(
               hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", ""));
     } catch (RuntimeException re) {
-      return "err: hex string -" + re + "\n";
+      return "err: hex string -" + re;
     }
     if (codeBytes.isEmpty()) {
       return "";
@@ -150,7 +157,7 @@ public class CodeValidateSubCommand implements Runnable {
 
     EOFLayout layout = evm.parseEOF(codeBytes);
     if (!layout.isValid()) {
-      return "err: layout - " + layout.invalidReason() + "\n";
+      return "err: layout - " + layout.invalidReason();
     }
 
     Code code = evm.getCodeUncached(codeBytes);
@@ -165,8 +172,7 @@ public class CodeValidateSubCommand implements Runnable {
               .mapToObj(code::getCodeSection)
               .map(cs -> code.getBytes().slice(cs.getEntryPoint(), cs.getLength()))
               .map(Bytes::toUnprefixedHexString)
-              .collect(Collectors.joining(","))
-          + "\n";
+              .collect(Collectors.joining(","));
     }
   }
 }
