@@ -62,8 +62,8 @@ tasks.register("fuzzAll", JavaExec) {
     "--corpus-dir=${buildDir}/generated/corpus",
     "--client=evm1=evmone-eofparse",
     "--client=revm=revme bytecode",
-    "--client=geth=eofdump eofparser",
-    "--client=etjs=tsx ../../../ethereumjs/ethereumjs-monorepo/packages/evm/scripts/eofContainerValidator.ts"
+    //    "--client=geth=eofdump eofparser",
+    //    "--client=etjs=tsx ../../../ethereumjs/ethereumjs-monorepo/packages/evm/scripts/eofContainerValidator.ts"
   ]
 }
 

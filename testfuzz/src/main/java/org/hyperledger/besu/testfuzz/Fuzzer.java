@@ -22,6 +22,7 @@ import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.security.NoSuchAlgorithmException;
+import java.util.function.Supplier;
 
 import com.gitlab.javafuzz.core.AbstractFuzzTarget;
 import com.gitlab.javafuzz.core.Corpus;
@@ -44,6 +45,8 @@ public class Fuzzer {
   private long totalExecutions;
   private long totalCoverage;
 
+  Supplier<String> fuzzStats;
+
   /**
    * Create a new fuzzer
    *
@@ -55,13 +58,15 @@ public class Fuzzer {
    * @throws InvocationTargetException If the wrong version of Jacoco is loaded
    * @throws IllegalAccessException If the wrong version of Jacoco is loaded
    */
-  public Fuzzer(final AbstractFuzzTarget target, final String dirs)
+  public Fuzzer(
+      final AbstractFuzzTarget target, final String dirs, final Supplier<String> fuzzStats)
       throws ClassNotFoundException,
           NoSuchMethodException,
           InvocationTargetException,
           IllegalAccessException {
     this.target = target;
     this.corpus = new Corpus(dirs);
+    this.fuzzStats = fuzzStats;
     Class<?> c = Class.forName("org.jacoco.agent.rt.RT");
     Method getAgentMethod = c.getMethod("getAgent");
     this.agent = getAgentMethod.invoke(null);
@@ -91,13 +96,14 @@ public class Fuzzer {
     this.executionsInSample = 0;
 
     System.out.printf(
-        "#%d %s     cov: %d corp: %d exec/s: %d rss: %d MB%n",
+        "#%d %s     cov: %d corp: %d exec/s: %d rss: %d MB %s%n",
         this.totalExecutions,
         type,
         this.totalCoverage,
         this.corpus.getLength(),
         execs_per_second,
-        rss);
+        rss,
+        fuzzStats.get());
   }
 
   /**

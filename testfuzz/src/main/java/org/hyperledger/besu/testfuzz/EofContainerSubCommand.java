@@ -149,7 +149,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
     clients.forEach((k, v) -> externalClients.add(new StreamingClient(k, v.split(" "))));
 
     try {
-      new Fuzzer(this, corpusDir.toString()).start();
+      new Fuzzer(this, corpusDir.toString(), this::fuzzStats).start();
     } catch (NoSuchAlgorithmException
         | ClassNotFoundException
         | InvocationTargetException
@@ -187,6 +187,8 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
 
   List<ExternalClient> externalClients = new ArrayList<>();
   EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  long validContainers; // TODO should be a metric
+  long totalContainers; // TODO should be a metric
 
   @Override
   public void fuzz(final byte[] bytes) {
@@ -239,6 +241,16 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
       parentCommand.out.println("code: " + eofUnderTest.toUnprefixedHexString());
       parentCommand.out.println("size: " + eofUnderTest.size());
       parentCommand.out.println();
+    } else {
+      if (besuValid) {
+        validContainers++;
+      }
+      totalContainers++;
     }
+  }
+
+  String fuzzStats() {
+    return " / %5.2f%% valid %d/%d"
+        .formatted((100.0 * validContainers) / totalContainers, validContainers, totalContainers);
   }
 }
