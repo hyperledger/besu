@@ -100,7 +100,7 @@ public class EthGetBlockReceiptsTest {
   public void exceptionWhenNoParamsSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams()))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid block or block hash parameters");
+        .hasMessage("Invalid block or block hash parameters (index 0)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
