@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evm.operation;
 
 import static org.hyperledger.besu.evm.internal.Words.clampedToLong;
+import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
@@ -26,6 +27,8 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.frame.MessageFrame.State;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -189,6 +192,14 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     frame.clearReturnData();
 
     final Account contract = frame.getWorldUpdater().get(to);
+
+    if (contract != null) {
+      final Optional<OperationResult> deductDelegatedCodeGasResult =
+          deductDelegatedCodeGasCost(frame, gasCalculator(), contract);
+      if (deductDelegatedCodeGasResult.isPresent()) {
+        return deductDelegatedCodeGasResult.get();
+      }
+    }
 
     final Account account = frame.getWorldUpdater().get(frame.getRecipientAddress());
     final Wei balance = account == null ? Wei.ZERO : account.getBalance();

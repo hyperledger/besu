@@ -41,7 +41,7 @@ public class TransactionDecoder {
           EIP1559TransactionDecoder::decode,
           TransactionType.BLOB,
           BlobTransactionDecoder::decode,
-          TransactionType.SET_CODE,
+          TransactionType.DELEGATE_CODE,
           SetCodeTransactionDecoder::decode);
 
   private static final ImmutableMap<TransactionType, Decoder> POOLED_TRANSACTION_DECODERS =

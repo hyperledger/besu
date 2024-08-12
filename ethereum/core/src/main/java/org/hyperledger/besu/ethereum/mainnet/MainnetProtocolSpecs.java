@@ -715,7 +715,7 @@ public abstract class MainnetProtocolSpecs {
                     evmConfiguration.evmStackSize(),
                     feeMarket,
                     CoinbaseFeePriceCalculator.eip1559(),
-                    new AuthorityProcessor(chainId)))
+                    new CodeDelegationProcessor(chainId)))
         // change to check for max blob gas per block for EIP-4844
         .transactionValidatorFactoryBuilder(
             (evm, gasLimitCalculator, feeMarket) ->
@@ -813,7 +813,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
                         TransactionType.BLOB,
-                        TransactionType.SET_CODE),
+                        TransactionType.DELEGATE_CODE),
                     evm.getEvmVersion().getMaxInitcodeSize()))
 
         // EIP-2935 Blockhash processor

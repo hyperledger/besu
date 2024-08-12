@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
@@ -23,23 +22,24 @@ import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
 import java.math.BigInteger;
 import java.util.Optional;
 
-import org.apache.tuweni.bytes.Bytes;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-public class AuthorityProcessor {
-  private static final Logger LOG = LoggerFactory.getLogger(AuthorityProcessor.class);
+public class CodeDelegationProcessor {
+  private static final Logger LOG = LoggerFactory.getLogger(CodeDelegationProcessor.class);
 
   private final Optional<BigInteger> maybeChainId;
 
-  public AuthorityProcessor(final Optional<BigInteger> maybeChainId) {
+  public CodeDelegationProcessor(final Optional<BigInteger> maybeChainId) {
     this.maybeChainId = maybeChainId;
   }
 
-  public void addContractToAuthority(
+  public CodeDelegationResult process(
       final EVMWorldUpdater evmWorldUpdater, final Transaction transaction) {
+    final CodeDelegationResult result = new CodeDelegationResult();
+
     transaction
-        .getAuthorizationList()
+        .getCodeDelegationList()
         .get()
         .forEach(
             payload ->
@@ -47,7 +47,7 @@ public class AuthorityProcessor {
                     .authorizer()
                     .ifPresent(
                         authorityAddress -> {
-                          LOG.trace("Set code authority: {}", authorityAddress);
+                          LOG.trace("Set code delegation for authority: {}", authorityAddress);
 
                           if (maybeChainId.isPresent()
                               && !payload.chainId().equals(BigInteger.ZERO)
@@ -55,34 +55,38 @@ public class AuthorityProcessor {
                             return;
                           }
 
-                          final Optional<MutableAccount> maybeAccount =
+                          final Optional<MutableAccount> maybeExistingAccount =
                               Optional.ofNullable(evmWorldUpdater.getAccount(authorityAddress));
                           final long accountNonce =
-                              maybeAccount.map(AccountState::getNonce).orElse(0L);
+                              maybeExistingAccount.map(AccountState::getNonce).orElse(0L);
 
-                          if (payload.nonce().isPresent()
-                              && !payload.nonce().get().equals(accountNonce)) {
+                          if (payload.nonce() != accountNonce) {
                             return;
                           }
 
-                          if (evmWorldUpdater
-                              .authorizedCodeService()
-                              .hasAuthorizedCode(authorityAddress)) {
-                            return;
-                          }
+                          result.addAccessedDelegatorAddress(authorityAddress);
 
-                          Optional<Account> codeAccount =
-                              Optional.ofNullable(evmWorldUpdater.get(payload.address()));
-                          final Bytes code;
-                          if (codeAccount.isPresent()) {
-                            code = codeAccount.get().getCode();
+                          MutableAccount account;
+                          if (maybeExistingAccount.isEmpty()) {
+                            account = evmWorldUpdater.createAccount(authorityAddress);
                           } else {
-                            code = Bytes.EMPTY;
+                            account = maybeExistingAccount.get();
+
+                            if (!evmWorldUpdater
+                                .authorizedCodeService()
+                                .canSetDelegatedCode(account)) {
+                              return;
+                            }
+
+                            result.addAlreadyExistingDelegator(authorityAddress);
                           }
 
                           evmWorldUpdater
                               .authorizedCodeService()
-                              .addAuthorizedCode(authorityAddress, code);
+                              .addDelegatedCode(account, payload.address());
+                          account.incrementNonce();
                         }));
+
+    return result;
   }
 }

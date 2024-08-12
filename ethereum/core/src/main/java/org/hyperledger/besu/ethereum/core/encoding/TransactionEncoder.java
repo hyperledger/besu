@@ -40,7 +40,7 @@ public class TransactionEncoder {
           EIP1559TransactionEncoder::encode,
           TransactionType.BLOB,
           BlobTransactionEncoder::encode,
-          TransactionType.SET_CODE,
+          TransactionType.DELEGATE_CODE,
           SetCodeTransactionEncoder::encode);
 
   private static final ImmutableMap<TransactionType, Encoder> POOLED_TRANSACTION_ENCODERS =

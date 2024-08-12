@@ -18,9 +18,9 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 import org.hyperledger.besu.crypto.SECP256K1;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.tests.acceptance.dsl.AcceptanceTestBase;
 import org.hyperledger.besu.tests.acceptance.dsl.account.Account;
@@ -88,8 +88,8 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
   public void shouldTransferAllEthOfAuthorizerToSponsor() throws IOException {
 
     // 7702 transaction
-    final org.hyperledger.besu.datatypes.SetCodeAuthorization authorization =
-        SetCodeAuthorization.builder()
+    final CodeDelegation authorization =
+        org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
             .chainId(BigInteger.valueOf(20211))
             .address(SEND_ALL_ETH_CONTRACT_ADDRESS)
             .signAndBuild(
@@ -98,7 +98,7 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
 
     final Transaction tx =
         Transaction.builder()
-            .type(TransactionType.SET_CODE)
+            .type(TransactionType.DELEGATE_CODE)
             .chainId(BigInteger.valueOf(20211))
             .nonce(0)
             .maxPriorityFeePerGas(Wei.of(1000000000))
@@ -143,13 +143,12 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
 
     cluster.verify(authorizer.balanceEquals(Amount.ether(90000)));
 
-    final org.hyperledger.besu.datatypes.SetCodeAuthorization authorization =
-        SetCodeAuthorization.builder()
+    final CodeDelegation authorization =
+        org.hyperledger.besu.ethereum.core.CodeDelegation.builder()
             .chainId(BigInteger.valueOf(20211))
-            .nonces(
-                Optional.of(
-                    1L)) // nonce is 1, but because it is validated before the nonce increase, it
-            // should be 0
+            .nonce(
+                1L) // nonce is 1, but because it is validated before the nonce increase, it should
+            // be 0
             .address(SEND_ALL_ETH_CONTRACT_ADDRESS)
             .signAndBuild(
                 secp256k1.createKeyPair(
@@ -157,7 +156,7 @@ public class SetCodeTransactionAcceptanceTest extends AcceptanceTestBase {
 
     final Transaction tx =
         Transaction.builder()
-            .type(TransactionType.SET_CODE)
+            .type(TransactionType.DELEGATE_CODE)
             .chainId(BigInteger.valueOf(20211))
             .nonce(0)
             .maxPriorityFeePerGas(Wei.of(1000000000))

@@ -17,7 +17,7 @@ package org.hyperledger.besu.ethereum.core.encoding;
 import static org.hyperledger.besu.ethereum.core.encoding.AccessListTransactionEncoder.writeAccessList;
 import static org.hyperledger.besu.ethereum.core.encoding.TransactionEncoder.writeSignatureAndRecoveryId;
 
-import org.hyperledger.besu.datatypes.SetCodeAuthorization;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPOutput;
 
@@ -32,21 +32,20 @@ public class SetCodeTransactionEncoder {
   }
 
   public static void encodeSetCodeInner(
-      final List<SetCodeAuthorization> payloads, final RLPOutput rlpOutput) {
+      final List<CodeDelegation> payloads, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     payloads.forEach(payload -> encodeSingleSetCode(payload, rlpOutput));
     rlpOutput.endList();
   }
 
   public static void encodeSingleSetCodeWithoutSignature(
-      final SetCodeAuthorization payload, final RLPOutput rlpOutput) {
+      final CodeDelegation payload, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     encodeAuthorizationDetails(payload, rlpOutput);
     rlpOutput.endList();
   }
 
-  public static void encodeSingleSetCode(
-      final SetCodeAuthorization payload, final RLPOutput rlpOutput) {
+  public static void encodeSingleSetCode(final CodeDelegation payload, final RLPOutput rlpOutput) {
     rlpOutput.startList();
     encodeAuthorizationDetails(payload, rlpOutput);
     rlpOutput.writeIntScalar(payload.signature().getRecId());
@@ -56,12 +55,10 @@ public class SetCodeTransactionEncoder {
   }
 
   private static void encodeAuthorizationDetails(
-      final SetCodeAuthorization payload, final RLPOutput rlpOutput) {
+      final CodeDelegation payload, final RLPOutput rlpOutput) {
     rlpOutput.writeBigIntegerScalar(payload.chainId());
     rlpOutput.writeBytes(payload.address().copy());
-    rlpOutput.startList();
-    payload.nonce().ifPresent(rlpOutput::writeLongScalar);
-    rlpOutput.endList();
+    rlpOutput.writeLongScalar(payload.nonce());
   }
 
   public static void encode(final Transaction transaction, final RLPOutput out) {
@@ -77,7 +74,7 @@ public class SetCodeTransactionEncoder {
     writeAccessList(out, transaction.getAccessList());
     encodeSetCodeInner(
         transaction
-            .getAuthorizationList()
+            .getCodeDelegationList()
             .orElseThrow(
                 () ->
                     new IllegalStateException(

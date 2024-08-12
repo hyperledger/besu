@@ -26,6 +26,7 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -35,7 +36,6 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.ConsolidationRequest;
 import org.hyperledger.besu.ethereum.core.DepositRequest;
 import org.hyperledger.besu.ethereum.core.Request;
-import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.core.TransactionReceipt;
 import org.hyperledger.besu.ethereum.core.WithdrawalRequest;
@@ -223,8 +223,7 @@ public class T8nExecutor {
                 continue;
               }
 
-              List<org.hyperledger.besu.datatypes.SetCodeAuthorization> authorizations =
-                  new ArrayList<>(authorizationList.size());
+              List<CodeDelegation> authorizations = new ArrayList<>(authorizationList.size());
               for (JsonNode entryAsJson : authorizationList) {
                 final BigInteger authorizationChainId =
                     Bytes.fromHexStringLenient(entryAsJson.get("chainId").textValue())
@@ -232,26 +231,8 @@ public class T8nExecutor {
                 final Address authorizationAddress =
                     Address.fromHexString(entryAsJson.get("address").textValue());
 
-                JsonNode nonces = entryAsJson.get("nonce");
-
-                if (nonces == null) {
-                  out.printf(
-                      "TX json node unparseable: expected nonce field to be provided - %s%n",
-                      txNode);
-                  continue;
-                }
-
-                List<Long> authorizationNonces;
-                if (nonces.isArray()) {
-                  authorizationNonces = new ArrayList<>(nonces.size());
-                  for (JsonNode nonceAsJson : nonces) {
-                    authorizationNonces.add(
-                        Bytes.fromHexStringLenient(nonceAsJson.textValue()).toLong());
-                  }
-                } else {
-                  authorizationNonces =
-                      List.of(Bytes.fromHexStringLenient(nonces.textValue()).toLong());
-                }
+                final long authorizationNonce =
+                    Bytes.fromHexStringLenient(entryAsJson.get("nonce").textValue()).toLong();
 
                 final byte authorizationV =
                     Bytes.fromHexStringLenient(entryAsJson.get("v").textValue())
@@ -265,13 +246,14 @@ public class T8nExecutor {
                         .toUnsignedBigInteger();
 
                 authorizations.add(
-                    SetCodeAuthorization.createSetCodeAuthorizationEntry(
-                        authorizationChainId,
-                        authorizationAddress,
-                        authorizationNonces,
-                        authorizationV,
-                        authorizationR,
-                        authorizationS));
+                    org.hyperledger.besu.ethereum.core.CodeDelegation
+                        .createSetCodeAuthorizationEntry(
+                            authorizationChainId,
+                            authorizationAddress,
+                            authorizationNonce,
+                            authorizationV,
+                            authorizationR,
+                            authorizationS));
               }
               builder.setCodeTransactionPayloads(authorizations);
             }

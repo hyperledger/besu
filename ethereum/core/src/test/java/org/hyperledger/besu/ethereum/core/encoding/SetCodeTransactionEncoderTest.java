@@ -19,11 +19,10 @@ import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
+import org.hyperledger.besu.ethereum.core.CodeDelegation;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -46,11 +45,11 @@ class SetCodeTransactionEncoderTest {
   void shouldEncodeSingleSetCodeWithNonce() {
     // "0xd80194633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c105"
 
-    final SetCodeAuthorization authorization =
-        new SetCodeAuthorization(
+    final CodeDelegation authorization =
+        new CodeDelegation(
             BigInteger.ONE,
             Address.fromHexString("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"),
-            Optional.of(0L),
+            42,
             SIGNATURE_ALGORITHM
                 .get()
                 .createSignature(
@@ -72,11 +71,11 @@ class SetCodeTransactionEncoderTest {
   void shouldEncodeSingleSetCodeWithoutNonce() {
     // "0xd70194633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c5"
 
-    final SetCodeAuthorization authorization =
-        new SetCodeAuthorization(
+    final CodeDelegation authorization =
+        new CodeDelegation(
             BigInteger.ONE,
             Address.fromHexString("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"),
-            Optional.empty(),
+            0,
             SIGNATURE_ALGORITHM
                 .get()
                 .createSignature(
@@ -98,11 +97,11 @@ class SetCodeTransactionEncoderTest {
   void shouldEncodeSingleSetCodeWithoutNonceAndChainIdZero() {
     // "d70094633688abc3ccf8b0c03088d2d1c6ae4958c2fa56c5"
 
-    final SetCodeAuthorization authorization =
-        new SetCodeAuthorization(
+    final CodeDelegation authorization =
+        new CodeDelegation(
             BigInteger.ZERO,
             Address.fromHexString("0x633688abc3cCf8B0C03088D2d1C6ae4958c2fA56"),
-            Optional.empty(),
+            5,
             SIGNATURE_ALGORITHM
                 .get()
                 .createSignature(

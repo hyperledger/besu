@@ -28,10 +28,10 @@ import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.KZGProof;
-import org.hyperledger.besu.datatypes.SetCodeAuthorization;
 import org.hyperledger.besu.datatypes.Sha256Hash;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.VersionedHash;
@@ -79,6 +79,9 @@ public class Transaction
 
   public static final BigInteger TWO = BigInteger.valueOf(2);
 
+  private static final BigInteger CODE_DELEGATION_BASE_COST =
+      BigInteger.valueOf(CodeDelegation.PER_EMPTY_ACCOUNT_COST);
+
   private static final Cache<Hash, Address> senderCache =
       CacheBuilder.newBuilder().recordStats().maximumSize(100_000L).build();
 
@@ -124,7 +127,7 @@ public class Transaction
   private final Optional<List<VersionedHash>> versionedHashes;
 
   private final Optional<BlobsWithCommitments> blobsWithCommitments;
-  private final Optional<List<SetCodeAuthorization>> maybeAuthorizationList;
+  private final Optional<List<CodeDelegation>> maybeCodeDelegationList;
 
   public static Builder builder() {
     return new Builder();
@@ -181,7 +184,7 @@ public class Transaction
       final Optional<BigInteger> chainId,
       final Optional<List<VersionedHash>> versionedHashes,
       final Optional<BlobsWithCommitments> blobsWithCommitments,
-      final Optional<List<SetCodeAuthorization>> maybeAuthorizationList) {
+      final Optional<List<CodeDelegation>> maybeCodeDelegationList) {
 
     if (!forCopy) {
       if (transactionType.requiresChainId()) {
@@ -220,7 +223,7 @@ public class Transaction
 
       if (transactionType.requiresSetCode()) {
         checkArgument(
-            maybeAuthorizationList.isPresent(),
+            maybeCodeDelegationList.isPresent(),
             "Must specify set code transaction payload for set code transaction");
       }
     }
@@ -241,7 +244,7 @@ public class Transaction
     this.chainId = chainId;
     this.versionedHashes = versionedHashes;
     this.blobsWithCommitments = blobsWithCommitments;
-    this.maybeAuthorizationList = maybeAuthorizationList;
+    this.maybeCodeDelegationList = maybeCodeDelegationList;
   }
 
   /**
@@ -473,7 +476,7 @@ public class Transaction
               payload,
               maybeAccessList,
               versionedHashes.orElse(null),
-              maybeAuthorizationList,
+              maybeCodeDelegationList,
               chainId);
     }
     return hashNoSignature;
@@ -617,6 +620,12 @@ public class Transaction
       cost = cost.add(blobGasPrice.getAsBigInteger().multiply(BigInteger.valueOf(totalBlobGas)));
     }
 
+    if (transactionType.supportsDelegateCode()) {
+      cost =
+          cost.add(
+              BigInteger.valueOf(codeDelegationListSize()).multiply(CODE_DELEGATION_BASE_COST));
+    }
+
     return cost;
   }
 
@@ -681,13 +690,13 @@ public class Transaction
   }
 
   @Override
-  public Optional<List<SetCodeAuthorization>> getAuthorizationList() {
-    return maybeAuthorizationList;
+  public Optional<List<CodeDelegation>> getCodeDelegationList() {
+    return maybeCodeDelegationList;
   }
 
   @Override
-  public int authorizationListSize() {
-    return maybeAuthorizationList.map(List::size).orElse(0);
+  public int codeDelegationListSize() {
+    return maybeCodeDelegationList.map(List::size).orElse(0);
   }
 
   /**
@@ -714,7 +723,7 @@ public class Transaction
       final Bytes payload,
       final Optional<List<AccessListEntry>> accessList,
       final List<VersionedHash> versionedHashes,
-      final Optional<List<SetCodeAuthorization>> authorizationList,
+      final Optional<List<CodeDelegation>> codeDelegationList,
       final Optional<BigInteger> chainId) {
     if (transactionType.requiresChainId()) {
       checkArgument(chainId.isPresent(), "Transaction type %s requires chainId", transactionType);
@@ -759,7 +768,7 @@ public class Transaction
                           new IllegalStateException(
                               "Developer error: the transaction should be guaranteed to have an access list here")),
                   chainId);
-          case SET_CODE ->
+          case DELEGATE_CODE ->
               setCodePreimage(
                   nonce,
                   maxPriorityFeePerGas,
@@ -770,7 +779,7 @@ public class Transaction
                   payload,
                   chainId,
                   accessList,
-                  authorizationList.orElseThrow(
+                  codeDelegationList.orElseThrow(
                       () ->
                           new IllegalStateException(
                               "Developer error: the transaction should be guaranteed to have a set code payload here")));
@@ -921,7 +930,7 @@ public class Transaction
       final Bytes payload,
       final Optional<BigInteger> chainId,
       final Optional<List<AccessListEntry>> accessList,
-      final List<SetCodeAuthorization> authorizationList) {
+      final List<CodeDelegation> authorizationList) {
     final Bytes encoded =
         RLP.encode(
             rlpOutput -> {
@@ -940,7 +949,7 @@ public class Transaction
               SetCodeTransactionEncoder.encodeSetCodeInner(authorizationList, rlpOutput);
               rlpOutput.endList();
             });
-    return Bytes.concatenate(Bytes.of(TransactionType.SET_CODE.getSerializedType()), encoded);
+    return Bytes.concatenate(Bytes.of(TransactionType.DELEGATE_CODE.getSerializedType()), encoded);
   }
 
   @Override
@@ -1111,7 +1120,7 @@ public class Transaction
             chainId,
             detachedVersionedHashes,
             detachedBlobsWithCommitments,
-            maybeAuthorizationList);
+            maybeCodeDelegationList);
 
     // copy also the computed fields, to avoid to recompute them
     copiedTx.sender = this.sender;
@@ -1179,7 +1188,7 @@ public class Transaction
     protected Optional<BigInteger> v = Optional.empty();
     protected List<VersionedHash> versionedHashes = null;
     private BlobsWithCommitments blobsWithCommitments;
-    protected Optional<List<SetCodeAuthorization>> setCodeTransactionPayloads = Optional.empty();
+    protected Optional<List<CodeDelegation>> setCodeTransactionPayloads = Optional.empty();
 
     public Builder copiedFrom(final Transaction toCopy) {
       this.transactionType = toCopy.transactionType;
@@ -1198,7 +1207,7 @@ public class Transaction
       this.chainId = toCopy.chainId;
       this.versionedHashes = toCopy.versionedHashes.orElse(null);
       this.blobsWithCommitments = toCopy.blobsWithCommitments.orElse(null);
-      this.setCodeTransactionPayloads = toCopy.maybeAuthorizationList;
+      this.setCodeTransactionPayloads = toCopy.maybeCodeDelegationList;
       return this;
     }
 
@@ -1293,7 +1302,7 @@ public class Transaction
       } else if (accessList.isPresent()) {
         transactionType = TransactionType.ACCESS_LIST;
       } else if (setCodeTransactionPayloads.isPresent()) {
-        transactionType = TransactionType.SET_CODE;
+        transactionType = TransactionType.DELEGATE_CODE;
       } else {
         transactionType = TransactionType.FRONTIER;
       }
@@ -1377,7 +1386,7 @@ public class Transaction
     }
 
     public Builder setCodeTransactionPayloads(
-        final List<SetCodeAuthorization> setCodeTransactionEntries) {
+        final List<CodeDelegation> setCodeTransactionEntries) {
       this.setCodeTransactionPayloads = Optional.ofNullable(setCodeTransactionEntries);
       return this;
     }

@@ -147,7 +147,7 @@ public abstract class PendingTransaction
           case ACCESS_LIST -> computeAccessListMemorySize();
           case EIP1559 -> computeEIP1559MemorySize();
           case BLOB -> computeBlobMemorySize();
-          case SET_CODE -> computeSetCodeMemorySize();
+          case DELEGATE_CODE -> computeSetCodeMemorySize();
         }
         + PENDING_TRANSACTION_MEMORY_SIZE;
   }

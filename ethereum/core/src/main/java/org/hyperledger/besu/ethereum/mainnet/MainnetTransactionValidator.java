@@ -129,6 +129,13 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getPayload().size(), maxInitcodeSize));
     }
 
+    if (transactionType == TransactionType.DELEGATE_CODE
+        && transaction.getCodeDelegationList().isEmpty()) {
+      return ValidationResult.invalid(
+          TransactionInvalidReason.EMPTY_CODE_DELEGATION,
+          "transaction code delegation transactions must have a non-empty code delegation list");
+    }
+
     return validateCostAndFee(transaction, baseFee, blobFee, transactionValidationParams);
   }
 
@@ -190,7 +197,7 @@ public class MainnetTransactionValidator implements TransactionValidator {
         gasCalculator.transactionIntrinsicGasCost(
                 transaction.getPayload(), transaction.isContractCreation())
             + (transaction.getAccessList().map(gasCalculator::accessListGasCost).orElse(0L))
-            + gasCalculator.setCodeListGasCost(transaction.authorizationListSize());
+            + gasCalculator.delegateCodeGasCost(transaction.codeDelegationListSize());
     if (Long.compareUnsigned(intrinsicGasCost, transaction.getGasLimit()) > 0) {
       return ValidationResult.invalid(
           TransactionInvalidReason.INTRINSIC_GAS_EXCEEDS_GAS_LIMIT,

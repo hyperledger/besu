@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.Code;
@@ -25,6 +27,7 @@ import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
 
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -114,6 +117,15 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     }
     Address to = Words.toAddress(toBytes);
     final Account contract = frame.getWorldUpdater().get(to);
+
+    if (contract != null) {
+      final Optional<OperationResult> deductDelegatedCodeGasCostResult =
+          deductDelegatedCodeGasCost(frame, gasCalculator(), contract);
+      if (deductDelegatedCodeGasCostResult.isPresent()) {
+        return deductDelegatedCodeGasCostResult.get();
+      }
+    }
+
     boolean accountCreation = contract == null && !zeroValue;
     long cost =
         gasCalculator().memoryExpansionGasCost(frame, inputOffset, inputLength)

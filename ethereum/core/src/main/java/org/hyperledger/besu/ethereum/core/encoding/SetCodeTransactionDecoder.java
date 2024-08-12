@@ -19,14 +19,13 @@ import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.TransactionType;
 import org.hyperledger.besu.datatypes.Wei;
-import org.hyperledger.besu.ethereum.core.SetCodeAuthorization;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.rlp.RLPInput;
 
 import java.math.BigInteger;
-import java.util.Optional;
 import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
@@ -44,7 +43,7 @@ public class SetCodeTransactionDecoder {
     final BigInteger chainId = input.readBigIntegerScalar();
     final Transaction.Builder builder =
         Transaction.builder()
-            .type(TransactionType.SET_CODE)
+            .type(TransactionType.DELEGATE_CODE)
             .chainId(chainId)
             .nonce(input.readLongScalar())
             .maxPriorityFeePerGas(Wei.of(input.readUInt256Scalar()))
@@ -65,9 +64,7 @@ public class SetCodeTransactionDecoder {
                       return accessListEntry;
                     }))
             .setCodeTransactionPayloads(
-                input.readList(
-                    setCodeTransactionPayloadsRLPInput ->
-                        decodeInnerPayload(setCodeTransactionPayloadsRLPInput)));
+                input.readList(SetCodeTransactionDecoder::decodeInnerPayload));
 
     final byte recId = (byte) input.readUnsignedByteScalar();
     final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
@@ -75,33 +72,15 @@ public class SetCodeTransactionDecoder {
 
     input.leaveList();
 
-    final Transaction transaction =
-        builder.signature(SIGNATURE_ALGORITHM.get().createSignature(r, s, recId)).build();
-
-    return transaction;
+    return builder.signature(SIGNATURE_ALGORITHM.get().createSignature(r, s, recId)).build();
   }
 
-  public static org.hyperledger.besu.datatypes.SetCodeAuthorization decodeInnerPayload(
-      final RLPInput input) {
+  public static CodeDelegation decodeInnerPayload(final RLPInput input) {
     input.enterList();
+
     final BigInteger chainId = input.readBigIntegerScalar();
     final Address address = Address.wrap(input.readBytes());
-
-    Optional<Long> nonce = Optional.empty();
-
-    if (!input.nextIsList()) {
-      throw new IllegalArgumentException("Optional nonce must be an list, but isn't");
-    }
-
-    final long noncesSize = input.nextSize();
-
-    input.enterList();
-    if (noncesSize == 1) {
-      nonce = Optional.ofNullable(input.readLongScalar());
-    } else if (noncesSize > 1) {
-      throw new IllegalArgumentException("Nonce list may only have 1 member, if any");
-    }
-    input.leaveList();
+    final long nonce = input.readLongScalar();
 
     final byte yParity = (byte) input.readUnsignedByteScalar();
     final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();
@@ -111,6 +90,7 @@ public class SetCodeTransactionDecoder {
 
     final SECPSignature signature = SIGNATURE_ALGORITHM.get().createSignature(r, s, yParity);
 
-    return new SetCodeAuthorization(chainId, address, nonce, signature);
+    return new org.hyperledger.besu.ethereum.core.CodeDelegation(
+        chainId, address, nonce, signature);
   }
 }

@@ -240,12 +240,12 @@ public interface Transaction {
    *
    * @return the set code transaction payloads
    */
-  Optional<List<SetCodeAuthorization>> getAuthorizationList();
+  Optional<List<CodeDelegation>> getCodeDelegationList();
 
   /**
    * Returns the size of the authorization list.
    *
    * @return the size of the authorization list
    */
-  int authorizationListSize();
+  int codeDelegationListSize();
 }

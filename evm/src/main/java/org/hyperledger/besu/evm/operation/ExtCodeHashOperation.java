@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.evm.operation;
 
+import static org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper.deductDelegatedCodeGasCost;
+
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.evm.EVM;
@@ -25,6 +27,8 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
+
+import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -78,23 +82,33 @@ public class ExtCodeHashOperation extends AbstractOperation {
       final long cost = cost(accountIsWarm);
       if (frame.getRemainingGas() < cost) {
         return new OperationResult(cost, ExceptionalHaltReason.INSUFFICIENT_GAS);
-      } else {
-        final Account account = frame.getWorldUpdater().get(address);
-        if (account == null || account.isEmpty()) {
-          frame.pushStackItem(Bytes.EMPTY);
-        } else {
-          final Bytes code = account.getCode();
-          if (enableEIP3540
-              && code.size() >= 2
-              && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
-              && code.get(1) == 0) {
-            frame.pushStackItem(EOF_REPLACEMENT_HASH);
-          } else {
-            frame.pushStackItem(account.getCodeHash());
-          }
-        }
-        return new OperationResult(cost, null);
       }
+
+      final Account account = frame.getWorldUpdater().get(address);
+
+      if (account != null) {
+        final Optional<OperationResult> deductDelegatedCodeGasResult =
+            deductDelegatedCodeGasCost(frame, gasCalculator(), account);
+        if (deductDelegatedCodeGasResult.isPresent()) {
+          return deductDelegatedCodeGasResult.get();
+        }
+      }
+
+      if (account == null || account.isEmpty()) {
+        frame.pushStackItem(Bytes.EMPTY);
+      } else {
+        final Bytes code = account.getCode();
+        if (enableEIP3540
+            && code.size() >= 2
+            && code.get(0) == EOFLayout.EOF_PREFIX_BYTE
+            && code.get(1) == 0) {
+          frame.pushStackItem(EOF_REPLACEMENT_HASH);
+        } else {
+          frame.pushStackItem(account.getCodeHash());
+        }
+      }
+      return new OperationResult(cost, null);
+
     } catch (final UnderflowException ufe) {
       return new OperationResult(cost(true), ExceptionalHaltReason.INSUFFICIENT_STACK_ITEMS);
     } catch (final OverflowException ofe) {

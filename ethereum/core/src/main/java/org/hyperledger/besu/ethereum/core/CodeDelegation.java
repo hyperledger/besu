@@ -24,7 +24,6 @@ import org.hyperledger.besu.ethereum.core.encoding.SetCodeTransactionEncoder;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 
@@ -33,7 +32,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 
-public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetCodeAuthorization {
+public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelegation {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
@@ -41,7 +40,7 @@ public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetC
 
   private final BigInteger chainId;
   private final Address address;
-  private final Optional<Long> nonce;
+  private final long nonce;
   private final SECPSignature signature;
   private Optional<Address> authorizer = Optional.empty();
   private boolean isAuthorityComputed = false;
@@ -51,13 +50,13 @@ public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetC
    *
    * @param chainId can be either the current chain id or zero
    * @param address the address from which the code will be set into the EOA account
-   * @param nonce an optional nonce after which this auth expires
+   * @param nonce the nonce after which this auth expires
    * @param signature the signature of the EOA account which will be used to set the code
    */
-  public SetCodeAuthorization(
+  public CodeDelegation(
       final BigInteger chainId,
       final Address address,
-      final Optional<Long> nonce,
+      final long nonce,
       final SECPSignature signature) {
     this.chainId = chainId;
     this.address = address;
@@ -70,25 +69,22 @@ public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetC
    *
    * @param chainId can be either the current chain id or zero
    * @param address the address from which the code will be set into the EOA account
-   * @param nonces the list of nonces
+   * @param nonce the nonce
    * @param v the recovery id
    * @param r the r value of the signature
    * @param s the s value of the signature
    * @return SetCodeTransactionEntry
    */
   @JsonCreator
-  public static org.hyperledger.besu.datatypes.SetCodeAuthorization createSetCodeAuthorizationEntry(
+  public static org.hyperledger.besu.datatypes.CodeDelegation createSetCodeAuthorizationEntry(
       @JsonProperty("chainId") final BigInteger chainId,
       @JsonProperty("address") final Address address,
-      @JsonProperty("nonce") final List<Long> nonces,
+      @JsonProperty("nonce") final long nonce,
       @JsonProperty("v") final byte v,
       @JsonProperty("r") final BigInteger r,
       @JsonProperty("s") final BigInteger s) {
-    return new SetCodeAuthorization(
-        chainId,
-        address,
-        Optional.ofNullable(nonces.get(0)),
-        SIGNATURE_ALGORITHM.get().createSignature(r, s, v));
+    return new CodeDelegation(
+        chainId, address, nonce, SIGNATURE_ALGORITHM.get().createSignature(r, s, v));
   }
 
   @JsonProperty("chainId")
@@ -120,7 +116,7 @@ public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetC
   }
 
   @Override
-  public Optional<Long> nonce() {
+  public long nonce() {
     return nonce;
   }
 
@@ -167,7 +163,7 @@ public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetC
   public static class Builder {
     private BigInteger chainId = BigInteger.ZERO;
     private Address address;
-    private Optional<Long> nonce = Optional.empty();
+    private Long nonce;
     private SECPSignature signature;
 
     /** Create a new builder. */
@@ -196,12 +192,12 @@ public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetC
     }
 
     /**
-     * Set the optional nonce.
+     * Set the nonce.
      *
-     * @param nonce the optional nonce.
+     * @param nonce the nonce.
      * @return this builder
      */
-    public Builder nonces(final Optional<Long> nonce) {
+    public Builder nonce(final long nonce) {
       this.nonce = nonce;
       return this;
     }
@@ -223,13 +219,13 @@ public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetC
      * @param keyPair the key pair
      * @return SetCodeAuthorization
      */
-    public org.hyperledger.besu.datatypes.SetCodeAuthorization signAndBuild(final KeyPair keyPair) {
+    public org.hyperledger.besu.datatypes.CodeDelegation signAndBuild(final KeyPair keyPair) {
       final BytesValueRLPOutput output = new BytesValueRLPOutput();
       output.startList();
       output.writeBigIntegerScalar(chainId);
       output.writeBytes(address);
       output.startList();
-      nonce.ifPresent(output::writeLongScalar);
+      output.writeLongScalar(nonce);
       output.endList();
       output.endList();
 
@@ -245,16 +241,20 @@ public class SetCodeAuthorization implements org.hyperledger.besu.datatypes.SetC
      *
      * @return SetCodeAuthorization
      */
-    public org.hyperledger.besu.datatypes.SetCodeAuthorization build() {
+    public org.hyperledger.besu.datatypes.CodeDelegation build() {
       if (address == null) {
         throw new IllegalStateException("Address must be set");
+      }
+
+      if (nonce == null) {
+        throw new IllegalStateException("Nonce must be set");
       }
 
       if (signature == null) {
         throw new IllegalStateException("Signature must be set");
       }
 
-      return new SetCodeAuthorization(chainId, address, nonce, signature);
+      return new CodeDelegation(chainId, address, nonce, signature);
     }
   }
 }
