@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
@@ -48,7 +49,13 @@ public class EthGetUncleByBlockNumberAndIndex extends AbstractBlockParameterMeth
   @Override
   protected BlockResult resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
-    final int index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
+    final int index;
+    try {
+      index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+              "Invalid block index (index 1)", RpcErrorType.INVALID_BLOCK_INDEX_PARAMS, e);
+    }
     return getBlockchainQueries()
         .getOmmer(blockNumber, index)
         .map(UncleBlockResult::build)
