@@ -112,7 +112,7 @@ public class EthFeeHistory implements JsonRpcMethod {
     final long chainHeadBlockNumber = chainHeadHeader.getNumber();
     final long highestBlockNumber = highestBlock.getNumber().orElse(chainHeadBlockNumber);
     if (highestBlockNumber > chainHeadBlockNumber) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     }
 
     final long firstBlock = Math.max(0, highestBlockNumber - (blockCount - 1));

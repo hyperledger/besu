@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -78,16 +79,21 @@ public class EthGetLogs implements JsonRpcMethod {
                             .getBlockNumber(blockchain)
                             .orElseThrow(
                                 () ->
-                                    new Exception("fromBlock not found: " + filter.getFromBlock()));
+                                        new InvalidJsonRpcParameters(
+                                                "fromBlock not found: " + filter.getFromBlock(),
+                                                RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS));
                     toBlockNumber =
                         filter
                             .getToBlock()
                             .getBlockNumber(blockchain)
                             .orElseThrow(
-                                () -> new Exception("toBlock not found: " + filter.getToBlock()));
+                                () -> new InvalidJsonRpcParameters(
+                                            "toBlock not found: " + filter.getToBlock(),
+                                            RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS));
                     if (maxLogRange > 0 && (toBlockNumber - fromBlockNumber) > maxLogRange) {
-                      throw new IllegalArgumentException(
-                          "Requested range exceeds maximum range limit");
+                      throw new InvalidJsonRpcParameters(
+                              "Requested range exceeds maximum range limit",
+                              RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
                     }
                   } catch (final Exception e) {
                     ex.set(e);
@@ -103,16 +109,18 @@ public class EthGetLogs implements JsonRpcMethod {
 
     if (ex.get() != null) {
       LOG.atDebug()
-          .setMessage("eth_getLogs request {} failed:")
-          .addArgument(requestContext.getRequest())
-          .setCause(ex.get())
-          .log();
-      if (ex.get() instanceof IllegalArgumentException) {
+              .setMessage("eth_getLogs request {} failed:")
+              .addArgument(requestContext.getRequest())
+              .setCause(ex.get())
+              .log();
+      if (ex.get() instanceof InvalidJsonRpcParameters) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
+                requestContext.getRequest().getId(),
+                ((InvalidJsonRpcParameters) ex.get()).getRpcErrorType());
+      } else {
+        LOG.error("Unexpected exception: {}", ex.get(), ex.get());
+        // TODO: wrap and throw? Something obviously went wrong
       }
-      return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
     }
 
     return new JsonRpcSuccessResponse(
