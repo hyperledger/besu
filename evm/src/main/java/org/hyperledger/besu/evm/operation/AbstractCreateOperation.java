@@ -153,7 +153,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
    * @param initcode the initcode for the new contract.
    * @return the address
    */
-  protected abstract Address targetContractAddress(MessageFrame frame, Code initcode);
+  protected abstract Address generateTargetContractAddress(MessageFrame frame, Code initcode);
 
   /**
    * Gets the initcode that will be run.
@@ -175,7 +175,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
   private void spawnChildMessage(final MessageFrame parent, final Code code, final EVM evm) {
     final Wei value = Wei.wrap(parent.getStackItem(0));
 
-    final Address contractAddress = targetContractAddress(parent, code);
+    final Address contractAddress = generateTargetContractAddress(parent, code);
     final Bytes inputData = getInputData(parent);
 
     final long childGasStipend =
