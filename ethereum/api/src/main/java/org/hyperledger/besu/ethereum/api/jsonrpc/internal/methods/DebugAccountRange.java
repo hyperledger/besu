@@ -58,8 +58,16 @@ public class DebugAccountRange implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final BlockParameterOrBlockHash blockParameterOrBlockHash =
-        requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+    final BlockParameterOrBlockHash blockParameterOrBlockHash;
+    try {
+      blockParameterOrBlockHash =
+          requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter or block hash parameter (index 0)",
+          RpcErrorType.INVALID_BLOCK_PARAMS,
+          e);
+    }
     final String addressHash;
     try {
       addressHash = requestContext.getRequiredParameter(2, String.class);
