@@ -129,7 +129,7 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenNumberParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("invalid", "true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid block parameter");
+        .hasMessage("Invalid block parameter (index 0)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
