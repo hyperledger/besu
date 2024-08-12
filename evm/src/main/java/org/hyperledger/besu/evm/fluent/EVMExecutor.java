@@ -1225,7 +1225,7 @@ public class EVMExecutor {
   }
 
   /**
-   * Returns the ChaindD this executor is using
+   * Returns the ChainID this executor is using
    *
    * @return the current chain ID
    */
