@@ -62,6 +62,22 @@ public class SECP256R1 extends AbstractSECP256 {
   }
 
   /**
+   * Attempt to enable the native library for secp256r1
+   *
+   * @return true if the native library was enabled.
+   */
+  @Override
+  public boolean maybeEnableNative() {
+    try {
+      useNative = BesuNativeEC.INSTANCE != null;
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+      LOG.info("Native secp256r1 not available - {}", e.getMessage());
+      useNative = false;
+    }
+    return useNative;
+  }
+
+  /**
    * SECP256R1 is using the non-deterministic implementation of K calculation (standard)
    *
    * @return an instance of RandomDSAKCalculator

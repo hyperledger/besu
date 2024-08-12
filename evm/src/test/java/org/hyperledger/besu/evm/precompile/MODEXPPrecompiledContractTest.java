@@ -155,12 +155,27 @@ class MODEXPPrecompiledContractTest {
 
   @ParameterizedTest
   @MethodSource("parameters")
-  void testPrecompiledContract(
+  void testPrecompiledContractNative(
       final String inputString,
       final String precompiledResult,
       final Long eip198Gas,
       final Long eip2565Gas) {
+    BigIntegerModularExponentiationPrecompiledContract.maybeEnableNative();
+    testComputation(inputString, precompiledResult);
+  }
 
+  @ParameterizedTest
+  @MethodSource("parameters")
+  void testPrecompiledContractJava(
+      final String inputString,
+      final String precompiledResult,
+      final Long eip198Gas,
+      final Long eip2565Gas) {
+    BigIntegerModularExponentiationPrecompiledContract.disableNative();
+    testComputation(inputString, precompiledResult);
+  }
+
+  private void testComputation(final String inputString, final String precompiledResult) {
     assumeThat(precompiledResult).isNotNull();
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expected = Bytes.fromHexString(precompiledResult);
