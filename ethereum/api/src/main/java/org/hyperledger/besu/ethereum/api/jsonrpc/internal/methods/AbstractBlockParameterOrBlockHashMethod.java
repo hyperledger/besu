@@ -123,7 +123,7 @@ public abstract class AbstractBlockParameterOrBlockHashMethod implements JsonRpc
       Optional<Hash> blockHash = blockParameterOrBlockHash.getHash();
       if (blockHash.isEmpty()) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+            requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_HASH_PARAMS);
       }
 
       // return error if block hash does not find a block

@@ -333,6 +333,18 @@ public class EOFLayoutTest {
             null,
             1
           },
+          {
+            "EF00 01 010004 0200010001 0300010015 040000 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00ff)",
+            "dangling data in subcontainer",
+            "subcontainer size mismatch",
+            1
+          },
+          {
+            "EF00 01 010004 0200010001 0300010014 040000 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00ff)",
+            "dangling data in container",
+            "Dangling data after end of all sections",
+            1
+          },
         });
   }
 

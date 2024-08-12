@@ -19,6 +19,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeaderBuilder;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
 
 import java.math.BigInteger;
+import java.util.Map;
 import java.util.Optional;
 import java.util.function.Predicate;
 
@@ -46,8 +47,16 @@ public interface ProtocolSchedule extends PrivacySupportingProtocolSchedule {
 
   void putTimestampMilestone(final long timestamp, final ProtocolSpec protocolSpec);
 
+  default void setMilestones(final Map<HardforkId, Long> milestoneList) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
   default Optional<ScheduledProtocolSpec.Hardfork> hardforkFor(
       final Predicate<ScheduledProtocolSpec> predicate) {
+    throw new UnsupportedOperationException("Not implemented");
+  }
+
+  default Optional<Long> milestoneFor(final HardforkId hardforkId) {
     throw new UnsupportedOperationException("Not implemented");
   }
 

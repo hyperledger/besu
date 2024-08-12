@@ -63,7 +63,7 @@ public enum EvmSpecVersion {
   PRAGUE_EOF(0x6000, 0xc000, 1, false, "PragueEOF", "Prague + EOF.  In Development"),
   /** Osaka evm spec version. */
   OSAKA(0x6000, 0xc000, 1, false, "Osaka", "Placeholder"),
-  /** Amstedam evm spec version. */
+  /** Amsterdam evm spec version. */
   AMSTERDAM(0x6000, 0xc000, 1, false, "Amsterdam", "Placeholder"),
   /** Bogota evm spec version. */
   BOGOTA(0x6000, 0xc000, 1, false, "Bogota", "Placeholder"),
