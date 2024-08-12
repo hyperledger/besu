@@ -103,7 +103,7 @@ public class EthGetMinerDataByBlockNumberTest {
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
     assertThatThrownBy(() -> method.response(requestContext))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid block parameter");
+        .hasMessage("Invalid block parameter (index 0)");
 
     verifyNoMoreInteractions(blockchainQueries);
   }
