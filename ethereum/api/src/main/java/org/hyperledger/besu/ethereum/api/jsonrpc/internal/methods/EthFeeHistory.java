@@ -88,9 +88,15 @@ public class EthFeeHistory implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
     final Object requestId = request.getRequest().getId();
 
-    final int blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
+    final int blockCount;
+    try {
+      blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block count parameter (index 0)", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
+    }
     if (isInvalidBlockCount(blockCount)) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_BLOCK_COUNT_PARAMS);
     }
     final BlockParameter highestBlock;
     try {
@@ -99,6 +105,7 @@ public class EthFeeHistory implements JsonRpcMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid highest block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
+
     final Optional<List<Double>> maybeRewardPercentiles =
         request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
 
