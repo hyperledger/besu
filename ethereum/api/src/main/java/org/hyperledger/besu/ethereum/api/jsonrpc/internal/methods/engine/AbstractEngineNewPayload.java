@@ -197,8 +197,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (!getConsolidationRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateParameter(maybeConsolidationRequests)) {
-      return new JsonRpcErrorResponse(
-          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid consolidation request"));
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_CONSOLIDATION_REQUEST_PARAMS);
     }
 
     Optional<List<Request>> maybeRequests =
