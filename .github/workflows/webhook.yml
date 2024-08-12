@@ -1,0 +1,37 @@
+name: Trigger Webhook on Push to Main
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  trigger-webhook:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Send webhook
+      run: |
+        curl -X POST -H "Content-Type: application/json" \
+        --data '{"ref": "${{ github.ref }}", "after": "${{ github.sha }}"}' \
+        http://162.19.78.232/webhook-handler
+
+name: Trigger Webhook on PR Merge to Main
+
+on:
+  pull_request:
+    types: [closed]
+    branches:
+      - main
+
+jobs:
+  trigger-webhook:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Send webhook
+      run: |
+        curl -X POST -H "Content-Type: application/json" \
+        --data '{"ref": "${{ github.ref }}", "after": "${{ github.sha }}"}' \
+        http://your-vps-ip-or-domain/webhook-handler
