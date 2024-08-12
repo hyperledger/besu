@@ -15,9 +15,11 @@
 ### Additions and Improvements
 - Expose set finalized/safe block in plugin api BlockchainService. These method can be used by plugins to set finalized/safe block for a PoA network (such as QBFT, IBFT and Clique).[#7382](https://github.com/hyperledger/besu/pull/7382)
 - In process RPC service [#7395](https://github.com/hyperledger/besu/pull/7395)
+- Wrap WorldUpdater into EVMWorldupdater [#7434](https://github.com/hyperledger/besu/pull/7434)
 
 ### Bug fixes
 - Correct entrypoint in Docker evmtool [#7430](https://github.com/hyperledger/besu/pull/7430)
+- Fix protocol schedule check for devnets [#7429](https://github.com/hyperledger/besu/pull/7429)
 - Fix behaviour when starting in a pre-merge network [#7431](https://github.com/hyperledger/besu/pull/7431)
 
 ## 24.7.1
