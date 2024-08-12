@@ -19,6 +19,8 @@
 
 ### Bug fixes
 - Correct entrypoint in Docker evmtool [#7430](https://github.com/hyperledger/besu/pull/7430)
+- Fix protocol schedule check for devnets [#7429](https://github.com/hyperledger/besu/pull/7429)
+- Fix behaviour when starting in a pre-merge network [#7431](https://github.com/hyperledger/besu/pull/7431)
 
 ## 24.7.1
 
