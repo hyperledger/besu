@@ -61,7 +61,6 @@ public class EthGetUncleByBlockHashAndIndex implements JsonRpcMethod {
           "Invalid block index parameter (index 1)", RpcErrorType.INVALID_BLOCK_INDEX_PARAMS, e);
     }
 
-
     return blockchain.getOmmer(hash, index).map(UncleBlockResult::build).orElse(null);
   }
 }
