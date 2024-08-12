@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -110,10 +109,11 @@ public class PrivCall extends AbstractBlockParameterMethod {
       callParams = request.getRequiredParameter(1, JsonCallParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid call parameters (index 1)", RpcErrorType.INVALID_CALL_PARAMS);
+          "Invalid call parameters (index 1)", RpcErrorType.INVALID_CALL_PARAMS);
     }
     if (callParams.getTo() == null) {
-      throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments", RpcErrorType.INVALID_CALL_PARAMS);
+      throw new InvalidJsonRpcParameters(
+          "Missing \"to\" field in call arguments", RpcErrorType.INVALID_CALL_PARAMS);
     }
     return callParams;
   }

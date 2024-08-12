@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsolidationRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -114,7 +113,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       blockParam = requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcRequestException(
-              "Invalid engine payload parameter (index 0)", RpcErrorType.INVALID_ENGINE_PAYLOAD_PARAMS, e);
+          "Invalid engine payload parameter (index 0)",
+          RpcErrorType.INVALID_ENGINE_PAYLOAD_PARAMS,
+          e);
     }
 
     final Optional<List<String>> maybeVersionedHashParam =

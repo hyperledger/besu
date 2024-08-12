@@ -30,7 +30,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -89,19 +88,19 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
       forkChoice = requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid engine forkchoice updated parameter (index 0)",
-              RpcErrorType.INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS,
-              e);
+          "Invalid engine forkchoice updated parameter (index 0)",
+          RpcErrorType.INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS,
+          e);
     }
     final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes;
     try {
       maybePayloadAttributes =
-              requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
+          requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid engine payload attributes parameter (index 1)",
-              RpcErrorType.INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMS,
-              e);
+          "Invalid engine payload attributes parameter (index 1)",
+          RpcErrorType.INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMS,
+          e);
     }
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
