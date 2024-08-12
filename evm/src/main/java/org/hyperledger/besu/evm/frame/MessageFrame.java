@@ -1718,6 +1718,7 @@ public class MessageFrame {
         newTxValues = parentMessageFrame.txValues;
         updater = parentMessageFrame.getWorldUpdater().updater();
         newStatic = isStatic || parentMessageFrame.isStatic;
+        parentMessageFrame.warmUpAddress(contract);
       }
 
       updater.setAuthorizedCodeService(authorizedCodeService);
