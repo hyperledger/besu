@@ -169,8 +169,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (!getDepositRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateParameter(maybeDepositRequests)) {
-      return new JsonRpcErrorResponse(
-          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposit request"));
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_DEPOSIT_REQUEST_PARAMS);
     }
 
     final Optional<List<Request>> maybeWithdrawalRequests =
