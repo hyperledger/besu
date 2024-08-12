@@ -66,6 +66,7 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -259,6 +260,12 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         .blobsWithCommitments(Optional.of(bwc))
         .versionedHashes(Optional.of(bwc.getVersionedHashes()))
         .createTransaction(senderKeys);
+  }
+
+  @Override
+  @Disabled
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterCancunMilestone() {
+    // only relevant for v2
   }
 
   @Override
