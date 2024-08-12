@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -49,14 +48,14 @@ public class AdminLogsRemoveCache implements JsonRpcMethod {
       startBlockParameter = requestContext.getOptionalParameter(0, BlockParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid start block parameter (index 0)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
+          "Invalid start block parameter (index 0)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
     }
     final Optional<BlockParameter> stopBlockParameter;
     try {
       stopBlockParameter = requestContext.getOptionalParameter(1, BlockParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid stop block parameter (index 1)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
+          "Invalid stop block parameter (index 1)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
     }
 
     final long startBlock;

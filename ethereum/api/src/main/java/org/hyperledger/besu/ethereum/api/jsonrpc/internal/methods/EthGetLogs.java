@@ -79,21 +79,22 @@ public class EthGetLogs implements JsonRpcMethod {
                             .getBlockNumber(blockchain)
                             .orElseThrow(
                                 () ->
-                                        new InvalidJsonRpcParameters(
-                                                "fromBlock not found: " + filter.getFromBlock(),
-                                                RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS));
+                                    new InvalidJsonRpcParameters(
+                                        "fromBlock not found: " + filter.getFromBlock(),
+                                        RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS));
                     toBlockNumber =
                         filter
                             .getToBlock()
                             .getBlockNumber(blockchain)
                             .orElseThrow(
-                                () -> new InvalidJsonRpcParameters(
-                                            "toBlock not found: " + filter.getToBlock(),
-                                            RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS));
+                                () ->
+                                    new InvalidJsonRpcParameters(
+                                        "toBlock not found: " + filter.getToBlock(),
+                                        RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS));
                     if (maxLogRange > 0 && (toBlockNumber - fromBlockNumber) > maxLogRange) {
                       throw new InvalidJsonRpcParameters(
-                              "Requested range exceeds maximum range limit",
-                              RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
+                          "Requested range exceeds maximum range limit",
+                          RpcErrorType.EXCEEDS_RPC_MAX_BLOCK_RANGE);
                     }
                   } catch (final Exception e) {
                     ex.set(e);
@@ -109,14 +110,14 @@ public class EthGetLogs implements JsonRpcMethod {
 
     if (ex.get() != null) {
       LOG.atDebug()
-              .setMessage("eth_getLogs request {} failed:")
-              .addArgument(requestContext.getRequest())
-              .setCause(ex.get())
-              .log();
+          .setMessage("eth_getLogs request {} failed:")
+          .addArgument(requestContext.getRequest())
+          .setCause(ex.get())
+          .log();
       if (ex.get() instanceof InvalidJsonRpcParameters) {
         return new JsonRpcErrorResponse(
-                requestContext.getRequest().getId(),
-                ((InvalidJsonRpcParameters) ex.get()).getRpcErrorType());
+            requestContext.getRequest().getId(),
+            ((InvalidJsonRpcParameters) ex.get()).getRpcErrorType());
       } else {
         LOG.error("Unexpected exception: {}", ex.get(), ex.get());
         // TODO: wrap and throw? Something obviously went wrong

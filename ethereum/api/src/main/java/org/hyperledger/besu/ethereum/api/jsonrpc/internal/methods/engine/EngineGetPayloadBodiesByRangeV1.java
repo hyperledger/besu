@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -64,7 +63,9 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
       startBlockNumber = request.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid start block number parameter (index 0)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
+          "Invalid start block number parameter (index 0)",
+          RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS,
+          e);
     }
     final long count;
     try {
