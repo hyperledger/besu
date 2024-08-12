@@ -93,8 +93,16 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
               RpcErrorType.INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS,
               e);
     }
-    final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes =
-        requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
+    final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes;
+    try {
+      maybePayloadAttributes =
+              requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+              "Invalid engine payload attributes parameter (index 1)",
+              RpcErrorType.INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMS,
+              e);
+    }
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
     mergeContext
