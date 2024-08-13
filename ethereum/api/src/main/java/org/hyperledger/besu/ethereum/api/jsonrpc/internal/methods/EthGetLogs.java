@@ -119,8 +119,7 @@ public class EthGetLogs implements JsonRpcMethod {
             requestContext.getRequest().getId(),
             ((InvalidJsonRpcParameters) ex.get()).getRpcErrorType());
       } else {
-        LOG.error("Unexpected exception: {}", ex.get(), ex.get());
-        // TODO: wrap and throw? Something obviously went wrong
+        throw new RuntimeException(ex.get());
       }
     }
 

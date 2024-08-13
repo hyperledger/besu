@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.Executi
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.SYNCING;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod.EngineStatus.VALID;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
+import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.CANCUN;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator.ForkchoiceResult;
@@ -39,7 +40,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineUpdateFo
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Withdrawal;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
-import org.hyperledger.besu.ethereum.mainnet.ScheduledProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.List;
@@ -55,7 +55,7 @@ import org.slf4j.spi.LoggingEventBuilder;
 public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJsonRpcMethod {
   private static final Logger LOG = LoggerFactory.getLogger(AbstractEngineForkchoiceUpdated.class);
   private final MergeMiningCoordinator mergeCoordinator;
-  protected final Long cancunTimestamp;
+  protected final Optional<Long> cancunMilestone;
 
   public AbstractEngineForkchoiceUpdated(
       final Vertx vertx,
@@ -66,9 +66,7 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
     super(vertx, protocolSchedule, protocolContext, engineCallListener);
 
     this.mergeCoordinator = mergeCoordinator;
-    Optional<ScheduledProtocolSpec.Hardfork> cancun =
-        protocolSchedule.hardforkFor(s -> s.fork().name().equalsIgnoreCase("Cancun"));
-    cancunTimestamp = cancun.map(ScheduledProtocolSpec.Hardfork::milestone).orElse(Long.MAX_VALUE);
+    cancunMilestone = protocolSchedule.milestoneFor(CANCUN);
   }
 
   protected ValidationResult<RpcErrorType> validateParameter(

@@ -18,8 +18,7 @@ import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
-import org.hyperledger.besu.evm.worldstate.WorldUpdater;
+import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
 
 import java.math.BigInteger;
 import java.util.Optional;
@@ -38,10 +37,7 @@ public class AuthorityProcessor {
   }
 
   public void addContractToAuthority(
-      final WorldUpdater worldState,
-      final AuthorizedCodeService authorizedCodeService,
-      final Transaction transaction) {
-
+      final EVMWorldUpdater evmWorldUpdater, final Transaction transaction) {
     transaction
         .getAuthorizationList()
         .get()
@@ -60,7 +56,7 @@ public class AuthorityProcessor {
                           }
 
                           final Optional<MutableAccount> maybeAccount =
-                              Optional.ofNullable(worldState.getAccount(authorityAddress));
+                              Optional.ofNullable(evmWorldUpdater.getAccount(authorityAddress));
                           final long accountNonce =
                               maybeAccount.map(AccountState::getNonce).orElse(0L);
 
@@ -69,12 +65,14 @@ public class AuthorityProcessor {
                             return;
                           }
 
-                          if (authorizedCodeService.hasAuthorizedCode(authorityAddress)) {
+                          if (evmWorldUpdater
+                              .authorizedCodeService()
+                              .hasAuthorizedCode(authorityAddress)) {
                             return;
                           }
 
                           Optional<Account> codeAccount =
-                              Optional.ofNullable(worldState.get(payload.address()));
+                              Optional.ofNullable(evmWorldUpdater.get(payload.address()));
                           final Bytes code;
                           if (codeAccount.isPresent()) {
                             code = codeAccount.get().getCode();
@@ -82,7 +80,9 @@ public class AuthorityProcessor {
                             code = Bytes.EMPTY;
                           }
 
-                          authorizedCodeService.addAuthorizedCode(authorityAddress, code);
+                          evmWorldUpdater
+                              .authorizedCodeService()
+                              .addAuthorizedCode(authorityAddress, code);
                         }));
   }
 }

@@ -180,7 +180,6 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
         .code(code)
         .isStatic(isStatic(frame))
         .completer(child -> complete(frame, child))
-        .authorizedCodeService(frame.getAuthorizedCodeService())
         .build();
 
     frame.setState(MessageFrame.State.CODE_SUSPENDED);
