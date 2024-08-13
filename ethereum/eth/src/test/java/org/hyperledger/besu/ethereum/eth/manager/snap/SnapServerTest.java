@@ -214,8 +214,7 @@ public class SnapServerTest {
     var rangeData =
         getAndVerifyAccountRangeData(
             (AccountRangeMessage) snapServer.constructGetAccountRangeResponse(tinyRangeLimit),
-            // TODO: after sorting out the request fudge factor, adjust this assertion to match
-            acctCount * 90 / 100 - 1);
+            acctCount);
 
     // assert proofs are valid for the requested range
     assertThat(assertIsValidAccountRangeProof(Hash.ZERO, rangeData)).isTrue();
@@ -316,6 +315,31 @@ public class SnapServerTest {
   }
 
   @Test
+  public void assertPartialStorageLimitHashBetweenSlots() {
+    Bytes accountShortHash = Bytes.fromHexStringLenient("0x40");
+    Hash accountFullHash = Hash.wrap(Bytes32.leftPad(accountShortHash));
+    SnapTestAccount testAccount = createTestContractAccount(accountFullHash, 2, inMemoryStorage);
+
+    Hash startHash = Hash.wrap(Bytes32.rightPad(Bytes.fromHexString("12"))); // slot 2
+    Hash endHash = Hash.wrap(Bytes32.rightPad(Bytes.fromHexString("13"))); // between slots 2 and 3
+    var rangeData = requestStorageRange(List.of(testAccount.addressHash), startHash, endHash);
+
+    assertThat(rangeData).isNotNull();
+    var slotsData = rangeData.slotsData(false);
+    assertThat(slotsData).isNotNull();
+    assertThat(slotsData.slots()).isNotNull();
+    assertThat(slotsData.slots().size()).isEqualTo(1);
+    var firstAccountStorages = slotsData.slots().first();
+    // expecting to see 2 slots
+    assertThat(firstAccountStorages.size()).isEqualTo(2);
+    // assert proofs are valid for the requested range
+    assertThat(
+            assertIsValidStorageProof(
+                testAccount, startHash, firstAccountStorages, slotsData.proofs()))
+        .isTrue();
+  }
+
+  @Test
   public void assertLastEmptyPartialStorageForSingleAccount() {
     // When our final range request is empty, no next account is possible,
     //      and we should return just a proof of exclusion of the right
@@ -343,7 +367,7 @@ public class SnapServerTest {
   @Test
   public void assertStorageLimitRangeResponse() {
     // assert we limit the range response according to bytessize
-    final int storageSlotSize = 70;
+    final int storageSlotSize = 69;
     final int storageSlotCount = 16;
     insertTestAccounts(acct1, acct2, acct3, acct4);
 
@@ -374,8 +398,7 @@ public class SnapServerTest {
     assertThat(firstAccountStorages.size()).isEqualTo(10);
     var secondAccountStorages = slotsData.slots().last();
     // expecting to see only 6 since request was limited to 16 slots
-    // TODO: after sorting out the request fudge factor, adjust this assertion to match
-    assertThat(secondAccountStorages.size()).isEqualTo(6 * 90 / 100 - 1);
+    assertThat(secondAccountStorages.size()).isEqualTo(6);
     // proofs required for interrupted storage range:
     assertThat(slotsData.proofs().size()).isNotEqualTo(0);
 
@@ -556,7 +579,7 @@ public class SnapServerTest {
   public void assertStorageTrieShortAccountHashPathRequest() {
     Bytes accountShortHash = Bytes.fromHexStringLenient("0x40");
     Hash accountFullHash = Hash.wrap(Bytes32.leftPad(accountShortHash));
-    SnapTestAccount testAccount = createTestContractAccount(accountFullHash, inMemoryStorage);
+    SnapTestAccount testAccount = createTestContractAccount(accountFullHash, 1, inMemoryStorage);
     insertTestAccounts(testAccount);
     var pathToSlot11 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0101"));
     var pathToSlot12 = CompactEncoding.encode(Bytes.fromHexStringLenient("0x0102"));
@@ -707,11 +730,11 @@ public class SnapServerTest {
   static SnapTestAccount createTestContractAccount(
       final String hexAddr, final BonsaiWorldStateKeyValueStorage storage) {
     final Hash acctHash = Hash.wrap(Bytes32.rightPad(Bytes.fromHexString(hexAddr)));
-    return createTestContractAccount(acctHash, storage);
+    return createTestContractAccount(acctHash, 1, storage);
   }
 
   static SnapTestAccount createTestContractAccount(
-      final Hash acctHash, final BonsaiWorldStateKeyValueStorage storage) {
+      final Hash acctHash, final int slotKeyGap, final BonsaiWorldStateKeyValueStorage storage) {
     MerkleTrie<Bytes32, Bytes> trie =
         new StoredMerklePatriciaTrie<>(
             (loc, hash) -> storage.getAccountStorageTrieNode(acctHash, loc, hash),
@@ -724,7 +747,7 @@ public class SnapServerTest {
     var flatdb = storage.getFlatDbStrategy();
     var updater = storage.updater();
     updater.putCode(Hash.hash(mockCode), mockCode);
-    IntStream.range(10, 20)
+    IntStream.iterate(10, i -> i < 20, i -> i + slotKeyGap)
         .boxed()
         .forEach(
             i -> {
