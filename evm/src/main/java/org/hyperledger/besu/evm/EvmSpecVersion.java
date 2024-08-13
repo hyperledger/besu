@@ -65,7 +65,7 @@ public enum EvmSpecVersion {
   BOGOTA(MainnetHardforkId.BOGOTA, 0x6000, 0xc000, 1),
   /** Polis evm spec version. */
   POLIS(MainnetHardforkId.POLIS, 0x6000, 0xc000, 1),
-  /** Bogota evm spec version. */
+  /** Bangkok evm spec version. */
   BANGKOK(MainnetHardforkId.BANGKOK, 0x6000, 0xc000, 1),
   /** Development fork for unscheduled EIPs */
   FUTURE_EIPS(MainnetHardforkId.FUTURE_EIPS, 0x6000, 0xc000, 1),
