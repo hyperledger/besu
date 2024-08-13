@@ -215,8 +215,8 @@ public class StandardJsonTracer implements OperationTracer {
       sb.append("\"returnData\":\"").append(returnData.toHexString()).append("\",");
     }
     sb.append("\"depth\":").append(depth).append(",");
-    if (subdepth > 1) {
-      sb.append("\"subdepth\":").append(subdepth).append(",");
+    if (subdepth >= 1) {
+      sb.append("\"fdepth\":").append(subdepth).append(",");
     }
     sb.append("\"refund\":").append(messageFrame.getGasRefund()).append(",");
     sb.append("\"opName\":\"").append(currentOp.getName()).append("\"");
