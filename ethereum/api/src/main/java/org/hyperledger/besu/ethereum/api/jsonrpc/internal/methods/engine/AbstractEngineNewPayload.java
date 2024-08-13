@@ -169,8 +169,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (!getDepositRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateParameter(maybeDepositRequests)) {
-      return new JsonRpcErrorResponse(
-          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid deposit request"));
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_DEPOSIT_REQUEST_PARAMS);
     }
 
     final Optional<List<Request>> maybeWithdrawalRequests =
@@ -197,8 +196,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (!getConsolidationRequestValidator(
             protocolSchedule.get(), blockParam.getTimestamp(), blockParam.getBlockNumber())
         .validateParameter(maybeConsolidationRequests)) {
-      return new JsonRpcErrorResponse(
-          reqId, new JsonRpcError(INVALID_PARAMS, "Invalid consolidation request"));
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_CONSOLIDATION_REQUEST_PARAMS);
     }
 
     Optional<List<Request>> maybeRequests =
@@ -466,7 +464,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       // blob transactions must have at least one blob
       if (versionedHashes.isEmpty()) {
         return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS, "There must be at least one blob");
+            RpcErrorType.INVALID_BLOB_COUNT, "There must be at least one blob");
       }
       transactionVersionedHashes.addAll(versionedHashes.get());
     }
@@ -497,7 +495,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (header.getBlobGasUsed().isPresent() && maybeVersionedHashes.isPresent()) {
       if (!validateBlobGasUsed(header, maybeVersionedHashes.get(), protocolSpec)) {
         return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS,
+            RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS,
             "Payload BlobGasUsed does not match calculated BlobGasUsed");
       }
     }
@@ -505,7 +503,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (protocolSpec.getGasCalculator().blobGasCost(transactionVersionedHashes.size())
         > protocolSpec.getGasLimitCalculator().currentBlobGasLimit()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS,
+          RpcErrorType.INVALID_BLOB_COUNT,
           String.format("Invalid Blob Count: %d", transactionVersionedHashes.size()));
     }
     return ValidationResult.valid();

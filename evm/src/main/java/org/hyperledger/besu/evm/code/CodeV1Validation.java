@@ -486,6 +486,8 @@ public class CodeV1Validation implements EOFValidator {
               "Code that was not forward referenced in section 0x%x pc %d",
               codeSectionToValidate, currentPC);
         }
+        currentMin = min(stack_min[currentPC], currentMin);
+        currentMax = max(stack_max[currentPC], currentMax);
 
         if (stackInputs > currentMin) {
           return format(
