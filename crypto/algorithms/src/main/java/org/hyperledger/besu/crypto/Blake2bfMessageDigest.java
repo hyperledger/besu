@@ -134,7 +134,7 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
     public static boolean maybeEnableNative() {
       try {
         useNative = LibBlake2bf.ENABLED;
-      } catch (UnsatisfiedLinkError ule) {
+    } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
         LOG.info("blake2bf native precompile not available: {}", ule.getMessage());
         useNative = false;
       }
