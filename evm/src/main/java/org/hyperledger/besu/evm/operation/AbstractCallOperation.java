@@ -230,7 +230,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         .code(code)
         .isStatic(isStatic(frame))
         .completer(child -> complete(frame, child))
-        .authorizedCodeService(frame.getAuthorizedCodeService())
         .build();
     // see note in stack depth check about incrementing cost
     frame.incrementRemainingGas(cost);

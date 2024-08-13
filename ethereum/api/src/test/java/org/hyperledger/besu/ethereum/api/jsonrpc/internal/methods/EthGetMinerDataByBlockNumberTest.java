@@ -103,7 +103,7 @@ public class EthGetMinerDataByBlockNumberTest {
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
     assertThatThrownBy(() -> method.response(requestContext))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid block parameter (index 0)");
 
     verifyNoMoreInteractions(blockchainQueries);
   }
@@ -114,7 +114,7 @@ public class EthGetMinerDataByBlockNumberTest {
     JsonRpcRequestContext requestContext = new JsonRpcRequestContext(request);
     assertThatThrownBy(() -> method.response(requestContext))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid block parameter");
 
     verifyNoMoreInteractions(blockchainQueries);
   }

@@ -191,6 +191,7 @@ public record EOFLayout(
    *     strict and excess data is in the container
    * @return the eof layout
    */
+  @SuppressWarnings("ReferenceEquality")
   public static EOFLayout parseEOF(final Bytes container, final boolean strictSize) {
     Queue<EOFParseStep> parseQueue = new ArrayDeque<>();
     parseQueue.add(new EOFParseStep(container, strictSize, -1, null, null));
@@ -213,8 +214,10 @@ public record EOFLayout(
                     + " - "
                     + parsedContainer.invalidReason);
       }
-      if (step.container.size() < parsedContainer.container.size()) {
-        return invalidLayout(container, parsedContainer.version, "excess data in subcontainer");
+      // This ReferenceEquality check is correct
+      if ((strictSize || result != parsedContainer)
+          && step.container.size() != parsedContainer.container.size()) {
+        return invalidLayout(container, parsedContainer.version, "subcontainer size mismatch");
       }
       if (step.index >= 0) {
         step.parentSubcontainers[step.index] = parsedContainer;

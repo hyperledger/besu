@@ -77,8 +77,7 @@ public class EthGetBlockByHashTest {
   public void exceptionWhenHashParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("hash", "true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage(
-            "Invalid json rpc parameter at index 0. Supplied value was: 'hash' of type: 'java.lang.String' - expected type: 'org.hyperledger.besu.datatypes.Hash'");
+        .hasMessage("Invalid block hash parameter (index 0)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
