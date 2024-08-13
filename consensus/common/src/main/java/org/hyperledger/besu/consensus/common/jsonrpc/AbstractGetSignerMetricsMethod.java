@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.BlockInterface;
 import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -66,17 +67,27 @@ public abstract class AbstractGetSignerMetricsMethod {
    */
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
 
-    final Optional<BlockParameter> startBlockParameter =
-        requestContext.getOptionalParameter(0, BlockParameter.class);
-    final Optional<BlockParameter> endBlockParameter =
-        requestContext.getOptionalParameter(1, BlockParameter.class);
+    final Optional<BlockParameter> startBlockParameter;
+    try {
+      startBlockParameter = requestContext.getOptionalParameter(0, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid start block parameter (index 0)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
+    }
+    final Optional<BlockParameter> endBlockParameter;
+    try {
+      endBlockParameter = requestContext.getOptionalParameter(1, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid end block parameter (index 1)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
+    }
 
     final long fromBlockNumber = getFromBlockNumber(startBlockParameter);
     final long toBlockNumber = getEndBlockNumber(endBlockParameter);
 
     if (!isValidParameters(fromBlockNumber, toBlockNumber)) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     }
 
     final Map<Address, SignerMetricResult> proposersMap = new HashMap<>();
