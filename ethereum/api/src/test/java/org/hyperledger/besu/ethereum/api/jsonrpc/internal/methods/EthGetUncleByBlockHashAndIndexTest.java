@@ -90,7 +90,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 1");
+        .hasMessage("Invalid block index parameter (index 1)");
   }
 
   @Test
@@ -113,7 +113,7 @@ public class EthGetUncleByBlockHashAndIndexTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid block index parameter (index 1)");
   }
 
   @Test
