@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.permissioning
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -44,7 +45,14 @@ public class PermRemoveAccountsFromAllowlist implements JsonRpcMethod {
   @Override
   @SuppressWarnings("unchecked")
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final List<String> accountsList = requestContext.getRequiredParameter(0, List.class);
+    final List<String> accountsList;
+    try {
+      accountsList = requestContext.getRequiredParameter(0, List.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid accounts list parameter (index 0)", RpcErrorType.INVALID_ACCOUNT_PARAMS, e);
+    }
+
     if (allowlistController.isPresent()) {
       final AllowlistOperationResult removeResult =
           allowlistController.get().removeAccounts(accountsList);

@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.MutableAccount;
-import org.hyperledger.besu.evm.worldstate.AuthorizedCodeService;
 import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 
 import java.util.Collection;
@@ -33,7 +32,6 @@ public class ToyWorld implements WorldUpdater {
 
   ToyWorld parent;
   Map<Address, ToyAccount> accounts = new HashMap<>();
-  private AuthorizedCodeService authorizedCodeService;
 
   public ToyWorld() {
     this(null);
@@ -41,7 +39,6 @@ public class ToyWorld implements WorldUpdater {
 
   public ToyWorld(final ToyWorld parent) {
     this.parent = parent;
-    this.authorizedCodeService = new AuthorizedCodeService();
   }
 
   @Override
@@ -52,11 +49,11 @@ public class ToyWorld implements WorldUpdater {
   @Override
   public Account get(final Address address) {
     if (accounts.containsKey(address)) {
-      return authorizedCodeService.processAccount(this, accounts.get(address), address);
+      return accounts.get(address);
     } else if (parent != null) {
-      return authorizedCodeService.processAccount(this, parent.get(address), address);
+      return parent.get(address);
     } else {
-      return authorizedCodeService.processAccount(this, null, address);
+      return null;
     }
   }
 
@@ -73,17 +70,17 @@ public class ToyWorld implements WorldUpdater {
       final Bytes code) {
     ToyAccount account = new ToyAccount(parentAccount, address, nonce, balance, code);
     accounts.put(address, account);
-    return authorizedCodeService.processMutableAccount(this, account, address);
+    return account;
   }
 
   @Override
   public MutableAccount getAccount(final Address address) {
     if (accounts.containsKey(address)) {
-      return authorizedCodeService.processMutableAccount(this, accounts.get(address), address);
+      return accounts.get(address);
     } else if (parent != null) {
       Account parentAccount = parent.getAccount(address);
       if (parentAccount == null) {
-        return authorizedCodeService.processMutableAccount(this, null, address);
+        return null;
       } else {
         return createAccount(
             parentAccount,
@@ -93,7 +90,7 @@ public class ToyWorld implements WorldUpdater {
             parentAccount.getCode());
       }
     } else {
-      return authorizedCodeService.processMutableAccount(this, null, address);
+      return null;
     }
   }
 
@@ -130,10 +127,5 @@ public class ToyWorld implements WorldUpdater {
   @Override
   public Optional<WorldUpdater> parentUpdater() {
     return Optional.empty();
-  }
-
-  @Override
-  public void setAuthorizedCodeService(final AuthorizedCodeService authorizedCodeService) {
-    this.authorizedCodeService = authorizedCodeService;
   }
 }

@@ -466,7 +466,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       // blob transactions must have at least one blob
       if (versionedHashes.isEmpty()) {
         return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS, "There must be at least one blob");
+            RpcErrorType.INVALID_BLOB_COUNT, "There must be at least one blob");
       }
       transactionVersionedHashes.addAll(versionedHashes.get());
     }
@@ -497,7 +497,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (header.getBlobGasUsed().isPresent() && maybeVersionedHashes.isPresent()) {
       if (!validateBlobGasUsed(header, maybeVersionedHashes.get(), protocolSpec)) {
         return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS,
+            RpcErrorType.INVALID_BLOB_GAS_USED_PARAMS,
             "Payload BlobGasUsed does not match calculated BlobGasUsed");
       }
     }
@@ -505,7 +505,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (protocolSpec.getGasCalculator().blobGasCost(transactionVersionedHashes.size())
         > protocolSpec.getGasLimitCalculator().currentBlobGasLimit()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS,
+          RpcErrorType.INVALID_BLOB_COUNT,
           String.format("Invalid Blob Count: %d", transactionVersionedHashes.size()));
     }
     return ValidationResult.valid();

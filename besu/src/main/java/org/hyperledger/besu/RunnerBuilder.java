@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.api.graphql.GraphQLDataFetchers;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLHttpService;
 import org.hyperledger.besu.ethereum.api.graphql.GraphQLProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.EngineJsonRpcService;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcHttpService;
 import org.hyperledger.besu.ethereum.api.jsonrpc.authentication.AuthenticationService;
@@ -178,6 +179,7 @@ public class RunnerBuilder {
   private Optional<JsonRpcConfiguration> engineJsonRpcConfiguration = Optional.empty();
   private GraphQLConfiguration graphQLConfiguration;
   private WebSocketConfiguration webSocketConfiguration;
+  private InProcessRpcConfiguration inProcessRpcConfiguration;
   private ApiConfiguration apiConfiguration;
   private Path dataDir;
   private Optional<Path> pidPath = Optional.empty();
@@ -411,6 +413,18 @@ public class RunnerBuilder {
    */
   public RunnerBuilder webSocketConfiguration(final WebSocketConfiguration webSocketConfiguration) {
     this.webSocketConfiguration = webSocketConfiguration;
+    return this;
+  }
+
+  /**
+   * Add In-Process RPC configuration.
+   *
+   * @param inProcessRpcConfiguration the in-process RPC configuration
+   * @return the runner builder
+   */
+  public RunnerBuilder inProcessRpcConfiguration(
+      final InProcessRpcConfiguration inProcessRpcConfiguration) {
+    this.inProcessRpcConfiguration = inProcessRpcConfiguration;
     return this;
   }
 
@@ -1082,6 +1096,37 @@ public class RunnerBuilder {
       jsonRpcIpcService = Optional.empty();
     }
 
+    final Map<String, JsonRpcMethod> inProcessRpcMethods;
+    if (inProcessRpcConfiguration.isEnabled()) {
+      inProcessRpcMethods =
+          jsonRpcMethods(
+              protocolSchedule,
+              context,
+              besuController,
+              peerNetwork,
+              blockchainQueries,
+              synchronizer,
+              transactionPool,
+              miningParameters,
+              miningCoordinator,
+              metricsSystem,
+              supportedCapabilities,
+              inProcessRpcConfiguration.getInProcessRpcApis(),
+              filterManager,
+              accountLocalConfigPermissioningController,
+              nodeLocalConfigPermissioningController,
+              privacyParameters,
+              jsonRpcConfiguration,
+              webSocketConfiguration,
+              metricsConfiguration,
+              natService,
+              besuPluginContext.getNamedPlugins(),
+              dataDir,
+              rpcEndpointServiceImpl);
+    } else {
+      inProcessRpcMethods = Map.of();
+    }
+
     return new Runner(
         vertx,
         networkRunner,
@@ -1091,6 +1136,7 @@ public class RunnerBuilder {
         graphQLHttpService,
         webSocketService,
         jsonRpcIpcService,
+        inProcessRpcMethods,
         stratumServer,
         metricsService,
         ethStatsService,

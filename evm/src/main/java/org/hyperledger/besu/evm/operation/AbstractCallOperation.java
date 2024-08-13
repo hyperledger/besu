@@ -197,7 +197,7 @@ public abstract class AbstractCallOperation extends AbstractOperation {
     if (value(frame).compareTo(balance) > 0 || frame.getDepth() >= 1024) {
       frame.expandMemory(inputDataOffset(frame), inputDataLength(frame));
       frame.expandMemory(outputDataOffset(frame), outputDataLength(frame));
-      // For the following, we either increment the gas or return zero so weo don't get double
+      // For the following, we either increment the gas or return zero, so we don't get double
       // charged. If we return zero then the traces don't have the right per-opcode cost.
       frame.incrementRemainingGas(gasAvailableForChildCall(frame) + cost);
       frame.popStackItems(getStackItemsConsumed());
@@ -230,7 +230,6 @@ public abstract class AbstractCallOperation extends AbstractOperation {
         .code(code)
         .isStatic(isStatic(frame))
         .completer(child -> complete(frame, child))
-        .authorizedCodeService(frame.getAuthorizedCodeService())
         .build();
     // see note in stack depth check about incrementing cost
     frame.incrementRemainingGas(cost);
