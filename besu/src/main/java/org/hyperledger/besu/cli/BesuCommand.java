@@ -1503,7 +1503,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private void configureNativeLibs() {
     if (unstableNativeLibraryOptions.getNativeAltbn128()
-        && AbstractAltBnPrecompiledContract.isNative()) {
+        && AbstractAltBnPrecompiledContract.maybeEnableNative()) {
       logger.info("Using the native implementation of alt bn128");
     } else {
       AbstractAltBnPrecompiledContract.disableNative();
@@ -1519,7 +1519,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
 
     if (unstableNativeLibraryOptions.getNativeSecp()
-        && SignatureAlgorithmFactory.getInstance().isNative()) {
+        && SignatureAlgorithmFactory.getInstance().maybeEnableNative()) {
       logger.info("Using the native implementation of the signature algorithm");
     } else {
       SignatureAlgorithmFactory.getInstance().disableNative();
