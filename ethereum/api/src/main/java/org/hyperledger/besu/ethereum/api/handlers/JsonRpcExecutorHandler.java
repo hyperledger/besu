@@ -84,7 +84,7 @@ public class JsonRpcExecutorHandler {
                   cancelTimer(ctx);
                 });
       } catch (final RuntimeException e) {
-        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
+        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
         LOG.error("Unhandled exception in JSON-RPC executor for method {}", method, e);
         handleErrorAndEndResponse(ctx, null, RpcErrorType.INTERNAL_ERROR);
         cancelTimer(ctx);

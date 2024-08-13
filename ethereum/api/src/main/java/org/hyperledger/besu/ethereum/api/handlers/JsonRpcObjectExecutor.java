@@ -48,6 +48,13 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
 
   @Override
   void execute() throws IOException {
+//    try {
+//      // Introduce a delay of 60 seconds to simulate a long-running process
+//      Thread.sleep(60000);
+//    } catch (InterruptedException e) {
+//      Thread.currentThread().interrupt();
+//    }
+
     HttpServerResponse response = ctx.response();
     response = response.putHeader("Content-Type", APPLICATION_JSON);
 
@@ -65,23 +72,26 @@ public class JsonRpcObjectExecutor extends AbstractJsonRpcExecutor {
   }
 
   private void handleJsonObjectResponse(
-      final HttpServerResponse response,
-      final JsonRpcResponse jsonRpcResponse,
-      final RoutingContext ctx)
-      throws IOException {
+          final HttpServerResponse response,
+          final JsonRpcResponse jsonRpcResponse,
+          final RoutingContext ctx)
+          throws IOException {
+    if (response.headWritten()) {
+      // Response head already sent, skipping response
+      return;
+    }
     response.setStatusCode(status(jsonRpcResponse).code());
     if (jsonRpcResponse.getType() == RpcResponseType.NONE) {
       response.end();
     } else {
       try (final JsonResponseStreamer streamer =
-          new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
+                   new JsonResponseStreamer(response, ctx.request().remoteAddress())) {
         // underlying output stream lifecycle is managed by the json object writer
         lazyTraceLogger(() -> getJsonObjectMapper().writeValueAsString(jsonRpcResponse));
         jsonObjectWriter.writeValue(streamer, jsonRpcResponse);
       }
     }
   }
-
   private static HttpResponseStatus status(final JsonRpcResponse response) {
     return switch (response.getType()) {
       case UNAUTHORIZED -> HttpResponseStatus.UNAUTHORIZED;
