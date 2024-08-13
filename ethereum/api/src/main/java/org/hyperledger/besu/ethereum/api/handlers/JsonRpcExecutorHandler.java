@@ -35,7 +35,7 @@ public class JsonRpcExecutorHandler {
   private static final Logger LOG = LoggerFactory.getLogger(JsonRpcExecutorHandler.class);
 
   // Default timeout for RPC calls in seconds
-  private static final long DEFAULT_TIMEOUT_MILLISECONDS = 30000;
+  private static final long DEFAULT_TIMEOUT_MILLISECONDS = 5000;
 
   private JsonRpcExecutorHandler() {}
 
@@ -48,14 +48,18 @@ public class JsonRpcExecutorHandler {
   }
 
   public static Handler<RoutingContext> handler(
-      final JsonRpcExecutor jsonRpcExecutor,
-      final Tracer tracer,
-      final JsonRpcConfiguration jsonRpcConfiguration) {
+          final JsonRpcExecutor jsonRpcExecutor,
+          final Tracer tracer,
+          final JsonRpcConfiguration jsonRpcConfiguration) {
     return ctx -> {
       final long timerId = ctx.vertx().setTimer(DEFAULT_TIMEOUT_MILLISECONDS, id -> {
-        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
+        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
         LOG.error("Timeout occurred in JSON-RPC executor for method {}", method);
-        handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
+        if (!ctx.response().ended()) {
+          handleJsonRpcError(ctx, null, RpcErrorType.TIMEOUT_ERROR);
+          ctx.fail(408); // HTTP 408 Request Timeout
+          ctx.response().close();
+        }
       });
 
       try {
@@ -68,14 +72,28 @@ public class JsonRpcExecutorHandler {
                           } catch (IOException e) {
                             final String method = executor.getRpcMethodName(ctx);
                             LOG.error("{} - Error streaming JSON-RPC response", method, e);
-                            handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
+                            if (!ctx.response().ended()) {
+                              handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
+                              ctx.fail(500); // HTTP 500 Internal Server Error
+                              ctx.response().close();
+                            }
                           }
                         },
-                        () -> handleJsonRpcError(ctx, null, RpcErrorType.PARSE_ERROR));
+                        () -> {
+                          if (!ctx.response().ended()) {
+                            handleJsonRpcError(ctx, null, RpcErrorType.PARSE_ERROR);
+                            ctx.fail(400); // HTTP 400 Bad Request
+                            ctx.response().close();
+                          }
+                        });
       } catch (final RuntimeException e) {
-        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name());
+        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
         LOG.error("Unhandled exception in JSON-RPC executor for method {}", method, e);
-        handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
+        if (!ctx.response().ended()) {
+          handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
+          ctx.fail(500); // HTTP 500 Internal Server Error
+          ctx.response().close();
+        }
       }
     };
   }
