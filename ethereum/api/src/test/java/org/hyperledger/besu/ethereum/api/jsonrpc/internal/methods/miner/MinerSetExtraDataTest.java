@@ -83,7 +83,7 @@ public class MinerSetExtraDataTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(),
             new JsonRpcError(
-                RpcErrorType.INVALID_PARAMS,
+                RpcErrorType.INVALID_EXTRA_DATA_PARAMS,
                 "Illegal character 'n' found at index 0 in hex binary representation"));
 
     final JsonRpcResponse actual = method.response(request);
@@ -100,7 +100,7 @@ public class MinerSetExtraDataTest {
         new JsonRpcErrorResponse(
             request.getRequest().getId(),
             new JsonRpcError(
-                RpcErrorType.INVALID_PARAMS,
+                RpcErrorType.INVALID_EXTRA_DATA_PARAMS,
                 "Hex value is too large: expected at most 32 bytes but got 37"));
 
     final JsonRpcResponse actual = method.response(request);
