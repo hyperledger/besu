@@ -114,7 +114,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcRequestException(
           "Invalid engine payload parameter (index 0)",
-          RpcErrorType.INVALID_ENGINE_PAYLOAD_PARAMS,
+          RpcErrorType.INVALID_ENGINE_NEW_PAYLOAD_PARAMS,
           e);
     }
 
