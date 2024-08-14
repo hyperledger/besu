@@ -111,6 +111,20 @@ public class GenesisFileModule {
     return createGenesisModule(Files.readString(genesisFile.toPath(), Charset.defaultCharset()));
   }
 
+  static GenesisFileModule createGenesisModule() {
+    final JsonObject genesis = new JsonObject();
+    final JsonObject config = new JsonObject();
+    genesis.put("config", config);
+    config.put("chainId", 1337);
+    config.put("londonBlock", 0);
+    genesis.put("baseFeePerGas", "0x3b9aca00");
+    genesis.put("gasLimit", "0x2540be400");
+    genesis.put("difficulty", "0x0");
+    genesis.put("mixHash", "0x0000000000000000000000000000000000000000000000000000000000000000");
+    genesis.put("coinbase", "0x0000000000000000000000000000000000000000");
+    return createGenesisModule(genesis.toString());
+  }
+
   private static GenesisFileModule createGenesisModule(final String genesisConfig) {
     final JsonObject genesis = new JsonObject(genesisConfig);
     final JsonObject config = genesis.getJsonObject("config");
