@@ -27,6 +27,7 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineForkchoiceUpdatedParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadAttributesParameter;
@@ -80,10 +81,25 @@ public abstract class AbstractEngineForkchoiceUpdated extends ExecutionEngineJso
 
     final Object requestId = requestContext.getRequest().getId();
 
-    final EngineForkchoiceUpdatedParameter forkChoice =
-        requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
-    final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes =
-        requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
+    final EngineForkchoiceUpdatedParameter forkChoice;
+    try {
+      forkChoice = requestContext.getRequiredParameter(0, EngineForkchoiceUpdatedParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid engine forkchoice updated parameter (index 0)",
+          RpcErrorType.INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS,
+          e);
+    }
+    final Optional<EnginePayloadAttributesParameter> maybePayloadAttributes;
+    try {
+      maybePayloadAttributes =
+          requestContext.getOptionalParameter(1, EnginePayloadAttributesParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid engine payload attributes parameter (index 1)",
+          RpcErrorType.INVALID_ENGINE_FORKCHOICE_UPDATED_PAYLOAD_ATTRIBUTES,
+          e);
+    }
 
     LOG.debug("Forkchoice parameters {}", forkChoice);
     mergeContext

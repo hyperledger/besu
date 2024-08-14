@@ -14,7 +14,7 @@
     "id": 337,
     "error": {
       "code": -32602,
-      "message": "Invalid params"
+      "message": "Invalid block number params"
     }
   },
   "statusCode": 200

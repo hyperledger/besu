@@ -23,6 +23,7 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePreparePayloadParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
@@ -58,17 +59,25 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final EnginePreparePayloadParameter enginePreparePayloadParameter =
-        requestContext
-            .getOptionalParameter(0, EnginePreparePayloadParameter.class)
-            .orElse(
-                new EnginePreparePayloadParameter(
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty(),
-                    Optional.empty()));
+    final EnginePreparePayloadParameter enginePreparePayloadParameter;
+    try {
+      enginePreparePayloadParameter =
+          requestContext
+              .getOptionalParameter(0, EnginePreparePayloadParameter.class)
+              .orElse(
+                  new EnginePreparePayloadParameter(
+                      Optional.empty(),
+                      Optional.empty(),
+                      Optional.empty(),
+                      Optional.empty(),
+                      Optional.empty(),
+                      Optional.empty()));
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid engine prepare payload parameter (index 0)",
+          RpcErrorType.INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS,
+          e);
+    }
 
     final var requestId = requestContext.getRequest().getId();
 
@@ -81,7 +90,10 @@ public class EnginePreparePayloadDebug extends ExecutionEngineJsonRpcMethod {
             payloadIdentifier ->
                 new JsonRpcSuccessResponse(
                     requestId, new EnginePreparePayloadResult(VALID, payloadIdentifier)))
-        .orElseGet(() -> new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS));
+        .orElseGet(
+            () ->
+                new JsonRpcErrorResponse(
+                    requestId, RpcErrorType.INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS));
   }
 
   @VisibleForTesting
