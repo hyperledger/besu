@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -54,12 +53,14 @@ public class MinerSetMinGasPrice implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
     } catch (final IllegalArgumentException invalidJsonRpcParameters) {
       return new JsonRpcErrorResponse(
-              requestContext.getRequest().getId(),
-              new JsonRpcError(
-                      RpcErrorType.INVALID_MIN_GAS_PRICE_PARAMS, invalidJsonRpcParameters.getMessage()));
+          requestContext.getRequest().getId(),
+          new JsonRpcError(
+              RpcErrorType.INVALID_MIN_GAS_PRICE_PARAMS, invalidJsonRpcParameters.getMessage()));
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid min gas price parameter (index 0)", RpcErrorType.INVALID_MIN_GAS_PRICE_PARAMS, e);
+          "Invalid min gas price parameter (index 0)",
+          RpcErrorType.INVALID_MIN_GAS_PRICE_PARAMS,
+          e);
     }
   }
 }

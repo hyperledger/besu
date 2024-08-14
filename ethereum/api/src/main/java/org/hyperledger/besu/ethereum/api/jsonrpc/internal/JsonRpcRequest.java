@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.util.Arrays;
 import java.util.List;
@@ -30,7 +31,6 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonRpcRequest {
@@ -53,7 +53,7 @@ public class JsonRpcRequest {
     this.params = params;
     if (method == null) {
       throw new InvalidJsonRpcRequestException(
-              "Field 'method' is required", RpcErrorType.INVALID_METHOD_PARAMS);
+          "Field 'method' is required", RpcErrorType.INVALID_METHOD_PARAMS);
     }
   }
 

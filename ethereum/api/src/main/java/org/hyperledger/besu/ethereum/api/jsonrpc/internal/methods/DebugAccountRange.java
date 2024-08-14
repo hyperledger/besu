@@ -19,7 +19,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -81,7 +80,7 @@ public class DebugAccountRange implements JsonRpcMethod {
       maxResults = requestContext.getRequiredParameter(3, Integer.TYPE);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid max results parameter (index 3)", RpcErrorType.INVALID_MAX_RESULTS_PARAMS, e);
+          "Invalid max results parameter (index 3)", RpcErrorType.INVALID_MAX_RESULTS_PARAMS, e);
     }
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
