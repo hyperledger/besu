@@ -36,10 +36,6 @@ public class LocalPermissioningConfigurationBuilderTest {
 
   private static final String PERMISSIONING_CONFIG_VALID = "/permissioning_config.toml";
 
-  @Deprecated
-  private static final String PERMISSIONING_CONFIG_VALID_WHITELISTS =
-      "/permissioning_config_whitelists.toml";
-
   private static final String PERMISSIONING_CONFIG_ACCOUNT_ALLOWLIST_ONLY =
       "/permissioning_config_account_allowlist_only.toml";
   private static final String PERMISSIONING_CONFIG_NODE_ALLOWLIST_ONLY =
@@ -60,24 +56,6 @@ public class LocalPermissioningConfigurationBuilderTest {
       "/permissioning_config_node_allowlist_with_dns.toml";
   private final String VALID_NODE_ID =
       "6f8a80d14311c39f35f516fa664deaaaa13e85b2f7493f37f6144d86991ec012937307647bd3b9a82abe2974e1407241d54947bbb39763a4cac9f77166ad92a0";
-
-  @Test
-  public void permissioningConfig_usingDeprecatedKeysIsStillValid() throws Exception {
-    final String uri = "enode://" + VALID_NODE_ID + "@192.168.0.9:4567";
-    final String uri2 = "enode://" + VALID_NODE_ID + "@192.169.0.9:4568";
-
-    final URL configFile = this.getClass().getResource(PERMISSIONING_CONFIG_VALID_WHITELISTS);
-    final Path toml = createTempFile("toml", Resources.toByteArray(configFile));
-
-    LocalPermissioningConfiguration permissioningConfiguration = permissioningConfig(toml);
-
-    assertThat(permissioningConfiguration.isAccountAllowlistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getAccountAllowlist())
-        .containsExactly("0x0000000000000000000000000000000000000009");
-    assertThat(permissioningConfiguration.isNodeAllowlistEnabled()).isTrue();
-    assertThat(permissioningConfiguration.getNodeAllowlist())
-        .containsExactly(EnodeURLImpl.fromString(uri), EnodeURLImpl.fromString(uri2));
-  }
 
   @Test
   public void permissioningConfig() throws Exception {
