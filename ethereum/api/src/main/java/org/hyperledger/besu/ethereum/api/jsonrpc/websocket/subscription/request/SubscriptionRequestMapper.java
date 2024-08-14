@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.websocket.subscription.request
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.methods.WebSocketRpcRequest;
@@ -78,7 +77,7 @@ public class SubscriptionRequestMapper {
       filterParameter = request.getRequiredParameter(1, FilterParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid filter parameters (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+          "Invalid filter parameters (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
     }
     return new SubscribeRequest(
         SubscriptionType.LOGS, filterParameter, null, request.getConnectionId());
@@ -113,10 +112,10 @@ public class SubscriptionRequestMapper {
             final FilterParameter filterParameter;
             try {
               filterParameter =
-                      jsonRpcRequestContext.getRequiredParameter(2, FilterParameter.class);
+                  jsonRpcRequestContext.getRequiredParameter(2, FilterParameter.class);
             } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
               throw new InvalidJsonRpcParameters(
-                      "Invalid filter parameter (index 2)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+                  "Invalid filter parameter (index 2)", RpcErrorType.INVALID_FILTER_PARAMS, e);
             }
             return new PrivateSubscribeRequest(
                 SubscriptionType.LOGS,

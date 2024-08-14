@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -54,7 +53,7 @@ public class PrivUninstallFilter implements JsonRpcMethod {
       filterId = request.getRequiredParameter(1, String.class);
     } catch (Exception e) {
       throw new InvalidJsonRpcParameters(
-              "Invalid filter ID paramter (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+          "Invalid filter ID paramter (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
     }
 
     if (privacyController instanceof MultiTenancyPrivacyController) {

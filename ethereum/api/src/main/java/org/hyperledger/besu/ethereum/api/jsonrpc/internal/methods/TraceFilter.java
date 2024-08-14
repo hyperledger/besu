@@ -22,7 +22,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -93,7 +92,7 @@ public class TraceFilter extends TraceBlock {
       filterParameter = requestContext.getRequiredParameter(0, FilterParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid filter parameter (index 0)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+          "Invalid filter parameter (index 0)", RpcErrorType.INVALID_FILTER_PARAMS, e);
     }
 
     final long fromBlock = resolveBlockNumber(filterParameter.getFromBlock());

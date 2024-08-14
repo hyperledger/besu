@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -58,7 +57,7 @@ public class EthGetLogs implements JsonRpcMethod {
       filter = requestContext.getRequiredParameter(0, FilterParameter.class);
     } catch (Exception e) {
       throw new InvalidJsonRpcParameters(
-              "Invalid filter parameter (index 0)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+          "Invalid filter parameter (index 0)", RpcErrorType.INVALID_FILTER_PARAMS, e);
     }
     LOG.atTrace().setMessage("eth_getLogs FilterParameter: {}").addArgument(filter).log();
 

@@ -80,7 +80,8 @@ public class PendingTransactionsParams {
   private Optional<Filter> getFilter(final String key, final Map<String, String> map) {
     if (map != null) {
       if (map.size() > 1) {
-        throw new InvalidJsonRpcParameters("Only one operator per filter type allowed", RpcErrorType.INVALID_FILTER_PARAMS);
+        throw new InvalidJsonRpcParameters(
+            "Only one operator per filter type allowed", RpcErrorType.INVALID_FILTER_PARAMS);
       } else if (!map.isEmpty()) {
         final Map.Entry<String, String> foundEntry = map.entrySet().stream().findFirst().get();
         final Predicate predicate =
@@ -88,17 +89,22 @@ public class PendingTransactionsParams {
                 .orElseThrow(
                     () ->
                         new InvalidJsonRpcParameters(
-                            "Unknown field expected one of `eq`, `gt`, `lt`, `action`", RpcErrorType.INVALID_FILTER_PARAMS));
+                            "Unknown field expected one of `eq`, `gt`, `lt`, `action`",
+                            RpcErrorType.INVALID_FILTER_PARAMS));
 
         final Filter filter = new Filter(key, foundEntry.getValue(), predicate);
         if (key.equals(FROM_FIELD) && !predicate.equals(EQ)) {
-          throw new InvalidJsonRpcParameters("The `from` filter only supports the `eq` operator", RpcErrorType.INVALID_FILTER_PARAMS);
+          throw new InvalidJsonRpcParameters(
+              "The `from` filter only supports the `eq` operator",
+              RpcErrorType.INVALID_FILTER_PARAMS);
         } else if (key.equals(TO_FIELD) && !predicate.equals(EQ) && !predicate.equals(ACTION)) {
           throw new InvalidJsonRpcParameters(
-              "The `to` filter only supports the `eq` or `action` operator", RpcErrorType.INVALID_FILTER_PARAMS);
+              "The `to` filter only supports the `eq` or `action` operator",
+              RpcErrorType.INVALID_FILTER_PARAMS);
         } else if (!key.equals(TO_FIELD) && predicate.equals(ACTION)) {
           throw new InvalidJsonRpcParameters(
-              "The operator `action` is only supported by the `to` filter", RpcErrorType.INVALID_FILTER_PARAMS);
+              "The operator `action` is only supported by the `to` filter",
+              RpcErrorType.INVALID_FILTER_PARAMS);
         }
         return Optional.of(filter);
       }

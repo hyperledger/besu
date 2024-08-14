@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -57,7 +56,7 @@ public class PrivNewFilter implements JsonRpcMethod {
       filter = request.getRequiredParameter(1, FilterParameter.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid filter parameter (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+          "Invalid filter parameter (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
     }
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
@@ -68,7 +67,8 @@ public class PrivNewFilter implements JsonRpcMethod {
     }
 
     if (!filter.isValid()) {
-      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_FILTER_PARAMS);
+      return new JsonRpcErrorResponse(
+          request.getRequest().getId(), RpcErrorType.INVALID_FILTER_PARAMS);
     }
 
     final String logFilterId =
