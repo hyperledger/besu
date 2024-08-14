@@ -30,6 +30,7 @@ import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonInclude.Include;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonSetter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 @JsonIgnoreProperties(ignoreUnknown = true)
 public class JsonRpcRequest {
@@ -51,7 +52,8 @@ public class JsonRpcRequest {
     this.method = method;
     this.params = params;
     if (method == null) {
-      throw new InvalidJsonRpcRequestException("Field 'method' is required");
+      throw new InvalidJsonRpcRequestException(
+              "Field 'method' is required", RpcErrorType.INVALID_METHOD_PARAMS);
     }
   }
 

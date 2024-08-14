@@ -40,6 +40,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsolidationRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
@@ -123,8 +124,15 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     final Object reqId = requestContext.getRequest().getId();
 
-    Optional<String> maybeParentBeaconBlockRootParam =
-        requestContext.getOptionalParameter(2, String.class);
+    Optional<String> maybeParentBeaconBlockRootParam;
+    try {
+      maybeParentBeaconBlockRootParam = requestContext.getOptionalParameter(2, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcRequestException(
+              "Invalid parent beacon block root parameters (index 2)",
+              RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
+              e);
+    }
     final Optional<Bytes32> maybeParentBeaconBlockRoot =
         maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
 
