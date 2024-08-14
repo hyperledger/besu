@@ -102,9 +102,7 @@ public class MetricsOptionGroup {
       arity = "1")
   private String metricsPrometheusJob = "besu-client";
 
-  /**
-   * Returns a newly created {@link MetricsOptionGroup} with default values.
-   */
+  /** Returns a newly created {@link MetricsOptionGroup} with default values. */
   public MetricsOptionGroup() {}
 
   /**
