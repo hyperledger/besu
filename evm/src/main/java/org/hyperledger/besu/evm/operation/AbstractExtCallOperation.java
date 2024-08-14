@@ -152,7 +152,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     final Wei balance = (zeroValue || account == null) ? Wei.ZERO : account.getBalance();
 
     // There myst be a minimum gas for a call to have access to.
-    if (childGas < gasCalculator().getMinRetainedGas()) {
+    if (childGas < gasCalculator().getMinCalleeGas()) {
       return softFailure(frame, cost);
     }
     // transferring value you don't have is not a halting exception, just a failure
