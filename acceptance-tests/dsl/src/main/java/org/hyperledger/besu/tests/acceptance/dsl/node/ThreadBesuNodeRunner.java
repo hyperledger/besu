@@ -25,6 +25,7 @@ import org.hyperledger.besu.cli.BesuCommand;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.components.BesuComponent;
+import org.hyperledger.besu.components.BesuPluginContextModule;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -92,7 +93,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 import javax.inject.Inject;
@@ -387,7 +387,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
-    @Named("besuPluginContext")
     public BesuPluginContextImpl providePluginContext(
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
@@ -501,17 +500,17 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   static class MockBesuCommandModule {
 
     @Provides
-    BesuCommand provideBesuCommand(final AcceptanceTestBesuComponent component) {
+    BesuCommand provideBesuCommand(final BesuPluginContextImpl pluginContext) {
       final BesuCommand besuCommand =
           new BesuCommand(
-              component,
               RlpBlockImporter::new,
               JsonBlockImporter::new,
               RlpBlockExporter::new,
               new RunnerBuilder(),
               new BesuController.Builder(),
-              Optional.ofNullable(component.getBesuPluginContext()).orElse(null),
-              System.getenv());
+              pluginContext,
+              System.getenv(),
+              LoggerFactory.getLogger(MockBesuCommandModule.class));
       besuCommand.toCommandLine();
       return besuCommand;
     }
