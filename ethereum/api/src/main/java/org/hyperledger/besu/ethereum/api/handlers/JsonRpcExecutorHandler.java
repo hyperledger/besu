@@ -57,10 +57,11 @@ public class JsonRpcExecutorHandler {
         LOG.error("Timeout occurred in JSON-RPC executor for method {}", method);
         if (!ctx.response().ended()) {
           handleJsonRpcError(ctx, null, RpcErrorType.TIMEOUT_ERROR);
-          ctx.fail(408); // HTTP 408 Request Timeout
           ctx.response().close();
         }
       });
+
+      ctx.put("timerId", timerId);
 
       try {
         createExecutor(jsonRpcExecutor, tracer, ctx, jsonRpcConfiguration)
@@ -68,13 +69,12 @@ public class JsonRpcExecutorHandler {
                         executor -> {
                           try {
                             executor.execute();
-                            ctx.vertx().cancelTimer(timerId); // Cancel the timer if execution completes
+                            cancelTimer(ctx);
                           } catch (IOException e) {
                             final String method = executor.getRpcMethodName(ctx);
                             LOG.error("{} - Error streaming JSON-RPC response", method, e);
                             if (!ctx.response().ended()) {
                               handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
-                              ctx.fail(500); // HTTP 500 Internal Server Error
                               ctx.response().close();
                             }
                           }
@@ -82,7 +82,6 @@ public class JsonRpcExecutorHandler {
                         () -> {
                           if (!ctx.response().ended()) {
                             handleJsonRpcError(ctx, null, RpcErrorType.PARSE_ERROR);
-                            ctx.fail(400); // HTTP 400 Bad Request
                             ctx.response().close();
                           }
                         });
@@ -91,11 +90,17 @@ public class JsonRpcExecutorHandler {
         LOG.error("Unhandled exception in JSON-RPC executor for method {}", method, e);
         if (!ctx.response().ended()) {
           handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
-          ctx.fail(500); // HTTP 500 Internal Server Error
           ctx.response().close();
         }
       }
     };
+  }
+
+  private static void cancelTimer(final RoutingContext ctx) {
+    Long timerId = ctx.get("timerId");
+    if (timerId != null) {
+      ctx.vertx().cancelTimer(timerId);
+    }
   }
 
   private static Optional<AbstractJsonRpcExecutor> createExecutor(
