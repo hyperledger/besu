@@ -15,13 +15,13 @@
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 import java.math.BigInteger;
 import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 public class JsonRpcRequestId {
 

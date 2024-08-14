@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -45,7 +44,7 @@ public class EthSubmitHashRate implements JsonRpcMethod {
       hashRate = requestContext.getRequiredParameter(0, String.class);
     } catch (Exception e) {
       throw new InvalidJsonRpcParameters(
-              "Invalid hash rate parameter (index 0)", RpcErrorType.INVALID_HASH_RATE_PARAMS, e);
+          "Invalid hash rate parameter (index 0)", RpcErrorType.INVALID_HASH_RATE_PARAMS, e);
     }
     final String id = requestContext.getRequiredParameter(1, String.class);
     return new JsonRpcSuccessResponse(

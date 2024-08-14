@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -98,9 +97,9 @@ public class EthGetBlockByHash implements JsonRpcMethod {
       return requestContext.getRequiredParameter(1, Boolean.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid is complete transaction parameter (index 1)",
-              RpcErrorType.INVALID_IS_TRANSACTION_COMPLETE_PARAMS,
-              e);
+          "Invalid is complete transaction parameter (index 1)",
+          RpcErrorType.INVALID_IS_TRANSACTION_COMPLETE_PARAMS,
+          e);
     }
   }
 }
