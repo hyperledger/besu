@@ -52,7 +52,7 @@ public enum RpcErrorType implements RpcMethodError {
       INVALID_PARAMS_ERROR_CODE, "Invalid engine exchange transition configuration params"),
   INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine forkchoice updated params"),
-  INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMS(
+  INVALID_ENGINE_FORKCHOICE_UPDATED_PAYLOAD_ATTRIBUTES(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine payload attributes parameter"),
   INVALID_ENGINE_NEW_PAYLOAD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid engine payload parameter"),
   INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS(
