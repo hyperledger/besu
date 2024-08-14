@@ -67,8 +67,7 @@ public class PermissioningConfigurationBuilder {
 
     if (localConfigNodePermissioningEnabled) {
       final TomlParseResult nodePermissioningToml = readToml(nodePermissioningConfigFilepath);
-      final TomlArray nodeAllowlistTomlArray =
-          getAllowlistArray(nodePermissioningToml, NODES_ALLOWLIST_KEY);
+      final TomlArray nodeAllowlistTomlArray = getArray(nodePermissioningToml, NODES_ALLOWLIST_KEY);
 
       permissioningConfiguration.setNodePermissioningConfigFilePath(
           nodePermissioningConfigFilepath);
@@ -102,7 +101,7 @@ public class PermissioningConfigurationBuilder {
     if (localConfigAccountPermissioningEnabled) {
       final TomlParseResult accountPermissioningToml = readToml(accountPermissioningConfigFilepath);
       final TomlArray accountAllowlistTomlArray =
-          getAllowlistArray(accountPermissioningToml, ACCOUNTS_ALLOWLIST_KEY);
+          getArray(accountPermissioningToml, ACCOUNTS_ALLOWLIST_KEY);
 
       permissioningConfiguration.setAccountPermissioningConfigFilePath(
           accountPermissioningConfigFilepath);
@@ -134,15 +133,14 @@ public class PermissioningConfigurationBuilder {
   }
 
   /**
-   * This method allows support for allowlist keys only.
+   * This method retrieves an array from parsed toml, using the given key.
    *
    * @param tomlParseResult result of a prior toml parse
-   * @param primaryKey key to fetch
-   * @return The array of the primaryKey if it exists, or null.
+   * @param key key to fetch
+   * @return The array matching the key if it exists, or null.
    */
-  private static TomlArray getAllowlistArray(
-      final TomlParseResult tomlParseResult, final String primaryKey) {
-    return tomlParseResult.getArray(primaryKey);
+  private static TomlArray getArray(final TomlParseResult tomlParseResult, final String key) {
+    return tomlParseResult.getArray(key);
   }
 
   private static TomlParseResult readToml(final String filepath) throws Exception {
