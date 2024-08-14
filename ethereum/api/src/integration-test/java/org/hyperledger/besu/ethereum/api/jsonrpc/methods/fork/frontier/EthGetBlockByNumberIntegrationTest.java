@@ -437,7 +437,7 @@ public class EthGetBlockByNumberIntegrationTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid is transaction complete params (index 1)");
+        .hasMessage("Invalid is transaction complete parameter (index 1)");
   }
 
   /**
