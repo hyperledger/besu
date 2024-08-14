@@ -38,7 +38,7 @@ public class StateDiffGenerator {
   public Stream<Trace> generateStateDiff(final TransactionTrace transactionTrace) {
     final List<TraceFrame> traceFrames = transactionTrace.getTraceFrames();
     if (traceFrames.isEmpty()) {
-      throw new RuntimeException("expected to have at least one processed frame");
+      return Stream.empty();
     }
 
     // This corresponds to the world state after the TX executed
