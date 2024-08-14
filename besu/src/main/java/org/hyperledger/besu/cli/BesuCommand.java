@@ -380,7 +380,8 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   @Option(
       names = {"--genesis-state-hash-cache-enabled"},
-      description = "Use genesis state hash from data on startup if specified")
+      description =
+          "Use genesis state hash from data on startup if specified (default: ${DEFAULT-VALUE})")
   private final Boolean genesisStateHashCacheEnabled = false;
 
   @Option(
