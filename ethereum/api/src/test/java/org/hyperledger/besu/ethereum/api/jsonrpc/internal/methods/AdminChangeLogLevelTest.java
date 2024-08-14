@@ -117,7 +117,7 @@ public class AdminChangeLogLevelTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {null}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_LOG_LEVEL_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
@@ -129,7 +129,7 @@ public class AdminChangeLogLevelTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_changeLogLevel", new String[] {"INVALID"}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_LOG_LEVEL_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
@@ -141,7 +141,7 @@ public class AdminChangeLogLevelTest {
         new JsonRpcRequestContext(
             new JsonRpcRequest("2.0", "admin_changeLogLevel", new Object[] {"DEBUG", "INVALID"}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_LOG_FILTER_PARAMS);
 
     final JsonRpcResponse actualResponse = adminChangeLogLevel.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);

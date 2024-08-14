@@ -47,6 +47,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_CREATE_PRIVACY_GROUP_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid create privacy group params"),
   INVALID_DATA_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid data params"),
+  INVALID_DATA_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid data hash params"),
   INVALID_DEPOSIT_REQUEST_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid deposit request"),
   INVALID_ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine exchange transition configuration params"),

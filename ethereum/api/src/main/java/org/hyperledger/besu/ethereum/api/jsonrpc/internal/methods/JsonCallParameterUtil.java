@@ -36,7 +36,7 @@ public class JsonCallParameterUtil {
         && (callParams.getMaxFeePerGas().isPresent()
             || callParams.getMaxPriorityFeePerGas().isPresent())) {
       throw new InvalidJsonRpcParameters(
-          "gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas");
+          "gasPrice cannot be used with maxFeePerGas or maxPriorityFeePerGas", RpcErrorType.INVALID_GAS_PRICE_PARAMS);
     }
     return callParams;
   }

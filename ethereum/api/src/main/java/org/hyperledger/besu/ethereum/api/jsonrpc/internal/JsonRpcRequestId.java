@@ -21,6 +21,7 @@ import java.util.Objects;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 public class JsonRpcRequestId {
 
@@ -34,7 +35,7 @@ public class JsonRpcRequestId {
   @JsonCreator
   public JsonRpcRequestId(final Object id) {
     if (isRequestTypeInvalid(id)) {
-      throw new InvalidJsonRpcRequestException("Invalid id");
+      throw new InvalidJsonRpcRequestException("Invalid id", RpcErrorType.INVALID_ID_PARAMS);
     }
     this.id = id;
   }
