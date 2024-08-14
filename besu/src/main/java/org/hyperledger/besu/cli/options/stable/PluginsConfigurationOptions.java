@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_DETECTION_DISABLED_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_OPTION_NAME;
 
 import org.hyperledger.besu.cli.converter.PluginInfoConverter;
@@ -28,6 +29,7 @@ import picocli.CommandLine;
 
 /** The Plugins Options options. */
 public class PluginsConfigurationOptions implements CLIOptions<PluginConfiguration> {
+
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_OPTION_NAME},
       description = "Comma-separated list of plugin names",
@@ -37,12 +39,23 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
       arity = "1..*")
   private List<PluginInfo> plugins;
 
+  @CommandLine.Option(
+      names = {DEFAULT_PLUGINS_DETECTION_DISABLED_OPTION_NAME},
+      description =
+          "If set to false, Besu will only register plugins if the --plugins option is specified.",
+      hidden = true,
+      defaultValue = "true")
+  private boolean pluginsDetectionEnabled;
+
   /** Default Constructor. */
   public PluginsConfigurationOptions() {}
 
   @Override
   public PluginConfiguration toDomainObject() {
-    return new PluginConfiguration(plugins);
+    return new PluginConfiguration.Builder()
+        .requestedPlugins(plugins)
+        .pluginsDetectionDisabled(pluginsDetectionEnabled)
+        .build();
   }
 
   @Override
@@ -61,6 +74,13 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_OPTION_NAME, new PluginInfoConverter());
 
-    return new PluginConfiguration(plugins);
+    boolean pluginsDetectionEnabled =
+      CommandLineUtils.getOptionValueOrDefault(
+        commandLine, DEFAULT_PLUGINS_DETECTION_DISABLED_OPTION_NAME, Boolean::parseBoolean);
+
+    return new PluginConfiguration.Builder()
+        .requestedPlugins(plugins)
+        .pluginsDetectionDisabled(pluginsDetectionEnabled)
+        .build();
   }
 }

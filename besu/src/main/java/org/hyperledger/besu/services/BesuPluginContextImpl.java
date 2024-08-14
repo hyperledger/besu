@@ -143,8 +143,9 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
       registerPlugins(registeringPlugins);
     } else {
-      // If no plugins were specified, register all detected plugins
-      registerPlugins(detectedPlugins);
+      if (config.isPluginsDetectionEnabled()) {
+        registerPlugins(detectedPlugins);
+      }
     }
   }
 

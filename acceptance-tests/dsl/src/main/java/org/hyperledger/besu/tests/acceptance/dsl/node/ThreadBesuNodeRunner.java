@@ -140,7 +140,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     besuPluginContext.addService(PermissioningService.class, permissioningService);
     besuPluginContext.addService(PrivacyPluginService.class, new PrivacyPluginServiceImpl());
 
-    besuPluginContext.registerPlugins(new PluginConfiguration(pluginsPath));
+    besuPluginContext.registerPlugins(
+        new PluginConfiguration.Builder().pluginsDir(pluginsPath).build());
 
     commandLine.parseArgs(node.getConfiguration().getExtraCLIOptions().toArray(new String[0]));
 
