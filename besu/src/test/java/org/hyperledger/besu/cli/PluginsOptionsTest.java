@@ -73,7 +73,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
 
   @Test
   public void shouldParsePluginDetectionOptionWhenDisabled() {
-    parseCommand("--Xplugin-auto-enabled");
+    parseCommand("--Xplugin-auto-enabled=false");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoEnabled()).isEqualTo(false);
 
@@ -83,7 +83,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
 
   @Test
   public void shouldParsePluginDetectionOptionWhenEnabled() {
-    parseCommand("--Xplugin-auto-enabled");
+    parseCommand("--Xplugin-auto-enabled=true");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoEnabled()).isEqualTo(true);
 

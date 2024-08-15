@@ -61,7 +61,7 @@ public class PluginConfiguration {
   public static class Builder {
     private List<PluginInfo> requestedPlugins;
     private Path pluginsDir;
-    private boolean pluginAutoEnabled = false;
+    private boolean pluginAutoEnabled = true;
 
     public Builder requestedPlugins(final List<PluginInfo> requestedPlugins) {
       this.requestedPlugins = requestedPlugins;
