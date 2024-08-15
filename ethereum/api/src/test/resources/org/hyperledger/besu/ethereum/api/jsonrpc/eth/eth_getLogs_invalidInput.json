@@ -16,7 +16,7 @@
     "id" : 406,
     "error" : {
       "code": -32602,
-      "message": "Invalid params"
+      "message": "Invalid filter params"
     }
   },
   "statusCode": 200
