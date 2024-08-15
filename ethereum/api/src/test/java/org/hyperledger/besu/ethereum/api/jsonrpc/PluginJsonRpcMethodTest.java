@@ -173,7 +173,8 @@ public class PluginJsonRpcMethodTest extends JsonRpcHttpServiceTestBase {
   private static Object echoPluginRpcMethod(final PluginRpcRequest request) {
     final var params = request.getParams();
     if (params.length == 0) {
-      throw new InvalidJsonRpcParameters("parameter is mandatory", RpcErrorType.INVALID_PARAM_COUNT);
+      throw new InvalidJsonRpcParameters(
+          "parameter is mandatory", RpcErrorType.INVALID_PARAM_COUNT);
     }
     final var input = params[0];
     if (input.toString().isBlank()) {

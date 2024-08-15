@@ -59,15 +59,15 @@ public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
     final List<Filter> filters;
     try {
       filters =
-              requestContext
-                      .getOptionalParameter(1, PendingTransactionsParams.class)
-                      .map(PendingTransactionsParams::filters)
-                      .orElse(Collections.emptyList());
+          requestContext
+              .getOptionalParameter(1, PendingTransactionsParams.class)
+              .map(PendingTransactionsParams::filters)
+              .orElse(Collections.emptyList());
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid pending transactions parameter (index 1)",
-              RpcErrorType.INVALID_PENDING_TRANSACTIONS_PARAMS,
-              e);
+          "Invalid pending transactions parameter (index 1)",
+          RpcErrorType.INVALID_PENDING_TRANSACTIONS_PARAMS,
+          e);
     }
 
     final Collection<Transaction> pendingTransactionsFiltered =

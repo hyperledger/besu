@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -75,7 +74,7 @@ public abstract class AbstractEngineGetPayload extends ExecutionEngineJsonRpcMet
       payloadId = request.getRequiredParameter(0, PayloadIdentifier.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid payload ID parameter (index 0)", RpcErrorType.INVALID_PAYLOAD_ID_PARAMS, e);
+          "Invalid payload ID parameter (index 0)", RpcErrorType.INVALID_PAYLOAD_ID_PARAMS, e);
     }
     mergeMiningCoordinator.finalizeProposalById(payloadId);
     final Optional<PayloadWrapper> maybePayload = mergeContext.get().retrievePayloadById(payloadId);
