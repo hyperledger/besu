@@ -18,12 +18,14 @@ import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcEnclaveErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.parameters.CreatePrivacyGroupParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
 import org.slf4j.Logger;
@@ -50,8 +52,15 @@ public class PrivCreatePrivacyGroup implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_CREATE_PRIVACY_GROUP.getMethodName());
 
-    final CreatePrivacyGroupParameter parameter =
-        requestContext.getRequiredParameter(0, CreatePrivacyGroupParameter.class);
+    final CreatePrivacyGroupParameter parameter;
+    try {
+      parameter = requestContext.getRequiredParameter(0, CreatePrivacyGroupParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid create privacy group parameter (index 0)",
+          RpcErrorType.INVALID_CREATE_PRIVACY_GROUP_PARAMS,
+          e);
+    }
 
     LOG.trace(
         "Creating a privacy group with name {} and description {}",

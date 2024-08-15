@@ -18,6 +18,7 @@ import org.hyperledger.besu.consensus.common.validator.ValidatorProvider;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -67,7 +68,13 @@ public class CliqueGetSignersAtHash implements JsonRpcMethod {
   }
 
   private Optional<BlockHeader> determineBlockHeader(final JsonRpcRequestContext request) {
-    final Hash hash = request.getRequiredParameter(0, Hash.class);
+    final Hash hash;
+    try {
+      hash = request.getRequiredParameter(0, Hash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
+    }
     return blockchainQueries.blockByHash(hash).map(BlockWithMetadata::getHeader);
   }
 }

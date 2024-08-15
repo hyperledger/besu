@@ -44,9 +44,10 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
   /**
    * Implementation of the `F` compression function of the Blake2b cryptographic hash function.
    *
-   * <p>RFC - https://tools.ietf.org/html/rfc7693
+   * <p>RFC - <a href="https://tools.ietf.org/html/rfc7693">...</a>
    *
-   * <p>Adapted from - https://github.com/keep-network/blake2b/blob/master/compression/f.go
+   * <p>Adapted from - <a
+   * href="https://github.com/keep-network/blake2b/blob/master/compression/f.go">...</a>
    *
    * <p>Optimized for 64-bit platforms
    */
@@ -93,12 +94,7 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
     private static boolean useNative;
 
     static {
-      try {
-        useNative = LibBlake2bf.ENABLED;
-      } catch (UnsatisfiedLinkError ule) {
-        LOG.info("blake2bf native precompile not available: {}", ule.getMessage());
-        useNative = false;
-      }
+      maybeEnableNative();
     }
 
     /** Instantiates a new Blake2bf digest. */
@@ -128,6 +124,21 @@ public class Blake2bfMessageDigest extends BCMessageDigest implements Cloneable 
       cloned.t = this.t.clone();
       cloned.v = this.v.clone();
       return cloned;
+    }
+
+    /**
+     * Attempt to enable the native libreary
+     *
+     * @return true if the native library was successfully enabled.
+     */
+    public static boolean maybeEnableNative() {
+      try {
+        useNative = LibBlake2bf.ENABLED;
+      } catch (UnsatisfiedLinkError | NoClassDefFoundError e) {
+        LOG.info("blake2bf native precompile not available: {}", e.getMessage());
+        useNative = false;
+      }
+      return useNative;
     }
 
     /** Disable native. */

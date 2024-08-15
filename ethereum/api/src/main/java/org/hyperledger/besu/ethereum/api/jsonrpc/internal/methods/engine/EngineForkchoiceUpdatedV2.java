@@ -21,6 +21,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePaylo
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
 
 import java.util.Optional;
 
@@ -51,20 +52,22 @@ public class EngineForkchoiceUpdatedV2 extends AbstractEngineForkchoiceUpdated {
   @Override
   protected Optional<JsonRpcErrorResponse> isPayloadAttributesValid(
       final Object requestId, final EnginePayloadAttributesParameter payloadAttributes) {
-    if (payloadAttributes.getTimestamp() >= cancunTimestamp) {
-      if (payloadAttributes.getParentBeaconBlockRoot() == null
-          || payloadAttributes.getParentBeaconBlockRoot().isEmpty()) {
-        return Optional.of(new JsonRpcErrorResponse(requestId, RpcErrorType.UNSUPPORTED_FORK));
-      } else {
-        return Optional.of(
-            new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PAYLOAD_ATTRIBUTES));
-      }
-    } else if (payloadAttributes.getParentBeaconBlockRoot() != null) {
+
+    if (payloadAttributes.getParentBeaconBlockRoot() != null) {
       LOG.error(
-          "Parent beacon block root hash present in payload attributes before cancun hardfork");
+          "Parent beacon block root hash present in payload attributes before Cancun hardfork");
       return Optional.of(new JsonRpcErrorResponse(requestId, getInvalidPayloadAttributesError()));
-    } else {
-      return Optional.empty();
     }
+
+    return Optional.empty();
+  }
+
+  @Override
+  protected ValidationResult<RpcErrorType> validateForkSupported(final long blockTimestamp) {
+    if (cancunMilestone.isPresent() && blockTimestamp >= cancunMilestone.get()) {
+      return ValidationResult.invalid(RpcErrorType.UNSUPPORTED_FORK);
+    }
+
+    return ValidationResult.valid();
   }
 }
