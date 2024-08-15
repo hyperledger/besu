@@ -182,7 +182,7 @@ public class EthNewFilterTest {
     final JsonRpcRequestContext request = ethNewFilter(invalidFilter);
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(null, RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(null, RpcErrorType.INVALID_FILTER_PARAMS);
 
     final JsonRpcResponse response = method.response(request);
 
