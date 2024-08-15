@@ -22,6 +22,8 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.IBFT;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.MINER;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.QBFT;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.ImmutableInProcessRpcConfiguration;
+import org.hyperledger.besu.ethereum.api.jsonrpc.InProcessRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
 import org.hyperledger.besu.tests.acceptance.dsl.node.RunnableNode;
@@ -93,5 +95,15 @@ public class NodeConfigurationFactory {
     rpcApis.addAll(Arrays.asList(rpcApi));
     jsonRpcConfig.setRpcApis(rpcApis);
     return jsonRpcConfig;
+  }
+
+  public InProcessRpcConfiguration createInProcessRpcConfiguration(final Set<String> extraRpcApis) {
+    final Set<String> rpcApis =
+        new HashSet<>(ImmutableInProcessRpcConfiguration.DEFAULT_IN_PROCESS_RPC_APIS);
+    rpcApis.addAll(extraRpcApis);
+    return ImmutableInProcessRpcConfiguration.builder()
+        .inProcessRpcApis(rpcApis)
+        .isEnabled(true)
+        .build();
   }
 }

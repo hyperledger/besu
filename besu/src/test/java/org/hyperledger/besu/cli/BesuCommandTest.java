@@ -2503,4 +2503,16 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
+
+  @Test
+  void helpOutputShouldDisplayCorrectDefaultValues() {
+    parseCommand("--help");
+
+    final String commandOutputString = commandOutput.toString(UTF_8);
+    final String errorOutputString = commandErrorOutput.toString(UTF_8);
+
+    assertThat(commandOutputString).doesNotContain("$DEFAULT-VALUE");
+
+    assertThat(errorOutputString).isEmpty();
+  }
 }

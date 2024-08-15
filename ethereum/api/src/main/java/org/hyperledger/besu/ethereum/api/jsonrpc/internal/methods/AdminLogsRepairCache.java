@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.api.query.cache.TransactionLogBloomCacher;
 
@@ -38,7 +40,13 @@ public class AdminLogsRepairCache implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Optional<Long> blockNumber = requestContext.getOptionalParameter(0, Long.class);
+    final Optional<Long> blockNumber;
+    try {
+      blockNumber = requestContext.getOptionalParameter(0, Long.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block number parameter (index 0)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
+    }
 
     if (blockNumber.isPresent()
         && blockchainQueries.getBlockchain().getBlockByNumber(blockNumber.get()).isEmpty()) {
