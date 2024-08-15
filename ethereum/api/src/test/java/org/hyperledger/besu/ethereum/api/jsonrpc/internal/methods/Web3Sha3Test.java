@@ -123,7 +123,7 @@ public class Web3Sha3Test {
                 "2", "web3_sha3", new Object[] {"0x68656c6c6f20776f726c64", "{encode:'hex'}"}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
@@ -135,7 +135,7 @@ public class Web3Sha3Test {
         new JsonRpcRequestContext(new JsonRpcRequest("2", "web3_sha3", new Object[] {}));
 
     final JsonRpcResponse expected =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     final JsonRpcResponse actual = method.response(request);
 
     assertThat(actual).usingRecursiveComparison().isEqualTo(expected);
