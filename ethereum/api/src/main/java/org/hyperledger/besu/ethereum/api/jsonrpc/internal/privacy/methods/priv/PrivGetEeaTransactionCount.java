@@ -73,8 +73,20 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
-    final String privateFrom = requestContext.getRequiredParameter(1, String.class);
-    final String[] privateFor = requestContext.getRequiredParameter(2, String[].class);
+    final String privateFrom;
+    try {
+      privateFrom = requestContext.getRequiredParameter(1, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid private from parameter (index 1)", RpcErrorType.INVALID_PRIVATE_FROM_PARAMS, e);
+    }
+    final String[] privateFor;
+    try {
+      privateFor = requestContext.getRequiredParameter(2, String[].class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid private for parameters (index 2)", RpcErrorType.INVALID_PRIVATE_FOR_PARAMS, e);
+    }
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
 

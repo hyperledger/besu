@@ -72,7 +72,15 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
-    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
     if (LOG.isTraceEnabled()) {
       LOG.trace("Executing {}", getName());
@@ -97,7 +105,7 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
       }
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS);
     }
 
     if (privacyGroup.isEmpty()) {
