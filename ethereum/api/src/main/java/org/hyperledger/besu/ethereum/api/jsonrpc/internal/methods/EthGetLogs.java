@@ -52,12 +52,18 @@ public class EthGetLogs implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final FilterParameter filter = requestContext.getRequiredParameter(0, FilterParameter.class);
+    final FilterParameter filter;
+    try {
+      filter = requestContext.getRequiredParameter(0, FilterParameter.class);
+    } catch (Exception e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid filter parameter (index 0)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+    }
     LOG.atTrace().setMessage("eth_getLogs FilterParameter: {}").addArgument(filter).log();
 
     if (!filter.isValid()) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_FILTER_PARAMS);
     }
 
     final AtomicReference<Exception> ex = new AtomicReference<>();
