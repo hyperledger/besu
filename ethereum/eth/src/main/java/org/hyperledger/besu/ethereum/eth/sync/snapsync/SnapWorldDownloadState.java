@@ -36,6 +36,7 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
@@ -44,6 +45,8 @@ import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.services.tasks.TaskCollection;
 
 import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -79,6 +82,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   protected final InMemoryTasksPriorityQueues<SnapDataRequest>
       pendingStorageFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
+  private final OperationTimer.TimingContext snapWorldStateInitialDownloadTimingContext;
   private Set<Bytes> accountsHealingList = new HashSet<>();
   private DynamicPivotBlockSelector pivotBlockSelector;
 
@@ -92,6 +96,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   // metrics around the snapsync
   private final SnapSyncMetricsManager metricsManager;
+  private final OperationTimer snapWorldStateHealingTimer;
+  private OperationTimer.TimingContext snapWorldHealingTimingContext;
 
   public SnapWorldDownloadState(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
@@ -119,41 +125,47 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.blockObserverId = blockchain.observeBlockAdded(createBlockchainObserver());
     this.ethContext = ethContext;
 
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
+    final MetricsSystem metricsSystem = metricsManager.getMetricsSystem();
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_account_requests_current",
+        "Number of account pending requests for snap sync world state download",
+        pendingAccountRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_storage_requests_current",
+        "Number of storage pending requests for snap sync world state download",
+        pendingStorageRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_big_storage_requests_current",
+        "Number of storage pending requests for snap sync world state download",
+        pendingLargeStorageRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_code_requests_current",
+        "Number of code pending requests for snap sync world state download",
+        pendingCodeRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_trie_node_requests_current",
+        "Number of trie node pending requests for snap sync world state download",
+        pendingTrieNodeRequests::size);
+    snapWorldStateInitialDownloadTimingContext =
+        metricsSystem
+            .createSimpleTimer(
+                BesuMetricCategory.SYNCHRONIZER,
+                "snap_world_state_initial_download_duration",
+                "Time taken to do the initial download of the world state")
+            .startTimer();
+    LOG.info(
+        "startTimer Starting snapWorldStateInitialDownload: {}",
+        LocalDateTime.now(ZoneId.systemDefault()));
+    snapWorldStateHealingTimer =
+        metricsSystem.createSimpleTimer(
             BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_account_requests_current",
-            "Number of account pending requests for snap sync world state download",
-            pendingAccountRequests::size);
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_storage_requests_current",
-            "Number of storage pending requests for snap sync world state download",
-            pendingStorageRequests::size);
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_big_storage_requests_current",
-            "Number of storage pending requests for snap sync world state download",
-            pendingLargeStorageRequests::size);
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_code_requests_current",
-            "Number of code pending requests for snap sync world state download",
-            pendingCodeRequests::size);
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_trie_node_requests_current",
-            "Number of trie node pending requests for snap sync world state download",
-            pendingTrieNodeRequests::size);
+            "snap_world_state_healing_duration",
+            "Time taken to heal the world state");
   }
 
   @Override
@@ -177,6 +189,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       // if all snapsync tasks are completed and the healing process was not running
       if (!snapSyncState.isHealTrieInProgress()) {
         // Start the healing process
+        LOG.info(
+            "Starting the healing process for the trie: {}",
+            LocalDateTime.now(ZoneId.systemDefault()));
         startTrieHeal();
       }
       // if all snapsync tasks are completed and the healing was running and blockchain is behind
@@ -193,6 +208,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         // FULL
         if (!snapSyncState.isHealFlatDatabaseInProgress()
             && worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
+          LOG.info(
+              "Starting the healing process for the flat database: {}",
+              LocalDateTime.now(ZoneId.systemDefault()));
           startFlatDatabaseHeal(header);
         }
         // If the flat database healing process is in progress or the flat database mode is not FULL
@@ -218,6 +236,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
           // stop the metrics timer for the world download
           syncTimingContext.stopTimer();
+          LOG.info(
+              "stopTimer Stopping syncTimingContext: {}",
+              LocalDateTime.now(ZoneId.systemDefault()));
 
           return true;
         }
@@ -238,6 +259,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   /** Method to start the healing process of the trie */
   public synchronized void startTrieHeal() {
+    LOG.info(
+        "stopTimer Initial snap world download done: {}",
+        LocalDateTime.now(ZoneId.systemDefault()));
+    snapWorldStateInitialDownloadTimingContext.stopTimer();
+    snapWorldHealingTimingContext = snapWorldStateHealingTimer.startTimer();
+    LOG.info("startTimer Starting snapWorldHealing: {}", LocalDateTime.now(ZoneId.systemDefault()));
     snapContext.clearAccountRangeTasks();
     snapSyncState.setHealTrieStatus(true);
     // Try to find a new pivot block before starting the healing process
@@ -274,6 +301,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
     LOG.info("Initiating the healing process for the flat database");
+    LOG.info(
+        "stopTimer Stopping snapWorldHealingTimer: {}", LocalDateTime.now(ZoneId.systemDefault()));
+    snapWorldHealingTimingContext.stopTimer();
     snapSyncState.setHealFlatDatabaseInProgress(true);
     final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
     ranges.forEach(

@@ -49,6 +49,8 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -194,7 +196,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
         "Whether or not the local node has caught up to the best known peer",
         () -> getSyncStatus().isPresent() ? 0 : 1);
     overallSyncTimer =
-        metricsSystem.createTimer(
+        metricsSystem.createSimpleTimer(
             BesuMetricCategory.SYNCHRONIZER,
             "world_state_and_chain_sync_duration",
             "Time taken to finish world state and chain sync");
@@ -402,6 +404,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     LOG.info("Stopping the pruner.");
     running.set(false);
     overallSyncTimingContext.stopTimer();
+    LOG.info("stopTimer overallSyncTimer: {}", LocalDateTime.now(ZoneId.systemDefault()));
     return null;
   }
 

@@ -143,7 +143,7 @@ public class FastSyncDownloader<REQUEST> {
     synchronized (this) {
       if (running.compareAndSet(true, false)) {
         LOG.info("Stopping sync");
-        // Canceling the world state download will also cause the chain download to be cancelled.
+        // Cancelling the world state download will also cause the chain download to be cancelled.
         worldStateDownloader.cancel();
       }
     }

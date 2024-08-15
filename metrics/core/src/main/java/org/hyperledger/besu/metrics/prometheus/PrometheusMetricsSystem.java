@@ -140,6 +140,26 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public LabelledMetric<OperationTimer> createSimpleLabelledTimer(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    final String metricName = convertToPrometheusName(category, name);
+    return cachedTimers.computeIfAbsent(
+        metricName,
+        (k) -> {
+          if (timersEnabled && isCategoryEnabled(category)) {
+            final Summary summary = Summary.build(metricName, help).labelNames(labelNames).create();
+            addCollectorUnchecked(category, summary);
+            return new PrometheusTimer(summary);
+          } else {
+            return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
+          }
+        });
+  }
+
+  @Override
   public void createGauge(
       final MetricCategory category,
       final String name,

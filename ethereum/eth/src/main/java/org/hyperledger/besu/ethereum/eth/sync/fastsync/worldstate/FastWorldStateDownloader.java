@@ -27,8 +27,11 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
@@ -55,6 +58,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
 
   private Optional<CompleteTaskStep> maybeCompleteTask = Optional.empty();
   private OperationTimer.TimingContext syncTimingContext;
+  private final AtomicBoolean timerHasNotBeenStarted = new AtomicBoolean(true);
 
   public FastWorldStateDownloader(
       final EthContext ethContext,
@@ -133,7 +137,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
           header.getHash(),
           stateRoot);
 
-      if (syncTimingContext == null) {
+      if (timerHasNotBeenStarted.compareAndSet(true, false)) {
         syncTimingContext =
             metricsSystem
                 .createTimer(
@@ -141,6 +145,9 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
                     "fast_world_state_sync_duration",
                     "Time taken to finish FastWorldState sync")
                 .startTimer();
+        LOG.info(
+            "startTimer Starting FastWorldStateDownload: {}",
+            LocalDateTime.now(ZoneId.systemDefault()));
       }
 
       final FastWorldDownloadState newDownloadState =

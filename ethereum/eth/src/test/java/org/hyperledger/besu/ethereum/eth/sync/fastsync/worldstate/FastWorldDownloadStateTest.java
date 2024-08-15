@@ -103,7 +103,7 @@ public class FastWorldDownloadStateTest {
             MIN_MILLIS_BEFORE_STALLING,
             clock,
             new NoOpMetricsSystem()
-                .createTimer(BesuMetricCategory.SYNCHRONIZER, "", "")
+                .createSimpleTimer(BesuMetricCategory.SYNCHRONIZER, "", "")
                 .startTimer());
     assertThat(downloadState.isDownloading()).isTrue();
     downloadState.setRootNodeData(ROOT_NODE_DATA);

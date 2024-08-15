@@ -37,6 +37,8 @@ import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
+import java.time.LocalDateTime;
+import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -142,11 +144,13 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       if (syncTimingContext == null) {
         syncTimingContext =
             metricsSystem
-                .createTimer(
+                .createSimpleTimer(
                     BesuMetricCategory.SYNCHRONIZER,
                     "fast_world_state_sync_duration",
                     "Time taken to finish FastWorldState sync")
                 .startTimer();
+        LOG.info(
+            "startTimer WorldState sync started: {}", LocalDateTime.now(ZoneId.systemDefault()));
       }
 
       final SnapWorldDownloadState newDownloadState =
