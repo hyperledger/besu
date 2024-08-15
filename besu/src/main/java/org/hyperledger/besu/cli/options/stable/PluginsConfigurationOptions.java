@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.cli.options.stable;
 
-import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_DETECTION_ENABLED_OPTION_NAME;
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_AUTO_ENABLED_OPTION_NAME;
 import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_OPTION_NAME;
 
 import org.hyperledger.besu.cli.converter.PluginInfoConverter;
@@ -31,7 +31,7 @@ import picocli.CommandLine;
 public class PluginsConfigurationOptions implements CLIOptions<PluginConfiguration> {
 
   @CommandLine.Option(
-      names = {DEFAULT_PLUGINS_DETECTION_ENABLED_OPTION_NAME},
+      names = {DEFAULT_PLUGINS_AUTO_ENABLED_OPTION_NAME},
       description =
           "If set to false, Besu will register plugins only when the --plugins option is explicitly specified. (default: ${DEFAULT-VALUE})",
       hidden = true,
@@ -54,7 +54,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   @Override
   public PluginConfiguration toDomainObject() {
     return new PluginConfiguration.Builder()
-        .pluginAutoRegistrationEnabled(pluginAutoRegistrationEnabled)
+        .pluginAutoEnabled(pluginAutoRegistrationEnabled)
         .requestedPlugins(plugins)
         .build();
   }
@@ -77,11 +77,11 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
 
     boolean pluginsDetectionEnabled =
         CommandLineUtils.getOptionValueOrDefault(
-            commandLine, DEFAULT_PLUGINS_DETECTION_ENABLED_OPTION_NAME, Boolean::parseBoolean);
+            commandLine, DEFAULT_PLUGINS_AUTO_ENABLED_OPTION_NAME, Boolean::parseBoolean);
 
     return new PluginConfiguration.Builder()
         .requestedPlugins(plugins)
-        .pluginAutoRegistrationEnabled(pluginsDetectionEnabled)
+        .pluginAutoEnabled(pluginsDetectionEnabled)
         .build();
   }
 }

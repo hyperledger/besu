@@ -16,7 +16,6 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_DETECTION_ENABLED_OPTION_NAME;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
@@ -74,10 +73,9 @@ public class PluginsOptionsTest extends CommandTestAbstract {
 
   @Test
   public void shouldParsePluginDetectionOptionWhenDisabled() {
-    parseCommand(DEFAULT_PLUGINS_DETECTION_ENABLED_OPTION_NAME);
+    parseCommand("--Xplugin-auto-enabled");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoRegistrationEnabled())
-        .isEqualTo(false);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoEnabled()).isEqualTo(false);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -85,10 +83,9 @@ public class PluginsOptionsTest extends CommandTestAbstract {
 
   @Test
   public void shouldParsePluginDetectionOptionWhenEnabled() {
-    parseCommand(DEFAULT_PLUGINS_DETECTION_ENABLED_OPTION_NAME);
+    parseCommand("--Xplugin-auto-enabled");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoRegistrationEnabled())
-        .isEqualTo(true);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoEnabled()).isEqualTo(true);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -98,8 +95,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   public void shouldParsePluginDetectionOptionByDefault() {
     parseCommand();
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoRegistrationEnabled())
-        .isEqualTo(true);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoEnabled()).isEqualTo(true);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

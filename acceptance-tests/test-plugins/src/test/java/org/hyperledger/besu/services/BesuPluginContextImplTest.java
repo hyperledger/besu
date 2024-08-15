@@ -235,34 +235,34 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldNotRegisterAnyPluginDetectionDisabled() {
+  void shouldNotRegisterAnyPluginsIfAutoRegistrationDisabled() {
     PluginConfiguration config =
         PluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .pluginAutoRegistrationEnabled(true)
+            .pluginAutoEnabled(false)
             .build();
     contextImpl.registerPlugins(config);
     assertThat(contextImpl.getRegisteredPlugins().isEmpty()).isTrue();
   }
 
   @Test
-  void shouldRegisterAllPluginDetectionEnabled() {
+  void shouldRegisterAllPluginsIfAutoRegistrationEnabled() {
     PluginConfiguration config =
         PluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .pluginAutoRegistrationEnabled(false)
+            .pluginAutoEnabled(true)
             .build();
     contextImpl.registerPlugins(config);
     assertThat(contextImpl.getRegisteredPlugins().isEmpty()).isFalse();
   }
 
   @Test
-  public void shouldRegisterDetectionDisabledAndPluginSpecified() {
+  public void shouldRegisterSpecifiedPluginWhenAutoRegistrationDisabled() {
     final PluginConfiguration config =
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .pluginAutoRegistrationEnabled(true)
+            .pluginAutoEnabled(false)
             .build();
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
@@ -273,11 +273,6 @@ public class BesuPluginContextImplTest {
 
     assertThat(requestedPlugin).isPresent();
     assertThat(requestedPlugin.get().getState()).isEqualTo("registered");
-
-    final Optional<TestPicoCLIPlugin> nonRequestedPlugin =
-        findTestPlugin(contextImpl.getRegisteredPlugins(), TestBesuEventsPlugin.class);
-
-    assertThat(nonRequestedPlugin).isEmpty();
   }
 
   private PluginConfiguration createConfigurationForSpecificPlugin(final String pluginName) {

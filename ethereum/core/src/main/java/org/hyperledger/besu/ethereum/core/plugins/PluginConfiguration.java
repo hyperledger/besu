@@ -22,15 +22,15 @@ import java.util.List;
 public class PluginConfiguration {
   private final List<PluginInfo> requestedPlugins;
   private final Path pluginsDir;
-  private final boolean pluginAutoRegistrationEnabled;
+  private final boolean pluginAutoEnabled;
 
   public PluginConfiguration(
       final List<PluginInfo> requestedPlugins,
       final Path pluginsDir,
-      final boolean pluginAutoRegistrationEnabled) {
+      final boolean pluginAutoEnabled) {
     this.requestedPlugins = requestedPlugins;
     this.pluginsDir = pluginsDir;
-    this.pluginAutoRegistrationEnabled = pluginAutoRegistrationEnabled;
+    this.pluginAutoEnabled = pluginAutoEnabled;
   }
 
   public List<String> getRequestedPlugins() {
@@ -43,8 +43,8 @@ public class PluginConfiguration {
     return pluginsDir;
   }
 
-  public boolean isPluginAutoRegistrationEnabled() {
-    return pluginAutoRegistrationEnabled;
+  public boolean isPluginAutoEnabled() {
+    return pluginAutoEnabled;
   }
 
   public static Path defaultPluginsDir() {
@@ -61,7 +61,7 @@ public class PluginConfiguration {
   public static class Builder {
     private List<PluginInfo> requestedPlugins;
     private Path pluginsDir;
-    private boolean pluginDetectionEnabled = false;
+    private boolean pluginAutoEnabled = false;
 
     public Builder requestedPlugins(final List<PluginInfo> requestedPlugins) {
       this.requestedPlugins = requestedPlugins;
@@ -73,8 +73,8 @@ public class PluginConfiguration {
       return this;
     }
 
-    public Builder pluginAutoRegistrationEnabled(final boolean pluginDetectionEnabled) {
-      this.pluginDetectionEnabled = pluginDetectionEnabled;
+    public Builder pluginAutoEnabled(final boolean pluginAutoEnabled) {
+      this.pluginAutoEnabled = pluginAutoEnabled;
       return this;
     }
 
@@ -82,7 +82,7 @@ public class PluginConfiguration {
       if (pluginsDir == null) {
         pluginsDir = PluginConfiguration.defaultPluginsDir();
       }
-      return new PluginConfiguration(requestedPlugins, pluginsDir, pluginDetectionEnabled);
+      return new PluginConfiguration(requestedPlugins, pluginsDir, pluginAutoEnabled);
     }
   }
 }
