@@ -37,7 +37,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
       hidden = true,
       defaultValue = "true",
       arity = "1")
-  private Boolean pluginAutoRegistrationEnabled = true;
+  private Boolean pluginAutoEnabled = true;
 
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_OPTION_NAME},
@@ -54,7 +54,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   @Override
   public PluginConfiguration toDomainObject() {
     return new PluginConfiguration.Builder()
-        .pluginAutoEnabled(pluginAutoRegistrationEnabled)
+        .pluginAutoEnabled(pluginAutoEnabled)
         .requestedPlugins(plugins)
         .build();
   }
