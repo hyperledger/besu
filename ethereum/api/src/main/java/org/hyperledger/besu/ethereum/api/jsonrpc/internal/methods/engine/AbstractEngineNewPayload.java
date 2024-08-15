@@ -494,7 +494,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (maybeParentHeader.isPresent()) {
       if (!validateExcessBlobGas(header, maybeParentHeader.get(), protocolSpec)) {
         return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS,
+            RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS,
             "Payload excessBlobGas does not match calculated excessBlobGas");
       }
     }
