@@ -142,11 +142,11 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
           matchAndValidateRequestedPlugins(requestedPlugins, detectedPlugins);
 
       registerPlugins(registeringPlugins);
-    } else {
-      if (config.isPluginsDetectionEnabled()) {
-        registerPlugins(detectedPlugins);
-      }
+    } else if (config.isPluginAutoRegistrationEnabled()) {
+      // Automatically register all detected plugins if auto-registration is enabled
+      registerPlugins(detectedPlugins);
     }
+    state = Lifecycle.REGISTERED;
   }
 
   private List<BesuPlugin> matchAndValidateRequestedPlugins(
@@ -183,7 +183,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         registeredPlugins.add(plugin);
       }
     }
-    state = Lifecycle.REGISTERED;
   }
 
   private boolean registerPlugin(final BesuPlugin plugin) {

@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.hyperledger.besu.cli.DefaultCommandValues.DEFAULT_PLUGINS_DETECTION_ENABLED_OPTION_NAME;
 import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.ethereum.core.plugins.PluginConfiguration;
@@ -29,28 +30,9 @@ import org.mockito.Captor;
 public class PluginsOptionsTest extends CommandTestAbstract {
 
   @Captor protected ArgumentCaptor<PluginConfiguration> pluginConfigurationArgumentCaptor;
-  @Test
-  public void pluginsOptionMustDefaultWhenNoPluginsSpecified() {
-    parseCommand();
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
-      .isEqualTo(List.of());
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
 
   @Test
-  public void pluginsOptionMustBeUsedWhenNoPluginsIsEmpty() {
-    parseCommand("--plugins", "");
-    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
-        .isEqualTo(List.of());
-    assertThat(commandOutput.toString(UTF_8)).isEmpty();
-    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
-  }
-
-  @Test
-  public void pluginsOptionMustBeUsedForSinglePlugin() {
+  public void shouldParsePluginOptionForSinglePlugin() {
     parseCommand("--plugins", "pluginA");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
@@ -60,7 +42,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pluginsOptionMustBeUsedForMultiplePlugins() {
+  public void shouldParsePluginOptionForMultiplePlugins() {
     parseCommand("--plugins", "pluginA,pluginB");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
@@ -71,21 +53,53 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void pluginsDetectionOptionMustBeUsed() {
-    parseCommand("--plugins-detection-disabled");
+  public void shouldNotUsePluginOptionWhenNoPluginsSpecified() {
+    parseCommand();
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsDetectionEnabled())
-      .isEqualTo(false);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
+        .isEqualTo(List.of());
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void shouldNotParseAnyPluginsWhenPluginOptionIsEmpty() {
+    parseCommand("--plugins", "");
+    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    assertThat(pluginConfigurationArgumentCaptor.getValue().getRequestedPlugins())
+        .isEqualTo(List.of());
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void shouldParsePluginDetectionOptionWhenDisabled() {
+    parseCommand(DEFAULT_PLUGINS_DETECTION_ENABLED_OPTION_NAME);
+    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoRegistrationEnabled())
+        .isEqualTo(false);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
 
-  public void pluginsDetectionOptionMustBeUsedas() {
-    parseCommand("--plugins-detection-disabled", "true");
+  @Test
+  public void shouldParsePluginDetectionOptionWhenEnabled() {
+    parseCommand(DEFAULT_PLUGINS_DETECTION_ENABLED_OPTION_NAME);
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsDetectionEnabled())
-      .isEqualTo(true);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoRegistrationEnabled())
+        .isEqualTo(true);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void shouldParsePluginDetectionOptionByDefault() {
+    parseCommand();
+    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoRegistrationEnabled())
+        .isEqualTo(true);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
