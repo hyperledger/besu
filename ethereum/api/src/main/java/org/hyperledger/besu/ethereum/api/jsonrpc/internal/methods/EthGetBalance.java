@@ -18,7 +18,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
@@ -41,12 +43,23 @@ public class EthGetBalance extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected BlockParameterOrBlockHash blockParameterOrBlockHash(
       final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
+    try {
+      return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block or block hash parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
   }
 
   @Override
   protected String resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
-    final Address address = request.getRequiredParameter(0, Address.class);
+    final Address address;
+    try {
+      address = request.getRequiredParameter(0, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
     return blockchainQueries
         .get()
         .accountBalance(address, blockHash)

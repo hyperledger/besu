@@ -132,20 +132,25 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         "Besu plugins have already been registered. Cannot register additional plugins.");
     state = Lifecycle.REGISTERING;
 
-    detectedPlugins = detectPlugins(config);
-    if (!config.getRequestedPlugins().isEmpty()) {
-      // Register only the plugins that were explicitly requested and validated
-      requestedPlugins = config.getRequestedPlugins();
+    if (config.isExternalPluginsEnabled()) {
+      detectedPlugins = detectPlugins(config);
 
-      // Match and validate the requested plugins against the detected plugins
-      List<BesuPlugin> registeringPlugins =
-          matchAndValidateRequestedPlugins(requestedPlugins, detectedPlugins);
+      if (config.getRequestedPlugins().isEmpty()) {
+        // If no plugins were specified, register all detected plugins
+        registerPlugins(detectedPlugins);
+      } else {
+        // Register only the plugins that were explicitly requested and validated
+        requestedPlugins = config.getRequestedPlugins();
+        // Match and validate the requested plugins against the detected plugins
+        List<BesuPlugin> registeringPlugins =
+            matchAndValidateRequestedPlugins(requestedPlugins, detectedPlugins);
 
-      registerPlugins(registeringPlugins);
+        registerPlugins(registeringPlugins);
+      }
     } else {
-      // If no plugins were specified, register all detected plugins
-      registerPlugins(detectedPlugins);
+      LOG.debug("External plugins are disabled. Skipping plugins registration.");
     }
+    state = Lifecycle.REGISTERED;
   }
 
   private List<BesuPlugin> matchAndValidateRequestedPlugins(
@@ -182,7 +187,6 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         registeredPlugins.add(plugin);
       }
     }
-    state = Lifecycle.REGISTERED;
   }
 
   private boolean registerPlugin(final BesuPlugin plugin) {
@@ -379,22 +383,20 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
           plugin ->
               summary.add(
                   String.format(
-                      " - %s (Version: %s)",
-                      plugin.getClass().getSimpleName(), plugin.getVersion())));
+                      " - %s (%s)", plugin.getClass().getSimpleName(), plugin.getVersion())));
     }
 
     // Identify and log detected but not registered (skipped) plugins
-    List<String> skippedPlugins =
-        detectedPlugins.stream()
-            .filter(plugin -> !registeredPlugins.contains(plugin))
-            .map(plugin -> plugin.getClass().getSimpleName())
-            .toList();
+    List<BesuPlugin> skippedPlugins =
+        detectedPlugins.stream().filter(plugin -> !registeredPlugins.contains(plugin)).toList();
 
     if (!skippedPlugins.isEmpty()) {
-      summary.add("Skipped Plugins:");
+      summary.add("Detected but not registered:");
       skippedPlugins.forEach(
-          pluginName ->
-              summary.add(String.format(" - %s (Detected but not registered)", pluginName)));
+          plugin ->
+              summary.add(
+                  String.format(
+                      " - %s (%s)", plugin.getClass().getSimpleName(), plugin.getVersion())));
     }
     summary.add(
         String.format(

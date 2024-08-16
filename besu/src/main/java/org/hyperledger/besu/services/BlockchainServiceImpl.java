@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.chain.MutableBlockchain;
 import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.ProtocolSpec;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.BaseFeeMarket;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.plugin.Unstable;
@@ -33,6 +34,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
+import javax.inject.Inject;
 
 /** The Blockchain service implementation. */
 @Unstable
@@ -43,10 +45,11 @@ public class BlockchainServiceImpl implements BlockchainService {
   private MutableBlockchain blockchain;
 
   /** Instantiates a new Blockchain service implementation. */
+  @Inject
   public BlockchainServiceImpl() {}
 
   /**
-   * Instantiates a new Blockchain service.
+   * Initialize the Blockchain service.
    *
    * @param protocolContext the protocol context
    * @param protocolSchedule the protocol schedule
@@ -133,6 +136,37 @@ public class BlockchainServiceImpl implements BlockchainService {
   @Override
   public Optional<Hash> getFinalizedBlock() {
     return blockchain.getFinalized();
+  }
+
+  @Override
+  public void setFinalizedBlock(final Hash blockHash) {
+    final var protocolSpec = getProtocolSpec(blockHash);
+
+    if (protocolSpec.isPoS()) {
+      throw new UnsupportedOperationException(
+          "Marking block as finalized is not supported for PoS networks");
+    }
+    blockchain.setFinalized(blockHash);
+  }
+
+  @Override
+  public void setSafeBlock(final Hash blockHash) {
+    final var protocolSpec = getProtocolSpec(blockHash);
+
+    if (protocolSpec.isPoS()) {
+      throw new UnsupportedOperationException(
+          "Marking block as safe is not supported for PoS networks");
+    }
+
+    blockchain.setSafeBlock(blockHash);
+  }
+
+  private ProtocolSpec getProtocolSpec(final Hash blockHash) {
+    return blockchain
+        .getBlockByHash(blockHash)
+        .map(Block::getHeader)
+        .map(protocolSchedule::getByBlockHeader)
+        .orElseThrow(() -> new IllegalArgumentException("Block not found: " + blockHash));
   }
 
   private static BlockContext blockContext(

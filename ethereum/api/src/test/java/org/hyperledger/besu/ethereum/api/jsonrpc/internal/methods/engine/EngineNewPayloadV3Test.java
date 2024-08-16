@@ -66,6 +66,7 @@ import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -137,7 +138,7 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             Optional.empty(),
             Optional.empty());
     final EnginePayloadParameter payload =
-        mockEnginePayload(mockHeader, Collections.emptyList(), null, null, null);
+        mockEnginePayload(mockHeader, Collections.emptyList(), null, null, null, null);
 
     ValidationResult<RpcErrorType> res =
         method.validateParameters(
@@ -193,11 +194,12 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .blobGasUsed(null)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null));
+    var resp =
+        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas fields");
+    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas used field");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -212,11 +214,12 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
             .blobGasUsed(100L)
             .buildHeader();
 
-    var resp = resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null));
+    var resp =
+        resp(mockEnginePayload(blockHeader, Collections.emptyList(), List.of(), null, null, null));
 
     final JsonRpcError jsonRpcError = fromErrorResp(resp);
     assertThat(jsonRpcError.getCode()).isEqualTo(INVALID_PARAMS.getCode());
-    assertThat(jsonRpcError.getData()).isEqualTo("Missing blob gas fields");
+    assertThat(jsonRpcError.getData()).isEqualTo("Missing excess blob gas field");
     verify(engineCallListener, times(1)).executionEngineCalled();
   }
 
@@ -257,6 +260,12 @@ public class EngineNewPayloadV3Test extends EngineNewPayloadV2Test {
         .blobsWithCommitments(Optional.of(bwc))
         .versionedHashes(Optional.of(bwc.getVersionedHashes()))
         .createTransaction(senderKeys);
+  }
+
+  @Override
+  @Disabled
+  public void shouldReturnUnsupportedForkIfBlockTimestampIsAfterCancunMilestone() {
+    // only relevant for v2
   }
 
   @Override

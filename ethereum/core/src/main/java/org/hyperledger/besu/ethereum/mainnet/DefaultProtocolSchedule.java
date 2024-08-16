@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static com.google.common.base.Preconditions.checkArgument;
 
+import org.hyperledger.besu.datatypes.HardforkId;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.PermissionTransactionFilter;
 import org.hyperledger.besu.ethereum.core.ProcessableBlockHeader;
@@ -25,6 +26,8 @@ import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
 
 import java.math.BigInteger;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NavigableSet;
 import java.util.Optional;
 import java.util.TreeSet;
@@ -38,6 +41,8 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
   @VisibleForTesting
   protected NavigableSet<ScheduledProtocolSpec> protocolSpecs =
       new TreeSet<>(Comparator.comparing(ScheduledProtocolSpec::fork).reversed());
+
+  private final Map<HardforkId, Long> milestones = new HashMap<>();
 
   private final Optional<BigInteger> chainId;
 
@@ -97,6 +102,12 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
     putMilestone(TimestampProtocolSpec.create(timestamp, protocolSpec));
   }
 
+  @Override
+  public void setMilestones(final Map<HardforkId, Long> milestones) {
+    this.milestones.clear();
+    this.milestones.putAll(milestones);
+  }
+
   private void putMilestone(final ScheduledProtocolSpec scheduledProtocolSpec) {
     // Ensure this replaces any existing spec at the same block number.
     protocolSpecs.remove(scheduledProtocolSpec);
@@ -115,6 +126,11 @@ public class DefaultProtocolSchedule implements ProtocolSchedule {
         .filter(predicate)
         .findFirst()
         .map(ScheduledProtocolSpec::fork);
+  }
+
+  @Override
+  public Optional<Long> milestoneFor(final HardforkId hardforkId) {
+    return Optional.ofNullable(milestones.get(hardforkId));
   }
 
   @Override

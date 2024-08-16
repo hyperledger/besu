@@ -1,0 +1,14 @@
+{
+  "cli": [
+    "--notime",
+    "--json",
+    "--code",
+    "ef00010100040200010009030001001404000000008000035f355f5fa15f5fee00ef00010100040200010001040000000080000000",
+    "--coinbase",
+    "4444588443C3A91288C5002483449ABA1054192B",
+    "--fork",
+    "CancunEOF"
+  ],
+  "stdin": "",
+  "stdout": "To evaluate INITCODE mode EOF code use the --create flag\n"
+}

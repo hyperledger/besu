@@ -48,7 +48,7 @@ public class EthGetTransactionByHash implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 1) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
     final Hash hash = requestContext.getRequiredParameter(0, Hash.class);
     final JsonRpcSuccessResponse jsonRpcSuccessResponse =

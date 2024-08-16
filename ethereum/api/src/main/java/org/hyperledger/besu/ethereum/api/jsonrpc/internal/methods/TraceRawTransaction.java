@@ -67,7 +67,7 @@ public class TraceRawTransaction extends AbstractTraceByBlock implements JsonRpc
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 2) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
     final var rawTransaction = requestContext.getRequiredParameter(0, String.class);

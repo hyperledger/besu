@@ -18,7 +18,9 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.Quantity;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
@@ -50,12 +52,23 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
   @Override
   protected BlockParameterOrBlockHash blockParameterOrBlockHash(
       final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
+    try {
+      return request.getRequiredParameter(1, BlockParameterOrBlockHash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block or block hash parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
   }
 
   @Override
   protected Object pendingResult(final JsonRpcRequestContext request) {
-    final Address address = request.getRequiredParameter(0, Address.class);
+    final Address address;
+    try {
+      address = request.getRequiredParameter(0, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
     final long pendingNonce =
         transactionPoolSupplier.get().getNextNonceForSender(address).orElse(0);
     final long latestNonce =
@@ -72,7 +85,13 @@ public class EthGetTransactionCount extends AbstractBlockParameterOrBlockHashMet
 
   @Override
   protected String resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
-    final Address address = request.getRequiredParameter(0, Address.class);
+    final Address address;
+    try {
+      address = request.getRequiredParameter(0, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
     final long transactionCount = getBlockchainQueries().getTransactionCount(address, blockHash);
 
     return Quantity.create(transactionCount);

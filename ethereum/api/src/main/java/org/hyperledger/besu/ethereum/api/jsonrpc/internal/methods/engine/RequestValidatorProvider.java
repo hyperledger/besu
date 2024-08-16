@@ -38,6 +38,12 @@ public class RequestValidatorProvider {
         protocolSchedule, blockTimestamp, blockNumber, RequestType.WITHDRAWAL);
   }
 
+  public static RequestValidator getConsolidationRequestValidator(
+      final ProtocolSchedule protocolSchedule, final long blockTimestamp, final long blockNumber) {
+    return getRequestValidator(
+        protocolSchedule, blockTimestamp, blockNumber, RequestType.CONSOLIDATION);
+  }
+
   private static RequestValidator getRequestValidator(
       final ProtocolSchedule protocolSchedule,
       final long blockTimestamp,

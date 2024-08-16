@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -38,14 +39,20 @@ public class Web3Sha3 implements JsonRpcMethod {
     if (requestContext.getRequest().getParamLength() != 1) {
       // Do we want custom messages for each different type of invalid params?
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
-    final String data = requestContext.getRequiredParameter(0, String.class);
+    final String data;
+    try {
+      data = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid data parameter (index 0)", RpcErrorType.INVALID_DATA_PARAMS, e);
+    }
 
     if (!data.isEmpty() && !data.startsWith("0x")) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_DATA_PARAMS);
     }
 
     try {
@@ -54,7 +61,7 @@ public class Web3Sha3 implements JsonRpcMethod {
           requestContext.getRequest().getId(), Hash.keccak256(byteData).toString());
     } catch (final IllegalArgumentException err) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_DATA_PARAMS);
     }
   }
 }

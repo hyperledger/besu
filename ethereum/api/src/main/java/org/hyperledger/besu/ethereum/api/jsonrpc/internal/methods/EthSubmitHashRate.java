@@ -16,8 +16,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.blockcreation.MiningCoordinator;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -37,8 +39,20 @@ public class EthSubmitHashRate implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final String hashRate = requestContext.getRequiredParameter(0, String.class);
-    final String id = requestContext.getRequiredParameter(1, String.class);
+    final String hashRate;
+    try {
+      hashRate = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid hash rate parameter (index 0)", RpcErrorType.INVALID_HASH_RATE_PARAMS, e);
+    }
+    final String id;
+    try {
+      id = requestContext.getRequiredParameter(1, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid sealer ID parameter (index 1)", RpcErrorType.INVALID_SEALER_ID_PARAMS, e);
+    }
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(),
         miningCoordinator.submitHashRate(

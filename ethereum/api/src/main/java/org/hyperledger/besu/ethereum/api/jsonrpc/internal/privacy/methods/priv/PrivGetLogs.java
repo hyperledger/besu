@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
@@ -61,12 +62,26 @@ public class PrivGetLogs implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
-    final FilterParameter filter = requestContext.getRequiredParameter(1, FilterParameter.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
+    final FilterParameter filter;
+    try {
+      filter = requestContext.getRequiredParameter(1, FilterParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid filter parameter (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+    }
 
     if (!filter.isValid()) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_FILTER_PARAMS);
     }
 
     final List<LogWithMetadata> matchingLogs =

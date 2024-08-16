@@ -65,6 +65,7 @@ import org.hyperledger.besu.evm.precompile.KZGPointEvalPrecompiledContract;
 import org.hyperledger.besu.metrics.StandardMetricCategory;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.data.EnodeURL;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.util.number.Fraction;
 import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
@@ -259,7 +260,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     final Path tempConfigFilePath = createTempFile("an-invalid-file-name-without-extension", "");
     parseCommand("--config-file", tempConfigFilePath.toString());
 
-    final String expectedOutputStart = "Unable to read TOML configuration file";
+    final String expectedOutputStart = "Unable to read from empty TOML configuration file.";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
@@ -805,6 +806,28 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void poaDiscoveryRetryBootnodesValueTrueMustBeUsed() {
+    parseCommand("--poa-discovery-retry-bootnodes", "true");
+
+    verify(mockRunnerBuilder).poaDiscoveryRetryBootnodes(eq(true));
+    verify(mockRunnerBuilder).build();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void poaDiscoveryRetryBootnodesValueFalseMustBeUsed() {
+    parseCommand("--poa-discovery-retry-bootnodes", "false");
+
+    verify(mockRunnerBuilder).poaDiscoveryRetryBootnodes(eq(false));
+    verify(mockRunnerBuilder).build();
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void callingWithBootnodesOptionButNoValueMustPassEmptyBootnodeList() {
     parseCommand("--bootnodes");
 
@@ -1107,7 +1130,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, CHECKPOINT, X_SNAP, X_CHECKPOINT] (case-insensitive) but was 'bogus'");
+            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, CHECKPOINT] (case-insensitive) but was 'bogus'");
   }
 
   @Test
@@ -1167,7 +1190,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(5);
+    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(5);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1179,7 +1202,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
+    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1191,7 +1214,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.SNAP);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
+    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1203,7 +1226,7 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     final SynchronizerConfiguration syncConfig = syncConfigurationCaptor.getValue();
     assertThat(syncConfig.getSyncMode()).isEqualTo(SyncMode.FAST);
-    assertThat(syncConfig.getFastSyncMinimumPeerCount()).isEqualTo(11);
+    assertThat(syncConfig.getSyncMinimumPeerCount()).isEqualTo(11);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
   }
@@ -1281,13 +1304,34 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void parsesInvalidDefaultBonsaiLimitTrieLogsWhenFullSyncEnabled() {
+  public void bonsaiLimitTrieLogsDisabledWhenFullSyncEnabled() {
     parseCommand("--sync-mode=FULL");
+
+    verify(mockControllerBuilder)
+        .dataStorageConfiguration(dataStorageConfigurationArgumentCaptor.capture());
+
+    final DataStorageConfiguration dataStorageConfiguration =
+        dataStorageConfigurationArgumentCaptor.getValue();
+    assertThat(dataStorageConfiguration.getDataStorageFormat()).isEqualTo(BONSAI);
+    assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isFalse();
+    verify(mockLogger)
+        .warn(
+            "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
+            "--bonsai-limit-trie-logs-enabled=false",
+            SyncMode.FULL,
+            DataStorageFormat.BONSAI);
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void parsesInvalidWhenFullSyncAndBonsaiLimitTrieLogsExplicitlyTrue() {
+    parseCommand("--sync-mode=FULL", "--bonsai-limit-trie-logs-enabled=true");
 
     Mockito.verifyNoInteractions(mockRunnerBuilder);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
-        .contains("Cannot enable --bonsai-limit-trie-logs-enabled with sync-mode FULL");
+        .contains(
+            "Cannot enable --bonsai-limit-trie-logs-enabled with --sync-mode=FULL and --data-storage-format=BONSAI. You must set --bonsai-limit-trie-logs-enabled=false or use a different sync-mode");
   }
 
   @Test
@@ -2458,5 +2502,17 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  void helpOutputShouldDisplayCorrectDefaultValues() {
+    parseCommand("--help");
+
+    final String commandOutputString = commandOutput.toString(UTF_8);
+    final String errorOutputString = commandErrorOutput.toString(UTF_8);
+
+    assertThat(commandOutputString).doesNotContain("$DEFAULT-VALUE");
+
+    assertThat(errorOutputString).isEmpty();
   }
 }

@@ -25,6 +25,9 @@ import org.apache.tuweni.bytes.Bytes;
  */
 public class KeyComparator {
 
+  /** Instantiates a new KeyComparator */
+  public KeyComparator() {}
+
   /**
    * Compares two keys from left to right.
    *

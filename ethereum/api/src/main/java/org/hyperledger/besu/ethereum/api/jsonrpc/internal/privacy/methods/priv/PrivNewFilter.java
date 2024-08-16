@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.priv;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.filter.FilterManager;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
@@ -49,8 +50,22 @@ public class PrivNewFilter implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
-    final String privacyGroupId = request.getRequiredParameter(0, String.class);
-    final FilterParameter filter = request.getRequiredParameter(1, FilterParameter.class);
+    final String privacyGroupId;
+    try { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      privacyGroupId = request.getRequiredParameter(0, String.class);
+    } catch (Exception e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
+    final FilterParameter filter;
+    try {
+      filter = request.getRequiredParameter(1, FilterParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid filter parameter (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+    }
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 
     if (privacyController instanceof MultiTenancyPrivacyController) {
@@ -60,7 +75,8 @@ public class PrivNewFilter implements JsonRpcMethod {
     }
 
     if (!filter.isValid()) {
-      return new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(
+          request.getRequest().getId(), RpcErrorType.INVALID_FILTER_PARAMS);
     }
 
     final String logFilterId =

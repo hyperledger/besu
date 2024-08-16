@@ -56,10 +56,12 @@ public class GeneralStateTestCaseSpec {
       final ReferenceTestWorldState initialWorldState,
       final Map<String, List<PostSection>> postSections,
       final StateTestVersionedTransaction versionedTransaction) {
-
+    if (initialWorldState == null) {
+      return Map.of();
+    }
     initialWorldState.persist(null);
     final Map<String, List<GeneralStateTestCaseEipSpec>> res =
-        new LinkedHashMap<>(postSections.size());
+        LinkedHashMap.newLinkedHashMap(postSections.size());
     for (final Map.Entry<String, List<PostSection>> entry : postSections.entrySet()) {
       final String eip = entry.getKey();
       final List<PostSection> post = entry.getValue();
@@ -70,11 +72,12 @@ public class GeneralStateTestCaseSpec {
                 .stateRoot(p.rootHash)
                 .blockHeaderFunctions(MAINNET_FUNCTIONS)
                 .buildBlockHeader();
-        final Supplier<Transaction> txSupplier = () -> versionedTransaction.get(p.indexes);
+        final List<Supplier<Transaction>> txSupplierList =
+            List.of(() -> versionedTransaction.get(p.indexes));
         specs.add(
             new GeneralStateTestCaseEipSpec(
                 eip,
-                txSupplier,
+                txSupplierList,
                 initialWorldState,
                 p.rootHash,
                 p.logsHash,

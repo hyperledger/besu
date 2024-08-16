@@ -66,7 +66,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 1) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
     final String rawTransaction = requestContext.getRequiredParameter(0, String.class);
 
@@ -86,7 +86,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     } catch (final RLPException e) {
       LOG.debug("RLPException: {} caused by {}", e.getMessage(), e.getCause());
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_PARAMS);
     } catch (final InvalidJsonRpcRequestException i) {
       LOG.debug("InvalidJsonRpcRequestException: {} caused by {}", i.getMessage(), i.getCause());
       return new JsonRpcErrorResponse(

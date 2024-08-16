@@ -22,6 +22,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.api.ApiConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -87,19 +88,39 @@ public class EthFeeHistory implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
     final Object requestId = request.getRequest().getId();
 
-    final int blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
-    if (isInvalidBlockCount(blockCount)) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
+    final int blockCount;
+    try {
+      blockCount = request.getRequiredParameter(0, UnsignedIntParameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block count parameter (index 0)", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
     }
-    final BlockParameter highestBlock = request.getRequiredParameter(1, BlockParameter.class);
-    final Optional<List<Double>> maybeRewardPercentiles =
-        request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
+    if (isInvalidBlockCount(blockCount)) {
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_BLOCK_COUNT_PARAMS);
+    }
+    final BlockParameter highestBlock;
+    try {
+      highestBlock = request.getRequiredParameter(1, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid highest block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
+
+    final Optional<List<Double>> maybeRewardPercentiles;
+    try {
+      maybeRewardPercentiles = request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid reward percentiles parameter (index 2)",
+          RpcErrorType.INVALID_REWARD_PERCENTILES_PARAMS,
+          e);
+    }
 
     final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
     final long chainHeadBlockNumber = chainHeadHeader.getNumber();
     final long highestBlockNumber = highestBlock.getNumber().orElse(chainHeadBlockNumber);
     if (highestBlockNumber > chainHeadBlockNumber) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     }
 
     final long firstBlock = Math.max(0, highestBlockNumber - (blockCount - 1));

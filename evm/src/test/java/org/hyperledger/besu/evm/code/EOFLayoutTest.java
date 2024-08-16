@@ -20,6 +20,7 @@ import java.util.Arrays;
 import java.util.Collection;
 
 import org.apache.tuweni.bytes.Bytes;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 
@@ -332,6 +333,18 @@ public class EOFLayoutTest {
             null,
             1
           },
+          {
+            "EF00 01 010004 0200010001 0300010015 040000 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00ff)",
+            "dangling data in subcontainer",
+            "subcontainer size mismatch",
+            1
+          },
+          {
+            "EF00 01 010004 0200010001 0300010014 040000 00 00800000 00 (EF0001 010004 0200010001 040000 00 00800000 00ff)",
+            "dangling data in container",
+            "Dangling data after end of all sections",
+            1
+          },
         });
   }
 
@@ -360,5 +373,12 @@ public class EOFLayoutTest {
       assertThat(layout.isValid()).isTrue();
       assertThat(layout.getCodeSectionCount()).isNotZero();
     }
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }

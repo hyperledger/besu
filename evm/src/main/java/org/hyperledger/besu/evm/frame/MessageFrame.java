@@ -1664,6 +1664,7 @@ public class MessageFrame {
       WorldUpdater updater;
       boolean newStatic;
       TxValues newTxValues;
+
       if (parentMessageFrame == null) {
         newTxValues =
             new TxValues(
@@ -1686,8 +1687,9 @@ public class MessageFrame {
         newStatic = isStatic;
       } else {
         newTxValues = parentMessageFrame.txValues;
-        updater = parentMessageFrame.worldUpdater.updater();
+        updater = parentMessageFrame.getWorldUpdater().updater();
         newStatic = isStatic || parentMessageFrame.isStatic;
+        parentMessageFrame.warmUpAddress(contract);
       }
 
       MessageFrame messageFrame =

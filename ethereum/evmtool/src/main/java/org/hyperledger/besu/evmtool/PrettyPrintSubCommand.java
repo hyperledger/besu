@@ -30,13 +30,31 @@ import java.util.List;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
 
+/**
+ * This class, PrettyPrintSubCommand, is a command-line interface (CLI) command that pretty prints
+ * EOF (Ethereum Object Format) code. It implements the Runnable interface, meaning it can be used
+ * in a thread of execution.
+ *
+ * <p>The class is annotated with {@code @CommandLine.Command}, which is a PicoCLI annotation that
+ * designates this class as a command-line command. The annotation parameters define the command's
+ * name, description, whether it includes standard help options, and the version provider.
+ *
+ * <p>The command's functionality is defined in the run() method, which is overridden from the
+ * Runnable interface.
+ */
 @CommandLine.Command(
     name = COMMAND_NAME,
     description = "Pretty Prints EOF Code",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
 public class PrettyPrintSubCommand implements Runnable {
+  /**
+   * The name of the command for the PrettyPrintSubCommand. This constant is used as the name
+   * parameter in the @CommandLine.Command annotation. It defines the command name that users should
+   * enter on the command line to invoke this command.
+   */
   public static final String COMMAND_NAME = "pretty-print";
+
   @CommandLine.ParentCommand private final EvmToolCommand parentCommand;
 
   @CommandLine.Option(
@@ -48,10 +66,20 @@ public class PrettyPrintSubCommand implements Runnable {
   // picocli does it magically
   @CommandLine.Parameters private final List<String> codeList = new ArrayList<>();
 
+  /**
+   * Default constructor for the PrettyPrintSubCommand class. This constructor initializes the
+   * parentCommand to null.
+   */
   public PrettyPrintSubCommand() {
     this(null);
   }
 
+  /**
+   * Constructs a new PrettyPrintSubCommand with the specified parent command.
+   *
+   * @param parentCommand The parent command for this subcommand. This is typically an instance of
+   *     EvmToolCommand.
+   */
   public PrettyPrintSubCommand(final EvmToolCommand parentCommand) {
     this.parentCommand = parentCommand;
   }
@@ -81,6 +109,11 @@ public class PrettyPrintSubCommand implements Runnable {
           }
           if (validatedCode instanceof CodeInvalid codeInvalid) {
             parentCommand.out.println("EOF code is invalid - " + codeInvalid.getInvalidReason());
+          }
+          if (layout.container().size() != container.size()) {
+            parentCommand.out.println(
+                "EOF code is invalid - dangling data after container - "
+                    + container.slice(layout.container().size()).toHexString());
           }
         } else {
           parentCommand.out.println("EOF layout is invalid - " + layout.invalidReason());
