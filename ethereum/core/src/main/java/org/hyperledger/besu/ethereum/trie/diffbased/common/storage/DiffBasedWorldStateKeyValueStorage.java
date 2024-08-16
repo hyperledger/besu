@@ -14,14 +14,19 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage;
 
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_FREEZER_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import static org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy.DELETED_ACCOUNT_VALUE;
 
 import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.bonsai.BonsaiContext;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.StorageSubscriber;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
@@ -38,12 +43,14 @@ import java.util.List;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 
 import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.bytes.Bytes32;
+import org.bouncycastle.util.Arrays;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -190,6 +197,70 @@ public abstract class DiffBasedWorldStateKeyValueStorage
       LOG.error("Error pruning trie log for block hash {}", blockHash, e);
       return false;
     }
+  }
+
+  /**
+   * Move old state from the primary DB segments to "cold" segments that will only be used for
+   * historic state queries. This prevents performance degradation over time for writes to the
+   * primary DB segments.
+   *
+   * @param currentBlockHeader TODO - should not be needed
+   * @param previousBlockHeader the block header for the previous block, used to get the "nearest
+   *     before" state
+   * @param accountHash the account to freeze old state for
+   * @return the number of account states that were moved to frozen storage
+   */
+  public int freezePreviousAccountState(
+      final Optional<BlockHeader> currentBlockHeader,
+      final Optional<BlockHeader> previousBlockHeader,
+      final Hash accountHash) {
+    AtomicInteger frozenStateCount = new AtomicInteger();
+    if (previousBlockHeader.isPresent()) {
+      try {
+        // Get the key for this block
+        final BonsaiContext theContext = new BonsaiContext();
+        theContext.setBlockHeader(currentBlockHeader.get());
+
+        // Get the key for the previous block
+        final BonsaiContext previousContext = new BonsaiContext();
+        previousContext.setBlockHeader(previousBlockHeader.get());
+        final Bytes previousKey =
+            ArchiveFlatDbStrategy.calculateArchiveKeyWithMaxSuffix(
+                previousContext, accountHash.toArrayUnsafe());
+
+        composedWorldStateStorage
+            .getNearestBefore(ACCOUNT_INFO_STATE, previousKey)
+            .filter(
+                // Ignore deleted entries
+                found ->
+                    !Arrays.areEqual(
+                        DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
+            // Skip "nearest" entries that are for a different account
+            .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
+            .stream()
+            .forEach(
+                (nearestKey) -> {
+                  SegmentedKeyValueStorageTransaction tx =
+                      composedWorldStateStorage.startTransaction();
+                  tx.remove(ACCOUNT_INFO_STATE, nearestKey.key().toArrayUnsafe());
+                  tx.put(
+                      ACCOUNT_FREEZER_STATE,
+                      nearestKey.key().toArrayUnsafe(),
+                      nearestKey.value().get());
+                  tx.commit();
+                  frozenStateCount.getAndIncrement();
+                });
+
+        LOG.atDebug()
+            .setMessage("no previous state for account {} found to move to cold storage")
+            .addArgument(accountHash)
+            .log();
+      } catch (Exception e) {
+        LOG.error("Error moving account state for account {} to cold storage", accountHash, e);
+      }
+    }
+
+    return frozenStateCount.get();
   }
 
   @Override

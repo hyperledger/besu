@@ -86,6 +86,7 @@ import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
+import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.worldview.BonsaiArchiveFreezer;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogPruner;
 import org.hyperledger.besu.ethereum.trie.forest.ForestWorldStateArchive;
@@ -753,6 +754,19 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
       trieLogManager.subscribe(trieLogPruner);
     }
 
+    // TODO - do we want a flag to turn this on and off?
+    if (DataStorageFormat.BONSAI_ARCHIVE.equals(dataStorageConfiguration.getDataStorageFormat())) {
+      final BonsaiWorldStateKeyValueStorage worldStateKeyValueStorage =
+          worldStateStorageCoordinator.getStrategy(BonsaiWorldStateKeyValueStorage.class);
+      final BonsaiArchiveFreezer archiveFreezer =
+          createBonsaiArchiveFreezer(
+              worldStateKeyValueStorage,
+              blockchain,
+              scheduler,
+              ((BonsaiWorldStateProvider) worldStateArchive).getTrieLogManager());
+      blockchain.observeBlockAdded(archiveFreezer);
+    }
+
     final List<Closeable> closeables = new ArrayList<>();
     closeables.add(protocolContext.getWorldStateArchive());
     closeables.add(storageProvider);
@@ -817,6 +831,23 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     trieLogPruner.initialize();
 
     return trieLogPruner;
+  }
+
+  private BonsaiArchiveFreezer createBonsaiArchiveFreezer(
+      final WorldStateKeyValueStorage worldStateStorage,
+      final Blockchain blockchain,
+      final EthScheduler scheduler,
+      final TrieLogManager trieLogManager) {
+    final BonsaiArchiveFreezer archiveFreezer =
+        new BonsaiArchiveFreezer(
+            (BonsaiWorldStateKeyValueStorage) worldStateStorage,
+            blockchain,
+            scheduler::executeServiceTask,
+            10,
+            trieLogManager);
+    archiveFreezer.initialize();
+
+    return archiveFreezer;
   }
 
   /**

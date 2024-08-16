@@ -25,6 +25,7 @@ import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.PartialF
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -99,7 +100,12 @@ public class FlatDbStrategyProvider {
                       // and default to the storage config otherwise
 
                       // TODO: temporarily hard code ARCHIVE mode for testing
-                      var flatDbModeVal = FlatDbMode.ARCHIVE.getVersion();
+                      var flatDbModeVal =
+                          dataStorageConfiguration
+                                  .getDataStorageFormat()
+                                  .equals(DataStorageFormat.BONSAI_ARCHIVE)
+                              ? FlatDbMode.ARCHIVE.getVersion()
+                              : FlatDbMode.FULL.getVersion();
                       // existingTrieData
                       //        ? FlatDbMode.ARCHIVE.getVersion()
                       //        : requestedFlatDbMode.getVersion();

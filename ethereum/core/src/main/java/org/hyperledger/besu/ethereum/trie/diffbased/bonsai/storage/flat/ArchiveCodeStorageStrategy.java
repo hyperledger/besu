@@ -55,7 +55,7 @@ public class ArchiveCodeStorageStrategy implements CodeStorageStrategy {
       // use getNearest() with an account key that is suffixed by the block context
       final Optional<Bytes> codeFound =
           storage
-              .getNearestTo(CODE_STORAGE, keyNearest)
+              .getNearestBefore(CODE_STORAGE, keyNearest)
               // return empty when we find a "deleted value key"
               .filter(
                   found ->

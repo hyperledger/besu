@@ -14,6 +14,7 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_FREEZER_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 
@@ -50,7 +51,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
 
   static final byte[] MAX_BLOCK_SUFFIX = Bytes.ofUnsignedLong(Long.MAX_VALUE).toArrayUnsafe();
   static final byte[] MIN_BLOCK_SUFFIX = Bytes.ofUnsignedLong(0L).toArrayUnsafe();
-  static final byte[] DELETED_ACCOUNT_VALUE = new byte[0];
+  public static final byte[] DELETED_ACCOUNT_VALUE = new byte[0];
   public static final byte[] DELETED_CODE_VALUE = new byte[0];
   static final byte[] DELETED_STORAGE_VALUE = new byte[0];
 
@@ -60,15 +61,15 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
       final NodeLoader nodeLoader,
       final Hash accountHash,
       final SegmentedKeyValueStorage storage) {
-    getAccountCounter.inc();
 
+    getAccountCounter.inc();
     // keyNearest, use MAX_BLOCK_SUFFIX in the absence of a block context:
     Bytes keyNearest = calculateArchiveKeyWithMaxSuffix(context, accountHash.toArrayUnsafe());
 
     // use getNearest() with an account key that is suffixed by the block context
     final Optional<Bytes> accountFound =
         storage
-            .getNearestTo(ACCOUNT_INFO_STATE, keyNearest)
+            .getNearestBefore(ACCOUNT_INFO_STATE, keyNearest)
             // return empty when we find a "deleted value key"
             .filter(
                 found ->
@@ -80,10 +81,30 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
 
     if (accountFound.isPresent()) {
       getAccountFoundInFlatDatabaseCounter.inc();
+      return accountFound;
     } else {
-      getAccountNotFoundInFlatDatabaseCounter.inc();
+      // Check the frozen state as old state is moved out of the primary DB segment
+      final Optional<Bytes> frozenAccountFound =
+          storage
+              .getNearestBefore(ACCOUNT_FREEZER_STATE, keyNearest)
+              // return empty when we find a "deleted value key"
+              .filter(
+                  found ->
+                      !Arrays.areEqual(
+                          DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
+              // don't return accounts that do not have a matching account hash
+              .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
+              .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+
+      if (frozenAccountFound.isPresent()) {
+        // TODO - different metric for frozen lookups?
+        getAccountFoundInFlatDatabaseCounter.inc();
+      } else {
+        getAccountNotFoundInFlatDatabaseCounter.inc();
+      }
+
+      return frozenAccountFound;
     }
-    return accountFound;
   }
 
   /*
@@ -132,7 +153,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
     // use getNearest() with a key that is suffixed by the block context
     final Optional<Bytes> storageFound =
         storage
-            .getNearestTo(ACCOUNT_STORAGE_STORAGE, keyNearest)
+            .getNearestBefore(ACCOUNT_STORAGE_STORAGE, keyNearest)
             // return empty when we find a "deleted value key"
             .filter(
                 found ->
