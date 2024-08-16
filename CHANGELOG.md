@@ -26,6 +26,7 @@
 - Fix protocol schedule check for devnets [#7429](https://github.com/hyperledger/besu/pull/7429)
 - Fix behaviour when starting in a pre-merge network [#7431](https://github.com/hyperledger/besu/pull/7431)
 - Fix tracing in precompiled contracts when halting for out of gas [#7318](https://github.com/hyperledger/besu/issues/7318)
+- Correctly release txpool save and restore lock in case of exceptions [#7473](https://github.com/hyperledger/besu/pull/7473)
 
 ## 24.7.1
 
