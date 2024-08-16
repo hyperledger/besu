@@ -58,6 +58,11 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         .build();
   }
 
+  /**
+   * Validate that there are no inconsistencies in the specified options.
+   *
+   * @param commandLine the full commandLine to check all the options specified by the user
+   */
   public void validate(final CommandLine commandLine) {
     String errorMessage =
         String.format(

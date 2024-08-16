@@ -148,7 +148,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         registerPlugins(registeringPlugins);
       }
     } else {
-      LOG.trace("External plugins are disabled. Skipping plugins registration.");
+      LOG.debug("External plugins are disabled. Skipping plugins registration.");
     }
     state = Lifecycle.REGISTERED;
   }
