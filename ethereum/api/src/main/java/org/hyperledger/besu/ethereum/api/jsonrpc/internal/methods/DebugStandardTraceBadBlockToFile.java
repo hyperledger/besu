@@ -19,7 +19,6 @@ import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -66,7 +65,9 @@ public class DebugStandardTraceBadBlockToFile extends DebugStandardTraceBlockToF
       transactionTraceParams = requestContext.getOptionalParameter(1, TransactionTraceParams.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid transaction trace parameters (index 1)", RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS, e);
+          "Invalid transaction trace parameters (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+          e);
     }
 
     final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();

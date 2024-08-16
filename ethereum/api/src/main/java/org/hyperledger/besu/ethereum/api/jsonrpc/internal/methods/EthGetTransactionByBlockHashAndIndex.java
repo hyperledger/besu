@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -50,14 +49,18 @@ public class EthGetTransactionByBlockHashAndIndex implements JsonRpcMethod {
       hash = requestContext.getRequiredParameter(0, Hash.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid transaction hash parameter (index 0)", RpcErrorType.INVALID_TRANSACTION_HASH_PARAMS, e);
+          "Invalid transaction hash parameter (index 0)",
+          RpcErrorType.INVALID_TRANSACTION_HASH_PARAMS,
+          e);
     }
     final int index;
     try {
       index = requestContext.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid transaction id parameter (index 1)", RpcErrorType.INVALID_TRANSACTION_ID_PARAMS, e);
+          "Invalid transaction id parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_ID_PARAMS,
+          e);
     }
     final Optional<TransactionWithMetadata> transactionWithMetadata =
         blockchain.transactionByBlockHashAndIndex(hash, index);

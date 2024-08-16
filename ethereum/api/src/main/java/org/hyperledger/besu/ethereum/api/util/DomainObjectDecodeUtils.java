@@ -32,10 +32,10 @@ public class DomainObjectDecodeUtils {
       return TransactionDecoder.decodeOpaqueBytes(txnBytes, EncodingContext.POOLED_TRANSACTION);
     } catch (final IllegalArgumentException e) {
       throw new InvalidJsonRpcRequestException(
-              "Invalid raw transaction hex", RpcErrorType.INVALID_TRANSACTION_PARAMS, e);
+          "Invalid raw transaction hex", RpcErrorType.INVALID_TRANSACTION_PARAMS, e);
     } catch (final RLPException r) {
       throw new InvalidJsonRpcRequestException(
-              "Invalid RLP in raw transaction hex", RpcErrorType.INVALID_TRANSACTION_PARAMS, r);
+          "Invalid RLP in raw transaction hex", RpcErrorType.INVALID_TRANSACTION_PARAMS, r);
     }
   }
 }

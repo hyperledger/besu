@@ -24,7 +24,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getDepositRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.RequestValidatorProvider.getWithdrawalRequestValidator;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.WithdrawalsValidatorProvider.getWithdrawalsValidator;
-import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INVALID_PARAMS;
 
 import org.hyperledger.besu.consensus.merge.blockcreation.MergeMiningCoordinator;
 import org.hyperledger.besu.datatypes.Address;
@@ -40,10 +39,8 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngin
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsolidationRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePayloadParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.WithdrawalRequestParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -124,7 +121,9 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
       maybeVersionedHashParam = requestContext.getOptionalList(1, String.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcRequestException(
-              "Invalid versioned hash parameters (index 1)", RpcErrorType.INVALID_VERSIONED_HASH_PARAMS, e);
+          "Invalid versioned hash parameters (index 1)",
+          RpcErrorType.INVALID_VERSIONED_HASH_PARAMS,
+          e);
     }
 
     final Object reqId = requestContext.getRequest().getId();
@@ -490,7 +489,8 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
 
     if (maybeVersionedHashes.isEmpty() && !transactionVersionedHashes.isEmpty()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_VERSIONED_HASH_PARAMS, "Payload must contain versioned hashes for transactions");
+          RpcErrorType.INVALID_VERSIONED_HASH_PARAMS,
+          "Payload must contain versioned hashes for transactions");
     }
 
     // Validate versionedHashesParam

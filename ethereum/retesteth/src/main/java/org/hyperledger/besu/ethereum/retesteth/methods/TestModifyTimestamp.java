@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.retesteth.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -43,7 +42,7 @@ public class TestModifyTimestamp implements JsonRpcMethod {
       epochSeconds = requestContext.getRequiredParameter(0, Long.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid timestamp parameter (index 0)", RpcErrorType.INVALID_TIMESTAMP_PARAMS, e);
+          "Invalid timestamp parameter (index 0)", RpcErrorType.INVALID_TIMESTAMP_PARAMS, e);
     }
     context.getRetestethClock().resetTime(epochSeconds);
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);

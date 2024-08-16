@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
@@ -84,7 +83,9 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
       txIndex = requestContext.getRequiredParameter(1, Integer.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid transaction index parameter (index 1)", RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS, e);
+          "Invalid transaction index parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS,
+          e);
     }
     final Address address;
     try {

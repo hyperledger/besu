@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceBlock.ChainUpdater;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceTypeParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -84,13 +83,13 @@ public class TraceReplayBlockTransactions extends AbstractBlockParameterMethod {
   @Override
   protected ArrayNode resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
-      final TraceTypeParameter traceTypeParameter;
-      try {
-          traceTypeParameter = request.getRequiredParameter(1, TraceTypeParameter.class);
-      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
-          throw new InvalidJsonRpcParameters(
-                  "Invalid trace type parameter (index 1)", RpcErrorType.INVALID_TRACE_TYPE_PARAMS, e);
-      }
+    final TraceTypeParameter traceTypeParameter;
+    try {
+      traceTypeParameter = request.getRequiredParameter(1, TraceTypeParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid trace type parameter (index 1)", RpcErrorType.INVALID_TRACE_TYPE_PARAMS, e);
+    }
 
     LOG.trace(
         "Received RPC rpcName={} block={} traceType={}",

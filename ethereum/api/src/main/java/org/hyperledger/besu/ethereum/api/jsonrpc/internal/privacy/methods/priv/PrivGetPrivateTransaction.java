@@ -21,7 +21,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -65,7 +64,9 @@ public class PrivGetPrivateTransaction implements JsonRpcMethod {
       hash = requestContext.getRequiredParameter(0, Hash.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid transaction hash parameter (index 0)", RpcErrorType.INVALID_TRANSACTION_HASH_PARAMS, e);
+          "Invalid transaction hash parameter (index 0)",
+          RpcErrorType.INVALID_TRANSACTION_HASH_PARAMS,
+          e);
     }
     final String enclaveKey = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
 

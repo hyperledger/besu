@@ -18,7 +18,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionCompleteResult;
@@ -56,7 +55,9 @@ public class EthGetTransactionByBlockNumberAndIndex extends AbstractBlockParamet
       index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid transaction index parameter (index 1)", RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS, e);
+          "Invalid transaction index parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS,
+          e);
     }
     final Optional<TransactionWithMetadata> transactionWithMetadata =
         getBlockchainQueries().transactionByBlockNumberAndIndex(blockNumber, index);

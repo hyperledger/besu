@@ -23,7 +23,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -66,7 +65,7 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
       add = requestContext.getRequiredParameter(1, Boolean.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid vote type parameter (index 1)", RpcErrorType.INVALID_VOTE_TYPE_PARAMS, e);
+          "Invalid vote type parameter (index 1)", RpcErrorType.INVALID_VOTE_TYPE_PARAMS, e);
     }
     LOG.trace(
         "Received RPC rpcName={} voteType={} address={}",

@@ -20,7 +20,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockReplay;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.Tracer.TraceableState;
@@ -83,7 +82,9 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       transactionIndex = requestContext.getRequiredParameter(1, Integer.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid transaction index parameter (index 1)", RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS, e);
+          "Invalid transaction index parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS,
+          e);
     }
     final Address accountAddress;
     try {
@@ -104,7 +105,7 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       limit = requestContext.getRequiredParameter(4, Integer.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-              "Invalid limit parameter (index 4)", RpcErrorType.INVALID_TRANSACTION_LIMIT_PARAMS, e);
+          "Invalid limit parameter (index 4)", RpcErrorType.INVALID_TRANSACTION_LIMIT_PARAMS, e);
     }
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
