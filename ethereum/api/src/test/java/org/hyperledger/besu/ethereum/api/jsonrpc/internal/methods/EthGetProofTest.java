@@ -120,7 +120,7 @@ class EthGetProofTest {
 
     Assertions.assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Missing required json rpc parameter at index 1");
+        .hasMessageContaining("Invalid storage keys parameters (index 1)");
   }
 
   @Test

@@ -47,13 +47,21 @@ public class PrivUninstallFilter implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
-    final String privacyGroupId = request.getRequiredParameter(0, String.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = request.getRequiredParameter(0, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
     final String filterId;
     try {
       filterId = request.getRequiredParameter(1, String.class);
     } catch (Exception e) {
       throw new InvalidJsonRpcParameters(
-          "Invalid filter ID paramter (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+          "Invalid filter ID parameter (index 1)", RpcErrorType.INVALID_FILTER_PARAMS, e);
     }
 
     if (privacyController instanceof MultiTenancyPrivacyController) {
