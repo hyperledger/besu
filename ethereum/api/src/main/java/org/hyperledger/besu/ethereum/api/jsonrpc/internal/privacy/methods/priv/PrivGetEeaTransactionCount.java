@@ -85,7 +85,7 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
       privateFor = requestContext.getRequiredParameter(2, String[].class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid private for parameters (index 2)", RpcErrorType.INVALID_PRIVATE_FOR_PARAMS, e);
+          "Invalid private for parameter (index 2)", RpcErrorType.INVALID_PRIVATE_FOR_PARAMS, e);
     }
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
