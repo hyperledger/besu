@@ -73,9 +73,10 @@ public class PluginsOptionsTest extends CommandTestAbstract {
 
   @Test
   public void shouldParsePluginDetectionOptionWhenDisabled() {
-    parseCommand("--Xplugin-auto-enabled=false");
+    parseCommand("--Xplugins-auto-loading-enabled=false");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoEnabled()).isEqualTo(false);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsAutoLoadingEnabled())
+        .isEqualTo(false);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -83,9 +84,10 @@ public class PluginsOptionsTest extends CommandTestAbstract {
 
   @Test
   public void shouldParsePluginDetectionOptionWhenEnabled() {
-    parseCommand("--Xplugin-auto-enabled=true");
+    parseCommand("--Xplugins-auto-loading-enabled=true");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoEnabled()).isEqualTo(true);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsAutoLoadingEnabled())
+        .isEqualTo(true);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
@@ -95,7 +97,8 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   public void shouldParsePluginDetectionOptionByDefault() {
     parseCommand();
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginAutoEnabled()).isEqualTo(true);
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsAutoLoadingEnabled())
+        .isEqualTo(true);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();

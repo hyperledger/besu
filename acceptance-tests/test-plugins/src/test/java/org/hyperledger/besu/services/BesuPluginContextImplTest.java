@@ -239,7 +239,7 @@ public class BesuPluginContextImplTest {
     PluginConfiguration config =
         PluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .pluginAutoEnabled(false)
+            .pluginsAutoLoadingEnabled(false)
             .build();
     contextImpl.registerPlugins(config);
     assertThat(contextImpl.getRegisteredPlugins().isEmpty()).isTrue();
@@ -250,7 +250,7 @@ public class BesuPluginContextImplTest {
     PluginConfiguration config =
         PluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .pluginAutoEnabled(true)
+            .pluginsAutoLoadingEnabled(true)
             .build();
     contextImpl.registerPlugins(config);
     assertThat(contextImpl.getRegisteredPlugins().isEmpty()).isFalse();
@@ -262,7 +262,7 @@ public class BesuPluginContextImplTest {
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .pluginAutoEnabled(false)
+            .pluginsAutoLoadingEnabled(false)
             .build();
 
     assertThat(contextImpl.getRegisteredPlugins()).isEmpty();

@@ -129,7 +129,7 @@ public interface DefaultCommandValues {
   String DEFAULT_PLUGINS_OPTION_NAME = "--plugins";
 
   /** The constant DEFAULT_PLUGINS_AUTO_ENABLED_OPTION_NAME. */
-  String DEFAULT_PLUGINS_AUTO_ENABLED_OPTION_NAME = "--Xplugin-auto-enabled";
+  String DEFAULT_PLUGINS_AUTO_LOADING_ENABLED_OPTION_NAME = "--Xplugins-auto-loading-enabled";
 
   /**
    * Gets default besu data path.
