@@ -97,7 +97,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
     List<TransactionWithMetadata> transactions = block.get().getTransactions();
     if (transactions.isEmpty() || txIndex < 0 || txIndex > block.get().getTransactions().size()) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_TRANSACTION_PARAMS);
     }
 
     return Tracer.processTracing(

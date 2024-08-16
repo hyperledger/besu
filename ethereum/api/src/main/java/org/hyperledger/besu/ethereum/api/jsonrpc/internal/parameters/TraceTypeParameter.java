@@ -24,6 +24,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 
 public class TraceTypeParameter {
 
@@ -73,7 +74,9 @@ public class TraceTypeParameter {
             .collect(Collectors.joining(", "));
 
     if (!unsupportedTypes.isEmpty()) {
-      throw new InvalidJsonRpcParameters("Invalid trace types supplied: " + unsupportedTypes);
+      throw new InvalidJsonRpcParameters(
+              "Invalid trace types supplied: " + unsupportedTypes,
+              RpcErrorType.INVALID_TRACE_TYPE_PARAMS);
     }
   }
 
