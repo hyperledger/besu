@@ -64,7 +64,7 @@ public class EngineNewPayloadV3 extends AbstractEngineNewPayload {
           RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS, "Missing excess blob gas field");
     } else if (maybeVersionedHashParam == null || maybeVersionedHashParam.isEmpty()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "Missing versioned hashes field");
+          RpcErrorType.INVALID_VERSIONED_HASH_PARAMS, "Missing versioned hashes field");
     } else if (maybeBeaconBlockRootParam.isEmpty()) {
       return ValidationResult.invalid(
           RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,

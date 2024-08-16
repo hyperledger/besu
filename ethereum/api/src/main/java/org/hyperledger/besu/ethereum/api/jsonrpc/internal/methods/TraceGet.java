@@ -56,7 +56,13 @@ public class TraceGet extends AbstractTraceByHash implements JsonRpcMethod {
           requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
-    final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
+    final Hash transactionHash;
+    try {
+      transactionHash = requestContext.getRequiredParameter(0, Hash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+              "Invalid transaction has parameter (index 0)", RpcErrorType.INVALID_TRANSACTION_HASH_PARAMS, e);
+    }
     final List<?> traceNumbersAsStrings;
     try {
       traceNumbersAsStrings = requestContext.getRequiredParameter(1, List.class);

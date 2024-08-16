@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTrace;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
@@ -77,11 +78,17 @@ public class DebugTraceBlock implements JsonRpcMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid block params (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
-    final TraceOptions traceOptions =
-        requestContext
-            .getOptionalParameter(1, TransactionTraceParams.class)
-            .map(TransactionTraceParams::traceOptions)
-            .orElse(TraceOptions.DEFAULT);
+    final TraceOptions traceOptions;
+    try {
+      traceOptions =
+              requestContext
+                      .getOptionalParameter(1, TransactionTraceParams.class)
+                      .map(TransactionTraceParams::traceOptions)
+                      .orElse(TraceOptions.DEFAULT);
+    } catch (Exception e) {// TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+              "Invalid transaction trace parameter (index 1)", RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS, e);
+    }
 
     if (this.blockchainQueries.blockByHash(block.getHeader().getParentHash()).isPresent()) {
       final Collection<DebugTraceTransactionResult> results =

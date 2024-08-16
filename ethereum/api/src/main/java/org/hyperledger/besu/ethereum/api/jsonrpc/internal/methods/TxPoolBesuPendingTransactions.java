@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.PendingTransactionsParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -54,8 +55,14 @@ public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
 
     final Collection<PendingTransaction> pendingTransactions =
         transactionPool.getPendingTransactions();
-    final Integer limit =
-        requestContext.getOptionalParameter(0, Integer.class).orElse(pendingTransactions.size());
+    final int limit;
+    try {
+      limit =
+              requestContext.getOptionalParameter(0, Integer.class).orElse(pendingTransactions.size());
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+              "Invalid transaction limit parameter (index 0)", RpcErrorType.INVALID_TRANSACTION_LIMIT_PARAMS, e);
+    }
     final List<Filter> filters;
     try {
       filters =
