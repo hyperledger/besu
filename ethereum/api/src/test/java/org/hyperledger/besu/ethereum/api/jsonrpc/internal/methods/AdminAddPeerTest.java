@@ -102,7 +102,7 @@ public class AdminAddPeerTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_addPeer", new String[] {}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -114,7 +114,7 @@ public class AdminAddPeerTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_addPeer", null));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -126,7 +126,7 @@ public class AdminAddPeerTest {
     final JsonRpcRequestContext request =
         new JsonRpcRequestContext(new JsonRpcRequest("2.0", "admin_addPeer", new String[] {null}));
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
@@ -221,7 +221,7 @@ public class AdminAddPeerTest {
             new JsonRpcRequest("2.0", "admin_addPeer", new String[] {validEnode, validEnode}));
 
     final JsonRpcResponse expectedResponse =
-        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+        new JsonRpcErrorResponse(request.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
 
     final JsonRpcResponse actualResponse = method.response(request);
 
