@@ -17,6 +17,7 @@
 - In process RPC service [#7395](https://github.com/hyperledger/besu/pull/7395)
 - Added support for tracing private transactions using `priv_traceTransaction` API. [#6161](https://github.com/hyperledger/besu/pull/6161)
 - Wrap WorldUpdater into EVMWorldupdater [#7434](https://github.com/hyperledger/besu/pull/7434)
+- Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
 
 
 ### Bug fixes
