@@ -1130,7 +1130,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       runner.startExternalServices();
 
       startPlugins(runner);
-      validatePluginOptions();
+      validatePrivacyPluginOptions();
       setReleaseMetrics();
       preSynchronization();
 
@@ -1355,7 +1355,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     besuPluginContext.startPlugins();
   }
 
-  private void validatePluginOptions() {
+  private void validatePrivacyPluginOptions() {
     // plugins do not 'wire up' until start has been called
     // consequently you can only do some configuration checks
     // after start has been called on plugins
@@ -1499,6 +1499,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     validateGraphQlOptions();
     validateApiOptions();
     validateConsensusSyncCompatibilityOptions();
+    validatePluginOptions();
     p2pTLSConfigOptions.checkP2PTLSOptionsDependencies(logger, commandLine);
   }
 
@@ -1517,6 +1518,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
         throw new ParameterException(commandLine, String.format("%s %s", "Snap sync", errorSuffix));
       }
     }
+  }
+
+  private void validatePluginOptions() {
+    pluginsConfigurationOptions.validate(commandLine);
   }
 
   private void validateApiOptions() {
