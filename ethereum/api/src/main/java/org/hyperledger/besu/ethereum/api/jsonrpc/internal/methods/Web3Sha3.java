@@ -39,7 +39,7 @@ public class Web3Sha3 implements JsonRpcMethod {
     if (requestContext.getRequest().getParamLength() != 1) {
       // Do we want custom messages for each different type of invalid params?
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
     final String data;
