@@ -143,7 +143,7 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
       registerPlugins(registeringPlugins);
     } else if (config.isPluginsAutoLoadingEnabled()) {
-      // Automatically register all detected plugins if auto-registration is enabled
+      // Automatically register all detected plugins if autoload is enabled
       registerPlugins(detectedPlugins);
     }
     state = Lifecycle.REGISTERED;

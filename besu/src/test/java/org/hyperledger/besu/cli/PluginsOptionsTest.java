@@ -72,7 +72,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void shouldParsePluginDetectionOptionWhenDisabled() {
+  public void shouldParsePluginsAutoLoadingOptionWhenDisabled() {
     parseCommand("--Xplugins-auto-loading-enabled=false");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsAutoLoadingEnabled())
@@ -83,7 +83,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void shouldParsePluginDetectionOptionWhenEnabled() {
+  public void shouldParsePluginsAutoLoadingOptionWhenEnabled() {
     parseCommand("--Xplugins-auto-loading-enabled=true");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsAutoLoadingEnabled())
@@ -94,7 +94,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void shouldParsePluginDetectionOptionByDefault() {
+  public void shouldEnablePluginsAutoLoadingByDefault() {
     parseCommand();
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
     assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsAutoLoadingEnabled())

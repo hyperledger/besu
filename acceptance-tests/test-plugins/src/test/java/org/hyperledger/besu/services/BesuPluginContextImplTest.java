@@ -235,7 +235,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldNotRegisterAnyPluginsIfAutoRegistrationDisabled() {
+  void shouldNotRegisterAnyPluginsIfAutoLoadingDisabled() {
     PluginConfiguration config =
         PluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
@@ -246,7 +246,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldRegisterAllPluginsIfAutoRegistrationEnabled() {
+  void shouldRegisterAllPluginsIfAutoLoadingEnabled() {
     PluginConfiguration config =
         PluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
@@ -257,7 +257,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  public void shouldRegisterSpecifiedPluginWhenAutoRegistrationDisabled() {
+  public void shouldRegisterSpecifiedPluginWhenAutoLoadingDisabled() {
     final PluginConfiguration config =
         PluginConfiguration.builder()
             .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
