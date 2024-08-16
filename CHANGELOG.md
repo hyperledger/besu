@@ -3,6 +3,18 @@
 ## Next release
 
 ### Upcoming Breaking Changes
+
+### Breaking Changes
+
+### Additions and Improvements
+- Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
+- Correctly release txpool save and restore lock in case of exceptions [#7473](https://github.com/hyperledger/besu/pull/7473)
+
+### Bug fixes
+
+## 24.8.0
+
+### Upcoming Breaking Changes
 - Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
 - --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
 - --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
@@ -18,7 +30,6 @@
 - Added support for tracing private transactions using `priv_traceTransaction` API. [#6161](https://github.com/hyperledger/besu/pull/6161)
 - Wrap WorldUpdater into EVMWorldupdater [#7434](https://github.com/hyperledger/besu/pull/7434)
 - Bump besu-native to 0.9.4 [#7456](https://github.com/hyperledger/besu/pull/7456)
-- Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
 
 
 ### Bug fixes
@@ -26,7 +37,6 @@
 - Fix protocol schedule check for devnets [#7429](https://github.com/hyperledger/besu/pull/7429)
 - Fix behaviour when starting in a pre-merge network [#7431](https://github.com/hyperledger/besu/pull/7431)
 - Fix tracing in precompiled contracts when halting for out of gas [#7318](https://github.com/hyperledger/besu/issues/7318)
-- Correctly release txpool save and restore lock in case of exceptions [#7473](https://github.com/hyperledger/besu/pull/7473)
 
 ## 24.7.1
 
