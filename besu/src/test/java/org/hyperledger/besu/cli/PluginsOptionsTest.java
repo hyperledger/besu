@@ -72,10 +72,11 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void shouldParsePluginsAutoLoadingOptionWhenDisabled() {
-    parseCommand("--Xplugins-auto-loading-enabled=false");
+  public void shouldParsePluginsExternalEnabledOptionWhenFalse() {
+    parseCommand("--Xplugins-external-enabled=false");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsAutoLoadingEnabled())
+
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
         .isEqualTo(false);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -83,10 +84,11 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void shouldParsePluginsAutoLoadingOptionWhenEnabled() {
-    parseCommand("--Xplugins-auto-loading-enabled=true");
+  public void shouldParsePluginsExternalEnabledOptionWhenTrue() {
+    parseCommand("--Xplugins-external-enabled=true");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsAutoLoadingEnabled())
+
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
         .isEqualTo(true);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
@@ -94,13 +96,23 @@ public class PluginsOptionsTest extends CommandTestAbstract {
   }
 
   @Test
-  public void shouldEnablePluginsAutoLoadingByDefault() {
+  public void shouldEnablePluginsExternalByDefault() {
     parseCommand();
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
-    assertThat(pluginConfigurationArgumentCaptor.getValue().isPluginsAutoLoadingEnabled())
+    assertThat(pluginConfigurationArgumentCaptor.getValue().isExternalPluginsEnabled())
         .isEqualTo(true);
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void shouldFailWhenPluginsIsDisabledAndPluginsExplicitlyRequested() {
+    parseCommand("--Xplugins-external-enabled=true", "--plugins", "pluginA");
+    verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8))
+        .contains("--plugins option can only be used when --Xplugins-external-enabled is true");
   }
 }

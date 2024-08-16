@@ -132,19 +132,22 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
         "Besu plugins have already been registered. Cannot register additional plugins.");
     state = Lifecycle.REGISTERING;
 
-    detectedPlugins = detectPlugins(config);
-    if (!config.getRequestedPlugins().isEmpty()) {
-      // Register only the plugins that were explicitly requested and validated
-      requestedPlugins = config.getRequestedPlugins();
+    if (config.isExternalPluginsEnabled()) {
+      detectedPlugins = detectPlugins(config);
+      if (!config.getRequestedPlugins().isEmpty()) {
+        // Register only the plugins that were explicitly requested and validated
+        requestedPlugins = config.getRequestedPlugins();
+        // Match and validate the requested plugins against the detected plugins
+        List<BesuPlugin> registeringPlugins =
+            matchAndValidateRequestedPlugins(requestedPlugins, detectedPlugins);
 
-      // Match and validate the requested plugins against the detected plugins
-      List<BesuPlugin> registeringPlugins =
-          matchAndValidateRequestedPlugins(requestedPlugins, detectedPlugins);
-
-      registerPlugins(registeringPlugins);
-    } else if (config.isPluginsAutoLoadingEnabled()) {
-      // Automatically register all detected plugins if autoload is enabled
-      registerPlugins(detectedPlugins);
+        registerPlugins(registeringPlugins);
+      } else {
+        // If no plugins were specified, register all detected plugins
+        registerPlugins(detectedPlugins);
+      }
+    } else {
+      LOG.trace("External plugins are disabled. Detected plugins will not be registered.");
     }
     state = Lifecycle.REGISTERED;
   }

@@ -22,15 +22,15 @@ import java.util.List;
 public class PluginConfiguration {
   private final List<PluginInfo> requestedPlugins;
   private final Path pluginsDir;
-  private final boolean pluginsAutoLoadingEnabled;
+  private final boolean externalPluginsEnabled;
 
   public PluginConfiguration(
       final List<PluginInfo> requestedPlugins,
       final Path pluginsDir,
-      final boolean pluginsAutoLoadingEnabled) {
+      final boolean externalPluginsEnabled) {
     this.requestedPlugins = requestedPlugins;
     this.pluginsDir = pluginsDir;
-    this.pluginsAutoLoadingEnabled = pluginsAutoLoadingEnabled;
+    this.externalPluginsEnabled = externalPluginsEnabled;
   }
 
   public List<String> getRequestedPlugins() {
@@ -43,8 +43,8 @@ public class PluginConfiguration {
     return pluginsDir;
   }
 
-  public boolean isPluginsAutoLoadingEnabled() {
-    return pluginsAutoLoadingEnabled;
+  public boolean isExternalPluginsEnabled() {
+    return externalPluginsEnabled;
   }
 
   public static Path defaultPluginsDir() {
@@ -61,7 +61,7 @@ public class PluginConfiguration {
   public static class Builder {
     private List<PluginInfo> requestedPlugins;
     private Path pluginsDir;
-    private boolean pluginsAutoLoadingEnabled = true;
+    private boolean externalPluginsEnabled = true;
 
     public Builder requestedPlugins(final List<PluginInfo> requestedPlugins) {
       this.requestedPlugins = requestedPlugins;
@@ -73,8 +73,8 @@ public class PluginConfiguration {
       return this;
     }
 
-    public Builder pluginsAutoLoadingEnabled(final boolean pluginsAutoLoadingEnabled) {
-      this.pluginsAutoLoadingEnabled = pluginsAutoLoadingEnabled;
+    public Builder externalPluginsEnabled(final boolean externalPluginsEnabled) {
+      this.externalPluginsEnabled = externalPluginsEnabled;
       return this;
     }
 
@@ -82,7 +82,7 @@ public class PluginConfiguration {
       if (pluginsDir == null) {
         pluginsDir = PluginConfiguration.defaultPluginsDir();
       }
-      return new PluginConfiguration(requestedPlugins, pluginsDir, pluginsAutoLoadingEnabled);
+      return new PluginConfiguration(requestedPlugins, pluginsDir, externalPluginsEnabled);
     }
   }
 }
