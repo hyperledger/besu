@@ -33,7 +33,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME},
       description =
-          "If set to false, Besu will register plugins only when the --plugins option is explicitly specified. (default: ${DEFAULT-VALUE})",
+          "Enables external plugins (default: ${DEFAULT-VALUE})",
       hidden = true,
       defaultValue = "true",
       arity = "1")
