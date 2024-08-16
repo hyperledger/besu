@@ -32,8 +32,7 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
 
   @CommandLine.Option(
       names = {DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME},
-      description =
-          "Enables external plugins (default: ${DEFAULT-VALUE})",
+      description = "Enables external plugins (default: ${DEFAULT-VALUE})",
       hidden = true,
       defaultValue = "true",
       arity = "1")
@@ -84,13 +83,13 @@ public class PluginsConfigurationOptions implements CLIOptions<PluginConfigurati
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_OPTION_NAME, new PluginInfoConverter());
 
-    boolean pluginsDetectionEnabled =
+    boolean externalPluginsEnabled =
         CommandLineUtils.getOptionValueOrDefault(
             commandLine, DEFAULT_PLUGINS_EXTERNAL_ENABLED_OPTION_NAME, Boolean::parseBoolean);
 
     return new PluginConfiguration.Builder()
         .requestedPlugins(plugins)
-        .externalPluginsEnabled(pluginsDetectionEnabled)
+        .externalPluginsEnabled(externalPluginsEnabled)
         .build();
   }
 }

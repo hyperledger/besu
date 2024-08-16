@@ -244,5 +244,5 @@ Xp2p-tls-clienthello-sni=false
 Xevm-jumpdest-cache-weight-kb=32000
 
 # plugins
-Xplugins-auto-loading-enabled=true
+Xplugins-external-enabled=true
 plugins=["none"]

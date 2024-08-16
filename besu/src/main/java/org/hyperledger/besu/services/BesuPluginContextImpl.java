@@ -134,7 +134,11 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
 
     if (config.isExternalPluginsEnabled()) {
       detectedPlugins = detectPlugins(config);
-      if (!config.getRequestedPlugins().isEmpty()) {
+
+      if (config.getRequestedPlugins().isEmpty()) {
+        // If no plugins were specified, register all detected plugins
+        registerPlugins(detectedPlugins);
+      } else {
         // Register only the plugins that were explicitly requested and validated
         requestedPlugins = config.getRequestedPlugins();
         // Match and validate the requested plugins against the detected plugins
@@ -142,12 +146,9 @@ public class BesuPluginContextImpl implements BesuContext, PluginVersionsProvide
             matchAndValidateRequestedPlugins(requestedPlugins, detectedPlugins);
 
         registerPlugins(registeringPlugins);
-      } else {
-        // If no plugins were specified, register all detected plugins
-        registerPlugins(detectedPlugins);
       }
     } else {
-      LOG.trace("External plugins are disabled. Detected plugins will not be registered.");
+      LOG.trace("External plugins are disabled. Skipping plugins registration.");
     }
     state = Lifecycle.REGISTERED;
   }

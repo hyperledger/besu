@@ -108,7 +108,7 @@ public class PluginsOptionsTest extends CommandTestAbstract {
 
   @Test
   public void shouldFailWhenPluginsIsDisabledAndPluginsExplicitlyRequested() {
-    parseCommand("--Xplugins-external-enabled=true", "--plugins", "pluginA");
+    parseCommand("--Xplugins-external-enabled=false", "--plugins", "pluginA");
     verify(mockBesuPluginContext).registerPlugins(pluginConfigurationArgumentCaptor.capture());
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
