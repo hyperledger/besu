@@ -127,7 +127,7 @@ public class SECP256R1Test {
   }
 
   @Test
-  public void recoverPublicKeyFromSignature() {
+  void recoverPublicKeyFromSignature() {
     final SECPPrivateKey privateKey =
         secp256R1.createPrivateKey(
             new BigInteger("c85ef7d79691fe79573b1a7064c19c1a9819ebdbd1faaab1a8ec92344438aaf4", 16));
@@ -139,20 +139,20 @@ public class SECP256R1Test {
 
     final SECPPublicKey recoveredPublicKey =
         secp256R1.recoverPublicKeyFromSignature(dataHash, signature).get();
-    assertThat(recoveredPublicKey.toString()).isEqualTo(keyPair.getPublicKey().toString());
+    assertThat(recoveredPublicKey).hasToString(keyPair.getPublicKey().toString());
   }
 
   @Test
-  public void signatureGenerationVerificationAndPubKeyRecovery() {
+  void signatureGenerationVerificationAndPubKeyRecovery() {
     signTestVectors.forEach(
         signTestVector -> {
           final SECPPrivateKey privateKey =
-              secp256R1.createPrivateKey(new BigInteger(signTestVector.getPrivateKey(), 16));
-          final BigInteger publicKeyBigInt = new BigInteger(signTestVector.getPublicKey(), 16);
+              secp256R1.createPrivateKey(new BigInteger(signTestVector.privateKey(), 16));
+          final BigInteger publicKeyBigInt = new BigInteger(signTestVector.publicKey(), 16);
           final SECPPublicKey publicKey = secp256R1.createPublicKey(publicKeyBigInt);
           final KeyPair keyPair = secp256R1.createKeyPair(privateKey);
 
-          final Bytes32 dataHash = keccak256(Bytes.wrap(signTestVector.getData().getBytes(UTF_8)));
+          final Bytes32 dataHash = keccak256(Bytes.wrap(signTestVector.data().getBytes(UTF_8)));
 
           final SECPSignature signature = secp256R1.sign(dataHash, keyPair);
           assertThat(secp256R1.verify(dataHash, signature, publicKey)).isTrue();
@@ -165,44 +165,22 @@ public class SECP256R1Test {
   }
 
   @Test
-  public void invalidFileThrowsInvalidKeyPairException() throws Exception {
+  void invalidFileThrowsInvalidKeyPairException() throws Exception {
     final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
     tempFile.deleteOnExit();
-    Files.write(tempFile.toPath(), "not valid".getBytes(UTF_8));
+    Files.writeString(tempFile.toPath(), "not valid");
     assertThatThrownBy(() -> KeyPairUtil.load(tempFile))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
   @Test
-  public void invalidMultiLineFileThrowsInvalidIdException() throws Exception {
+  void invalidMultiLineFileThrowsInvalidIdException() throws Exception {
     final File tempFile = Files.createTempFile(suiteName(), ".keypair").toFile();
     tempFile.deleteOnExit();
-    Files.write(tempFile.toPath(), "not\n\nvalid".getBytes(UTF_8));
+    Files.writeString(tempFile.toPath(), "not\n\nvalid");
     assertThatThrownBy(() -> KeyPairUtil.load(tempFile))
         .isInstanceOf(IllegalArgumentException.class);
   }
 
-  private static class SignTestVector {
-    private final String privateKey;
-    private final String publicKey;
-    private final String data;
-
-    public SignTestVector(final String privateKey, final String publicKey, final String data) {
-      this.privateKey = privateKey;
-      this.publicKey = publicKey;
-      this.data = data;
-    }
-
-    public String getPrivateKey() {
-      return privateKey;
-    }
-
-    public String getPublicKey() {
-      return publicKey;
-    }
-
-    public String getData() {
-      return data;
-    }
-  }
+  private record SignTestVector(String privateKey, String publicKey, String data) {}
 }

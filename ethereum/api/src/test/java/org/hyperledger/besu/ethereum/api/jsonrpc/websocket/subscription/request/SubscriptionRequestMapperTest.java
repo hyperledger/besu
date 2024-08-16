@@ -290,7 +290,7 @@ public class SubscriptionRequestMapperTest {
         .isInstanceOf(InvalidSubscriptionRequestException.class)
         .getCause()
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid filter parameters (index 1)");
   }
 
   @Test
@@ -303,7 +303,7 @@ public class SubscriptionRequestMapperTest {
         .isInstanceOf(InvalidSubscriptionRequestException.class)
         .getCause()
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid filter parameters (index 1)");
   }
 
   @Test

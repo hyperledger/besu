@@ -31,7 +31,6 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_ACCOUNT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid account params"),
   INVALID_ADDRESS_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid address hash params"),
   INVALID_ADDRESS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid address params"),
-  INVALID_AUTH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid auth params"),
   INVALID_BLOB_COUNT(
       INVALID_PARAMS_ERROR_CODE,
       "Invalid blob count (blob transactions must have at least one blob)"),
@@ -48,14 +47,15 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_CREATE_PRIVACY_GROUP_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid create privacy group params"),
   INVALID_DATA_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid data params"),
+  INVALID_DATA_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid data hash params"),
   INVALID_DEPOSIT_REQUEST_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid deposit request"),
   INVALID_ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine exchange transition configuration params"),
   INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine forkchoice updated params"),
-  INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMS(
+  INVALID_ENGINE_FORKCHOICE_UPDATED_PAYLOAD_ATTRIBUTES(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine payload attributes parameter"),
-  INVALID_ENGINE_PAYLOAD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid engine payload parameter"),
+  INVALID_ENGINE_NEW_PAYLOAD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid engine payload parameter"),
   INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine prepare payload parameter"),
   INVALID_ENODE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid enode params"),
@@ -89,6 +89,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_PRIVACY_GROUP_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid privacy group params"),
   INVALID_PRIVATE_FROM_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid private from params"),
   INVALID_PRIVATE_FOR_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid private for params"),
+  INVALID_PROPOSAL_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid proposal params"),
   INVALID_REMOTE_CAPABILITIES_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid remote capabilities params"),
   INVALID_REWARD_PERCENTILES_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid reward percentiles params"),

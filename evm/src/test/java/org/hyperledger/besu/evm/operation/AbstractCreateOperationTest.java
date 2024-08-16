@@ -118,7 +118,7 @@ class AbstractCreateOperationTest {
     }
 
     @Override
-    protected Address targetContractAddress(final MessageFrame frame, final Code initcode) {
+    protected Address generateTargetContractAddress(final MessageFrame frame, final Code initcode) {
       final Account sender = frame.getWorldUpdater().get(frame.getRecipientAddress());
       // Decrement nonce by 1 to normalize the effect of transaction execution
       final Address address =

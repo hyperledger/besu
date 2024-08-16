@@ -53,7 +53,12 @@ public class PrivCall extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(2, BlockParameter.class);
+    try {
+      return request.getRequiredParameter(2, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 2)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
   }
 
   @Override
@@ -99,9 +104,16 @@ public class PrivCall extends AbstractBlockParameterMethod {
   }
 
   private JsonCallParameter validateAndGetCallParams(final JsonRpcRequestContext request) {
-    final JsonCallParameter callParams = request.getRequiredParameter(1, JsonCallParameter.class);
+    final JsonCallParameter callParams;
+    try {
+      callParams = request.getRequiredParameter(1, JsonCallParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid call parameters (index 1)", RpcErrorType.INVALID_CALL_PARAMS);
+    }
     if (callParams.getTo() == null) {
-      throw new InvalidJsonRpcParameters("Missing \"to\" field in call arguments");
+      throw new InvalidJsonRpcParameters(
+          "Missing \"to\" field in call arguments", RpcErrorType.INVALID_CALL_PARAMS);
     }
     return callParams;
   }

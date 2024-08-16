@@ -17,6 +17,7 @@ package org.hyperledger.besu.evm.precompile;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.mock;
 
+import org.hyperledger.besu.crypto.Blake2bfMessageDigest.Blake2bfDigest;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.PetersburgGasCalculator;
 
@@ -67,9 +68,24 @@ class BLAKE2BFPrecompileContractTest {
 
   @ParameterizedTest
   @MethodSource("parameters")
-  void shouldRunFCompression(
+  void shouldRunFCompressionNative(
       final String inputString, final String expectedResult, final long expectedGasUsed) {
+    Blake2bfDigest.maybeEnableNative();
 
+    testFCompression(inputString, expectedResult, expectedGasUsed);
+  }
+
+  @ParameterizedTest
+  @MethodSource("parameters")
+  void shouldRunFCompressionJava(
+      final String inputString, final String expectedResult, final long expectedGasUsed) {
+    Blake2bfDigest.disableNative();
+
+    testFCompression(inputString, expectedResult, expectedGasUsed);
+  }
+
+  private void testFCompression(
+      final String inputString, final String expectedResult, final long expectedGasUsed) {
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expectedComputation =
         expectedResult == null ? null : Bytes.fromHexString(expectedResult);
