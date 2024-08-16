@@ -62,7 +62,15 @@ public class PrivGetLogs implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
     final FilterParameter filter;
     try {
       filter = requestContext.getRequiredParameter(1, FilterParameter.class);

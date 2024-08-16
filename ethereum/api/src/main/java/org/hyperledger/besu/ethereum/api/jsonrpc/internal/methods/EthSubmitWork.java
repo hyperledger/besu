@@ -65,7 +65,13 @@ public class EthSubmitWork implements JsonRpcMethod {
         throw new InvalidJsonRpcParameters(
             "Invalid mix hash parameter (index 2)", RpcErrorType.INVALID_MIX_HASH_PARAMS, e);
       }
-      Bytes powHash = Bytes.fromHexString(requestContext.getRequiredParameter(1, String.class));
+      Bytes powHash;
+      try {
+        powHash = Bytes.fromHexString(requestContext.getRequiredParameter(1, String.class));
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid PoW hash parameter (index 1)", RpcErrorType.INVALID_POW_HASH_PARAMS, e);
+      }
       final PoWSolution solution = new PoWSolution(nonce, mixHash, null, powHash);
       final boolean result = miner.submitWork(solution);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);

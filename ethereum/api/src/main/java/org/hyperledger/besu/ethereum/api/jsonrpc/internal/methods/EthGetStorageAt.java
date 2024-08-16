@@ -56,7 +56,13 @@ public class EthGetStorageAt extends AbstractBlockParameterOrBlockHashMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
-    final UInt256 position = request.getRequiredParameter(1, UInt256Parameter.class).getValue();
+    final UInt256 position;
+    try {
+      position = request.getRequiredParameter(1, UInt256Parameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid position parameter (index 1)", RpcErrorType.INVALID_POSITION_PARAMS, e);
+    }
     return blockchainQueries
         .get()
         .storageAt(address, position, blockHash)

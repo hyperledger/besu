@@ -78,7 +78,7 @@ public class PrivNewFilterTest {
 
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Missing required json rpc parameter at index 0");
+        .hasMessageContaining("Invalid privacy group ID parameter (index 0)");
   }
 
   @Test
