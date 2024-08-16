@@ -18,6 +18,7 @@
 - Added support for tracing private transactions using `priv_traceTransaction` API. [#6161](https://github.com/hyperledger/besu/pull/6161)
 - Wrap WorldUpdater into EVMWorldupdater [#7434](https://github.com/hyperledger/besu/pull/7434)
 - Bump besu-native to 0.9.4 [#7456](https://github.com/hyperledger/besu/pull/7456)
+- Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
 
 
 ### Bug fixes
