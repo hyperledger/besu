@@ -95,7 +95,8 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
 
   @Option(
       names = "--receipt-compaction-enabled",
-      description = "Enables compact storing of receipts (default: ${DEFAULT-VALUE})")
+      description = "Enables compact storing of receipts (default: ${DEFAULT-VALUE})",
+      fallbackValue = "true")
   private Boolean receiptCompactionEnabled = DEFAULT_RECEIPT_COMPACTION_ENABLED;
 
   @CommandLine.ArgGroup(validate = false)
