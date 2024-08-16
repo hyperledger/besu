@@ -99,7 +99,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private final OperationTimer snapWorldStateHealingTimer;
   private OperationTimer.TimingContext snapWorldHealingTimingContext;
 
-  private AtomicBoolean timersDone = new AtomicBoolean(false);
+  private final AtomicBoolean timersDone = new AtomicBoolean(false);
 
   public SnapWorldDownloadState(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
@@ -263,10 +263,11 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   public synchronized void startTrieHeal() {
     if (timersDone.compareAndSet(false, true)) {
       LOG.info(
-              "stopTimer Initial snap world download done: {}",
-              LocalDateTime.now(ZoneId.systemDefault()));
+          "stopTimer Initial snap world download done: {}",
+          LocalDateTime.now(ZoneId.systemDefault()));
       snapWorldStateInitialDownloadTimingContext.stopTimer();
-      LOG.info("startTimer Starting snapWorldHealing: {}", LocalDateTime.now(ZoneId.systemDefault()));
+      LOG.info(
+          "startTimer Starting snapWorldHealing: {}", LocalDateTime.now(ZoneId.systemDefault()));
       snapWorldHealingTimingContext = snapWorldStateHealingTimer.startTimer();
     }
     snapContext.clearAccountRangeTasks();
