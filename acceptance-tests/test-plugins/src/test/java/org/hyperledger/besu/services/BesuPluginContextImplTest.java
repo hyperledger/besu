@@ -235,7 +235,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldNotRegisterAnyPluginsIfAutoLoadingDisabled() {
+  void shouldNotRegisterAnyPluginsIfExternalPluginsDisabled() {
     PluginConfiguration config =
         PluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
@@ -246,7 +246,7 @@ public class BesuPluginContextImplTest {
   }
 
   @Test
-  void shouldRegisterAllPluginsIfAutoLoadingEnabled() {
+  void shouldRegisterPluginsIfExternalPluginsEnabled() {
     PluginConfiguration config =
         PluginConfiguration.builder()
             .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
@@ -254,25 +254,6 @@ public class BesuPluginContextImplTest {
             .build();
     contextImpl.registerPlugins(config);
     assertThat(contextImpl.getRegisteredPlugins().isEmpty()).isFalse();
-  }
-
-  @Test
-  public void shouldRegisterSpecifiedPluginWhenAutoLoadingDisabled() {
-    final PluginConfiguration config =
-        PluginConfiguration.builder()
-            .requestedPlugins(List.of(new PluginInfo("TestPicoCLIPlugin")))
-            .pluginsDir(DEFAULT_PLUGIN_DIRECTORY)
-            .externalPluginsEnabled(false)
-            .build();
-
-    assertThat(contextImpl.getRegisteredPlugins()).isEmpty();
-    contextImpl.registerPlugins(config);
-
-    final Optional<TestPicoCLIPlugin> requestedPlugin =
-        findTestPlugin(contextImpl.getRegisteredPlugins(), TestPicoCLIPlugin.class);
-
-    assertThat(requestedPlugin).isPresent();
-    assertThat(requestedPlugin.get().getState()).isEqualTo("registered");
   }
 
   private PluginConfiguration createConfigurationForSpecificPlugin(final String pluginName) {
