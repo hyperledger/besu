@@ -63,7 +63,7 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 3) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
     final Address address;

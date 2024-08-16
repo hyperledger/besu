@@ -75,7 +75,13 @@ public class DebugAccountRange implements JsonRpcMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid address hash parameter (index 2)", RpcErrorType.INVALID_ADDRESS_HASH_PARAMS, e);
     }
-    final int maxResults = requestContext.getRequiredParameter(3, Integer.TYPE);
+    final int maxResults;
+    try {
+      maxResults = requestContext.getRequiredParameter(3, Integer.TYPE);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid max results parameter (index 3)", RpcErrorType.INVALID_MAX_RESULTS_PARAMS, e);
+    }
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
     if (blockHashOptional.isEmpty()) {

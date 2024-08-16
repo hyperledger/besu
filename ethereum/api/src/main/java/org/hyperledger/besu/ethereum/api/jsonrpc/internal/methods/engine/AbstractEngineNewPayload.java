@@ -35,6 +35,7 @@ import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.BlockProcessingResult;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.ConsolidationRequestParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.DepositRequestParameter;
@@ -107,16 +108,30 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     engineCallListener.executionEngineCalled();
 
-    final EnginePayloadParameter blockParam =
-        requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
+    final EnginePayloadParameter blockParam;
+    try {
+      blockParam = requestContext.getRequiredParameter(0, EnginePayloadParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcRequestException(
+          "Invalid engine payload parameter (index 0)",
+          RpcErrorType.INVALID_ENGINE_NEW_PAYLOAD_PARAMS,
+          e);
+    }
 
     final Optional<List<String>> maybeVersionedHashParam =
         requestContext.getOptionalList(1, String.class);
 
     final Object reqId = requestContext.getRequest().getId();
 
-    Optional<String> maybeParentBeaconBlockRootParam =
-        requestContext.getOptionalParameter(2, String.class);
+    Optional<String> maybeParentBeaconBlockRootParam;
+    try {
+      maybeParentBeaconBlockRootParam = requestContext.getOptionalParameter(2, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcRequestException(
+          "Invalid parent beacon block root parameters (index 2)",
+          RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
+          e);
+    }
     final Optional<Bytes32> maybeParentBeaconBlockRoot =
         maybeParentBeaconBlockRootParam.map(Bytes32::fromHexString);
 
@@ -486,7 +501,7 @@ public abstract class AbstractEngineNewPayload extends ExecutionEngineJsonRpcMet
     if (maybeParentHeader.isPresent()) {
       if (!validateExcessBlobGas(header, maybeParentHeader.get(), protocolSpec)) {
         return ValidationResult.invalid(
-            RpcErrorType.INVALID_PARAMS,
+            RpcErrorType.INVALID_EXCESS_BLOB_GAS_PARAMS,
             "Payload excessBlobGas does not match calculated excessBlobGas");
       }
     }

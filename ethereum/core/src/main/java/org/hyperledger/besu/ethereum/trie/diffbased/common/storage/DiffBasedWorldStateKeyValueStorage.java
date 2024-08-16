@@ -129,11 +129,9 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   }
 
   public NavigableMap<Bytes32, Bytes> streamFlatAccounts(
-      final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
-      final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
+      final Bytes startKeyHash, final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
     return getFlatDbStrategy()
-        .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, endKeyHash, takeWhile);
+        .streamAccountFlatDatabase(composedWorldStateStorage, startKeyHash, takeWhile);
   }
 
   public NavigableMap<Bytes32, Bytes> streamFlatStorages(
@@ -146,11 +144,9 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   public NavigableMap<Bytes32, Bytes> streamFlatStorages(
       final Hash accountHash,
       final Bytes startKeyHash,
-      final Bytes32 endKeyHash,
       final Predicate<Pair<Bytes32, Bytes>> takeWhile) {
     return getFlatDbStrategy()
-        .streamStorageFlatDatabase(
-            composedWorldStateStorage, accountHash, startKeyHash, endKeyHash, takeWhile);
+        .streamStorageFlatDatabase(composedWorldStateStorage, accountHash, startKeyHash, takeWhile);
   }
 
   public boolean isWorldStateAvailable(final Bytes32 rootHash, final Hash blockHash) {
