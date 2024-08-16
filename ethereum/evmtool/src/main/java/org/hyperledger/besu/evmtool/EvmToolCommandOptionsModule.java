@@ -145,5 +145,7 @@ public class EvmToolCommandOptionsModule {
   }
 
   /** Default constructor for the EvmToolCommandOptionsModule class. */
-  public EvmToolCommandOptionsModule() {}
+  public EvmToolCommandOptionsModule() {
+    // This is only here because of JavaDoc linting
+  }
 }

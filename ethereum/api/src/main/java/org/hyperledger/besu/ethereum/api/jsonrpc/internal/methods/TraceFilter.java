@@ -19,6 +19,7 @@ import static org.hyperledger.besu.services.pipeline.PipelineBuilder.createPipel
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.FilterParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
@@ -86,8 +87,13 @@ public class TraceFilter extends TraceBlock {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final FilterParameter filterParameter =
-        requestContext.getRequiredParameter(0, FilterParameter.class);
+    final FilterParameter filterParameter;
+    try {
+      filterParameter = requestContext.getRequiredParameter(0, FilterParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid filter parameter (index 0)", RpcErrorType.INVALID_FILTER_PARAMS, e);
+    }
 
     final long fromBlock = resolveBlockNumber(filterParameter.getFromBlock());
     final long toBlock = resolveBlockNumber(filterParameter.getToBlock());

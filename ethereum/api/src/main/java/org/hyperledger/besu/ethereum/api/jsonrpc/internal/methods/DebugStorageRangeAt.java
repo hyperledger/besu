@@ -85,8 +85,13 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid account address parameter (index 2)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
-    final Hash startKey =
-        Hash.fromHexStringLenient(requestContext.getRequiredParameter(3, String.class));
+    final Hash startKey;
+    try {
+      startKey = Hash.fromHexStringLenient(requestContext.getRequiredParameter(3, String.class));
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid data start hash parameter (index 3)", RpcErrorType.INVALID_DATA_HASH_PARAMS, e);
+    }
     final int limit = requestContext.getRequiredParameter(4, Integer.class);
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);

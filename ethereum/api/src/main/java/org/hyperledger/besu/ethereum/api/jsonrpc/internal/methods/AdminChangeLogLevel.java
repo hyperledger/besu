@@ -44,13 +44,24 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     try {
-      final String logLevel = requestContext.getRequiredParameter(0, String.class);
+      final String logLevel;
+      try {
+        logLevel = requestContext.getRequiredParameter(0, String.class);
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid log level parameter (index 0)", RpcErrorType.INVALID_LOG_LEVEL_PARAMS, e);
+      }
       if (!VALID_PARAMS.contains(logLevel)) {
         return new JsonRpcErrorResponse(
-            requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+            requestContext.getRequest().getId(), RpcErrorType.INVALID_LOG_LEVEL_PARAMS);
       }
-      final Optional<String[]> optionalLogFilters =
-          requestContext.getOptionalParameter(1, String[].class);
+      final Optional<String[]> optionalLogFilters;
+      try {
+        optionalLogFilters = requestContext.getOptionalParameter(1, String[].class);
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid log filter parameters (index 1)", RpcErrorType.INVALID_LOG_FILTER_PARAMS, e);
+      }
       optionalLogFilters.ifPresentOrElse(
           logFilters ->
               Arrays.stream(logFilters).forEach(logFilter -> setLogLevel(logFilter, logLevel)),
@@ -58,7 +69,7 @@ public class AdminChangeLogLevel implements JsonRpcMethod {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId());
     } catch (InvalidJsonRpcParameters invalidJsonRpcParameters) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), invalidJsonRpcParameters.getRpcErrorType());
     }
   }
 
