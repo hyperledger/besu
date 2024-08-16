@@ -71,6 +71,7 @@ public class PrivUninstallFilterTest {
     assertThatThrownBy(() -> method.response(request))
         .isInstanceOf(InvalidJsonRpcParameters.class)
         .hasMessageContaining("Invalid filter ID parameter (index 1)");
+
   }
 
   @Test
