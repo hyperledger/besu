@@ -24,10 +24,13 @@ public class NetworkResult {
 
   private final String localAddress;
   private final String remoteAddress;
+  private final boolean inbound;
 
-  public NetworkResult(final SocketAddress localAddress, final SocketAddress remoteAddress) {
+  public NetworkResult(
+      final SocketAddress localAddress, final SocketAddress remoteAddress, final boolean inbound) {
     this.localAddress = removeTrailingSlash(localAddress.toString());
     this.remoteAddress = removeTrailingSlash(remoteAddress.toString());
+    this.inbound = inbound;
   }
 
   @JsonGetter(value = "localAddress")
@@ -38,6 +41,11 @@ public class NetworkResult {
   @JsonGetter(value = "remoteAddress")
   public String getRemoteAddress() {
     return remoteAddress;
+  }
+
+  @JsonGetter(value = "inbound")
+  public boolean isInbound() {
+    return inbound;
   }
 
   private String removeTrailingSlash(final String address) {

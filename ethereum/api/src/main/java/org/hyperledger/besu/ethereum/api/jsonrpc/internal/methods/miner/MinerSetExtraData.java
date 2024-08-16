@@ -60,10 +60,12 @@ public class MinerSetExtraData implements JsonRpcMethod {
           .addArgument(() -> new String(extraData.toArray(), StandardCharsets.UTF_8))
           .log();
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
-    } catch (final IllegalArgumentException invalidJsonRpcParameters) {
+    } catch (Exception invalidJsonRpcParameters) { // TODO:replace with "IllegalArgumentException |
+      // JsonRpcParameter.JsonRpcParameterException"
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
-          new JsonRpcError(RpcErrorType.INVALID_PARAMS, invalidJsonRpcParameters.getMessage()));
+          new JsonRpcError(
+              RpcErrorType.INVALID_EXTRA_DATA_PARAMS, invalidJsonRpcParameters.getMessage()));
     }
   }
 }

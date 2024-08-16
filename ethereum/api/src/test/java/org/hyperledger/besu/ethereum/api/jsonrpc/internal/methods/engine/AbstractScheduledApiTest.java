@@ -14,12 +14,12 @@
  */
 package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 
-import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.CANCUN;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.EXPERIMENTAL_EIPS;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.LONDON;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.PARIS;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.PRAGUE;
-import static org.hyperledger.besu.ethereum.mainnet.HardforkId.MainnetHardforkId.SHANGHAI;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.EXPERIMENTAL_EIPS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PARIS;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 

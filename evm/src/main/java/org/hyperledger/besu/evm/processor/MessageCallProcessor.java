@@ -153,6 +153,7 @@ public class MessageCallProcessor extends AbstractMessageProcessor {
     if (frame.getRemainingGas() < gasRequirement) {
       frame.setExceptionalHaltReason(Optional.of(ExceptionalHaltReason.INSUFFICIENT_GAS));
       frame.setState(MessageFrame.State.EXCEPTIONAL_HALT);
+      operationTracer.tracePrecompileCall(frame, gasRequirement, null);
     } else {
       frame.decrementRemainingGas(gasRequirement);
       final PrecompiledContract.PrecompileContractResult result =
