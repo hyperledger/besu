@@ -99,6 +99,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   private final OperationTimer snapWorldStateHealingTimer;
   private OperationTimer.TimingContext snapWorldHealingTimingContext;
 
+  private AtomicBoolean timersDone = new AtomicBoolean(false);
+
   public SnapWorldDownloadState(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapSyncStatePersistenceManager snapContext,
@@ -259,12 +261,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   /** Method to start the healing process of the trie */
   public synchronized void startTrieHeal() {
-    LOG.info(
-        "stopTimer Initial snap world download done: {}",
-        LocalDateTime.now(ZoneId.systemDefault()));
-    snapWorldStateInitialDownloadTimingContext.stopTimer();
-    snapWorldHealingTimingContext = snapWorldStateHealingTimer.startTimer();
-    LOG.info("startTimer Starting snapWorldHealing: {}", LocalDateTime.now(ZoneId.systemDefault()));
+    if (timersDone.compareAndSet(false, true)) {
+      LOG.info(
+              "stopTimer Initial snap world download done: {}",
+              LocalDateTime.now(ZoneId.systemDefault()));
+      snapWorldStateInitialDownloadTimingContext.stopTimer();
+      LOG.info("startTimer Starting snapWorldHealing: {}", LocalDateTime.now(ZoneId.systemDefault()));
+      snapWorldHealingTimingContext = snapWorldStateHealingTimer.startTimer();
+    }
     snapContext.clearAccountRangeTasks();
     snapSyncState.setHealTrieStatus(true);
     // Try to find a new pivot block before starting the healing process
