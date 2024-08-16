@@ -13,7 +13,7 @@
     "id" : 406,
     "error" : {
       "code" : -32602,
-      "message" : "Invalid params"
+      "message" : "Invalid number of params"
     }
   },
   "statusCode": 200

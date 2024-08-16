@@ -16,9 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.PendingTransactionsParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionPendingResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.pool.PendingTransactionFilter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.transaction.pool.PendingTransactionFilter.Filter;
@@ -54,11 +56,19 @@ public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
         transactionPool.getPendingTransactions();
     final Integer limit =
         requestContext.getOptionalParameter(0, Integer.class).orElse(pendingTransactions.size());
-    final List<Filter> filters =
-        requestContext
-            .getOptionalParameter(1, PendingTransactionsParams.class)
-            .map(PendingTransactionsParams::filters)
-            .orElse(Collections.emptyList());
+    final List<Filter> filters;
+    try {
+      filters =
+          requestContext
+              .getOptionalParameter(1, PendingTransactionsParams.class)
+              .map(PendingTransactionsParams::filters)
+              .orElse(Collections.emptyList());
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid pending transactions parameter (index 1)",
+          RpcErrorType.INVALID_PENDING_TRANSACTIONS_PARAMS,
+          e);
+    }
 
     final Collection<Transaction> pendingTransactionsFiltered =
         pendingTransactionFilter.reduce(pendingTransactions, filters, limit);

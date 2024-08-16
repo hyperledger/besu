@@ -67,7 +67,8 @@ public class EngineNewPayloadV4 extends AbstractEngineNewPayload {
           RpcErrorType.INVALID_PARAMS, "Missing versioned hashes field");
     } else if (maybeBeaconBlockRootParam.isEmpty()) {
       return ValidationResult.invalid(
-          RpcErrorType.INVALID_PARAMS, "Missing parent beacon block root field");
+          RpcErrorType.INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS,
+          "Missing parent beacon block root field");
     } else if (payloadParameter.getDepositRequests() == null) {
       return ValidationResult.invalid(RpcErrorType.INVALID_PARAMS, "Missing deposit field");
     } else {
