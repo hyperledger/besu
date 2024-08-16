@@ -156,7 +156,7 @@ dependencyManagement {
     dependency 'org.openjdk.jol:jol-core:0.17'
     dependency 'tech.pegasys:jc-kzg-4844:1.0.0'
 
-    dependencySet(group: 'org.hyperledger.besu', version: '0.9.3') {
+    dependencySet(group: 'org.hyperledger.besu', version: '0.9.4') {
       entry 'arithmetic'
       entry 'ipa-multipoint'
       entry 'bls12-381'

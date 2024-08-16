@@ -20,10 +20,12 @@ import org.hyperledger.besu.consensus.merge.MergeContext;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EngineExchangeTransitionConfigurationParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EngineExchangeTransitionConfigurationResult;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.Difficulty;
@@ -65,9 +67,17 @@ public class EngineExchangeTransitionConfiguration extends ExecutionEngineJsonRp
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
     engineCallListener.executionEngineCalled();
 
-    final EngineExchangeTransitionConfigurationParameter remoteTransitionConfiguration =
-        requestContext.getRequiredParameter(
-            0, EngineExchangeTransitionConfigurationParameter.class);
+    final EngineExchangeTransitionConfigurationParameter remoteTransitionConfiguration;
+    try {
+      remoteTransitionConfiguration =
+          requestContext.getRequiredParameter(
+              0, EngineExchangeTransitionConfigurationParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid engine exchange transition configuration parameters (index 0)",
+          RpcErrorType.INVALID_ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_PARAMS,
+          e);
+    }
     final Object reqId = requestContext.getRequest().getId();
 
     LOG.atTrace()
