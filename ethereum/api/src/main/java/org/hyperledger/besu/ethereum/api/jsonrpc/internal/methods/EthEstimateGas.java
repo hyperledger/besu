@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonCal
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -29,16 +30,14 @@ import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParam
 import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.CallParameter;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.transaction.TransactionSimulatorResult;
 import org.hyperledger.besu.evm.tracing.EstimateGasOperationTracer;
-
-import java.util.Optional;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class EthEstimateGas extends AbstractEstimateGas {
 
+  @SuppressWarnings("unused")
   private static final Logger LOG = LoggerFactory.getLogger(EthEstimateGas.class);
 
   public EthEstimateGas(
@@ -51,15 +50,23 @@ public class EthEstimateGas extends AbstractEstimateGas {
     return RpcMethod.ETH_ESTIMATE_GAS.getMethodName();
   }
 
+  protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
+    return request.getOptionalParameter(1, BlockParameter.class).orElse(BlockParameter.LATEST);
+  }
+
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final JsonCallParameter callParams = validateAndGetCallParams(requestContext);
 
-    final BlockHeader blockHeader = blockHeader();
+    final BlockParameter blockParameter = blockParameter(requestContext);
+    final long blockNumber = getBlockNumberFromParameter(blockParameter);
+
+    final BlockHeader blockHeader =
+        blockchainQueries.getBlockHeaderByNumber(blockNumber).orElse(null);
     if (blockHeader == null) {
-      LOG.error("Chain head block not found");
-      return errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR);
+      return errorResponse(requestContext, RpcErrorType.BLOCK_NOT_FOUND);
     }
+
     if (!blockchainQueries
         .getWorldStateArchive()
         .isWorldStateAvailable(blockHeader.getStateRoot(), blockHeader.getHash())) {
@@ -74,26 +81,33 @@ public class EthEstimateGas extends AbstractEstimateGas {
     final EstimateGasOperationTracer operationTracer = new EstimateGasOperationTracer();
 
     var gasUsed =
-        executeSimulation(
-            blockHeader, modifiedCallParams, operationTracer, isAllowExceedingBalance);
+        transactionSimulator.process(
+            modifiedCallParams,
+            ImmutableTransactionValidationParams.builder()
+                .from(TransactionValidationParams.transactionSimulator())
+                .isAllowExceedingBalance(isAllowExceedingBalance)
+                .build(),
+            operationTracer,
+            blockHeader.getNumber());
 
     if (gasUsed.isEmpty()) {
-      LOG.error("gasUsed is empty after simulating transaction.");
       return errorResponse(requestContext, RpcErrorType.INTERNAL_ERROR);
     }
 
-    // if the transaction is invalid or doesn't have enough gas with the max it never will!
     if (gasUsed.get().isInvalid() || !gasUsed.get().isSuccessful()) {
       return errorResponse(requestContext, gasUsed.get());
     }
 
     var low = gasUsed.get().result().getEstimateGasUsedByTransaction();
     var lowResult =
-        executeSimulation(
-            blockHeader,
+        transactionSimulator.process(
             overrideGasLimitAndPrice(callParams, low),
+            ImmutableTransactionValidationParams.builder()
+                .from(TransactionValidationParams.transactionSimulator())
+                .isAllowExceedingBalance(isAllowExceedingBalance)
+                .build(),
             operationTracer,
-            isAllowExceedingBalance);
+            blockHeader.getNumber());
 
     if (lowResult.isPresent() && lowResult.get().isSuccessful()) {
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(low));
@@ -105,11 +119,14 @@ public class EthEstimateGas extends AbstractEstimateGas {
       mid = (high + low) / 2;
 
       var binarySearchResult =
-          executeSimulation(
-              blockHeader,
+          transactionSimulator.process(
               overrideGasLimitAndPrice(callParams, mid),
+              ImmutableTransactionValidationParams.builder()
+                  .from(TransactionValidationParams.transactionSimulator())
+                  .isAllowExceedingBalance(isAllowExceedingBalance)
+                  .build(),
               operationTracer,
-              isAllowExceedingBalance);
+              blockHeader.getNumber());
       if (binarySearchResult.isEmpty() || !binarySearchResult.get().isSuccessful()) {
         low = mid;
       } else {
@@ -120,18 +137,15 @@ public class EthEstimateGas extends AbstractEstimateGas {
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), Quantity.create(high));
   }
 
-  private Optional<TransactionSimulatorResult> executeSimulation(
-      final BlockHeader blockHeader,
-      final CallParameter modifiedCallParams,
-      final EstimateGasOperationTracer operationTracer,
-      final boolean allowExceedingBalance) {
-    return transactionSimulator.process(
-        modifiedCallParams,
-        ImmutableTransactionValidationParams.builder()
-            .from(TransactionValidationParams.transactionSimulator())
-            .isAllowExceedingBalance(allowExceedingBalance)
-            .build(),
-        operationTracer,
-        blockHeader.getNumber());
+  private long getBlockNumberFromParameter(final BlockParameter blockParameter) {
+    if (blockParameter.isLatest()) {
+      return blockchainQueries.headBlockNumber();
+    } else if (blockParameter.isEarliest()) {
+      return BlockHeader.GENESIS_BLOCK_NUMBER;
+    } else if (blockParameter.isPending()) {
+      return blockchainQueries.headBlockNumber() + 1;
+    } else {
+      return blockParameter.getNumber().orElse(blockchainQueries.headBlockNumber());
+    }
   }
 }
