@@ -48,43 +48,48 @@ public class JsonRpcExecutorHandler {
   }
 
   public static Handler<RoutingContext> handler(
-          final JsonRpcExecutor jsonRpcExecutor,
-          final Tracer tracer,
-          final JsonRpcConfiguration jsonRpcConfiguration) {
+      final JsonRpcExecutor jsonRpcExecutor,
+      final Tracer tracer,
+      final JsonRpcConfiguration jsonRpcConfiguration) {
     return ctx -> {
-      final long timerId = ctx.vertx().setTimer(DEFAULT_TIMEOUT_MILLISECONDS, id -> {
-        final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
-        LOG.error("Timeout occurred in JSON-RPC executor for method {}", method);
-        if (!ctx.response().ended()) {
-          handleJsonRpcError(ctx, null, RpcErrorType.TIMEOUT_ERROR);
-          ctx.response().close();
-        }
-      });
+      final long timerId =
+          ctx.vertx()
+              .setTimer(
+                  DEFAULT_TIMEOUT_MILLISECONDS,
+                  id -> {
+                    final String method =
+                        ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
+                    LOG.error("Timeout occurred in JSON-RPC executor for method {}", method);
+                    if (!ctx.response().ended()) {
+                      handleJsonRpcError(ctx, null, RpcErrorType.TIMEOUT_ERROR);
+                      ctx.response().close();
+                    }
+                  });
 
       ctx.put("timerId", timerId);
 
       try {
         createExecutor(jsonRpcExecutor, tracer, ctx, jsonRpcConfiguration)
-                .ifPresentOrElse(
-                        executor -> {
-                          try {
-                            executor.execute();
-                            cancelTimer(ctx);
-                          } catch (IOException e) {
-                            final String method = executor.getRpcMethodName(ctx);
-                            LOG.error("{} - Error streaming JSON-RPC response", method, e);
-                            if (!ctx.response().ended()) {
-                              handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
-                              ctx.response().close();
-                            }
-                          }
-                        },
-                        () -> {
-                          if (!ctx.response().ended()) {
-                            handleJsonRpcError(ctx, null, RpcErrorType.PARSE_ERROR);
-                            ctx.response().close();
-                          }
-                        });
+            .ifPresentOrElse(
+                executor -> {
+                  try {
+                    executor.execute();
+                    cancelTimer(ctx);
+                  } catch (IOException e) {
+                    final String method = executor.getRpcMethodName(ctx);
+                    LOG.error("{} - Error streaming JSON-RPC response", method, e);
+                    if (!ctx.response().ended()) {
+                      handleJsonRpcError(ctx, null, RpcErrorType.INTERNAL_ERROR);
+                      ctx.response().close();
+                    }
+                  }
+                },
+                () -> {
+                  if (!ctx.response().ended()) {
+                    handleJsonRpcError(ctx, null, RpcErrorType.PARSE_ERROR);
+                    ctx.response().close();
+                  }
+                });
       } catch (final RuntimeException e) {
         final String method = ctx.get(ContextKey.REQUEST_BODY_AS_JSON_OBJECT.name()).toString();
         LOG.error("Unhandled exception in JSON-RPC executor for method {}", method, e);
