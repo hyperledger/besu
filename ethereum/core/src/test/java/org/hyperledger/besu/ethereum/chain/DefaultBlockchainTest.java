@@ -1002,6 +1002,54 @@ public class DefaultBlockchainTest {
         .isEqualTo(newBlock.getHeader().getDifficulty());
   }
 
+  @Test
+  public void testTPSandMgasMetrics() {
+    final BlockDataGenerator gen = new BlockDataGenerator();
+    final KeyValueStorage kvStore = new InMemoryKeyValueStorage();
+    final KeyValueStorage kvStoreVariables = new InMemoryKeyValueStorage();
+    final Block genesisBlock = gen.genesisBlock();
+    final DefaultBlockchain blockchain =
+        createMutableBlockchain(kvStore, kvStoreVariables, genesisBlock);
+
+    // Create and append a sequence of blocks
+    long startTime = System.currentTimeMillis();
+    for (int i = 0; i < 10; i++) {
+        BlockDataGenerator.BlockOptions options =
+            new BlockDataGenerator.BlockOptions()
+                .setBlockNumber(i + 1L)
+                .setParentHash(i == 0 ? genesisBlock.getHash() : blockchain.getChainHeadHash())
+                .setTimestamp(startTime / 1000 + i * 15) // 15 seconds between blocks
+                .addTransaction(gen.transactions(5)) // 5 transactions per block
+                .setGasUsed(1_000_000); // 1 Mgas per block
+        Block block = gen.block(options);
+        List<TransactionReceipt> receipts = gen.receipts(block);
+        blockchain.appendBlock(block, receipts);
+    }
+
+    // Check that the chain head has advanced
+    assertThat(blockchain.getChainHeadBlockNumber()).isEqualTo(10);
+
+    // Check TPS
+    double tps = blockchain.calculateTransactionsPerSecond();
+    assertThat(tps).isGreaterThan(0);
+    // Expected TPS: 50 transactions / 135 seconds = ~0.37 TPS
+    assertThat(tps).isCloseTo(0.37, within(0.05));
+
+    // Check Mgas/s
+    double mgasPerSecond = blockchain.calculateMgasPerSecond();
+    assertThat(mgasPerSecond).isGreaterThan(0);
+    // Expected Mgas/s: 10 Mgas / 135 seconds = ~0.074 Mgas/s
+    assertThat(mgasPerSecond).isCloseTo(0.074, within(0.01));
+
+    // Check total gas used
+    long totalGasUsed = blockchain.getChainHead().getHeader().getGasUsed();
+    assertThat(totalGasUsed).isEqualTo(10_000_000); // 10 blocks * 1 Mgas
+
+    // Check total transaction count
+    int totalTransactions = blockchain.getChainHead().getHeader().getTransactions().size();
+    assertThat(totalTransactions).isEqualTo(50); // 10 blocks * 5 transactions
+  }
+
   /*
    * Check that block header, block body, block number, transaction locations, and receipts for this
    * block are all stored.
