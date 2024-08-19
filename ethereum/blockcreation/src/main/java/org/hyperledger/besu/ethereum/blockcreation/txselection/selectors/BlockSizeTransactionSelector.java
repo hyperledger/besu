@@ -91,7 +91,7 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
       final TransactionSelectionResults transactionSelectionResults) {
 
     return transaction.getGasLimit()
-        > context.processableBlockHeader().getGasLimit()
+        > context.pendingBlockHeader().getGasLimit()
             - transactionSelectionResults.getCumulativeGasUsed();
   }
 
@@ -104,7 +104,7 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
    */
   private boolean blockOccupancyAboveThreshold(
       final TransactionSelectionResults transactionSelectionResults) {
-    final long gasAvailable = context.processableBlockHeader().getGasLimit();
+    final long gasAvailable = context.pendingBlockHeader().getGasLimit();
 
     final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
     final long gasRemaining = gasAvailable - gasUsed;
@@ -129,7 +129,7 @@ public class BlockSizeTransactionSelector extends AbstractTransactionSelector {
    * @return True if the block is full, false otherwise.
    */
   private boolean blockFull(final TransactionSelectionResults transactionSelectionResults) {
-    final long gasAvailable = context.processableBlockHeader().getGasLimit();
+    final long gasAvailable = context.pendingBlockHeader().getGasLimit();
     final long gasUsed = transactionSelectionResults.getCumulativeGasUsed();
 
     final long gasRemaining = gasAvailable - gasUsed;
