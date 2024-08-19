@@ -57,7 +57,6 @@ public class JsonRpcParameter {
    * @param <T> The type of parameter.
    * @return Returns the parameter cast as T if available.
    */
-  @SuppressWarnings("unchecked")
   public <T> Optional<T> optional(final Object[] params, final int index, final Class<T> paramClass)
       throws JsonRpcParameterException {
     if (params == null || params.length <= index || params[index] == null) {
@@ -68,7 +67,7 @@ public class JsonRpcParameter {
     final Object rawParam = params[index];
     if (paramClass.isAssignableFrom(rawParam.getClass())) {
       // If we're dealing with a simple type, just cast the value
-      param = (T) rawParam;
+      param = paramClass.cast(rawParam);
     } else {
       // Otherwise, serialize param back to json and then deserialize to the paramClass type
       try {
