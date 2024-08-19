@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.TraceTransaction;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor.PrivateBlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -74,7 +74,7 @@ public class PrivTraceTransaction extends AbstractPrivateTraceByHash implements 
     final String privacyGroupId;
     try {
       privacyGroupId = requestContext.getRequiredParameter(0, String.class);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid privacy group ID parameter (index 0)",
           RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
@@ -83,7 +83,7 @@ public class PrivTraceTransaction extends AbstractPrivateTraceByHash implements 
     final Hash transactionHash;
     try {
       transactionHash = requestContext.getRequiredParameter(1, Hash.class);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid transaction hash parameter (index 1)",
           RpcErrorType.INVALID_TRANSACTION_HASH_PARAMS,

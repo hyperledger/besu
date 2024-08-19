@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -44,7 +44,7 @@ public class AdminGenerateLogBloomCache implements JsonRpcMethod {
     final Optional<BlockParameter> startBlockParam;
     try {
       startBlockParam = requestContext.getOptionalParameter(0, BlockParameter.class);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid start block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
@@ -61,7 +61,7 @@ public class AdminGenerateLogBloomCache implements JsonRpcMethod {
     final Optional<BlockParameter> stopBlockParam;
     try {
       stopBlockParam = requestContext.getOptionalParameter(1, BlockParameter.class);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid stop block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }

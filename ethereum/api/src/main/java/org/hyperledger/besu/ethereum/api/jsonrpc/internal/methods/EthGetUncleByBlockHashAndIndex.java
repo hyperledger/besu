@@ -18,7 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -50,14 +50,14 @@ public class EthGetUncleByBlockHashAndIndex implements JsonRpcMethod {
     final Hash hash;
     try {
       hash = requestContext.getRequiredParameter(0, Hash.class);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
     }
     final int index;
     try {
       index = requestContext.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid block index parameter (index 1)", RpcErrorType.INVALID_BLOCK_INDEX_PARAMS, e);
     }

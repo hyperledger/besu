@@ -23,7 +23,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
-import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -64,7 +64,7 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     try {
       return request.getRequiredParameter(1, BlockParameter.class);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
@@ -76,7 +76,7 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
     final String privacyGroupId;
     try {
       privacyGroupId = requestContext.getRequiredParameter(0, String.class);
-    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid privacy group ID parameter (index 0)",
           RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
