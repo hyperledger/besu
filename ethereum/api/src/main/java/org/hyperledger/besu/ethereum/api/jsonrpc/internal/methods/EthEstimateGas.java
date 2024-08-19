@@ -37,9 +37,6 @@ import org.slf4j.LoggerFactory;
 
 public class EthEstimateGas extends AbstractEstimateGas {
 
-  @SuppressWarnings("unused")
-  private static final Logger LOG = LoggerFactory.getLogger(EthEstimateGas.class);
-
   public EthEstimateGas(
       final BlockchainQueries blockchainQueries, final TransactionSimulator transactionSimulator) {
     super(blockchainQueries, transactionSimulator);
@@ -142,7 +139,7 @@ public class EthEstimateGas extends AbstractEstimateGas {
       return blockchainQueries.headBlockNumber();
     } else if (blockParameter.isEarliest()) {
       return BlockHeader.GENESIS_BLOCK_NUMBER;
-    } else if (blockParameter.isPending()) {
+    } else if (blockParameter.isLatest() || blockParameter.isPending()) {
       return blockchainQueries.headBlockNumber() + 1;
     } else {
       return blockParameter.getNumber().orElse(blockchainQueries.headBlockNumber());
