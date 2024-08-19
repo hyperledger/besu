@@ -554,12 +554,12 @@ class CodeV1Test {
         Arguments.of("RJUMP -4", null, 0, List.of(List.of("5B e0fffc", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
-            "Stack minimum violation on backwards jump from 1 to 0, 1 != 1",
+            "Stack minimum violation on backwards RJUMP from 1 to 0, 0 != 1",
             0,
             List.of(List.of("43 e0fffc", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
-            "Stack minimum violation on backwards jump from 2 to 1, 0 != 0",
+            "Stack minimum violation on backwards RJUMP from 2 to 1, 1 != 0",
             0,
             List.of(List.of("43 50 e0fffc 00", 0, 0x80, 0))),
         Arguments.of(
@@ -570,7 +570,7 @@ class CodeV1Test {
             "RJUMP -5 matched stack", null, 0, List.of(List.of("43 50 43 e0fffb", 0, 0x80, 1))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
-            "Stack minimum violation on backwards jump from 3 to 2, 1 != 1",
+            "Stack minimum violation on backwards RJUMP from 3 to 2, 0 != 1",
             0,
             List.of(List.of("43 50 43 e0fffc 50 00", 0, 0x80, 0))));
   }
@@ -850,7 +850,7 @@ class CodeV1Test {
     return Stream.of(
         Arguments.of(
             "Stack height mismatch backwards",
-            "Stack minimum violation on backwards jump from 1 to 0, 1 != 1",
+            "Stack minimum violation on backwards RJUMP from 1 to 0, 0 != 1",
             0,
             List.of(List.of("30 e0fffc00", 0, 0x80, 1))),
         Arguments.of(
