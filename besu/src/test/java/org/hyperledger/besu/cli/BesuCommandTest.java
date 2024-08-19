@@ -1832,10 +1832,9 @@ public class BesuCommandTest extends CommandTestAbstract {
   @Test
   public void testGenerateEphemeryGenesisFileSuccess() throws IOException {
     parseCommand("--network", "ephemery");
-    // Set up the mock genesis file path
+
     Path tempJsonFile = Files.createTempFile("temp-ephemery", ".json");
 
-    // Set up the initial genesis string
     String initialGenesisInput = "{\n" +
             "  \"config\": {\n" +
             "    \"chainId\": 39438135\n" +
@@ -1844,7 +1843,6 @@ public class BesuCommandTest extends CommandTestAbstract {
             "}";
     Files.write(tempJsonFile, initialGenesisInput.getBytes(UTF_8));
 
-    // Mock the return value of the genesis file path
     when(EPHEMERY.getGenesisFile()).thenReturn(tempJsonFile.toString());
     long mockTimestamp = Instant.now().getEpochSecond() - 60 * 60 * 24 * 30 * 3; // 3 periods ago
     when(mockGenesisConfigFile.getTimestamp()).thenReturn(mockTimestamp);
@@ -1852,7 +1850,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     BigInteger mockChainId = BigInteger.valueOf(39438135);
     when(mockGenesisConfigOptions.getChainId()).thenReturn(Optional.of(mockChainId));
 
-    // Calculate the expected new values
+    // This calculates the expected new values
     long periodInSeconds = 28 * 24 * 60 * 60; // 28 days in seconds
     long periodsSinceGenesis = ChronoUnit.DAYS.between(Instant.ofEpochSecond(mockTimestamp), Instant.now()) / 28;
     long expectedTimestamp = mockTimestamp + periodsSinceGenesis * periodInSeconds;
