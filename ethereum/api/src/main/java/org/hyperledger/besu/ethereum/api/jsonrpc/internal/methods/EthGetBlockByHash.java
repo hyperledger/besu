@@ -97,8 +97,8 @@ public class EthGetBlockByHash implements JsonRpcMethod {
       return requestContext.getRequiredParameter(1, Boolean.class);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid is complete transaction parameter (index 1)",
-          RpcErrorType.INVALID_IS_TRANSACTION_COMPLETE_PARAMS,
+          "Invalid return complete transaction parameter (index 1)",
+          RpcErrorType.INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS,
           e);
     }
   }
