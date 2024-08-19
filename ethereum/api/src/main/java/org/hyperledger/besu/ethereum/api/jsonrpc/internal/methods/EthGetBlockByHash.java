@@ -59,7 +59,7 @@ public class EthGetBlockByHash implements JsonRpcMethod {
     return new JsonRpcSuccessResponse(
         requestContext.getRequest().getId(), blockResult(requestContext));
   }
-//
+
   private BlockResult blockResult(final JsonRpcRequestContext request) {
     final Hash hash;
     try {
