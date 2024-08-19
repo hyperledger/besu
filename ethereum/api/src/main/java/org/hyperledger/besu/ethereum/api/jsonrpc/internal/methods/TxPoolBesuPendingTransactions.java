@@ -54,8 +54,16 @@ public class TxPoolBesuPendingTransactions implements JsonRpcMethod {
 
     final Collection<PendingTransaction> pendingTransactions =
         transactionPool.getPendingTransactions();
-    final Integer limit =
-        requestContext.getOptionalParameter(0, Integer.class).orElse(pendingTransactions.size());
+    final int limit;
+    try {
+      limit =
+          requestContext.getOptionalParameter(0, Integer.class).orElse(pendingTransactions.size());
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction limit parameter (index 0)",
+          RpcErrorType.INVALID_TRANSACTION_LIMIT_PARAMS,
+          e);
+    }
     final List<Filter> filters;
     try {
       filters =

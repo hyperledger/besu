@@ -77,7 +77,15 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid block or block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
-    final int transactionIndex = requestContext.getRequiredParameter(1, Integer.class);
+    final int transactionIndex;
+    try {
+      transactionIndex = requestContext.getRequiredParameter(1, Integer.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction index parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS,
+          e);
+    }
     final Address accountAddress;
     try {
       accountAddress = requestContext.getRequiredParameter(2, Address.class);
@@ -92,7 +100,13 @@ public class DebugStorageRangeAt implements JsonRpcMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid data start hash parameter (index 3)", RpcErrorType.INVALID_DATA_HASH_PARAMS, e);
     }
-    final int limit = requestContext.getRequiredParameter(4, Integer.class);
+    final int limit;
+    try {
+      limit = requestContext.getRequiredParameter(4, Integer.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid limit parameter (index 4)", RpcErrorType.INVALID_TRANSACTION_LIMIT_PARAMS, e);
+    }
 
     final Optional<Hash> blockHashOptional = hashFromParameter(blockParameterOrBlockHash);
     if (blockHashOptional.isEmpty()) {

@@ -61,11 +61,19 @@ public class DebugTraceBlockByNumber extends AbstractBlockParameterMethod {
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
     final Optional<Hash> blockHash = getBlockchainQueries().getBlockHashByNumber(blockNumber);
-    final TraceOptions traceOptions =
-        request
-            .getOptionalParameter(1, TransactionTraceParams.class)
-            .map(TransactionTraceParams::traceOptions)
-            .orElse(TraceOptions.DEFAULT);
+    final TraceOptions traceOptions;
+    try {
+      traceOptions =
+          request
+              .getOptionalParameter(1, TransactionTraceParams.class)
+              .map(TransactionTraceParams::traceOptions)
+              .orElse(TraceOptions.DEFAULT);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction trace parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+          e);
+    }
 
     return blockHash
         .flatMap(

@@ -23,6 +23,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -70,7 +71,15 @@ public class PrivDistributeRawTransaction implements JsonRpcMethod {
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Object id = requestContext.getRequest().getId();
-    final String rawPrivateTransaction = requestContext.getRequiredParameter(0, String.class);
+    final String rawPrivateTransaction;
+    try {
+      rawPrivateTransaction = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid private transaction parameter (index 0)",
+          RpcErrorType.INVALID_TRANSACTION_PARAMS,
+          e);
+    }
 
     try {
       final PrivateTransaction privateTransaction =
