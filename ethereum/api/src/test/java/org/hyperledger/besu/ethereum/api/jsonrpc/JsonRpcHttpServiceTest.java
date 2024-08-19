@@ -784,7 +784,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final RpcErrorType expectedError = RpcErrorType.INVALID_IS_TRANSACTION_COMPLETE_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
@@ -854,7 +854,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       assertThat(resp.code()).isEqualTo(200);
       // Check general format of result
       final JsonObject json = new JsonObject(resp.body().string());
-      final RpcErrorType expectedError = RpcErrorType.INVALID_IS_TRANSACTION_COMPLETE_PARAMS;
+      final RpcErrorType expectedError = RpcErrorType.INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS;
       testHelper.assertValidJsonRpcError(
           json, id, expectedError.getCode(), expectedError.getMessage());
     }
