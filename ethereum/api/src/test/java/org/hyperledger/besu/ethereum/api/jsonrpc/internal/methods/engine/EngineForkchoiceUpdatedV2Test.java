@@ -92,6 +92,6 @@ public class EngineForkchoiceUpdatedV2Test extends AbstractEngineForkchoiceUpdat
 
   @Override
   protected RpcErrorType expectedInvalidPayloadError() {
-    return RpcErrorType.INVALID_PARAMS;
+    return RpcErrorType.INVALID_WITHDRAWALS_PARAMS;
   }
 }
