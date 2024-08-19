@@ -46,7 +46,7 @@ public enum NetworkName {
   MORDOR("/mordor.json", BigInteger.valueOf(7));
 
   private final String genesisFile;
-  private final BigInteger networkId;
+  private BigInteger networkId;
   private final boolean canSnapSync;
   private final String deprecationDate;
 
@@ -79,6 +79,14 @@ public enum NetworkName {
   public BigInteger getNetworkId() {
     return networkId;
   }
+
+  /**
+   * Sets network id.
+   */
+  public void setNetworkId(final BigInteger networkId) {
+    this.networkId = networkId;
+  }
+
 
   /**
    * Can SNAP sync boolean.

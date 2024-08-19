@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
+import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
@@ -31,6 +32,8 @@ import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAU
 import static org.hyperledger.besu.metrics.prometheus.MetricsConfiguration.DEFAULT_METRICS_PUSH_PORT;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
@@ -215,6 +218,8 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Clock;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1159,6 +1164,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (network != null && network.isDeprecated()) {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
+    if (network == EPHEMERY) {
+      generateEphemeryGenesisFile();
+    }
     try {
       configureLogging(true);
 
@@ -1725,6 +1733,47 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
+    }
+  }
+
+  /**
+   * generateEphemeryGenesisFile checks if a genesis update is available
+   * and updates the ephemery.json file
+   */
+  private void generateEphemeryGenesisFile() {
+    if(EPHEMERY.getGenesisFile() != null){
+
+      GenesisConfigFile configFile = GenesisConfigFile.fromResource(
+              Optional.ofNullable(network).orElse(EPHEMERY).getGenesisFile());
+      GenesisConfigOptions configOptions =  readGenesisConfigOptions();
+      final int PERIOD = 28;
+      long timestamp = configFile.getTimestamp();
+      Optional<BigInteger> chainId = configOptions.getChainId();
+
+      long periodInSeconds = (PERIOD * 24 * 60 * 60);
+      long currentTimestamp = Instant.now().getEpochSecond();
+      long periodsSinceGenesis = ChronoUnit.DAYS.between(Instant.ofEpochSecond(timestamp), Instant.now()) / PERIOD;
+      long newGenesisTimestamp = timestamp + (periodsSinceGenesis * periodInSeconds);
+      BigInteger newChainId = chainId.orElseThrow(() -> new IllegalStateException("ChainId not present"))
+              .add(BigInteger.valueOf(periodsSinceGenesis));
+
+      EPHEMERY.setNetworkId(newChainId);
+
+      if (currentTimestamp > (timestamp + periodInSeconds)) {
+        Path ephemeryGenesisfilePath =  Path.of(EPHEMERY.getGenesisFile());
+        try {
+          ObjectMapper objectMapper = new ObjectMapper();
+          ObjectNode rootNode = (ObjectNode) objectMapper.readTree(ephemeryGenesisfilePath.toFile());
+
+          ObjectNode configNode = (ObjectNode) rootNode.path("config");
+          configNode.put("chainId", newChainId.toString());
+          rootNode.put("timestamp", String.valueOf(newGenesisTimestamp));
+
+          objectMapper.writerWithDefaultPrettyPrinter().writeValue(ephemeryGenesisfilePath.toFile(), rootNode);
+        } catch (IOException e) {
+          throw new ParameterException(this.commandLine, "Unable to update ephemery genesis file. " + e.getMessage(), e);
+        }
+      }
     }
   }
 
