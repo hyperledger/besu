@@ -168,6 +168,15 @@ public interface Blockchain {
   Optional<BlockBody> getBlockBody(Hash blockHeaderHash);
 
   /**
+   * Safe version of {@code getBlockBody} (it should take any locks necessary to ensure any block
+   * updates that might be taking place have been completed first)
+   *
+   * @param blockHeaderHash The hash of the block whose header we want to retrieve.
+   * @return The block body corresponding to this block hash.
+   */
+  Optional<BlockBody> getBlockBodySafe(Hash blockHeaderHash);
+
+  /**
    * Given a block's hash, returns the list of transaction receipts associated with this block's
    * transactions. Associated block is not necessarily on the canonical chain.
    *
