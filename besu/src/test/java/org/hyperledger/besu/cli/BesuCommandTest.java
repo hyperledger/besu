@@ -16,6 +16,7 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.contentOf;
 import static org.hamcrest.Matchers.is;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
@@ -38,10 +39,9 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
-import static org.mockito.Mockito.atLeast;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.*;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -72,6 +72,7 @@ import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -79,7 +80,10 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -1823,6 +1827,45 @@ public class BesuCommandTest extends CommandTestAbstract {
 
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void testGenerateEphemeryGenesisFileSuccess() throws IOException {
+    parseCommand("--network", "ephemery");
+    // Set up the mock genesis file path
+    Path tempJsonFile = Files.createTempFile("temp-ephemery", ".json");
+
+    // Set up the initial genesis string
+    String initialGenesisInput = "{\n" +
+            "  \"config\": {\n" +
+            "    \"chainId\": 39438135\n" +
+            "  },\n" +
+            "  \"timestamp\": \"1720119600\"\n" +
+            "}";
+    Files.write(tempJsonFile, initialGenesisInput.getBytes(UTF_8));
+
+    // Mock the return value of the genesis file path
+    when(EPHEMERY.getGenesisFile()).thenReturn(tempJsonFile.toString());
+    long mockTimestamp = Instant.now().getEpochSecond() - 60 * 60 * 24 * 30 * 3; // 3 periods ago
+    when(mockGenesisConfigFile.getTimestamp()).thenReturn(mockTimestamp);
+
+    BigInteger mockChainId = BigInteger.valueOf(39438135);
+    when(mockGenesisConfigOptions.getChainId()).thenReturn(Optional.of(mockChainId));
+
+    // Calculate the expected new values
+    long periodInSeconds = 28 * 24 * 60 * 60; // 28 days in seconds
+    long periodsSinceGenesis = ChronoUnit.DAYS.between(Instant.ofEpochSecond(mockTimestamp), Instant.now()) / 28;
+    long expectedTimestamp = mockTimestamp + periodsSinceGenesis * periodInSeconds;
+    BigInteger expectedChainId = mockChainId.add(BigInteger.valueOf(periodsSinceGenesis));
+
+    ObjectNode mockRootNode = mock(ObjectNode.class);
+    ObjectNode mockConfigNode = mock(ObjectNode.class);
+    when(mockObjectMapper.readTree(any(File.class))).thenReturn(mockRootNode);
+    when(mockRootNode.path("config")).thenReturn(mockConfigNode);
+
+    verify(mockConfigNode).put(eq("chainId"), expectedChainId);
+    verify(mockRootNode).put(eq("timestamp"), expectedTimestamp);
+    verify(mockObjectMapper).writerWithDefaultPrettyPrinter();
   }
 
   @Test
