@@ -60,6 +60,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 import java.util.stream.LongStream;
+import java.util.stream.Stream;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
@@ -976,27 +977,35 @@ public class BlockchainQueries {
   }
 
   public Wei gasPrice() {
-    final long blockHeight = headBlockNumber();
-    final var chainHeadHeader = blockchain.getChainHeadHeader();
+    final Block chainHeadBlock = blockchain.getChainHeadBlock();
+    final var chainHeadHeader = chainHeadBlock.getHeader();
+    final long blockHeight = chainHeadHeader.getNumber();
+
     final var nextBlockProtocolSpec =
         protocolSchedule.getForNextBlockHeader(chainHeadHeader, System.currentTimeMillis());
     final var nextBlockFeeMarket = nextBlockProtocolSpec.getFeeMarket();
+
     final Wei[] gasCollection =
-        LongStream.rangeClosed(
-                Math.max(0, blockHeight - apiConfig.getGasPriceBlocks() + 1), blockHeight)
-            .mapToObj(
-                l ->
-                    blockchain
-                        .getBlockByNumber(l)
-                        .map(Block::getBody)
-                        .map(BlockBody::getTransactions)
-                        .orElseThrow(
-                            () -> new IllegalStateException("Could not retrieve block #" + l)))
+        Stream.concat(
+                LongStream.range(
+                        Math.max(0, blockHeight - apiConfig.getGasPriceBlocks() + 1), blockHeight)
+                    .mapToObj(
+                        l ->
+                            blockchain
+                                .getBlockByNumber(l)
+                                .orElseThrow(
+                                    () ->
+                                        new IllegalStateException(
+                                            "Could not retrieve block #" + l))),
+                Stream.of(chainHeadBlock))
+            .map(Block::getBody)
+            .map(BlockBody::getTransactions)
             .flatMap(Collection::stream)
             .filter(t -> t.getGasPrice().isPresent())
             .map(t -> t.getGasPrice().get())
             .sorted()
             .toArray(Wei[]::new);
+
     return (gasCollection == null || gasCollection.length == 0)
         ? gasPriceLowerBound(chainHeadHeader, nextBlockFeeMarket)
         : UInt256s.max(
