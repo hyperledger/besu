@@ -68,7 +68,7 @@ public class DebugTraceBlockByHash implements JsonRpcMethod {
               .orElse(TraceOptions.DEFAULT);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid transaction trace parameters (index 1)",
+          "Invalid transaction trace parameter (index 1)",
           RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
           e);
     }
