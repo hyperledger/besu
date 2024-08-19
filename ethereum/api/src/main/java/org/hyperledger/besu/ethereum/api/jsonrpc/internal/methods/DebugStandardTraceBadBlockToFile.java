@@ -60,8 +60,15 @@ public class DebugStandardTraceBadBlockToFile extends DebugStandardTraceBlockToF
       throw new InvalidJsonRpcParameters(
           "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
     }
-    final Optional<TransactionTraceParams> transactionTraceParams =
-        requestContext.getOptionalParameter(1, TransactionTraceParams.class);
+    final Optional<TransactionTraceParams> transactionTraceParams;
+    try {
+      transactionTraceParams = requestContext.getOptionalParameter(1, TransactionTraceParams.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction trace parameters (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+          e);
+    }
 
     final BadBlockManager badBlockManager = protocolContext.getBadBlockManager();
 

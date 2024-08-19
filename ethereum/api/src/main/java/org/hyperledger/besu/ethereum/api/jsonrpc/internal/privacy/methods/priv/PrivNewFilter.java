@@ -50,7 +50,15 @@ public class PrivNewFilter implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext request) {
-    final String privacyGroupId = request.getRequiredParameter(0, String.class);
+    final String privacyGroupId;
+    try { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      privacyGroupId = request.getRequiredParameter(0, String.class);
+    } catch (Exception e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
     final FilterParameter filter;
     try {
       filter = request.getRequiredParameter(1, FilterParameter.class);

@@ -82,8 +82,7 @@ public class PrivDebugGetStateRootTest {
 
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasNoCause()
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid privacy group ID parameter (index 0)");
   }
 
   @Test

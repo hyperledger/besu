@@ -60,7 +60,13 @@ public class IbftProposeValidatorVote implements JsonRpcMethod {
       throw new InvalidJsonRpcParameters(
           "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
     }
-    final Boolean add = requestContext.getRequiredParameter(1, Boolean.class);
+    final Boolean add;
+    try {
+      add = requestContext.getRequiredParameter(1, Boolean.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid vote type parameter (index 1)", RpcErrorType.INVALID_VOTE_TYPE_PARAMS, e);
+    }
     LOG.trace(
         "Received RPC rpcName={} voteType={} address={}",
         getName(),
