@@ -26,7 +26,7 @@ public interface DataStorageConfiguration {
   boolean DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED = true;
   long MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
   int DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE = 5_000;
-  boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = false;
+  boolean DEFAULT_RECEIPT_COMPACTION_ENABLED = true;
 
   DataStorageConfiguration DEFAULT_CONFIG =
       ImmutableDataStorageConfiguration.builder()

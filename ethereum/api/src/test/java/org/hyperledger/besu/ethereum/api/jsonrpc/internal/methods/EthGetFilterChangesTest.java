@@ -69,9 +69,8 @@ public class EthGetFilterChangesTest {
 
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
-        .hasNoCause()
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid filter ID parameter (index 0)");
 
     verifyNoInteractions(filterManager);
   }
@@ -83,7 +82,7 @@ public class EthGetFilterChangesTest {
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid filter ID parameter (index 0)");
 
     verifyNoInteractions(filterManager);
   }

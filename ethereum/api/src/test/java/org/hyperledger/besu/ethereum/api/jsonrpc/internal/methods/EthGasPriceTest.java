@@ -17,7 +17,9 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
 import static org.mockito.Mockito.when;
@@ -61,7 +63,6 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.Mock;
-import org.mockito.internal.verification.VerificationModeFactory;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
@@ -106,8 +107,8 @@ public class EthGasPriceTest {
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
-    verify(blockchain).getChainHeadBlockNumber();
-    verify(blockchain, VerificationModeFactory.times(100)).getBlockByNumber(anyLong());
+    verify(blockchain).getChainHeadBlock();
+    verify(blockchain, times(99)).getBlockByNumber(anyLong());
     verifyNoMoreInteractions(blockchain);
   }
 
@@ -127,8 +128,7 @@ public class EthGasPriceTest {
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
-    verify(blockchain).getChainHeadBlockNumber();
-    verify(blockchain, VerificationModeFactory.times(1)).getBlockByNumber(anyLong());
+    verify(blockchain).getChainHeadBlock();
     verifyNoMoreInteractions(blockchain);
   }
 
@@ -146,8 +146,8 @@ public class EthGasPriceTest {
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
-    verify(blockchain).getChainHeadBlockNumber();
-    verify(blockchain, VerificationModeFactory.times(100)).getBlockByNumber(anyLong());
+    verify(blockchain).getChainHeadBlock();
+    verify(blockchain, times(99)).getBlockByNumber(anyLong());
     verifyNoMoreInteractions(blockchain);
   }
 
@@ -165,8 +165,8 @@ public class EthGasPriceTest {
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
-    verify(blockchain).getChainHeadBlockNumber();
-    verify(blockchain, VerificationModeFactory.times(81)).getBlockByNumber(anyLong());
+    verify(blockchain).getChainHeadBlock();
+    verify(blockchain, times(80)).getBlockByNumber(anyLong());
     verifyNoMoreInteractions(blockchain);
   }
 
@@ -252,8 +252,7 @@ public class EthGasPriceTest {
     final JsonRpcResponse actualResponse = method.response(request);
     assertThat(actualResponse).usingRecursiveComparison().isEqualTo(expectedResponse);
 
-    verify(blockchain).getChainHeadBlockNumber();
-    verify(blockchain, VerificationModeFactory.times(1)).getBlockByNumber(anyLong());
+    verify(blockchain).getChainHeadBlock();
     verifyNoMoreInteractions(blockchain);
   }
 
@@ -328,12 +327,14 @@ public class EthGasPriceTest {
       blocksByNumber.put(i, createFakeBlock(i, txsNum, baseFee));
     }
 
-    when(blockchain.getChainHeadBlockNumber()).thenReturn(chainHeadBlockNumber);
-    when(blockchain.getBlockByNumber(anyLong()))
-        .thenAnswer(
-            invocation -> Optional.of(blocksByNumber.get(invocation.getArgument(0, Long.class))));
-
-    when(blockchain.getChainHeadHeader())
+    when(blockchain.getChainHeadBlock()).thenReturn(blocksByNumber.get(chainHeadBlockNumber));
+    if (chainHeadBlockNumber > 1) {
+      when(blockchain.getBlockByNumber(anyLong()))
+          .thenAnswer(
+              invocation -> Optional.of(blocksByNumber.get(invocation.getArgument(0, Long.class))));
+    }
+    lenient()
+        .when(blockchain.getChainHeadHeader())
         .thenReturn(blocksByNumber.get(chainHeadBlockNumber).getHeader());
   }
 

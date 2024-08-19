@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -49,12 +50,29 @@ public class EthSubmitWork implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     final Optional<PoWSolverInputs> solver = miner.getWorkDefinition();
     if (solver.isPresent()) {
-      final PoWSolution solution =
-          new PoWSolution(
-              Bytes.fromHexString(requestContext.getRequiredParameter(0, String.class)).getLong(0),
-              requestContext.getRequiredParameter(2, Hash.class),
-              null,
-              Bytes.fromHexString(requestContext.getRequiredParameter(1, String.class)));
+      long nonce;
+      try {
+        nonce =
+            Bytes.fromHexString(requestContext.getRequiredParameter(0, String.class)).getLong(0);
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid nonce parameter (index 0)", RpcErrorType.INVALID_NONCE_PARAMS, e);
+      }
+      Hash mixHash;
+      try {
+        mixHash = requestContext.getRequiredParameter(2, Hash.class);
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid mix hash parameter (index 2)", RpcErrorType.INVALID_MIX_HASH_PARAMS, e);
+      }
+      Bytes powHash;
+      try {
+        powHash = Bytes.fromHexString(requestContext.getRequiredParameter(1, String.class));
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid PoW hash parameter (index 1)", RpcErrorType.INVALID_POW_HASH_PARAMS, e);
+      }
+      final PoWSolution solution = new PoWSolution(nonce, mixHash, null, powHash);
       final boolean result = miner.submitWork(solution);
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), result);
     } else {
