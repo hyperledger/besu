@@ -14,14 +14,24 @@
  */
 package org.hyperledger.besu.testfuzz;
 
-import org.hyperledger.besu.crypto.Hash;
+import static java.nio.charset.StandardCharsets.UTF_8;
 
+import org.hyperledger.besu.crypto.Hash;
+import org.hyperledger.besu.crypto.MessageDigestFactory;
+
+import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.math.BigInteger;
+import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.function.Supplier;
 
 import com.gitlab.javafuzz.core.AbstractFuzzTarget;
@@ -52,18 +62,21 @@ public class Fuzzer {
    *
    * @param target The target to fuzz
    * @param dirs the list of corpus dirs and files, comma separated.
+   * @param fuzzStats additional fuzzing data from the client
    * @throws ClassNotFoundException If Jacoco RT is not found (because jacocoagent.jar is not
    *     loaded)
    * @throws NoSuchMethodException If the wrong version of Jacoco is loaded
    * @throws InvocationTargetException If the wrong version of Jacoco is loaded
    * @throws IllegalAccessException If the wrong version of Jacoco is loaded
+   * @throws NoSuchAlgorithmException If the SHA-256 crypto algo cannot be loaded.
    */
   public Fuzzer(
       final AbstractFuzzTarget target, final String dirs, final Supplier<String> fuzzStats)
       throws ClassNotFoundException,
           NoSuchMethodException,
           InvocationTargetException,
-          IllegalAccessException {
+          IllegalAccessException,
+          NoSuchAlgorithmException {
     this.target = target;
     this.corpus = new Corpus(dirs);
     this.fuzzStats = fuzzStats;
@@ -71,6 +84,7 @@ public class Fuzzer {
     Method getAgentMethod = c.getMethod("getAgent");
     this.agent = getAgentMethod.invoke(null);
     this.getExecutionDataMethod = agent.getClass().getMethod("getExecutionData", boolean.class);
+    fileNameForBuffer(new byte[0]);
   }
 
   void writeCrash(final byte[] buf) {
@@ -122,13 +136,15 @@ public class Fuzzer {
     this.executionsInSample = 0;
     this.lastSampleTime = System.currentTimeMillis();
 
+    Map<String, Integer> hitMap = new HashMap<>();
+
     while (true) {
       byte[] buf = this.corpus.generateInput();
       // The next version will run this in a different thread.
       try {
         this.target.fuzz(buf);
       } catch (Exception e) {
-        e.printStackTrace();
+        e.printStackTrace(System.out);
         this.writeCrash(buf);
         System.exit(1);
         break;
@@ -137,41 +153,87 @@ public class Fuzzer {
       this.totalExecutions++;
       this.executionsInSample++;
 
-      byte[] dumpData = (byte[]) this.getExecutionDataMethod.invoke(this.agent, false);
-      ExecutionDataReader edr = new ExecutionDataReader(new ByteArrayInputStream(dumpData));
-      HitCounter hc = new HitCounter();
-      edr.setExecutionDataVisitor(hc);
-      edr.setSessionInfoVisitor(hc);
-      try {
-        edr.read();
-      } catch (IOException e) {
-        e.printStackTrace();
-        this.writeCrash(dumpData);
-        System.exit(1);
-        break;
-      }
-
-      long newCoverage = hc.getHits();
+      long newCoverage = getHitCount(hitMap);
       if (newCoverage > this.totalCoverage) {
         this.totalCoverage = newCoverage;
         this.corpus.putBuffer(buf);
         this.logStats("NEW");
+
+        String filename = fileNameForBuffer(buf);
+        try (var pw =
+            new PrintWriter(
+                new BufferedWriter(
+                    new OutputStreamWriter(new FileOutputStream(filename), UTF_8)))) {
+          pw.println(Bytes.wrap(buf).toHexString());
+          System.out.println(filename);
+          //          System.exit(1);
+        } catch (IOException e) {
+          e.printStackTrace(System.out);
+        }
+        System.out.println("hits : " + newCoverage);
       } else if ((System.currentTimeMillis() - this.lastSampleTime) > 30000) {
         this.logStats("PULSE");
       }
     }
   }
 
+  private static String fileNameForBuffer(final byte[] buf) throws NoSuchAlgorithmException {
+    MessageDigest md = MessageDigestFactory.create(MessageDigestFactory.SHA256_ALG);
+    md.update(buf);
+    byte[] digest = md.digest();
+    return String.format("./new-%064x.hex", new BigInteger(1, digest));
+  }
+
+  private long getHitCount(final Map<String, Integer> hitMap)
+      throws IllegalAccessException, InvocationTargetException {
+    byte[] dumpData = (byte[]) this.getExecutionDataMethod.invoke(this.agent, false);
+    ExecutionDataReader edr = new ExecutionDataReader(new ByteArrayInputStream(dumpData));
+    HitCounter hc = new HitCounter(hitMap);
+    edr.setExecutionDataVisitor(hc);
+    edr.setSessionInfoVisitor(hc);
+    try {
+      edr.read();
+    } catch (IOException e) {
+      e.printStackTrace();
+      this.writeCrash(dumpData);
+      //      System.exit(1);
+    }
+
+    return hc.getHits();
+  }
+
   static class HitCounter implements IExecutionDataVisitor, ISessionInfoVisitor {
     long hits = 0;
+    Map<String, Integer> hitMap;
+
+    public HitCounter(final Map<String, Integer> hitMap) {
+      this.hitMap = hitMap;
+    }
 
     @Override
     public void visitClassExecution(final ExecutionData executionData) {
+      int hit = 0;
       for (boolean b : executionData.getProbes()) {
+        if (executionData.getName().startsWith("org/hyperledger/besu/testfuzz/")
+            || executionData.getName().startsWith("org/bouncycastle/")
+            || executionData.getName().startsWith("com/gitlab/javafuzz/")) {
+          continue;
+        }
         if (b) {
-          hits++;
+          hit++;
         }
       }
+      String name = executionData.getName();
+      if (hitMap.containsKey(name)) {
+        if (hitMap.get(name) < hit) {
+          System.out.println(name + " - " + hit);
+          hitMap.put(name, hit);
+        }
+      } else {
+        System.out.println(name + " - new");
+        hitMap.put(name, hit);
+      }
+      hits += hit;
     }
 
     public long getHits() {
