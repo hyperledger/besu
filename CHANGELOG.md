@@ -5,6 +5,7 @@
 ### Upcoming Breaking Changes
 
 ### Breaking Changes
+- Receipt compaction is enabled by default. It will no longer be possible to downgrade Besu to versions prior to 24.5.1.
 
 ### Additions and Improvements
 - Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
