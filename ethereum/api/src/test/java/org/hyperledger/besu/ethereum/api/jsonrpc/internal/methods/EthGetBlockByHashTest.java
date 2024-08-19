@@ -69,7 +69,7 @@ public class EthGetBlockByHashTest {
   public void exceptionWhenNoBoolSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams(ZERO_HASH)))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid is complete transaction parameter (index 1)");
+        .hasMessage("Invalid return complete transaction parameter (index 1)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
@@ -85,7 +85,7 @@ public class EthGetBlockByHashTest {
   public void exceptionWhenBoolParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams(ZERO_HASH, "maybe")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid is complete transaction parameter (index 1)");
+        .hasMessage("Invalid return complete transaction parameter (index 1)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 

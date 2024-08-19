@@ -65,7 +65,15 @@ public class PrivCall extends AbstractBlockParameterMethod {
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
     final JsonCallParameter callParams = validateAndGetCallParams(request);
-    final String privacyGroupId = request.getRequiredParameter(0, String.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = request.getRequiredParameter(0, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(request.getUser());
 

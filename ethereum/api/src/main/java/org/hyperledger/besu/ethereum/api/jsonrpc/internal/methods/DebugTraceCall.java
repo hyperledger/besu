@@ -55,10 +55,17 @@ public class DebugTraceCall extends AbstractTraceCall {
 
   @Override
   protected TraceOptions getTraceOptions(final JsonRpcRequestContext requestContext) {
-    return requestContext
-        .getOptionalParameter(2, TransactionTraceParams.class)
-        .map(TransactionTraceParams::traceOptions)
-        .orElse(TraceOptions.DEFAULT);
+    try {
+      return requestContext
+          .getOptionalParameter(2, TransactionTraceParams.class)
+          .map(TransactionTraceParams::traceOptions)
+          .orElse(TraceOptions.DEFAULT);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction trace parameter (index 2)",
+          RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
+          e);
+    }
   }
 
   @Override

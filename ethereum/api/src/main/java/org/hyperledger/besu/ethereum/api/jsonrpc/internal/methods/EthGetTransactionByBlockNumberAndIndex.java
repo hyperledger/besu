@@ -50,7 +50,15 @@ public class EthGetTransactionByBlockNumberAndIndex extends AbstractBlockParamet
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
-    final int index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
+    final int index;
+    try {
+      index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction index parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS,
+          e);
+    }
     final Optional<TransactionWithMetadata> transactionWithMetadata =
         getBlockchainQueries().transactionByBlockNumberAndIndex(blockNumber, index);
     return transactionWithMetadata.map(TransactionCompleteResult::new).orElse(null);

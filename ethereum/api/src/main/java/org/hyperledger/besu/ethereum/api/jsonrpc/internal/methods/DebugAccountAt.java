@@ -78,7 +78,15 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected Object resultByBlockHash(
       final JsonRpcRequestContext requestContext, final Hash blockHash) {
-    final Integer txIndex = requestContext.getRequiredParameter(1, Integer.class);
+    final Integer txIndex;
+    try {
+      txIndex = requestContext.getRequiredParameter(1, Integer.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction index parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS,
+          e);
+    }
     final Address address;
     try {
       address = requestContext.getRequiredParameter(2, Address.class);
@@ -97,7 +105,7 @@ public class DebugAccountAt extends AbstractBlockParameterOrBlockHashMethod {
     List<TransactionWithMetadata> transactions = block.get().getTransactions();
     if (transactions.isEmpty() || txIndex < 0 || txIndex > block.get().getTransactions().size()) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_TRANSACTION_PARAMS);
     }
 
     return Tracer.processTracing(

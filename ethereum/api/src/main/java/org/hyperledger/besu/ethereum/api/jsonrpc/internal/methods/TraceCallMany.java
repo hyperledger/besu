@@ -98,7 +98,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     } catch (final Exception e) {
       LOG.error("Error parsing trace_callMany parameters: {}", e.getLocalizedMessage());
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_TRACE_CALL_MANY_PARAMS);
     }
 
     final Optional<BlockHeader> maybeBlockHeader =

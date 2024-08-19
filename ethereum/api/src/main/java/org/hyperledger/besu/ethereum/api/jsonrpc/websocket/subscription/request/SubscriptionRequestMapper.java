@@ -32,8 +32,15 @@ public class SubscriptionRequestMapper {
     try {
       final WebSocketRpcRequest webSocketRpcRequestBody = validateRequest(jsonRpcRequestContext);
 
-      final SubscriptionType subscriptionType =
-          webSocketRpcRequestBody.getRequiredParameter(0, SubscriptionType.class);
+      final SubscriptionType subscriptionType;
+      try {
+        subscriptionType = webSocketRpcRequestBody.getRequiredParameter(0, SubscriptionType.class);
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid subscription type parameter (index 0)",
+            RpcErrorType.INVALID_SUBSCRIPTION_PARAMS,
+            e);
+      }
       switch (subscriptionType) {
         case NEW_BLOCK_HEADERS:
           {
@@ -60,8 +67,13 @@ public class SubscriptionRequestMapper {
   }
 
   private boolean includeTransactions(final WebSocketRpcRequest webSocketRpcRequestBody) {
-    final Optional<SubscriptionParam> params =
-        webSocketRpcRequestBody.getOptionalParameter(1, SubscriptionParam.class);
+    final Optional<SubscriptionParam> params;
+    try {
+      params = webSocketRpcRequestBody.getOptionalParameter(1, SubscriptionParam.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid subscription parameter (index 1)", RpcErrorType.INVALID_SUBSCRIPTION_PARAMS, e);
+    }
     return params.isPresent() && params.get().includeTransaction();
   }
 
@@ -88,8 +100,16 @@ public class SubscriptionRequestMapper {
     try {
       final WebSocketRpcRequest webSocketRpcRequestBody = validateRequest(jsonRpcRequestContext);
 
-      final long subscriptionId =
-          webSocketRpcRequestBody.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
+      final long subscriptionId;
+      try {
+        subscriptionId =
+            webSocketRpcRequestBody.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid subscription ID parameter (index 0)",
+            RpcErrorType.INVALID_SUBSCRIPTION_PARAMS,
+            e);
+      }
       return new UnsubscribeRequest(subscriptionId, webSocketRpcRequestBody.getConnectionId());
     } catch (final Exception e) {
       throw new InvalidSubscriptionRequestException("Error parsing unsubscribe request", e);
@@ -102,9 +122,24 @@ public class SubscriptionRequestMapper {
     try {
       final WebSocketRpcRequest webSocketRpcRequestBody = validateRequest(jsonRpcRequestContext);
 
-      final String privacyGroupId = webSocketRpcRequestBody.getRequiredParameter(0, String.class);
-      final SubscriptionType subscriptionType =
-          webSocketRpcRequestBody.getRequiredParameter(1, SubscriptionType.class);
+      final String privacyGroupId;
+      try {
+        privacyGroupId = webSocketRpcRequestBody.getRequiredParameter(0, String.class);
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid privacy group ID parameter (index 0)",
+            RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+            e);
+      }
+      final SubscriptionType subscriptionType;
+      try {
+        subscriptionType = webSocketRpcRequestBody.getRequiredParameter(1, SubscriptionType.class);
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid subscription type parameter (index 1)",
+            RpcErrorType.INVALID_SUBSCRIPTION_PARAMS,
+            e);
+      }
 
       switch (subscriptionType) {
         case LOGS:
@@ -142,9 +177,25 @@ public class SubscriptionRequestMapper {
     try {
       final WebSocketRpcRequest webSocketRpcRequestBody = validateRequest(jsonRpcRequestContext);
 
-      final String privacyGroupId = webSocketRpcRequestBody.getRequiredParameter(0, String.class);
-      final long subscriptionId =
-          webSocketRpcRequestBody.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
+      final String privacyGroupId;
+      try {
+        privacyGroupId = webSocketRpcRequestBody.getRequiredParameter(0, String.class);
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid privacy group ID parameter (index 0)",
+            RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+            e);
+      }
+      final long subscriptionId;
+      try {
+        subscriptionId =
+            webSocketRpcRequestBody.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
+      } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+        throw new InvalidJsonRpcParameters(
+            "Invalid subscription ID parameter (index 1)",
+            RpcErrorType.INVALID_SUBSCRIPTION_PARAMS,
+            e);
+      }
       return new PrivateUnsubscribeRequest(
           subscriptionId, webSocketRpcRequestBody.getConnectionId(), privacyGroupId);
     } catch (final Exception e) {

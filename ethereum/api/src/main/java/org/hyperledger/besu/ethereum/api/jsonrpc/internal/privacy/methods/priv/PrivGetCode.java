@@ -59,7 +59,15 @@ public class PrivGetCode extends AbstractBlockParameterMethod {
   @Override
   protected String resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
-    final String privacyGroupId = request.getRequiredParameter(0, String.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = request.getRequiredParameter(0, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
     final Address address;
     try {
       address = request.getRequiredParameter(1, Address.class);
