@@ -173,7 +173,7 @@ public class CodeValidateSubCommand implements Runnable {
         ((CodeV1) code).getEofLayout().containerMode().get())) {
       return "err: code is valid initcode.  Runtime code expected";
     } else {
-      return "OK %d/%d/%d%n"
+      return "OK %d/%d/%d"
           .formatted(code.getCodeSectionCount(), code.getSubcontainerCount(), code.getDataSize());
     }
   }
