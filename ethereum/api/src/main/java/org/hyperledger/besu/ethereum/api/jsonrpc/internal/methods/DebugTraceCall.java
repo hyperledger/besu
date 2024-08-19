@@ -62,7 +62,7 @@ public class DebugTraceCall extends AbstractTraceCall {
           .orElse(TraceOptions.DEFAULT);
     } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
       throw new InvalidJsonRpcParameters(
-          "Invalid transaction trace parameters (index 2)",
+          "Invalid transaction trace parameter (index 2)",
           RpcErrorType.INVALID_TRANSACTION_TRACE_PARAMS,
           e);
     }

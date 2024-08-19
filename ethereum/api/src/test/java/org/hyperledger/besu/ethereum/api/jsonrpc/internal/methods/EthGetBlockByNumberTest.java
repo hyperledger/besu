@@ -121,7 +121,7 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenNoBoolSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("0")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid is transaction complete parameter (index 1)");
+        .hasMessage("Invalid return complete transaction parameter (index 1)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
@@ -137,7 +137,7 @@ public class EthGetBlockByNumberTest {
   public void exceptionWhenBoolParamInvalid() {
     assertThatThrownBy(() -> method.response(requestWithParams("0", "maybe")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Invalid is transaction complete parameter (index 1)");
+        .hasMessage("Invalid return complete transaction parameter (index 1)");
     verifyNoMoreInteractions(blockchainQueries);
   }
 
