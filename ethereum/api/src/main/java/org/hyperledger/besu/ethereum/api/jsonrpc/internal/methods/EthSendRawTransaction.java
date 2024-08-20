@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcRequestException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcError;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -66,9 +67,15 @@ public class EthSendRawTransaction implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 1) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
-    final String rawTransaction = requestContext.getRequiredParameter(0, String.class);
+    final String rawTransaction;
+    try {
+      rawTransaction = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction parameters (index 0)", RpcErrorType.INVALID_TRANSACTION_PARAMS, e);
+    }
 
     final Transaction transaction;
     try {
@@ -86,7 +93,7 @@ public class EthSendRawTransaction implements JsonRpcMethod {
     } catch (final RLPException e) {
       LOG.debug("RLPException: {} caused by {}", e.getMessage(), e.getCause());
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_PARAMS);
     } catch (final InvalidJsonRpcRequestException i) {
       LOG.debug("InvalidJsonRpcRequestException: {} caused by {}", i.getMessage(), i.getCause());
       return new JsonRpcErrorResponse(

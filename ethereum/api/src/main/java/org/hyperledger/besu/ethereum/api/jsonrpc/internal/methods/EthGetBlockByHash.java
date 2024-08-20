@@ -17,8 +17,10 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.BlockResultFactory;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -59,7 +61,13 @@ public class EthGetBlockByHash implements JsonRpcMethod {
   }
 
   private BlockResult blockResult(final JsonRpcRequestContext request) {
-    final Hash hash = request.getRequiredParameter(0, Hash.class);
+    final Hash hash;
+    try {
+      hash = request.getRequiredParameter(0, Hash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
+    }
 
     if (isCompleteTransactions(request)) {
       return transactionComplete(hash);
@@ -85,6 +93,13 @@ public class EthGetBlockByHash implements JsonRpcMethod {
   }
 
   private boolean isCompleteTransactions(final JsonRpcRequestContext requestContext) {
-    return requestContext.getRequiredParameter(1, Boolean.class);
+    try {
+      return requestContext.getRequiredParameter(1, Boolean.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid return complete transaction parameter (index 1)",
+          RpcErrorType.INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS,
+          e);
+    }
   }
 }

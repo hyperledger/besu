@@ -56,14 +56,6 @@ public class DataStorageOptionsTest
   }
 
   @Test
-  public void bonsaiTrieLogPruningWindowSizeShouldBePositive2() {
-    internalTestFailure(
-        "Cannot enable --bonsai-limit-trie-logs-enabled with sync-mode FULL. You must set --bonsai-limit-trie-logs-enabled=false or use a different sync-mode",
-        "--sync-mode",
-        "FULL");
-  }
-
-  @Test
   public void bonsaiTrieLogPruningWindowSizeShouldBePositive() {
     internalTestFailure(
         "--bonsai-trie-logs-pruning-window-size=0 must be greater than 0",
@@ -135,12 +127,19 @@ public class DataStorageOptionsTest
   }
 
   @Test
+  public void receiptCompactionCanBeEnabledWithImplicitTrueValue() {
+    internalTestSuccess(
+        dataStorageConfiguration ->
+            assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(true),
+        "--receipt-compaction-enabled");
+  }
+
+  @Test
   public void receiptCompactionCanBeEnabled() {
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(true),
-        "--receipt-compaction-enabled",
-        "true");
+        "--receipt-compaction-enabled=true");
   }
 
   @Test
@@ -148,8 +147,7 @@ public class DataStorageOptionsTest
     internalTestSuccess(
         dataStorageConfiguration ->
             assertThat(dataStorageConfiguration.getReceiptCompactionEnabled()).isEqualTo(false),
-        "--receipt-compaction-enabled",
-        "false");
+        "--receipt-compaction-enabled=false");
   }
 
   @Override

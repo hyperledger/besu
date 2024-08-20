@@ -26,7 +26,92 @@ public enum RpcErrorType implements RpcMethodError {
   PARSE_ERROR(-32700, "Parse error"),
   INVALID_REQUEST(-32600, "Invalid Request"),
   METHOD_NOT_FOUND(-32601, "Method not found"),
-  INVALID_PARAMS(-32602, "Invalid params"),
+
+  INVALID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid params"),
+  INVALID_ACCOUNT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid account params"),
+  INVALID_ADDRESS_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid address hash params"),
+  INVALID_ADDRESS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid address params"),
+  INVALID_BLOB_COUNT(
+      INVALID_PARAMS_ERROR_CODE,
+      "Invalid blob count (blob transactions must have at least one blob)"),
+  INVALID_BLOB_GAS_USED_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid blob gas used param (missing or invalid)"),
+  INVALID_BLOCK_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block, unable to parse RLP"),
+  INVALID_BLOCK_COUNT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block count params"),
+  INVALID_BLOCK_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block hash params"),
+  INVALID_BLOCK_INDEX_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block index params"),
+  INVALID_BLOCK_NUMBER_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid block number params"),
+  INVALID_CALL_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid call params"),
+  INVALID_CONSOLIDATION_REQUEST_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid consolidation request params"),
+  INVALID_CREATE_PRIVACY_GROUP_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid create privacy group params"),
+  INVALID_DATA_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid data params"),
+  INVALID_DATA_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid data hash params"),
+  INVALID_DEPOSIT_REQUEST_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid deposit request"),
+  INVALID_ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid engine exchange transition configuration params"),
+  INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid engine forkchoice updated params"),
+  INVALID_ENGINE_FORKCHOICE_UPDATED_PAYLOAD_ATTRIBUTES(
+      INVALID_PARAMS_ERROR_CODE, "Invalid engine payload attributes parameter"),
+  INVALID_ENGINE_NEW_PAYLOAD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid engine payload parameter"),
+  INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid engine prepare payload parameter"),
+  INVALID_ENODE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid enode params"),
+  INVALID_EXCESS_BLOB_GAS_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid excess blob gas params (missing or invalid)"),
+  INVALID_EXTRA_DATA_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid extra data params"),
+  INVALID_FILTER_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid filter params"),
+  INVALID_GAS_PRICE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid gas price params"),
+  INVALID_HASH_RATE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid hash rate params"),
+  INVALID_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid ID params"),
+  INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid return complete transaction params"),
+  INVALID_LOG_FILTER_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid log filter params"),
+  INVALID_LOG_LEVEL_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid log level params (missing or incorrect)"),
+  INVALID_MAX_RESULTS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid max results params"),
+  INVALID_METHOD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid method params"),
+  INVALID_MIN_GAS_PRICE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid min gas price params"),
+  INVALID_MIN_PRIORITY_FEE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid min priority fee params"),
+  INVALID_MIX_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid mix hash params"),
+  INVALID_NONCE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid nonce params"),
+  INVALID_PARENT_BEACON_BLOCK_ROOT_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid parent beacon block root (missing or incorrect)"),
+  INVALID_PARAM_COUNT(INVALID_PARAMS_ERROR_CODE, "Invalid number of params"),
+  INVALID_PAYLOAD_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid payload id params"),
+  INVALID_PENDING_TRANSACTIONS_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid pending transactions params"),
+  INVAlID_PLUGIN_NAME_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid plug in name params"),
+  INVALID_POSITION_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid position params"),
+  INVALID_POW_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid pow hash params"),
+  INVALID_PRIVACY_GROUP_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid privacy group params"),
+  INVALID_PRIVATE_FROM_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid private from params"),
+  INVALID_PRIVATE_FOR_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid private for params"),
+  INVALID_PROPOSAL_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid proposal params"),
+  INVALID_REMOTE_CAPABILITIES_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid remote capabilities params"),
+  INVALID_REWARD_PERCENTILES_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid reward percentiles params"),
+  INVALID_SEALER_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid sealer ID params"),
+  INVALID_STORAGE_KEYS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid storage keys params"),
+  INVALID_SUBSCRIPTION_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid subscription params"),
+  INVALID_TARGET_GAS_LIMIT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid target gas limit params"),
+  INVALID_TIMESTAMP_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid timestamp parameter"),
+  INVALID_TRACE_CALL_MANY_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid trace call many params"),
+  INVALID_TRACE_NUMBERS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid trace numbers params"),
+  INVALID_TRACE_TYPE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid trace type params"),
+  INVALID_TRANSACTION_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid transaction params (missing or incorrect)"),
+  INVALID_TRANSACTION_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction hash params"),
+  INVALID_TRANSACTION_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction id params"),
+  INVALID_TRANSACTION_INDEX_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction index params"),
+  INVALID_TRANSACTION_LIMIT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction limit params"),
+  INVALID_TRANSACTION_TRACE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction trace params"),
+  INVALID_VERSIONED_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid versioned hash params"),
+  INVALID_VOTE_TYPE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid vote type params"),
+  INVALID_WITHDRAWALS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid withdrawals"),
+
   INTERNAL_ERROR(-32603, "Internal error"),
   TIMEOUT_ERROR(-32603, "Timeout expired"),
 
@@ -231,7 +316,6 @@ public enum RpcErrorType implements RpcMethodError {
   UNKNOWN(-32603, "Unknown internal error"),
 
   INVALID_BLOBS(-32603, "blobs failed kzg validation");
-
   private final int code;
   private final String message;
   private final Function<String, Optional<String>> dataDecoder;

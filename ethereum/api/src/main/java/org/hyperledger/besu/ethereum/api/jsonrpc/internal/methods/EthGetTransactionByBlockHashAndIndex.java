@@ -17,9 +17,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionCompleteResult;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
@@ -42,8 +44,24 @@ public class EthGetTransactionByBlockHashAndIndex implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Hash hash = requestContext.getRequiredParameter(0, Hash.class);
-    final int index = requestContext.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
+    final Hash hash;
+    try {
+      hash = requestContext.getRequiredParameter(0, Hash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction hash parameter (index 0)",
+          RpcErrorType.INVALID_TRANSACTION_HASH_PARAMS,
+          e);
+    }
+    final int index;
+    try {
+      index = requestContext.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction id parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_ID_PARAMS,
+          e);
+    }
     final Optional<TransactionWithMetadata> transactionWithMetadata =
         blockchain.transactionByBlockHashAndIndex(hash, index);
     final TransactionResult result =

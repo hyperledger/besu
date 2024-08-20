@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedLongParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -57,9 +58,22 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
     engineCallListener.executionEngineCalled();
 
-    final long startBlockNumber =
-        request.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
-    final long count = request.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
+    final long startBlockNumber;
+    try {
+      startBlockNumber = request.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid start block number parameter (index 0)",
+          RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS,
+          e);
+    }
+    final long count;
+    try {
+      count = request.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block count params (index 1)", RpcErrorType.INVALID_BLOCK_COUNT_PARAMS, e);
+    }
     final Object reqId = request.getRequest().getId();
 
     LOG.atTrace()
@@ -70,7 +84,7 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
         .log();
 
     if (startBlockNumber < 1 || count < 1) {
-      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     }
 
     if (count > getMaxRequestBlocks()) {

@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
@@ -62,12 +63,30 @@ public class PrivGetEeaTransactionCount implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 3) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
-    final Address address = requestContext.getRequiredParameter(0, Address.class);
-    final String privateFrom = requestContext.getRequiredParameter(1, String.class);
-    final String[] privateFor = requestContext.getRequiredParameter(2, String[].class);
+    final Address address;
+    try {
+      address = requestContext.getRequiredParameter(0, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
+    final String privateFrom;
+    try {
+      privateFrom = requestContext.getRequiredParameter(1, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid private from parameter (index 1)", RpcErrorType.INVALID_PRIVATE_FROM_PARAMS, e);
+    }
+    final String[] privateFor;
+    try {
+      privateFor = requestContext.getRequiredParameter(2, String[].class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid private for parameters (index 2)", RpcErrorType.INVALID_PRIVATE_FOR_PARAMS, e);
+    }
 
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
 

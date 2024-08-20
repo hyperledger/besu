@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TraceCallManyParameter;
@@ -63,8 +64,13 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    final Optional<BlockParameter> maybeBlockParameter =
-        request.getOptionalParameter(1, BlockParameter.class);
+    final Optional<BlockParameter> maybeBlockParameter;
+    try {
+      maybeBlockParameter = request.getOptionalParameter(1, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
 
     return maybeBlockParameter.orElse(BlockParameter.LATEST);
   }
@@ -75,7 +81,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
 
     if (requestContext.getRequest().getParamLength() != 2) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
     final TraceCallManyParameter[] transactionsAndTraceTypeParameters;
@@ -92,7 +98,7 @@ public class TraceCallMany extends TraceCall implements JsonRpcMethod {
     } catch (final Exception e) {
       LOG.error("Error parsing trace_callMany parameters: {}", e.getLocalizedMessage());
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_TRACE_CALL_MANY_PARAMS);
     }
 
     final Optional<BlockHeader> maybeBlockHeader =

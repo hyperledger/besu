@@ -58,28 +58,28 @@ public class QbftProposeValidatorVoteTest {
   public void exceptionWhenNoParamsSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams()))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid validator address parameter (index 0)");
   }
 
   @Test
   public void exceptionWhenNoAuthSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams(Address.fromHexString("1"))))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 1");
+        .hasMessage("Invalid vote type parameter (index 1)");
   }
 
   @Test
   public void exceptionWhenNoAddressSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams("true")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 0");
+        .hasMessageContaining("Invalid validator address parameter");
   }
 
   @Test
   public void exceptionWhenInvalidBoolParameterSupplied() {
     assertThatThrownBy(() -> method.response(requestWithParams(Address.fromHexString("1"), "c")))
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessageContaining("Invalid json rpc parameter at index 1");
+        .hasMessageContaining("Invalid vote type parameter (index 1)");
   }
 
   @Test

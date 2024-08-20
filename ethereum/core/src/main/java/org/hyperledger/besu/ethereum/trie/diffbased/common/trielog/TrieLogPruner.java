@@ -26,10 +26,17 @@ import org.hyperledger.besu.plugin.services.trielogs.TrieLogEvent;
 
 import java.util.Comparator;
 import java.util.Optional;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
 
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.TreeMultimap;
@@ -40,6 +47,7 @@ import org.slf4j.LoggerFactory;
 public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
 
   private static final Logger LOG = LoggerFactory.getLogger(TrieLogPruner.class);
+  private static final int PRELOAD_TIMEOUT_IN_SECONDS = 30;
 
   private final int pruningLimit;
   private final int loadingLimit;
@@ -83,25 +91,61 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
             BesuMetricCategory.PRUNER, "trie_log_pruned_orphan", "trie log pruned orphan");
   }
 
-  public int initialize() {
-    return preloadQueue();
+  public void initialize() {
+    preloadQueueWithTimeout(PRELOAD_TIMEOUT_IN_SECONDS);
   }
 
-  private int preloadQueue() {
+  @VisibleForTesting
+  void preloadQueueWithTimeout(final int timeoutInSeconds) {
+
+    LOG.info("Trie log pruner queue preload starting...");
     LOG.atInfo()
-        .setMessage("Loading first {} trie logs from database...")
+        .setMessage("Attempting to load first {} trie logs from database...")
         .addArgument(loadingLimit)
         .log();
+
+    try (final ExecutorService preloadExecutor = Executors.newSingleThreadExecutor()) {
+      final Future<?> future = preloadExecutor.submit(this::preloadQueue);
+
+      LOG.atInfo()
+          .setMessage(
+              "Trie log pruning will timeout after {} seconds. If this is timing out, consider using `besu storage trie-log prune` subcommand, see https://besu.hyperledger.org/public-networks/how-to/bonsai-limit-trie-logs")
+          .addArgument(timeoutInSeconds)
+          .log();
+
+      try {
+        future.get(timeoutInSeconds, TimeUnit.SECONDS);
+      } catch (InterruptedException | ExecutionException e) {
+        LOG.error("Error loading trie logs from database", e);
+        future.cancel(true);
+      } catch (TimeoutException e) {
+        future.cancel(true);
+        LOG.atWarn()
+            .setMessage("Timeout occurred while loading and processing {} trie logs from database")
+            .addArgument(loadingLimit)
+            .log();
+      }
+    }
+    LOG.info("Trie log pruner queue preload complete.");
+  }
+
+  private void preloadQueue() {
+
     try (final Stream<byte[]> trieLogKeys = rootWorldStateStorage.streamTrieLogKeys(loadingLimit)) {
-      final AtomicLong count = new AtomicLong();
+
+      final AtomicLong addToPruneQueueCount = new AtomicLong();
       final AtomicLong orphansPruned = new AtomicLong();
       trieLogKeys.forEach(
           blockHashAsBytes -> {
+            if (Thread.currentThread().isInterrupted()) {
+              throw new RuntimeException(
+                  new InterruptedException("Thread interrupted during trie log processing."));
+            }
             final Hash blockHash = Hash.wrap(Bytes32.wrap(blockHashAsBytes));
             final Optional<BlockHeader> header = blockchain.getBlockHeader(blockHash);
             if (header.isPresent()) {
               addToPruneQueue(header.get().getNumber(), blockHash);
-              count.getAndIncrement();
+              addToPruneQueueCount.getAndIncrement();
             } else {
               // prune orphaned blocks (sometimes created during block production)
               rootWorldStateStorage.pruneTrieLog(blockHash);
@@ -109,12 +153,23 @@ public class TrieLogPruner implements TrieLogEvent.TrieLogObserver {
               prunedOrphanCounter.inc();
             }
           });
+
       LOG.atDebug().log("Pruned {} orphaned trie logs from database...", orphansPruned.intValue());
-      LOG.atInfo().log("Loaded {} trie logs from database", count);
-      return pruneFromQueue() + orphansPruned.intValue();
+      LOG.atInfo().log(
+          "Added {} trie logs to prune queue. Commencing pruning of eligible trie logs...",
+          addToPruneQueueCount.intValue());
+      int prunedCount = pruneFromQueue();
+      LOG.atInfo().log("Pruned {} trie logs", prunedCount);
     } catch (Exception e) {
-      LOG.error("Error loading trie logs from database, nothing pruned", e);
-      return 0;
+      if (e instanceof InterruptedException
+          || (e.getCause() != null && e.getCause() instanceof InterruptedException)) {
+        LOG.info("Operation interrupted, but will attempt to prune what's in the queue so far...");
+        int prunedCount = pruneFromQueue();
+        LOG.atInfo().log("...pruned {} trie logs", prunedCount);
+        Thread.currentThread().interrupt(); // Preserve interrupt status
+      } else {
+        LOG.error("Error loading trie logs from database, nothing pruned", e);
+      }
     }
   }
 

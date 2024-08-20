@@ -17,23 +17,26 @@ package org.hyperledger.besu.ethereum.blockcreation.txselection;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
+import org.hyperledger.besu.plugin.data.ProcessableBlockHeader;
 
 import com.google.common.base.Stopwatch;
 
 public class TransactionEvaluationContext
     implements org.hyperledger.besu.plugin.services.txselection.TransactionEvaluationContext<
         PendingTransaction> {
-  private final org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction
-      pendingTransaction;
+  private final ProcessableBlockHeader pendingBlockHeader;
+  private final PendingTransaction pendingTransaction;
   private final Stopwatch evaluationTimer;
   private final Wei transactionGasPrice;
   private final Wei minGasPrice;
 
   public TransactionEvaluationContext(
+      final ProcessableBlockHeader pendingBlockHeader,
       final PendingTransaction pendingTransaction,
       final Stopwatch evaluationTimer,
       final Wei transactionGasPrice,
       final Wei minGasPrice) {
+    this.pendingBlockHeader = pendingBlockHeader;
     this.pendingTransaction = pendingTransaction;
     this.evaluationTimer = evaluationTimer;
     this.transactionGasPrice = transactionGasPrice;
@@ -42,6 +45,11 @@ public class TransactionEvaluationContext
 
   public Transaction getTransaction() {
     return pendingTransaction.getTransaction();
+  }
+
+  @Override
+  public ProcessableBlockHeader getPendingBlockHeader() {
+    return pendingBlockHeader;
   }
 
   @Override

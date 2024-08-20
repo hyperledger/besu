@@ -15,6 +15,7 @@
 package org.hyperledger.besu.evmtool;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode.INITCODE;
 import static picocli.CommandLine.ScopeType.INHERIT;
 
 import org.hyperledger.besu.cli.config.NetworkName;
@@ -34,6 +35,7 @@ import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.code.CodeInvalid;
+import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.log.LogsBloomFilter;
 import org.hyperledger.besu.evm.tracing.OperationTracer;
@@ -49,7 +51,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -150,13 +151,13 @@ public class EvmToolCommand implements Runnable {
       names = {"--sender"},
       paramLabel = "<address>",
       description = "Calling address for this invocation.")
-  private final Address sender = Address.ZERO;
+  private final Address sender = Address.fromHexString("0x73656e646572");
 
   @Option(
       names = {"--receiver"},
       paramLabel = "<address>",
       description = "Receiving address for this invocation.")
-  private final Address receiver = Address.ZERO;
+  private final Address receiver = Address.fromHexString("0x7265636569766572");
 
   @Option(
       names = {"--create"},
@@ -167,7 +168,7 @@ public class EvmToolCommand implements Runnable {
       names = {"--contract"},
       paramLabel = "<address>",
       description = "The address holding the contract code.")
-  private final Address contract = Address.ZERO;
+  private final Address contract = Address.fromHexString("0x7265636569766572");
 
   @Option(
       names = {"--coinbase"},
@@ -377,7 +378,7 @@ public class EvmToolCommand implements Runnable {
       } else if (genesisFile != null) {
         genesisFileModule = GenesisFileModule.createGenesisModule(genesisFile);
       } else {
-        genesisFileModule = GenesisFileModule.createGenesisModule(NetworkName.DEV);
+        genesisFileModule = GenesisFileModule.createGenesisModule();
       }
       final EvmToolComponent component =
           DaggerEvmToolComponent.builder()
@@ -418,11 +419,21 @@ public class EvmToolCommand implements Runnable {
       if (codeBytes.isEmpty() && !createTransaction) {
         codeBytes = component.getWorldState().get(receiver).getCode();
       }
-      Code code = evm.getCodeForCreation(codeBytes);
+      Code code =
+          createTransaction ? evm.getCodeForCreation(codeBytes) : evm.getCodeUncached(codeBytes);
       if (!code.isValid()) {
         out.println(((CodeInvalid) code).getInvalidReason());
         return;
+      } else if (code.getEofVersion() == 1
+          && createTransaction
+              != INITCODE.equals(((CodeV1) code).getEofLayout().containerMode().get())) {
+        out.println(
+            createTransaction
+                ? "--create requires EOF in INITCODE mode"
+                : "To evaluate INITCODE mode EOF code use the --create flag");
+        return;
       }
+
       final Stopwatch stopwatch = Stopwatch.createUnstarted();
       long lastTime = 0;
       do {
@@ -451,10 +462,12 @@ public class EvmToolCommand implements Runnable {
             BlockHeaderBuilder.create()
                 .parentHash(Hash.EMPTY)
                 .coinbase(coinbase)
-                .difficulty(Difficulty.ONE)
-                .number(1)
-                .gasLimit(5000)
-                .timestamp(Instant.now().toEpochMilli())
+                .difficulty(
+                    Difficulty.fromHexString(
+                        genesisFileModule.providesGenesisConfigFile().getDifficulty()))
+                .number(0)
+                .gasLimit(genesisFileModule.providesGenesisConfigFile().getGasLimit())
+                .timestamp(0)
                 .ommersHash(Hash.EMPTY_LIST_HASH)
                 .stateRoot(Hash.EMPTY_TRIE_HASH)
                 .transactionsRoot(Hash.EMPTY)
@@ -462,7 +475,7 @@ public class EvmToolCommand implements Runnable {
                 .logsBloom(LogsBloomFilter.empty())
                 .gasUsed(0)
                 .extraData(Bytes.EMPTY)
-                .mixHash(Hash.EMPTY)
+                .mixHash(Hash.ZERO)
                 .nonce(0)
                 .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
                 .baseFee(component.getBlockchain().getChainHeadHeader().getBaseFee().orElse(null))
@@ -515,28 +528,30 @@ public class EvmToolCommand implements Runnable {
               }
             }
           }
-
-          if (lastLoop && messageFrameStack.isEmpty()) {
-            final long evmGas = txGas - messageFrame.getRemainingGas();
-            final JsonObject resultLine = new JsonObject();
-            resultLine.put("gasUser", "0x" + Long.toHexString(evmGas));
-            if (!noTime) {
-              resultLine.put("timens", lastTime).put("time", lastTime / 1000);
-            }
-            resultLine
-                .put("gasTotal", "0x" + Long.toHexString(evmGas))
-                .put("output", messageFrame.getOutputData().toHexString());
-            out.println();
-            out.println(resultLine);
-          }
         }
         lastTime = stopwatch.elapsed().toNanos();
         stopwatch.reset();
-        if (showJsonAlloc && lastLoop) {
+        if (lastLoop) {
           initialMessageFrame.getSelfDestructs().forEach(updater::deleteAccount);
+          updater.clearAccountsThatAreEmpty();
           updater.commit();
           MutableWorldState worldState = component.getWorldState();
-          dumpWorldState(worldState, out);
+          final long evmGas = txGas - initialMessageFrame.getRemainingGas();
+          final JsonObject resultLine = new JsonObject();
+          resultLine
+              .put("stateRoot", worldState.rootHash().toHexString())
+              .put("output", initialMessageFrame.getOutputData().toHexString())
+              .put("gasUsed", "0x" + Long.toHexString(evmGas))
+              .put("pass", initialMessageFrame.getExceptionalHaltReason().isEmpty())
+              .put("fork", protocolSpec.getName());
+          if (!noTime) {
+            resultLine.put("timens", lastTime).put("time", lastTime / 1000);
+          }
+          out.println(resultLine);
+
+          if (showJsonAlloc) {
+            dumpWorldState(worldState, out);
+          }
         }
       } while (remainingIters-- > 0);
 

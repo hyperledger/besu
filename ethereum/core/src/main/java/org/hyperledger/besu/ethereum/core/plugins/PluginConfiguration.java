@@ -14,58 +14,25 @@
  */
 package org.hyperledger.besu.ethereum.core.plugins;
 
-import static java.util.Objects.requireNonNull;
-
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
 import java.util.List;
 
-/**
- * Configuration for managing plugins, including their information, detection type, and directory.
- */
 public class PluginConfiguration {
   private final List<PluginInfo> requestedPlugins;
   private final Path pluginsDir;
+  private final boolean externalPluginsEnabled;
 
-  /**
-   * Constructs a new PluginConfiguration with the specified plugin information and requestedPlugins
-   * directory.
-   *
-   * @param requestedPlugins List of {@link PluginInfo} objects representing the requestedPlugins.
-   * @param pluginsDir The directory where requestedPlugins are located.
-   */
-  public PluginConfiguration(final List<PluginInfo> requestedPlugins, final Path pluginsDir) {
+  public PluginConfiguration(
+      final List<PluginInfo> requestedPlugins,
+      final Path pluginsDir,
+      final boolean externalPluginsEnabled) {
     this.requestedPlugins = requestedPlugins;
     this.pluginsDir = pluginsDir;
+    this.externalPluginsEnabled = externalPluginsEnabled;
   }
 
-  /**
-   * Constructs a PluginConfiguration with specified plugins using the default directory.
-   *
-   * @param requestedPlugins List of plugins for consideration or registration. discoverable plugins
-   *     are.
-   */
-  public PluginConfiguration(final List<PluginInfo> requestedPlugins) {
-    this.requestedPlugins = requestedPlugins;
-    this.pluginsDir = PluginConfiguration.defaultPluginsDir();
-  }
-
-  /**
-   * Constructs a PluginConfiguration with the specified plugins directory
-   *
-   * @param pluginsDir The directory where plugins are located. Cannot be null.
-   */
-  public PluginConfiguration(final Path pluginsDir) {
-    this.requestedPlugins = null;
-    this.pluginsDir = requireNonNull(pluginsDir);
-  }
-
-  /**
-   * Returns the names of requested plugins, or an empty list if none.
-   *
-   * @return List of requested plugin names, never {@code null}.
-   */
   public List<String> getRequestedPlugins() {
     return requestedPlugins == null
         ? Collections.emptyList()
@@ -76,17 +43,46 @@ public class PluginConfiguration {
     return pluginsDir;
   }
 
-  /**
-   * Returns the default plugins directory based on system properties.
-   *
-   * @return The default {@link Path} to the plugin's directory.
-   */
+  public boolean isExternalPluginsEnabled() {
+    return externalPluginsEnabled;
+  }
+
   public static Path defaultPluginsDir() {
-    final String pluginsDirProperty = System.getProperty("besu.plugins.dir");
-    if (pluginsDirProperty == null) {
-      return Paths.get(System.getProperty("besu.home", "."), "plugins");
-    } else {
-      return Paths.get(pluginsDirProperty);
+    String pluginsDirProperty = System.getProperty("besu.plugins.dir");
+    return pluginsDirProperty == null
+        ? Paths.get(System.getProperty("besu.home", "."), "plugins")
+        : Paths.get(pluginsDirProperty);
+  }
+
+  public static Builder builder() {
+    return new Builder();
+  }
+
+  public static class Builder {
+    private List<PluginInfo> requestedPlugins;
+    private Path pluginsDir;
+    private boolean externalPluginsEnabled = true;
+
+    public Builder requestedPlugins(final List<PluginInfo> requestedPlugins) {
+      this.requestedPlugins = requestedPlugins;
+      return this;
+    }
+
+    public Builder pluginsDir(final Path pluginsDir) {
+      this.pluginsDir = pluginsDir;
+      return this;
+    }
+
+    public Builder externalPluginsEnabled(final boolean externalPluginsEnabled) {
+      this.externalPluginsEnabled = externalPluginsEnabled;
+      return this;
+    }
+
+    public PluginConfiguration build() {
+      if (pluginsDir == null) {
+        pluginsDir = PluginConfiguration.defaultPluginsDir();
+      }
+      return new PluginConfiguration(requestedPlugins, pluginsDir, externalPluginsEnabled);
     }
   }
 }

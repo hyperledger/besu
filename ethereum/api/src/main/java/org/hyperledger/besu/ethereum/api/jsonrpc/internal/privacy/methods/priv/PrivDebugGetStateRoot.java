@@ -20,6 +20,7 @@ import org.hyperledger.besu.enclave.EnclaveClientException;
 import org.hyperledger.besu.enclave.types.PrivacyGroup;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.AbstractBlockParameterMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
@@ -60,13 +61,26 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
 
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(1, BlockParameter.class);
+    try {
+      return request.getRequiredParameter(1, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
   }
 
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext requestContext, final long blockNumber) {
-    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
     final String privacyUserId = privacyIdProvider.getPrivacyUserId(requestContext.getUser());
     if (LOG.isTraceEnabled()) {
       LOG.trace("Executing {}", getName());
@@ -91,7 +105,7 @@ public class PrivDebugGetStateRoot extends AbstractBlockParameterMethod {
       }
     } catch (final Exception e) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS);
     }
 
     if (privacyGroup.isEmpty()) {

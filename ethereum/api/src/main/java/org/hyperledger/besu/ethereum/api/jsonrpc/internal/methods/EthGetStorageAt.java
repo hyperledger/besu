@@ -18,8 +18,10 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UInt256Parameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
 
 import org.apache.tuweni.units.bigints.UInt256;
@@ -37,13 +39,30 @@ public class EthGetStorageAt extends AbstractBlockParameterOrBlockHashMethod {
   @Override
   protected BlockParameterOrBlockHash blockParameterOrBlockHash(
       final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(2, BlockParameterOrBlockHash.class);
+    try {
+      return request.getRequiredParameter(2, BlockParameterOrBlockHash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid block or block hash parameter (index 2)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
+    }
   }
 
   @Override
   protected String resultByBlockHash(final JsonRpcRequestContext request, final Hash blockHash) {
-    final Address address = request.getRequiredParameter(0, Address.class);
-    final UInt256 position = request.getRequiredParameter(1, UInt256Parameter.class).getValue();
+    final Address address;
+    try {
+      address = request.getRequiredParameter(0, Address.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid address parameter (index 0)", RpcErrorType.INVALID_ADDRESS_PARAMS, e);
+    }
+    final UInt256 position;
+    try {
+      position = request.getRequiredParameter(1, UInt256Parameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid position parameter (index 1)", RpcErrorType.INVALID_POSITION_PARAMS, e);
+    }
     return blockchainQueries
         .get()
         .storageAt(address, position, blockHash)

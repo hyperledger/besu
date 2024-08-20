@@ -24,7 +24,6 @@ import static org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration.
 
 import org.hyperledger.besu.cli.options.CLIOptions;
 import org.hyperledger.besu.cli.util.CommandLineUtils;
-import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -63,34 +62,41 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
       arity = "1")
   private Long bonsaiMaxLayersToLoad = DEFAULT_BONSAI_MAX_LAYERS_TO_LOAD;
 
-  private static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
+  /** The bonsai limit trie logs enabled option name */
+  public static final String BONSAI_LIMIT_TRIE_LOGS_ENABLED = "--bonsai-limit-trie-logs-enabled";
 
   /** The bonsai trie logs pruning window size. */
   public static final String BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE =
       "--bonsai-trie-logs-pruning-window-size";
 
+  // TODO --Xbonsai-limit-trie-logs-enabled and --Xbonsai-trie-log-pruning-enabled are deprecated,
+  // remove in a future release
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
       names = {
         BONSAI_LIMIT_TRIE_LOGS_ENABLED,
-        "--Xbonsai-limit-trie-logs-enabled",
-        "--Xbonsai-trie-log-pruning-enabled"
+        "--Xbonsai-limit-trie-logs-enabled", // deprecated
+        "--Xbonsai-trie-log-pruning-enabled" // deprecated
       },
       fallbackValue = "true",
       description = "Limit the number of trie logs that are retained. (default: ${DEFAULT-VALUE})")
   private Boolean bonsaiLimitTrieLogsEnabled = DEFAULT_BONSAI_LIMIT_TRIE_LOGS_ENABLED;
 
+  // TODO --Xbonsai-trie-logs-pruning-window-size is deprecated, remove in a future release
   @SuppressWarnings("ExperimentalCliOptionMustBeCorrectlyDisplayed")
   @CommandLine.Option(
-      names = {BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE, "--Xbonsai-trie-logs-pruning-window-size"},
+      names = {
+        BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE,
+        "--Xbonsai-trie-logs-pruning-window-size" // deprecated
+      },
       description =
           "The max number of blocks to load and prune trie logs for at startup. (default: ${DEFAULT-VALUE})")
   private Integer bonsaiTrieLogPruningWindowSize = DEFAULT_BONSAI_TRIE_LOG_PRUNING_WINDOW_SIZE;
 
   @Option(
       names = "--receipt-compaction-enabled",
-      description = "Enables compact storing of receipts (default: ${DEFAULT-VALUE}).",
-      arity = "1")
+      description = "Enables compact storing of receipts (default: ${DEFAULT-VALUE})",
+      fallbackValue = "true")
   private Boolean receiptCompactionEnabled = DEFAULT_RECEIPT_COMPACTION_ENABLED;
 
   @CommandLine.ArgGroup(validate = false)
@@ -147,20 +153,10 @@ public class DataStorageOptions implements CLIOptions<DataStorageConfiguration> 
    * Validates the data storage options
    *
    * @param commandLine the full commandLine to check all the options specified by the user
-   * @param syncMode the sync mode
    */
-  public void validate(final CommandLine commandLine, final SyncMode syncMode) {
+  public void validate(final CommandLine commandLine) {
     if (DataStorageFormat.BONSAI == dataStorageFormat) {
       if (bonsaiLimitTrieLogsEnabled) {
-        if (SyncMode.FULL == syncMode) {
-          throw new CommandLine.ParameterException(
-              commandLine,
-              String.format(
-                  "Cannot enable %s with sync-mode %s. You must set %s or use a different sync-mode",
-                  BONSAI_LIMIT_TRIE_LOGS_ENABLED,
-                  SyncMode.FULL,
-                  BONSAI_LIMIT_TRIE_LOGS_ENABLED + "=false"));
-        }
         if (bonsaiMaxLayersToLoad < MINIMUM_BONSAI_TRIE_LOG_RETENTION_LIMIT) {
           throw new CommandLine.ParameterException(
               commandLine,
