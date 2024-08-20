@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -12,20 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.services.kvstore;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor;
 
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import java.util.List;
 
-public class InMemoryKeyValueStorageTest extends AbstractSegmentedKeyValueStorageTest {
+public class PrivateBlockTrace {
 
-  @Override
-  protected KeyValueStorage createStore() {
-    return new InMemoryKeyValueStorage();
+  private final List<PrivateTransactionTrace> transactionTraces;
+
+  public PrivateBlockTrace(final List<PrivateTransactionTrace> transactionTraces) {
+    this.transactionTraces = transactionTraces;
   }
 
-  @Override
-  public SegmentedKeyValueStorage createSegmentedStore() {
-    return new SegmentedInMemoryKeyValueStorage();
+  public List<PrivateTransactionTrace> getTransactionTraces() {
+    return transactionTraces;
   }
 }

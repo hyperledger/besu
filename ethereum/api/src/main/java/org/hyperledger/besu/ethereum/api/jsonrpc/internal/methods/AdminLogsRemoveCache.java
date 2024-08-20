@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -42,10 +43,20 @@ public class AdminLogsRemoveCache implements JsonRpcMethod {
 
   @Override
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
-    final Optional<BlockParameter> startBlockParameter =
-        requestContext.getOptionalParameter(0, BlockParameter.class);
-    final Optional<BlockParameter> stopBlockParameter =
-        requestContext.getOptionalParameter(1, BlockParameter.class);
+    final Optional<BlockParameter> startBlockParameter;
+    try {
+      startBlockParameter = requestContext.getOptionalParameter(0, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid start block parameter (index 0)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
+    }
+    final Optional<BlockParameter> stopBlockParameter;
+    try {
+      stopBlockParameter = requestContext.getOptionalParameter(1, BlockParameter.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid stop block parameter (index 1)", RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS, e);
+    }
 
     final long startBlock;
     if (startBlockParameter.isEmpty() || startBlockParameter.get().isEarliest()) {
@@ -81,7 +92,7 @@ public class AdminLogsRemoveCache implements JsonRpcMethod {
 
     if (stopBlock < startBlock) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     }
 
     final TransactionLogBloomCacher transactionLogBloomCacher =

@@ -47,14 +47,15 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_CREATE_PRIVACY_GROUP_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid create privacy group params"),
   INVALID_DATA_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid data params"),
+  INVALID_DATA_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid data hash params"),
   INVALID_DEPOSIT_REQUEST_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid deposit request"),
   INVALID_ENGINE_EXCHANGE_TRANSITION_CONFIGURATION_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine exchange transition configuration params"),
   INVALID_ENGINE_FORKCHOICE_UPDATED_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine forkchoice updated params"),
-  INVALID_ENGINE_PAYLOAD_ATTRIBUTES_PARAMS(
+  INVALID_ENGINE_FORKCHOICE_UPDATED_PAYLOAD_ATTRIBUTES(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine payload attributes parameter"),
-  INVALID_ENGINE_PAYLOAD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid engine payload parameter"),
+  INVALID_ENGINE_NEW_PAYLOAD_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid engine payload parameter"),
   INVALID_ENGINE_PREPARE_PAYLOAD_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid engine prepare payload parameter"),
   INVALID_ENODE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid enode params"),
@@ -65,8 +66,8 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_GAS_PRICE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid gas price params"),
   INVALID_HASH_RATE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid hash rate params"),
   INVALID_ID_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid ID params"),
-  INVALID_IS_TRANSACTION_COMPLETE_PARAMS(
-      INVALID_PARAMS_ERROR_CODE, "Invalid is transaction complete params"),
+  INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS(
+      INVALID_PARAMS_ERROR_CODE, "Invalid return complete transaction params"),
   INVALID_LOG_FILTER_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid log filter params"),
   INVALID_LOG_LEVEL_PARAMS(
       INVALID_PARAMS_ERROR_CODE, "Invalid log level params (missing or incorrect)"),

@@ -18,11 +18,13 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErr
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.JsonRpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.privacy.methods.PrivacyIdProvider;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.privacy.MultiTenancyValidationException;
 import org.hyperledger.besu.ethereum.privacy.PrivacyController;
 
@@ -50,7 +52,15 @@ public class PrivDeletePrivacyGroup implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     LOG.trace("Executing {}", RpcMethod.PRIV_DELETE_PRIVACY_GROUP.getMethodName());
 
-    final String privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    final String privacyGroupId;
+    try {
+      privacyGroupId = requestContext.getRequiredParameter(0, String.class);
+    } catch (Exception e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid privacy group ID parameter (index 0)",
+          RpcErrorType.INVALID_PRIVACY_GROUP_PARAMS,
+          e);
+    }
 
     final String response;
     try {

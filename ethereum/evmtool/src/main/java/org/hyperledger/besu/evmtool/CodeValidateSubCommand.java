@@ -35,9 +35,11 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
+import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import org.web3j.utils.Strings;
 import picocli.CommandLine;
@@ -63,7 +65,7 @@ public class CodeValidateSubCommand implements Runnable {
 
   @ParentCommand EvmToolCommand parentCommand;
 
-  private final EVM evm;
+  private final Supplier<EVM> evm;
 
   @CommandLine.Option(
       names = {"--file"},
@@ -83,12 +85,18 @@ public class CodeValidateSubCommand implements Runnable {
 
   CodeValidateSubCommand(final EvmToolCommand parentCommand) {
     this.parentCommand = parentCommand;
-    String fork = EvmSpecVersion.PRAGUE.getName();
-    if (parentCommand != null && parentCommand.hasFork()) {
-      fork = parentCommand.getFork();
-    }
-    ProtocolSpec protocolSpec = ReferenceTestProtocolSchedules.create().geSpecByName(fork);
-    evm = protocolSpec.getEvm();
+    String fork =
+        parentCommand != null && parentCommand.hasFork()
+            ? parentCommand.getFork()
+            : EvmSpecVersion.PRAGUE.getName();
+
+    evm =
+        Suppliers.memoize(
+            () -> {
+              ProtocolSpec protocolSpec =
+                  ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
+              return protocolSpec.getEvm();
+            });
   }
 
   @Override
@@ -155,12 +163,12 @@ public class CodeValidateSubCommand implements Runnable {
       return "";
     }
 
-    EOFLayout layout = evm.parseEOF(codeBytes);
+    EOFLayout layout = evm.get().parseEOF(codeBytes);
     if (!layout.isValid()) {
       return "err: layout - " + layout.invalidReason();
     }
 
-    Code code = evm.getCodeUncached(codeBytes);
+    Code code = evm.get().getCodeUncached(codeBytes);
     if (code instanceof CodeInvalid codeInvalid) {
       return "err: " + codeInvalid.getInvalidReason();
     } else if (EOFContainerMode.INITCODE.equals(

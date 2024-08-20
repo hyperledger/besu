@@ -263,9 +263,10 @@ public class BlockTransactionSelector {
             .getTransactionPriceCalculator()
             .price(
                 pendingTransaction.getTransaction(),
-                blockSelectionContext.processableBlockHeader().getBaseFee());
+                blockSelectionContext.pendingBlockHeader().getBaseFee());
 
     return new TransactionEvaluationContext(
+        blockSelectionContext.pendingBlockHeader(),
         pendingTransaction,
         Stopwatch.createStarted(),
         transactionGasPriceInBlock,
@@ -330,10 +331,10 @@ public class BlockTransactionSelector {
   private TransactionProcessingResult processTransaction(
       final PendingTransaction pendingTransaction, final WorldUpdater worldStateUpdater) {
     final BlockHashLookup blockHashLookup =
-        new CachingBlockHashLookup(blockSelectionContext.processableBlockHeader(), blockchain);
+        new CachingBlockHashLookup(blockSelectionContext.pendingBlockHeader(), blockchain);
     return transactionProcessor.processTransaction(
         worldStateUpdater,
-        blockSelectionContext.processableBlockHeader(),
+        blockSelectionContext.pendingBlockHeader(),
         pendingTransaction.getTransaction(),
         blockSelectionContext.miningBeneficiary(),
         pluginOperationTracer,

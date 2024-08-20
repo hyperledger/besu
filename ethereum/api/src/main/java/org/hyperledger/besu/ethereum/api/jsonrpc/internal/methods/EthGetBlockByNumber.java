@@ -124,6 +124,13 @@ public class EthGetBlockByNumber extends AbstractBlockParameterMethod {
   }
 
   private boolean isCompleteTransactions(final JsonRpcRequestContext request) {
-    return request.getRequiredParameter(1, Boolean.class);
+    try {
+      return request.getRequiredParameter(1, Boolean.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid return complete transaction parameter (index 1)",
+          RpcErrorType.INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS,
+          e);
+    }
   }
 }

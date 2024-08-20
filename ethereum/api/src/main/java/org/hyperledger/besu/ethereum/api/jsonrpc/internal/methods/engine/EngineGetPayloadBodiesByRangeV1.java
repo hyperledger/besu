@@ -58,8 +58,15 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext request) {
     engineCallListener.executionEngineCalled();
 
-    final long startBlockNumber =
-        request.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
+    final long startBlockNumber;
+    try {
+      startBlockNumber = request.getRequiredParameter(0, UnsignedLongParameter.class).getValue();
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid start block number parameter (index 0)",
+          RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS,
+          e);
+    }
     final long count;
     try {
       count = request.getRequiredParameter(1, UnsignedLongParameter.class).getValue();
@@ -77,7 +84,7 @@ public class EngineGetPayloadBodiesByRangeV1 extends ExecutionEngineJsonRpcMetho
         .log();
 
     if (startBlockNumber < 1 || count < 1) {
-      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(reqId, RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     }
 
     if (count > getMaxRequestBlocks()) {

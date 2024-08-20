@@ -3,6 +3,22 @@
 ## Next release
 
 ### Upcoming Breaking Changes
+
+### Breaking Changes
+- Receipt compaction is enabled by default. It will no longer be possible to downgrade Besu to versions prior to 24.5.1.
+
+### Additions and Improvements
+- Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
+- Add pending block header to `TransactionEvaluationContext` plugin API [#7483](https://github.com/hyperledger/besu/pull/7483)
+
+### Bug fixes
+- Fix tracing in precompiled contracts when halting for out of gas [#7318](https://github.com/hyperledger/besu/issues/7318)
+- Correctly release txpool save and restore lock in case of exceptions [#7473](https://github.com/hyperledger/besu/pull/7473)
+- Fix for `eth_gasPrice` could not retrieve block error [#7482](https://github.com/hyperledger/besu/pull/7482)
+
+## 24.8.0
+
+### Upcoming Breaking Changes
 - Receipt compaction will be enabled by default in a future version of Besu. After this change it will not be possible to downgrade to the previous Besu version.
 - --Xbonsai-limit-trie-logs-enabled is deprecated, use --bonsai-limit-trie-logs-enabled instead
 - --Xbonsai-trie-logs-pruning-window-size is deprecated, use --bonsai-trie-logs-pruning-window-size instead
@@ -15,7 +31,10 @@
 ### Additions and Improvements
 - Expose set finalized/safe block in plugin api BlockchainService. These method can be used by plugins to set finalized/safe block for a PoA network (such as QBFT, IBFT and Clique).[#7382](https://github.com/hyperledger/besu/pull/7382)
 - In process RPC service [#7395](https://github.com/hyperledger/besu/pull/7395)
+- Added support for tracing private transactions using `priv_traceTransaction` API. [#6161](https://github.com/hyperledger/besu/pull/6161)
 - Wrap WorldUpdater into EVMWorldupdater [#7434](https://github.com/hyperledger/besu/pull/7434)
+- Bump besu-native to 0.9.4 [#7456](https://github.com/hyperledger/besu/pull/7456)
+
 
 ### Bug fixes
 - Correct entrypoint in Docker evmtool [#7430](https://github.com/hyperledger/besu/pull/7430)

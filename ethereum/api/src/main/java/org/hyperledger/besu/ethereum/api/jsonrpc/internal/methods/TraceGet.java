@@ -17,6 +17,7 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.BlockTracer;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
@@ -51,11 +52,27 @@ public class TraceGet extends AbstractTraceByHash implements JsonRpcMethod {
   public JsonRpcResponse response(final JsonRpcRequestContext requestContext) {
     if (requestContext.getRequest().getParamLength() != 2) {
       return new JsonRpcErrorResponse(
-          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAMS);
+          requestContext.getRequest().getId(), RpcErrorType.INVALID_PARAM_COUNT);
     }
 
-    final Hash transactionHash = requestContext.getRequiredParameter(0, Hash.class);
-    final List<?> traceNumbersAsStrings = requestContext.getRequiredParameter(1, List.class);
+    final Hash transactionHash;
+    try {
+      transactionHash = requestContext.getRequiredParameter(0, Hash.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction hash parameter (index 0)",
+          RpcErrorType.INVALID_TRANSACTION_HASH_PARAMS,
+          e);
+    }
+    final List<?> traceNumbersAsStrings;
+    try {
+      traceNumbersAsStrings = requestContext.getRequiredParameter(1, List.class);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid trace numbers parameters (index 1)",
+          RpcErrorType.INVALID_TRACE_NUMBERS_PARAMS,
+          e);
+    }
     final List<Integer> traceAddress =
         traceNumbersAsStrings.stream()
             .map(t -> Integer.parseInt(((String) t).substring(2), 16))

@@ -106,14 +106,21 @@ public class EthFeeHistory implements JsonRpcMethod {
           "Invalid highest block parameter (index 1)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
 
-    final Optional<List<Double>> maybeRewardPercentiles =
-        request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
+    final Optional<List<Double>> maybeRewardPercentiles;
+    try {
+      maybeRewardPercentiles = request.getOptionalParameter(2, Double[].class).map(Arrays::asList);
+    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+      throw new InvalidJsonRpcParameters(
+          "Invalid reward percentiles parameter (index 2)",
+          RpcErrorType.INVALID_REWARD_PERCENTILES_PARAMS,
+          e);
+    }
 
     final BlockHeader chainHeadHeader = blockchain.getChainHeadHeader();
     final long chainHeadBlockNumber = chainHeadHeader.getNumber();
     final long highestBlockNumber = highestBlock.getNumber().orElse(chainHeadBlockNumber);
     if (highestBlockNumber > chainHeadBlockNumber) {
-      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_PARAMS);
+      return new JsonRpcErrorResponse(requestId, RpcErrorType.INVALID_BLOCK_NUMBER_PARAMS);
     }
 
     final long firstBlock = Math.max(0, highestBlockNumber - (blockCount - 1));
