@@ -90,32 +90,30 @@ public class DebugMetricsTest {
   public void shouldHandleDoubleValuesInNestedStructureWithoutClassCastException() {
     // Tests fix for issue# 7383: debug_metrics method error
     when(metricsSystem.streamObservations())
-            .thenReturn(
-                    Stream.of(
-                            // This creates a double value for "a"
-                            new Observation(BLOCKCHAIN, "nested_metric", 1.0, List.of("a")),
-                            // This attempts to create a nested structure under "a", which was previously a double
-                            new Observation(BLOCKCHAIN, "nested_metric", 2.0, asList("a", "b")),
-                            // This adds another level of nesting
-                            new Observation(BLOCKCHAIN, "nested_metric", 3.0, asList("a", "b", "c"))
-                    ));
+        .thenReturn(
+            Stream.of(
+                // This creates a double value for "a"
+                new Observation(BLOCKCHAIN, "nested_metric", 1.0, List.of("a")),
+                // This attempts to create a nested structure under "a", which was previously a
+                // double
+                new Observation(BLOCKCHAIN, "nested_metric", 2.0, asList("a", "b")),
+                // This adds another level of nesting
+                new Observation(BLOCKCHAIN, "nested_metric", 3.0, asList("a", "b", "c"))));
 
     assertResponse(
+        ImmutableMap.of(
+            BLOCKCHAIN.getName(),
             ImmutableMap.of(
-                    BLOCKCHAIN.getName(),
+                "nested_metric",
+                ImmutableMap.of(
+                    "a",
                     ImmutableMap.of(
-                            "nested_metric", ImmutableMap.of(
-                                    "a", ImmutableMap.of(
-                                            "value", 1.0,
-                                            "b", ImmutableMap.of(
-                                                    "value", 2.0,
-                                                    "c", 3.0
-                                            )
-                                    )
-                            )
-                    )
-            )
-    );
+                        "value",
+                        1.0,
+                        "b",
+                        ImmutableMap.of(
+                            "value", 2.0,
+                            "c", 3.0))))));
   }
 
   private void assertResponse(final ImmutableMap<String, Object> expectedResponse) {
