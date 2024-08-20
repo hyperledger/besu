@@ -113,11 +113,12 @@ public class EOFReferenceTestTools {
 
   @SuppressWarnings("java:S5960") // This is not production code, this is testing code.
   public static void executeTest(
+      final String name,
       final String fork,
       final Bytes code,
       final String containerKind,
       final EOFTestCaseSpec.TestResult expected) {
-    EVM evm = ReferenceTestProtocolSchedules.create().geSpecByName(fork).getEvm();
+    EVM evm = ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork).getEvm();
     assertThat(evm).isNotNull();
 
     // hardwire in the magic byte transaction checks
@@ -144,26 +145,32 @@ public class EOFReferenceTestTools {
               .withFailMessage("Code did not parse to valid containerKind of " + expectedMode)
               .isNotEqualTo(expectedMode);
         } else {
+          if (expected.result()) {
           assertThat(parsedCode.isValid())
               .withFailMessage(
+                    () -> "Valid code failed with " + ((CodeInvalid) parsedCode).getInvalidReason())
+                .isTrue();
+          } else {
+            assertThat(parsedCode.isValid())
+                .withFailMessage("Invalid code expected " + expected.exception() + " but was valid")
+                .isFalse();
+            if (name.contains("eip7692")) {
+              // if the test is from EEST, validate the exception name.
+              assertThat(((CodeInvalid) parsedCode).getInvalidReason())
+                  .withFailMessage(
                   () ->
-                      EOFLayout.parseEOF(code).prettyPrint()
-                          + "\nExpected exception :"
-                          + expected.exception()
-                          + " actual exception :"
-                          + (parsedCode.isValid()
+                          "Expected exception :%s actual exception: %s"
+                              .formatted(
+                                  expected.exception(),
+                                  (parsedCode.isValid()
                               ? null
-                              : ((CodeInvalid) parsedCode).getInvalidReason()))
-              .isEqualTo(expected.result());
-
-          if (expected.result()) {
-            assertThat(code)
-                .withFailMessage("Container round trip failed")
-                .isEqualTo(layout.writeContainer(null));
+                                      : ((CodeInvalid) parsedCode).getInvalidReason())))
+                  .containsIgnoringCase(expected.exception().replace("EOFException.", ""));
+            }
           }
         }
       } else {
-        assertThat(layout.isValid())
+        assertThat(false)
             .withFailMessage(
                 () ->
                     "Expected exception - "
