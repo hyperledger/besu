@@ -192,7 +192,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("invalidCodeArguments")
   void testInvalidCode(final String code) {
-    assertValidation("Invalid Instruction 0x", code);
+    assertValidation("undefined_instruction", code);
   }
 
   private static Stream<Arguments> invalidCodeArguments() {
@@ -214,7 +214,7 @@ class CodeV1Test {
   @ParameterizedTest
   @MethodSource("pushTruncatedImmediateArguments")
   void testPushTruncatedImmediate(final String code) {
-    assertValidation("No terminating instruction", code);
+    assertValidation("missing_stop_opcode", code);
   }
 
   private static Stream<Arguments> pushTruncatedImmediateArguments() {
@@ -228,13 +228,13 @@ class CodeV1Test {
   @ParameterizedTest
   @ValueSource(strings = {"e0", "e000"})
   void testRjumpTruncatedImmediate(final String code) {
-    assertValidation("Truncated relative jump offset", code);
+    assertValidation("truncated_instruction", code);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"6001e1", "6001e100"})
   void testRjumpiTruncatedImmediate(final String code) {
-    assertValidation("Truncated relative jump offset", code);
+    assertValidation("truncated_instruction", code);
   }
 
   @ParameterizedTest
@@ -248,7 +248,7 @@ class CodeV1Test {
         "6001e2030000000100"
       })
   void testRjumpvTruncatedImmediate(final String code) {
-    assertValidation("Truncated jump table", code);
+    assertValidation("truncated_instruction", code);
   }
 
   @ParameterizedTest
@@ -264,7 +264,7 @@ class CodeV1Test {
         "6001e200fff900"
       })
   void testRjumpsOutOfBounds(final String code) {
-    assertValidation("Relative jump destination out of bounds", code);
+    assertValidation("invalid_rjump_destination", code);
   }
 
   @ParameterizedTest
@@ -317,7 +317,7 @@ class CodeV1Test {
         "6001e2000005e2010000000000"
       })
   void testRjumpsIntoImmediate(final String code) {
-    assertValidation("Relative jump destinations targets invalid immediate data", code);
+    assertValidation("invalid_rjump_destination", code);
   }
 
   private static Stream<Arguments> rjumpsIntoImmediateExtraArguments() {
@@ -357,25 +357,25 @@ class CodeV1Test {
   @ParameterizedTest
   @ValueSource(strings = {"e3", "e300"})
   void testCallFTruncated(final String code) {
-    assertValidation("Truncated CALLF", code);
+    assertValidation("truncated_instruction", code);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"e5", "e500"})
   void testJumpCallFTruncated(final String code) {
-    assertValidation("Truncated JUMPF", code);
+    assertValidation("truncated_instruction", code);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"e30004", "e303ff", "e3ffff"})
   void testCallFWrongSection(final String code) {
-    assertValidation("CALLF to non-existent section -", code, false, 3);
+    assertValidation("invalid_code_section_index", code, false, 3);
   }
 
   @ParameterizedTest
   @ValueSource(strings = {"e50004", "e503ff", "e5ffff"})
   void testJumpFWrongSection(final String code) {
-    assertValidation("JUMPF to non-existent section -", code, false, 3);
+    assertValidation("invalid_code_section_index", code, false, 3);
   }
 
   @ParameterizedTest
@@ -476,8 +476,13 @@ class CodeV1Test {
     EOFLayout eofLayout = EOFLayout.parseEOF(Bytes.fromHexString(sb));
     CodeV1Validation validator = new CodeV1Validation(0xc000);
 
-    assertThat(validator.validateStack(sectionToTest, eofLayout, new WorkList(sectionCount)))
-        .isEqualTo(expectedError);
+    String validation =
+        validator.validateStack(sectionToTest, eofLayout, new WorkList(sectionCount));
+    if (expectedError != null) {
+      assertThat(validation).contains(expectedError);
+    } else {
+      assertThat(validation).isNull();
+    }
   }
 
   /**
@@ -517,13 +522,10 @@ class CodeV1Test {
   static Stream<Arguments> stackUnderflow() {
     return Stream.of(
         Arguments.of(
-            "Stack underflow",
-            "Operation 0x50 requires stack of 1 but may only have 0 items",
-            0,
-            List.of(List.of("50 00", 0, 0x80, 1))),
+            "Stack underflow", "stack_underflow", 0, List.of(List.of("50 00", 0, 0x80, 1))),
         Arguments.of(
             "double rjumpi",
-            "Operation 0xF3 requires stack of 2 but may only have 1 items",
+            "stack_underflow",
             0,
             List.of(List.of("5f 5f e10005 5f 5f e10000 f3", 0, 0x80, 1))));
   }
@@ -533,17 +535,17 @@ class CodeV1Test {
         Arguments.of("RJUMP 0", null, 0, List.of(List.of("e00000 00", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP 1 w/ dead code",
-            "Code that was not forward referenced in section 0x0 pc 3",
+            "unreachable_instructions",
             0,
             List.of(List.of("e00001 43 00", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP 2 w/ dead code",
-            "Code that was not forward referenced in section 0x0 pc 3",
+            "unreachable_instructions",
             0,
             List.of(List.of("e00002 43 50 00", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP 3 and -10",
-            "Code that was not forward referenced in section 0x0 pc 3",
+            "unreachable_instructions",
             0,
             List.of(List.of("e00003 01 50 00 6001 6001 e0fff6", 0, 0x80, 2))));
   }
@@ -554,12 +556,12 @@ class CodeV1Test {
         Arguments.of("RJUMP -4", null, 0, List.of(List.of("5B e0fffc", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
-            "Stack minimum violation on backwards jump from 1 to 0, 1 != 1",
+            "stack_height_mismatch",
             0,
             List.of(List.of("43 e0fffc", 0, 0x80, 0))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
-            "Stack minimum violation on backwards jump from 2 to 1, 0 != 0",
+            "stack_height_mismatch",
             0,
             List.of(List.of("43 50 e0fffc 00", 0, 0x80, 0))),
         Arguments.of(
@@ -570,7 +572,7 @@ class CodeV1Test {
             "RJUMP -5 matched stack", null, 0, List.of(List.of("43 50 43 e0fffb", 0, 0x80, 1))),
         Arguments.of(
             "RJUMP -4 unmatched stack",
-            "Stack minimum violation on backwards jump from 3 to 2, 1 != 1",
+            "stack_height_mismatch",
             0,
             List.of(List.of("43 50 43 e0fffc 50 00", 0, 0x80, 0))));
   }
@@ -611,17 +613,17 @@ class CodeV1Test {
             List.of(List.of("6001 e10003 30 50 00 30 30 30 50 50 50 00", 0, 0x80, 3))),
         Arguments.of(
             "RJUMPI Missing stack argument",
-            "Operation 0xE1 requires stack of 1 but may only have 0 items",
+            "stack_underflow",
             0,
             List.of(List.of("e10000 00", 0, 0x80, 0))),
         Arguments.of(
             "Stack underflow one branch",
-            "Operation 0x02 requires stack of 2 but may only have 1 items",
+            "stack_underflow",
             0,
             List.of(List.of("60ff 6001 e10002 50 00 02 50 00", 0, 0x80, 0))),
         Arguments.of(
             "Stack underflow another branch",
-            "Operation 0x02 requires stack of 2 but may only have 1 items",
+            "stack_underflow",
             0,
             List.of(List.of("60ff 6001 e10002 02 00 19 50 00", 0, 0x80, 0))),
         // this depends on requiring stacks to be "clean" returns
@@ -722,22 +724,22 @@ class CodeV1Test {
                 List.of("e4", 2, 2, 2))),
         Arguments.of(
             "underflow",
-            "Operation 0xE3 requires stack of 1 but may only have 0 items",
+            "stack_underflow",
             0,
             List.of(List.of("e30001 00", 0, 0x80, 0), List.of("e4", 1, 0, 0))),
         Arguments.of(
             "underflow 2",
-            "Operation 0xE3 requires stack of 2 but may only have 1 items",
+            "stack_underflow",
             0,
             List.of(List.of("30 e30001 00", 0, 0x80, 0), List.of("e4", 2, 0, 2))),
         Arguments.of(
             "underflow 3",
-            "Operation 0xE3 requires stack of 1 but may only have 0 items",
+            "stack_underflow",
             1,
             List.of(List.of("00", 0, 0x80, 0), List.of("50 e30001 e4", 1, 0, 1))),
         Arguments.of(
             "underflow 4",
-            "Operation 0xE3 requires stack of 3 but may only have 2 items",
+            "stack_underflow",
             0,
             List.of(
                 List.of("44 e30001 80 e30002 00", 0, 0x80, 0),
@@ -816,32 +818,32 @@ class CodeV1Test {
     return Stream.of(
         Arguments.of(
             "Max stack not changed by unreachable code",
-            "Code that was not forward referenced in section 0x0 pc 3",
+            "unreachable_instructions",
             0,
             List.of(List.of("30 50 00 30 30 30 50 50 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RETf",
-            "Code that was not forward referenced in section 0x0 pc 3",
+            "unreachable_instructions",
             0,
             List.of(List.of("30 50 e4 30 30 30 50 50 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Max stack not changed by unreachable code RJUMP",
-            "Code that was not forward referenced in section 0x0 pc 5",
+            "unreachable_instructions",
             0,
             List.of(List.of("30 50 e00006 30 30 30 50 50 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack underflow in unreachable code",
-            "Code that was not forward referenced in section 0x0 pc 3",
+            "unreachable_instructions",
             0,
             List.of(List.of("30 50 00 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RETF",
-            "Code that was not forward referenced in section 0x0 pc 3",
+            "unreachable_instructions",
             0,
             List.of(List.of("30 50 e4 50 00", 0, 0x80, 1))),
         Arguments.of(
             "Stack underflow in unreachable code RJUMP",
-            "Code that was not forward referenced in section 0x0 pc 5",
+            "unreachable_instructions",
             0,
             List.of(List.of("30 50 e00001 50 00", 0, 0x80, 1))));
   }
@@ -850,12 +852,12 @@ class CodeV1Test {
     return Stream.of(
         Arguments.of(
             "Stack height mismatch backwards",
-            "Stack minimum violation on backwards jump from 1 to 0, 1 != 1",
+            "stack_height_mismatch",
             0,
             List.of(List.of("30 e0fffc00", 0, 0x80, 1))),
         Arguments.of(
             "Stack height mismatch forwards",
-            "Calculated max stack height (5) does not match reported stack height (2)",
+            "invalid_max_stack_height",
             0,
             List.of(List.of("30e10003303030303000", 0, 0x80, 2))));
   }
@@ -867,7 +869,7 @@ class CodeV1Test {
             opcode ->
                 Arguments.of(
                     String.format("Invalid opcode %02x", opcode),
-                    String.format("Invalid Instruction 0x%02x", opcode),
+                    "undefined_instruction",
                     0,
                     List.of(List.of(String.format("0x%02x", opcode), 0, 0x80, 0))));
   }
