@@ -168,7 +168,7 @@ public class CodeV1Validation implements EOFValidator {
             eofLayout.containerMode().set(RUNTIME);
           } else if (!eofContainerMode.equals(RUNTIME)) {
             return format(
-                "incompatible_container_kind opode %s is only valid for runtime.",
+                "incompatible_container_kind opcode %s is only valid for runtime.",
                 opcodeInfo.name());
           }
           break;

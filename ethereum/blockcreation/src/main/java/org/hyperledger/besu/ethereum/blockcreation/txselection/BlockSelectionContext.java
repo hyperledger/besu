@@ -29,7 +29,7 @@ public record BlockSelectionContext(
     GasCalculator gasCalculator,
     GasLimitCalculator gasLimitCalculator,
     BlockHashProcessor blockHashProcessor,
-    ProcessableBlockHeader processableBlockHeader,
+    ProcessableBlockHeader pendingBlockHeader,
     FeeMarket feeMarket,
     Wei blobGasPrice,
     Address miningBeneficiary,

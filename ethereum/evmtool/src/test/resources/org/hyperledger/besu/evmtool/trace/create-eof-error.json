@@ -11,5 +11,5 @@
     "CancunEOF"
   ],
   "stdin": "",
-  "stdout": "EOF Code Invalid : incompatible_container_kind opode STOP is only valid for runtime.\n"
+  "stdout": "EOF Code Invalid : incompatible_container_kind opcode STOP is only valid for runtime.\n"
 }
