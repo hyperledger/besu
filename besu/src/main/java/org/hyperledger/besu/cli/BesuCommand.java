@@ -1659,7 +1659,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
-  // TODO is this still needed?
   private GenesisConfigOptions readGenesisConfigOptions() {
     try {
       return genesisConfigFileSupplier.get().getConfigOptions();

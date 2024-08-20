@@ -214,8 +214,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(config.dnsDiscoveryUrl()).isNull();
     assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(3141592));
 
-    // TODO then assert that the shanghaiTime is applied
-
+    // then assert that the shanghaiTime is applied
     final GenesisConfigFile actualGenesisConfigFile = (config.genesisConfigFile());
     assertThat(actualGenesisConfigFile).isNotNull();
     assertThat(actualGenesisConfigFile.getConfigOptions().getShanghaiTime()).isNotEmpty();
