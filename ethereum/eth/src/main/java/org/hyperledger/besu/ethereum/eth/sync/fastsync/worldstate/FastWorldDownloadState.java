@@ -20,7 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
@@ -41,14 +41,14 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock,
-      final OperationTimer.TimingContext syncTimingContext) {
+      final SyncDurationMetrics syncDurationMetrics) {
     super(
         worldStateStorageCoordinator,
         pendingRequests,
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
         clock,
-        syncTimingContext);
+        syncDurationMetrics);
   }
 
   @Override
@@ -76,11 +76,11 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
       // so they can give up waiting.
       notifyAll();
       LOG.info(
-          "stopTimer Finished downloading world state from peers: {}",
+          "stopTimer FAST_WORLD_STATE_DOWNLOAD_DURATION: {}",
           LocalDateTime.now(ZoneId.systemDefault()));
 
       // stop the metrics timer for the world download
-      syncTimingContext.stopTimer();
+      syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.FAST_WORLD_STATE_DOWNLOAD_DURATION);
 
       return true;
     } else {

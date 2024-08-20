@@ -36,8 +36,8 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -82,7 +82,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   protected final InMemoryTasksPriorityQueues<SnapDataRequest>
       pendingStorageFlatDatabaseHealingRequests = new InMemoryTasksPriorityQueues<>();
-  private final OperationTimer.TimingContext snapWorldStateInitialDownloadTimingContext;
   private Set<Bytes> accountsHealingList = new HashSet<>();
   private DynamicPivotBlockSelector pivotBlockSelector;
 
@@ -96,10 +95,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   // metrics around the snapsync
   private final SnapSyncMetricsManager metricsManager;
-  private final OperationTimer snapWorldStateHealingTimer;
-  private OperationTimer.TimingContext snapWorldHealingTimingContext;
 
-  private final AtomicBoolean timersDone = new AtomicBoolean(false);
+  private final AtomicBoolean trieHealStartedBefore = new AtomicBoolean(false);
 
   public SnapWorldDownloadState(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
@@ -112,14 +109,14 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final SnapSyncMetricsManager metricsManager,
       final Clock clock,
       final EthContext ethContext,
-      final OperationTimer.TimingContext syncTimingContext) {
+      final SyncDurationMetrics syncDurationMetrics) {
     super(
         worldStateStorageCoordinator,
         pendingRequests,
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
         clock,
-        syncTimingContext);
+        syncDurationMetrics);
     this.snapContext = snapContext;
     this.blockchain = blockchain;
     this.snapSyncState = snapSyncState;
@@ -153,21 +150,11 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         "snap_world_state_pending_trie_node_requests_current",
         "Number of trie node pending requests for snap sync world state download",
         pendingTrieNodeRequests::size);
-    snapWorldStateInitialDownloadTimingContext =
-        metricsSystem
-            .createSimpleTimer(
-                BesuMetricCategory.SYNCHRONIZER,
-                "snap_world_state_initial_download_duration",
-                "Time taken to do the initial download of the world state")
-            .startTimer();
+    syncDurationMetrics.startTimer(
+        SyncDurationMetrics.Labels.SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION);
     LOG.info(
-        "startTimer Starting snapWorldStateInitialDownload: {}",
+        "startTimer SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION: {}",
         LocalDateTime.now(ZoneId.systemDefault()));
-    snapWorldStateHealingTimer =
-        metricsSystem.createSimpleTimer(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_healing_duration",
-            "Time taken to heal the world state");
   }
 
   @Override
@@ -236,12 +223,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           snapContext.clear();
           internalFuture.complete(null);
 
-          // stop the metrics timer for the world download
-          syncTimingContext.stopTimer();
-          LOG.info(
-              "stopTimer Stopping syncTimingContext: {}",
-              LocalDateTime.now(ZoneId.systemDefault()));
-
           return true;
         }
       }
@@ -261,14 +242,16 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   /** Method to start the healing process of the trie */
   public synchronized void startTrieHeal() {
-    if (timersDone.compareAndSet(false, true)) {
+    if (trieHealStartedBefore.compareAndSet(false, true)) {
       LOG.info(
-          "stopTimer Initial snap world download done: {}",
+          "stopTimer SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION: {}",
           LocalDateTime.now(ZoneId.systemDefault()));
-      snapWorldStateInitialDownloadTimingContext.stopTimer();
+      syncDurationMetrics.stopTimer(
+          SyncDurationMetrics.Labels.SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION);
       LOG.info(
-          "startTimer Starting snapWorldHealing: {}", LocalDateTime.now(ZoneId.systemDefault()));
-      snapWorldHealingTimingContext = snapWorldStateHealingTimer.startTimer();
+          "startTimer SNAP_WORLD_STATE_HEALING_DURATION: {}",
+          LocalDateTime.now(ZoneId.systemDefault()));
+      syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
     }
     snapContext.clearAccountRangeTasks();
     snapSyncState.setHealTrieStatus(true);
@@ -305,10 +288,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
-    LOG.info("Initiating the healing process for the flat database");
+    LOG.info("startTimer FLAT_DB_HEAL: {}", LocalDateTime.now(ZoneId.systemDefault()));
+    syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.FLAT_DB_HEAL);
     LOG.info(
-        "stopTimer Stopping snapWorldHealingTimer: {}", LocalDateTime.now(ZoneId.systemDefault()));
-    snapWorldHealingTimingContext.stopTimer();
+        "stopTimer SNAP_WORLD_STATE_HEALING_DURATION: {}",
+        LocalDateTime.now(ZoneId.systemDefault()));
+    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
     snapSyncState.setHealFlatDatabaseInProgress(true);
     final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
     ranges.forEach(

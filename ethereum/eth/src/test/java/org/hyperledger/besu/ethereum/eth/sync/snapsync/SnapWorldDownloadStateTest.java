@@ -46,7 +46,7 @@ import org.hyperledger.besu.ethereum.trie.forest.storage.ForestWorldStateKeyValu
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
@@ -139,9 +139,7 @@ public class SnapWorldDownloadStateTest {
             metricsManager,
             clock,
             ethContext,
-            new NoOpMetricsSystem()
-                .createTimer(BesuMetricCategory.SYNCHRONIZER, "test", "test")
-                .startTimer());
+            SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
     final DynamicPivotBlockSelector dynamicPivotBlockManager =
         mock(DynamicPivotBlockSelector.class);
     doAnswer(

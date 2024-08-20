@@ -31,14 +31,12 @@ import org.hyperledger.besu.ethereum.trie.RangeManager;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -70,7 +68,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   private final AtomicReference<SnapWorldDownloadState> downloadState = new AtomicReference<>();
-  private OperationTimer.TimingContext syncTimingContext;
+  private final SyncDurationMetrics syncDurationMetrics;
 
   public SnapWorldStateDownloader(
       final EthContext ethContext,
@@ -83,7 +81,8 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final int maxNodeRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncDurationMetrics syncDurationMetrics) {
     this.ethContext = ethContext;
     this.protocolContext = protocolContext;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
@@ -95,6 +94,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
     this.minMillisBeforeStalling = minMillisBeforeStalling;
     this.clock = clock;
     this.metricsSystem = metricsSystem;
+    this.syncDurationMetrics = syncDurationMetrics;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.SYNCHRONIZER,
@@ -141,18 +141,6 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
       final SnapSyncMetricsManager snapsyncMetricsManager =
           new SnapSyncMetricsManager(metricsSystem, ethContext);
 
-      if (syncTimingContext == null) {
-        syncTimingContext =
-            metricsSystem
-                .createSimpleTimer(
-                    BesuMetricCategory.SYNCHRONIZER,
-                    "fast_world_state_sync_duration",
-                    "Time taken to finish FastWorldState sync")
-                .startTimer();
-        LOG.info(
-            "startTimer WorldState sync started: {}", LocalDateTime.now(ZoneId.systemDefault()));
-      }
-
       final SnapWorldDownloadState newDownloadState =
           new SnapWorldDownloadState(
               worldStateStorageCoordinator,
@@ -165,7 +153,7 @@ public class SnapWorldStateDownloader implements WorldStateDownloader {
               snapsyncMetricsManager,
               clock,
               ethContext,
-              syncTimingContext);
+              syncDurationMetrics);
 
       final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
       snapsyncMetricsManager.initRange(ranges);

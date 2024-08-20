@@ -34,6 +34,7 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 
@@ -69,13 +70,15 @@ public class PipelineChainDownloaderTest {
   public void setUp() {
     syncTarget = new SyncTarget(peer1, commonAncestor);
     syncTarget2 = new SyncTarget(peer2, commonAncestor);
+    final NoOpMetricsSystem noMetricsSystem = new NoOpMetricsSystem();
     chainDownloader =
         new PipelineChainDownloader(
             syncState,
             syncTargetManager,
             downloadPipelineFactory,
             scheduler,
-            new NoOpMetricsSystem());
+            noMetricsSystem,
+            SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
   }
 
   @Test

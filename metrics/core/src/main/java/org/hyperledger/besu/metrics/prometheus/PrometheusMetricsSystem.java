@@ -40,6 +40,7 @@ import io.prometheus.client.Collector.MetricFamilySamples;
 import io.prometheus.client.Collector.MetricFamilySamples.Sample;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
+import io.prometheus.client.Histogram;
 import io.prometheus.client.Summary;
 import io.prometheus.client.hotspot.BufferPoolsExports;
 import io.prometheus.client.hotspot.ClassLoadingExports;
@@ -150,9 +151,10 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
         metricName,
         (k) -> {
           if (timersEnabled && isCategoryEnabled(category)) {
-            final Summary summary = Summary.build(metricName, help).labelNames(labelNames).create();
-            addCollectorUnchecked(category, summary);
-            return new PrometheusTimer(summary);
+            final Histogram histogram =
+                Histogram.build(metricName, help).labelNames(labelNames).create();
+            addCollectorUnchecked(category, histogram);
+            return new PrometheusSimpleTimer(histogram);
           } else {
             return NoOpMetricsSystem.getOperationTimerLabelledMetric(labelNames.length);
           }

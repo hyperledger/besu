@@ -22,8 +22,8 @@ import org.hyperledger.besu.ethereum.eth.sync.fastsync.FastSyncState;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldStateDownloader;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
@@ -55,9 +55,9 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
   private final WorldStateStorageCoordinator worldStateStorageCoordinator;
 
   private final AtomicReference<FastWorldDownloadState> downloadState = new AtomicReference<>();
+  private final SyncDurationMetrics syncDurationMetrics;
 
   private Optional<CompleteTaskStep> maybeCompleteTask = Optional.empty();
-  private OperationTimer.TimingContext syncTimingContext;
   private final AtomicBoolean timerHasNotBeenStarted = new AtomicBoolean(true);
 
   public FastWorldStateDownloader(
@@ -69,7 +69,8 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
       final int maxNodeRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncDurationMetrics syncDurationMetrics) {
     this.ethContext = ethContext;
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.taskCollection = taskCollection;
@@ -79,6 +80,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
     this.minMillisBeforeStalling = minMillisBeforeStalling;
     this.clock = clock;
     this.metricsSystem = metricsSystem;
+    this.syncDurationMetrics = syncDurationMetrics;
 
     metricsSystem.createIntegerGauge(
         BesuMetricCategory.SYNCHRONIZER,
@@ -138,15 +140,10 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
           stateRoot);
 
       if (timerHasNotBeenStarted.compareAndSet(true, false)) {
-        syncTimingContext =
-            metricsSystem
-                .createTimer(
-                    BesuMetricCategory.SYNCHRONIZER,
-                    "fast_world_state_sync_duration",
-                    "Time taken to finish FastWorldState sync")
-                .startTimer();
+        syncDurationMetrics.startTimer(
+            SyncDurationMetrics.Labels.FAST_WORLD_STATE_DOWNLOAD_DURATION);
         LOG.info(
-            "startTimer Starting FastWorldStateDownload: {}",
+            "startTimer FAST_WORLD_STATE_DOWNLOAD_DURATION: {}",
             LocalDateTime.now(ZoneId.systemDefault()));
       }
 
@@ -157,7 +154,7 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
               maxNodeRequestsWithoutProgress,
               minMillisBeforeStalling,
               clock,
-              syncTimingContext);
+              syncDurationMetrics);
       this.downloadState.set(newDownloadState);
 
       if (!newDownloadState.downloadWasResumed()) {

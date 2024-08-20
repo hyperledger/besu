@@ -24,10 +24,10 @@ import org.hyperledger.besu.ethereum.eth.sync.state.SyncTarget;
 import org.hyperledger.besu.ethereum.eth.sync.tasks.exceptions.InvalidBlockException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.util.ExceptionUtils;
 
@@ -54,21 +54,21 @@ public class PipelineChainDownloader implements ChainDownloader {
   private final AtomicBoolean cancelled = new AtomicBoolean(false);
   private final Counter pipelineCompleteCounter;
   private final Counter pipelineErrorCounter;
-  private final MetricsSystem metricsSystem;
+  private final SyncDurationMetrics syncDurationMetrics;
   private Pipeline<?> currentDownloadPipeline;
-  private OperationTimer.TimingContext chainDownloadTimer;
 
   public PipelineChainDownloader(
       final SyncState syncState,
       final AbstractSyncTargetManager syncTargetManager,
       final DownloadPipelineFactory downloadPipelineFactory,
       final EthScheduler scheduler,
-      final MetricsSystem metricsSystem) {
+      final MetricsSystem metricsSystem,
+      final SyncDurationMetrics syncDurationMetrics) {
     this.syncState = syncState;
     this.syncTargetManager = syncTargetManager;
     this.downloadPipelineFactory = downloadPipelineFactory;
     this.scheduler = scheduler;
-    this.metricsSystem = metricsSystem;
+    this.syncDurationMetrics = syncDurationMetrics;
 
     final LabelledMetric<Counter> labelledCounter =
         metricsSystem.createLabelledCounter(
@@ -86,16 +86,10 @@ public class PipelineChainDownloader implements ChainDownloader {
       throw new IllegalStateException("Cannot start a chain download twice");
     }
     LOG.atInfo()
-        .setMessage("startTimer PipelineChain download starting: {}")
+        .setMessage("startTimer CHAIN_DOWNLOAD_DURATION: {}")
         .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
         .log();
-    chainDownloadTimer =
-        metricsSystem
-            .createSimpleTimer(
-                BesuMetricCategory.SYNCHRONIZER,
-                "chain_download_duration",
-                "time it takes to download the chain")
-            .startTimer();
+    syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
     return performDownload();
   }
 
@@ -127,9 +121,9 @@ public class PipelineChainDownloader implements ChainDownloader {
         && !syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)) {
       return performDownload();
     } else {
-      chainDownloadTimer.stopTimer();
+      syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
       LOG.atInfo()
-          .setMessage("stopTimer PipelineChain download finished: {}")
+          .setMessage("stopTimer CHAIN_DOWNLOAD_DURATION: {}")
           .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
           .log();
       return completedFuture(null);

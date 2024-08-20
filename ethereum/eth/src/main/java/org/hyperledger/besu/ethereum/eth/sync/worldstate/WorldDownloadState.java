@@ -18,7 +18,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
 import org.hyperledger.besu.ethereum.eth.manager.task.EthTask;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
-import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import org.hyperledger.besu.services.tasks.Task;
 import org.hyperledger.besu.services.tasks.TasksPriorityProvider;
@@ -38,7 +38,7 @@ import org.slf4j.LoggerFactory;
 
 public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> {
   private static final Logger LOG = LoggerFactory.getLogger(WorldDownloadState.class);
-  protected final OperationTimer.TimingContext syncTimingContext;
+  protected final SyncDurationMetrics syncDurationMetrics;
 
   private boolean downloadWasResumed;
   protected final InMemoryTasksPriorityQueues<REQUEST> pendingRequests;
@@ -64,7 +64,7 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
       final Clock clock,
-      final OperationTimer.TimingContext syncTimingContext) {
+      final SyncDurationMetrics syncDurationMetrics) {
     this.worldStateStorageCoordinator = worldStateStorageCoordinator;
     this.minMillisBeforeStalling = minMillisBeforeStalling;
     this.timestampOfLastProgress = clock.millis();
@@ -72,7 +72,7 @@ public abstract class WorldDownloadState<REQUEST extends TasksPriorityProvider> 
     this.pendingRequests = pendingRequests;
     this.maxRequestsWithoutProgress = maxRequestsWithoutProgress;
     this.clock = clock;
-    this.syncTimingContext = syncTimingContext;
+    this.syncDurationMetrics = syncDurationMetrics;
     this.internalFuture = new CompletableFuture<>();
     this.downloadFuture = new CompletableFuture<>();
     this.internalFuture.whenComplete(this::cleanup);
