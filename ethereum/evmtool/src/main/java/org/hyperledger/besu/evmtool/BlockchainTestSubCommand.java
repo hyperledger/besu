@@ -44,12 +44,10 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes32;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -80,9 +78,6 @@ public class BlockchainTestSubCommand implements Runnable {
    * enter on the command line to invoke this command.
    */
   public static final String COMMAND_NAME = "block-test";
-
-  static final Supplier<ReferenceTestProtocolSchedules> referenceTestProtocolSchedules =
-      Suppliers.memoize(ReferenceTestProtocolSchedules::create);
 
   @Option(
       names = {"--test-name"},
@@ -177,7 +172,7 @@ public class BlockchainTestSubCommand implements Runnable {
             .orElseThrow();
 
     final ProtocolSchedule schedule =
-        referenceTestProtocolSchedules.get().getByName(spec.getNetwork());
+        ReferenceTestProtocolSchedules.getInstance().getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();

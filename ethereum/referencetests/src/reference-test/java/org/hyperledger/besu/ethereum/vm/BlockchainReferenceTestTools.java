@@ -44,8 +44,6 @@ import org.apache.tuweni.bytes.Bytes32;
 import org.assertj.core.api.Assertions;
 
 public class BlockchainReferenceTestTools {
-  private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
-      ReferenceTestProtocolSchedules.create();
 
   private static final List<String> NETWORKS_TO_RUN;
 
@@ -114,7 +112,7 @@ public class BlockchainReferenceTestTools {
             .orElseThrow();
 
     final ProtocolSchedule schedule =
-        REFERENCE_TEST_PROTOCOL_SCHEDULES.getByName(spec.getNetwork());
+        ReferenceTestProtocolSchedules.getInstance().getByName(spec.getNetwork());
 
     final MutableBlockchain blockchain = spec.getBlockchain();
     final ProtocolContext context = spec.getProtocolContext();

@@ -766,7 +766,7 @@ public record EOFLayout(
             out.print("  ");
           }
           out.printf("%02x", byteCode[pc]);
-          for (int j = 1; j < advance; j++) {
+          for (int j = 1; j < advance && (pc + j) < byteCode.length; j++) {
             out.printf("%02x", byteCode[pc + j]);
           }
           out.printf(" # [%d] %s", pc, ci.name());
@@ -774,8 +774,11 @@ public record EOFLayout(
             out.printf("(%d)", byteCode[pc + 1] & 0xff);
           } else if (advance > 2) {
             out.print("(0x");
-            for (int j = 1; j < advance; j++) {
+            for (int j = 1; j < advance && (pc + j) < byteCode.length; j++) {
               out.printf("%02x", byteCode[pc + j]);
+            }
+            if ((pc + advance) >= byteCode.length) {
+              out.print(" <truncated immediate>");
             }
             out.print(")");
           }
