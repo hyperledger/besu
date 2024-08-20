@@ -187,7 +187,9 @@ class GenesisConfigFileTest {
   @Test
   void shouldOverrideConfigOptionsBaseFeeWhenSpecified() {
     GenesisConfigOptions withOverrides =
-        EMPTY_CONFIG.getConfigOptions(Map.of("baseFeePerGas", Wei.of(8).toString()));
+        EMPTY_CONFIG
+            .withOverrides(Map.of("baseFeePerGas", Wei.of(8).toString()))
+            .getConfigOptions();
     assertThat(withOverrides.getBaseFeePerGas()).contains(Wei.of(8L));
   }
 
@@ -229,7 +231,8 @@ class GenesisConfigFileTest {
   void assertTerminalTotalDifficultyOverride() {
     GenesisConfigOptions sepoliaOverrideOptions =
         GenesisConfigFile.fromResource("/sepolia.json")
-            .getConfigOptions(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)));
+            .withOverrides(Map.of("terminalTotalDifficulty", String.valueOf(Long.MAX_VALUE)))
+            .getConfigOptions();
 
     assertThat(sepoliaOverrideOptions.getTerminalTotalDifficulty()).isPresent();
     assertThat(sepoliaOverrideOptions.getTerminalTotalDifficulty())
@@ -355,10 +358,12 @@ class GenesisConfigFileTest {
     override.put("contractSizeLimit", bigBlockString);
 
     assertThat(config.getForkBlockNumbers()).isNotEmpty();
-    assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).hasValue(bigBlock);
-    assertThat(config.getConfigOptions(override).getChainId())
+    assertThat(config.withOverrides(override).getConfigOptions().getIstanbulBlockNumber())
+        .hasValue(bigBlock);
+    assertThat(config.withOverrides(override).getConfigOptions().getChainId())
         .hasValue(BigInteger.valueOf(bigBlock));
-    assertThat(config.getConfigOptions(override).getContractSizeLimit()).hasValue(bigBlock);
+    assertThat(config.withOverrides(override).getConfigOptions().getContractSizeLimit())
+        .hasValue(bigBlock);
   }
 
   @Test
@@ -370,9 +375,11 @@ class GenesisConfigFileTest {
     override.put("contractSizeLimit", null);
 
     assertThat(config.getForkBlockNumbers()).isNotEmpty();
-    assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).isNotPresent();
-    assertThat(config.getConfigOptions(override).getChainId()).isNotPresent();
-    assertThat(config.getConfigOptions(override).getContractSizeLimit()).isNotPresent();
+    assertThat(config.withOverrides(override).getConfigOptions().getIstanbulBlockNumber())
+        .isNotPresent();
+    assertThat(config.withOverrides(override).getConfigOptions().getChainId()).isNotPresent();
+    assertThat(config.withOverrides(override).getConfigOptions().getContractSizeLimit())
+        .isNotPresent();
   }
 
   @Test
@@ -388,10 +395,12 @@ class GenesisConfigFileTest {
     // all lower case
     override.put("contractsizelimit", bigBlockString);
 
-    assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).hasValue(bigBlock);
-    assertThat(config.getConfigOptions(override).getChainId())
+    assertThat(config.withOverrides(override).getConfigOptions().getIstanbulBlockNumber())
+        .hasValue(bigBlock);
+    assertThat(config.withOverrides(override).getConfigOptions().getChainId())
         .hasValue(BigInteger.valueOf(bigBlock));
-    assertThat(config.getConfigOptions(override).getContractSizeLimit()).hasValue(bigBlock);
+    assertThat(config.withOverrides(override).getConfigOptions().getContractSizeLimit())
+        .hasValue(bigBlock);
   }
 
   @Test
@@ -402,9 +411,11 @@ class GenesisConfigFileTest {
     override.put("chainId", "");
     override.put("contractSizeLimit", "");
 
-    assertThat(config.getConfigOptions(override).getIstanbulBlockNumber()).isNotPresent();
-    assertThat(config.getConfigOptions(override).getChainId()).isNotPresent();
-    assertThat(config.getConfigOptions(override).getContractSizeLimit()).isNotPresent();
+    assertThat(config.withOverrides(override).getConfigOptions().getIstanbulBlockNumber())
+        .isNotPresent();
+    assertThat(config.withOverrides(override).getConfigOptions().getChainId()).isNotPresent();
+    assertThat(config.withOverrides(override).getConfigOptions().getContractSizeLimit())
+        .isNotPresent();
   }
 
   @Test
@@ -431,7 +442,8 @@ class GenesisConfigFileTest {
     override.put("constantinopleFixBlock", "1000");
 
     assertThatExceptionOfType(RuntimeException.class)
-        .isThrownBy(() -> config.getConfigOptions(override).getPetersburgBlockNumber())
+        .isThrownBy(
+            () -> config.withOverrides(override).getConfigOptions().getPetersburgBlockNumber())
         .withMessage(
             "Genesis files cannot specify both petersburgBlock and constantinopleFixBlock.");
   }

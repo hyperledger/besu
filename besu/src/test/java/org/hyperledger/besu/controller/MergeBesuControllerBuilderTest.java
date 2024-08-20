@@ -125,7 +125,7 @@ public class MergeBesuControllerBuilderTest {
     lenient().when(genesisConfigFile.getExtraData()).thenReturn(Bytes.EMPTY.toHexString());
     lenient().when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     lenient().when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
+    lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     when(genesisConfigOptions.getTerminalTotalDifficulty())
