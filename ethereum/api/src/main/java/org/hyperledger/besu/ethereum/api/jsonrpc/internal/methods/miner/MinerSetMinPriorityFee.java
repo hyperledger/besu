@@ -52,11 +52,11 @@ public class MinerSetMinPriorityFee implements JsonRpcMethod {
       LOG.debug(
           "min priority fee per gas changed to {}", minPriorityFeePerGas.toHumanReadableString());
       return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), true);
-    } catch (final JsonRpcParameterException invalidJsonRpcParameters) {
+    } catch (final IllegalArgumentException | JsonRpcParameterException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
           new JsonRpcError(
-              RpcErrorType.INVALID_MIN_PRIORITY_FEE_PARAMS, invalidJsonRpcParameters.getMessage()));
+              RpcErrorType.INVALID_MIN_PRIORITY_FEE_PARAMS, e.getMessage()));
     }
   }
 }
