@@ -29,9 +29,19 @@ assignees: ''
     - publishes the docker `latest` tag variants
 - [ ] Check binary SHAs are correct on the release page
 - [ ] Check "Container Verify" GitHub workflow has run successfully
-- [ ] Create besu-docs release - https://github.com/hyperledger/besu-docs/releases/new
-  - Copy release notes from besu
-  - If publishing the release in github doesn't automatically trigger this workflow, then manually run https://github.com/hyperledger/besu-docs/actions/workflows/update-version.yml
-- [ ] Create homebrew release - run GHA workflow directly https://github.com/hyperledger/homebrew-besu/actions/workflows/update-version.yml
+- [ ] Create besu-docs release
+  - Run the GitHub workflow [update-version.yml](https://github.com/hyperledger/besu-docs/actions/workflows/update-version.yml) to update the docs version
+    - This creates a branch with name `besu-version-<version>`. PR may also be created if action has the permission
+    - If the PR has not been automatically created, create the PR manually to merge the branch to main
+    - Verify new version has been added as the stable version and last version
+    - New folder created `versioned_docs/version-<version>` [example pull request](https://github.com/hyperledger/besu-docs/pull/1675/files)
+    - Review and merge the PR to main
+  - Create a new release for the version. Copy the release notes from [hyperledger/besu](https://github.com/hyperledger/besu) to the besu-docs release
+- [ ] Create homebrew release
+  - Run GHA workflow directly [update-version.yml](https://github.com/hyperledger/homebrew-besu/actions/workflows/update-version.yml)
+  - This GHA workflow will create a branch with name `update-<version>`. Workflow may create the PR if permission allowed
+  - If the PR has not been automatically created, create the PR manually to merge the branch to main
+  - Review and merge the PR to main
+  - Run commands `brew tap hyperledger/besu && brew install besu` on MacOSX and verify latest version has been installed
 - [ ] Delete the burn-in nodes (unless required for further analysis eg performance)
 - [ ] Social announcements
