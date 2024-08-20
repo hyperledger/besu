@@ -55,8 +55,7 @@ public class MinerSetMinPriorityFee implements JsonRpcMethod {
     } catch (final IllegalArgumentException | JsonRpcParameterException e) {
       return new JsonRpcErrorResponse(
           requestContext.getRequest().getId(),
-          new JsonRpcError(
-              RpcErrorType.INVALID_MIN_PRIORITY_FEE_PARAMS, e.getMessage()));
+          new JsonRpcError(RpcErrorType.INVALID_MIN_PRIORITY_FEE_PARAMS, e.getMessage()));
     }
   }
 }
