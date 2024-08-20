@@ -276,7 +276,7 @@ public class PrivacyNode implements AutoCloseable {
       final Path dataLocation, final Path dbLocation) {
     final var besuConfiguration = new BesuConfigurationImpl();
     besuConfiguration
-        .init(dataLocation, dbLocation, besuConfig.getDataStorageConfiguration())
+        .init(dataLocation, dbLocation, null)
         .withMiningParameters(besuConfig.getMiningParameters());
     return new PrivacyKeyValueStorageProviderBuilder()
         .withStorageFactory(

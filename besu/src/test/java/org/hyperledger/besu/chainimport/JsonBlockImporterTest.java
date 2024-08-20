@@ -17,9 +17,7 @@ package org.hyperledger.besu.chainimport;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
@@ -465,7 +463,6 @@ public abstract class JsonBlockImporterTest {
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
-        .besuComponent(mock(BesuComponent.class))
         .build();
   }
 }
