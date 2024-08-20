@@ -24,8 +24,6 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.ipc.JsonRpcIpcConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.ImmutableTransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.rlpx.connections.netty.TLSConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
-import org.hyperledger.besu.ethereum.worldstate.ImmutableDataStorageConfiguration;
 import org.hyperledger.besu.metrics.prometheus.MetricsConfiguration;
 import org.hyperledger.besu.plugin.services.metrics.MetricCategory;
 import org.hyperledger.besu.tests.acceptance.dsl.StaticNodesUtils;
@@ -113,11 +111,7 @@ public class ProcessBesuNodeRunner implements BesuNodeRunner {
             .getCLIOptions());
 
     params.addAll(
-        DataStorageOptions.fromConfig(
-                ImmutableDataStorageConfiguration.builder()
-                    .from(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
-                    .build())
-            .getCLIOptions());
+        DataStorageOptions.fromConfig(node.getDataStorageConfiguration()).getCLIOptions());
 
     if (node.getMiningParameters().isMiningEnabled()) {
       params.add("--miner-enabled");

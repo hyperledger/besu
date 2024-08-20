@@ -185,6 +185,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     builder.dataDirectory(dataDir);
     builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
     builder.privacyParameters(node.getPrivacyParameters());
+    builder.dataStorageConfiguration(node.getDataStorageConfiguration());
     final InProcessRpcConfiguration inProcessRpcConfiguration = node.inProcessRpcConfiguration();
 
     node.getGenesisConfig()
