@@ -86,11 +86,15 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
   @CommandLine.ParentCommand private final BesuFuzzCommand parentCommand;
 
   static final ObjectMapper eofTestMapper = createObjectMapper();
-
   static final JavaType javaType =
       eofTestMapper
           .getTypeFactory()
           .constructParametricType(Map.class, String.class, EOFTestCaseSpec.class);
+
+  List<ExternalClient> externalClients = new ArrayList<>();
+  EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
+  long validContainers;
+  long totalContainers;
 
   /**
    * Default constructor for the EofContainerSubCommand class. This constructor initializes the
@@ -147,6 +151,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
     }
 
     clients.forEach((k, v) -> externalClients.add(new StreamingClient(k, v.split(" "))));
+    System.out.println("Fuzzing client set: " + clients.keySet());
 
     try {
       new Fuzzer(this, corpusDir.toString(), this::fuzzStats).start();
@@ -175,7 +180,9 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
                 new File(
                     initialCorpus,
                     f.toPath().getFileName() + "_" + (index++) + "_" + vector.getKey()))) {
-          fos.write(Bytes.fromHexString(vector.getValue().code()).toArrayUnsafe());
+          Bytes codeBytes = Bytes.fromHexString(vector.getValue().code());
+          evm.getCodeUncached(codeBytes);
+          fos.write(codeBytes.toArrayUnsafe());
         } catch (IOException e) {
           parentCommand.out.println("Invalid file " + f + ": " + e.getMessage());
           e.printStackTrace();
@@ -184,11 +191,6 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
       }
     }
   }
-
-  List<ExternalClient> externalClients = new ArrayList<>();
-  EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
-  long validContainers; // TODO should be a metric
-  long totalContainers; // TODO should be a metric
 
   @Override
   public void fuzz(final byte[] bytes) {

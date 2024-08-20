@@ -53,24 +53,64 @@ application {
   ]
 }
 
-tasks.register("fuzzAll", JavaExec) {
+def corpusDir = "${buildDir}/generated/corpus"
+
+tasks.register("runFuzzer", JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'org.hyperledger.besu.testfuzz.BesuFuzz'
+
   args = [
     "eof-container",
     "--tests-dir=${projectDir}/../ethereum/referencetests/src/reference-test/external-resources/EOFTests",
-    "--corpus-dir=${buildDir}/generated/corpus",
-    "--client=evm1=evmone-eofparse",
-    "--client=revm=revme bytecode",
-    // "--client=neth=netheofparse -x",
-    // "--client=geth=eofdump eofparser",
-    // "--client=etjs=tsx ../../../ethereumjs/ethereumjs-monorepo/packages/evm/scripts/eofContainerValidator.ts"
+    "--corpus-dir=${corpusDir}"
   ]
+  doFirst {
+    mkdir corpusDir
+  }
+}
+
+tasks.register("fuzzEvm1") {
+  doLast {
+    runFuzzer.args += "--client=evm1=evmone-eofparse"
+  }
+  finalizedBy("runFuzzer")
+}
+
+tasks.register("fuzzEthJS") {
+  doLast {
+    runFuzzer.args += "--client=etjs=tsx ../../../ethereumjs/ethereumjs-monorepo/packages/evm/scripts/eofContainerValidator.ts"
+  }
+  finalizedBy("runFuzzer")
+}
+
+tasks.register("fuzzGeth") {
+  doLast {
+    runFuzzer.args += "--client=geth=eofdump eofparser"
+  }
+  finalizedBy("runFuzzer")
+}
+
+tasks.register("fuzzNethermind") {
+  doLast {
+    runFuzzer.args += "--client=neth=netheofparse -x"
+  }
+  finalizedBy("runFuzzer")
+}
+
+tasks.register("fuzzReth") {
+  doLast {
+    runFuzzer.args += "--client=revm=revme bytecode"
+  }
+  finalizedBy("runFuzzer")
+}
+
+tasks.register("fuzzAll") {
+  dependsOn fuzzEvm1, fuzzEthJS, fuzzGeth, fuzzNethermind, fuzzReth
 }
 
 jacoco {
   applyTo run
-  applyTo fuzzAll
+  applyTo runFuzzer
 }
 
 // Copies jacoco into the lib directory
@@ -78,9 +118,6 @@ tasks.register("copyJacoco", Copy) {
   // The jacocoagent.jar is embedded within the jar
   from zipTree(configurations.jacocoAgent.singleFile).filter { it.name == 'jacocoagent.jar' }.singleFile
   into layout.buildDirectory.dir("install/${application.applicationName}/lib")
-  doLast {
-    println "yohoho"
-  }
 }
 
 installDist.finalizedBy copyJacoco

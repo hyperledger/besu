@@ -14,17 +14,12 @@
  */
 package org.hyperledger.besu.testfuzz;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
-
 import org.hyperledger.besu.crypto.Hash;
 import org.hyperledger.besu.crypto.MessageDigestFactory;
 
-import java.io.BufferedWriter;
 import java.io.ByteArrayInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.OutputStreamWriter;
-import java.io.PrintWriter;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.math.BigInteger;
@@ -159,18 +154,17 @@ public class Fuzzer {
         this.corpus.putBuffer(buf);
         this.logStats("NEW");
 
-        String filename = fileNameForBuffer(buf);
-        try (var pw =
-            new PrintWriter(
-                new BufferedWriter(
-                    new OutputStreamWriter(new FileOutputStream(filename), UTF_8)))) {
-          pw.println(Bytes.wrap(buf).toHexString());
-          System.out.println(filename);
-          //          System.exit(1);
-        } catch (IOException e) {
-          e.printStackTrace(System.out);
-        }
-        System.out.println("hits : " + newCoverage);
+        // If you want hex strings of new hits, uncomment the following.
+        // String filename = fileNameForBuffer(buf);
+        // try (var pw =
+        //     new PrintWriter(
+        //         new BufferedWriter(
+        //             new OutputStreamWriter(new FileOutputStream(filename), UTF_8)))) {
+        //   pw.println(Bytes.wrap(buf).toHexString());
+        //   System.out.println(filename);
+        // } catch (IOException e) {
+        //   e.printStackTrace(System.out);
+        // }
       } else if ((System.currentTimeMillis() - this.lastSampleTime) > 30000) {
         this.logStats("PULSE");
       }
@@ -196,7 +190,6 @@ public class Fuzzer {
     } catch (IOException e) {
       e.printStackTrace();
       this.writeCrash(dumpData);
-      //      System.exit(1);
     }
 
     return hc.getHits();
@@ -226,11 +219,9 @@ public class Fuzzer {
       String name = executionData.getName();
       if (hitMap.containsKey(name)) {
         if (hitMap.get(name) < hit) {
-          System.out.println(name + " - " + hit);
           hitMap.put(name, hit);
         }
       } else {
-        System.out.println(name + " - new");
         hitMap.put(name, hit);
       }
       hits += hit;
