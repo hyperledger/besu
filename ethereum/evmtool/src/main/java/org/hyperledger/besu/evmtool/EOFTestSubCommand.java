@@ -93,7 +93,7 @@ public class EOFTestSubCommand implements Runnable {
       fork = parentCommand.getFork();
     }
     ProtocolSpec protocolSpec =
-        ReferenceTestProtocolSchedules.create()
+        ReferenceTestProtocolSchedules.getInstance()
             .geSpecByName(fork == null ? EvmSpecVersion.PRAGUE.getName() : fork);
     evm = protocolSpec.getEvm();
 

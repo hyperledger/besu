@@ -478,7 +478,7 @@ class CodeFactoryTest {
                        # Subcontainer 0 ends
                    # Data section (empty)
             """,
-        "STOP is only a valid opcode in containers used for runtime operations.");
+        "incompatible_container_kind");
   }
 
   @Test
@@ -527,7 +527,7 @@ class CodeFactoryTest {
                        # Subcontainer 0 ends
                    # Data section (empty)
             """,
-        "RETURN is only a valid opcode in containers used for runtime operations.");
+        "incompatible_container_kind");
   }
 
   @Test
@@ -590,7 +590,7 @@ class CodeFactoryTest {
                        # Subcontainer 0 ends
                    # Data section (empty)
             """,
-        "RETURNCONTRACT is only a valid opcode in containers used for initcode");
+        "incompatible_container_kind");
   }
 
   private static void validCode(final String str) {
