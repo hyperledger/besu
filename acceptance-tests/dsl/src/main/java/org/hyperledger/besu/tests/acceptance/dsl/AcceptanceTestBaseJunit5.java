@@ -58,6 +58,7 @@ import java.util.concurrent.Executors;
 import org.apache.logging.log4j.ThreadContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.slf4j.Logger;
@@ -195,5 +196,12 @@ public class AcceptanceTestBaseJunit5 {
         () ->
             assertThat(node.execute(ethTransactions.blockNumber()))
                 .isGreaterThanOrEqualTo(BigInteger.valueOf(blockchainHeight)));
+  }
+
+  @Test
+  void dryRunDetector() {
+    assertThat(true)
+        .withFailMessage("This test is here so gradle --dry-run executes this class")
+        .isTrue();
   }
 }
