@@ -23,7 +23,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
-import javax.inject.Inject;
 
 /** The Storage service implementation. */
 public class StorageServiceImpl implements StorageService {
@@ -32,7 +31,6 @@ public class StorageServiceImpl implements StorageService {
   private final Map<String, KeyValueStorageFactory> factories;
 
   /** Instantiates a new Storage service. */
-  @Inject
   public StorageServiceImpl() {
     this.segments = List.of(KeyValueSegmentIdentifier.values());
     this.factories = new ConcurrentHashMap<>();

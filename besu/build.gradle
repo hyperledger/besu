@@ -104,8 +104,6 @@ dependencies {
   testImplementation 'org.mockito:mockito-core'
   testImplementation 'org.testcontainers:testcontainers'
   testImplementation 'tech.pegasys.discovery:discovery'
-  testImplementation 'com.google.dagger:dagger'
 
   annotationProcessor 'com.google.dagger:dagger-compiler'
-  testAnnotationProcessor 'com.google.dagger:dagger-compiler'
 }
