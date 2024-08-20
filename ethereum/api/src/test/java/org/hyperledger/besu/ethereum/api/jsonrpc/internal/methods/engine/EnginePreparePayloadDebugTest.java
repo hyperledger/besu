@@ -28,6 +28,7 @@ import org.hyperledger.besu.consensus.merge.blockcreation.PayloadIdentifier;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.EnginePreparePayloadParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.EnginePreparePayloadResult;
 
@@ -56,7 +57,7 @@ public class EnginePreparePayloadDebugTest {
   @Mock private EnginePreparePayloadParameter param;
 
   @BeforeEach
-  public void setUp() {
+  public void setUp() throws JsonRpcParameterException {
     when(protocolContext.safeConsensusContext(MergeContext.class))
         .thenReturn(Optional.of(mergeContext));
     when(requestContext.getOptionalParameter(0, EnginePreparePayloadParameter.class))
@@ -84,7 +85,7 @@ public class EnginePreparePayloadDebugTest {
   }
 
   @Test
-  public void shouldReturnPayloadIdWhenNoParams() {
+  public void shouldReturnPayloadIdWhenNoParams() throws JsonRpcParameterException {
     when(requestContext.getOptionalParameter(0, EnginePreparePayloadParameter.class))
         .thenReturn(Optional.empty());
     checkForPayloadId();
