@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -64,7 +65,7 @@ public class EthGetBlockByHash implements JsonRpcMethod {
     final Hash hash;
     try {
       hash = request.getRequiredParameter(0, Hash.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid block hash parameter (index 0)", RpcErrorType.INVALID_BLOCK_HASH_PARAMS, e);
     }
@@ -95,7 +96,7 @@ public class EthGetBlockByHash implements JsonRpcMethod {
   private boolean isCompleteTransactions(final JsonRpcRequestContext requestContext) {
     try {
       return requestContext.getRequiredParameter(1, Boolean.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid return complete transaction parameter (index 1)",
           RpcErrorType.INVALID_RETURN_COMPLETE_TRANSACTION_PARAMS,

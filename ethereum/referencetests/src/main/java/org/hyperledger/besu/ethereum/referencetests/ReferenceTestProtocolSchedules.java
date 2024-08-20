@@ -44,6 +44,15 @@ public class ReferenceTestProtocolSchedules {
   private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
       Arrays.asList("Frontier", "Homestead", "EIP150");
 
+  private static ReferenceTestProtocolSchedules instance;
+
+  public static ReferenceTestProtocolSchedules getInstance() {
+    if (instance == null) {
+      instance = create();
+    }
+    return instance;
+  }
+
   public static ReferenceTestProtocolSchedules create() {
     return create(new StubGenesisConfigOptions());
   }
