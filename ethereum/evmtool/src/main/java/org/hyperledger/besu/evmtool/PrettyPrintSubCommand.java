@@ -99,7 +99,7 @@ public class PrettyPrintSubCommand implements Runnable {
         if (parentCommand.hasFork()) {
           fork = parentCommand.getFork();
         }
-        ProtocolSpec protocolSpec = ReferenceTestProtocolSchedules.create().geSpecByName(fork);
+        ProtocolSpec protocolSpec = ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
         EVM evm = protocolSpec.getEvm();
         EOFLayout layout = evm.parseEOF(container);
         if (layout.isValid()) {

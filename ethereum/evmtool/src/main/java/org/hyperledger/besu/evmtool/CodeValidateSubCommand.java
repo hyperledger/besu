@@ -92,7 +92,7 @@ public class CodeValidateSubCommand implements Runnable {
         Suppliers.memoize(
             () -> {
               ProtocolSpec protocolSpec =
-                  ReferenceTestProtocolSchedules.create().geSpecByName(fork);
+                  ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
               return protocolSpec.getEvm();
             });
   }

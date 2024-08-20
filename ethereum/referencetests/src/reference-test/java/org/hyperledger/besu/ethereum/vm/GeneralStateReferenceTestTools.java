@@ -44,8 +44,6 @@ import org.hyperledger.besu.evm.worldstate.WorldUpdater;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 public class GeneralStateReferenceTestTools {
-  private static final ReferenceTestProtocolSchedules REFERENCE_TEST_PROTOCOL_SCHEDULES =
-      ReferenceTestProtocolSchedules.create();
   private static final List<String> SPECS_PRIOR_TO_DELETING_EMPTY_ACCOUNTS =
       Arrays.asList("Frontier", "Homestead", "EIP150");
 
@@ -54,7 +52,7 @@ public class GeneralStateReferenceTestTools {
   }
 
   private static ProtocolSpec protocolSpec(final String name) {
-    return REFERENCE_TEST_PROTOCOL_SCHEDULES
+    return ReferenceTestProtocolSchedules.getInstance()
         .getByName(name)
         .getByBlockHeader(BlockHeaderBuilder.createDefault().buildBlockHeader());
   }

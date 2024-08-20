@@ -51,14 +51,12 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Supplier;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Stopwatch;
-import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Option;
@@ -89,9 +87,6 @@ public class StateTestSubCommand implements Runnable {
    * enter on the command line to invoke this command.
    */
   public static final String COMMAND_NAME = "state-test";
-
-  static final Supplier<ReferenceTestProtocolSchedules> referenceTestProtocolSchedules =
-      Suppliers.memoize(ReferenceTestProtocolSchedules::create);
 
   @SuppressWarnings({"FieldCanBeFinal"})
   @Option(
@@ -258,7 +253,7 @@ public class StateTestSubCommand implements Runnable {
 
         final String forkName = fork == null ? spec.getFork() : fork;
         final ProtocolSchedule protocolSchedule =
-            referenceTestProtocolSchedules.get().getByName(forkName);
+            ReferenceTestProtocolSchedules.getInstance().getByName(forkName);
         if (protocolSchedule == null) {
           throw new UnsupportedForkException(forkName);
         }
