@@ -21,7 +21,7 @@ public final class BesuFuzz {
 
   /** Default constructor for the EvmTool class. */
   public BesuFuzz() {
-    // this is here only for javaodc linting
+    // this is here only for Javadoc linting
   }
 
   /**

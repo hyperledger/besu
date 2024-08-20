@@ -25,19 +25,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 /**
- * This class, EvmToolCommand, serves as the main command for the EVM (Ethereum Virtual Machine)
- * tool. The EVM tool is used to execute Ethereum transactions and contracts in a local environment.
- *
- * <p>EvmToolCommand implements the Runnable interface, making it the entrypoint for PicoCLI to
- * execute this command.
- *
- * <p>The class provides various options for setting up and executing EVM transactions. These
- * options include, but are not limited to, setting the gas price, sender address, receiver address,
- * and the data to be sent with the transaction.
- *
- * <p>Key methods in this class include 'run()' for executing the command, 'execute()' for setting
- * up and running the EVM transaction, and 'dumpWorldState()' for outputting the current state of
- * the Ethereum world state.
+ * This is the root command for the `BesuFuzz` command line tool.
+ * It is a collection of fuzzers that are guided by Besu's implementations.
  */
 @Command(
     description = "Executes Besu based fuzz tests",

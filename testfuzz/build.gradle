@@ -69,14 +69,14 @@ tasks.register("runFuzzer", JavaExec) {
   }
 }
 
-tasks.register("fuzzEvm1") {
+tasks.register("fuzzEvmone") {
   doLast {
     runFuzzer.args += "--client=evm1=evmone-eofparse"
   }
   finalizedBy("runFuzzer")
 }
 
-tasks.register("fuzzEthJS") {
+tasks.register("fuzzEthereumJS") {
   doLast {
     runFuzzer.args += "--client=etjs=tsx ../../../ethereumjs/ethereumjs-monorepo/packages/evm/scripts/eofContainerValidator.ts"
   }
