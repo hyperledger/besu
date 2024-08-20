@@ -180,14 +180,14 @@ public class Stratum1Protocol implements StratumProtocol {
       throw new InvalidJsonRpcParameters(
           "Invalid nonce parameter (index 2)", RpcErrorType.INVALID_NONCE_PARAMS, e);
     }
-    Hash mixHash = null;
+    Hash mixHash;
     try {
       mixHash = Hash.fromHexString(message.getRequiredParameter(4, String.class));
     } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid mix hash parameter (index 4)", RpcErrorType.INVALID_MIX_HASH_PARAMS, e);
     }
-    Bytes powHash = null;
+    Bytes powHash;
     try {
       powHash = Bytes.fromHexString(message.getRequiredParameter(3, String.class));
     } catch (JsonRpcParameterException e) {
