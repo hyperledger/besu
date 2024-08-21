@@ -37,11 +37,8 @@ assignees: ''
     - New folder created `versioned_docs/version-<version>` [example pull request](https://github.com/hyperledger/besu-docs/pull/1675/files)
     - Review and merge the PR to main
   - Create a new release for the version. Copy the release notes from [hyperledger/besu](https://github.com/hyperledger/besu) to the besu-docs release
-- [ ] Create homebrew release
-  - Run GHA workflow directly [update-version.yml](https://github.com/hyperledger/homebrew-besu/actions/workflows/update-version.yml)
-  - This GHA workflow will create a branch with name `update-<version>`. Workflow may create the PR if permission allowed
-  - If the PR has not been automatically created, create the PR manually to merge the branch to main
-  - Review and merge the PR to main
+- [ ] Create homebrew release using [update-version workflow](https://github.com/hyperledger/homebrew-besu/actions/workflows/update-version.yml)
+  - If the PR has not been automatically created, create the PR manually using the created branch `update-<version>`
   - Run commands `brew tap hyperledger/besu && brew install besu` on MacOSX and verify latest version has been installed
 - [ ] Delete the burn-in nodes (unless required for further analysis eg performance)
 - [ ] Social announcements
