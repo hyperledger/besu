@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle;
 
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
 import org.hyperledger.besu.datatypes.AccountValue;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -31,6 +29,9 @@ import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
 
 import java.util.NavigableMap;
 import java.util.Objects;
+
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
 
 public class VerkleAccount extends DiffBasedAccount {
   private final long codeSize;
@@ -90,10 +91,10 @@ public class VerkleAccount extends DiffBasedAccount {
     final RLPInput in = RLP.input(encoded);
     in.enterList();
 
-    final long nonce = in.readLongScalar();
     final Wei balance = Wei.of(in.readUInt256Scalar());
-    final Hash codeHash = Hash.wrap(in.readBytes32());
+    final long nonce = in.readLongScalar();
     final long codeSize = in.readLongScalar();
+    final Hash codeHash = Hash.wrap(in.readBytes32());
     in.leaveList();
 
     return new VerkleAccount(
@@ -108,17 +109,18 @@ public class VerkleAccount extends DiffBasedAccount {
   @Override
   public NavigableMap<Bytes32, AccountStorageEntry> storageEntriesFrom(
       final Bytes32 startKeyHash, final int limit) {
-    throw new RuntimeException("The method storageEntriesFrom is not supported when using Verkle tries. Verkle tries manage storage differently");
+    throw new RuntimeException(
+        "The method storageEntriesFrom is not supported when using Verkle tries. Verkle tries manage storage differently");
   }
 
   @Override
   public void writeTo(final RLPOutput out) {
     out.startList();
 
-    out.writeLongScalar(nonce);
     out.writeUInt256Scalar(balance);
-    out.writeLongScalar(codeSize);
+    out.writeLongScalar(nonce);
     out.writeBytes(codeHash);
+    out.writeLongScalar(codeSize);
 
     out.endList();
   }

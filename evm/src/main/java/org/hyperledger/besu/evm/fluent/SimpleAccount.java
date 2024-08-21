@@ -113,12 +113,10 @@ public class SimpleAccount implements MutableAccount {
     return codeHash.get();
   }
 
-
   @Override
   public Optional<Integer> getCodeSize() {
     return Optional.of(this.code == null ? 0 : this.code.size());
   }
-
 
   @Override
   public UInt256 getStorageValue(final UInt256 key) {

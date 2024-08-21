@@ -17,7 +17,6 @@ package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
@@ -56,10 +55,14 @@ public class FullBonsaiFlatDbStrategy extends BonsaiFlatDbStrategy {
   }
 
   @Override
-  public Optional<Bytes> getFlatAccount(final Supplier<Optional<Bytes>> worldStateRootHashSupplier, final NodeLoader nodeLoader, final Hash accountHash, final SegmentedKeyValueStorage storage) {
+  public Optional<Bytes> getFlatAccount(
+      final Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      final NodeLoader nodeLoader,
+      final Hash accountHash,
+      final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
     final Optional<Bytes> accountFound =
-            storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
+        storage.get(ACCOUNT_INFO_STATE, accountHash.toArrayUnsafe()).map(Bytes::wrap);
     if (accountFound.isPresent()) {
       getAccountFoundInFlatDatabaseCounter.inc();
     } else {

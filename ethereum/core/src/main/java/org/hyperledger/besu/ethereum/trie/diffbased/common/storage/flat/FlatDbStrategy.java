@@ -14,34 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.NodeLoader;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
-import java.util.Comparator;
-import java.util.NavigableMap;
 import java.util.Optional;
-import java.util.TreeMap;
-import java.util.function.Function;
-import java.util.function.Predicate;
-import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
-import kotlin.Pair;
 import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
 
 /**
  * This class represents a FlatDbReaderStrategy, which is responsible for reading and writing data
@@ -87,7 +69,6 @@ public abstract class FlatDbStrategy {
             "Number of storage slots found in the flat database");
   }
 
-
   public boolean isCodeByCodeHash() {
     return codeStorageStrategy instanceof CodeHashCodeStorageStrategy;
   }
@@ -125,7 +106,7 @@ public abstract class FlatDbStrategy {
     codeStorageStrategy.putFlatCode(transaction, accountHash, codeHash, code);
   }
 
-  public abstract void clearAll(final SegmentedKeyValueStorage storage) ;
+  public abstract void clearAll(final SegmentedKeyValueStorage storage);
 
   public abstract void resetOnResync(final SegmentedKeyValueStorage storage);
 }

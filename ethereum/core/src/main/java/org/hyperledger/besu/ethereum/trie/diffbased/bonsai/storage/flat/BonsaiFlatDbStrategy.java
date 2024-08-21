@@ -14,20 +14,16 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 
-import kotlin.Pair;
-import org.apache.tuweni.bytes.Bytes;
-import org.apache.tuweni.bytes.Bytes32;
-import org.apache.tuweni.rlp.RLP;
-import org.hyperledger.besu.datatypes.Address;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
 import org.hyperledger.besu.ethereum.trie.NodeLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeHashCodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
-import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
-import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
@@ -41,9 +37,10 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+import kotlin.Pair;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.rlp.RLP;
 
 /**
  * This class represents a FlatDbReaderStrategy, which is responsible for reading and writing data
@@ -52,7 +49,8 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
  */
 public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
 
-  public BonsaiFlatDbStrategy(final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
+  public BonsaiFlatDbStrategy(
+      final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
     super(metricsSystem, codeStorageStrategy);
   }
 
@@ -60,10 +58,10 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
    * Retrieves the account data for the given account hash, using the world state root hash supplier and node loader.
    */
   public abstract Optional<Bytes> getFlatAccount(
-          Supplier<Optional<Bytes>> worldStateRootHashSupplier,
-          NodeLoader nodeLoader,
-          Hash accountHash,
-          SegmentedKeyValueStorage storage);
+      Supplier<Optional<Bytes>> worldStateRootHashSupplier,
+      NodeLoader nodeLoader,
+      Hash accountHash,
+      SegmentedKeyValueStorage storage);
 
   /*
    * Retrieves the storage value for the given account hash and storage slot key, using the world state root hash supplier, storage root supplier, and node loader.
@@ -76,6 +74,7 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
       Hash accountHash,
       StorageSlotKey storageSlotKey,
       SegmentedKeyValueStorage storageStorage);
+
   /*
    * Puts the account data for the given account hash, using the world state root hash supplier and node loader.
    */
@@ -116,7 +115,7 @@ public abstract class BonsaiFlatDbStrategy extends FlatDbStrategy {
         ACCOUNT_STORAGE_STORAGE, Bytes.concatenate(accountHash, slotHash).toArrayUnsafe());
   }
 
-@Override
+  @Override
   public void clearAll(final SegmentedKeyValueStorage storage) {
     storage.clear(ACCOUNT_INFO_STATE);
     storage.clear(ACCOUNT_STORAGE_STORAGE);

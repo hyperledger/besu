@@ -74,8 +74,8 @@ public class VerkleSnapshotWorldStateKeyValueStorage extends VerkleWorldStateKey
   }
 
   @Override
-  public Optional<Bytes> getFlatBasicData(final Address address) {
-    return isClosedGet() ? Optional.empty() : super.getFlatBasicData(address);
+  public Optional<Bytes> getAccount(final Address address) {
+    return isClosedGet() ? Optional.empty() : super.getAccount(address);
   }
 
   @Override

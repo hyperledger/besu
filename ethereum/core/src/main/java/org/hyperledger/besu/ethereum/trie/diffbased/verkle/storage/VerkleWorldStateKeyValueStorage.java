@@ -14,8 +14,6 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 
@@ -26,7 +24,6 @@ import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeHashCodeStorageStrategy;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.VerkleFlatDbStrategy;
 import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
@@ -51,12 +48,11 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
   public VerkleWorldStateKeyValueStorage(
       final StorageProvider provider, final MetricsSystem metricsSystem) {
     super(
-        provider.getStorageBySegmentIdentifiers(
-            List.of(CODE_STORAGE, TRIE_BRANCH_STORAGE)),
+        provider.getStorageBySegmentIdentifiers(List.of(CODE_STORAGE, TRIE_BRANCH_STORAGE)),
         provider.getStorageBySegmentIdentifier(KeyValueSegmentIdentifier.TRIE_LOG_STORAGE));
-    this.flatDbStrategy = new VerkleFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
+    this.flatDbStrategy =
+        new VerkleFlatDbStrategy(metricsSystem, new CodeHashCodeStorageStrategy());
   }
-
 
   public VerkleWorldStateKeyValueStorage(
       final VerkleFlatDbStrategy flatDbStrategy,
@@ -89,8 +85,8 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     }
   }
 
-  public Optional<Bytes> getFlatBasicData(final Address address) {
-    return getFlatDbStrategy().getFlatBasicData(address, composedWorldStateStorage);
+  public Optional<Bytes> getAccount(final Address address) {
+    return getFlatDbStrategy().getFlatAccount(address, composedWorldStateStorage);
   }
 
   public Optional<Bytes> getStorageValueByStorageSlotKey(
@@ -170,7 +166,6 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
       return this;
     }
 
-
     @Override
     public SegmentedKeyValueStorageTransaction getWorldStateTransaction() {
       return composedWorldStateTransaction;
@@ -184,6 +179,7 @@ public class VerkleWorldStateKeyValueStorage extends DiffBasedWorldStateKeyValue
     @Override
     public void commit() {
       // write the log ahead, then the worldstate
+      flatDbStrategy.clearCache();
       trieLogStorageTransaction.commit();
       composedWorldStateTransaction.commit();
     }

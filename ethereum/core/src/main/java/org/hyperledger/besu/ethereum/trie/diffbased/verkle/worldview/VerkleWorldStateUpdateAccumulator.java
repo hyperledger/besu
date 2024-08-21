@@ -27,11 +27,11 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWo
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.Consumer;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.FlatBasicData;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.UpdateTrackingAccount;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
+
 import java.util.Map;
 import java.util.Optional;
 import java.util.function.Function;
@@ -90,8 +90,7 @@ public class VerkleWorldStateUpdateAccumulator
       final long nonce,
       final Wei balance,
       final boolean mutable) {
-    return new VerkleAccount(
-        context, address, addressHash, nonce, balance, 0, Hash.EMPTY, mutable);
+    return new VerkleAccount(context, address, addressHash, nonce, balance, 0, Hash.EMPTY, mutable);
   }
 
   @Override
@@ -112,45 +111,6 @@ public class VerkleWorldStateUpdateAccumulator
       final Address address,
       final StorageSlotKey storageSlotKey) {
     return worldState.getStorageValueByStorageSlotKey(address, storageSlotKey);
-  }
-
-  @Override
-  public VerkleAccount loadAccount(
-          final Address address, final Function<DiffBasedValue<VerkleAccount>, VerkleAccount> accountFunction) {
-    try {
-      final DiffBasedValue<VerkleAccount> diffBasedValue = getAccountsToUpdate().get(address);
-      if (diffBasedValue == null) {
-        final Account account;
-        if (wrappedWorldView() instanceof DiffBasedWorldStateUpdateAccumulator) {
-          final DiffBasedWorldStateUpdateAccumulator<VerkleAccount> worldStateUpdateAccumulator =
-                  (DiffBasedWorldStateUpdateAccumulator<VerkleAccount>) wrappedWorldView();
-          account = worldStateUpdateAccumulator.loadAccount(address, accountFunction);
-        } else {
-          final FlatBasicData basicFlatData = ((VerkleWorldState) wrappedWorldView()).getBasicFlatData(address);
-          account = basicFlatData.getVerkleAccount();
-          final StorageConsumingMap<StorageSlotKey, DiffBasedValue<UInt256>> accountStorage = getStorageToUpdate().get(address);
-          for (Map.Entry<UInt256,UInt256> slot :basicFlatData.getHeaderStorage().entrySet()) {
-            accountStorage.putIfAbsent(new StorageSlotKey(slot.getKey()), new DiffBasedValue<>(slot.getValue(), slot.getValue()));
-          }
-        }
-        if (account instanceof DiffBasedAccount diffBasedAccount) {
-          VerkleAccount mutableAccount = copyAccount((VerkleAccount) diffBasedAccount, this, true);
-          getAccountsToUpdate().put(
-                  address, new DiffBasedValue<>((VerkleAccount) diffBasedAccount, mutableAccount));
-          return mutableAccount;
-        } else {
-          // add the empty read in accountsToUpdate
-          getAccountsToUpdate().put(address, new DiffBasedValue<>(null, null));
-          return null;
-        }
-      } else {
-        return accountFunction.apply(diffBasedValue);
-      }
-    } catch (MerkleTrieException e) {
-      // need to throw to trigger the heal
-      throw new MerkleTrieException(
-              e.getMessage(), Optional.of(address), e.getHash(), e.getLocation());
-    }
   }
 
   @Override

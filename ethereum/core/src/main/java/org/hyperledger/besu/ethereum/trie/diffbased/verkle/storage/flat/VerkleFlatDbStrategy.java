@@ -14,35 +14,44 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat;
 
-import org.apache.tuweni.bytes.Bytes;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+
 import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.StorageSlotKey;
-import org.hyperledger.besu.ethereum.trie.NodeLoader;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPInput;
+import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.ethereum.rlp.RLPInput;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.CodeStorageStrategy;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.flat.FlatDbStrategy;
-import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyAdapter;
-import org.hyperledger.besu.ethereum.trie.verkle.hasher.TrieKeyCachedPedersenHasher;
+import org.hyperledger.besu.ethereum.trie.verkle.hasher.CachedPedersenHasher;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.metrics.Counter;
 import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorageTransaction;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.function.Supplier;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ExecutionException;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
+import com.google.common.cache.Cache;
+import com.google.common.cache.CacheBuilder;
+import org.apache.tuweni.bytes.Bytes;
+import org.apache.tuweni.bytes.Bytes32;
+import org.apache.tuweni.units.bigints.UInt256;
 
 public class VerkleFlatDbStrategy extends FlatDbStrategy {
+
+  private static final int ACCOUNT_CACHE_SIZE = 250;
+  private static final int STEM_PER_ACCOUNT_CACHE_SIZE = 100;
 
   protected final Counter getAccountNotFoundInFlatDatabaseCounter;
 
   protected final Counter getStorageValueNotFoundInFlatDatabaseCounter;
 
-  protected static final TrieKeyAdapter trieKeyPreloader = new TrieKeyAdapter(new TrieKeyCachedPedersenHasher(10000)); //TODO need to specify a good cache value
+  private final Cache<Address, CachedPedersenHasher> perdersenHasherByAccount;
+  private final Map<Address, Map<Bytes, List<Bytes>>> stemByAccount = new ConcurrentHashMap<>();
 
   public VerkleFlatDbStrategy(
       final MetricsSystem metricsSystem, final CodeStorageStrategy codeStorageStrategy) {
@@ -59,20 +68,20 @@ public class VerkleFlatDbStrategy extends FlatDbStrategy {
             BesuMetricCategory.BLOCKCHAIN,
             "get_storagevalue_missing_flat_database",
             "Number of storage slots not found in the flat database");
+
+    perdersenHasherByAccount = CacheBuilder.newBuilder().maximumSize(ACCOUNT_CACHE_SIZE).build();
   }
 
-  public Optional<Bytes> getFlatBasicData(
-          final Address address,
-          final SegmentedKeyValueStorage storage) {
+  public Optional<Bytes> getFlatAccount(
+      final Address address, final SegmentedKeyValueStorage storage) {
     getAccountCounter.inc();
-    final Optional<Bytes> accountFound =
-            storage.get(TRIE_BRANCH_STORAGE, trieKeyPreloader.getHeaderStem(address).toArrayUnsafe()).map(Bytes::wrap);
-    if (accountFound.isPresent()) {
-      getAccountFoundInFlatDatabaseCounter.inc();
-    } else {
-      getAccountNotFoundInFlatDatabaseCounter.inc();
+    final Optional<List<Bytes>> stemValues = getStemValues(address, UInt256.ZERO, storage);
+    if (stemValues.isPresent()) {
+      getStorageValueFlatDatabaseCounter.inc();
+      return Optional.of(encodeAccountStemValues(stemValues.get()));
     }
-    return accountFound;
+    getAccountNotFoundInFlatDatabaseCounter.inc();
+    return Optional.empty();
   }
 
   public Optional<Bytes> getFlatStorageValueByStorageSlotKey(
@@ -80,19 +89,14 @@ public class VerkleFlatDbStrategy extends FlatDbStrategy {
       final StorageSlotKey storageSlotKey,
       final SegmentedKeyValueStorage storage) {
     getStorageValueCounter.inc();
-    final Optional<Bytes> storageFound =
-        storage
-            .get(
-                    TRIE_BRANCH_STORAGE,
-                    trieKeyPreloader.getStorageStem(address, storageSlotKey.getSlotKey().orElseThrow()).toArrayUnsafe())
-            .map(Bytes::wrap);
-    if (storageFound.isPresent()) {
+    final UInt256 slotKey = storageSlotKey.getSlotKey().orElseThrow();
+    final Optional<List<Bytes>> stemValues = getStemValues(address, slotKey, storage);
+    if (stemValues.isPresent()) {
       getStorageValueFlatDatabaseCounter.inc();
-    } else {
-      getStorageValueNotFoundInFlatDatabaseCounter.inc();
+      return Optional.of(stemValues.get().get(slotKey.toInt()));
     }
-
-    return storageFound;
+    getStorageValueNotFoundInFlatDatabaseCounter.inc();
+    return Optional.empty();
   }
 
   @Override
@@ -105,5 +109,65 @@ public class VerkleFlatDbStrategy extends FlatDbStrategy {
   public void resetOnResync(final SegmentedKeyValueStorage storage) {
     // NOOP
     // not need to reset anything in full mode
+  }
+
+  private Optional<List<Bytes>> getStemValues(
+      final Address address, final Bytes32 index, final SegmentedKeyValueStorage storage) {
+    Map<Bytes, List<Bytes>> stemMap = stemByAccount.get(address);
+    if (stemMap != null) {
+      final CachedPedersenHasher cachedPedersenHasher;
+      try {
+        cachedPedersenHasher =
+            perdersenHasherByAccount.get(
+                address,
+                () ->
+                    new CachedPedersenHasher(
+                        STEM_PER_ACCOUNT_CACHE_SIZE, new ConcurrentHashMap<>()));
+        final Bytes stem = cachedPedersenHasher.computeStem(address, index);
+        final Map<Bytes, List<Bytes>> stems =
+            stemByAccount.computeIfAbsent(address, __ -> new ConcurrentHashMap<>());
+        return Optional.ofNullable(
+            stems.computeIfAbsent(
+                stem,
+                s ->
+                    storage
+                        .get(TRIE_BRANCH_STORAGE, stem.toArrayUnsafe())
+                        .map(bytes -> decodeStemNode(Bytes.of(bytes)))
+                        .orElse(null)));
+      } catch (ExecutionException e) {
+        throw new RuntimeException(e);
+      }
+    }
+    return Optional.empty();
+  }
+
+  public void clearCache() {
+    stemByAccount.clear();
+  }
+
+  // TODO use besu verkle trie code
+
+  private List<Bytes> decodeStemNode(final Bytes encodedValues) {
+    RLPInput input = new BytesValueRLPInput(encodedValues, false);
+    input.enterList();
+
+    input.skipNext(); // depth
+    input.skipNext(); // commitment
+    input.skipNext(); // leftCommitment
+    input.skipNext(); // rightCommitment
+    input.skipNext(); // leftScalar
+    input.skipNext(); // rightScaler
+    return input.readList(RLPInput::readBytes);
+  }
+
+  private Bytes encodeAccountStemValues(final List<Bytes> values) {
+    final BytesValueRLPOutput out = new BytesValueRLPOutput();
+    out.startList();
+    out.writeUInt256Scalar(UInt256.fromBytes(values.get(1))); // balance
+    out.writeLongScalar(values.get(2).toLong()); // nonce
+    out.writeBytes(values.get(3)); // codehash
+    out.writeLongScalar(values.get(4).toLong()); // codesize
+    out.endList();
+    return out.encoded();
   }
 }

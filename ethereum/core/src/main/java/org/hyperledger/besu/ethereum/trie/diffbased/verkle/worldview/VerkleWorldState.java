@@ -29,11 +29,10 @@ import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWo
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.DiffBasedWorldStateConfig;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.DiffBasedWorldStateUpdateAccumulator;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.worldview.accumulator.preload.StorageConsumingMap;
+import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleLayeredWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.FlatBasicData;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleAccount;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.flat.VerkleFlatDbStrategy;
 import org.hyperledger.besu.ethereum.trie.verkle.util.Parameters;
 import org.hyperledger.besu.ethereum.verkletrie.TrieKeyPreloader;
@@ -366,14 +365,10 @@ public class VerkleWorldState extends DiffBasedWorldState {
 
   @Override
   public Account get(final Address address) {
-    return getBasicFlatData(address).getVerkleAccount();
-  }
-
-  public FlatBasicData getBasicFlatData(final Address address) {
     return getWorldStateStorage()
-            .getFlatBasicData(address)
-            .map(bytes -> FlatBasicData.fromRLP(accumulator, address, bytes, true))
-            .orElse(null);
+        .getAccount(address)
+        .map(bytes -> VerkleAccount.fromRLP(accumulator, address, bytes, true))
+        .orElse(null);
   }
 
   @Override
@@ -427,7 +422,9 @@ public class VerkleWorldState extends DiffBasedWorldState {
     return calculateRootHash(
         Optional.of(
             new VerkleWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, (VerkleFlatDbStrategy) worldStateKeyValueStorage.getFlatDbStrategy())),
+                noOpSegmentedTx,
+                noOpTx,
+                (VerkleFlatDbStrategy) worldStateKeyValueStorage.getFlatDbStrategy())),
         accumulator.copy());
   }
 

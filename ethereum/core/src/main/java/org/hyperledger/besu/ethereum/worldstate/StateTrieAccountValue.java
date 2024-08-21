@@ -48,7 +48,12 @@ public class StateTrieAccountValue implements AccountValue {
     this.codeSize = Optional.empty();
   }
 
-  public StateTrieAccountValue(final long nonce, final Wei balance, final Hash storageRoot, final Hash codeHash, final int codeSize) {
+  public StateTrieAccountValue(
+      final long nonce,
+      final Wei balance,
+      final Hash storageRoot,
+      final Hash codeHash,
+      final int codeSize) {
     this.nonce = nonce;
     this.balance = balance;
     this.storageRoot = storageRoot;

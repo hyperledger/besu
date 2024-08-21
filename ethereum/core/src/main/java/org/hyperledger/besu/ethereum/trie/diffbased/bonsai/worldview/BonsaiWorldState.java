@@ -453,7 +453,9 @@ public class BonsaiWorldState extends DiffBasedWorldState {
     return calculateRootHash(
         Optional.of(
             new BonsaiWorldStateKeyValueStorage.Updater(
-                noOpSegmentedTx, noOpTx, (BonsaiFlatDbStrategy) worldStateKeyValueStorage.getFlatDbStrategy())),
+                noOpSegmentedTx,
+                noOpTx,
+                (BonsaiFlatDbStrategy) worldStateKeyValueStorage.getFlatDbStrategy())),
         accumulator.copy());
   }
 

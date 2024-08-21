@@ -143,13 +143,7 @@ public abstract class DiffBasedWorldStateUpdateAccumulator<ACCOUNT extends DiffB
     }
 
     final ACCOUNT newAccount =
-        createAccount(
-            this,
-            address,
-            hashAndSaveAccountPreImage(address),
-            nonce,
-            balance,
-            true);
+        createAccount(this, address, hashAndSaveAccountPreImage(address), nonce, balance, true);
     diffBasedValue.setUpdated(newAccount);
     return track(new UpdateTrackingAccount<>(newAccount));
   }

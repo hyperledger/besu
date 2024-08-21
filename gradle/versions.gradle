@@ -169,7 +169,7 @@ dependencyManagement {
       entry 'ipa-multipoint'
     }
 
-    dependency 'org.hyperledger.besu:besu-verkle-trie:0.0.1-SNAPSHOT'
+    dependency 'org.hyperledger.besu:besu-verkle-trie:0.0.1-TEST-SNAPSHOT'
 
     dependencySet(group: 'org.immutables', version: '2.10.0') {
       entry 'value-annotations'
