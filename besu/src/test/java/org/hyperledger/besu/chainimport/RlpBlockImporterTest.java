@@ -16,11 +16,9 @@ package org.hyperledger.besu.chainimport;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
 
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.cli.config.NetworkName;
-import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.MergeConfigOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
@@ -79,7 +77,6 @@ public final class RlpBlockImporterTest {
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkConfiguration(NetworkingConfiguration.create())
-            .besuComponent(mock(BesuComponent.class))
             .build();
     final RlpBlockImporter.ImportResult result =
         rlpBlockImporter.importBlockchain(source, targetController, false);
@@ -113,7 +110,6 @@ public final class RlpBlockImporterTest {
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkConfiguration(NetworkingConfiguration.create())
-            .besuComponent(mock(BesuComponent.class))
             .build();
 
     assertThatThrownBy(
@@ -144,7 +140,6 @@ public final class RlpBlockImporterTest {
             .gasLimitCalculator(GasLimitCalculator.constant())
             .evmConfiguration(EvmConfiguration.DEFAULT)
             .networkConfiguration(NetworkingConfiguration.create())
-            .besuComponent(mock(BesuComponent.class))
             .build();
 
     final RlpBlockImporter.ImportResult result =
