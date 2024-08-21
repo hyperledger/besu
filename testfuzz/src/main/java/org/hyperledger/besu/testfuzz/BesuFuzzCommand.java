@@ -25,8 +25,8 @@ import picocli.CommandLine;
 import picocli.CommandLine.Command;
 
 /**
- * This is the root command for the `BesuFuzz` command line tool.
- * It is a collection of fuzzers that are guided by Besu's implementations.
+ * This is the root command for the `BesuFuzz` command line tool. It is a collection of fuzzers that
+ * are guided by Besu's implementations.
  */
 @Command(
     description = "Executes Besu based fuzz tests",

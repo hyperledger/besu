@@ -20,7 +20,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.config.CheckpointConfigOptions;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
@@ -114,7 +113,6 @@ public class CliqueBesuControllerBuilderTest {
             "0x0000000000000000000000000000000000000000000000000000000000000000b9b81ee349c3807e46bc71aa2632203c5b4620340000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000");
     lenient().when(genesisConfigFile.getMixHash()).thenReturn(Hash.ZERO.toHexString());
     lenient().when(genesisConfigFile.getNonce()).thenReturn(Long.toHexString(1));
-    lenient().when(genesisConfigFile.getConfigOptions(any())).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigFile.getConfigOptions()).thenReturn(genesisConfigOptions);
     lenient().when(genesisConfigOptions.getCheckpointOptions()).thenReturn(checkpointConfigOptions);
     lenient()
@@ -191,7 +189,6 @@ public class CliqueBesuControllerBuilderTest {
             .storageProvider(storageProvider)
             .gasLimitCalculator(gasLimitCalculator)
             .evmConfiguration(EvmConfiguration.DEFAULT)
-            .besuComponent(mock(BesuComponent.class))
             .networkConfiguration(NetworkingConfiguration.create());
   }
 
