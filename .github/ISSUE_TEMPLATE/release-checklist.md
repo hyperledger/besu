@@ -29,13 +29,8 @@ assignees: ''
     - publishes the docker `latest` tag variants
 - [ ] Check binary SHAs are correct on the release page
 - [ ] Check "Container Verify" GitHub workflow has run successfully
-- [ ] Create besu-docs release
-  - Run the GitHub workflow [update-version.yml](https://github.com/hyperledger/besu-docs/actions/workflows/update-version.yml) to update the docs version
-    - This creates a branch with name `besu-version-<version>`. PR may also be created if action has the permission
-    - If the PR has not been automatically created, create the PR manually to merge the branch to main
-    - Verify new version has been added as the stable version and last version
-    - New folder created `versioned_docs/version-<version>` [example pull request](https://github.com/hyperledger/besu-docs/pull/1675/files)
-    - Review and merge the PR to main
+- [ ] Create besu-docs release using [update-version workflow](https://github.com/hyperledger/besu-docs/actions/workflows/update-version.yml)
+  - If the PR has not been automatically created, create the PR manually using the created branch `besu-version-<version>`
   - Create a new release for the version. Copy the release notes from [hyperledger/besu](https://github.com/hyperledger/besu) to the besu-docs release
 - [ ] Create homebrew release using [update-version workflow](https://github.com/hyperledger/homebrew-besu/actions/workflows/update-version.yml)
   - If the PR has not been automatically created, create the PR manually using the created branch `update-<version>`
