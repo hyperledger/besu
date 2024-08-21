@@ -89,7 +89,8 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
       throw new IllegalStateException("DB mode version not set");
     }
 
-    AtomicInteger frozenStateCount = new AtomicInteger();
+    AtomicInteger frozenAccountStateCount = new AtomicInteger();
+    AtomicInteger frozenStorageStateCount = new AtomicInteger();
 
     LOG.atDebug()
         .setMessage(
@@ -99,7 +100,7 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
         .addArgument(retainAboveThisBlock)
         .log();
 
-    final var blocksToMove =
+    final var accountsToMove =
         blocksToMoveToFreezer.asMap().entrySet().stream()
             .dropWhile((e) -> e.getKey() > retainAboveThisBlock);
     // TODO - limit to a configurable number of blocks to move per loop
@@ -109,35 +110,72 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
     // Determine which world state keys have changed in the last N blocks by looking at the
     // trie logs for the blocks. Then move the old keys to the freezer segment (if and only if they
     // have changed)
-    blocksToMove.forEach(
-        (block) -> {
-          for (Hash blockHash : block.getValue()) {
-            Optional<TrieLog> trieLog = trieLogManager.getTrieLogLayer(blockHash);
-            if (trieLog.isPresent()) {
-              trieLog
-                  .get()
-                  .getAccountChanges()
-                  .forEach(
-                      (address, change) -> {
-                        // Move any previous state for this account
-                        frozenStateCount.addAndGet(
-                            rootWorldStateStorage.freezePreviousAccountState(
-                                blockchain.getBlockHeader(blockHash),
-                                blockchain.getBlockHeader(block.getKey() - 1),
-                                address.addressHash()));
-                        // TODO - block number - 1 is a hack until getNearestBefore() is pulled in
-                      });
-            }
-            movedToFreezer.put(block.getKey(), blockHash);
-          }
-        });
+    accountsToMove
+        .parallel()
+        .forEach(
+            (block) -> {
+              for (Hash blockHash : block.getValue()) {
+                Optional<TrieLog> trieLog = trieLogManager.getTrieLogLayer(blockHash);
+                if (trieLog.isPresent()) {
+                  trieLog
+                      .get()
+                      .getAccountChanges()
+                      .forEach(
+                          (address, change) -> {
+                            // Move any previous state for this account
+                            frozenAccountStateCount.addAndGet(
+                                rootWorldStateStorage.freezePreviousAccountState(
+                                    blockchain.getBlockHeader(
+                                        blockchain.getBlockHeader(blockHash).get().getParentHash()),
+                                    address.addressHash()));
+                          });
+                }
+                movedToFreezer.put(block.getKey(), blockHash);
+              }
+            });
+
+    final var storageToMove =
+        blocksToMoveToFreezer.asMap().entrySet().stream()
+            .dropWhile((e) -> e.getKey() > retainAboveThisBlock);
+
+    storageToMove
+        .parallel()
+        .forEach(
+            (block) -> {
+              for (Hash blockHash : block.getValue()) {
+                Optional<TrieLog> trieLog = trieLogManager.getTrieLogLayer(blockHash);
+                if (trieLog.isPresent()) {
+                  trieLog
+                      .get()
+                      .getStorageChanges()
+                      .forEach(
+                          (address, storageSlotKey) -> {
+                            storageSlotKey.forEach(
+                                (slotKey, slotValue) -> {
+                                  // Move any previous state for this account
+                                  frozenStorageStateCount.addAndGet(
+                                      rootWorldStateStorage.freezePreviousStorageState(
+                                          blockchain.getBlockHeader(
+                                              blockchain
+                                                  .getBlockHeader(blockHash)
+                                                  .get()
+                                                  .getParentHash()),
+                                          Bytes.concatenate(
+                                              address.addressHash(), slotKey.getSlotHash())));
+                                });
+                          });
+                }
+                movedToFreezer.put(block.getKey(), blockHash);
+              }
+            });
 
     movedToFreezer.keySet().forEach(blocksToMoveToFreezer::removeAll);
 
-    if (frozenStateCount.get() > 0) {
+    if (frozenAccountStateCount.get() > 0 || frozenStorageStateCount.get() > 0) {
       LOG.atInfo()
-          .setMessage("froze {} state entries for {} blocks")
-          .addArgument(frozenStateCount.get())
+          .setMessage("froze {} account state entries, {} storage state entries for {} blocks")
+          .addArgument(frozenAccountStateCount.get())
+          .addArgument(frozenStorageStateCount.get())
           .addArgument(movedToFreezer::size)
           .log();
     }

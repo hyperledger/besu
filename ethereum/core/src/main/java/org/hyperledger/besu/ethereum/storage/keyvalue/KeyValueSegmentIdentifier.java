@@ -42,6 +42,12 @@ public enum KeyValueSegmentIdentifier implements SegmentIdentifier {
       true,
       false,
       true),
+  STORAGE_FREEZER_STATE(
+      "STORAGE_FREEZER_STATE".getBytes(StandardCharsets.UTF_8),
+      EnumSet.of(BONSAI_ARCHIVE),
+      true,
+      false,
+      true),
   VARIABLES(new byte[] {11}), // formerly GOQUORUM_PRIVATE_WORLD_STATE
 
   // previously supported GoQuorum private states

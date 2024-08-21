@@ -18,6 +18,7 @@ import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIden
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.STORAGE_FREEZER_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy.DELETED_ACCOUNT_VALUE;
 
@@ -200,27 +201,20 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   }
 
   /**
-   * Move old state from the primary DB segments to "cold" segments that will only be used for
-   * historic state queries. This prevents performance degradation over time for writes to the
+   * Move old account state from the primary DB segments to "cold" segments that will only be used
+   * for historic state queries. This prevents performance degradation over time for writes to the
    * primary DB segments.
    *
-   * @param currentBlockHeader TODO - should not be needed
    * @param previousBlockHeader the block header for the previous block, used to get the "nearest
    *     before" state
    * @param accountHash the account to freeze old state for
    * @return the number of account states that were moved to frozen storage
    */
   public int freezePreviousAccountState(
-      final Optional<BlockHeader> currentBlockHeader,
-      final Optional<BlockHeader> previousBlockHeader,
-      final Hash accountHash) {
+      final Optional<BlockHeader> previousBlockHeader, final Hash accountHash) {
     AtomicInteger frozenStateCount = new AtomicInteger();
     if (previousBlockHeader.isPresent()) {
       try {
-        // Get the key for this block
-        final BonsaiContext theContext = new BonsaiContext();
-        theContext.setBlockHeader(currentBlockHeader.get());
-
         // Get the key for the previous block
         final BonsaiContext previousContext = new BonsaiContext();
         previousContext.setBlockHeader(previousBlockHeader.get());
@@ -257,6 +251,64 @@ public abstract class DiffBasedWorldStateKeyValueStorage
             .log();
       } catch (Exception e) {
         LOG.error("Error moving account state for account {} to cold storage", accountHash, e);
+      }
+    }
+
+    return frozenStateCount.get();
+  }
+
+  /**
+   * Move old storage state from the primary DB segments to "cold" segments that will only be used
+   * for historic state queries. This prevents performance degradation over time for writes to the
+   * primary DB segments.
+   *
+   * @param previousBlockHeader the block header for the previous block, used to get the "nearest
+   *     before" state
+   * @param storageSlotKey the storage slot to freeze old state for
+   * @return the number of storage states that were moved to frozen storage
+   */
+  public int freezePreviousStorageState(
+      final Optional<BlockHeader> previousBlockHeader, final Bytes storageSlotKey) {
+    AtomicInteger frozenStateCount = new AtomicInteger();
+    if (previousBlockHeader.isPresent()) {
+      try {
+        // Get the key for the previous block
+        final BonsaiContext previousContext = new BonsaiContext();
+        previousContext.setBlockHeader(previousBlockHeader.get());
+        final Bytes previousKey =
+            ArchiveFlatDbStrategy.calculateArchiveKeyWithMaxSuffix(
+                previousContext, storageSlotKey.toArrayUnsafe());
+
+        composedWorldStateStorage
+            .getNearestBefore(ACCOUNT_STORAGE_STORAGE, previousKey)
+            .filter(
+                // Ignore deleted entries
+                found ->
+                    !Arrays.areEqual(
+                        DELETED_ACCOUNT_VALUE, found.value().orElse(DELETED_ACCOUNT_VALUE)))
+            // Skip "nearest" entries that are for a different account
+            .filter(
+                found -> storageSlotKey.commonPrefixLength(found.key()) >= storageSlotKey.size())
+            .stream()
+            .forEach(
+                (nearestKey) -> {
+                  SegmentedKeyValueStorageTransaction tx =
+                      composedWorldStateStorage.startTransaction();
+                  tx.remove(ACCOUNT_STORAGE_STORAGE, nearestKey.key().toArrayUnsafe());
+                  tx.put(
+                      STORAGE_FREEZER_STATE,
+                      nearestKey.key().toArrayUnsafe(),
+                      nearestKey.value().get());
+                  tx.commit();
+                  frozenStateCount.getAndIncrement();
+                });
+
+        LOG.atDebug()
+            .setMessage("no previous state for storage {} found to move to cold storage")
+            .addArgument(storageSlotKey)
+            .log();
+      } catch (Exception e) {
+        LOG.error("Error moving storage state for slot {} to cold storage", storageSlotKey, e);
       }
     }
 

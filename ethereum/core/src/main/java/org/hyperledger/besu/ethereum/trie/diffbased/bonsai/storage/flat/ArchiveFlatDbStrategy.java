@@ -208,7 +208,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
     transaction.put(ACCOUNT_STORAGE_STORAGE, keySuffixed, DELETED_STORAGE_VALUE);
   }
 
-  public byte[] calculateNaturalSlotKey(final Hash accountHash, final Hash slotHash) {
+  public static byte[] calculateNaturalSlotKey(final Hash accountHash, final Hash slotHash) {
     return Bytes.concatenate(accountHash, slotHash).toArrayUnsafe();
   }
 
