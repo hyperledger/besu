@@ -172,6 +172,60 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
+  public void testGenesisOverrideOptions() throws Exception {
+    parseCommand("--override-genesis-config", "shanghaiTime=123");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    // mainnet defaults
+    assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(1));
+
+    // assert that shanghaiTime override is applied
+    final GenesisConfigFile actualGenesisConfigFile = (config.genesisConfigFile());
+    assertThat(actualGenesisConfigFile).isNotNull();
+    assertThat(actualGenesisConfigFile.getConfigOptions().getShanghaiTime()).isNotEmpty();
+    assertThat(actualGenesisConfigFile.getConfigOptions().getShanghaiTime().getAsLong())
+        .isEqualTo(123);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
+  public void testGenesisOverrideOptionsWithCustomGenesis() throws Exception {
+    final Path genesisFile = createFakeGenesisFile(GENESIS_VALID_JSON);
+
+    parseCommand(
+        "--genesis-file", genesisFile.toString(), "--override-genesis-config", "shanghaiTime=123");
+
+    final ArgumentCaptor<EthNetworkConfig> networkArg =
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
+
+    verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
+    verify(mockControllerBuilder).build();
+
+    final EthNetworkConfig config = networkArg.getValue();
+    assertThat(config.bootNodes()).isEmpty();
+    assertThat(config.dnsDiscoveryUrl()).isNull();
+    assertThat(config.networkId()).isEqualTo(BigInteger.valueOf(3141592));
+
+    // then assert that the shanghaiTime is applied
+    final GenesisConfigFile actualGenesisConfigFile = (config.genesisConfigFile());
+    assertThat(actualGenesisConfigFile).isNotNull();
+    assertThat(actualGenesisConfigFile.getConfigOptions().getShanghaiTime()).isNotEmpty();
+    assertThat(actualGenesisConfigFile.getConfigOptions().getShanghaiTime().getAsLong())
+        .isEqualTo(123);
+
+    assertThat(commandOutput.toString(UTF_8)).isEmpty();
+    assertThat(commandErrorOutput.toString(UTF_8)).isEmpty();
+  }
+
+  @Test
   public void callingHelpSubCommandMustDisplayUsage() {
     parseCommand("--help");
     final String expectedOutputStart = String.format("Usage:%n%nbesu [OPTIONS] [COMMAND]");
