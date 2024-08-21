@@ -193,6 +193,15 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       // if all snapsync tasks are completed and the healing was running and the blockchain is not
       // behind the pivot block
       else {
+        LOG.atInfo()
+                .setMessage("stopTimer CHAIN_DOWNLOAD_DURATION: {}")
+                .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
+                .log();
+        syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
+        LOG.atInfo()
+                .setMessage("stopTimer CHAIN_DOWNLOAD_DURATION: {}")
+                .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
+                .log();
         // If the flat database healing process is not in progress and the flat database mode is
         // FULL
         if (!snapSyncState.isHealFlatDatabaseInProgress()
@@ -288,12 +297,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
-    LOG.info("startTimer FLAT_DB_HEAL: {}", LocalDateTime.now(ZoneId.systemDefault()));
+    LOG.atInfo()
+            .setMessage("startTimer FLAT_DB_HEAL: {}")
+            .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
+            .log();
     syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.FLAT_DB_HEAL);
-    LOG.info(
-        "stopTimer SNAP_WORLD_STATE_HEALING_DURATION: {}",
-        LocalDateTime.now(ZoneId.systemDefault()));
-    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
+    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
     snapSyncState.setHealFlatDatabaseInProgress(true);
     final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
     ranges.forEach(

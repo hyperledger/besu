@@ -121,11 +121,6 @@ public class PipelineChainDownloader implements ChainDownloader {
         && !syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)) {
       return performDownload();
     } else {
-      syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
-      LOG.atInfo()
-          .setMessage("stopTimer CHAIN_DOWNLOAD_DURATION: {}")
-          .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
-          .log();
       return completedFuture(null);
     }
   }
