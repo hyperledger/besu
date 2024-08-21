@@ -40,7 +40,6 @@ import org.hyperledger.besu.ethereum.p2p.peers.EnodeURLImpl;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueStorageProviderBuilder;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
-import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.MetricsSystemFactory;
 import org.hyperledger.besu.metrics.ObservableMetricsSystem;
@@ -250,7 +249,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))))
         .metricsSystem(metricsSystem)
         .transactionPoolConfiguration(txPoolConfig)
-        .dataStorageConfiguration(DataStorageConfiguration.DEFAULT_FOREST_CONFIG)
+        .dataStorageConfiguration(node.getDataStorageConfiguration())
         .ethProtocolConfiguration(EthProtocolConfiguration.defaultConfig())
         .clock(Clock.systemUTC())
         .isRevertReasonEnabled(node.isRevertReasonEnabled())
