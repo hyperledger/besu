@@ -21,4 +21,4 @@ Open the Zipkin UI by browsing to http://localhost:9411/
 You will be able to see the detail of your traces.
 
 References:
-* [OpenTelemetry Environment Variable Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/master/specification/sdk-environment-variables.md)
+* [OpenTelemetry Environment Variable Specification](https://github.com/open-telemetry/opentelemetry-specification/blob/main/specification/configuration/sdk-environment-variables.md)
