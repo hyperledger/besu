@@ -20,6 +20,7 @@ import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.CODE_OFF
 import static org.hyperledger.besu.ethereum.trie.verkle.util.Parameters.VERKLE_NODE_WIDTH;
 import static org.hyperledger.besu.evm.internal.Words.clampedAdd;
 
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.trie.verkle.adapter.TrieKeyAdapter;
 import org.hyperledger.besu.ethereum.trie.verkle.hasher.PedersenHasher;
@@ -31,7 +32,7 @@ import java.util.Objects;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class Eip4762AccessWitness implements org.hyperledger.besu.datatypes.AccessWitness {
+public class Eip4762AccessWitness implements AccessWitness {
 
   private static final TrieKeyAdapter TRIE_KEY_ADAPTER = new TrieKeyAdapter(new PedersenHasher());
   private static final long WITNESS_BRANCH_READ_COST = 1900;

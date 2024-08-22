@@ -766,6 +766,6 @@ public interface GasCalculator {
   }
 
   default AccessWitness newAccessWitness() {
-    return new NoopAccessWitness();
+    return NoopAccessWitness.get();
   }
 }
