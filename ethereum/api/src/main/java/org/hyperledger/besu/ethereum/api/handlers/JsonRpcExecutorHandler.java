@@ -99,7 +99,8 @@ public class JsonRpcExecutorHandler {
     }
   }
 
-  private static void handleErrorAndEndResponse(final RoutingContext ctx, final Object id, final RpcErrorType errorType) {
+  private static void handleErrorAndEndResponse(
+      final RoutingContext ctx, final Object id, final RpcErrorType errorType) {
     if (!ctx.response().ended()) {
       handleJsonRpcError(ctx, id, errorType);
     }
