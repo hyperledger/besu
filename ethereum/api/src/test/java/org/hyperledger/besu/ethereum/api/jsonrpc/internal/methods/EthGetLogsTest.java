@@ -73,7 +73,7 @@ public class EthGetLogsTest {
     final Throwable thrown = catchThrowable(() -> method.response(request));
     assertThat(thrown)
         .isInstanceOf(InvalidJsonRpcParameters.class)
-        .hasMessage("Missing required json rpc parameter at index 0");
+        .hasMessage("Invalid filter parameter (index 0)");
 
     verifyNoInteractions(blockchainQueries);
   }

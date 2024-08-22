@@ -38,7 +38,7 @@ public class ClusterThreadNodeRunnerAcceptanceTest extends AcceptanceTestBase {
     final BesuNodeRunner besuNodeRunner = new ThreadBesuNodeRunner();
     noDiscoveryCluster = new Cluster(clusterConfiguration, net, besuNodeRunner);
     final BesuNode noDiscoveryNode = besu.createNodeWithNoDiscovery("noDiscovery");
-    fullNode = besu.createArchiveNode("archive");
+    fullNode = besu.createArchiveNode("node2");
     noDiscoveryCluster.start(noDiscoveryNode, fullNode);
   }
 

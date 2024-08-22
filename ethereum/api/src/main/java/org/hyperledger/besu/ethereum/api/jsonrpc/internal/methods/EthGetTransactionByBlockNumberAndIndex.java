@@ -18,6 +18,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.UnsignedIntParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.TransactionCompleteResult;
@@ -41,7 +42,7 @@ public class EthGetTransactionByBlockNumberAndIndex extends AbstractBlockParamet
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     try {
       return request.getRequiredParameter(0, BlockParameter.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid block parameter (index 0)", RpcErrorType.INVALID_BLOCK_PARAMS, e);
     }
@@ -50,7 +51,15 @@ public class EthGetTransactionByBlockNumberAndIndex extends AbstractBlockParamet
   @Override
   protected Object resultByBlockNumber(
       final JsonRpcRequestContext request, final long blockNumber) {
-    final int index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
+    final int index;
+    try {
+      index = request.getRequiredParameter(1, UnsignedIntParameter.class).getValue();
+    } catch (JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid transaction index parameter (index 1)",
+          RpcErrorType.INVALID_TRANSACTION_INDEX_PARAMS,
+          e);
+    }
     final Optional<TransactionWithMetadata> transactionWithMetadata =
         getBlockchainQueries().transactionByBlockNumberAndIndex(blockNumber, index);
     return transactionWithMetadata.map(TransactionCompleteResult::new).orElse(null);

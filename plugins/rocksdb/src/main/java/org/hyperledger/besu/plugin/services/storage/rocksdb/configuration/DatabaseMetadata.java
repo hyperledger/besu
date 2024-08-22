@@ -74,7 +74,7 @@ public class DatabaseMetadata {
    * @return the metadata to use for new db
    */
   public static DatabaseMetadata defaultForNewPrivateDb() {
-    return new DatabaseMetadata(PrivacyVersionedStorageFormat.FOREST_WITH_VARIABLES);
+    return new DatabaseMetadata(PrivacyVersionedStorageFormat.FOREST_WITH_RECEIPT_COMPACTION);
   }
 
   /**

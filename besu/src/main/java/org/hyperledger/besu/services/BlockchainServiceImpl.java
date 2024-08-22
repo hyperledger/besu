@@ -34,7 +34,6 @@ import java.util.List;
 import java.util.Optional;
 import java.util.function.Supplier;
 import java.util.stream.Collectors;
-import javax.inject.Inject;
 
 /** The Blockchain service implementation. */
 @Unstable
@@ -45,7 +44,6 @@ public class BlockchainServiceImpl implements BlockchainService {
   private MutableBlockchain blockchain;
 
   /** Instantiates a new Blockchain service implementation. */
-  @Inject
   public BlockchainServiceImpl() {}
 
   /**

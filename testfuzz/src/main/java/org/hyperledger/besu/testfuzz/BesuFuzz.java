@@ -12,27 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.components;
+package org.hyperledger.besu.testfuzz;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+import org.hyperledger.besu.util.LogConfigurator;
 
-import javax.inject.Named;
+/** The main entry point for the EVM (Ethereum Virtual Machine) tool. */
+public final class BesuFuzz {
 
-import dagger.Module;
-import dagger.Provides;
-
-@Module
-public class GenesisConfigModule {
-
-  @Named("default")
-  @Provides
-  GenesisConfigFile provideDefaultGenesisConfigFile() {
-    return GenesisConfigFile.DEFAULT;
+  /** Default constructor for the EvmTool class. */
+  public BesuFuzz() {
+    // this is here only for Javadoc linting
   }
 
-  @Named("mainnet")
-  @Provides
-  GenesisConfigFile provideMainnetGenesisConfigFile() {
-    return GenesisConfigFile.mainnet();
+  /**
+   * The main entry point for the EVM (Ethereum Virtual Machine) tool.
+   *
+   * @param args The command line arguments.
+   */
+  public static void main(final String... args) {
+    LogConfigurator.setLevel("", "DEBUG");
+    final BesuFuzzCommand besuFuzzCommand = new BesuFuzzCommand();
+
+    besuFuzzCommand.execute(args);
   }
 }
