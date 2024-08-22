@@ -231,10 +231,10 @@ public class Eip4762AccessWitness implements AccessWitness {
       final UInt256 subIndex,
       final boolean isWrite) {
 
-    AccessEvents accessEvent = touchAddress(address, treeIndex, subIndex, isWrite);
+    final short accessEvents = touchAddress(address, treeIndex, subIndex, isWrite);
     boolean logEnabled = false;
     long gas = 0;
-    if (accessEvent.isBranchRead()) {
+    if (AccessEvents.isBranchRead(accessEvents)) {
       gas = clampedAdd(gas, WITNESS_BRANCH_READ_COST);
       if (logEnabled) {
         System.out.println(
@@ -250,7 +250,7 @@ public class Eip4762AccessWitness implements AccessWitness {
                 + gas);
       }
     }
-    if (accessEvent.isChunkRead()) {
+    if (AccessEvents.isChunkRead(accessEvents)) {
       gas = clampedAdd(gas, WITNESS_CHUNK_READ_COST);
       if (logEnabled) {
         System.out.println(
@@ -266,7 +266,7 @@ public class Eip4762AccessWitness implements AccessWitness {
                 + gas);
       }
     }
-    if (accessEvent.isBranchWrite()) {
+    if (AccessEvents.isBranchWrite(accessEvents)) {
       gas = clampedAdd(gas, WITNESS_BRANCH_WRITE_COST);
       if (logEnabled) {
         System.out.println(
@@ -282,7 +282,7 @@ public class Eip4762AccessWitness implements AccessWitness {
                 + gas);
       }
     }
-    if (accessEvent.isChunkWrite()) {
+    if (AccessEvents.isChunkWrite(accessEvents)) {
       gas = clampedAdd(gas, WITNESS_CHUNK_WRITE_COST);
       if (logEnabled) {
         System.out.println(
@@ -298,7 +298,7 @@ public class Eip4762AccessWitness implements AccessWitness {
                 + gas);
       }
     }
-    if (accessEvent.isChunkFill()) {
+    if (AccessEvents.isChunkFill(accessEvents)) {
       gas = clampedAdd(gas, WITNESS_CHUNK_FILL_COST);
       if (logEnabled) {
         System.out.println(
@@ -318,20 +318,20 @@ public class Eip4762AccessWitness implements AccessWitness {
     return gas;
   }
 
-  public AccessEvents touchAddress(
+  public short touchAddress(
       final Address addr, final UInt256 treeIndex, final UInt256 subIndex, final boolean isWrite) {
-    AccessEvents accessEvents = new AccessEvents();
+    short accessEvents = AccessEvents.NONE;
     BranchAccessKey branchKey = new BranchAccessKey(addr, treeIndex);
 
     ChunkAccessKey chunkKey = new ChunkAccessKey(addr, treeIndex, subIndex);
 
     // Read access.
     if (!this.branches.containsKey(branchKey)) {
-      accessEvents.setBranchRead(true);
+      accessEvents |= AccessEvents.BRANCH_READ;
       this.branches.put(branchKey, AccessWitnessReadFlag);
     }
     if (!this.chunks.containsKey(chunkKey)) {
-      accessEvents.setChunkRead(true);
+      accessEvents |= AccessEvents.CHUNK_READ ;
       this.chunks.put(chunkKey, AccessWitnessReadFlag);
     }
 
@@ -342,7 +342,7 @@ public class Eip4762AccessWitness implements AccessWitness {
     if (isWrite) {
 
       if ((this.branches.get(branchKey) & AccessWitnessWriteFlag) == 0) {
-        accessEvents.setBranchWrite(true);
+        accessEvents |= AccessEvents.BRANCH_WRITE;
         this.branches.put(
             branchKey, (byte) (this.branches.get(branchKey) | AccessWitnessWriteFlag));
       }
@@ -350,7 +350,7 @@ public class Eip4762AccessWitness implements AccessWitness {
       byte chunkValue = this.chunks.get(chunkKey);
 
       if ((chunkValue & AccessWitnessWriteFlag) == 0) {
-        accessEvents.setChunkWrite(true);
+        accessEvents |= AccessEvents.CHUNK_WRITE;
         this.chunks.put(chunkKey, (byte) (this.chunks.get(chunkKey) | AccessWitnessWriteFlag));
       }
     }
