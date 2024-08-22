@@ -90,7 +90,7 @@ public class EVMExecutor {
   private ContractCreationProcessor contractCreationProcessor = null;
   private MessageFrame.Type messageFrameType = MessageFrame.Type.MESSAGE_CALL;
 
-  private final AccessWitness accessWitness = new NoopAccessWitness();
+  private final AccessWitness accessWitness = NoopAccessWitness.get();
 
   private EVMExecutor(final EVM evm) {
     checkNotNull(evm, "evm must not be null");

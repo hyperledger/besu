@@ -14,11 +14,31 @@
  */
 package org.hyperledger.besu.evm.gascalculator.stateless;
 
+import org.hyperledger.besu.datatypes.AccessWitness;
 import org.hyperledger.besu.datatypes.Address;
+
+import java.util.Collections;
+import java.util.List;
 
 import org.apache.tuweni.units.bigints.UInt256;
 
-public class NoopAccessWitness extends Eip4762AccessWitness {
+public class NoopAccessWitness implements AccessWitness {
+
+  private static NoopAccessWitness instance;
+
+  private NoopAccessWitness() {}
+
+  public static NoopAccessWitness get() {
+    if (instance == null) {
+      instance = new NoopAccessWitness();
+    }
+    return instance;
+  }
+
+  @Override
+  public List<Address> keys() {
+    return Collections.emptyList();
+  }
 
   @Override
   public long touchAndChargeProofOfAbsence(final Address address) {
@@ -66,6 +86,11 @@ public class NoopAccessWitness extends Eip4762AccessWitness {
   public long touchAddressOnReadAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
     return 0;
+  }
+
+  @Override
+  public List<UInt256> getStorageSlotTreeIndexes(final UInt256 storageKey) {
+    return Collections.emptyList();
   }
 
   @Override
