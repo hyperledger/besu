@@ -1,0 +1,12 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="Besu Debug" type="Application" factoryName="Application" activateToolWindowBeforeRun="false">
+    <envs>
+      <env name="LOG_LEVEL" value="INFO" />
+    </envs>
+    <option name="MAIN_CLASS_NAME" value="org.hyperledger.besu.Besu" />
+    <module name="besu.main" />
+    <option name="PROGRAM_PARAMETERS" value="--data-path=data --genesis-file=../genesis.json --rpc-http-enabled --rpc-http-api=ETH,NET,IBFT,WEB3,TXPOOL,ADMIN --host-allowlist=&quot;*&quot; --rpc-http-cors-origins=&quot;all&quot; --min-gas-price=0" />
+    <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$/../../hyperledger-besu/IBFT-Network/Node-1" />
+    <method v="2" />
+  </configuration>
+</component>
