@@ -30,7 +30,6 @@ import org.hyperledger.besu.plugin.data.TransactionSimulationResult;
 import org.hyperledger.besu.plugin.services.TransactionSimulationService;
 
 import java.util.Optional;
-import javax.inject.Inject;
 
 /** TransactionSimulationServiceImpl */
 @Unstable
@@ -44,7 +43,6 @@ public class TransactionSimulationServiceImpl implements TransactionSimulationSe
   private TransactionSimulator transactionSimulator;
 
   /** Create an instance to be configured */
-  @Inject
   public TransactionSimulationServiceImpl() {}
 
   /**

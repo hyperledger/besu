@@ -12,29 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.components;
+package org.hyperledger.besu.testfuzz;
 
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+interface ExternalClient {
 
-import javax.inject.Singleton;
+  String getName();
 
-import dagger.Module;
-import dagger.Provides;
-
-@Module
-public class NoOpMetricsSystemModule {
-
-  @Provides
-  @Singleton
-  MetricsSystem provideMetricsSystem() {
-    return new NoOpMetricsSystem();
-  }
-
-  @Provides
-  @Singleton
-  ObservableMetricsSystem provideObservableMetricsSystem() {
-    return new NoOpMetricsSystem();
-  }
+  String differentialFuzz(String data);
 }
