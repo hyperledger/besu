@@ -16,17 +16,13 @@ package org.hyperledger.besu.testfuzz;
 
 import static org.hyperledger.besu.testfuzz.EofContainerSubCommand.COMMAND_NAME;
 
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.core.util.Separators;
-import com.fasterxml.jackson.core.util.Separators.Spacing;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.gitlab.javafuzz.core.AbstractFuzzTarget;
-import com.google.common.base.Stopwatch;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
+
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -42,13 +38,19 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+
+import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.core.util.Separators;
+import com.fasterxml.jackson.core.util.Separators.Spacing;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.gitlab.javafuzz.core.AbstractFuzzTarget;
+import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.datatypes.Hash;
-import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.MainnetEVMs;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -88,13 +90,13 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
 
   @Option(
       names = {"--time-limit-ns"},
-          defaultValue = "5000",
+      defaultValue = "5000",
       description = "Time threshold, in nanoseconds, that results in a fuzz error if exceeded")
   private final long timeThresholdNs = 5_000;
 
   @Option(
       names = {"--time-limit-warmup"},
-          defaultValue = "2000",
+      defaultValue = "2000",
       description = "Minimum number of fuzz tests before a time limit fuzz error can occur")
   private final long timeThresholdIterations = 2_000;
 
@@ -227,7 +229,8 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
                   String value = client.differentialFuzz(eofUnderTestHexString);
                   stopwatch.stop();
                   long elapsedMicros = stopwatch.elapsed(TimeUnit.MICROSECONDS);
-                  if (elapsedMicros > timeThresholdNs && totalContainers > timeThresholdIterations) {
+                  if (elapsedMicros > timeThresholdNs
+                      && totalContainers > timeThresholdIterations) {
                     Hash name = Hash.hash(eofUnderTest);
                     parentCommand.out.printf(
                         "%s: slow validation %d µs%n", client.getName(), elapsedMicros);
