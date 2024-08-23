@@ -27,6 +27,7 @@ import java.util.HashMap;
  */
 public class SyncDurationMetrics {
 
+  /** A {@link SyncDurationMetrics} instance that does not record any metrics. */
   public static final SyncDurationMetrics NO_METRICS_SYNC_DURATION_METRICS =
       new SyncDurationMetrics(new NoOpMetricsSystem());
 
@@ -34,16 +35,30 @@ public class SyncDurationMetrics {
 
   private final HashMap<String, OperationTimer.TimingContext> timers = new HashMap<>();
 
+  /**
+   * Creates a new {@link SyncDurationMetrics} instance.
+   *
+   * @param metricsSystem The {@link MetricsSystem} to use to record metrics.
+   */
   public SyncDurationMetrics(final MetricsSystem metricsSystem) {
     timer =
         metricsSystem.createSimpleLabelledTimer(
             BesuMetricCategory.SYNCHRONIZER, "sync_duration", "Time taken to sync", "name");
   }
 
+  /**
+   * Starts a timer for the given synchronization phase.
+   *
+   * @param label The synchronization phase to start the timer for.
+   */
   public void startTimer(final Labels label) {
     timers.computeIfAbsent(label.name(), k -> timer.labels(label.name()).startTimer());
   }
 
+  /** Stops the timer for the given synchronization phase.
+   *
+   * @param label The synchronization phase to stop the timer for.
+   */
   public void stopTimer(final Labels label) {
     OperationTimer.TimingContext context = timers.get(label.name());
     if (context != null) {
