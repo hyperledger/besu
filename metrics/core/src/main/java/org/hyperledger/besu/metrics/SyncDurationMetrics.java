@@ -22,8 +22,8 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 import java.util.HashMap;
 
 /**
- * This class manages the synchronization duration metrics for the Hyperledger Besu project.
- * It provides methods to start and stop timers for various synchronization phases.
+ * This class manages the synchronization duration metrics for the Hyperledger Besu project. It
+ * provides methods to start and stop timers for various synchronization phases.
  */
 public class SyncDurationMetrics {
 
@@ -55,7 +55,8 @@ public class SyncDurationMetrics {
     timers.computeIfAbsent(label.name(), k -> timer.labels(label.name()).startTimer());
   }
 
-  /** Stops the timer for the given synchronization phase.
+  /**
+   * Stops the timer for the given synchronization phase.
    *
    * @param label The synchronization phase to stop the timer for.
    */
@@ -66,9 +67,7 @@ public class SyncDurationMetrics {
     }
   }
 
-  /**
-   * Enum representing the different synchronization phases.
-   */
+  /** Enum representing the different synchronization phases. */
   public enum Labels {
     /** Total time taken to get into sync. */
     TOTAL_SYNC_DURATION,
