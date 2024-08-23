@@ -21,6 +21,10 @@ import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
 import java.util.HashMap;
 
+/**
+ * This class manages the synchronization duration metrics for the Hyperledger Besu project.
+ * It provides methods to start and stop timers for various synchronization phases.
+ */
 public class SyncDurationMetrics {
 
   public static final SyncDurationMetrics NO_METRICS_SYNC_DURATION_METRICS =
@@ -47,12 +51,21 @@ public class SyncDurationMetrics {
     }
   }
 
+  /**
+   * Enum representing the different synchronization phases.
+   */
   public enum Labels {
+    /** Total time taken to get into sync. */
     TOTAL_SYNC_DURATION,
+    /** Time taken to download the chain data (headers, blocks, receipts). */
     CHAIN_DOWNLOAD_DURATION,
+    /** Time taken to download the initial world state, before the healing step. */
     SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION,
+    /** Time taken to heal the world state, after the initial download. */
     SNAP_WORLD_STATE_HEALING_DURATION,
+    /** Time taken to do the fast world state download. */
     FAST_WORLD_STATE_DOWNLOAD_DURATION,
+    /** Time taken to do the flat database heal. */
     FLAT_DB_HEAL;
   }
 }
