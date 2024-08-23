@@ -155,9 +155,12 @@ public class CodeValidateSubCommand implements Runnable {
   public String considerCode(final String hexCode) {
     Bytes codeBytes;
     try {
-      codeBytes =
-          Bytes.fromHexString(
-              hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", ""));
+      String strippedString =
+          hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", "");
+      if (Strings.isEmpty(strippedString)) {
+        return "";
+      }
+      codeBytes = Bytes.fromHexString(strippedString);
     } catch (RuntimeException re) {
       return "err: hex string -" + re;
     }
