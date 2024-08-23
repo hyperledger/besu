@@ -204,7 +204,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     final Map<String, JsonRpcMethod> rpcMethods =
         new JsonRpcMethodsFactory()
             .methods(
-                    CLIENT_NODE_NAME,
+                CLIENT_NODE_NAME,
                 CLIENT_VERSION,
                 CLIENT_COMMIT,
                 NETWORK_ID,
@@ -314,7 +314,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     final Map<String, JsonRpcMethod> rpcMethods =
         new JsonRpcMethodsFactory()
             .methods(
-                    CLIENT_NODE_NAME,
+                CLIENT_NODE_NAME,
                 CLIENT_VERSION,
                 CLIENT_COMMIT,
                 NETWORK_ID,

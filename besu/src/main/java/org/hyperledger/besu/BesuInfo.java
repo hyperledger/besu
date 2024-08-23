@@ -30,8 +30,9 @@ public final class BesuInfo {
   private static final String OS = PlatformDetector.getOS();
   private static final String VM = PlatformDetector.getVM();
   private static final String COMMIT;
+
   static {
-    if(VERSION == null) {
+    if (VERSION == null) {
       COMMIT = null;
     } else {
       Pattern pattern = Pattern.compile("v?\\d*\\.\\d*\\.\\d*-\\w+-(?<commit>[0-9a-fA-F]{8})");
@@ -79,6 +80,7 @@ public final class BesuInfo {
 
   /**
    * Generate the commit hash for this besu version, or null if this is a full release version
+   *
    * @return the commit hash for this besu version, or null if this is a full release version
    */
   public static String commit() {

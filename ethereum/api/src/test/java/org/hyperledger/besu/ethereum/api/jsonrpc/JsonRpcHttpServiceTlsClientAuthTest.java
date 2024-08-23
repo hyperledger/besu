@@ -116,7 +116,7 @@ public class JsonRpcHttpServiceTlsClientAuthTest {
     rpcMethods =
         new JsonRpcMethodsFactory()
             .methods(
-                    CLIENT_NODE_NAME,
+                CLIENT_NODE_NAME,
                 CLIENT_VERSION,
                 CLIENT_COMMIT,
                 CHAIN_ID,
