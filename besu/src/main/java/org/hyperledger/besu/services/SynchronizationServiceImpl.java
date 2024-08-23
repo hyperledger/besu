@@ -74,7 +74,8 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   @Override
   public void fireNewUnverifiedForkchoiceEvent(
       final Hash head, final Hash safeBlock, final Hash finalizedBlock) {
-    protocolContext.safeConsensusContext(MergeContext.class)
+    protocolContext
+        .safeConsensusContext(MergeContext.class)
         .ifPresent(mc -> mc.fireNewUnverifiedForkchoiceEvent(head, safeBlock, finalizedBlock));
     protocolContext.getBlockchain().setFinalized(finalizedBlock);
     protocolContext.getBlockchain().setSafeBlock(safeBlock);
