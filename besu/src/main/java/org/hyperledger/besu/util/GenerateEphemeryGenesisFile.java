@@ -56,9 +56,9 @@ public class GenerateEphemeryGenesisFile {
   }
 
   public void generate() throws IOException {
-    if (Optional.ofNullable(network).orElse(EPHEMERY).getGenesisFile() != null
-        || genesisConfigFile.getConfigOptions() != null
-        || genesisConfigFile.getTimestamp() != 0) {
+    if (EPHEMERY.getGenesisFile() != null
+        || genesisConfigOptions != null
+        || genesisConfigFile != null) {
 
       final int PERIOD = 28;
       long genesisTimestamp = genesisConfigFile.getTimestamp();
@@ -77,6 +77,9 @@ public class GenerateEphemeryGenesisFile {
       EPHEMERY.setNetworkId(updatedChainId);
 
       if (currentTimestamp > (genesisTimestamp + periodInSeconds)) {
+
+          GenesisConfigFile.fromResource(
+              Optional.ofNullable(network).orElse(EPHEMERY).getGenesisFile());
         Path ephemeryGenesisfilePath = Path.of(EPHEMERY.getGenesisFile());
         try {
           ObjectMapper objectMapper = new ObjectMapper();
