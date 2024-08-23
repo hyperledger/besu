@@ -92,13 +92,13 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
       names = {"--time-limit-ns"},
       defaultValue = "5000",
       description = "Time threshold, in nanoseconds, that results in a fuzz error if exceeded")
-  private final long timeThresholdNs = 5_000;
+  private long timeThresholdNs = 5_000;
 
   @Option(
       names = {"--time-limit-warmup"},
       defaultValue = "2000",
       description = "Minimum number of fuzz tests before a time limit fuzz error can occur")
-  private final long timeThresholdIterations = 2_000;
+  private long timeThresholdIterations = 2_000;
 
   @CommandLine.ParentCommand private final BesuFuzzCommand parentCommand;
 
@@ -244,7 +244,11 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
                   }
                   if (value.toLowerCase(Locale.ROOT).startsWith("ok")) {
                     passHappened.set(true);
+                  } else if (value.toLowerCase(Locale.ROOT).startsWith("err")) {
+                    failHappened.set(true);
                   } else {
+                    // unexpected ouput: trigger a missmatch
+                    passHappened.set(true);
                     failHappened.set(true);
                   }
                   return Map.entry(client.getName(), value);
