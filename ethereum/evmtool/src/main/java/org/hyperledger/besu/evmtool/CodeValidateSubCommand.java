@@ -126,9 +126,13 @@ public class CodeValidateSubCommand implements Runnable {
   private void checkCodeFromBufferedReader(final BufferedReader in) {
     try {
       for (String code = in.readLine(); code != null; code = in.readLine()) {
-        String validation = considerCode(code);
-        if (!Strings.isBlank(validation)) {
-          parentCommand.out.println(validation);
+        try {
+          String validation = considerCode(code);
+          if (!Strings.isBlank(validation)) {
+            parentCommand.out.println(validation);
+          }
+        } catch (RuntimeException e) {
+          parentCommand.out.println("fail: " + e.getMessage());
         }
       }
     } catch (IOException e) {
@@ -158,7 +162,7 @@ public class CodeValidateSubCommand implements Runnable {
       return "err: hex string -" + re;
     }
     if (codeBytes.isEmpty()) {
-      return "";
+      return "err: empty container";
     }
 
     EOFLayout layout = evm.get().parseEOF(codeBytes);

@@ -39,6 +39,7 @@ dependencies {
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
   implementation 'com.gitlab.javafuzz:core'
+  implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.tmio:tuweni-bytes'
   implementation 'org.jacoco:org.jacoco.agent'
@@ -56,6 +57,7 @@ application {
 def corpusDir = "${buildDir}/generated/corpus"
 
 tasks.register("runFuzzer", JavaExec) {
+  doNotTrackState("Produces no artifacts")
   classpath = sourceSets.main.runtimeClasspath
   mainClass = 'org.hyperledger.besu.testfuzz.BesuFuzz'
 
@@ -67,6 +69,15 @@ tasks.register("runFuzzer", JavaExec) {
   doFirst {
     mkdir corpusDir
   }
+}
+
+// This fuzzes besu as an external client.  Besu fuzzing as a local client is enabled by default.
+tasks.register("fuzzBesu") {
+  dependsOn(":installDist")
+  doLast {
+    runFuzzer.args += "--client=besu=../build/install/besu/bin/evmtool code-validate"
+  }
+  finalizedBy("runFuzzer")
 }
 
 tasks.register("fuzzEvmone") {

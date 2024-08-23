@@ -24,7 +24,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 @SuppressWarnings({"java:S106", "CallToPrintStackTrace"}) // we use lots the console, on purpose
-class SingleQueryClient implements ExternalClient {
+class SingleQueryClient implements FuzzingClient {
   final String name;
   String[] command;
   Pattern okRegexp;

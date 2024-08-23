@@ -16,17 +16,17 @@ package org.hyperledger.besu.testfuzz;
 
 import static org.hyperledger.besu.testfuzz.EofContainerSubCommand.COMMAND_NAME;
 
-import org.hyperledger.besu.datatypes.Address;
-import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
-import org.hyperledger.besu.evm.Code;
-import org.hyperledger.besu.evm.EVM;
-import org.hyperledger.besu.evm.MainnetEVMs;
-import org.hyperledger.besu.evm.code.CodeInvalid;
-import org.hyperledger.besu.evm.code.CodeV1;
-import org.hyperledger.besu.evm.code.EOFLayout;
-import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
-
+import com.fasterxml.jackson.core.JsonParser.Feature;
+import com.fasterxml.jackson.core.util.DefaultIndenter;
+import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
+import com.fasterxml.jackson.core.util.Separators;
+import com.fasterxml.jackson.core.util.Separators.Spacing;
+import com.fasterxml.jackson.databind.JavaType;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.module.SimpleModule;
+import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
+import com.gitlab.javafuzz.core.AbstractFuzzTarget;
+import com.google.common.base.Stopwatch;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -39,18 +39,16 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.core.util.DefaultIndenter;
-import com.fasterxml.jackson.core.util.DefaultPrettyPrinter;
-import com.fasterxml.jackson.core.util.Separators;
-import com.fasterxml.jackson.core.util.Separators.Spacing;
-import com.fasterxml.jackson.databind.JavaType;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.module.SimpleModule;
-import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.gitlab.javafuzz.core.AbstractFuzzTarget;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.stream.Collectors;
 import org.apache.tuweni.bytes.Bytes;
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.datatypes.Hash;
+import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
+import org.hyperledger.besu.evm.EVM;
+import org.hyperledger.besu.evm.MainnetEVMs;
+import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -83,6 +81,23 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
       description = "Add a client for differential fuzzing")
   private final Map<String, String> clients = new LinkedHashMap<>();
 
+  @Option(
+      names = {"--no-local-client"},
+      description = "Don't include built-in Besu with fuzzing")
+  private final Boolean noLocalClient = false;
+
+  @Option(
+      names = {"--time-limit-ns"},
+          defaultValue = "5000",
+      description = "Time threshold, in nanoseconds, that results in a fuzz error if exceeded")
+  private final long timeThresholdNs = 5_000;
+
+  @Option(
+      names = {"--time-limit-warmup"},
+          defaultValue = "2000",
+      description = "Minimum number of fuzz tests before a time limit fuzz error can occur")
+  private final long timeThresholdIterations = 2_000;
+
   @CommandLine.ParentCommand private final BesuFuzzCommand parentCommand;
 
   static final ObjectMapper eofTestMapper = createObjectMapper();
@@ -91,7 +106,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
           .getTypeFactory()
           .constructParametricType(Map.class, String.class, EOFTestCaseSpec.class);
 
-  List<ExternalClient> externalClients = new ArrayList<>();
+  List<FuzzingClient> fuzzingClients = new ArrayList<>();
   EVM evm = MainnetEVMs.pragueEOF(EvmConfiguration.DEFAULT);
   long validContainers;
   long totalContainers;
@@ -150,7 +165,10 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
       }
     }
 
-    clients.forEach((k, v) -> externalClients.add(new StreamingClient(k, v.split(" "))));
+    if (!noLocalClient) {
+      fuzzingClients.add(new InternalClient("this"));
+    }
+    clients.forEach((k, v) -> fuzzingClients.add(new StreamingClient(k, v.split(" "))));
     System.out.println("Fuzzing client set: " + clients.keySet());
 
     try {
@@ -196,55 +214,49 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
   public void fuzz(final byte[] bytes) {
     Bytes eofUnderTest = Bytes.wrap(bytes);
     String eofUnderTestHexString = eofUnderTest.toHexString();
-    Code code = evm.getCodeUncached(eofUnderTest);
-    Map<String, String> results = new LinkedHashMap<>();
-    boolean mismatch = false;
-    for (var client : externalClients) {
-      String value = client.differentialFuzz(eofUnderTestHexString);
-      results.put(client.getName(), value);
-      if (value == null || value.startsWith("fail: ")) {
-        mismatch = true; // if an external client fails, always report it as an error
-      }
-    }
-    boolean besuValid = false;
-    String besuReason;
-    if (!code.isValid()) {
-      besuReason = ((CodeInvalid) code).getInvalidReason();
-    } else if (code.getEofVersion() != 1) {
-      EOFLayout layout = EOFLayout.parseEOF(eofUnderTest);
-      if (layout.isValid()) {
-        besuReason = "Besu Parsing Error";
-        parentCommand.out.println(layout.version());
-        parentCommand.out.println(layout.invalidReason());
-        parentCommand.out.println(code.getEofVersion());
-        parentCommand.out.println(code.getClass().getName());
-        System.exit(1);
-        mismatch = true;
-      } else {
-        besuReason = layout.invalidReason();
-      }
-    } else if (EOFContainerMode.INITCODE.equals(
-        ((CodeV1) code).getEofLayout().containerMode().get())) {
-      besuReason = "Code is initcode, not runtime";
-    } else {
-      besuReason = "OK";
-      besuValid = true;
-    }
-    for (var entry : results.entrySet()) {
-      mismatch =
-          mismatch
-              || besuValid != entry.getValue().toUpperCase(Locale.getDefault()).startsWith("OK");
-    }
-    if (mismatch) {
-      parentCommand.out.println("besu: " + besuReason);
-      for (var entry : results.entrySet()) {
+
+    AtomicBoolean passHappened = new AtomicBoolean(false);
+    AtomicBoolean failHappened = new AtomicBoolean(false);
+
+    Map<String, String> resultMap =
+        fuzzingClients.stream()
+            .parallel()
+            .map(
+                client -> {
+                  Stopwatch stopwatch = Stopwatch.createStarted();
+                  String value = client.differentialFuzz(eofUnderTestHexString);
+                  stopwatch.stop();
+                  long elapsedMicros = stopwatch.elapsed(TimeUnit.MICROSECONDS);
+                  if (elapsedMicros > timeThresholdNs && totalContainers > timeThresholdIterations) {
+                    Hash name = Hash.hash(eofUnderTest);
+                    parentCommand.out.printf(
+                        "%s: slow validation %d µs%n", client.getName(), elapsedMicros);
+                    try {
+                      Files.writeString(
+                          Path.of("slow-" + client.getName() + "-" + name + ".hex"),
+                          eofUnderTestHexString);
+                    } catch (IOException e) {
+                      throw new RuntimeException(e);
+                    }
+                  }
+                  if (value.toLowerCase(Locale.ROOT).startsWith("ok")) {
+                    passHappened.set(true);
+                  } else {
+                    failHappened.set(true);
+                  }
+                  return Map.entry(client.getName(), value);
+                })
+            .collect(Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue));
+
+    if (passHappened.get() && failHappened.get()) {
+      for (var entry : resultMap.entrySet()) {
         parentCommand.out.println(entry.getKey() + ": " + entry.getValue());
       }
       parentCommand.out.println("code: " + eofUnderTest.toUnprefixedHexString());
       parentCommand.out.println("size: " + eofUnderTest.size());
       parentCommand.out.println();
     } else {
-      if (besuValid) {
+      if (passHappened.get()) {
         validContainers++;
       }
       totalContainers++;
