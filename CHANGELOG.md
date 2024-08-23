@@ -1,5 +1,13 @@
 # Changelog
 
+## [Unreleased]
+
+### Fixed
+- **DebugMetrics**: Fixed a `ClassCastException` occurring in `DebugMetrics` when handling nested metric structures. Previously, `Double` values within these structures were incorrectly cast to `Map` objects, leading to errors. This update allows for proper handling of both direct values and nested structures at the same level. Issue# [#7383]
+
+### Tests
+- Added a comprehensive test case to reproduce the bug and verify the fix for the `ClassCastException` in `DebugMetrics`. This ensures that complex, dynamically nested metric structures can be handled without errors.
+
 ## Next release
 
 ### Upcoming Breaking Changes
@@ -16,6 +24,7 @@
 - Fix tracing in precompiled contracts when halting for out of gas [#7318](https://github.com/hyperledger/besu/issues/7318)
 - Correctly release txpool save and restore lock in case of exceptions [#7473](https://github.com/hyperledger/besu/pull/7473)
 - Fix for `eth_gasPrice` could not retrieve block error [#7482](https://github.com/hyperledger/besu/pull/7482)
+
 
 ## 24.8.0
 
