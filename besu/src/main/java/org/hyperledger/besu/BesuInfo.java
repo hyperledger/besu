@@ -17,6 +17,8 @@ package org.hyperledger.besu;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represent Besu information such as version, OS etc. Used with --version option and during Besu
@@ -27,6 +29,20 @@ public final class BesuInfo {
   private static final String VERSION = BesuInfo.class.getPackage().getImplementationVersion();
   private static final String OS = PlatformDetector.getOS();
   private static final String VM = PlatformDetector.getVM();
+  private static final String COMMIT;
+  static {
+    if(VERSION == null) {
+      COMMIT = null;
+    } else {
+      Pattern pattern = Pattern.compile("v?\\d*\\.\\d*\\.\\d*-\\w+-(?<commit>[0-9a-fA-F]{8})");
+      Matcher matcher = pattern.matcher(BesuInfo.class.getPackage().getImplementationVersion());
+      if (matcher.find()) {
+        COMMIT = matcher.group("commit");
+      } else {
+        COMMIT = null;
+      }
+    }
+  }
 
   private BesuInfo() {}
 
@@ -59,5 +75,13 @@ public final class BesuInfo {
     return maybeIdentity
         .map(identity -> String.format("%s/%s/v%s/%s/%s", CLIENT, identity, VERSION, OS, VM))
         .orElse(version());
+  }
+
+  /**
+   * Generate the commit hash for this besu version, or null if this is a full release version
+   * @return the commit hash for this besu version, or null if this is a full release version
+   */
+  public static String commit() {
+    return COMMIT;
   }
 }
