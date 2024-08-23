@@ -78,8 +78,8 @@ public class GenerateEphemeryGenesisFile {
 
       if (currentTimestamp > (genesisTimestamp + periodInSeconds)) {
 
-          GenesisConfigFile.fromResource(
-              Optional.ofNullable(network).orElse(EPHEMERY).getGenesisFile());
+        GenesisConfigFile.fromResource(
+            Optional.ofNullable(network).orElse(EPHEMERY).getGenesisFile());
         Path ephemeryGenesisfilePath = Path.of(EPHEMERY.getGenesisFile());
         try {
           ObjectMapper objectMapper = new ObjectMapper();
