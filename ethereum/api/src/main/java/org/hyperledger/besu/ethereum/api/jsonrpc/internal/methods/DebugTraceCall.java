@@ -16,10 +16,12 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import static org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType.INTERNAL_ERROR;
 
+import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcErrorConverter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameter;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonCallParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.TransactionTraceParams;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.TransactionTrace;
@@ -28,19 +30,18 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorR
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.results.DebugTraceTransactionResult;
 import org.hyperledger.besu.ethereum.api.query.BlockchainQueries;
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.debug.TraceOptions;
+import org.hyperledger.besu.ethereum.mainnet.ImmutableTransactionValidationParams;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.ethereum.mainnet.TransactionValidationParams;
 import org.hyperledger.besu.ethereum.transaction.PreCloseStateHandler;
 import org.hyperledger.besu.ethereum.transaction.TransactionSimulator;
 import org.hyperledger.besu.ethereum.vm.DebugOperationTracer;
 
 import java.util.Optional;
 
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class DebugTraceCall extends AbstractTraceCall {
-  private static final Logger LOG = LoggerFactory.getLogger(DebugTraceCall.class);
 
   public DebugTraceCall(
       final BlockchainQueries blockchainQueries,
@@ -69,6 +70,44 @@ public class DebugTraceCall extends AbstractTraceCall {
     }
   }
 
+  protected Object resultByBlockHeader(
+      final JsonRpcRequestContext request, final BlockHeader header) {
+    final JsonCallParameter callParams = JsonCallParameterUtil.validateAndGetCallParams(request);
+
+    final TraceOptions traceOptions = getTraceOptions(request);
+    final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions, false);
+
+    TransactionValidationParams validationParams = buildTransactionValidationParams();
+
+    return transactionSimulator
+        .process(
+            callParams,
+            validationParams,
+            tracer,
+            (mutableWorldState, transactionSimulatorResult) -> {
+              return transactionSimulatorResult.map(
+                  result -> {
+                    if (result.isInvalid()) {
+                      return errorResponse(
+                          request,
+                          JsonRpcErrorConverter.convertTransactionInvalidReason(
+                              result.getValidationResult().getInvalidReason()));
+                    } else {
+                      return new DebugTraceTransactionResult(
+                          new TransactionTrace(
+                              result.transaction(), result.result(), tracer.getTraceFrames()));
+                    }
+                  });
+            },
+            header)
+        .orElse(errorResponse(request, RpcErrorType.INTERNAL_ERROR));
+  }
+
+  private JsonRpcErrorResponse errorResponse(
+      final JsonRpcRequestContext request, final RpcErrorType rpcErrorType) {
+    return new JsonRpcErrorResponse(request.getRequest().getId(), new JsonRpcError(rpcErrorType));
+  }
+
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     final Optional<BlockParameter> maybeBlockParameter;
@@ -89,7 +128,6 @@ public class DebugTraceCall extends AbstractTraceCall {
         maybeSimulatorResult.map(
             result -> {
               if (result.isInvalid()) {
-                LOG.error("Invalid simulator result {}", result);
                 final JsonRpcError error =
                     new JsonRpcError(
                         INTERNAL_ERROR, result.getValidationResult().getErrorMessage());
@@ -102,5 +140,14 @@ public class DebugTraceCall extends AbstractTraceCall {
 
               return new DebugTraceTransactionResult(transactionTrace);
             });
+  }
+
+  @Override
+  protected TransactionValidationParams buildTransactionValidationParams() {
+    return ImmutableTransactionValidationParams.builder()
+        .from(TransactionValidationParams.transactionSimulator())
+        .isAllowExceedingBalance(true)
+        .allowUnderpriced(true)
+        .build();
   }
 }
