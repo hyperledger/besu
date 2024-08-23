@@ -81,12 +81,12 @@ public enum NetworkName {
   }
 
   /**
-   * Sets network id.
+   * Sets network id. This method is called only by the Ephemery network. It is required to update
+   * the networkid.
    */
   public void setNetworkId(final BigInteger networkId) {
     this.networkId = networkId;
   }
-
 
   /**
    * Can SNAP sync boolean.

@@ -28,8 +28,6 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration.DEF
 import static org.hyperledger.besu.ethereum.api.jsonrpc.authentication.EngineAuthService.EPHEMERAL_JWT_FILE;
 import static org.hyperledger.besu.nat.kubernetes.KubernetesNatManager.DEFAULT_BESU_SERVICE_NAME_FILTER;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
@@ -199,6 +197,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.GenerateEphemeryGenesisFile;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -218,8 +217,6 @@ import java.net.URL;
 import java.net.UnknownHostException;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -1096,7 +1093,14 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
     if (network == EPHEMERY) {
-      generateEphemeryGenesisFile();
+      GenerateEphemeryGenesisFile generateEphemeryGenesisFile =
+          new GenerateEphemeryGenesisFile(
+              network, readGenesisConfigFile(), readGenesisConfigOptions());
+      try {
+        generateEphemeryGenesisFile.generate();
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     try {
       configureLogging(true);
@@ -1671,47 +1675,6 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
-    }
-  }
-
-  /**
-   * generateEphemeryGenesisFile checks if a genesis update is available
-   * and updates the ephemery.json file
-   */
-  private void generateEphemeryGenesisFile() {
-    if(EPHEMERY.getGenesisFile() != null){
-
-      GenesisConfigFile configFile = GenesisConfigFile.fromResource(
-              Optional.ofNullable(network).orElse(EPHEMERY).getGenesisFile());
-      GenesisConfigOptions configOptions =  readGenesisConfigOptions();
-      final int PERIOD = 28;
-      long timestamp = configFile.getTimestamp();
-      Optional<BigInteger> chainId = configOptions.getChainId();
-
-      long periodInSeconds = (PERIOD * 24 * 60 * 60);
-      long currentTimestamp = Instant.now().getEpochSecond();
-      long periodsSinceGenesis = ChronoUnit.DAYS.between(Instant.ofEpochSecond(timestamp), Instant.now()) / PERIOD;
-      long newGenesisTimestamp = timestamp + (periodsSinceGenesis * periodInSeconds);
-      BigInteger newChainId = chainId.orElseThrow(() -> new IllegalStateException("ChainId not present"))
-              .add(BigInteger.valueOf(periodsSinceGenesis));
-
-      EPHEMERY.setNetworkId(newChainId);
-
-      if (currentTimestamp > (timestamp + periodInSeconds)) {
-        Path ephemeryGenesisfilePath =  Path.of(EPHEMERY.getGenesisFile());
-        try {
-          ObjectMapper objectMapper = new ObjectMapper();
-          ObjectNode rootNode = (ObjectNode) objectMapper.readTree(ephemeryGenesisfilePath.toFile());
-
-          ObjectNode configNode = (ObjectNode) rootNode.path("config");
-          configNode.put("chainId", newChainId.toString());
-          rootNode.put("timestamp", String.valueOf(newGenesisTimestamp));
-
-          objectMapper.writerWithDefaultPrettyPrinter().writeValue(ephemeryGenesisfilePath.toFile(), rootNode);
-        } catch (IOException e) {
-          throw new ParameterException(this.commandLine, "Unable to update ephemery genesis file. " + e.getMessage(), e);
-        }
-      }
     }
   }
 

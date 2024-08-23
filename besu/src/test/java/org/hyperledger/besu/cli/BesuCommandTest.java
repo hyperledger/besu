@@ -16,7 +16,6 @@ package org.hyperledger.besu.cli;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.contentOf;
 import static org.hamcrest.Matchers.is;
 import static org.hyperledger.besu.cli.config.NetworkName.CLASSIC;
 import static org.hyperledger.besu.cli.config.NetworkName.DEV;
@@ -39,9 +38,10 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.contains;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.ArgumentMatchers.isNotNull;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.atLeast;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.hyperledger.besu.BesuInfo;
 import org.hyperledger.besu.cli.config.EthNetworkConfig;
 import org.hyperledger.besu.config.GenesisConfigFile;
@@ -72,7 +72,6 @@ import org.hyperledger.besu.util.number.Percentage;
 import org.hyperledger.besu.util.number.PositiveNumber;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
-import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.math.BigInteger;
@@ -80,10 +79,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
@@ -290,8 +286,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", tempConfigFile.toString());
 
     final String expectedOutputStart =
-        "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '.', expected a-z, A-Z, 0-9, ', \", a table key, "
-            + "a newline, or end-of-input (line 1, column 1)";
+        "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '.',"
+            + " expected a-z, A-Z, 0-9, ', \", a table key, a newline, or end-of-input (line 1,"
+            + " column 1)";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
@@ -318,8 +315,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--config-file", tempConfigFile.toString());
 
     final String expectedOutputStart =
-        "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '=', expected ', \", ''', \"\"\", a number, "
-            + "a boolean, a date/time, an array, or a table (line 1, column 8)";
+        "Invalid TOML configuration: org.apache.tuweni.toml.TomlParseError: Unexpected '=',"
+            + " expected ', \", ''', \"\"\", a number, a boolean, a date/time, an array, or a table"
+            + " (line 1, column 8)";
     assertThat(commandErrorOutput.toString(UTF_8)).startsWith(expectedOutputStart);
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
   }
@@ -1135,7 +1133,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, CHECKPOINT] (case-insensitive) but was 'bogus'");
+            "Invalid value for option '--sync-mode': expected one of [FULL, FAST, SNAP, CHECKPOINT]"
+                + " (case-insensitive) but was 'bogus'");
   }
 
   @Test
@@ -1291,7 +1290,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove --ethstats-contact or provide a URL (via --ethstats=nodename:secret@host:port)");
+            "The `--ethstats-contact` requires ethstats server URL to be provided. Either remove"
+                + " --ethstats-contact or provide a URL (via"
+                + " --ethstats=nodename:secret@host:port)");
   }
 
   @Test
@@ -1321,7 +1322,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(dataStorageConfiguration.getBonsaiLimitTrieLogsEnabled()).isFalse();
     verify(mockLogger)
         .warn(
-            "Forcing {}, since it cannot be enabled with --sync-mode={} and --data-storage-format={}.",
+            "Forcing {}, since it cannot be enabled with --sync-mode={} and"
+                + " --data-storage-format={}.",
             "--bonsai-limit-trie-logs-enabled=false",
             SyncMode.FULL,
             DataStorageFormat.BONSAI);
@@ -1336,7 +1338,9 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Cannot enable --bonsai-limit-trie-logs-enabled with --sync-mode=FULL and --data-storage-format=BONSAI. You must set --bonsai-limit-trie-logs-enabled=false or use a different sync-mode");
+            "Cannot enable --bonsai-limit-trie-logs-enabled with --sync-mode=FULL and"
+                + " --data-storage-format=BONSAI. You must set"
+                + " --bonsai-limit-trie-logs-enabled=false or use a different sync-mode");
   }
 
   @Test
@@ -1401,7 +1405,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "The `--Xdns-update-enabled` requires dns to be enabled. Either remove --Xdns-update-enabled or specify dns is enabled (--Xdns-enabled)");
+            "The `--Xdns-update-enabled` requires dns to be enabled. Either remove"
+                + " --Xdns-update-enabled or specify dns is enabled (--Xdns-enabled)");
   }
 
   @Test
@@ -1830,43 +1835,6 @@ public class BesuCommandTest extends CommandTestAbstract {
   }
 
   @Test
-  public void testGenerateEphemeryGenesisFileSuccess() throws IOException {
-    parseCommand("--network", "ephemery");
-
-    Path tempJsonFile = Files.createTempFile("temp-ephemery", ".json");
-
-    String initialGenesisInput = "{\n" +
-            "  \"config\": {\n" +
-            "    \"chainId\": 39438135\n" +
-            "  },\n" +
-            "  \"timestamp\": \"1720119600\"\n" +
-            "}";
-    Files.write(tempJsonFile, initialGenesisInput.getBytes(UTF_8));
-
-    when(EPHEMERY.getGenesisFile()).thenReturn(tempJsonFile.toString());
-    long mockTimestamp = Instant.now().getEpochSecond() - 60 * 60 * 24 * 30 * 3; // 3 periods ago
-    when(mockGenesisConfigFile.getTimestamp()).thenReturn(mockTimestamp);
-
-    BigInteger mockChainId = BigInteger.valueOf(39438135);
-    when(mockGenesisConfigOptions.getChainId()).thenReturn(Optional.of(mockChainId));
-
-    // This calculates the expected new values
-    long periodInSeconds = 28 * 24 * 60 * 60; // 28 days in seconds
-    long periodsSinceGenesis = ChronoUnit.DAYS.between(Instant.ofEpochSecond(mockTimestamp), Instant.now()) / 28;
-    long expectedTimestamp = mockTimestamp + periodsSinceGenesis * periodInSeconds;
-    BigInteger expectedChainId = mockChainId.add(BigInteger.valueOf(periodsSinceGenesis));
-
-    ObjectNode mockRootNode = mock(ObjectNode.class);
-    ObjectNode mockConfigNode = mock(ObjectNode.class);
-    when(mockObjectMapper.readTree(any(File.class))).thenReturn(mockRootNode);
-    when(mockRootNode.path("config")).thenReturn(mockConfigNode);
-
-    verify(mockConfigNode).put(eq("chainId"), expectedChainId);
-    verify(mockRootNode).put(eq("timestamp"), expectedTimestamp);
-    verify(mockObjectMapper).writerWithDefaultPrettyPrinter();
-  }
-
-  @Test
   public void classicValuesAreUsed() {
     parseCommand("--network", "classic");
 
@@ -2236,7 +2204,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "Port number '8545' has been specified multiple times. Please review the supplied configuration.");
+            "Port number '8545' has been specified multiple times. Please review the supplied"
+                + " configuration.");
   }
 
   @Test
@@ -2341,7 +2310,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     verify(mockLogger)
         .warn(
             eq(
-                "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the version"),
+                "BESU_USING_JEMALLOC is present but we failed to load jemalloc library to get the"
+                    + " version"),
             any(Throwable.class));
   }
 
@@ -2387,7 +2357,8 @@ public class BesuCommandTest extends CommandTestAbstract {
     assertThat(commandOutput.toString(UTF_8)).isEmpty();
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "PoS checkpoint sync requires a block with total difficulty greater or equal than the TTD");
+            "PoS checkpoint sync requires a block with total difficulty greater or equal than the"
+                + " TTD");
   }
 
   @Test
@@ -2521,7 +2492,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         "100");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xsnapsync-synchronizer-flat option can only be used when --Xbonsai-full-flat-db-enabled is true");
+            "--Xsnapsync-synchronizer-flat option can only be used when"
+                + " --Xbonsai-full-flat-db-enabled is true");
 
     parseCommand(
         "--Xbonsai-full-flat-db-enabled",
@@ -2530,7 +2502,8 @@ public class BesuCommandTest extends CommandTestAbstract {
         "100");
     assertThat(commandErrorOutput.toString(UTF_8))
         .contains(
-            "--Xsnapsync-synchronizer-flat option can only be used when --Xbonsai-full-flat-db-enabled is true");
+            "--Xsnapsync-synchronizer-flat option can only be used when"
+                + " --Xbonsai-full-flat-db-enabled is true");
   }
 
   @Test

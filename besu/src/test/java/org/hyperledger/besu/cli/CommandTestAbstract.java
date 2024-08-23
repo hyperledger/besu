@@ -29,7 +29,6 @@ import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.hyperledger.besu.Runner;
 import org.hyperledger.besu.RunnerBuilder;
 import org.hyperledger.besu.chainexport.RlpBlockExporter;
@@ -45,7 +44,6 @@ import org.hyperledger.besu.cli.options.unstable.MetricsCLIOptions;
 import org.hyperledger.besu.cli.options.unstable.NetworkingOptions;
 import org.hyperledger.besu.cli.options.unstable.SynchronizerOptions;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.controller.BesuControllerBuilder;
@@ -226,9 +224,7 @@ public abstract class CommandTestAbstract {
   @Mock protected TransactionPool mockTransactionPool;
   @Mock protected PrivacyPluginServiceImpl privacyPluginService;
   @Mock protected StorageProvider storageProvider;
-  @Mock protected GenesisConfigOptions mockGenesisConfigOptions;
-  @Mock protected GenesisConfigFile mockGenesisConfigFile;
-  @Mock protected ObjectMapper mockObjectMapper;
+
   @SuppressWarnings("PrivateStaticFinalLoggers") // @Mocks are inited by JUnit
   @Mock
   protected Logger mockLogger;
