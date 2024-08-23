@@ -178,9 +178,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       // if all snapsync tasks are completed and the healing process was not running
       if (!snapSyncState.isHealTrieInProgress()) {
         // Start the healing process
-        LOG.info(
-            "Starting the healing process for the trie: {}",
-            LocalDateTime.now(ZoneId.systemDefault()));
         startTrieHeal();
       }
       // if all snapsync tasks are completed and the healing was running and blockchain is behind
@@ -193,22 +190,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       // if all snapsync tasks are completed and the healing was running and the blockchain is not
       // behind the pivot block
       else {
-        LOG.atInfo()
-                .setMessage("stopTimer CHAIN_DOWNLOAD_DURATION: {}")
-                .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
-                .log();
         syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
-        LOG.atInfo()
-                .setMessage("stopTimer CHAIN_DOWNLOAD_DURATION: {}")
-                .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
-                .log();
+
         // If the flat database healing process is not in progress and the flat database mode is
         // FULL
         if (!snapSyncState.isHealFlatDatabaseInProgress()
             && worldStateStorageCoordinator.isMatchingFlatMode(FlatDbMode.FULL)) {
-          LOG.info(
-              "Starting the healing process for the flat database: {}",
-              LocalDateTime.now(ZoneId.systemDefault()));
           startFlatDatabaseHeal(header);
         }
         // If the flat database healing process is in progress or the flat database mode is not FULL
@@ -252,14 +239,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   /** Method to start the healing process of the trie */
   public synchronized void startTrieHeal() {
     if (trieHealStartedBefore.compareAndSet(false, true)) {
-      LOG.info(
-          "stopTimer SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION: {}",
-          LocalDateTime.now(ZoneId.systemDefault()));
       syncDurationMetrics.stopTimer(
           SyncDurationMetrics.Labels.SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION);
-      LOG.info(
-          "startTimer SNAP_WORLD_STATE_HEALING_DURATION: {}",
-          LocalDateTime.now(ZoneId.systemDefault()));
+
       syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
     }
     snapContext.clearAccountRangeTasks();
@@ -297,10 +279,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
-    LOG.atInfo()
-            .setMessage("startTimer FLAT_DB_HEAL: {}")
-            .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
-            .log();
     syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.FLAT_DB_HEAL);
     syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
     snapSyncState.setHealFlatDatabaseInProgress(true);

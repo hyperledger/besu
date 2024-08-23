@@ -24,8 +24,6 @@ import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -75,9 +73,8 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
       // THere are no more inputs to process so make sure we wake up any threads waiting to dequeue
       // so they can give up waiting.
       notifyAll();
-      LOG.info(
-          "stopTimer FAST_WORLD_STATE_DOWNLOAD_DURATION: {}",
-          LocalDateTime.now(ZoneId.systemDefault()));
+
+      LOG.info("Finished downloading world state from peers");
 
       // stop the metrics timer for the world download
       syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.FAST_WORLD_STATE_DOWNLOAD_DURATION);

@@ -27,8 +27,6 @@ import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -142,9 +140,6 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
       if (timerHasNotBeenStarted.compareAndSet(true, false)) {
         syncDurationMetrics.startTimer(
             SyncDurationMetrics.Labels.FAST_WORLD_STATE_DOWNLOAD_DURATION);
-        LOG.info(
-            "startTimer FAST_WORLD_STATE_DOWNLOAD_DURATION: {}",
-            LocalDateTime.now(ZoneId.systemDefault()));
       }
 
       final FastWorldDownloadState newDownloadState =

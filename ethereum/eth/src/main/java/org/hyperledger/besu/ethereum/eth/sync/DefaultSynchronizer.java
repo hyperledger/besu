@@ -49,8 +49,6 @@ import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.nio.file.Path;
 import java.time.Clock;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -216,7 +214,6 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     if (running.compareAndSet(false, true)) {
       LOG.info("Starting synchronizer.");
 
-      LOG.info("startTimer SYNC_DURATION: {}", LocalDateTime.now(ZoneId.systemDefault()));
       syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.TOTAL_SYNC_DURATION);
 
       blockPropagationManager.ifPresent(
@@ -404,11 +401,10 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
     blockPropagationManager.ifPresent(BlockPropagationManager::stop);
     LOG.info("Stopping the pruner.");
     running.set(false);
-    LOG.info(
-        "stopTimer for FLAT_DB_HEAL and SYNC_DURATION: {}",
-        LocalDateTime.now(ZoneId.systemDefault()));
+
     syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.FLAT_DB_HEAL);
     syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.TOTAL_SYNC_DURATION);
+
     return null;
   }
 

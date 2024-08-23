@@ -32,8 +32,6 @@ import org.hyperledger.besu.services.pipeline.Pipeline;
 import org.hyperledger.besu.util.ExceptionUtils;
 
 import java.time.Duration;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
@@ -85,11 +83,9 @@ public class PipelineChainDownloader implements ChainDownloader {
     if (!started.compareAndSet(false, true)) {
       throw new IllegalStateException("Cannot start a chain download twice");
     }
-    LOG.atInfo()
-        .setMessage("startTimer CHAIN_DOWNLOAD_DURATION: {}")
-        .addArgument(LocalDateTime.now(ZoneId.systemDefault()))
-        .log();
+
     syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+
     return performDownload();
   }
 
@@ -121,6 +117,7 @@ public class PipelineChainDownloader implements ChainDownloader {
         && !syncState.hasReachedTerminalDifficulty().orElse(Boolean.FALSE)) {
       return performDownload();
     } else {
+      LOG.info("PipelineChain download complete");
       return completedFuture(null);
     }
   }
