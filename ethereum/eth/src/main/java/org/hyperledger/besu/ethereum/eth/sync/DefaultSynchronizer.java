@@ -217,7 +217,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
       LOG.info("Starting synchronizer.");
 
       LOG.info("startTimer SYNC_DURATION: {}", LocalDateTime.now(ZoneId.systemDefault()));
-      syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.SYNC_DURATION);
+      syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.TOTAL_SYNC_DURATION);
 
       blockPropagationManager.ifPresent(
           manager -> {
@@ -408,7 +408,7 @@ public class DefaultSynchronizer implements Synchronizer, UnverifiedForkchoiceLi
         "stopTimer for FLAT_DB_HEAL and SYNC_DURATION: {}",
         LocalDateTime.now(ZoneId.systemDefault()));
     syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.FLAT_DB_HEAL);
-    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.SYNC_DURATION);
+    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.TOTAL_SYNC_DURATION);
     return null;
   }
 
