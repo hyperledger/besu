@@ -80,7 +80,7 @@ public class AltBN128MulPrecompiledContract extends AbstractAltBnPrecompiledCont
   public PrecompileContractResult computePrecompile(
       final Bytes input, @Nonnull final MessageFrame messageFrame) {
 
-    if (input.size() >= 64 && input.slice(0,64).equals(POINT_AT_INFINITY)) {
+    if (input.size() >= 64 && input.slice(0, 64).equals(POINT_AT_INFINITY)) {
       return new PrecompileContractResult(
           POINT_AT_INFINITY, false, MessageFrame.State.COMPLETED_SUCCESS, Optional.empty());
     }
