@@ -478,7 +478,14 @@ public class EvmToolCommand implements Runnable {
                 .mixHash(Hash.ZERO)
                 .nonce(0)
                 .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
-                .baseFee(component.getBlockchain().getChainHeadHeader().getBaseFee().orElse(null))
+                .baseFee(
+                    component
+                        .getBlockchain()
+                        .getChainHeadHeader()
+                        .getBaseFee()
+                        .or(() -> genesisFileModule.providesGenesisConfigFile().getBaseFeePerGas())
+                        .orElse(
+                            protocolSpec.getFeeMarket().implementsBaseFee() ? Wei.of(0xa) : null))
                 .buildBlockHeader();
 
         Address contractAddress =
@@ -519,13 +526,12 @@ public class EvmToolCommand implements Runnable {
               lastTime = stopwatch.elapsed().toNanos();
             }
             if (lastLoop) {
-              if (messageFrame.getExceptionalHaltReason().isPresent()) {
-                out.println(messageFrame.getExceptionalHaltReason().get());
-              }
-              if (messageFrame.getRevertReason().isPresent()) {
-                out.println(
-                    new String(messageFrame.getRevertReason().get().toArrayUnsafe(), UTF_8));
-              }
+              messageFrame
+                  .getExceptionalHaltReason()
+                  .ifPresent(haltReason -> out.println(haltReason));
+              messageFrame
+                  .getRevertReason()
+                  .ifPresent(bytes -> out.println(new String(bytes.toArrayUnsafe(), UTF_8)));
             }
           }
         }
@@ -572,7 +578,7 @@ public class EvmToolCommand implements Runnable {
     out.println("{");
     worldState
         .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-        .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
+        .sorted(Comparator.comparing(o -> o.getAddress().orElse(Address.ZERO).toHexString()))
         .forEach(
             a -> {
               var account = worldState.get(a.getAddress().get());
@@ -585,7 +591,7 @@ public class EvmToolCommand implements Runnable {
                       .map(
                           e ->
                               Map.entry(
-                                  e.getKey().get(),
+                                  e.getKey().orElse(UInt256.ZERO),
                                   account.getStorageValue(UInt256.fromBytes(e.getKey().get()))))
                       .filter(e -> !e.getValue().isZero())
                       .sorted(Map.Entry.comparingByKey())
