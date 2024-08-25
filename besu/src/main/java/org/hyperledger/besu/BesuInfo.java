@@ -36,7 +36,7 @@ public final class BesuInfo {
       COMMIT = null;
     } else {
       Pattern pattern = Pattern.compile("v?\\d*\\.\\d*\\.\\d*-\\w+-(?<commit>[0-9a-fA-F]{8})");
-      Matcher matcher = pattern.matcher(BesuInfo.class.getPackage().getImplementationVersion());
+      Matcher matcher = pattern.matcher(VERSION);
       if (matcher.find()) {
         COMMIT = matcher.group("commit");
       } else {
