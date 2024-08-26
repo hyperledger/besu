@@ -444,8 +444,6 @@ allprojects {
   }
 }
 
-check.dependsOn spotlessCheckFast
-
 task deploy() {}
 
 task checkMavenCoordinateCollisions {
@@ -467,7 +465,7 @@ task checkMavenCoordinateCollisions {
 
 tasks.register('checkPluginAPIChanges', DefaultTask) {}
 checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
-check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
+check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions', 'spotlessCheckFast')
 
 subprojects {
 
