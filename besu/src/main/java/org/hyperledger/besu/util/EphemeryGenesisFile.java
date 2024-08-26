@@ -34,7 +34,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
  * The Generate Ephemery Genesis File. Checks for update based on the set period and update the
  * Ephemery genesis file
  */
-public class GenerateEphemeryGenesisFile {
+public class EphemeryGenesisFile {
   private final NetworkName network;
   private final GenesisConfigFile genesisConfigFile;
   private final GenesisConfigOptions genesisConfigOptions;
@@ -46,7 +46,7 @@ public class GenerateEphemeryGenesisFile {
    * @param genesisConfigFile the Genesis Config File
    * @param genesisConfigOptions the Genesis Config Options
    */
-  public GenerateEphemeryGenesisFile(
+  public EphemeryGenesisFile(
       final NetworkName network,
       final GenesisConfigFile genesisConfigFile,
       final GenesisConfigOptions genesisConfigOptions) {

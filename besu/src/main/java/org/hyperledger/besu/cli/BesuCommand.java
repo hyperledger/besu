@@ -197,6 +197,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.EphemeryGenesisFile;
 import org.hyperledger.besu.util.GenerateEphemeryGenesisFile;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
@@ -1093,11 +1094,11 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
     if (network == EPHEMERY) {
-      GenerateEphemeryGenesisFile generateEphemeryGenesisFile =
-          new GenerateEphemeryGenesisFile(
+      EphemeryGenesisFile ephemeryGenesisFile =
+          new EphemeryGenesisFile(
               network, readGenesisConfigFile(), readGenesisConfigOptions());
       try {
-        generateEphemeryGenesisFile.generate();
+        ephemeryGenesisFile.generate();
       } catch (IOException e) {
         throw new RuntimeException(e);
       }
