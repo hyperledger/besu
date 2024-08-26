@@ -198,7 +198,6 @@ import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
 import org.hyperledger.besu.util.EphemeryGenesisFile;
-import org.hyperledger.besu.util.GenerateEphemeryGenesisFile;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -1095,8 +1094,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     }
     if (network == EPHEMERY) {
       EphemeryGenesisFile ephemeryGenesisFile =
-          new EphemeryGenesisFile(
-              network, readGenesisConfigFile(), readGenesisConfigOptions());
+          new EphemeryGenesisFile(network, readGenesisConfigFile(), readGenesisConfigOptions());
       try {
         ephemeryGenesisFile.generate();
       } catch (IOException e) {

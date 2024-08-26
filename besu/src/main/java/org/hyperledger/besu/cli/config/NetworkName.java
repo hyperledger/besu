@@ -31,7 +31,10 @@ public enum NetworkName {
   /** LUKSO mainnet network name. */
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
 
-  /** EPHEMERY network name. */
+  /**
+   * EPHEMERY network name. The networkId is the default networkId that will be used to make update
+   * to the most recent networkId
+   */
   EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135)),
 
   /** Dev network name. */
@@ -81,11 +84,15 @@ public enum NetworkName {
   }
 
   /**
-   * Sets network id. This method is called only by the Ephemery network. It is required to update
-   * the networkid.
+   * This method is called only by the Ephemery network. It is required to update the networkid.
+   *
+   * @param networkId Sets network id .
+   * @param name Sets network name .
    */
-  public void setNetworkId(final BigInteger networkId) {
-    this.networkId = networkId;
+  public void setNetworkId(final BigInteger networkId, final NetworkName name) {
+    if (name == EPHEMERY) {
+      this.networkId = networkId;
+    }
   }
 
   /**

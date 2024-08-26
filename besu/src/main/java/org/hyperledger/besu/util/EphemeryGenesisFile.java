@@ -38,6 +38,8 @@ public class EphemeryGenesisFile {
   private final NetworkName network;
   private final GenesisConfigFile genesisConfigFile;
   private final GenesisConfigOptions genesisConfigOptions;
+  private static final int PERIOD = 28;
+  private static final long PERIOD_IN_SECONDS = (PERIOD * 24 * 60 * 60);
 
   /**
    * Instantiates a new Generate Ephemery genesis file.
@@ -56,27 +58,27 @@ public class EphemeryGenesisFile {
   }
 
   public void generate() throws IOException {
-    if (EPHEMERY.getGenesisFile() != null
-        || genesisConfigOptions != null
-        || genesisConfigFile != null) {
+    if (EPHEMERY.getGenesisFile() == null
+        || genesisConfigOptions == null
+        || genesisConfigFile == null) {
+      throw new IOException();
+    } else {
 
-      final int PERIOD = 28;
       long genesisTimestamp = genesisConfigFile.getTimestamp();
       Optional<BigInteger> genesisChainId = genesisConfigOptions.getChainId();
 
-      long periodInSeconds = (PERIOD * 24 * 60 * 60);
       long currentTimestamp = Instant.now().getEpochSecond();
       long periodsSinceGenesis =
           ChronoUnit.DAYS.between(Instant.ofEpochSecond(genesisTimestamp), Instant.now()) / PERIOD;
-      long updatedTimestamp = genesisTimestamp + (periodsSinceGenesis * periodInSeconds);
+      long updatedTimestamp = genesisTimestamp + (periodsSinceGenesis * PERIOD_IN_SECONDS);
       BigInteger updatedChainId =
           genesisChainId
               .orElseThrow(() -> new IllegalStateException("ChainId not present"))
               .add(BigInteger.valueOf(periodsSinceGenesis));
 
-      EPHEMERY.setNetworkId(updatedChainId);
+      EPHEMERY.setNetworkId(updatedChainId, EPHEMERY);
 
-      if (currentTimestamp > (genesisTimestamp + periodInSeconds)) {
+      if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
 
         GenesisConfigFile.fromResource(
             Optional.ofNullable(network).orElse(EPHEMERY).getGenesisFile());

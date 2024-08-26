@@ -78,8 +78,7 @@ public class EphemeryGenesisFileTest {
     network = mock(NetworkName.class);
     genesisConfigFile = mock(GenesisConfigFile.class);
     genesisConfigOptions = mock(GenesisConfigOptions.class);
-    ephemeryGenesisFile =
-        new EphemeryGenesisFile(network, genesisConfigFile, genesisConfigOptions);
+    ephemeryGenesisFile = new EphemeryGenesisFile(network, genesisConfigFile, genesisConfigOptions);
     tempJsonFile = Files.createTempFile("temp-ephemery", ".json");
   }
 
@@ -149,7 +148,7 @@ public class EphemeryGenesisFileTest {
 
     long expectedGenesisTimestamp =
         GENESIS_TEST_TIMESTAMP + (PERIOD_SINCE_GENESIS * PERIOD_IN_SECONDS);
-    EPHEMERY.setNetworkId(expectedChainId);
+    EPHEMERY.setNetworkId(expectedChainId, EPHEMERY);
 
     configNode.put("chainId", expectedChainId);
     rootNode.put("timestamp", String.valueOf(expectedGenesisTimestamp));
