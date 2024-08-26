@@ -105,7 +105,7 @@ tasks.register("fuzzReth") {
 }
 
 tasks.register("fuzzAll") {
-  dependsOn fuzzEvm1, fuzzEthJS, fuzzGeth, fuzzNethermind, fuzzReth
+  dependsOn fuzzEvmone, fuzzEthereumJS, fuzzGeth, fuzzNethermind, fuzzReth
 }
 
 jacoco {
