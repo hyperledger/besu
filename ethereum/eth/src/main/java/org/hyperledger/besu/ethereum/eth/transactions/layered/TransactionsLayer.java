@@ -22,10 +22,10 @@ import org.hyperledger.besu.ethereum.eth.transactions.PendingTransaction;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionAddedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.PendingTransactionDroppedListener;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult;
+import org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalLong;
@@ -43,7 +43,13 @@ public interface TransactionsLayer {
 
   TransactionAddedResult add(PendingTransaction pendingTransaction, int gap);
 
-  void remove(PendingTransaction pendingTransaction, RemovalReason reason);
+  /**
+   * Remove the pending tx from the pool
+   *
+   * @param pendingTransaction the pending tx
+   * @param reason the reason it is removed from the pool
+   */
+  void remove(PendingTransaction pendingTransaction, PoolRemovalReason reason);
 
   /**
    * Penalize a pending transaction. Penalization could be applied to notify the txpool that this
@@ -107,27 +113,4 @@ public interface TransactionsLayer {
   String logStats();
 
   String logSender(Address sender);
-
-  enum RemovalReason {
-    CONFIRMED,
-    CROSS_LAYER_REPLACED,
-    EVICTED,
-    DROPPED,
-    FOLLOW_INVALIDATED,
-    INVALIDATED,
-    PROMOTED,
-    REPLACED,
-    RECONCILED,
-    BELOW_BASE_FEE;
-
-    private final String label;
-
-    RemovalReason() {
-      this.label = name().toLowerCase(Locale.ROOT);
-    }
-
-    public String label() {
-      return label;
-    }
-  }
 }

@@ -25,7 +25,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.S4;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP1;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.LayersTest.Sender.SP2;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.INVALIDATED;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
