@@ -83,14 +83,6 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
     final BlockInterface blockInterface = bftContext.getBlockInterface();
     final ValidatorProvider validatorProvider = bftContext.getValidatorProvider();
 
-    // return mapOf(
-    //     new QbftProposeValidatorVote(validatorProvider),
-    //     new QbftGetValidatorsByBlockNumber(blockchainQueries, readOnlyValidatorProvider),
-    //     new QbftDiscardValidatorVote(validatorProvider),
-    //     new QbftGetValidatorsByBlockHash(context.getBlockchain(), readOnlyValidatorProvider),
-    //     new QbftGetSignerMetrics(readOnlyValidatorProvider, blockInterface, blockchainQueries),
-    //     new QbftGetPendingVotes(validatorProvider),
-    //     new QbftGetRequestTimeoutSeconds(bftConfig));
     Map<String, JsonRpcMethod> methods =
         mapOf(
             new QbftProposeValidatorVote(validatorProvider),
@@ -101,7 +93,6 @@ public class QbftJsonRpcMethods extends ApiGroupJsonRpcMethods {
             new QbftGetPendingVotes(validatorProvider),
             new QbftGetRequestTimeoutSeconds(bftConfig));
 
-    LOG.debug("QBFT RPC Methods created: {}", methods.keySet());
     return methods;
   }
 }
