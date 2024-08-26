@@ -137,11 +137,6 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
           header.getHash(),
           stateRoot);
 
-      if (timerHasNotBeenStarted.compareAndSet(true, false)) {
-        syncDurationMetrics.startTimer(
-            SyncDurationMetrics.Labels.FAST_WORLD_STATE_DOWNLOAD_DURATION);
-      }
-
       final FastWorldDownloadState newDownloadState =
           new FastWorldDownloadState(
               worldStateStorageCoordinator,

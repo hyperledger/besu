@@ -76,9 +76,6 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
 
       LOG.info("Finished downloading world state from peers");
 
-      // stop the metrics timer for the world download
-      syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.FAST_WORLD_STATE_DOWNLOAD_DURATION);
-
       return true;
     } else {
       return false;

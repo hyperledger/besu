@@ -191,6 +191,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       // behind the pivot block
       else {
         syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
+        syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
 
         // If the flat database healing process is not in progress and the flat database mode is
         // FULL
@@ -280,7 +281,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
     syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.FLAT_DB_HEAL);
-    syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
     snapSyncState.setHealFlatDatabaseInProgress(true);
     final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
     ranges.forEach(
