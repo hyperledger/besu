@@ -14,16 +14,14 @@
  */
 package org.hyperledger.besu.evm.gascalculator.stateless;
 
-import java.util.function.Supplier;
-
 public final class AccessEvents {
 
   public static final short NONE = 0;
   public static final short BRANCH_READ = 1;
-  public static final short CHUNK_READ = 2;
-  public static final short BRANCH_WRITE = 4;
-  public static final short CHUNK_WRITE = 16;
-  public static final short CHUNK_FILL = 32;
+  public static final short BRANCH_WRITE = 2;
+  public static final short LEAF_READ = 4;
+  public static final short LEAF_RESET = 8;
+  public static final short LEAF_SET = 16;
 
   private AccessEvents() {}
 
@@ -31,19 +29,19 @@ public final class AccessEvents {
     return (accessEvents & BRANCH_READ) != 0;
   }
 
-  public static boolean isChunkRead(final short accessEvents) {
-    return (accessEvents & CHUNK_READ) != 0;
-  }
-
   public static boolean isBranchWrite(final short accessEvents) {
     return (accessEvents & BRANCH_WRITE) != 0;
   }
 
-  public static boolean isChunkWrite(final short accessEvents) {
-    return (accessEvents & CHUNK_WRITE) != 0;
+  public static boolean isLeafRead(final short accessEvents) {
+    return (accessEvents & LEAF_READ) != 0;
   }
 
-  public static boolean isChunkFill(final short accessEvents) {
-    return (accessEvents & CHUNK_FILL) != 0;
+  public static boolean isLeafReset(final short accessEvents) {
+    return (accessEvents & LEAF_RESET) != 0;
+  }
+
+  public static boolean isLeafSet(final short accessEvents) {
+    return (accessEvents & LEAF_SET) != 0;
   }
 }

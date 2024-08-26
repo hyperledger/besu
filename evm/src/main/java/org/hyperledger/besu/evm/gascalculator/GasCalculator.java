@@ -20,7 +20,6 @@ import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.stateless.NoopAccessWitness;
 import org.hyperledger.besu.evm.operation.BalanceOperation;
@@ -759,9 +758,7 @@ public interface GasCalculator {
    * @return gas cost after computing all access events
    */
   default long computeBaseAccessEventsCost(
-      final AccessWitness accessWitness,
-      final Transaction transaction,
-      final MutableAccount sender) {
+      final AccessWitness accessWitness, final Transaction transaction) {
     return 0L;
   }
 

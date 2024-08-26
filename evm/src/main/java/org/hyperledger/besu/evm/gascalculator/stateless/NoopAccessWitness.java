@@ -46,7 +46,8 @@ public class NoopAccessWitness implements AccessWitness {
   }
 
   @Override
-  public long touchAndChargeValueTransfer(final Address caller, final Address target) {
+  public long touchAndChargeValueTransfer(
+      final Address caller, final Address target, final boolean isAccountCreation) {
     return 0;
   }
 
@@ -66,8 +67,7 @@ public class NoopAccessWitness implements AccessWitness {
   }
 
   @Override
-  public long touchAndChargeContractCreateInit(
-      final Address address, final boolean createSendsValue) {
+  public long touchAndChargeContractCreateInit(final Address address) {
     return 0;
   }
 
@@ -77,7 +77,13 @@ public class NoopAccessWitness implements AccessWitness {
   }
 
   @Override
-  public long touchAddressOnWriteAndComputeGas(
+  public long touchAddressOnWriteResetAndComputeGas(
+      final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
+    return 0;
+  }
+
+  @Override
+  public long touchAddressOnWriteSetAndComputeGas(
       final Address address, final UInt256 treeIndex, final UInt256 subIndex) {
     return 0;
   }
@@ -100,12 +106,6 @@ public class NoopAccessWitness implements AccessWitness {
 
   @Override
   public long touchCodeChunks(
-      final Address address, final long offset, final long readSize, final long codeLength) {
-    return 0;
-  }
-
-  @Override
-  public long touchCodeChunksWithoutAccessCost(
       final Address address, final long offset, final long readSize, final long codeLength) {
     return 0;
   }

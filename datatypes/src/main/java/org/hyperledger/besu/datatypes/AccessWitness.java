@@ -24,7 +24,7 @@ public interface AccessWitness {
 
   long touchAndChargeProofOfAbsence(Address address);
 
-  long touchAndChargeValueTransfer(Address caller, Address target);
+  long touchAndChargeValueTransfer(Address caller, Address target, boolean isAccountCreation);
 
   long touchAndChargeMessageCall(Address address);
 
@@ -32,11 +32,13 @@ public interface AccessWitness {
 
   long touchTxExistingAndComputeGas(Address target, boolean sendsValue);
 
-  long touchAndChargeContractCreateInit(Address address, boolean createSendsValue);
+  long touchAndChargeContractCreateInit(Address address);
 
   long touchAndChargeContractCreateCompleted(final Address address);
 
-  long touchAddressOnWriteAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
+  long touchAddressOnWriteResetAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
+
+  long touchAddressOnWriteSetAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
 
   long touchAddressOnReadAndComputeGas(Address address, UInt256 treeIndex, UInt256 subIndex);
 
@@ -45,9 +47,4 @@ public interface AccessWitness {
   long touchCodeChunksUponContractCreation(Address address, long codeLength);
 
   long touchCodeChunks(Address address, long offset, long readSize, long codeLength);
-
-  default long touchCodeChunksWithoutAccessCost(
-      final Address address, final long offset, final long readSize, final long codeLength) {
-    return touchCodeChunks(address, offset, readSize, codeLength);
-  }
 }

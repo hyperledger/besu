@@ -417,6 +417,7 @@ public class VerkleWorldState extends DiffBasedWorldState {
   @Override
   public UInt256 getStorageValue(final Address address, final UInt256 storageKey) {
     return getStorageValueByStorageSlotKey(address, new StorageSlotKey(storageKey))
+        // TODO: should this really be ZERO if it doesn't exist? I think it should be None
         .orElse(UInt256.ZERO);
   }
 
