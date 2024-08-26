@@ -51,7 +51,7 @@ class EngineGetClientVersionV1Test {
 
   @Test
   void testGetName() {
-    assertThat(getClientVersion.getName()).isEqualTo("engine_getClientVersionsV1");
+    assertThat(getClientVersion.getName()).isEqualTo("engine_getClientVersionV1");
   }
 
   @Test
