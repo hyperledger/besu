@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
-import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -71,13 +70,12 @@ class MainnetGenesisFileModule extends GenesisFileModule {
       }
     }
 
-    var schedules = createSchedules(configOptions.getChainId().orElse(BigInteger.valueOf(1337)));
-    var schedule =
-        schedules.get(
-            fork.orElse(EvmSpecVersion.defaultVersion().getName())
-                .toLowerCase(Locale.getDefault()));
-    if (schedule != null) {
-      return schedule.get();
+    if (fork.isPresent()) {
+      var schedules = createSchedules(configOptions.getChainId().orElse(BigInteger.valueOf(1337)));
+      var schedule = schedules.get(fork.get().toLowerCase(Locale.getDefault()));
+      if (schedule != null) {
+        return schedule.get();
+      }
     }
 
     return MainnetProtocolSchedule.fromConfig(
