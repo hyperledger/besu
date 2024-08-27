@@ -20,9 +20,11 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Map.Entry;
 
+import com.google.common.base.Splitter;
 import org.apache.tuweni.bytes.Bytes;
 
 import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
@@ -31,9 +33,7 @@ import org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocolSchedul
 import org.hyperledger.besu.evm.Code;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.code.CodeInvalid;
-import org.hyperledger.besu.evm.code.CodeV1;
 import org.hyperledger.besu.evm.code.EOFLayout;
-import org.hyperledger.besu.evm.code.EOFLayout.EOFContainerMode;
 import org.hyperledger.besu.testutil.JsonTestParameters;
 
 public class EOFReferenceTestTools {
@@ -124,6 +124,25 @@ public class EOFReferenceTestTools {
     // hardwire in the magic byte transaction checks
     if (evm.getMaxEOFVersion() < 1) {
       assertThat(expected.exception()).isEqualTo("EOF_InvalidCode");
+    } else if (code.size() > evm.getEvmVersion().getMaxInitcodeSize()) {
+      // this check is in EOFCREATE and Transaction validator, but unit tests sniff it out.
+      assertThat(false)
+          .withFailMessage(
+              () ->
+                  "No Expected exception, actual exception - container_size_above_limit "
+                      + code.size())
+          .isEqualTo(expected.result());
+      if (name.contains("eip7692")) {
+        // if the test is from EEST, validate the exception name.
+        assertThat("container_size_above_limit")
+            .withFailMessage(
+                () ->
+                    "Expected exception: %s actual exception: %s %d"
+                        .formatted(
+                            expected.exception(), "container_size_above_limit ", code.size()))
+            .containsIgnoringCase(expected.exception().replace("EOFException.", ""));
+      }
+
     } else {
       EOFLayout layout = EOFLayout.parseEOF(code);
 
@@ -134,39 +153,27 @@ public class EOFReferenceTestTools {
         } else {
           parsedCode = evm.getCodeUncached(code);
         }
-        if ("EOF_IncompatibleContainerKind".equals(expected.exception()) && parsedCode.isValid()) {
-          EOFContainerMode expectedMode =
-              EOFContainerMode.valueOf(containerKind == null ? "RUNTIME" : containerKind);
-          EOFContainerMode containerMode =
-              ((CodeV1) parsedCode).getEofLayout().containerMode().get();
-          EOFContainerMode actualMode =
-              containerMode == null ? EOFContainerMode.RUNTIME : containerMode;
-          assertThat(actualMode)
-              .withFailMessage("Code did not parse to valid containerKind of " + expectedMode)
-              .isNotEqualTo(expectedMode);
-        } else {
-          if (expected.result()) {
+        if (expected.result()) {
           assertThat(parsedCode.isValid())
               .withFailMessage(
-                    () -> "Valid code failed with " + ((CodeInvalid) parsedCode).getInvalidReason())
-                .isTrue();
-          } else {
-            assertThat(parsedCode.isValid())
-                .withFailMessage("Invalid code expected " + expected.exception() + " but was valid")
-                .isFalse();
-            if (name.contains("eip7692")) {
-              // if the test is from EEST, validate the exception name.
-              assertThat(((CodeInvalid) parsedCode).getInvalidReason())
-                  .withFailMessage(
-                  () ->
-                          "Expected exception :%s actual exception: %s"
-                              .formatted(
-                                  expected.exception(),
-                                  (parsedCode.isValid()
-                              ? null
-                                      : ((CodeInvalid) parsedCode).getInvalidReason())))
-                  .containsIgnoringCase(expected.exception().replace("EOFException.", ""));
-            }
+                  () -> "Valid code failed with " + ((CodeInvalid) parsedCode).getInvalidReason())
+              .isTrue();
+        } else {
+          assertThat(parsedCode.isValid())
+              .withFailMessage("Invalid code expected " + expected.exception() + " but was valid")
+              .isFalse();
+          if (name.contains("eip7692")) {
+            // if the test is from EEST, validate the exception name.
+            assertThat(((CodeInvalid) parsedCode).getInvalidReason())
+                .withFailMessage(
+                    () ->
+                        "Expected exception :%s actual exception: %s"
+                            .formatted(
+                                expected.exception(),
+                                (parsedCode.isValid()
+                                    ? null
+                                    : ((CodeInvalid) parsedCode).getInvalidReason())))
+                .containsIgnoringCase(expected.exception().replace("EOFException.", ""));
           }
         }
       } else {
@@ -178,6 +185,25 @@ public class EOFReferenceTestTools {
                         + " actual exception - "
                         + (layout.isValid() ? null : layout.invalidReason()))
             .isEqualTo(expected.result());
+        if (name.contains("eip7692")) {
+          // if the test is from EEST, validate the exception name.
+          boolean exceptionMatched = false;
+          for (String e : Splitter.on('|').split(expected.exception())) {
+            if (layout
+                .invalidReason()
+                .toLowerCase(Locale.ROOT)
+                .contains(e.replace("EOFException.", "").toLowerCase(Locale.ROOT))) {
+              exceptionMatched = true;
+              break;
+            }
+          }
+          assertThat(exceptionMatched)
+              .withFailMessage(
+                  () ->
+                      "Expected exception :%s actual exception: %s"
+                          .formatted(expected.exception(), layout.invalidReason()))
+              .isTrue();
+        }
       }
     }
   }
