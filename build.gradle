@@ -991,7 +991,7 @@ def calculateVersion() {
   def gitDetails = getGitCommitDetails() // Adjust length as needed
   if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
     println("Generating project version using supplied version: ${project.version}-${gitDetails.hash}")
-      return "${project.version}-${gitDetails.hash}"
+    return "${project.version}-${gitDetails.hash}"
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
     println("Generating project version using date (${gitDetails.date}-develop-${gitDetails.hash}), as supplied version is not semver: ${project.version}")

@@ -33,14 +33,15 @@ public final class BesuInfo {
 
   static {
     String projectVersion = BesuInfo.class.getPackage().getImplementationVersion();
-    if(projectVersion == null) {
-      //protect against unset project version (e.g. unit tests being run, etc)
+    if (projectVersion == null) {
+      // protect against unset project version (e.g. unit tests being run, etc)
       VERSION = null;
       COMMIT = null;
     } else {
-      Pattern pattern = Pattern.compile("(?<version>\\d+\\.\\d+\\.?\\d?-?\\w*)-(?<commit>[0-9a-fA-F]{8})");
+      Pattern pattern =
+          Pattern.compile("(?<version>\\d+\\.\\d+\\.?\\d?-?\\w*)-(?<commit>[0-9a-fA-F]{8})");
       Matcher matcher = pattern.matcher(projectVersion);
-      if(matcher.find()) {
+      if (matcher.find()) {
         VERSION = matcher.group("version");
         COMMIT = matcher.group("commit");
       } else {
@@ -78,7 +79,9 @@ public final class BesuInfo {
    */
   public static String nodeName(final Optional<String> maybeIdentity) {
     return maybeIdentity
-        .map(identity -> String.format("%s/%s/v%s-%s/%s/%s", CLIENT, identity, VERSION, COMMIT, OS, VM))
+        .map(
+            identity ->
+                String.format("%s/%s/v%s-%s/%s/%s", CLIENT, identity, VERSION, COMMIT, OS, VM))
         .orElse(version());
   }
 
