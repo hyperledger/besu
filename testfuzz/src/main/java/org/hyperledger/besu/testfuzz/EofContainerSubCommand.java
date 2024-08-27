@@ -92,7 +92,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
       names = {"--time-limit-ns"},
       defaultValue = "5000",
       description = "Time threshold, in nanoseconds, that results in a fuzz error if exceeded")
-  private long timeThresholdNs = 5_000;
+  private long timeThresholdMicros = 5_000;
 
   @Option(
       names = {"--time-limit-warmup"},
@@ -229,7 +229,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
                   String value = client.differentialFuzz(eofUnderTestHexString);
                   stopwatch.stop();
                   long elapsedMicros = stopwatch.elapsed(TimeUnit.MICROSECONDS);
-                  if (elapsedMicros > timeThresholdNs
+                  if (elapsedMicros > timeThresholdMicros
                       && totalContainers > timeThresholdIterations) {
                     Hash name = Hash.hash(eofUnderTest);
                     parentCommand.out.printf(
@@ -247,7 +247,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
                   } else if (value.toLowerCase(Locale.ROOT).startsWith("err")) {
                     failHappened.set(true);
                   } else {
-                    // unexpected ouput: trigger a missmatch
+                    // unexpected output: trigger a missmatch
                     passHappened.set(true);
                     failHappened.set(true);
                   }
