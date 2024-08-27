@@ -33,7 +33,8 @@ public final class BesuInfoTest {
    */
   @Test
   public void versionStringIsEthstatsFriendly() {
-    assertThat(BesuInfo.version()).matches("[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null)/[^/]+/[^/]+");
+    assertThat(BesuInfo.version())
+        .matches("[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null-null)/[^/]+/[^/]+");
   }
 
   /**
@@ -45,7 +46,7 @@ public final class BesuInfoTest {
   @Test
   public void noIdentityNodeNameIsEthstatsFriendly() {
     assertThat(BesuInfo.nodeName(Optional.empty()))
-        .matches("[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null)/[^/]+/[^/]+");
+        .matches("[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null-null)/[^/]+/[^/]+");
   }
 
   /**
@@ -58,6 +59,6 @@ public final class BesuInfoTest {
   @Test
   public void userIdentityNodeNameIsEthstatsFriendly() {
     assertThat(BesuInfo.nodeName(Optional.of("TestUserIdentity")))
-        .matches("[^/]+/[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null)/[^/]+/[^/]+");
+        .matches("[^/]+/[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null-null)/[^/]+/[^/]+");
   }
 }

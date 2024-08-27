@@ -36,8 +36,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
@@ -175,12 +173,8 @@ public class CodeValidateSubCommand implements Runnable {
         ((CodeV1) code).getEofLayout().containerMode().get())) {
       return "err: code is valid initcode.  Runtime code expected";
     } else {
-      return "OK "
-          + IntStream.range(0, code.getCodeSectionCount())
-              .mapToObj(code::getCodeSection)
-              .map(cs -> code.getBytes().slice(cs.getEntryPoint(), cs.getLength()))
-              .map(Bytes::toUnprefixedHexString)
-              .collect(Collectors.joining(","));
+      return "OK %d/%d/%d"
+          .formatted(code.getCodeSectionCount(), code.getSubcontainerCount(), code.getDataSize());
     }
   }
 }

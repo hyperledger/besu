@@ -17,6 +17,8 @@ package org.hyperledger.besu;
 import org.hyperledger.besu.util.platform.PlatformDetector;
 
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Represent Besu information such as version, OS etc. Used with --version option and during Besu
@@ -24,9 +26,29 @@ import java.util.Optional;
  */
 public final class BesuInfo {
   private static final String CLIENT = "besu";
-  private static final String VERSION = BesuInfo.class.getPackage().getImplementationVersion();
   private static final String OS = PlatformDetector.getOS();
   private static final String VM = PlatformDetector.getVM();
+  private static final String VERSION;
+  private static final String COMMIT;
+
+  static {
+    String projectVersion = BesuInfo.class.getPackage().getImplementationVersion();
+    if (projectVersion == null) {
+      // protect against unset project version (e.g. unit tests being run, etc)
+      VERSION = null;
+      COMMIT = null;
+    } else {
+      Pattern pattern =
+          Pattern.compile("(?<version>\\d+\\.\\d+\\.?\\d?-?\\w*)-(?<commit>[0-9a-fA-F]{8})");
+      Matcher matcher = pattern.matcher(projectVersion);
+      if (matcher.find()) {
+        VERSION = matcher.group("version");
+        COMMIT = matcher.group("commit");
+      } else {
+        throw new RuntimeException("Invalid project version: " + projectVersion);
+      }
+    }
+  }
 
   private BesuInfo() {}
 
@@ -46,7 +68,7 @@ public final class BesuInfo {
    *     or "besu/v23.1.0/osx-aarch_64/corretto-java-19"
    */
   public static String version() {
-    return String.format("%s/v%s/%s/%s", CLIENT, VERSION, OS, VM);
+    return String.format("%s/v%s-%s/%s/%s", CLIENT, VERSION, COMMIT, OS, VM);
   }
 
   /**
@@ -57,7 +79,18 @@ public final class BesuInfo {
    */
   public static String nodeName(final Optional<String> maybeIdentity) {
     return maybeIdentity
-        .map(identity -> String.format("%s/%s/v%s/%s/%s", CLIENT, identity, VERSION, OS, VM))
+        .map(
+            identity ->
+                String.format("%s/%s/v%s-%s/%s/%s", CLIENT, identity, VERSION, COMMIT, OS, VM))
         .orElse(version());
+  }
+
+  /**
+   * Generate the commit hash for this besu version
+   *
+   * @return the commit hash for this besu version
+   */
+  public static String commit() {
+    return COMMIT;
   }
 }
