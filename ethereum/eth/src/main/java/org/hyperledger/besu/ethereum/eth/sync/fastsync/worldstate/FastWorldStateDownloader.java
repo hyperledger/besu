@@ -29,7 +29,6 @@ import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 import java.time.Clock;
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Function;
 import java.util.function.IntSupplier;
@@ -56,7 +55,6 @@ public class FastWorldStateDownloader implements WorldStateDownloader {
   private final SyncDurationMetrics syncDurationMetrics;
 
   private Optional<CompleteTaskStep> maybeCompleteTask = Optional.empty();
-  private final AtomicBoolean timerHasNotBeenStarted = new AtomicBoolean(true);
 
   public FastWorldStateDownloader(
       final EthContext ethContext,
