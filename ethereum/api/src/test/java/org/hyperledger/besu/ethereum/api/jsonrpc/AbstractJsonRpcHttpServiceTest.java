@@ -75,7 +75,9 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
   protected BlockchainSetupUtil blockchainSetupUtil;
 
-  protected static String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
+  protected static final String CLIENT_VERSION = "0.1.0";
+  protected static final String CLIENT_COMMIT = "12345678";
   protected static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
   protected static final Collection<String> JSON_RPC_APIS =
       Arrays.asList(
@@ -168,7 +170,9 @@ public abstract class AbstractJsonRpcHttpServiceTest {
 
     return new JsonRpcMethodsFactory()
         .methods(
+            CLIENT_NODE_NAME,
             CLIENT_VERSION,
+            CLIENT_COMMIT,
             NETWORK_ID,
             new StubGenesisConfigOptions(),
             peerDiscoveryMock,
