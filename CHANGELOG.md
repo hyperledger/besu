@@ -3,7 +3,8 @@
 ## [Unreleased]
 
 ### Fixed
-- **DebugMetrics**: Fixed a `ClassCastException` occurring in `DebugMetrics` when handling nested metric structures. Previously, `Double` values within these structures were incorrectly cast to `Map` objects, leading to errors. This update allows for proper handling of both direct values and nested structures at the same level. Issue# [#7383]
+- **DebugMetrics**: Fixed a `ClassCastException` occurring in `DebugMetrics` when handling nested metric structures. Previously, `Double` values within these structures were incorrectly cast to `Map` objects, leading to errors. This update allows for proper handling of both direct values and nested structures at the same level. Issue# [#7383](https://github.com/hyperledger/besu/pull/7383)
+- `evmtool` was not respecting the `--genesis` setting, resulting in unexpected trace results. [#7433](https://github.com/hyperledger/besu/pull/7433)
 
 ### Tests
 - Added a comprehensive test case to reproduce the bug and verify the fix for the `ClassCastException` in `DebugMetrics`. This ensures that complex, dynamically nested metric structures can be handled without errors.
@@ -19,6 +20,7 @@
 - Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
 - Add pending block header to `TransactionEvaluationContext` plugin API [#7483](https://github.com/hyperledger/besu/pull/7483)
 - Add bootnode to holesky config [#7500](https://github.com/hyperledger/besu/pull/7500)
+- Implement engine_getClientVersionV1
 
 ### Bug fixes
 - Fix tracing in precompiled contracts when halting for out of gas [#7318](https://github.com/hyperledger/besu/issues/7318)
