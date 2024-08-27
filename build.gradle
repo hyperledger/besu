@@ -168,7 +168,7 @@ allprojects {
     def ethExecSpecTestsRepo = ivy {
       url 'https://github.com'
       patternLayout {
-        artifact '/[organisation]/[module]/releases/download/v[revision]/[classifier].[ext]'
+        artifact '/[organisation]/[module]/releases/download/eip6800@v[revision]/[classifier].[ext]'
       }
       metadataSources {
         artifact()
