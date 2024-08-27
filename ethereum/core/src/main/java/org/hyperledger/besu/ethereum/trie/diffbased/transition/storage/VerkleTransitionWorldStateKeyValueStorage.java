@@ -1,39 +1,40 @@
+/*
+ * Copyright contributors to Hyperledger Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.ethereum.trie.diffbased.transition.storage;
 
 import org.hyperledger.besu.ethereum.storage.StorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.transition.VerkleTransitionContext;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.storage.VerkleWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 
-import java.util.concurrent.atomic.AtomicReference;
-
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
 public class VerkleTransitionWorldStateKeyValueStorage
-    implements WorldStateKeyValueStorage,
-        AutoCloseable {
-  private static final Logger LOG =
-      LoggerFactory.getLogger(VerkleTransitionWorldStateKeyValueStorage.class);
+    implements WorldStateKeyValueStorage, AutoCloseable {
 
   final BonsaiWorldStateKeyValueStorage bonsaiKeyValueStorage;
   final VerkleWorldStateKeyValueStorage verkleKeyValueStorage;
-  final long blockTimestamp;
 
   public VerkleTransitionWorldStateKeyValueStorage(
       final StorageProvider provider,
-      final long blockTimestamp,
       final MetricsSystem metricsSystem,
       final DataStorageConfiguration dataStorageConfiguration) {
     this.bonsaiKeyValueStorage =
         new BonsaiWorldStateKeyValueStorage(provider, metricsSystem, dataStorageConfiguration);
     this.verkleKeyValueStorage = new VerkleWorldStateKeyValueStorage(provider, metricsSystem);
-    this.blockTimestamp = blockTimestamp;
   }
 
   @Override

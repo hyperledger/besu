@@ -256,11 +256,11 @@ public interface GenesisConfigOptions {
    */
   OptionalLong getPragueEOFTime();
 
-    /**
-     * Gets future eips time.
-     *
-     * @return the future eips time
-     */
+  /**
+   * Gets future eips time.
+   *
+   * @return the future eips time
+   */
   OptionalLong getFutureEipsTime();
 
   /**

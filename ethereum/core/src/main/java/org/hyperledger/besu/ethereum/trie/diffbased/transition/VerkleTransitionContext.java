@@ -1,105 +1,93 @@
+/*
+ * Copyright contributors to Hyperledger Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.ethereum.trie.diffbased.transition;
 
-import static org.hyperledger.besu.ethereum.trie.diffbased.transition.VerkleTransitionContext.TransitionStatus.FINALIZED;
-import static org.hyperledger.besu.ethereum.trie.diffbased.transition.VerkleTransitionContext.TransitionStatus.PRE_TRANSITION;
-import static org.hyperledger.besu.ethereum.trie.diffbased.transition.VerkleTransitionContext.TransitionStatus.STARTED;
-
+import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.trie.diffbased.transition.storage.VerkleTransitionWorldStateKeyValueStorage;
-import org.hyperledger.besu.util.Subscribers;
-
-import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public class VerkleTransitionContext {
-  enum TransitionStatus {
-    PRE_TRANSITION,
-    STARTED,
-    FINALIZED
+
+  public VerkleTransitionContext(final long verkleTimestamp) {
+    // TODO, this should be a singleton to prevent transition event spam
+    this.verkleTransitionTimestamp = verkleTimestamp;
   }
 
-  final Subscribers<VerkleTransitionSubscriber> subscribers = Subscribers.create();
   private static final Logger LOG =
       LoggerFactory.getLogger(VerkleTransitionWorldStateKeyValueStorage.class);
 
-  // start in PRE_TRANSITION, rely on startup checks to correctly set the current state
-  final AtomicReference<TransitionStatus> transitionStatus = new AtomicReference<>(PRE_TRANSITION);
-  final AtomicLong latestTimestamp = new AtomicLong(System.currentTimeMillis());
+  final long verkleTransitionTimestamp;
 
+  /**
+   * Method which specifies if a worldstate for a given block header should be using the verkle
+   * worldstate for mutation.
+   *
+   * <p>This essentially _IS_ the verkle transition logic.
+   *
+   * @param blockHeader blockheader corresponding to a specific worldstate, typically a parent block
+   *     used to fetch the worldstate for mutation.
+   * @return boolean indicating true for verkle, false for pre-transition
+   */
+  public boolean isVerkleForMutation(final BlockHeader blockHeader) {
+    // return true if the timestamp is post transtion
+    if (blockHeader.getTimestamp() >= verkleTransitionTimestamp) {
+      return true;
+    }
 
+    // return true if the timestamp is within 1 block (12 seconds) of the transition, such that
+    // any state mutation will happen on verkle rather than patricia merkle trie
+    if (blockHeader.getTimestamp() + 12_000 > verkleTransitionTimestamp) {
+      LOG.warn(
+          "Returning implicit verkle transition worldstate for mutation of {}",
+          blockHeader.toLogString());
+      return true;
+    }
 
-// TODO: consider construction when implementing verkle batch conversions
-
-//  final long transitionStartTime;
-//
-//  private static AtomicReference<VerkleTransitionContext> singleton = new AtomicReference<>();
-//
-//  public synchronized static VerkleTransitionContext {
-//
-//  }
-//
-//  private VerkleTransitionContext(long transitionStartTime) {
-//    this.transitionStartTime = transitionStartTime;
-//  }
-
-  public long subscribe(VerkleTransitionSubscriber subscriber) {
-    return subscribers.subscribe(subscriber);
+    // otherwise this timestamp should be using patricia merkle trie:
+    return false;
   }
 
   public boolean isBeforeTransition() {
-    return transitionStatus.get() == PRE_TRANSITION;
+    return System.currentTimeMillis() < verkleTransitionTimestamp;
   }
 
-  public boolean isMigrating() {
-    return transitionStatus.get() == STARTED;
-  }
-  ;
-
-  public boolean isFinalized() {
-    return transitionStatus.get() == FINALIZED;
+  public boolean isBeforeTransition(final long timestamp) {
+    return timestamp < verkleTransitionTimestamp;
   }
 
-  public boolean  markTransition(long blockTimestamp) {
-    if (transitionStatus.get() == PRE_TRANSITION) {
-      transitionStatus.set(STARTED);
-      subscribers.forEach(VerkleTransitionSubscriber::onTransitionStarted);
-      // TODO: some cool ascii art for verkle transition started
-      LOG.info("Started verkle transition");
-      return true;
-    } else {
-      LOG.warn("Ignoring request to start transition already started or in progress");
-      return false;
-    }
+  /**
+   * Return whether the world state has fully migrated to verkle
+   *
+   * @return boolean indicating whether verkle transition is complete or not
+   */
+  public boolean isTransitionFinalized() {
+    return isTransitionFinalized(System.currentTimeMillis());
   }
 
-  public synchronized boolean revertTransition() {
-    if (transitionStatus.get() != FINALIZED) {
-      transitionStatus.set(FINALIZED);
-      subscribers.forEach(VerkleTransitionSubscriber::onTransitionReverted);
-      LOG.info("Reverting verkle transition");
-      return true;
-    } else {
-      LOG.error("Attempt to revert a finalized verkle transition");
-      return false;
-    }
-  }
-
-  /** Mark the transition as finalized, alert subscribers */
-  public void finalizeTransition() {
-    if (transitionStatus.getAndSet(FINALIZED) != FINALIZED) {
-      subscribers.forEach(VerkleTransitionSubscriber::onTransitionFinalized);
-      // TODO: put some fun ascii art in the logs
-      LOG.info("Verkle transition complete");
-    }
-  }
-
-  public interface VerkleTransitionSubscriber {
-    void onTransitionStarted();
-
-    void onTransitionReverted();
-
-    void onTransitionFinalized();
+  /**
+   * Return whether the state has fully transitioned and no state should be
+   * read from MPT
+   *
+   * @param timestamp ts for which the verkle transition should have completed
+   *
+   * @return boolean indicating whether verkle transition is complete or not
+   */
+  public boolean isTransitionFinalized(final long timestamp) {
+    //TODO: write me once we have a frozen MPT and defined migration cadence
+    return false;
   }
 }

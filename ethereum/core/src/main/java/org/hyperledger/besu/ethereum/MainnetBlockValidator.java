@@ -126,9 +126,7 @@ public class MainnetBlockValidator implements BlockValidator {
       return retval;
     }
     try (final var worldState =
-        context.getWorldStateArchive()
-            .getMutable(parentHeader, shouldPersist, header.getTimestamp())
-            .orElse(null)) {
+        context.getWorldStateArchive().getMutable(parentHeader, shouldPersist).orElse(null)) {
 
       if (worldState == null) {
         var retval =

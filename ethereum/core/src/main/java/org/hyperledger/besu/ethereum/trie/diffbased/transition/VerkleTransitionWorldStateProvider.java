@@ -1,3 +1,17 @@
+/*
+ * Copyright contributors to Hyperledger Besu.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
+ * the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the License is distributed on
+ * an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the License for the
+ * specific language governing permissions and limitations under the License.
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
 package org.hyperledger.besu.ethereum.trie.diffbased.transition;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -7,14 +21,8 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.MutableWorldState;
 import org.hyperledger.besu.ethereum.proof.WorldStateProof;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.BonsaiWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoader;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.BonsaiWorldStateKeyValueStorage;
-import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.verkle.VerkleWorldStateProvider;
-import org.hyperledger.besu.ethereum.trie.diffbased.verkle.worldview.VerkleWorldState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateArchive;
-import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
-import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
 
 import java.io.IOException;
@@ -24,22 +32,23 @@ import java.util.function.Function;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.apache.tuweni.units.bigints.UInt256;
-import org.hyperledger.besu.plugin.BesuContext;
 
-public class VerkleTransitionWorldStateProvider
-    implements WorldStateArchive/*, VerkleTransitionContext.VerkleTransitionSubscriber */ {
+public class VerkleTransitionWorldStateProvider implements WorldStateArchive {
 
   private final BonsaiWorldStateProvider bonsaiWorldStateProvider;
   private final VerkleWorldStateProvider verkleWorldStateProvider;
-  private final long verkleTimestamp;
+  private final VerkleTransitionContext transitionContext;
+  private final Blockchain blockchain;
+
   public VerkleTransitionWorldStateProvider(
-      // TODO: clean this up
+      final Blockchain blockchain,
       final BonsaiWorldStateProvider bonsaiWorldStateProvider,
       final VerkleWorldStateProvider verkleWorldStateProvider,
-      final long verkleTransitionTimestamp) {
+      final VerkleTransitionContext verkleContext) {
+    this.blockchain = blockchain;
     this.bonsaiWorldStateProvider = bonsaiWorldStateProvider;
     this.verkleWorldStateProvider = verkleWorldStateProvider;
-    this.verkleTimestamp = verkleTransitionTimestamp;
+    this.transitionContext = verkleContext;
   }
 
   @Override
@@ -57,71 +66,45 @@ public class VerkleTransitionWorldStateProvider
   @Override
   public Optional<MutableWorldState> getMutable(
       final BlockHeader blockHeader, final boolean isPersistingState) {
-    // TODO: use verkle context to determine which to use
+    if (transitionContext.isVerkleForMutation(blockHeader)) {
+      return verkleWorldStateProvider.getMutable(blockHeader, isPersistingState);
+    }
     return bonsaiWorldStateProvider.getMutable(blockHeader, isPersistingState);
   }
 
   @Override
-  public Optional<MutableWorldState> getMutable(
-      BlockHeader blockHeader, boolean isPersistingState, long timestamp) {
-    //TODO: use verkle transition context here
-    if (timestamp < verkleTimestamp) {
-      return bonsaiWorldStateProvider.getMutable(blockHeader, isPersistingState);
-    } else {
-
-      //TODO immediately: plumb a fallback flatdbreader
-
-      return verkleWorldStateProvider.getMutable(blockHeader, isPersistingState);
-
-
-
-      if (isPersistingState) {
-        return getMutable(blockHeader.getStateRoot(), blockHeader.getHash());
-      } else {
-        final BlockHeader chainHeadBlockHeader = blockchain.getChainHeadHeader();
-        if (chainHeadBlockHeader.getNumber() - blockHeader.getNumber()
-            >= trieLogManager.getMaxLayersToLoad()) {
-          LOG.warn(
-              "Exceeded the limit of historical blocks that can be loaded ({}). If you need to make older historical queries, configure your `--bonsai-historical-block-limit`.",
-              trieLogManager.getMaxLayersToLoad());
-          return Optional.empty();
-        }
-        return verkleWorldStateProvider.getCachedWorldStorageManager()
-            .getWorldState(blockHeader.getHash())
-            .or(() -> verkleWorldStateProvider.getCachedWorldStorageManager().getNearestWorldState(blockHeader))
-            .or(() -> verkleWorldStateProvider.getCachedWorldStorageManager().getHeadWorldState(blockchain::getBlockHeader))
-            .flatMap(worldState -> verkleWorldStateProvider.rollMutableStateToBlockHash(worldState, blockHeader.getHash()))
-            .map(MutableWorldState::freeze);
-      }
-
-
-
-
-
-    }
-  }
-
-
-  @Override
   public Optional<MutableWorldState> getMutable(final Hash rootHash, final Hash blockHash) {
-    // TODO: use verkle context to determine which to use
-    return bonsaiWorldStateProvider.getMutable(rootHash, blockHash);
+    return blockchain
+        .getBlockHeader(blockHash)
+        .map(transitionContext::isVerkleForMutation)
+        .flatMap(
+            isVerkle -> {
+              if (isVerkle) {
+                return verkleWorldStateProvider.getMutable(rootHash, blockHash);
+              } else {
+                return bonsaiWorldStateProvider.getMutable(rootHash, blockHash);
+              }
+            });
   }
 
   @Override
   public MutableWorldState getMutable() {
-    // TODO: use verkle context to determine which to use
-    return bonsaiWorldStateProvider.getMutable();
+    // rely on the verkle context to decide which mutable to get. 😬
+    if (transitionContext.isBeforeTransition()) {
+      return bonsaiWorldStateProvider.getMutable();
+    } else {
+      return verkleWorldStateProvider.getMutable();
+    }
   }
 
   @Override
   public void resetArchiveStateTo(final BlockHeader blockHeader) {
-    // TODO: write me
+    // TODO: write me (maybe?)
   }
 
   @Override
   public Optional<Bytes> getNodeData(final Hash hash) {
-    // TODO: will we serve eth/63 GET_NODE_DATA in verkle?
+    // TODO: bonsai does not implement this, presumably verkle will not either
     return Optional.empty();
   }
 
@@ -131,8 +114,13 @@ public class VerkleTransitionWorldStateProvider
       final Address accountAddress,
       final List<UInt256> accountStorageKeys,
       final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper) {
-    // TODO: will we ever serve eth_getProof from verkle?  that is the only use for this
-    return Optional.empty();
+    if (transitionContext.isBeforeTransition(blockHeader.getTimestamp())) {
+      return bonsaiWorldStateProvider.getAccountProof(
+          blockHeader, accountAddress, accountStorageKeys, mapper);
+    } else {
+      // TODO: will we ever serve eth_getProof from verkle?  that is the only use for this
+      return Optional.empty();
+    }
   }
 
   @Override
@@ -144,19 +132,4 @@ public class VerkleTransitionWorldStateProvider
       // no op
     }
   }
-
-//  @Override
-//  public void onTransitionStarted() {
-//    // TODO: write me
-//  }
-//
-//  @Override
-//  public void onTransitionReverted() {
-//    // TODO: write me
-//  }
-//
-//  @Override
-//  public void onTransitionFinalized() {
-//    // TODO: write me
-//  }
 }
