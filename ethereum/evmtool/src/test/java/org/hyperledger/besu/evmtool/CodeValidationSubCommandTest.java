@@ -57,7 +57,8 @@ class CodeValidationSubCommandTest {
     EvmToolCommand parentCommand = new EvmToolCommand(bais, new PrintWriter(baos, true, UTF_8));
     final CodeValidateSubCommand codeValidateSubCommand = new CodeValidateSubCommand(parentCommand);
     codeValidateSubCommand.run();
-    assertThat(baos.toString(UTF_8)).contains("err: layout - EOF header byte 1 incorrect\n");
+    assertThat(baos.toString(UTF_8))
+        .contains("err: layout - invalid_magic EOF header byte 1 incorrect\n");
   }
 
   @Test
@@ -71,7 +72,7 @@ class CodeValidationSubCommandTest {
         .contains(
             """
                 OK 1/0/0
-                err: layout - EOF header byte 1 incorrect
+                err: layout - invalid_magic EOF header byte 1 incorrect
                 OK 1/0/0
                 """);
   }
@@ -97,7 +98,8 @@ class CodeValidationSubCommandTest {
     final CommandLine cmd = new CommandLine(codeValidateSubCommand);
     cmd.parseArgs(CODE_BAD_MAGIC);
     codeValidateSubCommand.run();
-    assertThat(baos.toString(UTF_8)).contains("err: layout - EOF header byte 1 incorrect\n");
+    assertThat(baos.toString(UTF_8))
+        .contains("err: layout - invalid_magic EOF header byte 1 incorrect\n");
   }
 
   @Test
@@ -113,7 +115,7 @@ class CodeValidationSubCommandTest {
         .contains(
             """
                 OK 1/0/0
-                err: layout - EOF header byte 1 incorrect
+                err: layout - invalid_magic EOF header byte 1 incorrect
                 OK 1/0/0
                 """);
   }
@@ -154,7 +156,7 @@ class CodeValidationSubCommandTest {
         .isEqualTo(
             """
                 OK 1/0/0
-                err: layout - EOF header byte 1 incorrect
+                err: layout - invalid_magic EOF header byte 1 incorrect
                 OK 1/0/0
                 """);
   }

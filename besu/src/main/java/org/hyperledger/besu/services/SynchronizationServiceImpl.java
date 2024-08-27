@@ -74,17 +74,11 @@ public class SynchronizationServiceImpl implements SynchronizationService {
   @Override
   public void fireNewUnverifiedForkchoiceEvent(
       final Hash head, final Hash safeBlock, final Hash finalizedBlock) {
-    final MergeContext mergeContext = protocolContext.getConsensusContext(MergeContext.class);
-    if (mergeContext != null) {
-      mergeContext.fireNewUnverifiedForkchoiceEvent(head, safeBlock, finalizedBlock);
-      protocolContext.getBlockchain().setFinalized(finalizedBlock);
-      protocolContext.getBlockchain().setSafeBlock(safeBlock);
-    } else {
-      LOG.atWarn()
-          .setMessage(
-              "The merge context is unavailable, hence the fork choice event cannot be triggered")
-          .log();
-    }
+    protocolContext
+        .safeConsensusContext(MergeContext.class)
+        .ifPresent(mc -> mc.fireNewUnverifiedForkchoiceEvent(head, safeBlock, finalizedBlock));
+    protocolContext.getBlockchain().setFinalized(finalizedBlock);
+    protocolContext.getBlockchain().setSafeBlock(safeBlock);
   }
 
   @Override
