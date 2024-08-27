@@ -26,21 +26,25 @@ import java.util.regex.Pattern;
  */
 public final class BesuInfo {
   private static final String CLIENT = "besu";
-  private static final String VERSION = BesuInfo.class.getPackage().getImplementationVersion();
   private static final String OS = PlatformDetector.getOS();
   private static final String VM = PlatformDetector.getVM();
+  private static final String VERSION;
   private static final String COMMIT;
 
   static {
-    if (VERSION == null) {
+    String projectVersion = BesuInfo.class.getPackage().getImplementationVersion();
+    if(projectVersion == null) {
+      //protect against unset project version (e.g. unit tests being run, etc)
+      VERSION = null;
       COMMIT = null;
     } else {
-      Pattern pattern = Pattern.compile("v?\\d*\\.\\d*\\.\\d*-\\w+-(?<commit>[0-9a-fA-F]{8})");
-      Matcher matcher = pattern.matcher(VERSION);
-      if (matcher.find()) {
+      Pattern pattern = Pattern.compile("(?<version>\\d+\\.\\d+\\.?\\d?-?\\w*)-(?<commit>[0-9a-fA-F]{8})");
+      Matcher matcher = pattern.matcher(projectVersion);
+      if(matcher.find()) {
+        VERSION = matcher.group("version");
         COMMIT = matcher.group("commit");
       } else {
-        COMMIT = null;
+        throw new RuntimeException("Invalid project version: " + projectVersion);
       }
     }
   }
@@ -63,7 +67,7 @@ public final class BesuInfo {
    *     or "besu/v23.1.0/osx-aarch_64/corretto-java-19"
    */
   public static String version() {
-    return String.format("%s/v%s/%s/%s", CLIENT, VERSION, OS, VM);
+    return String.format("%s/v%s-%s/%s/%s", CLIENT, VERSION, COMMIT, OS, VM);
   }
 
   /**
@@ -74,14 +78,14 @@ public final class BesuInfo {
    */
   public static String nodeName(final Optional<String> maybeIdentity) {
     return maybeIdentity
-        .map(identity -> String.format("%s/%s/v%s/%s/%s", CLIENT, identity, VERSION, OS, VM))
+        .map(identity -> String.format("%s/%s/v%s-%s/%s/%s", CLIENT, identity, VERSION, COMMIT, OS, VM))
         .orElse(version());
   }
 
   /**
-   * Generate the commit hash for this besu version, or null if this is a full release version
+   * Generate the commit hash for this besu version
    *
-   * @return the commit hash for this besu version, or null if this is a full release version
+   * @return the commit hash for this besu version
    */
   public static String commit() {
     return COMMIT;
