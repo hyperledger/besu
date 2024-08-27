@@ -61,7 +61,7 @@ public class SyncDurationMetrics {
    * @param label The synchronization phase to stop the timer for.
    */
   public void stopTimer(final Labels label) {
-    OperationTimer.TimingContext context = timers.get(label.name());
+    OperationTimer.TimingContext context = timers.remove(label.name());
     if (context != null) {
       context.stopTimer();
     }
