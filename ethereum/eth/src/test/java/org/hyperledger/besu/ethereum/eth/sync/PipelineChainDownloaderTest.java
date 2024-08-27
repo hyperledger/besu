@@ -70,7 +70,7 @@ public class PipelineChainDownloaderTest {
   public void setUp() {
     syncTarget = new SyncTarget(peer1, commonAncestor);
     syncTarget2 = new SyncTarget(peer2, commonAncestor);
-    final NoOpMetricsSystem noMetricsSystem = new NoOpMetricsSystem();
+    final NoOpMetricsSystem noOpMetricsSystem = new NoOpMetricsSystem();
     chainDownloader =
         new PipelineChainDownloader(
             syncState,
