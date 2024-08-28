@@ -82,8 +82,6 @@ public class SyncDurationMetrics {
     SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION,
     /** Time taken to heal the world state, after the initial download. */
     SNAP_WORLD_STATE_HEALING_DURATION,
-    /** Time taken to do the fast world state download. */
-    FAST_WORLD_STATE_DOWNLOAD_DURATION,
     /** Time taken to do the flat database heal. */
     FLAT_DB_HEAL;
   }
