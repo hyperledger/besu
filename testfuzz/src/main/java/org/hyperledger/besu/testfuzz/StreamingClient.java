@@ -19,7 +19,7 @@ import java.io.IOException;
 import java.io.PrintWriter;
 import java.nio.charset.StandardCharsets;
 
-class StreamingClient implements ExternalClient {
+class StreamingClient implements FuzzingClient {
   final String name;
   final BufferedReader reader;
   final PrintWriter writer;

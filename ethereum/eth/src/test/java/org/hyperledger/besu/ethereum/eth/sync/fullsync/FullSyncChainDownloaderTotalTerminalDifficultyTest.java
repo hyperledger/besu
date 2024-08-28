@@ -31,6 +31,7 @@ import org.hyperledger.besu.ethereum.eth.sync.ChainDownloader;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.state.SyncState;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
@@ -107,7 +108,8 @@ public class FullSyncChainDownloaderTotalTerminalDifficultyTest {
         ethContext,
         syncState,
         metricsSystem,
-        terminalCondition);
+        terminalCondition,
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   private SynchronizerConfiguration.Builder syncConfigBuilder() {

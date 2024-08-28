@@ -89,7 +89,13 @@ public class PrettyPrintSubCommand implements Runnable {
     LogConfigurator.setLevel("", "OFF");
 
     for (var hexCode : codeList) {
-      Bytes container = Bytes.fromHexString(hexCode);
+      Bytes container;
+      try {
+        container = Bytes.fromHexString(hexCode);
+      } catch (IllegalArgumentException e) {
+        parentCommand.out.println("Invalid hex string: " + e.getMessage());
+        continue;
+      }
       if (container.get(0) != ((byte) 0xef) && container.get(1) != 0) {
         parentCommand.out.println(
             "Pretty printing of legacy EVM is not supported. Patches welcome!");

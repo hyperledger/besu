@@ -20,6 +20,7 @@ import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.eth.sync.worldstate.WorldDownloadState;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
 import java.time.Clock;
@@ -37,13 +38,15 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
       final InMemoryTasksPriorityQueues<NodeDataRequest> pendingRequests,
       final int maxRequestsWithoutProgress,
       final long minMillisBeforeStalling,
-      final Clock clock) {
+      final Clock clock,
+      final SyncDurationMetrics syncDurationMetrics) {
     super(
         worldStateStorageCoordinator,
         pendingRequests,
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
-        clock);
+        clock,
+        syncDurationMetrics);
   }
 
   @Override
@@ -70,7 +73,9 @@ public class FastWorldDownloadState extends WorldDownloadState<NodeDataRequest> 
       // THere are no more inputs to process so make sure we wake up any threads waiting to dequeue
       // so they can give up waiting.
       notifyAll();
+
       LOG.info("Finished downloading world state from peers");
+
       return true;
     } else {
       return false;
