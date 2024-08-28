@@ -28,7 +28,7 @@ import java.util.HashMap;
 public class SyncDurationMetrics {
 
   /** A {@link SyncDurationMetrics} instance that does not record any metrics. */
-  public static final SyncDurationMetrics NO_METRICS_SYNC_DURATION_METRICS =
+  public static final SyncDurationMetrics NO_OP_SYNC_DURATION_METRICS =
       new SyncDurationMetrics(new NoOpMetricsSystem());
 
   private final LabelledMetric<OperationTimer> timer;
