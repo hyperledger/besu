@@ -3,6 +3,7 @@
 ## [Unreleased]
 
 ### Upcoming Breaking Changes
+- k8s (KUBERNETES) Nat method is now deprecated and removed in a future release
 
 ### Breaking Changes
 - Receipt compaction is enabled by default. It will no longer be possible to downgrade Besu to versions prior to 24.5.1.
