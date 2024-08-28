@@ -69,7 +69,12 @@ public class SyncDurationMetrics {
 
   /** Enum representing the different synchronization phases. */
   public enum Labels {
-    /** Total time taken to get into sync. */
+    /** Total time taken to get into sync. It is useful for SNAP and CHECKPOINT sync-modes only. 
+    
+    Total sync duration includes the separate stages mentioned below, some of which occur in parallel. 
+    
+    Total sync duration excludes the backwards sync stage due to implementation challenges. The backwards sync should be a very short duration following the other sync stages.
+      */
     TOTAL_SYNC_DURATION,
     /** Time taken to download the chain data (headers, blocks, receipts). */
     CHAIN_DOWNLOAD_DURATION,
