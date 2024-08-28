@@ -44,7 +44,7 @@ public class EOFCreateOperation extends AbstractCreateOperation {
    * @param gasCalculator the gas calculator
    */
   public EOFCreateOperation(final GasCalculator gasCalculator) {
-    super(OPCODE, "EOFCREATE", 4, 1, gasCalculator, Integer.MAX_VALUE, 1);
+    super(OPCODE, "EOFCREATE", 4, 1, gasCalculator, 1);
   }
 
   @Override

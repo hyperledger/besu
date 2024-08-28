@@ -740,35 +740,59 @@ public record EOFLayout(
         OpcodeInfo ci = V1_OPCODES[byteCode[pc] & 0xff];
 
         if (ci.opcode() == RelativeJumpVectorOperation.OPCODE) {
-          int tableSize = byteCode[pc + 1] & 0xff;
-          out.printf("%02x%02x", byteCode[pc], byteCode[pc + 1]);
-          for (int j = 0; j <= tableSize; j++) {
-            out.printf("%02x%02x", byteCode[pc + j * 2 + 2], byteCode[pc + j * 2 + 3]);
-          }
-          out.printf(" # [%d] %s(", pc, ci.name());
-          for (int j = 0; j <= tableSize; j++) {
-            if (j != 0) {
-              out.print(',');
+          if (byteCode.length <= pc + 1) {
+            out.printf(
+                "    %02x # [%d] %s(<truncated instruction>)%n", byteCode[pc], pc, ci.name());
+            pc++;
+          } else {
+            int tableSize = byteCode[pc + 1] & 0xff;
+            out.printf("%02x%02x", byteCode[pc], byteCode[pc + 1]);
+            int calculatedTableEnd = pc + tableSize * 2 + 4;
+            int lastTableEntry = Math.min(byteCode.length, calculatedTableEnd);
+            for (int j = pc + 2; j < lastTableEntry; j++) {
+              out.printf("%02x", byteCode[j]);
             }
-            int b0 = byteCode[pc + j * 2 + 2]; // we want the sign extension, so no `& 0xff`
-            int b1 = byteCode[pc + j * 2 + 3] & 0xff;
-            out.print(b0 << 8 | b1);
+            out.printf(" # [%d] %s(", pc, ci.name());
+            for (int j = pc + 3; j < lastTableEntry; j += 2) {
+              // j indexes to the second byte of the word, to handle mid-word truncation
+              if (j != pc + 3) {
+                out.print(',');
+              }
+              int b0 = byteCode[j - 1]; // we want the sign extension, so no `& 0xff`
+              int b1 = byteCode[j] & 0xff;
+              out.print(b0 << 8 | b1);
+            }
+            if (byteCode.length < calculatedTableEnd) {
+              out.print("<truncated immediate>");
+            }
+            pc += tableSize * 2 + 4;
+            out.print(")\n");
           }
-          pc += tableSize * 2 + 4;
-          out.print(")\n");
         } else if (ci.opcode() == RelativeJumpOperation.OPCODE
             || ci.opcode() == RelativeJumpIfOperation.OPCODE) {
-          int b0 = byteCode[pc + 1] & 0xff;
-          int b1 = byteCode[pc + 2] & 0xff;
-          short delta = (short) (b0 << 8 | b1);
-          out.printf("%02x%02x%02x # [%d] %s(%d)", byteCode[pc], b0, b1, pc, ci.name(), delta);
+          if (pc + 1 >= byteCode.length) {
+            out.printf("    %02x # [%d] %s(<truncated immediate>)", byteCode[pc], pc, ci.name());
+          } else if (pc + 2 >= byteCode.length) {
+            out.printf(
+                "  %02x%02x # [%d] %s(<truncated immediate>)",
+                byteCode[pc], byteCode[pc + 1], pc, ci.name());
+          } else {
+            int b0 = byteCode[pc + 1] & 0xff;
+            int b1 = byteCode[pc + 2] & 0xff;
+            short delta = (short) (b0 << 8 | b1);
+            out.printf("%02x%02x%02x # [%d] %s(%d)", byteCode[pc], b0, b1, pc, ci.name(), delta);
+          }
           pc += 3;
           out.printf("%n");
         } else if (ci.opcode() == ExchangeOperation.OPCODE) {
-          int imm = byteCode[pc + 1] & 0xff;
-          out.printf(
-              "  %02x%02x # [%d] %s(%d, %d)",
-              byteCode[pc], imm, pc, ci.name(), imm >> 4, imm & 0x0F);
+          if (pc + 1 >= byteCode.length) {
+            out.printf("    %02x # [%d] %s(<truncated immediate>)", byteCode[pc], pc, ci.name());
+          } else {
+            int imm = byteCode[pc + 1] & 0xff;
+            out.printf(
+                "  %02x%02x # [%d] %s(%d, %d)",
+                byteCode[pc], imm, pc, ci.name(), imm >> 4, imm & 0x0F);
+          }
           pc += 2;
           out.printf("%n");
         } else {
@@ -784,7 +808,11 @@ public record EOFLayout(
           }
           out.printf(" # [%d] %s", pc, ci.name());
           if (advance == 2) {
-            out.printf("(%d)", byteCode[pc + 1] & 0xff);
+            if (byteCode.length <= pc + 1) {
+              out.print("(<truncated immediate>)");
+            } else {
+              out.printf("(%d)", byteCode[pc + 1] & 0xff);
+            }
           } else if (advance > 2) {
             out.print("(0x");
             for (int j = 1; j < advance && (pc + j) < byteCode.length; j++) {
