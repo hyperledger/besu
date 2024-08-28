@@ -183,13 +183,11 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
     PeekingIterator<Pair<byte[], byte[]>> parentIterator =
         new PeekingIterator<>(parent.stream(segmentId).iterator());
 
-    Stream<Pair<byte[], byte[]>> stream =
-        StreamSupport.stream(
+    return StreamSupport.stream(
             Spliterators.spliteratorUnknownSize(
                 new LayeredIterator(ourIterator, parentIterator), ORDERED | SORTED | DISTINCT),
-            false);
-
-    return stream.filter(e -> e.getValue() != null);
+            false)
+        .filter(e -> e.getValue() != null);
   }
 
   private static class LayeredIterator implements Iterator<Pair<byte[], byte[]>> {
