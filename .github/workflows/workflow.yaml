@@ -10,7 +10,7 @@ on:
 
 jobs:
   build_and_test:
-    runs-on: ubuntu-22.04-16core
+    runs-on: ubuntu-latest-128
     env:
       architecture: "amd64"
       GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4"
@@ -55,7 +55,7 @@ jobs:
   publish:
     needs: build_and_test
     if: github.event_name != 'pull_request'
-    runs-on: ubuntu-22.04-16core
+    runs-on: ubuntu-latest-128
     env:
       architecture: "amd64"
       GRADLE_OPTS: "-Xmx6g -Dorg.gradle.parallel=true -Dorg.gradle.workers.max=4"
