@@ -16,26 +16,22 @@ package org.hyperledger.besu.util;
 
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Path;
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Optional;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 
 /**
  * The Generate Ephemery Genesis File. Checks for update based on the set period and update the
  * Ephemery genesis file
  */
 public class EphemeryGenesisFile {
-  private final NetworkName network;
   private final GenesisConfigFile genesisConfigFile;
   private final GenesisConfigOptions genesisConfigOptions;
   private static final int PERIOD = 28;
@@ -44,61 +40,44 @@ public class EphemeryGenesisFile {
   /**
    * Instantiates a new Generate Ephemery genesis file.
    *
-   * @param network the Network
    * @param genesisConfigFile the Genesis Config File
    * @param genesisConfigOptions the Genesis Config Options
    */
   public EphemeryGenesisFile(
-      final NetworkName network,
-      final GenesisConfigFile genesisConfigFile,
-      final GenesisConfigOptions genesisConfigOptions) {
+      final GenesisConfigFile genesisConfigFile, final GenesisConfigOptions genesisConfigOptions) {
     this.genesisConfigFile = genesisConfigFile;
-    this.network = network;
     this.genesisConfigOptions = genesisConfigOptions;
   }
 
-  public void generate() throws IOException {
-    if (EPHEMERY.getGenesisFile() == null
-        || genesisConfigOptions == null
-        || genesisConfigFile == null) {
-      throw new IOException();
-    } else {
+  public void updateGenesis() {
+    try {
+      if (EPHEMERY.getGenesisFile() == null
+          || genesisConfigOptions == null
+          || genesisConfigFile == null) {
+        throw new IOException("Genesis file or config options are null");
+      } else {
+        long genesisTimestamp = genesisConfigFile.getTimestamp();
+        Optional<BigInteger> genesisChainId = genesisConfigOptions.getChainId();
+        long currentTimestamp = Instant.now().getEpochSecond();
+        long periodsSinceGenesis =
+            ChronoUnit.DAYS.between(Instant.ofEpochSecond(genesisTimestamp), Instant.now())
+                / PERIOD;
+        long updatedTimestamp = genesisTimestamp + (periodsSinceGenesis * PERIOD_IN_SECONDS);
+        BigInteger updatedChainId =
+            genesisChainId
+                .orElseThrow(() -> new IllegalStateException("ChainId not present"))
+                .add(BigInteger.valueOf(periodsSinceGenesis));
 
-      long genesisTimestamp = genesisConfigFile.getTimestamp();
-      Optional<BigInteger> genesisChainId = genesisConfigOptions.getChainId();
-
-      long currentTimestamp = Instant.now().getEpochSecond();
-      long periodsSinceGenesis =
-          ChronoUnit.DAYS.between(Instant.ofEpochSecond(genesisTimestamp), Instant.now()) / PERIOD;
-      long updatedTimestamp = genesisTimestamp + (periodsSinceGenesis * PERIOD_IN_SECONDS);
-      BigInteger updatedChainId =
-          genesisChainId
-              .orElseThrow(() -> new IllegalStateException("ChainId not present"))
-              .add(BigInteger.valueOf(periodsSinceGenesis));
-
-      EPHEMERY.setNetworkId(updatedChainId, EPHEMERY);
-
-      if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
-
-        GenesisConfigFile.fromResource(
-            Optional.ofNullable(network).orElse(EPHEMERY).getGenesisFile());
-        Path ephemeryGenesisfilePath = Path.of(EPHEMERY.getGenesisFile());
-        try {
-          ObjectMapper objectMapper = new ObjectMapper();
-          ObjectNode rootNode =
-              (ObjectNode) objectMapper.readTree(ephemeryGenesisfilePath.toFile());
-
-          ObjectNode configNode = (ObjectNode) rootNode.path("config");
-          configNode.put("chainId", updatedChainId.toString());
-          rootNode.put("timestamp", String.valueOf(updatedTimestamp));
-
-          objectMapper
-              .writerWithDefaultPrettyPrinter()
-              .writeValue(ephemeryGenesisfilePath.toFile(), rootNode);
-        } catch (IOException e) {
-          throw new IOException("Unable to update ephemery genesis file. " + e);
+        if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
+          EPHEMERY.setNetworkId(updatedChainId, EPHEMERY);
+          Map<String, String> overrides = new HashMap<>();
+          overrides.put("chainId", String.valueOf(updatedChainId));
+          overrides.put("timestamp", String.valueOf(updatedTimestamp));
+          genesisConfigFile.withOverrides(overrides);
         }
       }
+    } catch (IOException e) {
+      throw new RuntimeException("Error updating genesis file: " + e.getMessage(), e);
     }
   }
 }

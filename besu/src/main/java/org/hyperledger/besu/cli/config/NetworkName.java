@@ -20,134 +20,114 @@ import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
 
-/**
- * The enum Network name.
- */
+/** The enum Network name. */
 public enum NetworkName {
-    /**
-     * Mainnet network name.
-     */
-    MAINNET("/mainnet.json", BigInteger.valueOf(1)),
-    /**
-     * Sepolia network name.
-     */
-    SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
-    /**
-     * Holešky network name.
-     */
-    HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
-    /**
-     * LUKSO mainnet network name.
-     */
-    LUKSO("/lukso.json", BigInteger.valueOf(42)),
+  /** Mainnet network name. */
+  MAINNET("/mainnet.json", BigInteger.valueOf(1)),
+  /** Sepolia network name. */
+  SEPOLIA("/sepolia.json", BigInteger.valueOf(11155111)),
+  /** Holešky network name. */
+  HOLESKY("/holesky.json", BigInteger.valueOf(17000)),
+  /** LUKSO mainnet network name. */
+  LUKSO("/lukso.json", BigInteger.valueOf(42)),
 
-    /**
-     * EPHEMERY network name. The networkId is the default networkId that will be
-     * used to make update to the most recent networkId.
-     */
-    EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135)),
+  /**
+   * EPHEMERY network name. The networkId is the default networkId that will be used to make update
+   * to the most recent networkId.
+   */
+  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135)),
 
-    /**
-     * Dev network name.
-     */
-    DEV("/dev.json", BigInteger.valueOf(2018), false),
-    /**
-     * Future EIPs network name.
-     */
-    FUTURE_EIPS("/future.json", BigInteger.valueOf(2022), false),
-    /**
-     * Experimental EIPs network name.
-     */
-    EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), false),
-    /**
-     * Classic network name.
-     */
-    CLASSIC("/classic.json", BigInteger.valueOf(1)),
-    /**
-     * Mordor network name.
-     */
-    MORDOR("/mordor.json", BigInteger.valueOf(7));
+  /** Dev network name. */
+  DEV("/dev.json", BigInteger.valueOf(2018), false),
+  /** Future EIPs network name. */
+  FUTURE_EIPS("/future.json", BigInteger.valueOf(2022), false),
+  /** Experimental EIPs network name. */
+  EXPERIMENTAL_EIPS("/experimental.json", BigInteger.valueOf(2023), false),
+  /** Classic network name. */
+  CLASSIC("/classic.json", BigInteger.valueOf(1)),
+  /** Mordor network name. */
+  MORDOR("/mordor.json", BigInteger.valueOf(7));
 
-    private final String genesisFile;
-    private BigInteger networkId;
-    private final boolean canSnapSync;
-    private final String deprecationDate;
+  private final String genesisFile;
+  private BigInteger networkId;
+  private final boolean canSnapSync;
+  private final String deprecationDate;
 
-    NetworkName(final String genesisFile, final BigInteger networkId) {
-        this(genesisFile, networkId, true);
+  NetworkName(final String genesisFile, final BigInteger networkId) {
+    this(genesisFile, networkId, true);
+  }
+
+  NetworkName(final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
+    this.genesisFile = genesisFile;
+    this.networkId = networkId;
+    this.canSnapSync = canSnapSync;
+    // no deprecations planned
+    this.deprecationDate = null;
+  }
+
+  /**
+   * Gets genesis file.
+   *
+   * @return the genesis file
+   */
+  public String getGenesisFile() {
+    return genesisFile;
+  }
+
+  /**
+   * Gets network id.
+   *
+   * @return the network id
+   */
+  public BigInteger getNetworkId() {
+    return networkId;
+  }
+
+  /**
+   * This method is called only by the Ephemery network. It is required to update the networkid.
+   *
+   * @param networkId Sets network id .
+   * @param name Sets network name .
+   */
+  public void setNetworkId(final BigInteger networkId, final NetworkName name) {
+    if (name == EPHEMERY) {
+      this.networkId = networkId;
     }
+  }
 
-    NetworkName(final String genesisFile, final BigInteger networkId, final boolean canSnapSync) {
-        this.genesisFile = genesisFile;
-        this.networkId = networkId;
-        this.canSnapSync = canSnapSync;
-        // no deprecations planned
-        this.deprecationDate = null;
-    }
+  /**
+   * Can SNAP sync boolean.
+   *
+   * @return the boolean
+   */
+  public boolean canSnapSync() {
+    return canSnapSync;
+  }
 
-    /**
-     * Gets genesis file.
-     *
-     * @return the genesis file
-     */
-    public String getGenesisFile() {
-        return genesisFile;
-    }
+  /**
+   * Normalize string.
+   *
+   * @return the string
+   */
+  public String normalize() {
+    return StringUtils.capitalize(name().toLowerCase(Locale.ROOT));
+  }
 
-    /**
-     * Gets network id.
-     *
-     * @return the network id
-     */
-    public BigInteger getNetworkId() {
-        return networkId;
-    }
+  /**
+   * Is deprecated boolean.
+   *
+   * @return the boolean
+   */
+  public boolean isDeprecated() {
+    return deprecationDate != null;
+  }
 
-    /**
-     * This method is called only by the Ephemery network. It is required to update the networkid.
-     *
-     * @param networkId Sets network id .
-     * @param name      Sets network name .
-     */
-    public void setNetworkId(final BigInteger networkId, final NetworkName name) {
-        if (name == EPHEMERY) {
-            this.networkId = networkId;
-        }
-    }
-
-    /**
-     * Can SNAP sync boolean.
-     *
-     * @return the boolean
-     */
-    public boolean canSnapSync() {
-        return canSnapSync;
-    }
-
-    /**
-     * Normalize string.
-     *
-     * @return the string
-     */
-    public String normalize() {
-        return StringUtils.capitalize(name().toLowerCase(Locale.ROOT));
-    }
-
-    /**
-     * Is deprecated boolean.
-     *
-     * @return the boolean
-     */
-    public boolean isDeprecated() {
-        return deprecationDate != null;
-    }
-
-    /**
-     * Gets deprecation date.
-     *
-     * @return the deprecation date
-     */
-    public Optional<String> getDeprecationDate() {
-        return Optional.ofNullable(deprecationDate);
-    }
+  /**
+   * Gets deprecation date.
+   *
+   * @return the deprecation date
+   */
+  public Optional<String> getDeprecationDate() {
+    return Optional.ofNullable(deprecationDate);
+  }
 }

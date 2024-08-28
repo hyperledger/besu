@@ -866,6 +866,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   private Collection<EnodeURL> staticNodes;
   private BesuController besuController;
   private BesuConfigurationImpl pluginCommonConfiguration;
+  private EphemeryGenesisFile ephemeryGenesisFile;
 
   private BesuComponent besuComponent;
   private final Supplier<ObservableMetricsSystem> metricsSystem =
@@ -1093,13 +1094,9 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
     if (network == EPHEMERY) {
-      EphemeryGenesisFile ephemeryGenesisFile =
-          new EphemeryGenesisFile(network, readGenesisConfigFile(), readGenesisConfigOptions());
-      try {
-        ephemeryGenesisFile.generate();
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
+      ephemeryGenesisFile =
+          new EphemeryGenesisFile(readGenesisConfigFile(), readGenesisConfigOptions());
+      ephemeryGenesisFile.updateGenesis();
     }
     try {
       configureLogging(true);

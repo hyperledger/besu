@@ -24,7 +24,6 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-import org.hyperledger.besu.cli.config.NetworkName;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 
@@ -50,12 +49,11 @@ public class EphemeryGenesisFileTest {
   private static Path tempJsonFile;
   private GenesisConfigFile genesisConfigFile;
   private GenesisConfigOptions genesisConfigOptions;
-  private NetworkName network;
   private EphemeryGenesisFile ephemeryGenesisFile;
   private static final int GENESIS_CONFIG_TEST_CHAINID = 39438135;
-  private static final long GENESIS_TEST_TIMESTAMP = 1609459200;
-  private static final long CURRENT_TIMESTAMP = 1512041200;
-  private static final long CURRENT_TIMESTAMP_HIGHER = 1622041200;
+  private static final long GENESIS_TEST_TIMESTAMP = 1720119600;
+  private static final long CURRENT_TIMESTAMP = 1712041200;
+  private static final long CURRENT_TIMESTAMP_HIGHER = 1922041200;
   private static final long PERIOD_IN_SECONDS = 28 * 24 * 60 * 60;
   private static final long PERIOD_SINCE_GENESIS = 3;
 
@@ -75,15 +73,14 @@ public class EphemeryGenesisFileTest {
   @BeforeEach
   void setUp() throws IOException {
     objectMapper = new ObjectMapper();
-    network = mock(NetworkName.class);
     genesisConfigFile = mock(GenesisConfigFile.class);
     genesisConfigOptions = mock(GenesisConfigOptions.class);
-    ephemeryGenesisFile = new EphemeryGenesisFile(network, genesisConfigFile, genesisConfigOptions);
+    ephemeryGenesisFile = new EphemeryGenesisFile(genesisConfigFile, genesisConfigOptions);
     tempJsonFile = Files.createTempFile("temp-ephemery", ".json");
   }
 
   @Test
-  public void testGenerateWhenChainIdIsAbsent() throws IOException {
+  public void testEphemeryWhenChainIdIsAbsent() throws IOException {
     Map<String, ObjectNode> node =
         createGenesisFile(tempJsonFile, INVALID_GENESIS_JSON_WITHOUT_CHAINID);
     ObjectNode configNode = node.get("configNode");
@@ -93,7 +90,7 @@ public class EphemeryGenesisFileTest {
   }
 
   @Test
-  public void testGenerateWhenTimestampIsAbsent() throws IOException {
+  public void testEphemeryWhenTimestampIsAbsent() throws IOException {
     Map<String, ObjectNode> node =
         createGenesisFile(tempJsonFile, INVALID_GENESIS_JSON_WITHOUT_TIMESTAMP);
     ObjectNode rootNode = node.get("rootNode");
@@ -103,7 +100,7 @@ public class EphemeryGenesisFileTest {
   }
 
   @Test
-  public void testGenerateWhenGenesisJsonIsInvalid() throws IOException {
+  public void testEphemeryWhenGenesisJsonIsInvalid() throws IOException {
     Map<String, ObjectNode> node = createGenesisFile(tempJsonFile, INVALID_GENESIS_VALID_JSON);
     ObjectNode rootNode = node.get("rootNode");
     ObjectNode configNode = node.get("configNode");
@@ -115,7 +112,7 @@ public class EphemeryGenesisFileTest {
   }
 
   @Test
-  public void testGenerateWhenGenesisJsonIsValid() throws IOException {
+  public void testEphemeryWhenGenesisJsonIsValid() throws IOException {
     Map<String, ObjectNode> node = createGenesisFile(tempJsonFile, VALID_GENESIS_JSON);
     ObjectNode rootNode = node.get("rootNode");
     ObjectNode configNode = node.get("configNode");
@@ -127,7 +124,7 @@ public class EphemeryGenesisFileTest {
   }
 
   @Test
-  public void testGenerateNotYetDueForUpdate() throws IOException {
+  public void testEphemeryNotYetDueForUpdate() throws IOException {
     Map<String, ObjectNode> node = createGenesisFile(tempJsonFile, VALID_GENESIS_JSON);
     ObjectNode rootNode = node.get("rootNode");
     assertThat(CURRENT_TIMESTAMP)
@@ -137,7 +134,7 @@ public class EphemeryGenesisFileTest {
   }
 
   @Test
-  public void testGenerateWhenSuccessful() throws IOException {
+  public void testEphemeryWhenSuccessful() throws IOException {
     Map<String, ObjectNode> node = createGenesisFile(tempJsonFile, VALID_GENESIS_JSON);
     ObjectNode rootNode = node.get("rootNode");
     ObjectNode configNode = node.get("configNode");
@@ -153,8 +150,6 @@ public class EphemeryGenesisFileTest {
     configNode.put("chainId", expectedChainId);
     rootNode.put("timestamp", String.valueOf(expectedGenesisTimestamp));
 
-    objectMapper.writerWithDefaultPrettyPrinter().writeValue(tempJsonFile.toFile(), rootNode);
-
     assertThat(CURRENT_TIMESTAMP_HIGHER)
         .isGreaterThan(rootNode.get("timestamp").asLong() + PERIOD_IN_SECONDS);
     assertThat(tempJsonFile).exists();
@@ -164,34 +159,27 @@ public class EphemeryGenesisFileTest {
   }
 
   @Test
-  public void testGenerateWhenGenesisFilePathIsNull() throws IOException {
-    final Path tempJsonFile = Path.of("invalid-path");
-    assertThat(tempJsonFile).doesNotExist();
-  }
-
-  @Test
-  public void testGenerateWhenChainIdAndTimestampIsPresent() throws IOException {
+  public void testEphemeryWhenChainIdAndTimestampIsPresent() {
     when(genesisConfigFile.getTimestamp()).thenReturn(GENESIS_TEST_TIMESTAMP);
     when(genesisConfigOptions.getChainId())
         .thenReturn(Optional.of(BigInteger.valueOf(GENESIS_CONFIG_TEST_CHAINID)));
-    ephemeryGenesisFile.generate();
-    verify(network).getGenesisFile();
+    ephemeryGenesisFile.updateGenesis();
     verify(genesisConfigFile).getTimestamp();
     verify(genesisConfigOptions).getChainId();
   }
 
   @Test
-  public void testGenerateThrowIOException() throws IOException {
+  public void testEphemeryThrowIOException() {
     EphemeryGenesisFile spyEphemeryGenesisFile = spy(ephemeryGenesisFile);
 
-    doThrow(new IOException("Unable to update ephemery genesis file."))
+    doThrow(new RuntimeException("Unable to update ephemery genesis file."))
         .when(spyEphemeryGenesisFile)
-        .generate();
+        .updateGenesis();
 
-    assertThatThrownBy(spyEphemeryGenesisFile::generate)
-        .isInstanceOf(IOException.class)
+    assertThatThrownBy(spyEphemeryGenesisFile::updateGenesis)
+        .isInstanceOf(RuntimeException.class)
         .hasMessage("Unable to update ephemery genesis file.");
-    verify(spyEphemeryGenesisFile).generate();
+    verify(spyEphemeryGenesisFile).updateGenesis();
   }
 
   public Map<String, ObjectNode> createGenesisFile(
