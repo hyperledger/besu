@@ -105,6 +105,15 @@ public class NoOpMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public LabelledMetric<OperationTimer> createSimpleLabelledTimer(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return getOperationTimerLabelledMetric(labelNames.length);
+  }
+
+  @Override
   public LabelledMetric<OperationTimer> createLabelledTimer(
       final MetricCategory category,
       final String name,
