@@ -139,7 +139,7 @@ public class SnapWorldDownloadStateTest {
             metricsManager,
             clock,
             ethContext,
-            SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
+            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
     final DynamicPivotBlockSelector dynamicPivotBlockManager =
         mock(DynamicPivotBlockSelector.class);
     doAnswer(

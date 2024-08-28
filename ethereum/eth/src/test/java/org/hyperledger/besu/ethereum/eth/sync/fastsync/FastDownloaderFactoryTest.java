@@ -117,7 +117,7 @@ public class FastDownloaderFactoryTest {
                     worldStateStorageCoordinator,
                     syncState,
                     clock,
-                    SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS))
+                    SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
         .isInstanceOf(IllegalStateException.class);
   }
 
@@ -142,7 +142,7 @@ public class FastDownloaderFactoryTest {
             worldStateStorageCoordinator,
             syncState,
             clock,
-            SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
+            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
     assertThat(result).isEmpty();
   }
 
@@ -170,7 +170,7 @@ public class FastDownloaderFactoryTest {
         worldStateStorageCoordinator,
         syncState,
         clock,
-        SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
 
     verify(mutableBlockchain).getChainHeadBlockNumber();
   }
@@ -205,7 +205,7 @@ public class FastDownloaderFactoryTest {
         worldStateStorageCoordinator,
         syncState,
         clock,
-        SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
 
     verify(worldStateKeyValueStorage).clear();
     assertThat(Files.exists(stateQueueDir)).isFalse();
@@ -242,7 +242,7 @@ public class FastDownloaderFactoryTest {
                     worldStateStorageCoordinator,
                     syncState,
                     clock,
-                    SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS))
+                    SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
         .isInstanceOf(IllegalStateException.class);
   }
 

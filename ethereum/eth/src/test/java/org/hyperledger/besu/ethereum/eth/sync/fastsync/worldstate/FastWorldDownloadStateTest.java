@@ -102,7 +102,7 @@ public class FastWorldDownloadStateTest {
             MAX_REQUESTS_WITHOUT_PROGRESS,
             MIN_MILLIS_BEFORE_STALLING,
             clock,
-            SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
+            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
     assertThat(downloadState.isDownloading()).isTrue();
     downloadState.setRootNodeData(ROOT_NODE_DATA);
     future = downloadState.getDownloadFuture();

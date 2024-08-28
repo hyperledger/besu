@@ -122,7 +122,7 @@ public class WorldStateDownloaderBenchmark {
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             Clock.fixed(Instant.ofEpochSecond(1000), ZoneOffset.UTC),
             metricsSystem,
-            SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
+            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   private Hash createExistingWorldState() {

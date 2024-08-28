@@ -123,7 +123,7 @@ public class FullSyncChainDownloaderTest {
         syncState,
         metricsSystem,
         SyncTerminationCondition.never(),
-        SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   private ChainDownloader downloader() {

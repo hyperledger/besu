@@ -143,7 +143,7 @@ public class CheckPointSyncChainDownloaderTest {
         syncState,
         new NoOpMetricsSystem(),
         new FastSyncState(otherBlockchain.getBlockHeader(pivotBlockNumber).get()),
-        SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   @ParameterizedTest
