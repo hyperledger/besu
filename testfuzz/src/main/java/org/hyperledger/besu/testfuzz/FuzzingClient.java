@@ -14,7 +14,7 @@
  */
 package org.hyperledger.besu.testfuzz;
 
-interface ExternalClient {
+interface FuzzingClient {
 
   String getName();
 
