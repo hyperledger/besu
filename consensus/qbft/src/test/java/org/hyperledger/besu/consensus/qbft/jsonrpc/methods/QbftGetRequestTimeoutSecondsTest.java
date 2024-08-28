@@ -34,8 +34,6 @@ import org.slf4j.LoggerFactory;
 @ExtendWith(MockitoExtension.class)
 public class QbftGetRequestTimeoutSecondsTest {
 
-  private static final Logger LOG = LoggerFactory.getLogger(QbftGetRequestTimeoutSecondsTest.class);
-
   private static final String JSON_RPC_VERSION = "2.0";
   private static final String METHOD_NAME = "qbft_getRequestTimeoutSeconds";
 
