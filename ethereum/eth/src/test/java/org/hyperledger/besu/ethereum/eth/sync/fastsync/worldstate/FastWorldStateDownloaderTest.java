@@ -64,6 +64,7 @@ import org.hyperledger.besu.evm.account.Account;
 import org.hyperledger.besu.evm.account.AccountStorageEntry;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.evm.worldstate.WorldState;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.services.kvstore.InMemoryKeyValueStorage;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -1051,7 +1052,8 @@ class FastWorldStateDownloaderTest {
         config.getWorldStateMaxRequestsWithoutProgress(),
         config.getWorldStateMinMillisBeforeStalling(),
         TestClock.fixed(),
-        new NoOpMetricsSystem());
+        new NoOpMetricsSystem(),
+        SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
   }
 
   private WorldStatePreimageStorage createPreimageStorage() {
