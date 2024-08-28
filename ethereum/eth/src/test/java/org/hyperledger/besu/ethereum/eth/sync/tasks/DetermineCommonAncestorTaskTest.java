@@ -121,7 +121,7 @@ public class DetermineCommonAncestorTaskTest {
     assertThat(failure.get()).isNotNull();
     final Throwable error = ExceptionUtils.rootCause(failure.get());
     assertThat(error).isInstanceOf(EthTaskException.class);
-    assertThat(((EthTaskException) error).reason()).isEqualTo(FailureReason.NO_AVAILABLE_PEERS);
+    assertThat(((EthTaskException) error).reason()).isEqualTo(FailureReason.PEER_DISCONNECTED);
   }
 
   @Test
