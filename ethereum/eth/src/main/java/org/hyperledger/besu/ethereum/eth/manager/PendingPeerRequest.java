@@ -57,6 +57,9 @@ public class PendingPeerRequest {
       // No peers have the required height.
       result.completeExceptionally(new NoAvailablePeersException());
       return true;
+    } else if (maybePeer.get().isDisconnected()) {
+      result.completeExceptionally(new PeerDisconnectedException(maybePeer.get()));
+      return true;
     } else {
       // At least one peer has the required height, but we are not able to use it if it's busy
       final Optional<EthPeer> maybePeerWithCapacity =
@@ -80,8 +83,8 @@ public class PendingPeerRequest {
   }
 
   private Optional<EthPeer> getPeerToUse() {
-    // return the assigned peer if still valid, otherwise switch to another peer
-    return peer.filter(p -> !p.isDisconnected()).isPresent()
+    // If a peer was supplied, use it, otherwise grab one from EthPeers
+    return peer.isPresent()
         ? peer
         : ethPeers
             .streamAvailablePeers()
