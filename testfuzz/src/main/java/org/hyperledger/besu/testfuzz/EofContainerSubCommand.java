@@ -247,7 +247,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
                   } else if (value.toLowerCase(Locale.ROOT).startsWith("err")) {
                     failHappened.set(true);
                   } else {
-                    // unexpected output: trigger a missmatch
+                    // unexpected output: trigger a mismatch
                     passHappened.set(true);
                     failHappened.set(true);
                   }
