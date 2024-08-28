@@ -441,8 +441,7 @@ public class FastSyncDownloaderTest {
         .thenReturn(completedFuture(secondDownloadPivotBlockHeaderState));
 
     when(fastSyncActions.createChainDownloader(
-            secondDownloadPivotBlockHeaderState,
-            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
+            secondDownloadPivotBlockHeaderState, SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
         .thenReturn(secondChainDownloader);
     when(secondChainDownloader.start()).thenReturn(completedFuture(null));
     when(worldStateDownloader.run(
@@ -474,8 +473,7 @@ public class FastSyncDownloaderTest {
     verify(storage).storeState(secondDownloadPivotBlockHeaderState);
     verify(fastSyncActions)
         .createChainDownloader(
-            secondDownloadPivotBlockHeaderState,
-            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
+            secondDownloadPivotBlockHeaderState, SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
     verify(worldStateDownloader)
         .run(any(FastSyncActions.class), eq(new FastSyncState(secondPivotBlockHeader)));
     verifyNoMoreInteractions(fastSyncActions, worldStateDownloader, storage);
@@ -525,8 +523,7 @@ public class FastSyncDownloaderTest {
         .thenReturn(completedFuture(secondDownloadPivotBlockHeaderState));
 
     when(fastSyncActions.createChainDownloader(
-            secondDownloadPivotBlockHeaderState,
-            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
+            secondDownloadPivotBlockHeaderState, SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS))
         .thenReturn(secondChainDownloader);
     when(secondChainDownloader.start()).thenReturn(completedFuture(null));
     when(worldStateDownloader.run(
@@ -560,8 +557,7 @@ public class FastSyncDownloaderTest {
     verify(storage).storeState(secondDownloadPivotBlockHeaderState);
     verify(fastSyncActions)
         .createChainDownloader(
-            secondDownloadPivotBlockHeaderState,
-            SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
+            secondDownloadPivotBlockHeaderState, SyncDurationMetrics.NO_OP_SYNC_DURATION_METRICS);
     verify(worldStateDownloader)
         .run(any(FastSyncActions.class), eq(new FastSyncState(secondPivotBlockHeader)));
     verifyNoMoreInteractions(fastSyncActions, worldStateDownloader, storage);

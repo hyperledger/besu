@@ -31,7 +31,6 @@ public class SyncDurationMetrics {
   public static final SyncDurationMetrics NO_OP_SYNC_DURATION_METRICS =
       new SyncDurationMetrics(new NoOpMetricsSystem());
 
-
   private final LabelledMetric<OperationTimer> timer;
 
   private final HashMap<String, OperationTimer.TimingContext> timers = new HashMap<>();
