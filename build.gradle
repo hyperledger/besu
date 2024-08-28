@@ -33,7 +33,7 @@ plugins {
 }
 
 tasks.register('spotlessCheckFast') {
-    dependsOn subprojects.collect { it.tasks.withType(com.diffplug.gradle.spotless.SpotlessCheck) }
+  dependsOn subprojects.collect { it.tasks.withType(com.diffplug.gradle.spotless.SpotlessCheck) }
 }
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
