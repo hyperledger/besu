@@ -152,7 +152,7 @@ public class PrometheusMetricsSystem implements ObservableMetricsSystem {
         (k) -> {
           if (timersEnabled && isCategoryEnabled(category)) {
             final Histogram histogram =
-                Histogram.build(metricName, help).labelNames(labelNames).create();
+                Histogram.build(metricName, help).labelNames(labelNames).buckets(1D).create();
             addCollectorUnchecked(category, histogram);
             return new PrometheusSimpleTimer(histogram);
           } else {

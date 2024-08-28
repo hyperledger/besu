@@ -77,7 +77,7 @@ public class PipelineChainDownloaderTest {
             syncTargetManager,
             downloadPipelineFactory,
             scheduler,
-            noMetricsSystem,
+            noOpMetricsSystem,
             SyncDurationMetrics.NO_METRICS_SYNC_DURATION_METRICS);
   }
 
