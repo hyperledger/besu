@@ -152,9 +152,6 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
         pendingTrieNodeRequests::size);
     syncDurationMetrics.startTimer(
         SyncDurationMetrics.Labels.SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION);
-    LOG.info(
-        "startTimer SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION: {}",
-        LocalDateTime.now(ZoneId.systemDefault()));
   }
 
   @Override
