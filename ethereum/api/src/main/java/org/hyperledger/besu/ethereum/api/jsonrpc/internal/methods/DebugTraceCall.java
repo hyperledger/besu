@@ -70,44 +70,6 @@ public class DebugTraceCall extends AbstractTraceCall {
     }
   }
 
-  protected Object resultByBlockHeader(
-      final JsonRpcRequestContext request, final BlockHeader header) {
-    final JsonCallParameter callParams = JsonCallParameterUtil.validateAndGetCallParams(request);
-
-    final TraceOptions traceOptions = getTraceOptions(request);
-    final DebugOperationTracer tracer = new DebugOperationTracer(traceOptions, false);
-
-    TransactionValidationParams validationParams = buildTransactionValidationParams();
-
-    return transactionSimulator
-        .process(
-            callParams,
-            validationParams,
-            tracer,
-            (mutableWorldState, transactionSimulatorResult) -> {
-              return transactionSimulatorResult.map(
-                  result -> {
-                    if (result.isInvalid()) {
-                      return errorResponse(
-                          request,
-                          JsonRpcErrorConverter.convertTransactionInvalidReason(
-                              result.getValidationResult().getInvalidReason()));
-                    } else {
-                      return new DebugTraceTransactionResult(
-                          new TransactionTrace(
-                              result.transaction(), result.result(), tracer.getTraceFrames()));
-                    }
-                  });
-            },
-            header)
-        .orElse(errorResponse(request, RpcErrorType.INTERNAL_ERROR));
-  }
-
-  private JsonRpcErrorResponse errorResponse(
-      final JsonRpcRequestContext request, final RpcErrorType rpcErrorType) {
-    return new JsonRpcErrorResponse(request.getRequest().getId(), new JsonRpcError(rpcErrorType));
-  }
-
   @Override
   protected BlockParameter blockParameter(final JsonRpcRequestContext request) {
     final Optional<BlockParameter> maybeBlockParameter;
