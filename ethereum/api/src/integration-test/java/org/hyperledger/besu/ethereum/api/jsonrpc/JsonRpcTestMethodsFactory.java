@@ -64,7 +64,9 @@ import io.vertx.core.VertxOptions;
 /** Provides a facade to construct the JSON-RPC component. */
 public class JsonRpcTestMethodsFactory {
 
-  private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
+  private static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
+  private static final String CLIENT_VERSION = "0.1.0";
+  private static final String CLIENT_COMMIT = "12345678";
   private static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
 
   private final BlockchainImporter importer;
@@ -175,7 +177,9 @@ public class JsonRpcTestMethodsFactory {
 
     return new JsonRpcMethodsFactory()
         .methods(
+            CLIENT_NODE_NAME,
             CLIENT_VERSION,
+            CLIENT_COMMIT,
             NETWORK_ID,
             new StubGenesisConfigOptions(),
             peerDiscovery,
