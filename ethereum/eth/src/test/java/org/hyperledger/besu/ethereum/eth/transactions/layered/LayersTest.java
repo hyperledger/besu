@@ -156,7 +156,7 @@ public class LayersTest extends BaseTransactionPoolTest {
   @ParameterizedTest
   @MethodSource("providerMaxPrioritizedByType")
   void maxPrioritizedByType(final Scenario scenario) {
-    assertScenario(scenario, BLOB_TX_POOL_CONFIG);
+    assertScenario(scenario);
   }
 
   @ParameterizedTest
@@ -166,54 +166,7 @@ public class LayersTest extends BaseTransactionPoolTest {
   }
 
   private void assertScenario(final Scenario scenario) {
-    assertScenario(scenario, DEFAULT_TX_POOL_CONFIG);
-  }
-
-  private void assertScenario(
-      final Scenario scenario, final TransactionPoolConfiguration poolConfig) {
-    final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
-
-    final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
-    final EthScheduler ethScheduler = new EthScheduler(1, 4, 1, 1, new NoOpMetricsSystem());
-    final SparseTransactions sparseTransactions =
-        new SparseTransactions(
-            poolConfig,
-            ethScheduler,
-            evictCollector,
-            txPoolMetrics,
-            (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
-            new BlobCache());
-
-    final ReadyTransactions readyTransactions =
-        new ReadyTransactions(
-            poolConfig,
-            ethScheduler,
-            sparseTransactions,
-            txPoolMetrics,
-            (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
-            new BlobCache());
-
-    final BaseFeePrioritizedTransactions prioritizedTransactions =
-        new BaseFeePrioritizedTransactions(
-            poolConfig,
-            LayersTest::mockBlockHeader,
-            ethScheduler,
-            readyTransactions,
-            txPoolMetrics,
-            (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
-            FeeMarket.london(0L),
-            new BlobCache(),
-            MiningParameters.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE));
-
-    final LayeredPendingTransactions pendingTransactions =
-        new LayeredPendingTransactions(poolConfig, prioritizedTransactions, ethScheduler);
-
-    scenario.execute(
-        pendingTransactions,
-        prioritizedTransactions,
-        readyTransactions,
-        sparseTransactions,
-        evictCollector);
+    scenario.run();
   }
 
   static Stream<Arguments> providerAddTransactions() {
@@ -452,7 +405,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedReadyForSenders(S1, 0, S1, 1)
                 .expectedSparseForSender(S3, 2)
                 .addForSenders(S3, 1)
-                // ToDo: only S3[1] is prioritized because there is no space to try to fill gaps
+                // only S3[1] is prioritized because there is no space to try to fill gaps
                 .expectedPrioritizedForSenders(S3, 0, S3, 1, S2, 0)
                 .expectedReadyForSenders(S2, 1, S1, 0, S1, 1)
                 .expectedSparseForSender(S3, 2)
@@ -465,7 +418,7 @@ public class LayersTest extends BaseTransactionPoolTest {
         Arguments.of(
             new Scenario("replacement cross layer")
                 .addForSenders(S2, 0, S3, 2, S1, 1, S2, 1, S3, 0, S1, 0, S3, 1)
-                // ToDo: only S3[1] is prioritized because there is no space to try to fill gaps
+                // only S3[1] is prioritized because there is no space to try to fill gaps
                 .expectedPrioritizedForSenders(S3, 0, S3, 1, S2, 0)
                 .expectedReadyForSenders(S2, 1, S1, 0, S1, 1)
                 .expectedSparseForSender(S3, 2)
@@ -1061,9 +1014,9 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .addForSender(S1, 3)
                 .expectedPrioritizedForSender(S1, 2, 3)
                 .setAccountNonce(S1, 0) // rewind nonce due to reorg
-                .addForSender(S1, 0)
-                .expectedPrioritizedForSender(S1, 0)
-                .expectedSparseForSender(S1, 2, 3)));
+                .addForSender(S1, 0, 1)
+                .expectedPrioritizedForSender(S1, 0, 1, 2)
+                .expectedReadyForSender(S1, 3)));
   }
 
   static Stream<Arguments> providerAsyncWorldStateUpdates() {
@@ -1221,22 +1174,22 @@ public class LayersTest extends BaseTransactionPoolTest {
   static Stream<Arguments> providerMaxPrioritizedByType() {
     return Stream.of(
         Arguments.of(
-            new Scenario("first blob tx is prioritized")
+            new Scenario("first blob tx is prioritized", BLOB_TX_POOL_CONFIG)
                 .addForSender(S1, BLOB, 0)
                 .expectedPrioritizedForSender(S1, 0)),
         Arguments.of(
-            new Scenario("multiple senders only first blob tx is prioritized")
+            new Scenario("multiple senders only first blob tx is prioritized", BLOB_TX_POOL_CONFIG)
                 .addForSender(S1, BLOB, 0)
                 .addForSender(S2, BLOB, 0)
                 .expectedPrioritizedForSender(S1, 0)
                 .expectedReadyForSender(S2, 0)),
         Arguments.of(
-            new Scenario("same sender following blob txs are moved to ready")
+            new Scenario("same sender following blob txs are moved to ready", BLOB_TX_POOL_CONFIG)
                 .addForSender(S1, BLOB, 0, 1, 2)
                 .expectedPrioritizedForSender(S1, 0)
                 .expectedReadyForSender(S1, 1, 2)),
         Arguments.of(
-            new Scenario("promoting txs respect prioritized count limit")
+            new Scenario("promoting txs respect prioritized count limit", BLOB_TX_POOL_CONFIG)
                 .addForSender(S1, BLOB, 0, 1, 2)
                 .expectedPrioritizedForSender(S1, 0)
                 .expectedReadyForSender(S1, 1, 2)
@@ -1244,14 +1197,14 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedPrioritizedForSender(S1, 1)
                 .expectedReadyForSender(S1, 2)),
         Arguments.of(
-            new Scenario("filling gaps respect prioritized count limit")
+            new Scenario("filling gaps respect prioritized count limit", BLOB_TX_POOL_CONFIG)
                 .addForSender(S1, BLOB, 1)
                 .expectedSparseForSender(S1, 1)
                 .addForSender(S1, BLOB, 0)
                 .expectedPrioritizedForSender(S1, 0)
                 .expectedSparseForSender(S1, 1)),
         Arguments.of(
-            new Scenario("promoting to ready is unbounded")
+            new Scenario("promoting to ready is unbounded", BLOB_TX_POOL_CONFIG)
                 .addForSender(S1, BLOB, 0, 1, 2, 3, 4, 5, 6)
                 .expectedPrioritizedForSender(S1, 0)
                 .expectedReadyForSender(S1, 1, 2, 3)
@@ -1351,18 +1304,17 @@ public class LayersTest extends BaseTransactionPoolTest {
     return transactionReplacementHandler.shouldReplace(pt1, pt2, mockBlockHeader());
   }
 
-  static class Scenario extends BaseTransactionPoolTest {
-    interface TransactionLayersConsumer {
-      void accept(
-          LayeredPendingTransactions pending,
-          AbstractPrioritizedTransactions prioritized,
-          ReadyTransactions ready,
-          SparseTransactions sparse,
-          EvictCollectorLayer dropped);
-    }
+  static class Scenario extends BaseTransactionPoolTest implements Runnable {
 
     final String description;
-    final List<TransactionLayersConsumer> actions = new ArrayList<>();
+    final TransactionPoolConfiguration poolConfig;
+    final EvictCollectorLayer dropped;
+    final SparseTransactions sparse;
+    final ReadyTransactions ready;
+    final AbstractPrioritizedTransactions prio;
+    final LayeredPendingTransactions pending;
+
+    final List<Runnable> actions = new ArrayList<>();
     List<PendingTransaction> lastExpectedPrioritized = new ArrayList<>();
     List<PendingTransaction> lastExpectedReady = new ArrayList<>();
     List<PendingTransaction> lastExpectedSparse = new ArrayList<>();
@@ -1381,7 +1333,57 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
 
     Scenario(final String description) {
+      this(description, DEFAULT_TX_POOL_CONFIG);
+    }
+
+    Scenario(final String description, final TransactionPoolConfiguration poolConfig) {
       this.description = description;
+      this.poolConfig = poolConfig;
+
+      final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
+
+      this.dropped = new EvictCollectorLayer(txPoolMetrics);
+      final EthScheduler ethScheduler = new EthScheduler(1, 4, 1, 1, new NoOpMetricsSystem());
+      this.sparse =
+          new SparseTransactions(
+              poolConfig,
+              ethScheduler,
+              this.dropped,
+              txPoolMetrics,
+              (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
+              new BlobCache());
+
+      this.ready =
+          new ReadyTransactions(
+              poolConfig,
+              ethScheduler,
+              this.sparse,
+              txPoolMetrics,
+              (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
+              new BlobCache());
+
+      this.prio =
+          new BaseFeePrioritizedTransactions(
+              poolConfig,
+              LayersTest::mockBlockHeader,
+              ethScheduler,
+              this.ready,
+              txPoolMetrics,
+              (pt1, pt2) -> transactionReplacementTester(poolConfig, pt1, pt2),
+              FeeMarket.london(0L),
+              new BlobCache(),
+              MiningParameters.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE));
+
+      this.pending = new LayeredPendingTransactions(poolConfig, this.prio, ethScheduler);
+    }
+
+    @Override
+    public void run() {
+      actions.forEach(Runnable::run);
+      assertExpectedPrioritized(prio, lastExpectedPrioritized);
+      assertExpectedReady(ready, lastExpectedReady);
+      assertExpectedSparse(sparse, lastExpectedSparse);
+      assertExpectedDropped(dropped, lastExpectedDropped);
     }
 
     Scenario addForSender(final Sender sender, final long... nonce) {
@@ -1389,17 +1391,16 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
 
     Scenario addForSender(final Sender sender, final TransactionType type, final long... nonce) {
-      Arrays.stream(nonce)
-          .forEach(
-              n -> {
-                final var pendingTx = getOrCreate(sender, type, n);
-                actions.add(
-                    (pending, prio, ready, sparse, dropped) -> {
-                      final Account mockSender = mock(Account.class);
-                      when(mockSender.getNonce()).thenReturn(nonceBySender.get(sender));
-                      pending.addTransaction(pendingTx, Optional.of(mockSender));
-                    });
-              });
+      actions.add(
+          () ->
+              Arrays.stream(nonce)
+                  .forEach(
+                      n -> {
+                        final var pendingTx = getOrCreateOrReplace(sender, type, n);
+                        final Account mockSender = mock(Account.class);
+                        when(mockSender.getNonce()).thenReturn(nonceBySender.get(sender));
+                        pending.addTransaction(pendingTx, Optional.of(mockSender));
+                      }));
       return this;
     }
 
@@ -1413,55 +1414,63 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
 
     public Scenario confirmedForSenders(final Object... args) {
-      final Map<Address, Long> maxConfirmedNonceBySender = new HashMap<>();
-      for (int i = 0; i < args.length; i = i + 2) {
-        final Sender sender = (Sender) args[i];
-        final long nonce = (int) args[i + 1];
-        maxConfirmedNonceBySender.put(sender.address, nonce);
-        setAccountNonce(sender, nonce + 1);
-      }
       actions.add(
-          (pending, prio, ready, sparse, dropped) ->
-              prio.blockAdded(FeeMarket.london(0L), mockBlockHeader(), maxConfirmedNonceBySender));
+          () -> {
+            final Map<Address, Long> maxConfirmedNonceBySender = new HashMap<>();
+            for (int i = 0; i < args.length; i = i + 2) {
+              final Sender sender = (Sender) args[i];
+              final long nonce = (int) args[i + 1];
+              maxConfirmedNonceBySender.put(sender.address, nonce);
+              nonceBySender.put(sender, nonce + 1);
+            }
+
+            prio.blockAdded(FeeMarket.london(0L), mockBlockHeader(), maxConfirmedNonceBySender);
+          });
       return this;
     }
 
-    Scenario setAccountNonce(final Sender sender, final long nonce) {
-      actions.add((pending, prio, ready, sparse, dropped) -> nonceBySender.put(sender, nonce));
+    public Scenario setAccountNonce(final Sender sender, final long nonce) {
+      actions.add(() -> nonceBySender.put(sender, nonce));
       return this;
     }
 
-    void execute(
-        final LayeredPendingTransactions pending,
-        final AbstractPrioritizedTransactions prioritized,
-        final ReadyTransactions ready,
-        final SparseTransactions sparse,
-        final EvictCollectorLayer dropped) {
-      actions.forEach(action -> action.accept(pending, prioritized, ready, sparse, dropped));
-      assertExpectedPrioritized(prioritized, lastExpectedPrioritized);
-      assertExpectedReady(ready, lastExpectedReady);
-      assertExpectedSparse(sparse, lastExpectedSparse);
-      assertExpectedDropped(dropped, lastExpectedDropped);
+    private PendingTransaction getOrCreateOrReplace(
+        final Sender sender, final TransactionType type, final long nonce) {
+      return getMaybe(sender, nonce)
+          .map(
+              tx ->
+                  nonceBySender.get(sender) <= nonce
+                      ? tx
+                      : createRemotePendingTransaction(
+                          createTransactionReplacement(tx.getTransaction(), sender.key)))
+          .orElseGet(() -> create(sender, type, nonce));
     }
 
     private PendingTransaction getOrCreate(
         final Sender sender, final TransactionType type, final long nonce) {
-      return txsBySender
-          .get(sender)
-          .computeIfAbsent(
-              nonce,
-              n ->
-                  switch (type) {
-                    case FRONTIER -> createFrontierPendingTransaction(sender, n);
-                    case ACCESS_LIST -> createAccessListPendingTransaction(sender, n);
-                    case EIP1559 -> createEIP1559PendingTransaction(sender, n);
-                    case BLOB -> createBlobPendingTransaction(sender, n);
-                    case SET_CODE -> throw new UnsupportedOperationException();
-                  });
+      return getMaybe(sender, nonce).orElseGet(() -> create(sender, type, nonce));
+    }
+
+    private PendingTransaction create(
+        final Sender sender, final TransactionType type, final long nonce) {
+      final var newPendingTx =
+          switch (type) {
+            case FRONTIER -> createFrontierPendingTransaction(sender, nonce);
+            case ACCESS_LIST -> createAccessListPendingTransaction(sender, nonce);
+            case EIP1559 -> createEIP1559PendingTransaction(sender, nonce);
+            case BLOB -> createBlobPendingTransaction(sender, nonce);
+            case SET_CODE -> throw new UnsupportedOperationException();
+          };
+      txsBySender.get(sender).put(nonce, newPendingTx);
+      return newPendingTx;
+    }
+
+    private Optional<PendingTransaction> getMaybe(final Sender sender, final long nonce) {
+      return Optional.ofNullable(txsBySender.get(sender).get(nonce));
     }
 
     private PendingTransaction get(final Sender sender, final long nonce) {
-      return txsBySender.get(sender).get(nonce);
+      return getMaybe(sender, nonce).get();
     }
 
     private PendingTransaction createFrontierPendingTransaction(
@@ -1489,102 +1498,114 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
 
     public Scenario expectedPrioritizedForSender(final Sender sender, final long... nonce) {
-      lastExpectedPrioritized = expectedForSender(sender, nonce);
-      final var expectedCopy = List.copyOf(lastExpectedPrioritized);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedPrioritized(prio, expectedCopy));
+          () -> {
+            lastExpectedPrioritized = expectedForSender(sender, nonce);
+            assertExpectedPrioritized(prio, lastExpectedPrioritized);
+          });
       return this;
     }
 
     public Scenario expectedReadyForSender(final Sender sender, final long... nonce) {
-      lastExpectedReady = expectedForSender(sender, nonce);
-      final var expectedCopy = List.copyOf(lastExpectedReady);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedReady(ready, expectedCopy));
+          () -> {
+            lastExpectedReady = expectedForSender(sender, nonce);
+            assertExpectedReady(ready, lastExpectedReady);
+          });
       return this;
     }
 
     public Scenario expectedSparseForSender(final Sender sender, final long... nonce) {
-      lastExpectedSparse = expectedForSender(sender, nonce);
-      final var expectedCopy = List.copyOf(lastExpectedSparse);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedSparse(sparse, expectedCopy));
+          () -> {
+            lastExpectedSparse = expectedForSender(sender, nonce);
+            assertExpectedSparse(sparse, lastExpectedSparse);
+          });
       return this;
     }
 
     public Scenario expectedDroppedForSender(final Sender sender, final long... nonce) {
-      lastExpectedDropped = expectedForSender(sender, nonce);
-      final var expectedCopy = List.copyOf(lastExpectedDropped);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedDropped(dropped, expectedCopy));
+          () -> {
+            lastExpectedDropped = expectedForSender(sender, nonce);
+            assertExpectedDropped(dropped, lastExpectedDropped);
+          });
       return this;
     }
 
     public Scenario expectedPrioritizedForSenders(
-        final Sender sender1, final long nonce1, final Sender sender2, Object... args) {
-      lastExpectedPrioritized = expectedForSenders(sender1, nonce1, sender2, args);
-      final var expectedCopy = List.copyOf(lastExpectedPrioritized);
+        final Sender sender1, final long nonce1, final Sender sender2, final Object... args) {
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedPrioritized(prio, expectedCopy));
+          () -> {
+            lastExpectedPrioritized = expectedForSenders(sender1, nonce1, sender2, args);
+            assertExpectedPrioritized(prio, lastExpectedPrioritized);
+          });
       return this;
     }
 
     public Scenario expectedPrioritizedForSenders() {
-      lastExpectedPrioritized = List.of();
-      final var expectedCopy = List.copyOf(lastExpectedPrioritized);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedPrioritized(prio, expectedCopy));
+          () -> {
+            lastExpectedPrioritized = List.of();
+            assertExpectedPrioritized(prio, lastExpectedPrioritized);
+          });
       return this;
     }
 
     public Scenario expectedReadyForSenders(
         final Sender sender1, final long nonce1, final Sender sender2, final Object... args) {
-      lastExpectedReady = expectedForSenders(sender1, nonce1, sender2, args);
-      final var expectedCopy = List.copyOf(lastExpectedReady);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedReady(ready, expectedCopy));
+          () -> {
+            lastExpectedReady = expectedForSenders(sender1, nonce1, sender2, args);
+            assertExpectedReady(ready, lastExpectedReady);
+          });
       return this;
     }
 
     public Scenario expectedReadyForSenders() {
-      lastExpectedReady = List.of();
-      final var expectedCopy = List.copyOf(lastExpectedReady);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedReady(ready, expectedCopy));
+          () -> {
+            lastExpectedReady = List.of();
+            assertExpectedReady(ready, lastExpectedReady);
+          });
       return this;
     }
 
     public Scenario expectedSparseForSenders(
         final Sender sender1, final long nonce1, final Sender sender2, final Object... args) {
-      lastExpectedSparse = expectedForSenders(sender1, nonce1, sender2, args);
-      final var expectedCopy = List.copyOf(lastExpectedSparse);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedSparse(sparse, expectedCopy));
+          () -> {
+            lastExpectedSparse = expectedForSenders(sender1, nonce1, sender2, args);
+            assertExpectedSparse(sparse, lastExpectedSparse);
+          });
       return this;
     }
 
     public Scenario expectedSparseForSenders() {
-      lastExpectedSparse = List.of();
-      final var expectedCopy = List.copyOf(lastExpectedSparse);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedSparse(sparse, expectedCopy));
+          () -> {
+            lastExpectedSparse = List.of();
+            assertExpectedSparse(sparse, lastExpectedSparse);
+          });
       return this;
     }
 
     public Scenario expectedDroppedForSenders(
         final Sender sender1, final long nonce1, final Sender sender2, final Object... args) {
-      lastExpectedDropped = expectedForSenders(sender1, nonce1, sender2, args);
-      final var expectedCopy = List.copyOf(lastExpectedDropped);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedDropped(dropped, expectedCopy));
+          () -> {
+            lastExpectedDropped = expectedForSenders(sender1, nonce1, sender2, args);
+            assertExpectedDropped(dropped, lastExpectedDropped);
+          });
       return this;
     }
 
     public Scenario expectedDroppedForSenders() {
-      lastExpectedDropped = List.of();
-      final var expectedCopy = List.copyOf(lastExpectedDropped);
       actions.add(
-          (pending, prio, ready, sparse, dropped) -> assertExpectedDropped(dropped, expectedCopy));
+          () -> {
+            lastExpectedDropped = List.of();
+            assertExpectedDropped(dropped, lastExpectedDropped);
+          });
       return this;
     }
 
@@ -1645,53 +1666,54 @@ public class LayersTest extends BaseTransactionPoolTest {
         final Integer nullableInt = (Integer) args[i + 1];
         final OptionalLong nonce =
             nullableInt == null ? OptionalLong.empty() : OptionalLong.of(nullableInt);
-        actions.add(
-            (pending, prio, ready, sparse, dropped) ->
-                assertThat(prio.getNextNonceFor(sender.address)).isEqualTo(nonce));
+        actions.add(() -> assertThat(prio.getNextNonceFor(sender.address)).isEqualTo(nonce));
       }
       return this;
     }
 
     public Scenario removeForSender(final Sender sender, final long... nonce) {
-      Arrays.stream(nonce)
-          .forEach(
-              n -> {
-                final var pendingTx = getOrCreate(sender, EIP1559, n);
-                actions.add(
-                    (pending, prio, ready, sparse, dropped) -> prio.remove(pendingTx, INVALIDATED));
-              });
+      actions.add(
+          () ->
+              Arrays.stream(nonce)
+                  .forEach(
+                      n -> {
+                        final var pendingTx = getOrCreate(sender, EIP1559, n);
+                        prio.remove(pendingTx, INVALIDATED);
+                      }));
       return this;
     }
 
     public Scenario penalizeForSender(final Sender sender, final long... nonce) {
-      Arrays.stream(nonce)
-          .forEach(
-              n -> {
-                actions.add(
-                    (pending, prio, ready, sparse, dropped) -> {
-                      final var senderTxs = prio.getAllFor(sender.address);
-                      Arrays.stream(nonce)
-                          .mapToObj(
-                              n2 -> senderTxs.stream().filter(pt -> pt.getNonce() == n2).findAny())
-                          .map(Optional::get)
-                          .forEach(prio::penalize);
-                    });
-              });
+      actions.add(
+          () ->
+              Arrays.stream(nonce)
+                  .forEach(
+                      n -> {
+                        final var senderTxs = prio.getAllFor(sender.address);
+                        Arrays.stream(nonce)
+                            .mapToObj(
+                                n2 ->
+                                    senderTxs.stream().filter(pt -> pt.getNonce() == n2).findAny())
+                            .map(Optional::get)
+                            .forEach(prio::penalize);
+                      }));
       return this;
     }
 
     public Scenario expectedSelectedTransactions(final Object... args) {
-      List<PendingTransaction> expectedSelected = new ArrayList<>();
-      for (int i = 0; i < args.length; i = i + 2) {
-        final Sender sender = (Sender) args[i];
-        final long nonce = (int) args[i + 1];
-        expectedSelected.add(get(sender, nonce));
-      }
       actions.add(
-          (pending, prio, ready, sparse, dropped) ->
-              assertThat(prio.getBySender())
-                  .flatExtracting(SenderPendingTransactions::pendingTransactions)
-                  .containsExactlyElementsOf(expectedSelected));
+          () -> {
+            List<PendingTransaction> expectedSelected = new ArrayList<>();
+            for (int i = 0; i < args.length; i = i + 2) {
+              final Sender sender = (Sender) args[i];
+              final long nonce = (int) args[i + 1];
+              expectedSelected.add(get(sender, nonce));
+            }
+
+            assertThat(prio.getBySender())
+                .flatExtracting(SenderPendingTransactions::pendingTransactions)
+                .containsExactlyElementsOf(expectedSelected);
+          });
       return this;
     }
 
