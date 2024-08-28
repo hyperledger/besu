@@ -280,6 +280,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   }
 
   public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
+    LOG.info("Initiating the healing process for the flat database");
     syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.FLAT_DB_HEAL);
     snapSyncState.setHealFlatDatabaseInProgress(true);
     final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
