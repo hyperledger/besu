@@ -41,7 +41,19 @@ public interface TransactionsLayer {
 
   boolean contains(Transaction transaction);
 
-  TransactionAddedResult add(PendingTransaction pendingTransaction, int gap);
+  /**
+   * Try to add a pending transaction to this layer. The {@code addReason} is used to discriminate
+   * between a new tx that is added to the pool, or a tx that is already in the pool, but is moving
+   * internally between layers, for example, due to a promotion or demotion. The distinction is
+   * needed since we only need to send a notification for a new tx, and not when it is only an
+   * internal move.
+   *
+   * @param pendingTransaction the tx to try to add to this layer
+   * @param gap the nonce gap between the current sender nonce and the tx
+   * @param addReason define if it is a new tx or an internal move
+   * @return the result of the add operation
+   */
+  TransactionAddedResult add(PendingTransaction pendingTransaction, int gap, AddReason addReason);
 
   void remove(PendingTransaction pendingTransaction, RemovalReason reason);
 
@@ -107,6 +119,29 @@ public interface TransactionsLayer {
   String logStats();
 
   String logSender(Address sender);
+
+  /** Describe why we are trying to add a tx to a layer. */
+  enum AddReason {
+    /** When adding a tx, that is not present in the pool. */
+    NEW(true),
+    /** When adding a tx as result of an internal move between layers. */
+    MOVE(false);
+
+    private final boolean sendNotification;
+
+    AddReason(final boolean sendNotification) {
+      this.sendNotification = sendNotification;
+    }
+
+    /**
+     * Should we send add notification for this reason?
+     *
+     * @return
+     */
+    public boolean sendNotification() {
+      return sendNotification;
+    }
+  }
 
   enum RemovalReason {
     CONFIRMED,
