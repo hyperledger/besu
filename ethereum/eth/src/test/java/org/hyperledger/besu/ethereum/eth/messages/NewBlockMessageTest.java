@@ -24,12 +24,14 @@ import org.hyperledger.besu.ethereum.core.ProtocolScheduleFixture;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.RawMessage;
 import org.hyperledger.besu.ethereum.rlp.BytesValueRLPOutput;
+import org.hyperledger.besu.util.number.ByteUnits;
 
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.Test;
 
 public class NewBlockMessageTest {
   private static final ProtocolSchedule protocolSchedule = ProtocolScheduleFixture.MAINNET;
+  private static final int maxMessageSize = 10 * ByteUnits.MEGABYTE;
 
   @Test
   public void roundTripNewBlockMessage() {
@@ -37,7 +39,8 @@ public class NewBlockMessageTest {
     final BlockDataGenerator blockGenerator = new BlockDataGenerator();
     final Block blockForInsertion = blockGenerator.block();
 
-    final NewBlockMessage msg = NewBlockMessage.create(blockForInsertion, totalDifficulty);
+    final NewBlockMessage msg =
+        NewBlockMessage.create(blockForInsertion, totalDifficulty, maxMessageSize);
     assertThat(msg.getCode()).isEqualTo(EthPV62.NEW_BLOCK);
     assertThat(msg.totalDifficulty(protocolSchedule)).isEqualTo(totalDifficulty);
     final Block extractedBlock = msg.block(protocolSchedule);
@@ -72,5 +75,15 @@ public class NewBlockMessageTest {
 
     assertThatExceptionOfType(IllegalArgumentException.class)
         .isThrownBy(() -> NewBlockMessage.readFrom(rawMsg));
+  }
+
+  @Test
+  public void createBlockMessageLargerThanLimitThrows() {
+    final Difficulty totalDifficulty = Difficulty.of(98765);
+    final BlockDataGenerator blockGenerator = new BlockDataGenerator();
+    final Block newBlock = blockGenerator.block();
+
+    assertThatExceptionOfType(IllegalArgumentException.class)
+        .isThrownBy(() -> NewBlockMessage.create(newBlock, totalDifficulty, 1));
   }
 }
