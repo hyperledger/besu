@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.fail;
 import static org.awaitility.Awaitility.await;
 import static org.hyperledger.besu.datatypes.TransactionType.ACCESS_LIST;
 import static org.hyperledger.besu.datatypes.TransactionType.BLOB;
@@ -55,13 +56,11 @@ import java.util.Collections;
 import java.util.EnumMap;
 import java.util.EnumSet;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.OptionalLong;
-import java.util.Set;
 import java.util.TreeMap;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -430,7 +429,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .expectedPrioritizedForSenders(S3, 0, S3, 1, S2, 0)
                 .expectedReadyForSenders(S2, 1, S1, 0, S1, 1)
                 .expectedSparseForSender(S3, 2)
-                .addForSenders(S3, 2) // added in prioritized, but replacement in sparse
+                .replaceForSenders(S3, 2) // added in prioritized, but replacement in sparse
                 .expectedPrioritizedForSenders(S3, 0, S3, 1, S3, 2)
                 .expectedReadyForSenders(S2, 0, S2, 1, S1, 0)
                 .expectedSparseForSender(S1, 1)));
@@ -1324,13 +1323,12 @@ public class LayersTest extends BaseTransactionPoolTest {
     final AbstractPrioritizedTransactions prio;
     final LayeredPendingTransactions pending;
 
+    final NotificationsCollector notificationsCollector = new NotificationsCollector();
     final List<Runnable> actions = new ArrayList<>();
     List<PendingTransaction> lastExpectedPrioritized = new ArrayList<>();
     List<PendingTransaction> lastExpectedReady = new ArrayList<>();
     List<PendingTransaction> lastExpectedSparse = new ArrayList<>();
     List<PendingTransaction> lastExpectedDropped = new ArrayList<>();
-
-    final NotificationsCollector notificationsCollector = new NotificationsCollector();
 
     final EnumMap<Sender, Long> nonceBySender = new EnumMap<>(Sender.class);
 
@@ -1338,10 +1336,20 @@ public class LayersTest extends BaseTransactionPoolTest {
       Arrays.stream(Sender.values()).forEach(e -> nonceBySender.put(e, 0L));
     }
 
-    final EnumMap<Sender, Map<Long, PendingTransaction>> txsBySender = new EnumMap<>(Sender.class);
+    final EnumSet<Sender> sendersWithReorg = EnumSet.noneOf(Sender.class);
+
+    final EnumMap<Sender, NavigableMap<Long, PendingTransaction>> liveTxsBySender =
+        new EnumMap<>(Sender.class);
 
     {
-      Arrays.stream(Sender.values()).forEach(e -> txsBySender.put(e, new HashMap<>()));
+      Arrays.stream(Sender.values()).forEach(e -> liveTxsBySender.put(e, new TreeMap<>()));
+    }
+
+    final EnumMap<Sender, NavigableMap<Long, PendingTransaction>> droppedTxsBySender =
+        new EnumMap<>(Sender.class);
+
+    {
+      Arrays.stream(Sender.values()).forEach(e -> droppedTxsBySender.put(e, new TreeMap<>()));
     }
 
     Scenario(final String description) {
@@ -1387,8 +1395,10 @@ public class LayersTest extends BaseTransactionPoolTest {
               MiningParameters.newDefault().setMinTransactionGasPrice(MIN_GAS_PRICE));
 
       this.pending = new LayeredPendingTransactions(poolConfig, this.prio, ethScheduler);
+
       this.pending.subscribePendingTransactions(notificationsCollector::collectAddedTxNotification);
-      this.pending.subscribeDroppedTransactions(notificationsCollector::collectDroppedTxNotification);
+      this.pending.subscribeDroppedTransactions(
+          notificationsCollector::collectDroppedTxNotification);
     }
 
     @Override
@@ -1400,37 +1410,72 @@ public class LayersTest extends BaseTransactionPoolTest {
       assertExpectedDropped(dropped, lastExpectedDropped);
     }
 
-    Scenario addForSender(final Sender sender, final long... nonce) {
+    public Scenario addForSender(final Sender sender, final long... nonce) {
       return addForSender(sender, EIP1559, nonce);
     }
 
-    Scenario addForSender(final Sender sender, final TransactionType type, final long... nonce) {
+    public Scenario addForSender(
+        final Sender sender, final TransactionType type, final long... nonce) {
       actions.add(
-          () ->
-              Arrays.stream(nonce)
-                  .forEach(
-                      n -> {
-                        final var pendingTx = getOrCreateOrReplace(sender, type, n);
-                        final Account mockSender = mock(Account.class);
-                        when(mockSender.getNonce()).thenReturn(nonceBySender.get(sender));
-                        pending.addTransaction(pendingTx, Optional.of(mockSender));
+          () -> {
+            final var expectedAddNotifications = new ArrayList<PendingTransaction>();
+            final var expectedDropNotifications = new ArrayList<PendingTransaction>();
+            Arrays.stream(nonce)
+                .forEach(
+                    n -> {
+                      final var pendingTx = create(sender, type, n);
+                      final Account mockSender = mock(Account.class);
+                      when(mockSender.getNonce()).thenReturn(nonceBySender.get(sender));
+                      pending.addTransaction(pendingTx, Optional.of(mockSender));
+                      expectedAddNotifications.add(pendingTx);
+                    });
 
-                        final var expectedNotifications =
-                            reOrgedSenders.contains(sender) ? getCurrentSenderTxs(pending, sender) : txsToAdd;
-                        notificationsCollector.assertAddNotifications(expectedNotifications);
-                        reOrgedSenders.remove(sender);
-                      }));
+            // reorg case
+            if (sendersWithReorg.contains(sender)) {
+              // reorg is removing and re-adding all sender txs, so assert notifications accordingly
+              final var currentPendingTxs =
+                  liveTxsBySender.get(sender).tailMap(nonce[nonce.length - 1], false).values();
+              expectedDropNotifications.addAll(currentPendingTxs);
+              expectedAddNotifications.addAll(currentPendingTxs);
+              sendersWithReorg.remove(sender);
+            }
+
+            // reconciliation case
+            final var txsRemovedByReconciliation =
+                liveTxsBySender.get(sender).headMap(nonceBySender.get(sender), false).values();
+            if (!txsRemovedByReconciliation.isEmpty()) {
+              // reconciliation is removing all sender txs, and re-adding only the ones with a
+              // larger nonce,
+              // so assert notifications accordingly
+              final var reconciledPendingTxs =
+                  liveTxsBySender.get(sender).tailMap(nonce[nonce.length - 1], false).values();
+              expectedDropNotifications.addAll(txsRemovedByReconciliation);
+              expectedDropNotifications.addAll(reconciledPendingTxs);
+              expectedAddNotifications.addAll(reconciledPendingTxs);
+              txsRemovedByReconciliation.clear();
+            }
+
+            handleDropped(expectedDropNotifications);
+
+            notificationsCollector.assertDropNotifications(expectedDropNotifications);
+            notificationsCollector.assertAddNotifications(expectedAddNotifications);
+          });
       return this;
     }
 
-    private List<PendingTransaction> getCurrentSenderTxs(
-        final LayeredPendingTransactions pending, final Sender sender) {
-      return pending.getPendingTransactions().stream()
-          .filter(pt -> pt.getSender().equals(sender.address))
-          .toList();
+    private void handleDropped(final List<PendingTransaction> expectedDropNotifications) {
+      // handle dropped tx due to layer or pool full
+      final var droppedTxs = dropped.getEvictedTransactions();
+      expectedDropNotifications.addAll(droppedTxs);
+      droppedTxs.stream()
+          .forEach(
+              pt -> {
+                liveTxsBySender.get(Sender.getByAddress(pt.getSender())).remove(pt.getNonce());
+                droppedTxsBySender.get(Sender.getByAddress(pt.getSender())).put(pt.getNonce(), pt);
+              });
     }
 
-    Scenario addForSenders(final Object... args) {
+    public Scenario addForSenders(final Object... args) {
       for (int i = 0; i < args.length; i = i + 2) {
         final Sender sender = (Sender) args[i];
         final long nonce = (int) args[i + 1];
@@ -1439,11 +1484,56 @@ public class LayersTest extends BaseTransactionPoolTest {
       return this;
     }
 
+    public Scenario replaceForSender(final Sender sender, final long... nonce) {
+      return replaceForSender(sender, EIP1559, nonce);
+    }
+
+    public Scenario replaceForSender(
+        final Sender sender, final TransactionType type, final long... nonce) {
+      actions.add(
+          () -> {
+            final var expectedAddNotifications = new ArrayList<PendingTransaction>();
+            final var expectedDropNotifications = new ArrayList<PendingTransaction>();
+            Arrays.stream(nonce)
+                .forEach(
+                    n -> {
+                      final var maybeExistingTx = getMaybe(sender, n);
+                      maybeExistingTx.ifPresentOrElse(
+                          existingTx -> {
+                            final var pendingTx = replace(sender, existingTx);
+                            final Account mockSender = mock(Account.class);
+                            when(mockSender.getNonce()).thenReturn(nonceBySender.get(sender));
+                            pending.addTransaction(pendingTx, Optional.of(mockSender));
+                            expectedAddNotifications.add(pendingTx);
+                            expectedDropNotifications.add(existingTx);
+                          },
+                          () ->
+                              fail(
+                                  "Could not replace non-existing transaction with nonce "
+                                      + n
+                                      + " for sender "
+                                      + sender.name()));
+                    });
+            notificationsCollector.assertDropNotifications(expectedDropNotifications);
+            notificationsCollector.assertAddNotifications(expectedAddNotifications);
+          });
+      return this;
+    }
+
+    public Scenario replaceForSenders(final Object... args) {
+      for (int i = 0; i < args.length; i = i + 2) {
+        final Sender sender = (Sender) args[i];
+        final long nonce = (int) args[i + 1];
+        replaceForSender(sender, nonce);
+      }
+      return this;
+    }
+
     public Scenario confirmedForSenders(final Object... args) {
       actions.add(
           () -> {
             final Map<Address, Long> maxConfirmedNonceBySender = new HashMap<>();
-            final List<Transaction> confirmedTxs = new ArrayList<>();
+            final List<PendingTransaction> confirmedTxs = new ArrayList<>();
             for (int i = 0; i < args.length; i = i + 2) {
               final Sender sender = (Sender) args[i];
               final long nonce = (int) args[i + 1];
@@ -1451,10 +1541,9 @@ public class LayersTest extends BaseTransactionPoolTest {
               nonceBySender.put(sender, nonce + 1);
               for (final var pendingTx : getAll(sender)) {
                 if (pendingTx.getNonce() <= nonce) {
-                  confirmedTxs.add(pendingTx.getTransaction());
+                  confirmedTxs.add(liveTxsBySender.get(sender).remove(pendingTx.getNonce()));
                 }
               }
-
             }
 
             prio.blockAdded(FeeMarket.london(0L), mockBlockHeader(), maxConfirmedNonceBySender);
@@ -1468,38 +1557,25 @@ public class LayersTest extends BaseTransactionPoolTest {
       return this;
     }
 
-    Scenario reorgForSenders(final Object... args) {
-      for (int i = 0; i < args.length; i = i + 2) {
-        final Sender sender = (Sender) args[i];
-        final long nonce = (int) args[i + 1];
-        setAccountNonce(sender, nonce);
-        actions.add((pending, prio, ready, sparse, dropped) -> {
-          reOrgedSenders.add(sender);
-          txsBySender.get(sender).tailMap(nonce).clear();
-        });
-      }
+    public Scenario reorgForSenders(final Object... args) {
+      actions.add(
+          () -> {
+            for (int i = 0; i < args.length; i = i + 2) {
+              final Sender sender = (Sender) args[i];
+              final long nonce = (int) args[i + 1];
+              nonceBySender.put(sender, nonce);
+              sendersWithReorg.add(sender);
+            }
+          });
       return this;
-    }
-
-    private PendingTransaction getOrCreateOrReplace(
-        final Sender sender, final TransactionType type, final long nonce) {
-      return getMaybe(sender, nonce)
-          .map(
-              tx ->
-                  nonceBySender.get(sender) <= nonce
-                      ? tx
-                      : replace(sender,
-                          tx))
-          .orElseGet(() -> create(sender, type, nonce));
-    }
-
-    private PendingTransaction getOrCreate(
-        final Sender sender, final TransactionType type, final long nonce) {
-      return getMaybe(sender, nonce).orElseGet(() -> create(sender, type, nonce));
     }
 
     private PendingTransaction create(
         final Sender sender, final TransactionType type, final long nonce) {
+      if (liveTxsBySender.get(sender).containsKey(nonce)) {
+        fail(
+            "Transaction for sender " + sender.name() + " with nonce " + nonce + " already exists");
+      }
       final var newPendingTx =
           switch (type) {
             case FRONTIER -> createFrontierPendingTransaction(sender, nonce);
@@ -1508,20 +1584,21 @@ public class LayersTest extends BaseTransactionPoolTest {
             case BLOB -> createBlobPendingTransaction(sender, nonce);
             case SET_CODE -> throw new UnsupportedOperationException();
           };
-      txsBySender.get(sender).put(nonce, newPendingTx);
+      liveTxsBySender.get(sender).put(nonce, newPendingTx);
       return newPendingTx;
     }
 
     private PendingTransaction replace(final Sender sender, final PendingTransaction pendingTx) {
       final var replaceTx =
           createRemotePendingTransaction(
-              createTransactionReplacement(pendingTx.getTransaction(), sender.key));
-      txsBySender.get(sender).replace(pendingTx.getNonce(), replaceTx);
+              createTransactionReplacement(pendingTx.getTransaction(), sender.key),
+              sender.hasPriority);
+      liveTxsBySender.get(sender).replace(pendingTx.getNonce(), replaceTx);
       return replaceTx;
     }
 
     private Optional<PendingTransaction> getMaybe(final Sender sender, final long nonce) {
-      return Optional.ofNullable(txsBySender.get(sender).get(nonce));
+      return Optional.ofNullable(liveTxsBySender.get(sender).get(nonce));
     }
 
     private PendingTransaction get(final Sender sender, final long nonce) {
@@ -1529,7 +1606,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
 
     private List<PendingTransaction> getAll(final Sender sender) {
-      return List.copyOf(txsBySender.get(sender).values());
+      return List.copyOf(liveTxsBySender.get(sender).values());
     }
 
     private PendingTransaction createFrontierPendingTransaction(
@@ -1586,7 +1663,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     public Scenario expectedDroppedForSender(final Sender sender, final long... nonce) {
       actions.add(
           () -> {
-            lastExpectedDropped = expectedForSender(sender, nonce);
+            lastExpectedDropped = droppedForSender(sender, nonce);
             assertExpectedDropped(dropped, lastExpectedDropped);
           });
       return this;
@@ -1719,6 +1796,10 @@ public class LayersTest extends BaseTransactionPoolTest {
       return Arrays.stream(nonce).mapToObj(n -> get(sender, n)).toList();
     }
 
+    private List<PendingTransaction> droppedForSender(final Sender sender, final long... nonce) {
+      return Arrays.stream(nonce).mapToObj(n -> droppedTxsBySender.get(sender).get(n)).toList();
+    }
+
     public Scenario expectedNextNonceForSenders(final Object... args) {
       for (int i = 0; i < args.length; i = i + 2) {
         final Sender sender = (Sender) args[i];
@@ -1732,13 +1813,24 @@ public class LayersTest extends BaseTransactionPoolTest {
 
     public Scenario removeForSender(final Sender sender, final long... nonce) {
       actions.add(
-          () ->
-              Arrays.stream(nonce)
-                  .forEach(
-                      n -> {
-                        final var pendingTx = getOrCreate(sender, EIP1559, n);
-                        prio.remove(pendingTx, INVALIDATED);
-                      }));
+          () -> {
+            final var expectedDropNotifications = new ArrayList<PendingTransaction>();
+            Arrays.stream(nonce)
+                .forEach(
+                    n -> {
+                      final var maybeLiveTx = getMaybe(sender, n);
+                      final var pendingTx = maybeLiveTx.orElseGet(() -> create(sender, EIP1559, n));
+                      prio.remove(pendingTx, INVALIDATED);
+                      maybeLiveTx.ifPresent(
+                          liveTx -> {
+                            expectedDropNotifications.add(liveTx);
+                            liveTxsBySender.get(sender).remove(liveTx.getNonce());
+                            droppedTxsBySender.get(sender).put(liveTx.getNonce(), liveTx);
+                          });
+                    });
+            handleDropped(expectedDropNotifications);
+            notificationsCollector.assertDropNotifications(expectedDropNotifications);
+          });
       return this;
     }
 
@@ -1802,6 +1894,10 @@ public class LayersTest extends BaseTransactionPoolTest {
       this.gasFeeMultiplier = gasFeeMultiplier;
       this.hasPriority = hasPriority;
     }
+
+    static Sender getByAddress(final Address address) {
+      return Arrays.stream(values()).filter(s -> s.address.equals(address)).findAny().get();
+    }
   }
 
   static class NotificationsCollector {
@@ -1809,10 +1905,6 @@ public class LayersTest extends BaseTransactionPoolTest {
         Collections.synchronizedList(new ArrayList<>());
     private final List<Transaction> droppedTxsNotifications =
         Collections.synchronizedList(new ArrayList<>());
-//    private final Set<Transaction> consumedAddedTxsNotifications =
-//        Collections.synchronizedSet(new HashSet<>());
-//    private final Set<Transaction> consumedDroppedTxsNotifications =
-//        Collections.synchronizedSet(new HashSet<>());
 
     void collectAddedTxNotification(final Transaction tx) {
       addedTxsNotifications.add(tx);
@@ -1827,27 +1919,24 @@ public class LayersTest extends BaseTransactionPoolTest {
           expectedAddedPendingTxs.stream()
               .map(PendingTransaction::getTransaction)
               .collect(Collectors.toCollection(ArrayList::new));
-//
-//      expectedAddedTxs.removeAll(consumedAddedTxsNotifications);
       await()
           .untilAsserted(
               () ->
                   assertThat(addedTxsNotifications)
                       .describedAs("Added notifications")
                       .containsExactlyInAnyOrderElementsOf(expectedAddedTxs));
-//      consumedAddedTxsNotifications.addAll(addedTxsNotifications);
       addedTxsNotifications.clear();
     }
 
-    void assertDropNotifications(final List<Transaction> expectedDroppedTxs) {
-//      expectedDroppedTxs.removeAll(consumedDroppedTxsNotifications);
+    void assertDropNotifications(final List<PendingTransaction> expectedDroppedPendingTxs) {
+      final var expectedDroppedTxs =
+          expectedDroppedPendingTxs.stream().map(PendingTransaction::getTransaction).toList();
       await()
           .untilAsserted(
               () ->
                   assertThat(droppedTxsNotifications)
                       .describedAs("Dropped notifications")
                       .containsExactlyInAnyOrderElementsOf(expectedDroppedTxs));
-//      consumedDroppedTxsNotifications.addAll(droppedTxsNotifications);
       droppedTxsNotifications.clear();
     }
   }
