@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.PROMOTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.INVALIDATED;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -288,7 +289,7 @@ public class SparseTransactions extends AbstractTransactionsLayer {
       if (deltaGap > 0) {
         final int currGap = gapBySender.get(sender);
         final int newGap;
-        if (removalReason.equals(PoolRemovalReason.INVALIDATED)) {
+        if (removalReason.equals(INVALIDATED)) {
           newGap = currGap + deltaGap;
         } else {
           newGap = deltaGap - 1;
