@@ -62,7 +62,6 @@ import java.util.NavigableMap;
 import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.TreeMap;
-import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import org.junit.jupiter.api.Test;
@@ -1323,7 +1322,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     final AbstractPrioritizedTransactions prio;
     final LayeredPendingTransactions pending;
 
-    final NotificationsCollector notificationsCollector = new NotificationsCollector();
+    final NotificationsChecker notificationsChecker = new NotificationsChecker();
     final List<Runnable> actions = new ArrayList<>();
     List<PendingTransaction> lastExpectedPrioritized = new ArrayList<>();
     List<PendingTransaction> lastExpectedReady = new ArrayList<>();
@@ -1396,9 +1395,8 @@ public class LayersTest extends BaseTransactionPoolTest {
 
       this.pending = new LayeredPendingTransactions(poolConfig, this.prio, ethScheduler);
 
-      this.pending.subscribePendingTransactions(notificationsCollector::collectAddedTxNotification);
-      this.pending.subscribeDroppedTransactions(
-          notificationsCollector::collectDroppedTxNotification);
+      this.pending.subscribePendingTransactions(notificationsChecker::collectAddNotification);
+      this.pending.subscribeDroppedTransactions(notificationsChecker::collectDropNotification);
     }
 
     @Override
@@ -1416,10 +1414,15 @@ public class LayersTest extends BaseTransactionPoolTest {
 
     public Scenario addForSender(
         final Sender sender, final TransactionType type, final long... nonce) {
+      internalAddForSender(sender, type, nonce);
+      actions.add(notificationsChecker::assertExpectedNotifications);
+      return this;
+    }
+
+    private void internalAddForSender(
+        final Sender sender, final TransactionType type, final long... nonce) {
       actions.add(
           () -> {
-            final var expectedAddNotifications = new ArrayList<PendingTransaction>();
-            final var expectedDropNotifications = new ArrayList<PendingTransaction>();
             Arrays.stream(nonce)
                 .forEach(
                     n -> {
@@ -1427,7 +1430,7 @@ public class LayersTest extends BaseTransactionPoolTest {
                       final Account mockSender = mock(Account.class);
                       when(mockSender.getNonce()).thenReturn(nonceBySender.get(sender));
                       pending.addTransaction(pendingTx, Optional.of(mockSender));
-                      expectedAddNotifications.add(pendingTx);
+                      notificationsChecker.addExpectedAddNotification(pendingTx);
                     });
 
             // reorg case
@@ -1435,8 +1438,11 @@ public class LayersTest extends BaseTransactionPoolTest {
               // reorg is removing and re-adding all sender txs, so assert notifications accordingly
               final var currentPendingTxs =
                   liveTxsBySender.get(sender).tailMap(nonce[nonce.length - 1], false).values();
-              expectedDropNotifications.addAll(currentPendingTxs);
-              expectedAddNotifications.addAll(currentPendingTxs);
+              currentPendingTxs.forEach(
+                  pt -> {
+                    notificationsChecker.addExpectedAddNotification(pt);
+                    notificationsChecker.addExpectedDropNotification(pt);
+                  });
               sendersWithReorg.remove(sender);
             }
 
@@ -1445,28 +1451,26 @@ public class LayersTest extends BaseTransactionPoolTest {
                 liveTxsBySender.get(sender).headMap(nonceBySender.get(sender), false).values();
             if (!txsRemovedByReconciliation.isEmpty()) {
               // reconciliation is removing all sender txs, and re-adding only the ones with a
-              // larger nonce,
-              // so assert notifications accordingly
+              // larger nonce, so assert notifications accordingly
               final var reconciledPendingTxs =
                   liveTxsBySender.get(sender).tailMap(nonce[nonce.length - 1], false).values();
-              expectedDropNotifications.addAll(txsRemovedByReconciliation);
-              expectedDropNotifications.addAll(reconciledPendingTxs);
-              expectedAddNotifications.addAll(reconciledPendingTxs);
+              txsRemovedByReconciliation.forEach(notificationsChecker::addExpectedDropNotification);
+              reconciledPendingTxs.forEach(
+                  pt -> {
+                    notificationsChecker.addExpectedDropNotification(pt);
+                    notificationsChecker.addExpectedAddNotification(pt);
+                  });
               txsRemovedByReconciliation.clear();
             }
 
-            handleDropped(expectedDropNotifications);
-
-            notificationsCollector.assertDropNotifications(expectedDropNotifications);
-            notificationsCollector.assertAddNotifications(expectedAddNotifications);
+            handleDropped();
           });
-      return this;
     }
 
-    private void handleDropped(final List<PendingTransaction> expectedDropNotifications) {
+    private void handleDropped() {
       // handle dropped tx due to layer or pool full
       final var droppedTxs = dropped.getEvictedTransactions();
-      expectedDropNotifications.addAll(droppedTxs);
+      droppedTxs.forEach(notificationsChecker::addExpectedDropNotification);
       droppedTxs.stream()
           .forEach(
               pt -> {
@@ -1479,21 +1483,21 @@ public class LayersTest extends BaseTransactionPoolTest {
       for (int i = 0; i < args.length; i = i + 2) {
         final Sender sender = (Sender) args[i];
         final long nonce = (int) args[i + 1];
-        addForSender(sender, nonce);
+        internalAddForSender(sender, EIP1559, nonce);
       }
+      actions.add(notificationsChecker::assertExpectedNotifications);
       return this;
     }
 
     public Scenario replaceForSender(final Sender sender, final long... nonce) {
-      return replaceForSender(sender, EIP1559, nonce);
+      internalReplaceForSender(sender, nonce);
+      actions.add(notificationsChecker::assertExpectedNotifications);
+      return this;
     }
 
-    public Scenario replaceForSender(
-        final Sender sender, final TransactionType type, final long... nonce) {
+    private Scenario internalReplaceForSender(final Sender sender, final long... nonce) {
       actions.add(
           () -> {
-            final var expectedAddNotifications = new ArrayList<PendingTransaction>();
-            final var expectedDropNotifications = new ArrayList<PendingTransaction>();
             Arrays.stream(nonce)
                 .forEach(
                     n -> {
@@ -1504,8 +1508,8 @@ public class LayersTest extends BaseTransactionPoolTest {
                             final Account mockSender = mock(Account.class);
                             when(mockSender.getNonce()).thenReturn(nonceBySender.get(sender));
                             pending.addTransaction(pendingTx, Optional.of(mockSender));
-                            expectedAddNotifications.add(pendingTx);
-                            expectedDropNotifications.add(existingTx);
+                            notificationsChecker.addExpectedAddNotification(pendingTx);
+                            notificationsChecker.addExpectedDropNotification(existingTx);
                           },
                           () ->
                               fail(
@@ -1514,8 +1518,6 @@ public class LayersTest extends BaseTransactionPoolTest {
                                       + " for sender "
                                       + sender.name()));
                     });
-            notificationsCollector.assertDropNotifications(expectedDropNotifications);
-            notificationsCollector.assertAddNotifications(expectedAddNotifications);
           });
       return this;
     }
@@ -1524,8 +1526,9 @@ public class LayersTest extends BaseTransactionPoolTest {
       for (int i = 0; i < args.length; i = i + 2) {
         final Sender sender = (Sender) args[i];
         final long nonce = (int) args[i + 1];
-        replaceForSender(sender, nonce);
+        internalReplaceForSender(sender, nonce);
       }
+      actions.add(notificationsChecker::assertExpectedNotifications);
       return this;
     }
 
@@ -1533,7 +1536,6 @@ public class LayersTest extends BaseTransactionPoolTest {
       actions.add(
           () -> {
             final Map<Address, Long> maxConfirmedNonceBySender = new HashMap<>();
-            final List<PendingTransaction> confirmedTxs = new ArrayList<>();
             for (int i = 0; i < args.length; i = i + 2) {
               final Sender sender = (Sender) args[i];
               final long nonce = (int) args[i + 1];
@@ -1541,13 +1543,14 @@ public class LayersTest extends BaseTransactionPoolTest {
               nonceBySender.put(sender, nonce + 1);
               for (final var pendingTx : getAll(sender)) {
                 if (pendingTx.getNonce() <= nonce) {
-                  confirmedTxs.add(liveTxsBySender.get(sender).remove(pendingTx.getNonce()));
+                  notificationsChecker.addExpectedDropNotification(
+                      liveTxsBySender.get(sender).remove(pendingTx.getNonce()));
                 }
               }
             }
 
             prio.blockAdded(FeeMarket.london(0L), mockBlockHeader(), maxConfirmedNonceBySender);
-            notificationsCollector.assertDropNotifications(confirmedTxs);
+            notificationsChecker.assertExpectedNotifications();
           });
       return this;
     }
@@ -1814,7 +1817,6 @@ public class LayersTest extends BaseTransactionPoolTest {
     public Scenario removeForSender(final Sender sender, final long... nonce) {
       actions.add(
           () -> {
-            final var expectedDropNotifications = new ArrayList<PendingTransaction>();
             Arrays.stream(nonce)
                 .forEach(
                     n -> {
@@ -1823,13 +1825,13 @@ public class LayersTest extends BaseTransactionPoolTest {
                       prio.remove(pendingTx, INVALIDATED);
                       maybeLiveTx.ifPresent(
                           liveTx -> {
-                            expectedDropNotifications.add(liveTx);
+                            notificationsChecker.addExpectedDropNotification(liveTx);
                             liveTxsBySender.get(sender).remove(liveTx.getNonce());
                             droppedTxsBySender.get(sender).put(liveTx.getNonce(), liveTx);
                           });
                     });
-            handleDropped(expectedDropNotifications);
-            notificationsCollector.assertDropNotifications(expectedDropNotifications);
+            handleDropped();
+            notificationsChecker.assertExpectedNotifications();
           });
       return this;
     }
@@ -1900,44 +1902,55 @@ public class LayersTest extends BaseTransactionPoolTest {
     }
   }
 
-  static class NotificationsCollector {
-    private final List<Transaction> addedTxsNotifications =
+  static class NotificationsChecker {
+    private final List<Transaction> collectedAddNotifications =
         Collections.synchronizedList(new ArrayList<>());
-    private final List<Transaction> droppedTxsNotifications =
+    private final List<Transaction> collectedDropNotifications =
         Collections.synchronizedList(new ArrayList<>());
+    private final List<Transaction> expectedAddNotifications = new ArrayList<>();
+    private final List<Transaction> expectedDropNotifications = new ArrayList<>();
 
-    void collectAddedTxNotification(final Transaction tx) {
-      addedTxsNotifications.add(tx);
+    void collectAddNotification(final Transaction tx) {
+      collectedAddNotifications.add(tx);
     }
 
-    void collectDroppedTxNotification(final Transaction tx) {
-      droppedTxsNotifications.add(tx);
+    void collectDropNotification(final Transaction tx) {
+      collectedDropNotifications.add(tx);
     }
 
-    void assertAddNotifications(final List<PendingTransaction> expectedAddedPendingTxs) {
-      final var expectedAddedTxs =
-          expectedAddedPendingTxs.stream()
-              .map(PendingTransaction::getTransaction)
-              .collect(Collectors.toCollection(ArrayList::new));
+    void addExpectedAddNotification(final PendingTransaction tx) {
+      expectedAddNotifications.add(tx.getTransaction());
+    }
+
+    void addExpectedDropNotification(final PendingTransaction tx) {
+      expectedDropNotifications.add(tx.getTransaction());
+    }
+
+    void assertExpectedNotifications() {
+      assertAddNotifications(expectedAddNotifications);
+      assertDropNotifications(expectedDropNotifications);
+    }
+
+    private void assertAddNotifications(final List<Transaction> expectedAddedTxs) {
       await()
           .untilAsserted(
               () ->
-                  assertThat(addedTxsNotifications)
+                  assertThat(collectedAddNotifications)
                       .describedAs("Added notifications")
                       .containsExactlyInAnyOrderElementsOf(expectedAddedTxs));
-      addedTxsNotifications.clear();
+      collectedAddNotifications.clear();
+      expectedAddNotifications.clear();
     }
 
-    void assertDropNotifications(final List<PendingTransaction> expectedDroppedPendingTxs) {
-      final var expectedDroppedTxs =
-          expectedDroppedPendingTxs.stream().map(PendingTransaction::getTransaction).toList();
+    private void assertDropNotifications(final List<Transaction> expectedDroppedTxs) {
       await()
           .untilAsserted(
               () ->
-                  assertThat(droppedTxsNotifications)
+                  assertThat(collectedDropNotifications)
                       .describedAs("Dropped notifications")
                       .containsExactlyInAnyOrderElementsOf(expectedDroppedTxs));
-      droppedTxsNotifications.clear();
+      collectedDropNotifications.clear();
+      expectedDropNotifications.clear();
     }
   }
 
