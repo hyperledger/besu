@@ -64,4 +64,6 @@ public interface WorldStateArchive extends Closeable {
       final Address accountAddress,
       final List<UInt256> accountStorageKeys,
       final Function<Optional<WorldStateProof>, ? extends Optional<U>> mapper);
+
+  WorldStateKeyValueStorage getWorldStateStorage();
 }

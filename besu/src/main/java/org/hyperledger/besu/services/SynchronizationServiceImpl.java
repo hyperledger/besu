@@ -139,7 +139,7 @@ public class SynchronizationServiceImpl implements SynchronizationService {
         archive -> {
           archive.getDefaultWorldStateConfig().setTrieDisabled(true);
           final DiffBasedWorldStateKeyValueStorage worldStateStorage =
-              archive.getWorldStateKeyValueStorage();
+              archive.getWorldStateStorage();
           final Optional<Hash> worldStateBlockHash = worldStateStorage.getWorldStateBlockHash();
           final Optional<Bytes> worldStateRootHash = worldStateStorage.getWorldStateRootHash();
           if (worldStateRootHash.isPresent() && worldStateBlockHash.isPresent()) {

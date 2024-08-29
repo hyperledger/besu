@@ -85,6 +85,13 @@ public class BlockchainSetupUtil {
     return blockchain;
   }
 
+  public Blockchain importAllBlocks(
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode) {
+    importBlocks(blocks, headerValidationMode, ommerValidationMode);
+    return blockchain;
+  }
+
   public void importFirstBlocks(final int count) {
     importBlocks(blocks.subList(0, count));
   }
@@ -124,6 +131,10 @@ public class BlockchainSetupUtil {
 
   public static BlockchainSetupUtil forUpgradedFork() {
     return createForEthashChain(BlockTestUtil.getUpgradedForkResources(), DataStorageFormat.FOREST);
+  }
+
+  public static BlockchainSetupUtil forSnapTesting(final DataStorageFormat storageFormat) {
+    return createForEthashChain(BlockTestUtil.getSnapTestChainResources(), storageFormat);
   }
 
   public static BlockchainSetupUtil createForEthashChain(
@@ -241,6 +252,13 @@ public class BlockchainSetupUtil {
   }
 
   private void importBlocks(final List<Block> blocks) {
+    importBlocks(blocks, HeaderValidationMode.FULL, HeaderValidationMode.FULL);
+  }
+
+  private void importBlocks(
+      final List<Block> blocks,
+      final HeaderValidationMode headerValidationMode,
+      final HeaderValidationMode ommerValidationMode) {
     for (final Block block : blocks) {
       if (block.getHeader().getNumber() == BlockHeader.GENESIS_BLOCK_NUMBER) {
         continue;
@@ -248,7 +266,8 @@ public class BlockchainSetupUtil {
       final ProtocolSpec protocolSpec = protocolSchedule.getByBlockHeader(block.getHeader());
       final BlockImporter blockImporter = protocolSpec.getBlockImporter();
       final BlockImportResult result =
-          blockImporter.importBlock(protocolContext, block, HeaderValidationMode.FULL);
+          blockImporter.importBlock(
+              protocolContext, block, headerValidationMode, ommerValidationMode);
       if (!result.isImported()) {
         throw new IllegalStateException("Unable to import block " + block.getHeader().getNumber());
       }

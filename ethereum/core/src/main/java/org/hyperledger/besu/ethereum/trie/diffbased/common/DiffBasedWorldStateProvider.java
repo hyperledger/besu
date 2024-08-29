@@ -265,7 +265,8 @@ public abstract class DiffBasedWorldStateProvider implements WorldStateArchive {
     worldStateKeyValueStorage.clearTrie();
   }
 
-  public DiffBasedWorldStateKeyValueStorage getWorldStateKeyValueStorage() {
+  @Override
+  public DiffBasedWorldStateKeyValueStorage getWorldStateStorage() {
     return worldStateKeyValueStorage;
   }
 
