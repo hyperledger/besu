@@ -349,8 +349,18 @@ class ECRECPrecompiledContractTest {
 
   @ParameterizedTest
   @MethodSource("parameters")
-  void shouldRecoverAddress(final String inputString, final String expectedResult) {
+  void shouldRecoverAddressNative(final String inputString, final String expectedResult) {
+    contract.signatureAlgorithm.maybeEnableNative();
+    final Bytes input = Bytes.fromHexString(inputString);
+    final Bytes expected =
+        expectedResult == null ? Bytes.EMPTY : Bytes32.fromHexString(expectedResult);
+    assertThat(contract.computePrecompile(input, messageFrame).getOutput()).isEqualTo(expected);
+  }
 
+  @ParameterizedTest
+  @MethodSource("parameters")
+  void shouldRecoverAddressJava(final String inputString, final String expectedResult) {
+    contract.signatureAlgorithm.disableNative();
     final Bytes input = Bytes.fromHexString(inputString);
     final Bytes expected =
         expectedResult == null ? Bytes.EMPTY : Bytes32.fromHexString(expectedResult);

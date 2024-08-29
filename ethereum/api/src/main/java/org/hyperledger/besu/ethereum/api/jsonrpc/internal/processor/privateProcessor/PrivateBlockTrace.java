@@ -12,29 +12,19 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.components;
+package org.hyperledger.besu.ethereum.api.jsonrpc.internal.processor.privateProcessor;
 
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import java.util.List;
 
-import javax.inject.Singleton;
+public class PrivateBlockTrace {
 
-import dagger.Module;
-import dagger.Provides;
+  private final List<PrivateTransactionTrace> transactionTraces;
 
-@Module
-public class NoOpMetricsSystemModule {
-
-  @Provides
-  @Singleton
-  MetricsSystem provideMetricsSystem() {
-    return new NoOpMetricsSystem();
+  public PrivateBlockTrace(final List<PrivateTransactionTrace> transactionTraces) {
+    this.transactionTraces = transactionTraces;
   }
 
-  @Provides
-  @Singleton
-  ObservableMetricsSystem provideObservableMetricsSystem() {
-    return new NoOpMetricsSystem();
+  public List<PrivateTransactionTrace> getTransactionTraces() {
+    return transactionTraces;
   }
 }

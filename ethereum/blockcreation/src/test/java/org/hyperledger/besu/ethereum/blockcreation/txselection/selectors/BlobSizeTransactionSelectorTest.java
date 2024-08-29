@@ -76,7 +76,9 @@ class BlobSizeTransactionSelectorTest {
 
     final var nonBlobTx = createEIP1559PendingTransaction();
 
-    final var txEvaluationContext = new TransactionEvaluationContext(nonBlobTx, null, null, null);
+    final var txEvaluationContext =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), nonBlobTx, null, null, null);
 
     final var result =
         selector.evaluateTransactionPreProcessing(txEvaluationContext, selectionResults);
@@ -94,7 +96,9 @@ class BlobSizeTransactionSelectorTest {
 
     final var firstBlobTx = createBlobPendingTransaction(MAX_BLOBS);
 
-    final var txEvaluationContext = new TransactionEvaluationContext(firstBlobTx, null, null, null);
+    final var txEvaluationContext =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
 
     when(selectionResults.getCumulativeBlobGasUsed()).thenReturn(0L);
 
@@ -112,7 +116,9 @@ class BlobSizeTransactionSelectorTest {
 
     final var firstBlobTx = createBlobPendingTransaction(1);
 
-    final var txEvaluationContext = new TransactionEvaluationContext(firstBlobTx, null, null, null);
+    final var txEvaluationContext =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
 
     when(selectionResults.getCumulativeBlobGasUsed()).thenReturn(MAX_BLOB_GAS);
 
@@ -132,7 +138,9 @@ class BlobSizeTransactionSelectorTest {
 
     final var firstBlobTx = createBlobPendingTransaction(MAX_BLOBS);
 
-    final var txEvaluationContext = new TransactionEvaluationContext(firstBlobTx, null, null, null);
+    final var txEvaluationContext =
+        new TransactionEvaluationContext(
+            blockSelectionContext.pendingBlockHeader(), firstBlobTx, null, null, null);
 
     when(selectionResults.getCumulativeBlobGasUsed()).thenReturn(MAX_BLOB_GAS - 1);
 

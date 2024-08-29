@@ -109,6 +109,8 @@ public class PrivacyRequestFactory {
   public static class GetPrivateTransactionResponse
       extends Response<PrivateTransactionGroupResponse> {}
 
+  public static class PrivTraceTransaction extends Response<String> {}
+
   public static class CreatePrivacyGroupResponse extends Response<String> {}
 
   public static class DeletePrivacyGroupResponse extends Response<String> {}
@@ -453,6 +455,16 @@ public class PrivacyRequestFactory {
 
     return new Request<>(
         "priv_getLogs", Arrays.asList(privacyGroupId, filterParameter), web3jService, EthLog.class);
+  }
+
+  public Request<?, PrivTraceTransaction> privTraceTransaction(
+      final String privacyGroupId, final Hash transactionHash) {
+
+    return new Request<>(
+        "priv_traceTransaction",
+        Arrays.asList(privacyGroupId, transactionHash),
+        web3jService,
+        PrivTraceTransaction.class);
   }
 
   public Request<?, EthFilter> privNewFilter(

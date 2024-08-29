@@ -13,7 +13,7 @@
     "id": 0,
     "error" : {
       "code" : -32602,
-      "message" : "Invalid params"
+      "message" : "Invalid block, unable to parse RLP"
     }
   },
   "statusCode": 200

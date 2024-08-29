@@ -12,20 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.services.kvstore;
+package org.hyperledger.besu.metrics.prometheus;
 
-import org.hyperledger.besu.plugin.services.storage.KeyValueStorage;
-import org.hyperledger.besu.plugin.services.storage.SegmentedKeyValueStorage;
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-public class InMemoryKeyValueStorageTest extends AbstractSegmentedKeyValueStorageTest {
+import io.prometheus.client.Histogram;
 
-  @Override
-  protected KeyValueStorage createStore() {
-    return new InMemoryKeyValueStorage();
+class PrometheusSimpleTimer implements LabelledMetric<OperationTimer> {
+
+  private final Histogram histogram;
+
+  public PrometheusSimpleTimer(final Histogram histogram) {
+    this.histogram = histogram;
   }
 
   @Override
-  public SegmentedKeyValueStorage createSegmentedStore() {
-    return new SegmentedInMemoryKeyValueStorage();
+  public OperationTimer labels(final String... labels) {
+    final Histogram.Child metric = histogram.labels(labels);
+    return () -> metric.startTimer()::observeDuration;
   }
 }

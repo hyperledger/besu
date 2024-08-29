@@ -27,7 +27,6 @@ import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolScheduleBuilder;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
-import org.hyperledger.besu.evm.EvmSpecVersion;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
@@ -71,13 +70,12 @@ class MainnetGenesisFileModule extends GenesisFileModule {
       }
     }
 
-    var schedules = createSchedules();
-    var schedule =
-        schedules.get(
-            fork.orElse(EvmSpecVersion.defaultVersion().getName())
-                .toLowerCase(Locale.getDefault()));
-    if (schedule != null) {
-      return schedule.get();
+    if (fork.isPresent()) {
+      var schedules = createSchedules(configOptions.getChainId().orElse(BigInteger.valueOf(1337)));
+      var schedule = schedules.get(fork.get().toLowerCase(Locale.getDefault()));
+      if (schedule != null) {
+        return schedule.get();
+      }
     }
 
     return MainnetProtocolSchedule.fromConfig(
@@ -89,9 +87,9 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         new NoOpMetricsSystem());
   }
 
-  public static Map<String, Supplier<ProtocolSchedule>> createSchedules() {
+  public static Map<String, Supplier<ProtocolSchedule>> createSchedules(final BigInteger chainId) {
     return Map.ofEntries(
-        Map.entry("frontier", createSchedule(new StubGenesisConfigOptions())),
+        Map.entry("frontier", createSchedule(new StubGenesisConfigOptions().chainId(chainId))),
         Map.entry("homestead", createSchedule(new StubGenesisConfigOptions().homesteadBlock(0))),
         Map.entry("eip150", createSchedule(new StubGenesisConfigOptions().eip150Block(0))),
         Map.entry("eip158", createSchedule(new StubGenesisConfigOptions().eip158Block(0))),
@@ -102,43 +100,86 @@ class MainnetGenesisFileModule extends GenesisFileModule {
         Map.entry(
             "constantinoplefix", createSchedule(new StubGenesisConfigOptions().petersburgBlock(0))),
         Map.entry("petersburg", createSchedule(new StubGenesisConfigOptions().petersburgBlock(0))),
-        Map.entry("istanbul", createSchedule(new StubGenesisConfigOptions().istanbulBlock(0))),
         Map.entry(
-            "muirglacier", createSchedule(new StubGenesisConfigOptions().muirGlacierBlock(0))),
-        Map.entry("berlin", createSchedule(new StubGenesisConfigOptions().berlinBlock(0))),
+            "istanbul",
+            createSchedule(new StubGenesisConfigOptions().istanbulBlock(0).chainId(chainId))),
+        Map.entry(
+            "muirglacier",
+            createSchedule(new StubGenesisConfigOptions().muirGlacierBlock(0).chainId(chainId))),
+        Map.entry(
+            "berlin",
+            createSchedule(new StubGenesisConfigOptions().berlinBlock(0).chainId(chainId))),
         Map.entry(
             "london",
-            createSchedule(new StubGenesisConfigOptions().londonBlock(0).baseFeePerGas(0x0a))),
+            createSchedule(
+                new StubGenesisConfigOptions()
+                    .londonBlock(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))),
         Map.entry(
-            "arrowglacier", createSchedule(new StubGenesisConfigOptions().arrowGlacierBlock(0))),
+            "arrowglacier",
+            createSchedule(
+                new StubGenesisConfigOptions()
+                    .arrowGlacierBlock(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))),
         Map.entry(
-            "grayglacier", createSchedule(new StubGenesisConfigOptions().grayGlacierBlock(0))),
+            "grayglacier",
+            createSchedule(
+                new StubGenesisConfigOptions()
+                    .grayGlacierBlock(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))),
         Map.entry(
             "merge",
             createSchedule(
-                new StubGenesisConfigOptions().mergeNetSplitBlock(0).baseFeePerGas(0x0a))),
+                new StubGenesisConfigOptions()
+                    .mergeNetSplitBlock(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))),
         Map.entry(
             "shanghai",
-            createSchedule(new StubGenesisConfigOptions().shanghaiTime(0).baseFeePerGas(0x0a))),
+            createSchedule(
+                new StubGenesisConfigOptions()
+                    .shanghaiTime(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))),
         Map.entry(
             "cancun",
-            createSchedule(new StubGenesisConfigOptions().cancunTime(0).baseFeePerGas(0x0a))),
+            createSchedule(
+                new StubGenesisConfigOptions().cancunTime(0).baseFeePerGas(0x0a).chainId(chainId))),
         Map.entry(
             "cancuneof",
-            createSchedule(new StubGenesisConfigOptions().cancunEOFTime(0).baseFeePerGas(0x0a))),
+            createSchedule(
+                new StubGenesisConfigOptions()
+                    .cancunEOFTime(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))),
         Map.entry(
             "prague",
-            createSchedule(new StubGenesisConfigOptions().pragueTime(0).baseFeePerGas(0x0a))),
+            createSchedule(
+                new StubGenesisConfigOptions().pragueTime(0).baseFeePerGas(0x0a).chainId(chainId))),
         Map.entry(
             "pragueeof",
-            createSchedule(new StubGenesisConfigOptions().pragueEOFTime(0).baseFeePerGas(0x0a))),
+            createSchedule(
+                new StubGenesisConfigOptions()
+                    .pragueEOFTime(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))),
         Map.entry(
             "futureeips",
-            createSchedule(new StubGenesisConfigOptions().futureEipsTime(0).baseFeePerGas(0x0a))),
+            createSchedule(
+                new StubGenesisConfigOptions()
+                    .futureEipsTime(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))),
         Map.entry(
             "experimentaleips",
             createSchedule(
-                new StubGenesisConfigOptions().experimentalEipsTime(0).baseFeePerGas(0x0a))));
+                new StubGenesisConfigOptions()
+                    .experimentalEipsTime(0)
+                    .baseFeePerGas(0x0a)
+                    .chainId(chainId))));
   }
 
   private static Supplier<ProtocolSchedule> createSchedule(final GenesisConfigOptions options) {

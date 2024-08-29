@@ -51,7 +51,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
-import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -152,13 +151,13 @@ public class EvmToolCommand implements Runnable {
       names = {"--sender"},
       paramLabel = "<address>",
       description = "Calling address for this invocation.")
-  private final Address sender = Address.ZERO;
+  private final Address sender = Address.fromHexString("0x73656e646572");
 
   @Option(
       names = {"--receiver"},
       paramLabel = "<address>",
       description = "Receiving address for this invocation.")
-  private final Address receiver = Address.ZERO;
+  private final Address receiver = Address.fromHexString("0x7265636569766572");
 
   @Option(
       names = {"--create"},
@@ -169,7 +168,7 @@ public class EvmToolCommand implements Runnable {
       names = {"--contract"},
       paramLabel = "<address>",
       description = "The address holding the contract code.")
-  private final Address contract = Address.ZERO;
+  private final Address contract = Address.fromHexString("0x7265636569766572");
 
   @Option(
       names = {"--coinbase"},
@@ -379,7 +378,7 @@ public class EvmToolCommand implements Runnable {
       } else if (genesisFile != null) {
         genesisFileModule = GenesisFileModule.createGenesisModule(genesisFile);
       } else {
-        genesisFileModule = GenesisFileModule.createGenesisModule(NetworkName.DEV);
+        genesisFileModule = GenesisFileModule.createGenesisModule();
       }
       final EvmToolComponent component =
           DaggerEvmToolComponent.builder()
@@ -463,10 +462,12 @@ public class EvmToolCommand implements Runnable {
             BlockHeaderBuilder.create()
                 .parentHash(Hash.EMPTY)
                 .coinbase(coinbase)
-                .difficulty(Difficulty.ONE)
-                .number(1)
-                .gasLimit(5000)
-                .timestamp(Instant.now().toEpochMilli())
+                .difficulty(
+                    Difficulty.fromHexString(
+                        genesisFileModule.providesGenesisConfigFile().getDifficulty()))
+                .number(0)
+                .gasLimit(genesisFileModule.providesGenesisConfigFile().getGasLimit())
+                .timestamp(0)
                 .ommersHash(Hash.EMPTY_LIST_HASH)
                 .stateRoot(Hash.EMPTY_TRIE_HASH)
                 .transactionsRoot(Hash.EMPTY)
@@ -474,10 +475,17 @@ public class EvmToolCommand implements Runnable {
                 .logsBloom(LogsBloomFilter.empty())
                 .gasUsed(0)
                 .extraData(Bytes.EMPTY)
-                .mixHash(Hash.EMPTY)
+                .mixHash(Hash.ZERO)
                 .nonce(0)
                 .blockHeaderFunctions(new MainnetBlockHeaderFunctions())
-                .baseFee(component.getBlockchain().getChainHeadHeader().getBaseFee().orElse(null))
+                .baseFee(
+                    component
+                        .getBlockchain()
+                        .getChainHeadHeader()
+                        .getBaseFee()
+                        .or(() -> genesisFileModule.providesGenesisConfigFile().getBaseFeePerGas())
+                        .orElse(
+                            protocolSpec.getFeeMarket().implementsBaseFee() ? Wei.of(0xa) : null))
                 .buildBlockHeader();
 
         Address contractAddress =
@@ -518,37 +526,38 @@ public class EvmToolCommand implements Runnable {
               lastTime = stopwatch.elapsed().toNanos();
             }
             if (lastLoop) {
-              if (messageFrame.getExceptionalHaltReason().isPresent()) {
-                out.println(messageFrame.getExceptionalHaltReason().get());
-              }
-              if (messageFrame.getRevertReason().isPresent()) {
-                out.println(
-                    new String(messageFrame.getRevertReason().get().toArrayUnsafe(), UTF_8));
-              }
+              messageFrame
+                  .getExceptionalHaltReason()
+                  .ifPresent(haltReason -> out.println(haltReason));
+              messageFrame
+                  .getRevertReason()
+                  .ifPresent(bytes -> out.println(new String(bytes.toArrayUnsafe(), UTF_8)));
             }
-          }
-
-          if (lastLoop && messageFrameStack.isEmpty()) {
-            final long evmGas = txGas - messageFrame.getRemainingGas();
-            final JsonObject resultLine = new JsonObject();
-            resultLine.put("gasUser", "0x" + Long.toHexString(evmGas));
-            if (!noTime) {
-              resultLine.put("timens", lastTime).put("time", lastTime / 1000);
-            }
-            resultLine
-                .put("gasTotal", "0x" + Long.toHexString(evmGas))
-                .put("output", messageFrame.getOutputData().toHexString());
-            out.println();
-            out.println(resultLine);
           }
         }
         lastTime = stopwatch.elapsed().toNanos();
         stopwatch.reset();
-        if (showJsonAlloc && lastLoop) {
+        if (lastLoop) {
           initialMessageFrame.getSelfDestructs().forEach(updater::deleteAccount);
+          updater.clearAccountsThatAreEmpty();
           updater.commit();
           MutableWorldState worldState = component.getWorldState();
-          dumpWorldState(worldState, out);
+          final long evmGas = txGas - initialMessageFrame.getRemainingGas();
+          final JsonObject resultLine = new JsonObject();
+          resultLine
+              .put("stateRoot", worldState.rootHash().toHexString())
+              .put("output", initialMessageFrame.getOutputData().toHexString())
+              .put("gasUsed", "0x" + Long.toHexString(evmGas))
+              .put("pass", initialMessageFrame.getExceptionalHaltReason().isEmpty())
+              .put("fork", protocolSpec.getName());
+          if (!noTime) {
+            resultLine.put("timens", lastTime).put("time", lastTime / 1000);
+          }
+          out.println(resultLine);
+
+          if (showJsonAlloc) {
+            dumpWorldState(worldState, out);
+          }
         }
       } while (remainingIters-- > 0);
 
@@ -569,7 +578,7 @@ public class EvmToolCommand implements Runnable {
     out.println("{");
     worldState
         .streamAccounts(Bytes32.ZERO, Integer.MAX_VALUE)
-        .sorted(Comparator.comparing(o -> o.getAddress().get().toHexString()))
+        .sorted(Comparator.comparing(o -> o.getAddress().orElse(Address.ZERO).toHexString()))
         .forEach(
             a -> {
               var account = worldState.get(a.getAddress().get());
@@ -582,7 +591,7 @@ public class EvmToolCommand implements Runnable {
                       .map(
                           e ->
                               Map.entry(
-                                  e.getKey().get(),
+                                  e.getKey().orElse(UInt256.ZERO),
                                   account.getStorageValue(UInt256.fromBytes(e.getKey().get()))))
                       .filter(e -> !e.getValue().isZero())
                       .sorted(Map.Entry.comparingByKey())

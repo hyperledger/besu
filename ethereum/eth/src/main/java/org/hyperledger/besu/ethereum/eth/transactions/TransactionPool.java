@@ -706,7 +706,8 @@ public class TransactionPool implements BlockAddedObserver {
 
             isCancelled.set(false);
             operationInProgress.set(
-                CompletableFuture.runAsync(operation).thenRun(diskAccessLock::release));
+                CompletableFuture.runAsync(operation)
+                    .whenComplete((res, err) -> diskAccessLock.release()));
             return operationInProgress.get();
           } else {
             CompletableFuture.failedFuture(

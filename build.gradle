@@ -45,6 +45,10 @@ sonarqube {
   }
 }
 
+tasks.register('spotlessCheckFast') {
+  dependsOn subprojects.collect { it.tasks.withType(com.diffplug.gradle.spotless.SpotlessCheck) }
+}
+
 project.tasks["sonarqube"].dependsOn "jacocoRootReport"
 
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
@@ -159,6 +163,10 @@ allprojects {
     maven {
       url 'https://splunk.jfrog.io/splunk/ext-releases-local'
       content { includeGroupByRegex('com\\.splunk\\..*') }
+    }
+    maven {
+      url 'https://gitlab.com/api/v4/projects/19871573/packages/maven'
+      content { includeGroupByRegex('com\\.gitlab\\.javafuzz(\\..*)?') }
     }
 
     mavenCentral()
@@ -428,6 +436,12 @@ allprojects {
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
+
+  plugins.withType(JavaPlugin) {
+    tasks.withType(JavaCompile) {
+      it.dependsOn(rootProject.tasks.named('spotlessCheckFast'))
+    }
+  }
 }
 
 task deploy() {}
@@ -451,7 +465,7 @@ task checkMavenCoordinateCollisions {
 
 tasks.register('checkPluginAPIChanges', DefaultTask) {}
 checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
-check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
+check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions', 'spotlessCheckFast')
 
 subprojects {
 
@@ -816,7 +830,7 @@ task distDocker {
         dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
         println "Building for platform ${project.getProperty('docker-platform')}"
       }
-      def gitDetails = getGitCommitDetails(7)
+      def gitDetails = getGitCommitDetails()
       executable shell
       workingDir dockerBuildDir
       args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
@@ -983,18 +997,18 @@ def buildTime() {
 @Memoized
 def calculateVersion() {
   // Regex pattern for basic calendar versioning, with provision to omit patch rev
-  def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
-
-  if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
-    if (project.hasProperty('versionappendcommit') && project.versionappendcommit == "true") {
-      def gitDetails = getGitCommitDetails(7) // Adjust length as needed
-      return "${project.version}-${gitDetails.hash}"
-    }
-    return "${project.version}"
-  } else {
+  def calVerPattern = ~/\d+\.\d+(\.\d+)?(-\w+)?$/
+  def calVerWithCommitPattern = ~/\d+\.\d+(\.\d+)?(-\w+)?-[0-9a-fA-F]{7,8}$/
+  def gitDetails = getGitCommitDetails() // Adjust length as needed
+  if (project.hasProperty('version') && project.version =~ calVerWithCommitPattern) {
+    println("Utilising supplied version as it appears to already contain commit hash: ${project.version}")
+    return project.version
+  } else if (project.hasProperty('version') && project.version =~ calVerPattern) {
+    println("Generating project version using supplied version: ${project.version}-${gitDetails.hash}")
+    return "${project.version}-${gitDetails.hash}"
+  }  else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
-    println("Generating project version as supplied is version not semver: ${project.version}")
-    def gitDetails = getGitCommitDetails(7) // Adjust length as needed
+    println("Generating project version using date (${gitDetails.date}-develop-${gitDetails.hash}), as supplied version is not semver: ${project.version}")
     return "${gitDetails.date}-develop-${gitDetails.hash}"
   }
 }

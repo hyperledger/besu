@@ -16,6 +16,11 @@ package org.hyperledger.besu.ethereum.mainnet;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.BERLIN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.CANCUN;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.LONDON;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.PRAGUE;
+import static org.hyperledger.besu.datatypes.HardforkId.MainnetHardforkId.SHANGHAI;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
@@ -32,6 +37,7 @@ import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
 import java.math.BigInteger;
+import java.util.Optional;
 import java.util.OptionalLong;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -120,6 +126,44 @@ class ProtocolScheduleBuilderTest {
                 .getByBlockHeader(blockHeader(56, PRE_SHANGHAI_TIMESTAMP + 6))
                 .getName())
         .isEqualTo("Prague");
+  }
+
+  @Test
+  void milestoneForShouldQueryAllAvailableHardforks() {
+    final long PRAGUE_TIME = 1722333828L;
+
+    when(configOptions.getHomesteadBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getByzantiumBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getConstantinopleBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getPetersburgBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getIstanbulBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getBerlinBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getLondonBlockNumber()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getShanghaiTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getCancunTime()).thenReturn(OptionalLong.of(0));
+    when(configOptions.getPragueTime()).thenReturn(OptionalLong.of(PRAGUE_TIME));
+
+    final ProtocolSchedule protocolSchedule = builder.createProtocolSchedule();
+
+    final Optional<Long> maybeBerlinMileStone = protocolSchedule.milestoneFor(BERLIN);
+    assertThat(maybeBerlinMileStone).isPresent();
+    assertThat(maybeBerlinMileStone.get()).isEqualTo(0);
+
+    final Optional<Long> maybeLondonMileStone = protocolSchedule.milestoneFor(LONDON);
+    assertThat(maybeLondonMileStone).isPresent();
+    assertThat(maybeLondonMileStone.get()).isEqualTo(0);
+
+    final Optional<Long> maybeShanghaiMileStone = protocolSchedule.milestoneFor(SHANGHAI);
+    assertThat(maybeShanghaiMileStone).isPresent();
+    assertThat(maybeShanghaiMileStone.get()).isEqualTo(0);
+
+    final Optional<Long> maybeCancunMileStone = protocolSchedule.milestoneFor(CANCUN);
+    assertThat(maybeCancunMileStone).isPresent();
+    assertThat(maybeCancunMileStone.get()).isEqualTo(0);
+
+    final Optional<Long> maybePragueMileStone = protocolSchedule.milestoneFor(PRAGUE);
+    assertThat(maybePragueMileStone).isPresent();
+    assertThat(maybePragueMileStone.get()).isEqualTo(PRAGUE_TIME);
   }
 
   @Test
