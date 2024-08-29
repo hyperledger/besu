@@ -229,6 +229,7 @@ public class ExtDelegateCallOperationTest {
     final var messageFrame =
         new TestMessageFrameBuilder()
             .initialGas(400000)
+            .code(SIMPLE_EOF)
             .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
