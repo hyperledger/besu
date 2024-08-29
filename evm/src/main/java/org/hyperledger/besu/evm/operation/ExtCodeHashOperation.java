@@ -27,8 +27,7 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.OverflowException;
 import org.hyperledger.besu.evm.internal.UnderflowException;
 import org.hyperledger.besu.evm.internal.Words;
-
-import java.util.Optional;
+import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
 
 import org.apache.tuweni.bytes.Bytes;
 
@@ -87,10 +86,11 @@ public class ExtCodeHashOperation extends AbstractOperation {
       final Account account = frame.getWorldUpdater().get(address);
 
       if (account != null) {
-        final Optional<OperationResult> deductDelegatedCodeGasResult =
+        final DelegatedCodeGasCostHelper.Result result =
             deductDelegatedCodeGasCost(frame, gasCalculator(), account);
-        if (deductDelegatedCodeGasResult.isPresent()) {
-          return deductDelegatedCodeGasResult.get();
+        if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
+          return new Operation.OperationResult(
+              result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
         }
       }
 

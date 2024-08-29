@@ -26,8 +26,8 @@ import org.hyperledger.besu.evm.frame.ExceptionalHaltReason;
 import org.hyperledger.besu.evm.frame.MessageFrame;
 import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 import org.hyperledger.besu.evm.internal.Words;
+import org.hyperledger.besu.evm.worldstate.DelegatedCodeGasCostHelper;
 
-import java.util.Optional;
 import javax.annotation.Nonnull;
 
 import org.apache.tuweni.bytes.Bytes;
@@ -119,10 +119,11 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     final Account contract = frame.getWorldUpdater().get(to);
 
     if (contract != null) {
-      final Optional<OperationResult> deductDelegatedCodeGasCostResult =
+      final DelegatedCodeGasCostHelper.Result result =
           deductDelegatedCodeGasCost(frame, gasCalculator(), contract);
-      if (deductDelegatedCodeGasCostResult.isPresent()) {
-        return deductDelegatedCodeGasCostResult.get();
+      if (result.status() != DelegatedCodeGasCostHelper.Status.SUCCESS) {
+        return new Operation.OperationResult(
+            result.gasCost(), ExceptionalHaltReason.INSUFFICIENT_GAS);
       }
     }
 
