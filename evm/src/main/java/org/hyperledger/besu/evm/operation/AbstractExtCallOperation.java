@@ -146,7 +146,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     frame.clearReturnData();
 
     // delegate calls to prior EOF versions are prohibited
-    if (isDelegate() && frame.getCode().getEofVersion() != code.getEofVersion()) {
+    if (isDelegate() && callingCode.getEofVersion() != code.getEofVersion()) {
       return softFailure(frame, cost);
     }
 
