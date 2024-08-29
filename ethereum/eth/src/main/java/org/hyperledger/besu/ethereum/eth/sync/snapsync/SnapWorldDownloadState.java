@@ -36,6 +36,8 @@ import org.hyperledger.besu.ethereum.worldstate.FlatDbMode;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
 import org.hyperledger.besu.metrics.BesuMetricCategory;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
+import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.plugin.services.storage.DataStorageFormat;
 import org.hyperledger.besu.services.tasks.InMemoryTaskQueue;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
@@ -92,6 +94,8 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
   // metrics around the snapsync
   private final SnapSyncMetricsManager metricsManager;
 
+  private final AtomicBoolean trieHealStartedBefore = new AtomicBoolean(false);
+
   public SnapWorldDownloadState(
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SnapSyncStatePersistenceManager snapContext,
@@ -102,13 +106,15 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       final long minMillisBeforeStalling,
       final SnapSyncMetricsManager metricsManager,
       final Clock clock,
-      final EthContext ethContext) {
+      final EthContext ethContext,
+      final SyncDurationMetrics syncDurationMetrics) {
     super(
         worldStateStorageCoordinator,
         pendingRequests,
         maxRequestsWithoutProgress,
         minMillisBeforeStalling,
-        clock);
+        clock,
+        syncDurationMetrics);
     this.snapContext = snapContext;
     this.blockchain = blockchain;
     this.snapSyncState = snapSyncState;
@@ -116,46 +122,34 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
     this.blockObserverId = blockchain.observeBlockAdded(createBlockchainObserver());
     this.ethContext = ethContext;
 
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_account_requests_current",
-            "Number of account pending requests for snap sync world state download",
-            pendingAccountRequests::size);
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_storage_requests_current",
-            "Number of storage pending requests for snap sync world state download",
-            pendingStorageRequests::size);
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_big_storage_requests_current",
-            "Number of storage pending requests for snap sync world state download",
-            pendingLargeStorageRequests::size);
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_code_requests_current",
-            "Number of code pending requests for snap sync world state download",
-            pendingCodeRequests::size);
-    metricsManager
-        .getMetricsSystem()
-        .createLongGauge(
-            BesuMetricCategory.SYNCHRONIZER,
-            "snap_world_state_pending_trie_node_requests_current",
-            "Number of trie node pending requests for snap sync world state download",
-            pendingTrieNodeRequests::size);
-  }
-
-  @Override
-  public synchronized void notifyTaskAvailable() {
-    notifyAll();
+    final MetricsSystem metricsSystem = metricsManager.getMetricsSystem();
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_account_requests_current",
+        "Number of account pending requests for snap sync world state download",
+        pendingAccountRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_storage_requests_current",
+        "Number of storage pending requests for snap sync world state download",
+        pendingStorageRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_big_storage_requests_current",
+        "Number of storage pending requests for snap sync world state download",
+        pendingLargeStorageRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_code_requests_current",
+        "Number of code pending requests for snap sync world state download",
+        pendingCodeRequests::size);
+    metricsSystem.createLongGauge(
+        BesuMetricCategory.SYNCHRONIZER,
+        "snap_world_state_pending_trie_node_requests_current",
+        "Number of trie node pending requests for snap sync world state download",
+        pendingTrieNodeRequests::size);
+    syncDurationMetrics.startTimer(
+        SyncDurationMetrics.Labels.SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION);
   }
 
   @Override
@@ -191,6 +185,9 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
       // if all snapsync tasks are completed and the healing was running and the blockchain is not
       // behind the pivot block
       else {
+        syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
+        syncDurationMetrics.stopTimer(SyncDurationMetrics.Labels.CHAIN_DOWNLOAD_DURATION);
+
         // If the flat database healing process is not in progress and the flat database mode is
         // FULL
         if (!snapSyncState.isHealFlatDatabaseInProgress()
@@ -217,6 +214,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
           // Clear the snap context
           snapContext.clear();
           internalFuture.complete(null);
+
           return true;
         }
       }
@@ -236,6 +234,12 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   /** Method to start the healing process of the trie */
   public synchronized void startTrieHeal() {
+    if (trieHealStartedBefore.compareAndSet(false, true)) {
+      syncDurationMetrics.stopTimer(
+          SyncDurationMetrics.Labels.SNAP_INITIAL_WORLD_STATE_DOWNLOAD_DURATION);
+
+      syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.SNAP_WORLD_STATE_HEALING_DURATION);
+    }
     snapContext.clearAccountRangeTasks();
     snapSyncState.setHealTrieStatus(true);
     // Try to find a new pivot block before starting the healing process
@@ -272,6 +276,7 @@ public class SnapWorldDownloadState extends WorldDownloadState<SnapDataRequest> 
 
   public synchronized void startFlatDatabaseHeal(final BlockHeader header) {
     LOG.info("Initiating the healing process for the flat database");
+    syncDurationMetrics.startTimer(SyncDurationMetrics.Labels.FLAT_DB_HEAL);
     snapSyncState.setHealFlatDatabaseInProgress(true);
     final Map<Bytes32, Bytes32> ranges = RangeManager.generateAllRanges(16);
     ranges.forEach(
