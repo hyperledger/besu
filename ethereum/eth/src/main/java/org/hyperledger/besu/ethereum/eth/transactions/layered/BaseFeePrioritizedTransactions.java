@@ -15,6 +15,7 @@
 package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.DEMOTED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason.MOVE;
 
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
@@ -135,7 +136,7 @@ public class BaseFeePrioritizedTransactions extends AbstractPrioritizedTransacti
                   .addArgument(newNextBlockBaseFee::toHumanReadableString)
                   .log();
               processEvict(senderTxs, demoteTx, DEMOTED);
-              addToNextLayer(senderTxs, demoteTx, 0);
+              addToNextLayer(senderTxs, demoteTx, 0, MOVE);
             }
           });
 

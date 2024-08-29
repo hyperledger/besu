@@ -25,6 +25,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReas
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.CROSS_LAYER_REPLACED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.PoolRemovalReason.REPLACED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.RemovedFrom.POOL;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason.MOVE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Hash;
@@ -170,7 +171,8 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       final PendingTransaction pendingTransaction, final int gap);
 
   @Override
-  public TransactionAddedResult add(final PendingTransaction pendingTransaction, final int gap) {
+  public TransactionAddedResult add(
+      final PendingTransaction pendingTransaction, final int gap, final AddReason addReason) {
 
     // is replacing an existing one?
     TransactionAddedResult addStatus = maybeReplaceTransaction(pendingTransaction);
@@ -179,7 +181,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     }
 
     if (addStatus.equals(TRY_NEXT_LAYER)) {
-      return addToNextLayer(pendingTransaction, gap);
+      return addToNextLayer(pendingTransaction, gap, addReason);
     }
 
     if (addStatus.isSuccess()) {
@@ -193,7 +195,10 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         tryFillGap(addStatus, pendingTransaction, getRemainingPromotionsPerType());
       }
 
-      ethScheduler.scheduleTxWorkerTask(() -> notifyTransactionAdded(pendingTransaction));
+      if (addReason.sendNotification()) {
+        ethScheduler.scheduleTxWorkerTask(() -> notifyTransactionAdded(pendingTransaction));
+      }
+
     } else {
       final var rejectReason = addStatus.maybeInvalidReason().orElseThrow();
       metrics.incrementRejected(pendingTransaction, rejectReason, name());
@@ -303,24 +308,26 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   }
 
   private TransactionAddedResult addToNextLayer(
-      final PendingTransaction pendingTransaction, final int distance) {
+      final PendingTransaction pendingTransaction, final int distance, final AddReason addReason) {
     return addToNextLayer(
         txsBySender.getOrDefault(pendingTransaction.getSender(), EMPTY_SENDER_TXS),
         pendingTransaction,
-        distance);
+        distance,
+        addReason);
   }
 
   protected TransactionAddedResult addToNextLayer(
       final NavigableMap<Long, PendingTransaction> senderTxs,
       final PendingTransaction pendingTransaction,
-      final int distance) {
+      final int distance,
+      final AddReason addReason) {
     final int nextLayerDistance;
     if (senderTxs.isEmpty()) {
       nextLayerDistance = distance;
     } else {
       nextLayerDistance = (int) (pendingTransaction.getNonce() - (senderTxs.lastKey() + 1));
     }
-    return nextLayer.add(pendingTransaction, nextLayerDistance);
+    return nextLayer.add(pendingTransaction, nextLayerDistance, addReason);
   }
 
   private void processAdded(final PendingTransaction addedTx) {
@@ -354,7 +361,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
         ++evictedCount;
         evictedSize += lastTx.memorySize();
         // evicted can always be added to the next layer
-        addToNextLayer(lessReadySenderTxs, lastTx, 0);
+        addToNextLayer(lessReadySenderTxs, lastTx, 0, MOVE);
       }
 
       if (lessReadySenderTxs.isEmpty()) {

@@ -16,6 +16,7 @@ package org.hyperledger.besu.ethereum.eth.transactions.layered;
 
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.EVICTED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.RemovalReason.LayerMoveReason.FOLLOW_INVALIDATED;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.AddReason.MOVE;
 
 import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.ethereum.eth.manager.EthScheduler;
@@ -78,7 +79,7 @@ public abstract class AbstractSequentialTransactionsLayer extends AbstractTransa
               senderTxs.remove(txToRemove.getNonce());
               processRemove(senderTxs, txToRemove.getTransaction(), FOLLOW_INVALIDATED);
             })
-        .forEach(followingTx -> nextLayer.add(followingTx, gap));
+        .forEach(followingTx -> nextLayer.add(followingTx, gap, MOVE));
   }
 
   @Override
