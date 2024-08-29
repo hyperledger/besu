@@ -100,6 +100,16 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
       description = "Minimum number of fuzz tests before a time limit fuzz error can occur")
   private long timeThresholdIterations = 2_000;
 
+  @Option(
+      names = {"--guidance-regexp"},
+      description = "Regexp for classes that matter for guidance metric")
+  private String guidanceRegexp;
+
+  @Option(
+      names = {"--new-corpus-dir"},
+      description = "Directory to write hex versions of guidance added contracts")
+  private File newCorpusDir = null;
+
   @CommandLine.ParentCommand private final BesuFuzzCommand parentCommand;
 
   static final ObjectMapper eofTestMapper = createObjectMapper();
@@ -174,7 +184,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
     System.out.println("Fuzzing client set: " + clients.keySet());
 
     try {
-      new Fuzzer(this, corpusDir.toString(), this::fuzzStats).start();
+      new Fuzzer(this, corpusDir.toString(), this::fuzzStats, guidanceRegexp, newCorpusDir).start();
     } catch (NoSuchAlgorithmException
         | ClassNotFoundException
         | InvocationTargetException
@@ -236,7 +246,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
                         "%s: slow validation %d µs%n", client.getName(), elapsedMicros);
                     try {
                       Files.writeString(
-                          Path.of("slow-" + client.getName() + "-" + name + ".hex"),
+                          Path.of("slow-" + name + "-" + client.getName() + ".hex"),
                           eofUnderTestHexString);
                     } catch (IOException e) {
                       throw new RuntimeException(e);

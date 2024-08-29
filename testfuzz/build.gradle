@@ -71,6 +71,15 @@ tasks.register("runFuzzer", JavaExec) {
   }
 }
 
+// Adds guidance to the fuzzerm but with a 90% performacne drop.
+tasks.register("fuzzGuided") {
+  doLast {
+    runFuzzer.args += "--guidance-regexp=org/(hyperledger/besu|apache/tuweni)"
+    runFuzzer.args += "--new-corpus-dir=${corpusDir}/.."
+  }
+  finalizedBy("runFuzzer")
+}
+
 // This fuzzes besu as an external client.  Besu fuzzing as a local client is enabled by default.
 tasks.register("fuzzBesu") {
   dependsOn(":installDist")
@@ -110,7 +119,7 @@ tasks.register("fuzzNethermind") {
 
 tasks.register("fuzzReth") {
   doLast {
-    runFuzzer.args += "--client=revm=revme bytecode"
+    runFuzzer.args += "--client=revm=revme bytecode --eof-runtime"
   }
   finalizedBy("runFuzzer")
 }
