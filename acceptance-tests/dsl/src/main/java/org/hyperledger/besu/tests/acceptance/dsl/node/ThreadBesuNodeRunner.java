@@ -418,6 +418,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
+    @Singleton
     public BesuController provideBesuController(
         final SynchronizerConfiguration synchronizerConfiguration,
         final BesuControllerBuilder builder,
