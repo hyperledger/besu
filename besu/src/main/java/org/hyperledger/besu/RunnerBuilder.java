@@ -1291,6 +1291,8 @@ public class RunnerBuilder {
         new JsonRpcMethodsFactory()
             .methods(
                 BesuInfo.nodeName(identityString),
+                BesuInfo.shortVersion(),
+                BesuInfo.commit(),
                 ethNetworkConfig.networkId(),
                 besuController.getGenesisConfigOptions(),
                 network,
