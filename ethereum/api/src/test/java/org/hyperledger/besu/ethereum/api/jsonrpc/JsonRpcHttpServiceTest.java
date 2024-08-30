@@ -202,7 +202,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1127,7 +1127,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1143,7 +1143,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidJsonRpcResult(json, id);
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1175,7 +1175,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, null);
       // Check result
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1197,7 +1197,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1218,7 +1218,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1242,7 +1242,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1268,7 +1268,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1289,7 +1289,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       testHelper.assertValidJsonRpcResult(json, id);
       // Check result
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1353,7 +1353,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       final JsonObject json = new JsonObject(resp.body().string());
       testHelper.assertValidJsonRpcResult(json, id);
       final String result = json.getString("result");
-      assertThat(result).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(result).isEqualTo(CLIENT_VERSION);
     }
   }
 
@@ -1485,7 +1485,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       // Check result web3_clientVersion
       final JsonObject jsonClientVersion = responses.get(clientVersionRequestId);
       testHelper.assertValidJsonRpcResult(jsonClientVersion, clientVersionRequestId);
-      assertThat(jsonClientVersion.getString("result")).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(jsonClientVersion.getString("result")).isEqualTo(CLIENT_VERSION);
 
       // Check result unknown method
       final JsonObject jsonError = responses.get(brokenRequestId);
@@ -1540,7 +1540,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       // Check result web3_clientVersion
       final JsonObject jsonClientVersion = responses.get(clientVersionRequestId);
       testHelper.assertValidJsonRpcResult(jsonClientVersion, clientVersionRequestId);
-      assertThat(jsonClientVersion.getString("result")).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(jsonClientVersion.getString("result")).isEqualTo(CLIENT_VERSION);
 
       // Check invalid request
       final JsonObject jsonError = responses.get(invalidId);
@@ -1605,7 +1605,7 @@ public class JsonRpcHttpServiceTest extends JsonRpcHttpServiceTestBase {
       // Check result web3_clientVersion
       final JsonObject jsonClientVersion = responses.get(clientVersionRequestId);
       testHelper.assertValidJsonRpcResult(jsonClientVersion, clientVersionRequestId);
-      assertThat(jsonClientVersion.getString("result")).isEqualTo(CLIENT_NODE_NAME);
+      assertThat(jsonClientVersion.getString("result")).isEqualTo(CLIENT_VERSION);
 
       // Check result net_version
       final JsonObject jsonNetVersion = responses.get(netVersionRequestId);
