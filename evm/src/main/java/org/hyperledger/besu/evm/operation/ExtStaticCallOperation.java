@@ -24,13 +24,16 @@ import org.hyperledger.besu.evm.gascalculator.GasCalculator;
 /** The Static call operation. */
 public class ExtStaticCallOperation extends AbstractExtCallOperation {
 
+  /** The constant OPCODE. */
+  public static final int OPCODE = 0xFB;
+
   /**
    * Instantiates a new Static call operation.
    *
    * @param gasCalculator the gas calculator
    */
   public ExtStaticCallOperation(final GasCalculator gasCalculator) {
-    super(0xFB, "EXTSTATICCALL", 3, 1, gasCalculator);
+    super(OPCODE, "EXTSTATICCALL", 3, 1, gasCalculator);
   }
 
   @Override
