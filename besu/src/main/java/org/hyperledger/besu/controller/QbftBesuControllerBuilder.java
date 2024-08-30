@@ -16,6 +16,7 @@ package org.hyperledger.besu.controller;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 
+import org.hyperledger.besu.config.BftConfigOptions;
 import org.hyperledger.besu.config.BftFork;
 import org.hyperledger.besu.config.QbftConfigOptions;
 import org.hyperledger.besu.config.QbftFork;
@@ -103,6 +104,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
   private ForksSchedule<QbftConfigOptions> qbftForksSchedule;
   private ValidatorPeers peers;
   private TransactionValidatorProvider transactionValidatorProvider;
+  private BftConfigOptions bftConfigOptions;
 
   /** Default Constructor. */
   public QbftBesuControllerBuilder() {}
@@ -120,6 +122,7 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
     qbftConfig = genesisConfigOptions.getQbftConfigOptions();
     bftEventQueue = new BftEventQueue(qbftConfig.getMessageQueueLimit());
     qbftForksSchedule = QbftForksSchedulesFactory.create(genesisConfigOptions);
+    bftConfigOptions = qbftConfig;
   }
 
   @Override
@@ -132,7 +135,8 @@ public class QbftBesuControllerBuilder extends BftBesuControllerBuilder {
         protocolContext,
         protocolSchedule,
         miningParameters,
-        createReadOnlyValidatorProvider(protocolContext.getBlockchain()));
+        createReadOnlyValidatorProvider(protocolContext.getBlockchain()),
+        bftConfigOptions);
   }
 
   private ValidatorProvider createReadOnlyValidatorProvider(final Blockchain blockchain) {
