@@ -87,10 +87,9 @@ public enum NetworkName {
    * This method is called only by the Ephemery network. It is required to update the networkid.
    *
    * @param networkId Sets network id .
-   * @param name Sets network name .
    */
-  public void setNetworkId(final BigInteger networkId, final NetworkName name) {
-    if (name == EPHEMERY) {
+  public void setNetworkId(final BigInteger networkId) {
+    if (this == EPHEMERY) {
       this.networkId = networkId;
     }
   }

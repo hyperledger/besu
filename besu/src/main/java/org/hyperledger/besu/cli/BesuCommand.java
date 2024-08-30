@@ -1093,7 +1093,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     if (network != null && network.isDeprecated()) {
       logger.warn(NetworkDeprecationMessage.generate(network));
     }
-    if (network == EPHEMERY) {
+    if (network.equals(EPHEMERY)) {
       ephemeryGenesisFile =
           new EphemeryGenesisFile(readGenesisConfigFile(), readGenesisConfigOptions());
       ephemeryGenesisFile.updateGenesis();

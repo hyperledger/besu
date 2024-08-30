@@ -55,26 +55,26 @@ public class EphemeryGenesisFile {
           || genesisConfigOptions == null
           || genesisConfigFile == null) {
         throw new IOException("Genesis file or config options are null");
-      } else {
-        long genesisTimestamp = genesisConfigFile.getTimestamp();
-        Optional<BigInteger> genesisChainId = genesisConfigOptions.getChainId();
-        long currentTimestamp = Instant.now().getEpochSecond();
-        long periodsSinceGenesis =
-            ChronoUnit.DAYS.between(Instant.ofEpochSecond(genesisTimestamp), Instant.now())
-                / PERIOD;
-        long updatedTimestamp = genesisTimestamp + (periodsSinceGenesis * PERIOD_IN_SECONDS);
-        BigInteger updatedChainId =
-            genesisChainId
-                .orElseThrow(() -> new IllegalStateException("ChainId not present"))
-                .add(BigInteger.valueOf(periodsSinceGenesis));
+      }
 
-        if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
-          EPHEMERY.setNetworkId(updatedChainId, EPHEMERY);
-          Map<String, String> overrides = new HashMap<>();
-          overrides.put("chainId", String.valueOf(updatedChainId));
-          overrides.put("timestamp", String.valueOf(updatedTimestamp));
-          genesisConfigFile.withOverrides(overrides);
-        }
+      long genesisTimestamp = genesisConfigFile.getTimestamp();
+      Optional<BigInteger> genesisChainId = genesisConfigOptions.getChainId();
+      long currentTimestamp = Instant.now().getEpochSecond();
+      long periodsSinceGenesis =
+          ChronoUnit.DAYS.between(Instant.ofEpochSecond(genesisTimestamp), Instant.now()) / PERIOD;
+
+      long updatedTimestamp = genesisTimestamp + (periodsSinceGenesis * PERIOD_IN_SECONDS);
+      BigInteger updatedChainId =
+          genesisChainId
+              .orElseThrow(() -> new IllegalStateException("ChainId not present"))
+              .add(BigInteger.valueOf(periodsSinceGenesis));
+
+      if (currentTimestamp > (genesisTimestamp + PERIOD_IN_SECONDS)) {
+        EPHEMERY.setNetworkId(updatedChainId);
+        Map<String, String> overrides = new HashMap<>();
+        overrides.put("chainId", String.valueOf(updatedChainId));
+        overrides.put("timestamp", String.valueOf(updatedTimestamp));
+        genesisConfigFile.withOverrides(overrides);
       }
     } catch (IOException e) {
       throw new RuntimeException("Error updating genesis file: " + e.getMessage(), e);

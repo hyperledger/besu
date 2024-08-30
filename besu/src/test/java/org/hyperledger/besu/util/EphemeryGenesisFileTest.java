@@ -14,10 +14,10 @@
  */
 package org.hyperledger.besu.util;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
+import static org.hyperledger.besu.config.GenesisConfigFile.fromConfig;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
@@ -29,15 +29,12 @@ import org.hyperledger.besu.config.GenesisConfigOptions;
 
 import java.io.IOException;
 import java.math.BigInteger;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.TreeMap;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.vertx.core.json.JsonObject;
+import org.assertj.core.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -45,8 +42,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 public class EphemeryGenesisFileTest {
-  private static ObjectMapper objectMapper;
-  private static Path tempJsonFile;
   private GenesisConfigFile genesisConfigFile;
   private GenesisConfigOptions genesisConfigOptions;
   private EphemeryGenesisFile ephemeryGenesisFile;
@@ -62,7 +57,7 @@ public class EphemeryGenesisFileTest {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID))
           .put("timestamp", GENESIS_TEST_TIMESTAMP);
 
-  private static final JsonObject INVALID_GENESIS_VALID_JSON = new JsonObject();
+  private static final GenesisConfigFile INVALID_GENESIS_JSON = fromConfig("{}");
   private static final JsonObject INVALID_GENESIS_JSON_WITHOUT_CHAINID =
       (new JsonObject()).put("timestamp", GENESIS_TEST_TIMESTAMP);
 
@@ -72,72 +67,70 @@ public class EphemeryGenesisFileTest {
 
   @BeforeEach
   void setUp() throws IOException {
-    objectMapper = new ObjectMapper();
     genesisConfigFile = mock(GenesisConfigFile.class);
     genesisConfigOptions = mock(GenesisConfigOptions.class);
     ephemeryGenesisFile = new EphemeryGenesisFile(genesisConfigFile, genesisConfigOptions);
-    tempJsonFile = Files.createTempFile("temp-ephemery", ".json");
   }
 
   @Test
-  public void testEphemeryWhenChainIdIsAbsent() throws IOException {
-    Map<String, ObjectNode> node =
-        createGenesisFile(tempJsonFile, INVALID_GENESIS_JSON_WITHOUT_CHAINID);
-    ObjectNode configNode = node.get("configNode");
-    assertThat(configNode.has("chainId")).isFalse();
-    assertThat(configNode.get("chainId")).isNull();
-    Files.delete(tempJsonFile);
+  public void testEphemeryWhenChainIdIsAbsent() {
+    final GenesisConfigFile config =
+        GenesisConfigFile.fromConfig(INVALID_GENESIS_JSON_WITHOUT_CHAINID.toString());
+    Optional<BigInteger> chainId = config.getConfigOptions().getChainId();
+    assertThat(chainId).isNotPresent();
   }
 
   @Test
-  public void testEphemeryWhenTimestampIsAbsent() throws IOException {
-    Map<String, ObjectNode> node =
-        createGenesisFile(tempJsonFile, INVALID_GENESIS_JSON_WITHOUT_TIMESTAMP);
-    ObjectNode rootNode = node.get("rootNode");
-    assertThat(rootNode.has("timestamp")).isFalse();
-    assertThat(rootNode.get("timestamp")).isNull();
-    Files.delete(tempJsonFile);
+  public void testShouldDefaultTimestampToZero() {
+    final GenesisConfigFile config =
+        GenesisConfigFile.fromConfig(INVALID_GENESIS_JSON_WITHOUT_TIMESTAMP.toString());
+    assertThat(config.getTimestamp()).isZero();
   }
 
   @Test
-  public void testEphemeryWhenGenesisJsonIsInvalid() throws IOException {
-    Map<String, ObjectNode> node = createGenesisFile(tempJsonFile, INVALID_GENESIS_VALID_JSON);
-    ObjectNode rootNode = node.get("rootNode");
-    ObjectNode configNode = node.get("configNode");
-    assertThat(rootNode.has("timestamp")).isFalse();
-    assertThat(configNode.has("chainId")).isFalse();
-    assertThat(rootNode.get("timestamp")).isNull();
-    assertThat(configNode.get("chainId")).isNull();
-    Files.delete(tempJsonFile);
+  public void testEphemeryWhenGenesisJsonIsInvalid() {
+    Assertions.assertThatThrownBy(INVALID_GENESIS_JSON::getDifficulty)
+        .isInstanceOf(IllegalArgumentException.class)
+        .hasMessageContaining("Invalid genesis block configuration");
   }
 
   @Test
-  public void testEphemeryWhenGenesisJsonIsValid() throws IOException {
-    Map<String, ObjectNode> node = createGenesisFile(tempJsonFile, VALID_GENESIS_JSON);
-    ObjectNode rootNode = node.get("rootNode");
-    ObjectNode configNode = node.get("configNode");
-    assertThat(rootNode.has("timestamp")).isTrue();
-    assertThat(configNode.has("chainId")).isTrue();
-    assertThat(rootNode.get("timestamp")).isNotNull();
-    assertThat(configNode.get("chainId")).isNotNull();
-    Files.delete(tempJsonFile);
+  public void testEphemeryWhenGenesisJsonIsValid() {
+    final GenesisConfigFile config = GenesisConfigFile.fromConfig(VALID_GENESIS_JSON.toString());
+    assertThat(String.valueOf(config.getTimestamp())).isNotNull();
+    assertThat(String.valueOf(config.getTimestamp())).isNotEmpty();
+    assertThat(String.valueOf(config.getConfigOptions().getChainId())).isNotNull();
+    assertThat(String.valueOf(config.getConfigOptions().getChainId())).isNotEmpty();
   }
 
   @Test
-  public void testEphemeryNotYetDueForUpdate() throws IOException {
-    Map<String, ObjectNode> node = createGenesisFile(tempJsonFile, VALID_GENESIS_JSON);
-    ObjectNode rootNode = node.get("rootNode");
-    assertThat(CURRENT_TIMESTAMP)
-        .isLessThan(rootNode.get("timestamp").asLong() + PERIOD_IN_SECONDS);
-    objectMapper.writerWithDefaultPrettyPrinter().writeValue(tempJsonFile.toFile(), rootNode);
-    Files.delete(tempJsonFile);
+  public void testEphemeryNotYetDueForUpdate() {
+    final GenesisConfigFile config = GenesisConfigFile.fromConfig(VALID_GENESIS_JSON.toString());
+    assertThat(CURRENT_TIMESTAMP).isLessThan(config.getTimestamp() + PERIOD_IN_SECONDS);
   }
 
   @Test
-  public void testEphemeryWhenSuccessful() throws IOException {
-    Map<String, ObjectNode> node = createGenesisFile(tempJsonFile, VALID_GENESIS_JSON);
-    ObjectNode rootNode = node.get("rootNode");
-    ObjectNode configNode = node.get("configNode");
+  void testOverrideWithUpdatedChainIdAndTimeStamp() {
+    BigInteger expectedChainId =
+        BigInteger.valueOf(GENESIS_CONFIG_TEST_CHAINID)
+            .add(BigInteger.valueOf(PERIOD_SINCE_GENESIS));
+
+    long expectedGenesisTimestamp =
+        GENESIS_TEST_TIMESTAMP + (PERIOD_SINCE_GENESIS * PERIOD_IN_SECONDS);
+
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/ephemery.json");
+
+    final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    override.put("chainId", String.valueOf(expectedChainId));
+    override.put("timestamp", String.valueOf(expectedGenesisTimestamp));
+
+    assertThat(config.withOverrides(override).getConfigOptions().getChainId()).isPresent();
+    assertThat(config.withOverrides(override).getTimestamp()).isNotNull();
+  }
+
+  @Test
+  public void testEphemeryWhenSuccessful() {
+    final GenesisConfigFile config = GenesisConfigFile.fromConfig(VALID_GENESIS_JSON.toString());
 
     BigInteger expectedChainId =
         BigInteger.valueOf(GENESIS_CONFIG_TEST_CHAINID)
@@ -145,27 +138,37 @@ public class EphemeryGenesisFileTest {
 
     long expectedGenesisTimestamp =
         GENESIS_TEST_TIMESTAMP + (PERIOD_SINCE_GENESIS * PERIOD_IN_SECONDS);
-    EPHEMERY.setNetworkId(expectedChainId, EPHEMERY);
 
-    configNode.put("chainId", expectedChainId);
-    rootNode.put("timestamp", String.valueOf(expectedGenesisTimestamp));
+    EPHEMERY.setNetworkId(expectedChainId);
+
+    final Map<String, String> override = new TreeMap<>(String.CASE_INSENSITIVE_ORDER);
+    override.put("chainId", String.valueOf(expectedChainId));
+    override.put("timestamp", String.valueOf(expectedGenesisTimestamp));
+    config.withOverrides(override);
 
     assertThat(CURRENT_TIMESTAMP_HIGHER)
-        .isGreaterThan(rootNode.get("timestamp").asLong() + PERIOD_IN_SECONDS);
-    assertThat(tempJsonFile).exists();
-    assertThat(rootNode.get("timestamp").asLong()).isEqualTo(expectedGenesisTimestamp);
-    assertThat(configNode.get("chainId").toString()).isEqualTo(expectedChainId.toString());
-    Files.delete(tempJsonFile);
+        .isGreaterThan(Long.parseLong(String.valueOf(GENESIS_TEST_TIMESTAMP + PERIOD_IN_SECONDS)));
+
+    assertThat(override.get("timestamp")).isEqualTo(String.valueOf(expectedGenesisTimestamp));
+    assertThat(override.get("chainId")).isEqualTo(expectedChainId.toString());
   }
 
   @Test
   public void testEphemeryWhenChainIdAndTimestampIsPresent() {
+    final GenesisConfigFile config = GenesisConfigFile.fromResource("/ephemery.json");
+    Optional<BigInteger> chainId = config.getConfigOptions().getChainId();
+    long timestamp = config.getTimestamp();
     when(genesisConfigFile.getTimestamp()).thenReturn(GENESIS_TEST_TIMESTAMP);
     when(genesisConfigOptions.getChainId())
         .thenReturn(Optional.of(BigInteger.valueOf(GENESIS_CONFIG_TEST_CHAINID)));
     ephemeryGenesisFile.updateGenesis();
     verify(genesisConfigFile).getTimestamp();
     verify(genesisConfigOptions).getChainId();
+
+    assertThat(chainId).isPresent();
+    assertThat(chainId).isNotEmpty();
+    assertThat(String.valueOf(timestamp)).isNotNull();
+    assertThat(String.valueOf(timestamp)).isNotEmpty();
   }
 
   @Test
@@ -180,23 +183,5 @@ public class EphemeryGenesisFileTest {
         .isInstanceOf(RuntimeException.class)
         .hasMessage("Unable to update ephemery genesis file.");
     verify(spyEphemeryGenesisFile).updateGenesis();
-  }
-
-  public Map<String, ObjectNode> createGenesisFile(
-      final Path tempJsonFile, final JsonObject genesisData) throws IOException {
-    Files.write(tempJsonFile, genesisData.encodePrettily().getBytes(UTF_8));
-
-    ObjectMapper objectMapper = new ObjectMapper();
-    ObjectNode rootNode = (ObjectNode) objectMapper.readTree(tempJsonFile.toFile());
-
-    ObjectNode configNode =
-        rootNode.has("config")
-            ? (ObjectNode) rootNode.path("config")
-            : objectMapper.createObjectNode();
-    Map<String, ObjectNode> nodes = new HashMap<>();
-    nodes.put("rootNode", rootNode);
-    nodes.put("configNode", configNode);
-
-    return nodes;
   }
 }
