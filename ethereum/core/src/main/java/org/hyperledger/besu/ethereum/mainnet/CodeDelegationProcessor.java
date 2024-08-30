@@ -55,26 +55,26 @@ public class CodeDelegationProcessor {
                             return;
                           }
 
-                          final Optional<MutableAccount> maybeExistingAccount =
+                          final Optional<MutableAccount> maybeAuthorityAccount =
                               Optional.ofNullable(evmWorldUpdater.getAccount(authorityAddress));
-                          final long accountNonce =
-                              maybeExistingAccount.map(AccountState::getNonce).orElse(0L);
+                          final long authorityNonce =
+                              maybeAuthorityAccount.map(AccountState::getNonce).orElse(0L);
 
-                          if (payload.nonce() != accountNonce) {
+                          if (payload.nonce() != authorityNonce) {
                             return;
                           }
 
                           result.addAccessedDelegatorAddress(authorityAddress);
 
-                          MutableAccount account;
-                          if (maybeExistingAccount.isEmpty()) {
-                            account = evmWorldUpdater.createAccount(authorityAddress);
+                          MutableAccount authority;
+                          if (maybeAuthorityAccount.isEmpty()) {
+                            authority = evmWorldUpdater.createAccount(authorityAddress);
                           } else {
-                            account = maybeExistingAccount.get();
+                            authority = maybeAuthorityAccount.get();
 
                             if (!evmWorldUpdater
                                 .authorizedCodeService()
-                                .canSetDelegatedCode(account)) {
+                                .canSetDelegatedCode(authority)) {
                               return;
                             }
 
@@ -83,8 +83,8 @@ public class CodeDelegationProcessor {
 
                           evmWorldUpdater
                               .authorizedCodeService()
-                              .addDelegatedCode(account, payload.address());
-                          account.incrementNonce();
+                              .addDelegatedCode(authority, payload.address());
+                          authority.incrementNonce();
                         }));
 
     return result;

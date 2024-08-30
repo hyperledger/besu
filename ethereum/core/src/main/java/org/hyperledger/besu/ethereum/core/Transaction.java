@@ -79,9 +79,6 @@ public class Transaction
 
   public static final BigInteger TWO = BigInteger.valueOf(2);
 
-  private static final BigInteger CODE_DELEGATION_BASE_COST =
-      BigInteger.valueOf(CodeDelegation.PER_EMPTY_ACCOUNT_COST);
-
   private static final Cache<Hash, Address> senderCache =
       CacheBuilder.newBuilder().recordStats().maximumSize(100_000L).build();
 
@@ -618,12 +615,6 @@ public class Transaction
 
     if (transactionType.supportsBlob()) {
       cost = cost.add(blobGasPrice.getAsBigInteger().multiply(BigInteger.valueOf(totalBlobGas)));
-    }
-
-    if (transactionType.supportsDelegateCode()) {
-      cost =
-          cost.add(
-              BigInteger.valueOf(codeDelegationListSize()).multiply(CODE_DELEGATION_BASE_COST));
     }
 
     return cost;

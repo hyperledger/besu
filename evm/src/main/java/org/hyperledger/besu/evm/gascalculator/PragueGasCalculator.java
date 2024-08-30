@@ -21,11 +21,8 @@ import org.hyperledger.besu.datatypes.CodeDelegation;
 /**
  * Gas Calculator for Prague
  *
- * <p>Placeholder for new gas schedule items. If Prague finalzies without changes this can be
- * removed
- *
  * <UL>
- *   <LI>TBD
+ *   <LI>Gas costs for EIP-7702 (Code Delegation)
  * </UL>
  */
 public class PragueGasCalculator extends CancunGasCalculator {

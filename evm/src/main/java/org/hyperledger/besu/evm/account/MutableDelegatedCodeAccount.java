@@ -116,7 +116,7 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
 
   @Override
   public void setCode(final Bytes code) {
-    throw new RuntimeException("Cannot set code on an AuthorizedCodeAccount");
+    wrappedAccount.setCode(code);
   }
 
   @Override
