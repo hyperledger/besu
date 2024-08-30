@@ -12,27 +12,11 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.components;
+package org.hyperledger.besu.testfuzz;
 
-import org.hyperledger.besu.config.GenesisConfigFile;
+interface FuzzingClient {
 
-import javax.inject.Named;
+  String getName();
 
-import dagger.Module;
-import dagger.Provides;
-
-@Module
-public class GenesisConfigModule {
-
-  @Named("default")
-  @Provides
-  GenesisConfigFile provideDefaultGenesisConfigFile() {
-    return GenesisConfigFile.DEFAULT;
-  }
-
-  @Named("mainnet")
-  @Provides
-  GenesisConfigFile provideMainnetGenesisConfigFile() {
-    return GenesisConfigFile.mainnet();
-  }
+  String differentialFuzz(String data);
 }

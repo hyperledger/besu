@@ -76,6 +76,15 @@ public class StubMetricsSystem implements ObservableMetricsSystem {
   }
 
   @Override
+  public LabelledMetric<OperationTimer> createSimpleLabelledTimer(
+      final MetricCategory category,
+      final String name,
+      final String help,
+      final String... labelNames) {
+    return labelValues -> NoOpMetricsSystem.NO_OP_OPERATION_TIMER;
+  }
+
+  @Override
   public void createGauge(
       final MetricCategory category,
       final String name,

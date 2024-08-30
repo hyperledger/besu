@@ -12,29 +12,27 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.components;
+package org.hyperledger.besu.testfuzz;
 
-import org.hyperledger.besu.metrics.ObservableMetricsSystem;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
-import org.hyperledger.besu.plugin.services.MetricsSystem;
+import org.hyperledger.besu.util.LogConfigurator;
 
-import javax.inject.Singleton;
+/** The main entry point for the EVM (Ethereum Virtual Machine) tool. */
+public final class BesuFuzz {
 
-import dagger.Module;
-import dagger.Provides;
-
-@Module
-public class NoOpMetricsSystemModule {
-
-  @Provides
-  @Singleton
-  MetricsSystem provideMetricsSystem() {
-    return new NoOpMetricsSystem();
+  /** Default constructor for the EvmTool class. */
+  public BesuFuzz() {
+    // this is here only for Javadoc linting
   }
 
-  @Provides
-  @Singleton
-  ObservableMetricsSystem provideObservableMetricsSystem() {
-    return new NoOpMetricsSystem();
+  /**
+   * The main entry point for the EVM (Ethereum Virtual Machine) tool.
+   *
+   * @param args The command line arguments.
+   */
+  public static void main(final String... args) {
+    LogConfigurator.setLevel("", "DEBUG");
+    final BesuFuzzCommand besuFuzzCommand = new BesuFuzzCommand();
+
+    besuFuzzCommand.execute(args);
   }
 }

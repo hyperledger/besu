@@ -16,8 +16,11 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods;
 
 import org.hyperledger.besu.ethereum.api.jsonrpc.RpcMethod;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
 import org.hyperledger.besu.ethereum.api.util.DomainObjectDecodeUtils;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPool;
 import org.hyperledger.besu.ethereum.mainnet.ValidationResult;
@@ -56,9 +59,15 @@ public class DebugBatchSendRawTransaction implements JsonRpcMethod {
     final List<ExecutionStatus> executionStatuses = new ArrayList<>();
     IntStream.range(0, requestContext.getRequest().getParamLength())
         .forEach(
-            i ->
+            i -> {
+              try {
                 executionStatuses.add(
-                    process(i, requestContext.getRequiredParameter(i, String.class))));
+                    process(i, requestContext.getRequiredParameter(i, String.class)));
+              } catch (JsonRpcParameterException e) {
+                throw new InvalidJsonRpcParameters(
+                    "Invalid parameter (index " + i + ")", RpcErrorType.INVALID_PARAMS, e);
+              }
+            });
 
     return new JsonRpcSuccessResponse(requestContext.getRequest().getId(), executionStatuses);
   }

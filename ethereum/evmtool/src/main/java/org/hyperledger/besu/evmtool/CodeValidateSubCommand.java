@@ -36,8 +36,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 import com.google.common.base.Suppliers;
 import org.apache.tuweni.bytes.Bytes;
@@ -94,7 +92,7 @@ public class CodeValidateSubCommand implements Runnable {
         Suppliers.memoize(
             () -> {
               ProtocolSpec protocolSpec =
-                  ReferenceTestProtocolSchedules.create().geSpecByName(fork);
+                  ReferenceTestProtocolSchedules.getInstance().geSpecByName(fork);
               return protocolSpec.getEvm();
             });
   }
@@ -128,9 +126,13 @@ public class CodeValidateSubCommand implements Runnable {
   private void checkCodeFromBufferedReader(final BufferedReader in) {
     try {
       for (String code = in.readLine(); code != null; code = in.readLine()) {
-        String validation = considerCode(code);
-        if (!Strings.isBlank(validation)) {
-          parentCommand.out.println(validation);
+        try {
+          String validation = considerCode(code);
+          if (!Strings.isBlank(validation)) {
+            parentCommand.out.println(validation);
+          }
+        } catch (RuntimeException e) {
+          parentCommand.out.println("fail: " + e.getMessage());
         }
       }
     } catch (IOException e) {
@@ -153,14 +155,17 @@ public class CodeValidateSubCommand implements Runnable {
   public String considerCode(final String hexCode) {
     Bytes codeBytes;
     try {
-      codeBytes =
-          Bytes.fromHexString(
-              hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", ""));
+      String strippedString =
+          hexCode.replaceAll("(^|\n)#[^\n]*($|\n)", "").replaceAll("[^0-9A-Za-z]", "");
+      if (Strings.isEmpty(strippedString)) {
+        return "";
+      }
+      codeBytes = Bytes.fromHexString(strippedString);
     } catch (RuntimeException re) {
       return "err: hex string -" + re;
     }
     if (codeBytes.isEmpty()) {
-      return "";
+      return "err: empty container";
     }
 
     EOFLayout layout = evm.get().parseEOF(codeBytes);
@@ -175,12 +180,8 @@ public class CodeValidateSubCommand implements Runnable {
         ((CodeV1) code).getEofLayout().containerMode().get())) {
       return "err: code is valid initcode.  Runtime code expected";
     } else {
-      return "OK "
-          + IntStream.range(0, code.getCodeSectionCount())
-              .mapToObj(code::getCodeSection)
-              .map(cs -> code.getBytes().slice(cs.getEntryPoint(), cs.getLength()))
-              .map(Bytes::toUnprefixedHexString)
-              .collect(Collectors.joining(","));
+      return "OK %d/%d/%d"
+          .formatted(code.getCodeSectionCount(), code.getSubcontainerCount(), code.getDataSize());
     }
   }
 }

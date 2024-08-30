@@ -1,6 +1,6 @@
 # Changelog
 
-## Next release
+## [Unreleased]
 
 ### Upcoming Breaking Changes
 
@@ -9,11 +9,18 @@
 
 ### Additions and Improvements
 - Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
+- Add pending block header to `TransactionEvaluationContext` plugin API [#7483](https://github.com/hyperledger/besu/pull/7483)
+- Add bootnode to holesky config [#7500](https://github.com/hyperledger/besu/pull/7500)
+- Performance optimzation for ECMUL (1 of 2) [#7509](https://github.com/hyperledger/besu/pull/7509)
+- Performance optimzation for ECMUL (2 of 2) [#7543](https://github.com/hyperledger/besu/pull/7543)
 
 ### Bug fixes
 - Fix tracing in precompiled contracts when halting for out of gas [#7318](https://github.com/hyperledger/besu/issues/7318)
 - Correctly release txpool save and restore lock in case of exceptions [#7473](https://github.com/hyperledger/besu/pull/7473)
 - Fix for `eth_gasPrice` could not retrieve block error [#7482](https://github.com/hyperledger/besu/pull/7482)
+- Correctly drops messages that exceeds local message size limit [#5455](https://github.com/hyperledger/besu/pull/7507)
+- **DebugMetrics**: Fixed a `ClassCastException` occurring in `DebugMetrics` when handling nested metric structures. Previously, `Double` values within these structures were incorrectly cast to `Map` objects, leading to errors. This update allows for proper handling of both direct values and nested structures at the same level. Issue# [#7383](https://github.com/hyperledger/besu/pull/7383)
+- `evmtool` was not respecting the `--genesis` setting, resulting in unexpected trace results. [#7433](https://github.com/hyperledger/besu/pull/7433)
 
 ## 24.8.0
 
@@ -32,13 +39,18 @@
 - In process RPC service [#7395](https://github.com/hyperledger/besu/pull/7395)
 - Added support for tracing private transactions using `priv_traceTransaction` API. [#6161](https://github.com/hyperledger/besu/pull/6161)
 - Wrap WorldUpdater into EVMWorldupdater [#7434](https://github.com/hyperledger/besu/pull/7434)
-- Bump besu-native to 0.9.4 [#7456](https://github.com/hyperledger/besu/pull/7456)
-
+- Bump besu-native to 0.9.4 [#7456](https://github.com/hyperledger/besu/pull/7456)=
 
 ### Bug fixes
 - Correct entrypoint in Docker evmtool [#7430](https://github.com/hyperledger/besu/pull/7430)
 - Fix protocol schedule check for devnets [#7429](https://github.com/hyperledger/besu/pull/7429)
 - Fix behaviour when starting in a pre-merge network [#7431](https://github.com/hyperledger/besu/pull/7431)
+- Fix Null pointer from DNS daemon [#7505](https://github.com/hyperledger/besu/issues/7505)
+
+### Download Links
+https://github.com/hyperledger/besu/releases/tag/24.8.0
+https://github.com/hyperledger/besu/releases/download/24.8.0/besu-24.8.0.tar.gz / sha256 9671157a623fb94005357bc409d1697a0d62bb6fd434b1733441bb301a9534a4
+https://github.com/hyperledger/besu/releases/download/24.8.0/besu-24.8.0.zip / sha256 9ee217d2188e8da89002c3f42e4f85f89aab782e9512bd03520296f0a4dcdd90
 
 ## 24.7.1
 
@@ -75,6 +87,11 @@
 - Add 30 second timeout to trie log pruner preload [#7365](https://github.com/hyperledger/besu/pull/7365)
 - Avoid executing pruner preload during trie log subcommands [#7366](https://github.com/hyperledger/besu/pull/7366)
 
+### Download Links
+https://github.com/hyperledger/besu/releases/tag/24.7.1
+https://github.com/hyperledger/besu/releases/download/24.7.1/besu-24.7.1.tar.gz / sha256 59ac352a86fd887225737a5fe4dad1742347edd3c3fbed98b079177e4ea8d544
+https://github.com/hyperledger/besu/releases/download/24.7.1/besu-24.7.1.zip / sha256 e616f8100f026a71a146a33847b40257c279b38085b17bb991df045cccb6f832
+
 ## 24.7.0
 
 ### Upcoming Breaking Changes
@@ -106,6 +123,11 @@
 - Fix "Invalid block detected" for BFT chains using Bonsai DB [#7204](https://github.com/hyperledger/besu/pull/7204)
 - Fix "Could not confirm best peer had pivot block" [#7109](https://github.com/hyperledger/besu/issues/7109)
 - Fix "Chain Download Halt" [#6884](https://github.com/hyperledger/besu/issues/6884)
+
+### Download Links
+https://github.com/hyperledger/besu/releases/tag/24.7.0
+https://github.com/hyperledger/besu/releases/download/24.7.0/besu-24.7.0.tar.gz / sha256 96cf47defd1d8c10bfc22634e53e3d640eaa81ef58cb0808e5f4265998979530
+https://github.com/hyperledger/besu/releases/download/24.7.0/besu-24.7.0.zip / sha256 7e92e2eb469be197af8c8ca7ac494e7a2e7ee91cbdb02d99ff87fb5209e0c2a0
 
 
 
