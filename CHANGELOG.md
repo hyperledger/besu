@@ -11,6 +11,7 @@
 - Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
 - Add pending block header to `TransactionEvaluationContext` plugin API [#7483](https://github.com/hyperledger/besu/pull/7483)
 - Add bootnode to holesky config [#7500](https://github.com/hyperledger/besu/pull/7500)
+- Implement engine_getClientVersionV1 [#7512](https://github.com/hyperledger/besu/pull/7512)
 - Performance optimzation for ECMUL (1 of 2) [#7509](https://github.com/hyperledger/besu/pull/7509)
 - Performance optimzation for ECMUL (2 of 2) [#7543](https://github.com/hyperledger/besu/pull/7543)
 
