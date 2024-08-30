@@ -1,5 +1,5 @@
 ## Pre-requisites
-* [Truffle](https://truffleframework.com/) installed 
+* [Truffle](https://archive.trufflesuite.com/truffle/) installed 
 ```
 npm install -g truffle
 ```

@@ -32,10 +32,6 @@ plugins {
   id 'maven-publish'
 }
 
-tasks.register('spotlessCheckFast') {
-  dependsOn subprojects.collect { it.tasks.withType(com.diffplug.gradle.spotless.SpotlessCheck) }
-}
-
 if (!JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_21)) {
   throw new GradleException("Java 21 or later is required to build Besu.\n" +
   "  Detected version ${JavaVersion.current()}")
@@ -45,12 +41,15 @@ group = 'io.consensys.linea-besu'
 
 defaultTasks 'build', 'checkLicense', 'javadoc'
 
-def buildAliases = ['dev': [
+def buildAliases = [
+  'dev': [
     'spotlessApply',
     'build',
     'checkLicense',
     'javadoc'
-  ]]
+  ],
+  'build': ['spotlessCheck', 'build']
+]
 
 def expandedTaskList = []
 gradle.startParameter.taskNames.each {
@@ -423,12 +422,6 @@ allprojects {
     options.addStringOption('Xwerror', '-html5')
     options.encoding = 'UTF-8'
   }
-
-  plugins.withType(JavaPlugin) {
-    tasks.withType(JavaCompile) {
-      it.dependsOn(rootProject.tasks.named('spotlessCheckFast'))
-    }
-  }
 }
 
 task deploy() {}
@@ -452,7 +445,7 @@ task checkMavenCoordinateCollisions {
 
 tasks.register('checkPluginAPIChanges', DefaultTask) {}
 checkPluginAPIChanges.dependsOn(':plugin-api:checkAPIChanges')
-check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions', 'spotlessCheckFast')
+check.dependsOn('checkPluginAPIChanges', 'checkMavenCoordinateCollisions')
 
 subprojects {
 
@@ -804,7 +797,7 @@ task distDocker {
         dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
         println "Building for platform ${project.getProperty('docker-platform')}"
       }
-      def gitDetails = getGitCommitDetails()
+      def gitDetails = getGitCommitDetails(7)
       executable shell
       workingDir dockerBuildDir
       args "-c", "docker buildx build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} --push ."
@@ -972,13 +965,17 @@ def buildTime() {
 def calculateVersion() {
   // Regex pattern for basic calendar versioning, with provision to omit patch rev
   def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
-  def gitDetails = getGitCommitDetails() // Adjust length as needed
+
   if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
-    println("Generating project version using supplied version: ${project.version}-${gitDetails.hash}")
-    return "${project.version}-${gitDetails.hash}"
+    if (project.hasProperty('versionappendcommit') && project.versionappendcommit == "true") {
+      def gitDetails = getGitCommitDetails(7) // Adjust length as needed
+      return "${project.version}-${gitDetails.hash}"
+    }
+    return "${project.version}"
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
-    println("Generating project version using date (${gitDetails.date}-develop-${gitDetails.hash}), as supplied version is not semver: ${project.version}")
+    println("Generating project version as supplied is version not semver: ${project.version}")
+    def gitDetails = getGitCommitDetails(7) // Adjust length as needed
     return "${gitDetails.date}-develop-${gitDetails.hash}"
   }
 }
