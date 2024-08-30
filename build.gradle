@@ -823,7 +823,7 @@ task distDocker {
         dockerPlatform = "--platform ${project.getProperty('docker-platform')}"
         println "Building for platform ${project.getProperty('docker-platform')}"
       }
-      def gitDetails = getGitCommitDetails()
+      def gitDetails = getGitCommitDetails(7)
       executable shell
       workingDir dockerBuildDir
       args "-c", "docker build ${dockerPlatform} --build-arg BUILD_DATE=${buildTime()} --build-arg VERSION=${dockerBuildVersion} --build-arg VCS_REF=${gitDetails.hash} -t ${image} ."
@@ -991,13 +991,17 @@ def buildTime() {
 def calculateVersion() {
   // Regex pattern for basic calendar versioning, with provision to omit patch rev
   def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
-  def gitDetails = getGitCommitDetails() // Adjust length as needed
+
   if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
-    println("Generating project version using supplied version: ${project.version}-${gitDetails.hash}")
-    return "${project.version}-${gitDetails.hash}"
+    if (project.hasProperty('versionappendcommit') && project.versionappendcommit == "true") {
+      def gitDetails = getGitCommitDetails(7) // Adjust length as needed
+      return "${project.version}-${gitDetails.hash}"
+    }
+    return "${project.version}"
   } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
-    println("Generating project version using date (${gitDetails.date}-develop-${gitDetails.hash}), as supplied version is not semver: ${project.version}")
+    println("Generating project version as supplied is version not semver: ${project.version}")
+    def gitDetails = getGitCommitDetails(7) // Adjust length as needed
     return "${gitDetails.date}-develop-${gitDetails.hash}"
   }
 }
