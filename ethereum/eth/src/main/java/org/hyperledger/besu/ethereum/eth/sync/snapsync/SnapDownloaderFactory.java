@@ -33,6 +33,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ScheduleBasedBlockHeaderFunctions;
 import org.hyperledger.besu.ethereum.trie.CompactEncoding;
 import org.hyperledger.besu.ethereum.worldstate.WorldStateStorageCoordinator;
+import org.hyperledger.besu.metrics.SyncDurationMetrics;
 import org.hyperledger.besu.plugin.services.MetricsSystem;
 import org.hyperledger.besu.services.tasks.InMemoryTasksPriorityQueues;
 
@@ -58,7 +59,8 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       final EthContext ethContext,
       final WorldStateStorageCoordinator worldStateStorageCoordinator,
       final SyncState syncState,
-      final Clock clock) {
+      final Clock clock,
+      final SyncDurationMetrics syncDurationMetrics) {
 
     final Path fastSyncDataDirectory = dataDirectory.resolve(FAST_SYNC_FOLDER);
     final FastSyncStateStorage fastSyncStateStorage =
@@ -93,10 +95,7 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
       return Optional.empty();
     }
 
-    final SnapSyncProcessState snapSyncState =
-        new SnapSyncProcessState(
-            fastSyncStateStorage.loadState(
-                ScheduleBasedBlockHeaderFunctions.create(protocolSchedule)));
+    final SnapSyncProcessState snapSyncState = new SnapSyncProcessState(fastSyncState);
 
     final InMemoryTasksPriorityQueues<SnapDataRequest> snapTaskCollection =
         createSnapWorldStateDownloaderTaskCollection();
@@ -112,7 +111,8 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             syncConfig.getWorldStateMaxRequestsWithoutProgress(),
             syncConfig.getWorldStateMinMillisBeforeStalling(),
             clock,
-            metricsSystem);
+            metricsSystem,
+            syncDurationMetrics);
     final FastSyncDownloader<SnapDataRequest> fastSyncDownloader =
         new SnapSyncDownloader(
             new FastSyncActions(
@@ -129,7 +129,8 @@ public class SnapDownloaderFactory extends FastDownloaderFactory {
             fastSyncStateStorage,
             snapTaskCollection,
             fastSyncDataDirectory,
-            snapSyncState);
+            snapSyncState,
+            syncDurationMetrics);
     syncState.setWorldStateDownloadStatus(snapWorldStateDownloader);
     return Optional.of(fastSyncDownloader);
   }
