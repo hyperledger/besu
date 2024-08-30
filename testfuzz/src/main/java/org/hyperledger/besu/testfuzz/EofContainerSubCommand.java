@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.testfuzz.javafuzz.Fuzzer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,7 +49,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.gitlab.javafuzz.core.AbstractFuzzTarget;
 import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
@@ -61,7 +61,7 @@ import picocli.CommandLine.Option;
     description = "Fuzzes EOF container parsing and validation",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
-public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnable {
+public class EofContainerSubCommand implements Runnable {
 
   static final String COMMAND_NAME = "eof-container";
 
@@ -184,7 +184,13 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
     System.out.println("Fuzzing client set: " + clients.keySet());
 
     try {
-      new Fuzzer(this, corpusDir.toString(), this::fuzzStats, guidanceRegexp, newCorpusDir).start();
+      new Fuzzer(
+              this::parseEOFContainers,
+              corpusDir.toString(),
+              this::fuzzStats,
+              guidanceRegexp,
+              newCorpusDir)
+          .start();
     } catch (NoSuchAlgorithmException
         | ClassNotFoundException
         | InvocationTargetException
@@ -222,8 +228,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
     }
   }
 
-  @Override
-  public void fuzz(final byte[] bytes) {
+  void parseEOFContainers(final byte[] bytes) {
     Bytes eofUnderTest = Bytes.wrap(bytes);
     String eofUnderTestHexString = eofUnderTest.toHexString();
 

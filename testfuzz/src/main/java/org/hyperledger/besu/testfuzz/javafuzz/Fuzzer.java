@@ -12,7 +12,7 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
-package org.hyperledger.besu.testfuzz;
+package org.hyperledger.besu.testfuzz.javafuzz;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
 
@@ -37,8 +37,6 @@ import java.util.function.Supplier;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import com.gitlab.javafuzz.core.AbstractFuzzTarget;
-import com.gitlab.javafuzz.core.Corpus;
 import org.apache.tuweni.bytes.Bytes;
 import org.jacoco.core.data.ExecutionData;
 import org.jacoco.core.data.ExecutionDataReader;
@@ -46,10 +44,14 @@ import org.jacoco.core.data.IExecutionDataVisitor;
 import org.jacoco.core.data.ISessionInfoVisitor;
 import org.jacoco.core.data.SessionInfo;
 
-/** Ported from javafuzz because JaCoCo APIs changed. */
+/**
+ * Ported from <a
+ * href="https://gitlab.com/gitlab-org/security-products/analyzers/fuzzers/javafuzz">...</a> because
+ * JaCoCo APIs changed.
+ */
 @SuppressWarnings({"java:S106", "CallToPrintStackTrace"}) // we use lots the console, on purpose
 public class Fuzzer {
-  private final AbstractFuzzTarget target;
+  private final FuzzTarget target;
   private final Corpus corpus;
   private final Object agent;
   private final Method getExecutionDataMethod;
@@ -68,6 +70,8 @@ public class Fuzzer {
    * @param target The target to fuzz
    * @param dirs the list of corpus dirs and files, comma separated.
    * @param fuzzStats additional fuzzing data from the client
+   * @param guidanceRegexp Regexp of (slash delimited) class names to check for guidance.
+   * @param newCorpusDir Direcroty to dump hex encoded versions of guidance discovered tests.
    * @throws ClassNotFoundException If Jacoco RT is not found (because jacocoagent.jar is not
    *     loaded)
    * @throws NoSuchMethodException If the wrong version of Jacoco is loaded
@@ -76,7 +80,7 @@ public class Fuzzer {
    * @throws NoSuchAlgorithmException If the SHA-256 crypto algo cannot be loaded.
    */
   public Fuzzer(
-      final AbstractFuzzTarget target,
+      final FuzzTarget target,
       final String dirs,
       final Supplier<String> fuzzStats,
       final String guidanceRegexp,

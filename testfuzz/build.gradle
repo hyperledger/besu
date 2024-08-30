@@ -38,7 +38,6 @@ dependencies {
   implementation project(':util')
 
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'com.gitlab.javafuzz:core'
   implementation 'com.google.guava:guava'
   implementation 'info.picocli:picocli'
   implementation 'io.tmio:tuweni-bytes'
@@ -71,7 +70,7 @@ tasks.register("runFuzzer", JavaExec) {
   }
 }
 
-// Adds guidance to the fuzzerm but with a 90% performacne drop.
+// Adds guidance to the fuzzer but with a 90% performance drop.
 tasks.register("fuzzGuided") {
   doLast {
     runFuzzer.args += "--guidance-regexp=org/(hyperledger/besu|apache/tuweni)"
