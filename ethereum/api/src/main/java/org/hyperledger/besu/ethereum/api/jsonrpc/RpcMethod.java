@@ -152,6 +152,7 @@ public enum RpcMethod {
   QBFT_GET_VALIDATORS_BY_BLOCK_NUMBER("qbft_getValidatorsByBlockNumber"),
   QBFT_PROPOSE_VALIDATOR_VOTE("qbft_proposeValidatorVote"),
   QBFT_GET_SIGNER_METRICS("qbft_getSignerMetrics"),
+  QBFT_GET_REQUEST_TIMEOUT_SECONDS("qbft_getRequestTimeoutSeconds"),
   MINER_CHANGE_TARGET_GAS_LIMIT("miner_changeTargetGasLimit"),
   MINER_SET_COINBASE("miner_setCoinbase"),
   MINER_SET_ETHERBASE("miner_setEtherbase"),
