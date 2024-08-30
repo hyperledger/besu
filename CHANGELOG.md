@@ -5,6 +5,16 @@
 ### Upcoming Breaking Changes
 
 ### Breaking Changes
+
+### Additions and Improvements
+
+### Bug fixes
+
+## 24.9.0
+
+### Upcoming Breaking Changes
+
+### Breaking Changes
 - Receipt compaction is enabled by default. It will no longer be possible to downgrade Besu to versions prior to 24.5.1.
 
 ### Additions and Improvements
