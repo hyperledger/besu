@@ -51,9 +51,7 @@ public class EphemeryGenesisFile {
 
   public void updateGenesis() {
     try {
-      if (EPHEMERY.getGenesisFile() == null
-          || genesisConfigOptions == null
-          || genesisConfigFile == null) {
+      if (EPHEMERY.getGenesisFile() == null || genesisConfigOptions == null) {
         throw new IOException("Genesis file or config options are null");
       }
 
