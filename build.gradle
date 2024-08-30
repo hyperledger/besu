@@ -990,16 +990,12 @@ def buildTime() {
 @Memoized
 def calculateVersion() {
   // Regex pattern for basic calendar versioning, with provision to omit patch rev
-  def calVerPattern = ~/\d+\.\d+(\.\d+)?(-\w+)?$/
-  def calVerWithCommitPattern = ~/\d+\.\d+(\.\d+)?(-\w+)?-[0-9a-fA-F]{7,8}$/
+  def calVerPattern = ~/\d+\.\d+(\.\d+)?(-.*)?/
   def gitDetails = getGitCommitDetails() // Adjust length as needed
-  if (project.hasProperty('version') && project.version =~ calVerWithCommitPattern) {
-    println("Utilising supplied version as it appears to already contain commit hash: ${project.version}")
-    return project.version
-  } else if (project.hasProperty('version') && project.version =~ calVerPattern) {
+  if (project.hasProperty('version') && (project.version =~ calVerPattern)) {
     println("Generating project version using supplied version: ${project.version}-${gitDetails.hash}")
     return "${project.version}-${gitDetails.hash}"
-  }  else {
+  } else {
     // If no version is supplied or it doesn't match the semantic versioning, calculate from git
     println("Generating project version using date (${gitDetails.date}-develop-${gitDetails.hash}), as supplied version is not semver: ${project.version}")
     return "${gitDetails.date}-develop-${gitDetails.hash}"
