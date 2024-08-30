@@ -32,6 +32,7 @@ public final class BesuInfo {
   private static final String OS = PlatformDetector.getOS();
   private static final String VM = PlatformDetector.getVM();
   private static final String COMMIT;
+
   static {
     String className = BesuInfo.class.getSimpleName() + ".class";
     String classPath = BesuInfo.class.getResource(className).toString();
