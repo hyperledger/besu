@@ -33,8 +33,7 @@ public final class BesuInfoTest {
    */
   @Test
   public void versionStringIsEthstatsFriendly() {
-    assertThat(BesuInfo.version())
-        .matches("[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null)/[^/]+/[^/]+");
+    assertThat(BesuInfo.version()).matches("[^/]+/v(\\d+\\.\\d+\\.\\d+[^/]*|null)/[^/]+/[^/]+");
   }
 
   /**
