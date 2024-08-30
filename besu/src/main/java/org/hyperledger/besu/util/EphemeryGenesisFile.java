@@ -29,7 +29,7 @@ import java.util.Optional;
 
 /**
  * The Generate Ephemery Genesis File. Checks for update based on the set period and update the
- * Ephemery genesis file
+ * Ephemery genesis file in memory
  */
 public class EphemeryGenesisFile {
   private final GenesisConfigFile genesisConfigFile;
