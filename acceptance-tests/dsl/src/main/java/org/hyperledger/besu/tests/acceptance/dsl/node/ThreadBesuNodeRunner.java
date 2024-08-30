@@ -135,8 +135,8 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .besuNodeProviderModule(module)
             .build();
 
-    final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl =
-        new TransactionPoolValidatorServiceImpl();
+    // final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl =
+    //  new TransactionPoolValidatorServiceImpl();
     final Path dataDir = node.homeDirectory();
     final PermissioningServiceImpl permissioningService = new PermissioningServiceImpl();
 
@@ -153,17 +153,18 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .ifPresent(networkConfigBuilder::setGenesisConfigFile);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
 
-    final TransactionPoolConfiguration txPoolConfig =
-        ImmutableTransactionPoolConfiguration.builder()
-            .from(node.getTransactionPoolConfiguration())
-            .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
-            .transactionPoolValidatorService(transactionPoolValidatorServiceImpl)
-            .build();
-
+    /*
+        final TransactionPoolConfiguration txPoolConfig =
+            ImmutableTransactionPoolConfiguration.builder()
+                .from(node.getTransactionPoolConfiguration())
+                .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
+                .transactionPoolValidatorService(transactionPoolValidatorServiceImpl)
+                .build();
+    */
     final BesuControllerBuilder builder = component.besuControllerBuilder();
     builder.isRevertReasonEnabled(node.isRevertReasonEnabled());
     builder.networkConfiguration(node.getNetworkingConfiguration());
-    builder.transactionPoolConfiguration(txPoolConfig);
+    // builder.transactionPoolConfiguration(txPoolConfig);
     builder.dataDirectory(dataDir);
     builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
     builder.privacyParameters(node.getPrivacyParameters());
@@ -299,7 +300,7 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Provides
     @Named("ExtraCLIOptions")
     public List<String> provideExtraCLIOptions() {
-      return toProvide.getConfiguration().getExtraCLIOptions();
+      return toProvide.getExtraCLIOptions();
     }
 
     @Provides
@@ -344,6 +345,34 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
+    @Singleton
+    TransactionPoolValidatorServiceImpl provideTransactionPoolValidatorService() {
+      return new TransactionPoolValidatorServiceImpl();
+    }
+
+    @Provides
+    @Singleton
+    TransactionSelectionServiceImpl provideTransactionSelectionService() {
+      return new TransactionSelectionServiceImpl();
+    }
+
+    @Provides
+    @Singleton
+    TransactionPoolConfiguration provideTransactionPoolConfiguration(
+        final BesuNode node,
+        final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl) {
+
+      TransactionPoolConfiguration txPoolConfig =
+          ImmutableTransactionPoolConfiguration.builder()
+              .from(node.getTransactionPoolConfiguration())
+              .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
+              .transactionPoolValidatorService(transactionPoolValidatorServiceImpl)
+              .build();
+      return txPoolConfig;
+    }
+
+    @Provides
+    @Singleton
     TransactionSimulator provideTransactionSimulator(
         final Blockchain blockchain,
         final WorldStateArchive worldStateArchive,
@@ -378,11 +407,13 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     @Provides
     public BesuControllerBuilder provideBesuControllerBuilder(
         final EthNetworkConfig ethNetworkConfig,
-        final SynchronizerConfiguration synchronizerConfiguration) {
+        final SynchronizerConfiguration synchronizerConfiguration,
+        final TransactionPoolConfiguration transactionPoolConfiguration) {
 
       final BesuControllerBuilder builder =
           new BesuController.Builder()
               .fromEthNetworkConfig(ethNetworkConfig, synchronizerConfiguration.getSyncMode());
+      builder.transactionPoolConfiguration(transactionPoolConfiguration);
       return builder;
     }
 
@@ -521,17 +552,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
           dataDir, dataDir.resolve(DATABASE_PATH), node.getDataStorageConfiguration());
       commonPluginConfiguration.withMiningParameters(miningParameters);
       return commonPluginConfiguration;
-    }
-
-    @Provides
-    TransactionPoolConfiguration provideTransactionPoolConfiguration(
-        final BesuNode node,
-        final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl) {
-      return ImmutableTransactionPoolConfiguration.builder()
-          .from(node.getTransactionPoolConfiguration())
-          .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
-          .transactionPoolValidatorService(transactionPoolValidatorServiceImpl)
-          .build();
     }
   }
 
