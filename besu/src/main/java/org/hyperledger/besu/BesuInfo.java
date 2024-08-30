@@ -81,13 +81,4 @@ public final class BesuInfo {
         .map(identity -> String.format("%s/%s/v%s/%s/%s", CLIENT, identity, VERSION, OS, VM))
         .orElse(version());
   }
-
-  /**
-   * Generate the commit hash for this besu version
-   *
-   * @return the commit hash for this besu version
-   */
-  public static String commit() {
-    return COMMIT;
-  }
 }
