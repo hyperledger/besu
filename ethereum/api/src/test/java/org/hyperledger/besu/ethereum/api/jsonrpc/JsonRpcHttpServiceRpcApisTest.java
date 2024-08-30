@@ -94,9 +94,7 @@ public class JsonRpcHttpServiceRpcApisTest {
   private JsonRpcHttpService service;
   private static String baseUrl;
   private static final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
-  private static final String CLIENT_NODE_NAME = "TestClientVersion/0.1.0";
-  private static final String CLIENT_VERSION = "0.1.0";
-  private static final String CLIENT_COMMIT = "12345678";
+  private static final String CLIENT_VERSION = "TestClientVersion/0.1.0";
   private static final BigInteger NETWORK_ID = BigInteger.valueOf(123);
   private JsonRpcConfiguration configuration;
   private static final List<String> netServices =
@@ -204,9 +202,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     final Map<String, JsonRpcMethod> rpcMethods =
         new JsonRpcMethodsFactory()
             .methods(
-                CLIENT_NODE_NAME,
                 CLIENT_VERSION,
-                CLIENT_COMMIT,
                 NETWORK_ID,
                 new StubGenesisConfigOptions(),
                 mock(P2PNetwork.class),
@@ -314,9 +310,7 @@ public class JsonRpcHttpServiceRpcApisTest {
     final Map<String, JsonRpcMethod> rpcMethods =
         new JsonRpcMethodsFactory()
             .methods(
-                CLIENT_NODE_NAME,
                 CLIENT_VERSION,
-                CLIENT_COMMIT,
                 NETWORK_ID,
                 new StubGenesisConfigOptions(),
                 p2pNetwork,
