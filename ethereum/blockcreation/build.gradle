@@ -7,7 +7,7 @@ jar {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateImplementationVersion()
       )
   }
 }

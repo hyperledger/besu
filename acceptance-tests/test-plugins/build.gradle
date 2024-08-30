@@ -25,7 +25,7 @@ task testPluginsJar(type: Jar) {
       'Specification-Title': archiveBaseName,
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion()
+      'Implementation-Version': calculateImplementationVersion()
       )
   }
   from sourceSets.main.output
