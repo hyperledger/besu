@@ -118,6 +118,7 @@ public class ExtCallOperationTest {
     final var messageFrame =
         new TestMessageFrameBuilder()
             .initialGas(parentGas)
+            .code(SIMPLE_EOF)
             .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
@@ -208,6 +209,7 @@ public class ExtCallOperationTest {
     final var messageFrame =
         new TestMessageFrameBuilder()
             .initialGas(parentGas)
+            .code(SIMPLE_EOF)
             .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
             .pushStackItem(valueSent)
             .pushStackItem(Bytes.EMPTY)
@@ -243,6 +245,7 @@ public class ExtCallOperationTest {
     final var messageFrame =
         new TestMessageFrameBuilder()
             .initialGas(400000)
+            .code(SIMPLE_EOF)
             .pushStackItem(CONTRACT_ADDRESS) // canary for non-returning
             .pushStackItem(Bytes.EMPTY)
             .pushStackItem(Bytes.EMPTY)
