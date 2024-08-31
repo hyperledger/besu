@@ -257,7 +257,8 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getNonce(), senderNonce));
     }
 
-    if (!validationParams.isAllowContractAddressAsSender() && !codeHash.equals(Hash.EMPTY)) {
+    if (!validationParams.isAllowContractAddressAsSender()
+        && !canSendTransaction(sender, codeHash)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.TX_SENDER_NOT_AUTHORIZED,
           String.format(
@@ -266,6 +267,10 @@ public class MainnetTransactionValidator implements TransactionValidator {
     }
 
     return ValidationResult.valid();
+  }
+
+  private static boolean canSendTransaction(final Account sender, final Hash codeHash) {
+    return codeHash.equals(Hash.EMPTY) || sender.hasDelegatedCode();
   }
 
   private ValidationResult<TransactionInvalidReason> validateTransactionSignature(
