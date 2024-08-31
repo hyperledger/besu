@@ -351,7 +351,7 @@ public class MainnetTransactionProcessor {
         warmAddressList.addAll(codeDelegationResult.accessedDelegatorAddresses());
         codeDelegationRefund =
             gasCalculator.calculateDelegateCodeGasRefund(
-                (codeDelegationResult.alreadyExistingDelegators().size()));
+                (codeDelegationResult.alreadyExistingDelegators()));
       }
 
       final List<AccessListEntry> accessListEntries = transaction.getAccessList().orElse(List.of());

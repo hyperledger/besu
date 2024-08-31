@@ -78,7 +78,7 @@ public class CodeDelegationProcessor {
                               return;
                             }
 
-                            result.addAlreadyExistingDelegator(authorityAddress);
+                            result.incremenentAlreadyExistingDelegators();
                           }
 
                           evmWorldUpdater

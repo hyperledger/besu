@@ -663,7 +663,7 @@ public interface GasCalculator {
    * @param alreadyExistingAccountSize The number of accounts already in the trie
    * @return the gas refund
    */
-  default long calculateDelegateCodeGasRefund(final int alreadyExistingAccountSize) {
+  default long calculateDelegateCodeGasRefund(final long alreadyExistingAccountSize) {
     return 0L;
   }
 

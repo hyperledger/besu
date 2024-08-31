@@ -21,21 +21,21 @@ import java.util.Set;
 
 public class CodeDelegationResult {
   private final Set<Address> accessedDelegatorAddresses = new BytesTrieSet<>(Address.SIZE);
-  private final Set<Address> alreadyExistingDelegators = new BytesTrieSet<>(Address.SIZE);
+  private long alreadyExistingDelegators = 0L;
 
   public void addAccessedDelegatorAddress(final Address address) {
     accessedDelegatorAddresses.add(address);
   }
 
-  public void addAlreadyExistingDelegator(final Address address) {
-    alreadyExistingDelegators.add(address);
+  public void incremenentAlreadyExistingDelegators() {
+    alreadyExistingDelegators += 1;
   }
 
   public Set<Address> accessedDelegatorAddresses() {
     return accessedDelegatorAddresses;
   }
 
-  public Set<Address> alreadyExistingDelegators() {
+  public long alreadyExistingDelegators() {
     return alreadyExistingDelegators;
   }
 }
