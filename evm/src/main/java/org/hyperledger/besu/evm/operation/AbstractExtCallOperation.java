@@ -95,6 +95,11 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
 
   @Override
   public OperationResult execute(final MessageFrame frame, final EVM evm) {
+    Code callingCode = frame.getCode();
+    if (callingCode.getEofVersion() == 0) {
+      return InvalidOperation.INVALID_RESULT;
+    }
+
     final Bytes toBytes = frame.getStackItem(STACK_TO).trimLeadingZeros();
     final Wei value = value(frame);
     final boolean zeroValue = value.isZero();
@@ -141,7 +146,7 @@ public abstract class AbstractExtCallOperation extends AbstractCallOperation {
     frame.clearReturnData();
 
     // delegate calls to prior EOF versions are prohibited
-    if (isDelegate() && frame.getCode().getEofVersion() != code.getEofVersion()) {
+    if (isDelegate() && callingCode.getEofVersion() != code.getEofVersion()) {
       return softFailure(frame, cost);
     }
 
