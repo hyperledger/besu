@@ -41,8 +41,6 @@ dependencyManagement {
 
     dependency 'org.hyperledger.besu:besu-errorprone-checks:1.0.0'
 
-    dependency 'com.gitlab.javafuzz:core:1.26'
-
     dependency 'com.google.guava:guava:33.0.0-jre'
 
     dependency 'com.graphql-java:graphql-java:21.5'
@@ -156,7 +154,7 @@ dependencyManagement {
 
     dependency 'org.fusesource.jansi:jansi:2.4.1'
 
-    dependencySet(group: 'org.hyperledger.besu', version: '0.9.4') {
+    dependencySet(group: 'org.hyperledger.besu', version: '0.9.5') {
       entry 'arithmetic'
       entry 'ipa-multipoint'
       entry 'bls12-381'
