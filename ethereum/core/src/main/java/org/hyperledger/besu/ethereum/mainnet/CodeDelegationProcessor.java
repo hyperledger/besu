@@ -14,6 +14,8 @@
  */
 package org.hyperledger.besu.ethereum.mainnet;
 
+import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.ethereum.core.CodeDelegation;
 import org.hyperledger.besu.ethereum.core.Transaction;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
@@ -62,54 +64,71 @@ public class CodeDelegationProcessor {
         .getCodeDelegationList()
         .get()
         .forEach(
-            payload ->
-                payload
-                    .authorizer()
-                    .ifPresent(
-                        authorityAddress -> {
-                          LOG.trace("Set code delegation for authority: {}", authorityAddress);
-
-                          if (maybeChainId.isPresent()
-                              && !payload.chainId().equals(BigInteger.ZERO)
-                              && !maybeChainId.get().equals(payload.chainId())) {
-                            return;
-                          }
-
-                          final Optional<MutableAccount> maybeAuthorityAccount =
-                              Optional.ofNullable(evmWorldUpdater.getAccount(authorityAddress));
-
-                          result.addAccessedDelegatorAddress(authorityAddress);
-
-                          MutableAccount authority;
-                          boolean authorityDoesAlreadyExist = false;
-                          if (maybeAuthorityAccount.isEmpty()) {
-                            authority = evmWorldUpdater.createAccount(authorityAddress);
-                          } else {
-                            authority = maybeAuthorityAccount.get();
-
-                            if (!evmWorldUpdater
-                                .authorizedCodeService()
-                                .canSetDelegatedCode(authority)) {
-                              return;
-                            }
-
-                            authorityDoesAlreadyExist = true;
-                          }
-
-                          if (payload.nonce() != authority.getNonce()) {
-                            return;
-                          }
-
-                          if (authorityDoesAlreadyExist) {
-                            result.incremenentAlreadyExistingDelegators();
-                          }
-
-                          evmWorldUpdater
-                              .authorizedCodeService()
-                              .addDelegatedCode(authority, payload.address());
-                          authority.incrementNonce();
-                        }));
+            codeDelegation ->
+                processAuthorization(
+                    evmWorldUpdater,
+                    (org.hyperledger.besu.ethereum.core.CodeDelegation) codeDelegation,
+                    result));
 
     return result;
+  }
+
+  private void processAuthorization(
+      final EVMWorldUpdater evmWorldUpdater,
+      final CodeDelegation codeDelegation,
+      final CodeDelegationResult result) {
+    LOG.trace("Processing code delegation: {}", codeDelegation);
+
+    if (maybeChainId.isPresent()
+        && !codeDelegation.chainId().equals(BigInteger.ZERO)
+        && !maybeChainId.get().equals(codeDelegation.chainId())) {
+      LOG.trace(
+          "Invalid chain id for code delegation. Expected: {}, Actual: {}",
+          maybeChainId.get(),
+          codeDelegation.chainId());
+      return;
+    }
+
+    final Optional<Address> authorizer = codeDelegation.authorizer();
+    if (authorizer.isEmpty()) {
+      LOG.trace("Invalid signature for code delegation");
+      return;
+    }
+
+    LOG.trace("Set code delegation for authority: {}", authorizer.get());
+
+    final Optional<MutableAccount> maybeAuthorityAccount =
+        Optional.ofNullable(evmWorldUpdater.getAccount(authorizer.get()));
+
+    result.addAccessedDelegatorAddress(authorizer.get());
+
+    MutableAccount authority;
+    boolean authorityDoesAlreadyExist = false;
+    if (maybeAuthorityAccount.isEmpty()) {
+      authority = evmWorldUpdater.createAccount(authorizer.get());
+    } else {
+      authority = maybeAuthorityAccount.get();
+
+      if (!evmWorldUpdater.authorizedCodeService().canSetDelegatedCode(authority)) {
+        return;
+      }
+
+      authorityDoesAlreadyExist = true;
+    }
+
+    if (codeDelegation.nonce() != authority.getNonce()) {
+      LOG.trace(
+          "Invalid nonce for code delegation. Expected: {}, Actual: {}",
+          authority.getNonce(),
+          codeDelegation.nonce());
+      return;
+    }
+
+    if (authorityDoesAlreadyExist) {
+      result.incremenentAlreadyExistingDelegators();
+    }
+
+    evmWorldUpdater.authorizedCodeService().addDelegatedCode(authority, codeDelegation.address());
+    authority.incrementNonce();
   }
 }
