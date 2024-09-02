@@ -60,7 +60,7 @@ public class DifficultyCalculatorTests {
             "/BasicTests/difficultyMainNetwork.json",
             MainnetProtocolSchedule.fromConfig(
                 GenesisConfigFile.mainnet()
-                    .getConfigOptions(postMergeOverrides),
+                    .withOverrides(postMergeOverrides).getConfigOptions(),
                 EvmConfiguration.DEFAULT, MiningParameters.newDefault(), new BadBlockManager(), false, new NoOpMetricsSystem())),
         Arguments.of(
           "/DifficultyTests/dfGrayGlacier/difficultyGrayGlacierForkBlock.json",
