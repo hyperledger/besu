@@ -47,7 +47,7 @@ public class DelegatedCodeService {
    * @return {@code true} if the account can set delegated code, {@code false} otherwise.
    */
   public boolean canSetDelegatedCode(final Account account) {
-    return account.getCode().isEmpty() || hasDelegatedCode(account.getCode());
+    return account.getCode().isEmpty() || hasDelegatedCode(account.getUnprocessedCode());
   }
 
   /**
