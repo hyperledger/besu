@@ -82,6 +82,11 @@ public class DelegatedCodeAccount extends BaseDelegatedCodeAccount implements Ac
   }
 
   @Override
+  public Bytes getUnprocessedCode() {
+    return wrappedAccount.getCode();
+  }
+
+  @Override
   public Hash getCodeHash() {
     return super.getCodeHash();
   }

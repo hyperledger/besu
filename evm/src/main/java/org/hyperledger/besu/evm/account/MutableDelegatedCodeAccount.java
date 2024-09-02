@@ -84,6 +84,11 @@ public class MutableDelegatedCodeAccount extends BaseDelegatedCodeAccount
   }
 
   @Override
+  public Bytes getUnprocessedCode() {
+    return wrappedAccount.getCode();
+  }
+
+  @Override
   public Hash getCodeHash() {
     return super.getCodeHash();
   }

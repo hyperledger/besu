@@ -24,7 +24,9 @@ import org.apache.tuweni.bytes.Bytes;
 
 class BaseDelegatedCodeAccount {
   private final WorldUpdater worldUpdater;
-  private final Address delegatedCodeAddress;
+
+  /** The address of the account that has delegated code to be loaded into it. */
+  protected final Address delegatedCodeAddress;
 
   private Bytes delegatedCode;
   private Hash codeHash;
@@ -75,8 +77,9 @@ class BaseDelegatedCodeAccount {
   }
 
   private Bytes resolveDelegatedCode() {
+
     return Optional.ofNullable(worldUpdater.getAccount(delegatedCodeAddress))
-        .map(Account::getCode)
+        .map(Account::getUnprocessedCode)
         .orElse(Bytes.EMPTY);
   }
 }
