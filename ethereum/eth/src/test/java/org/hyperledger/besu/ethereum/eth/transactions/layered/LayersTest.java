@@ -45,7 +45,7 @@ import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolMetrics;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolReplacementHandler;
 import org.hyperledger.besu.ethereum.mainnet.feemarket.FeeMarket;
 import org.hyperledger.besu.evm.account.Account;
-import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
+import org.hyperledger.besu.testutil.DeterministicEthScheduler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -174,7 +174,7 @@ public class LayersTest extends BaseTransactionPoolTest {
     final TransactionPoolMetrics txPoolMetrics = new TransactionPoolMetrics(metricsSystem);
 
     final EvictCollectorLayer evictCollector = new EvictCollectorLayer(txPoolMetrics);
-    final EthScheduler ethScheduler = new EthScheduler(1, 4, 1, 1, new NoOpMetricsSystem());
+    final EthScheduler ethScheduler = new DeterministicEthScheduler();
     final SparseTransactions sparseTransactions =
         new SparseTransactions(
             poolConfig,
