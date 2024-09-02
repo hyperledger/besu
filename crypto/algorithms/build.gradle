@@ -23,6 +23,7 @@ jar {
       'Specification-Version': project.version,
       'Implementation-Title': archiveBaseName,
       'Implementation-Version': calculateVersion(),
+      'Commit-Hash': getGitCommitDetails(40).hash,
       'Automatic-Module-Name': 'io.consensys.linea-besu.internal.crypto'
       )
   }

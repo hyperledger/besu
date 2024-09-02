@@ -5,12 +5,24 @@
 ### Upcoming Breaking Changes
 
 ### Breaking Changes
+
+### Additions and Improvements
+- Include current chain head block when computing `eth_maxPriorityFeePerGas` [#7485](https://github.com/hyperledger/besu/pull/7485)
+
+### Bug fixes
+
+## 24.9.0
+
+### Upcoming Breaking Changes
+
+### Breaking Changes
 - Receipt compaction is enabled by default. It will no longer be possible to downgrade Besu to versions prior to 24.5.1.
 
 ### Additions and Improvements
 - Add 'inbound' field to admin_peers JSON-RPC Call [#7461](https://github.com/hyperledger/besu/pull/7461)
 - Add pending block header to `TransactionEvaluationContext` plugin API [#7483](https://github.com/hyperledger/besu/pull/7483)
 - Add bootnode to holesky config [#7500](https://github.com/hyperledger/besu/pull/7500)
+- Implement engine_getClientVersionV1 [#7512](https://github.com/hyperledger/besu/pull/7512)
 - Performance optimzation for ECMUL (1 of 2) [#7509](https://github.com/hyperledger/besu/pull/7509)
 - Performance optimzation for ECMUL (2 of 2) [#7543](https://github.com/hyperledger/besu/pull/7543)
 

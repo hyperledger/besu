@@ -41,8 +41,6 @@ dependencyManagement {
 
     dependency 'org.hyperledger.besu:besu-errorprone-checks:1.0.0'
 
-    dependency 'com.gitlab.javafuzz:core:1.26'
-
     dependency 'com.google.guava:guava:33.0.0-jre'
 
     dependency 'com.graphql-java:graphql-java:21.5'
