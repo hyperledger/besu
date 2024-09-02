@@ -144,10 +144,18 @@ public class CodeDelegation implements org.hyperledger.besu.datatypes.CodeDelega
 
     final Hash hash = Hash.hash(Bytes.concatenate(MAGIC, rlpOutput.encoded()));
 
-    return SIGNATURE_ALGORITHM
-        .get()
-        .recoverPublicKeyFromSignature(hash, signature)
-        .map(Address::extract);
+    Optional<Address> authorityAddress;
+    try {
+      authorityAddress =
+          SIGNATURE_ALGORITHM
+              .get()
+              .recoverPublicKeyFromSignature(hash, signature)
+              .map(Address::extract);
+    } catch (final IllegalArgumentException e) {
+      authorityAddress = Optional.empty();
+    }
+
+    return authorityAddress;
   }
 
   /**
