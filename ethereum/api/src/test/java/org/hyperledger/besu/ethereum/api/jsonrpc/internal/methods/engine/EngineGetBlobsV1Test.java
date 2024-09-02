@@ -93,6 +93,7 @@ public class EngineGetBlobsV1Test {
   @BeforeEach
   public void before() {
     when(protocolContext.getBlockchain()).thenReturn(blockchain);
+    when(transactionPool.getBlobCache()).thenReturn(blobCache);
     this.method =
         spy(new EngineGetBlobsV1(vertx, protocolContext, engineCallListener, transactionPool));
   }

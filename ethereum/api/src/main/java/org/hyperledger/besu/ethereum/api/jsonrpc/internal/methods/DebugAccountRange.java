@@ -19,6 +19,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.BlockParameterOrBlockHash;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter.JsonRpcParameterException;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.RpcErrorType;
@@ -62,7 +63,7 @@ public class DebugAccountRange implements JsonRpcMethod {
     try {
       blockParameterOrBlockHash =
           requestContext.getRequiredParameter(0, BlockParameterOrBlockHash.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid block parameter or block hash parameter (index 0)",
           RpcErrorType.INVALID_BLOCK_PARAMS,
@@ -71,14 +72,14 @@ public class DebugAccountRange implements JsonRpcMethod {
     final String addressHash;
     try {
       addressHash = requestContext.getRequiredParameter(2, String.class);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid address hash parameter (index 2)", RpcErrorType.INVALID_ADDRESS_HASH_PARAMS, e);
     }
     final int maxResults;
     try {
       maxResults = requestContext.getRequiredParameter(3, Integer.TYPE);
-    } catch (Exception e) { // TODO:replace with JsonRpcParameter.JsonRpcParameterException
+    } catch (JsonRpcParameterException e) {
       throw new InvalidJsonRpcParameters(
           "Invalid max results parameter (index 3)", RpcErrorType.INVALID_MAX_RESULTS_PARAMS, e);
     }

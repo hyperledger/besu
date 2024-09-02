@@ -110,6 +110,7 @@ public enum RpcErrorType implements RpcMethodError {
   INVALID_TRANSACTION_LIMIT_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction limit params"),
   INVALID_TRANSACTION_TRACE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid transaction trace params"),
   INVALID_VERSIONED_HASH_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid versioned hash params"),
+  INVALID_VERSIONED_HASHES_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid versioned hashes params"),
   INVALID_VOTE_TYPE_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid vote type params"),
   INVALID_WITHDRAWALS_PARAMS(INVALID_PARAMS_ERROR_CODE, "Invalid withdrawals"),
 

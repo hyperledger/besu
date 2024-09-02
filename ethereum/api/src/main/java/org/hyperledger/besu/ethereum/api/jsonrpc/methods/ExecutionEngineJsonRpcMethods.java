@@ -24,6 +24,7 @@ import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineF
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV2;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineForkchoiceUpdatedV3;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetBlobsV1;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetClientVersionV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByHashV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadBodiesByRangeV1;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.engine.EngineGetPayloadV1;
@@ -59,6 +60,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
   private final ProtocolContext protocolContext;
   private final EthPeers ethPeers;
   private final Vertx consensusEngineServer;
+  private final String clientVersion;
+  private final String commit;
   private final TransactionPool transactionPool;
 
   ExecutionEngineJsonRpcMethods(
@@ -67,6 +70,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
       final ProtocolContext protocolContext,
       final EthPeers ethPeers,
       final Vertx consensusEngineServer,
+      final String clientVersion,
+      final String commit,
       final TransactionPool transactionPool) {
     this.mergeCoordinator =
         Optional.ofNullable(miningCoordinator)
@@ -76,6 +81,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
     this.protocolContext = protocolContext;
     this.ethPeers = ethPeers;
     this.consensusEngineServer = consensusEngineServer;
+    this.clientVersion = clientVersion;
+    this.commit = commit;
     this.transactionPool = transactionPool;
   }
 
@@ -153,6 +160,8 @@ public class ExecutionEngineJsonRpcMethods extends ApiGroupJsonRpcMethods {
                   consensusEngineServer, protocolContext, engineQosTimer),
               new EnginePreparePayloadDebug(
                   consensusEngineServer, protocolContext, engineQosTimer, mergeCoordinator.get()),
+              new EngineGetClientVersionV1(
+                  consensusEngineServer, protocolContext, engineQosTimer, clientVersion, commit),
               new EngineGetBlobsV1(
                   consensusEngineServer, protocolContext, engineQosTimer, transactionPool)));
 

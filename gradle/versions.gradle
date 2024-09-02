@@ -153,10 +153,8 @@ dependencyManagement {
     }
 
     dependency 'org.fusesource.jansi:jansi:2.4.1'
-    dependency 'org.openjdk.jol:jol-core:0.17'
-    dependency 'tech.pegasys:jc-kzg-4844:1.0.0'
 
-    dependencySet(group: 'org.hyperledger.besu', version: '0.9.4') {
+    dependencySet(group: 'org.hyperledger.besu', version: '0.9.5') {
       entry 'arithmetic'
       entry 'ipa-multipoint'
       entry 'bls12-381'
@@ -173,6 +171,9 @@ dependencyManagement {
 
     dependency 'org.java-websocket:Java-WebSocket:1.5.5'
 
+    dependency 'org.jacoco:org.jacoco.agent:0.8.11'
+    dependency 'org.jacoco:org.jacoco.core:0.8.11'
+
     dependency 'org.jetbrains.kotlin:kotlin-stdlib:1.9.22'
 
     dependencySet(group: 'org.junit.jupiter', version: '5.10.1') {
@@ -181,6 +182,8 @@ dependencyManagement {
       entry 'junit-jupiter-engine'
       entry 'junit-jupiter-params'
     }
+
+    dependency 'org.openjdk.jol:jol-core:0.17'
 
     dependency 'org.junit.platform:junit-platform-runner:1.9.2'
 
@@ -231,6 +234,8 @@ dependencyManagement {
     dependency 'org.yaml:snakeyaml:2.0'
 
     dependency 'org.apache.maven:maven-artifact:3.9.6'
+
+    dependency 'tech.pegasys:jc-kzg-4844:1.0.0'
 
     dependency 'tech.pegasys.discovery:discovery:22.12.0'
   }

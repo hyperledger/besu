@@ -19,7 +19,9 @@ import org.hyperledger.besu.datatypes.Transaction;
 import org.hyperledger.besu.datatypes.VersionedHash;
 import org.hyperledger.besu.ethereum.ProtocolContext;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.JsonRpcRequestContext;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.exception.InvalidJsonRpcParameters;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.methods.ExecutionEngineJsonRpcMethod;
+import org.hyperledger.besu.ethereum.api.jsonrpc.internal.parameters.JsonRpcParameter;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcErrorResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcResponse;
 import org.hyperledger.besu.ethereum.api.jsonrpc.internal.response.JsonRpcSuccessResponse;
@@ -83,8 +85,15 @@ public class EngineGetBlobsV1 extends ExecutionEngineJsonRpcMethod {
 
   @Override
   public JsonRpcResponse syncResponse(final JsonRpcRequestContext requestContext) {
-    final VersionedHash[] versionedHashes =
-        requestContext.getRequiredParameter(0, VersionedHash[].class);
+    final VersionedHash[] versionedHashes;
+    try {
+      versionedHashes = requestContext.getRequiredParameter(0, VersionedHash[].class);
+    } catch (JsonRpcParameter.JsonRpcParameterException e) {
+      throw new InvalidJsonRpcParameters(
+          "Invalid versioned hashes parameter (index 0)",
+          RpcErrorType.INVALID_VERSIONED_HASHES_PARAMS,
+          e);
+    }
 
     if (versionedHashes.length > 128) {
       return new JsonRpcErrorResponse(
