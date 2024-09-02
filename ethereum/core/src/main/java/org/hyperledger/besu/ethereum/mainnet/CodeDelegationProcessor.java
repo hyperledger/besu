@@ -15,7 +15,6 @@
 package org.hyperledger.besu.ethereum.mainnet;
 
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.evm.account.AccountState;
 import org.hyperledger.besu.evm.account.MutableAccount;
 import org.hyperledger.besu.evm.worldstate.EVMWorldUpdater;
 
@@ -34,6 +33,22 @@ public class CodeDelegationProcessor {
     this.maybeChainId = maybeChainId;
   }
 
+  /**
+   * At the start of executing the transaction, after incrementing the sender’s nonce, for each authorization we do
+   * the following:
+   * 1. Verify the chain id is either 0 or the chain's current ID.
+   * 2. `authority = ecrecover(keccak(MAGIC || rlp([chain_id, address, nonce])), y_parity, r, s]`
+   * 3. Add `authority` to `accessed_addresses` (as defined in [EIP-2929](./eip-2929.md).)
+   * 4. Verify the code of `authority` is either empty or already delegated.
+   * 5. Verify the nonce of `authority` is equal to `nonce`.
+   * 6. Add `PER_EMPTY_ACCOUNT_COST - PER_AUTH_BASE_COST` gas to the global refund counter if `authority` exists in the trie.
+   * 7. Set the code of `authority` to be `0xef0100 || address`. This is a delegation designation.
+   * 8. Increase the nonce of `authority` by one.
+   *
+   * @param evmWorldUpdater The world state updater which is aware of code delegation.
+   * @param transaction The transaction being processed.
+   * @return The result of the code delegation processing.
+   */
   public CodeDelegationResult process(
       final EVMWorldUpdater evmWorldUpdater, final Transaction transaction) {
     final CodeDelegationResult result = new CodeDelegationResult();
@@ -57,16 +72,11 @@ public class CodeDelegationProcessor {
 
                           final Optional<MutableAccount> maybeAuthorityAccount =
                               Optional.ofNullable(evmWorldUpdater.getAccount(authorityAddress));
-                          final long authorityNonce =
-                              maybeAuthorityAccount.map(AccountState::getNonce).orElse(0L);
-
-                          if (payload.nonce() != authorityNonce) {
-                            return;
-                          }
 
                           result.addAccessedDelegatorAddress(authorityAddress);
 
                           MutableAccount authority;
+                          boolean authorityDoesAlreadyExist = false;
                           if (maybeAuthorityAccount.isEmpty()) {
                             authority = evmWorldUpdater.createAccount(authorityAddress);
                           } else {
@@ -78,6 +88,14 @@ public class CodeDelegationProcessor {
                               return;
                             }
 
+                            authorityDoesAlreadyExist = true;
+                          }
+
+                          if (payload.nonce() != authority.getNonce()) {
+                            return;
+                          }
+
+                          if (authorityDoesAlreadyExist) {
                             result.incremenentAlreadyExistingDelegators();
                           }
 
