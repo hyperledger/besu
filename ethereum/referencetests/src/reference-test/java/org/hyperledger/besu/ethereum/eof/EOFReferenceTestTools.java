@@ -124,7 +124,7 @@ public class EOFReferenceTestTools {
     // hardwire in the magic byte transaction checks
     if (evm.getMaxEOFVersion() < 1) {
       assertThat(expected.exception()).isEqualTo("EOF_InvalidCode");
-    } else if (code.size() > evm.getEvmVersion().getMaxInitcodeSize()) {
+    } else if (code.size() > evm.getMaxInitcodeSize()) {
       // this check is in EOFCREATE and Transaction validator, but unit tests sniff it out.
       assertThat(false)
           .withFailMessage(

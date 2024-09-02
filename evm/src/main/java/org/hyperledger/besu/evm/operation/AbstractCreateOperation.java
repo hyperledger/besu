@@ -97,7 +97,7 @@ public abstract class AbstractCreateOperation extends AbstractOperation {
 
     Code code = codeSupplier.get();
 
-    if (code != null && code.getSize() > evm.getEvmVersion().getMaxInitcodeSize()) {
+    if (code != null && code.getSize() > evm.getMaxInitcodeSize()) {
       frame.popStackItems(getStackItemsConsumed());
       return new OperationResult(cost, ExceptionalHaltReason.CODE_TOO_LARGE);
     }
