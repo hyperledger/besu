@@ -87,11 +87,13 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
         });
   }
 
-  public PendingPeerRequest sendRequestToPeer(final PeerRequest request, final long minimumBlockNumber) {
+  public PendingPeerRequest sendRequestToPeer(
+      final PeerRequest request, final long minimumBlockNumber) {
     PendingPeerRequest result = null;
     do {
       try {
-        result = ethContext.getEthPeers().executePeerRequest(request, minimumBlockNumber, assignedPeer);
+        result =
+            ethContext.getEthPeers().executePeerRequest(request, minimumBlockNumber, assignedPeer);
       } catch (PeerDisconnectedException e) {
         Optional<EthPeer> maybePeer = ethContext.getEthPeers().bestPeer();
         if (maybePeer.isEmpty()) {
@@ -99,8 +101,9 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
         }
         assignPeer(maybePeer.get());
       }
-      //if result isn't set, we can assume a new peer has been assigned and continue the loop to attempt execution again
-    } while(result == null);
+      // if result isn't set, we can assume a new peer has been assigned and continue the loop to
+      // attempt execution again
+    } while (result == null);
     return result;
   }
 
