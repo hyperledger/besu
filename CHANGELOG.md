@@ -7,6 +7,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Include current chain head block when computing `eth_maxPriorityFeePerGas` [#7485](https://github.com/hyperledger/besu/pull/7485)
 
 ### Bug fixes
 
