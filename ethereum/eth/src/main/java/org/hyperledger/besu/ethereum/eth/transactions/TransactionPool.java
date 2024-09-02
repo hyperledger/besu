@@ -89,6 +89,7 @@ public class TransactionPool implements BlockAddedObserver {
   private static final Logger LOG = LoggerFactory.getLogger(TransactionPool.class);
   private static final Logger LOG_FOR_REPLAY = LoggerFactory.getLogger("LOG_FOR_REPLAY");
   private final Supplier<PendingTransactions> pendingTransactionsSupplier;
+  private final BlobCache blobCache;
   private volatile PendingTransactions pendingTransactions = new DisabledPendingTransactions();
   private final ProtocolSchedule protocolSchedule;
   private final ProtocolContext protocolContext;
@@ -111,7 +112,8 @@ public class TransactionPool implements BlockAddedObserver {
       final TransactionBroadcaster transactionBroadcaster,
       final EthContext ethContext,
       final TransactionPoolMetrics metrics,
-      final TransactionPoolConfiguration configuration) {
+      final TransactionPoolConfiguration configuration,
+      final BlobCache blobCache) {
     this.pendingTransactionsSupplier = pendingTransactionsSupplier;
     this.protocolSchedule = protocolSchedule;
     this.protocolContext = protocolContext;
@@ -121,6 +123,7 @@ public class TransactionPool implements BlockAddedObserver {
     this.configuration = configuration;
     this.blockAddedEventOrderedProcessor =
         ethContext.getScheduler().createOrderedProcessor(this::processBlockAddedEvent);
+    this.blobCache = blobCache;
     initLogForReplay();
   }
 
@@ -165,6 +168,10 @@ public class TransactionPool implements BlockAddedObserver {
   void handleConnect(final EthPeer peer) {
     transactionBroadcaster.relayTransactionPoolTo(
         peer, pendingTransactions.getPendingTransactions());
+  }
+
+  public BlobCache getBlobCache() {
+    return blobCache;
   }
 
   public ValidationResult<TransactionInvalidReason> addTransactionViaApi(
