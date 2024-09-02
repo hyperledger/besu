@@ -12,28 +12,24 @@
  *
  * SPDX-License-Identifier: Apache-2.0
  */
+package org.hyperledger.besu.metrics.prometheus;
 
-apply plugin: 'java-library'
+import org.hyperledger.besu.plugin.services.metrics.LabelledMetric;
+import org.hyperledger.besu.plugin.services.metrics.OperationTimer;
 
-jar {
-  archiveBaseName = 'besu-kvstore'
-  manifest {
-    attributes(
-      'Specification-Title': archiveBaseName,
-      'Specification-Version': project.version,
-      'Implementation-Title': archiveBaseName,
-      'Implementation-Version': calculateVersion(),
-      'Commit-Hash': getGitCommitDetails(40).hash
-      )
+import io.prometheus.client.Histogram;
+
+class PrometheusSimpleTimer implements LabelledMetric<OperationTimer> {
+
+  private final Histogram histogram;
+
+  public PrometheusSimpleTimer(final Histogram histogram) {
+    this.histogram = histogram;
   }
-}
 
-dependencies {
-  api project(':plugin-api')
-  api 'org.slf4j:slf4j-api'
-  implementation 'com.google.guava:guava'
-
-  testImplementation project(':testutil')
-  testImplementation 'org.junit.jupiter:junit-jupiter'
-  testImplementation 'org.assertj:assertj-core'
+  @Override
+  public OperationTimer labels(final String... labels) {
+    final Histogram.Child metric = histogram.labels(labels);
+    return () -> metric.startTimer()::observeDuration;
+  }
 }
