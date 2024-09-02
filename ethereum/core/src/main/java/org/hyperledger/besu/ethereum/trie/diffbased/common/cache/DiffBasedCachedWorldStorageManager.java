@@ -43,7 +43,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 public abstract class DiffBasedCachedWorldStorageManager implements StorageSubscriber {
-  public static final long RETAINED_LAYERS = 128; // at least 256 + typical rollbacks
+  public static final long RETAINED_LAYERS = 128;
   private static final Logger LOG =
       LoggerFactory.getLogger(DiffBasedCachedWorldStorageManager.class);
   private final DiffBasedWorldStateProvider archive;
