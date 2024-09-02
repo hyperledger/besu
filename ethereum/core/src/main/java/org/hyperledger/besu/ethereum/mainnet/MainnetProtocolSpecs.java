@@ -650,7 +650,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.FRONTIER,
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559),
-                    evm.getEvmVersion().getMaxInitcodeSize()))
+                    evm.getMaxInitcodeSize()))
         .withdrawalsProcessor(new WithdrawalsProcessor())
         .withdrawalsValidator(new WithdrawalsValidator.AllowedWithdrawals())
         .name("Shanghai");
@@ -730,7 +730,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.ACCESS_LIST,
                         TransactionType.EIP1559,
                         TransactionType.BLOB),
-                    evm.getEvmVersion().getMaxInitcodeSize()))
+                    evm.getMaxInitcodeSize()))
         .precompileContractRegistryBuilder(MainnetPrecompiledContractRegistries::cancun)
         .blockHeaderValidatorBuilder(MainnetBlockHeaderValidator::cancunBlockHeaderValidator)
         .blockHashProcessor(new CancunBlockHashProcessor())
@@ -814,7 +814,7 @@ public abstract class MainnetProtocolSpecs {
                         TransactionType.EIP1559,
                         TransactionType.BLOB,
                         TransactionType.SET_CODE),
-                    evm.getEvmVersion().getMaxInitcodeSize()))
+                    evm.getMaxInitcodeSize()))
 
         // EIP-2935 Blockhash processor
         .blockHashProcessor(new PragueBlockHashProcessor())
