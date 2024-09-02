@@ -19,7 +19,9 @@ import org.hyperledger.besu.ethereum.eth.manager.EthPeer;
 import org.hyperledger.besu.ethereum.eth.manager.PeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.PendingPeerRequest;
 import org.hyperledger.besu.ethereum.eth.manager.RequestManager;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.NoAvailablePeersException;
 import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerBreachedProtocolException;
+import org.hyperledger.besu.ethereum.eth.manager.exceptions.PeerDisconnectedException;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.MessageData;
 import org.hyperledger.besu.ethereum.p2p.rlpx.wire.messages.DisconnectMessage.DisconnectReason;
 import org.hyperledger.besu.ethereum.rlp.RLPException;
@@ -85,9 +87,21 @@ public abstract class AbstractPeerRequestTask<R> extends AbstractPeerTask<R> {
         });
   }
 
-  public PendingPeerRequest sendRequestToPeer(
-      final PeerRequest request, final long minimumBlockNumber) {
-    return ethContext.getEthPeers().executePeerRequest(request, minimumBlockNumber, assignedPeer);
+  public PendingPeerRequest sendRequestToPeer(final PeerRequest request, final long minimumBlockNumber) {
+    PendingPeerRequest result = null;
+    do {
+      try {
+        result = ethContext.getEthPeers().executePeerRequest(request, minimumBlockNumber, assignedPeer);
+      } catch (PeerDisconnectedException e) {
+        Optional<EthPeer> maybePeer = ethContext.getEthPeers().bestPeer();
+        if (maybePeer.isEmpty()) {
+          throw new NoAvailablePeersException();
+        }
+        assignPeer(maybePeer.get());
+      }
+      //if result isn't set, we can assume a new peer has been assigned and continue the loop to attempt execution again
+    } while(result == null);
+    return result;
   }
 
   private void handleMessage(

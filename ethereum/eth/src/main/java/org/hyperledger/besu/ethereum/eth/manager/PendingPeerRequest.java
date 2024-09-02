@@ -58,8 +58,7 @@ public class PendingPeerRequest {
       result.completeExceptionally(new NoAvailablePeersException());
       return true;
     } else if (maybePeer.get().isDisconnected()) {
-      result.completeExceptionally(new PeerDisconnectedException(maybePeer.get()));
-      return true;
+      throw new PeerDisconnectedException(maybePeer.get());
     } else {
       // At least one peer has the required height, but we are not able to use it if it's busy
       final Optional<EthPeer> maybePeerWithCapacity =
