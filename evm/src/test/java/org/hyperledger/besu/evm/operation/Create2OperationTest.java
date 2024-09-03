@@ -60,11 +60,7 @@ public class Create2OperationTest {
   private final MutableAccount newAccount = mock(MutableAccount.class);
 
   private final Create2Operation operation =
-      new Create2Operation(new ConstantinopleGasCalculator(), Integer.MAX_VALUE);
-
-  private final Create2Operation maxInitCodeOperation =
-      new Create2Operation(
-          new ConstantinopleGasCalculator(), MainnetEVMs.SHANGHAI_INIT_CODE_SIZE_LIMIT);
+      new Create2Operation(new ConstantinopleGasCalculator());
 
   private static final String TOPIC =
       "ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff"; // 32 FFs
@@ -221,7 +217,7 @@ public class Create2OperationTest {
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM myEVM = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = maxInitCodeOperation.execute(messageFrame, myEVM);
+    var result = operation.execute(messageFrame, myEVM);
     final MessageFrame createFrame = messageFrame.getMessageFrameStack().peek();
     final ContractCreationProcessor ccp =
         new ContractCreationProcessor(myEVM, false, List.of(), 0, List.of());
@@ -250,7 +246,7 @@ public class Create2OperationTest {
     when(worldUpdater.updater()).thenReturn(worldUpdater);
 
     final EVM evm = MainnetEVMs.shanghai(DEV_NET_CHAIN_ID, EvmConfiguration.DEFAULT);
-    var result = maxInitCodeOperation.execute(messageFrame, evm);
+    var result = operation.execute(messageFrame, evm);
     assertThat(result.getHaltReason()).isEqualTo(CODE_TOO_LARGE);
   }
 

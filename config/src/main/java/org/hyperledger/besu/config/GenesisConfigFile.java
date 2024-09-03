@@ -18,7 +18,6 @@ import org.hyperledger.besu.datatypes.Wei;
 
 import java.net.URL;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -41,6 +40,7 @@ public class GenesisConfigFile {
 
   private final GenesisReader loader;
   private final ObjectNode genesisRoot;
+  private Map<String, String> overrides;
 
   private GenesisConfigFile(final GenesisReader loader) {
     this.loader = loader;
@@ -107,34 +107,40 @@ public class GenesisConfigFile {
   }
 
   /**
-   * Gets config options.
+   * Gets config options, including any overrides.
    *
    * @return the config options
    */
   public GenesisConfigOptions getConfigOptions() {
-    return getConfigOptions(Collections.emptyMap());
-  }
-
-  /**
-   * Gets config options.
-   *
-   * @param overrides the overrides
-   * @return the config options
-   */
-  public GenesisConfigOptions getConfigOptions(final Map<String, String> overrides) {
     final ObjectNode config = loader.getConfig();
-
-    Map<String, String> overridesRef = overrides;
+    // are there any overrides to apply?
+    if (this.overrides == null) {
+      return JsonGenesisConfigOptions.fromJsonObject(config);
+    }
+    // otherwise apply overrides
+    Map<String, String> overridesRef = this.overrides;
 
     // if baseFeePerGas has been explicitly configured, pass it as an override:
     final var optBaseFee = getBaseFeePerGas();
     if (optBaseFee.isPresent()) {
       // streams and maps cannot handle null values.
-      overridesRef = new HashMap<>(overrides);
+      overridesRef = new HashMap<>(this.overrides);
       overridesRef.put("baseFeePerGas", optBaseFee.get().toShortHexString());
     }
 
     return JsonGenesisConfigOptions.fromJsonObjectWithOverrides(config, overridesRef);
+  }
+
+  /**
+   * Sets overrides for genesis options.
+   *
+   * @param overrides the overrides
+   * @return the config options
+   */
+  public GenesisConfigFile withOverrides(final Map<String, String> overrides) {
+
+    this.overrides = overrides;
+    return this;
   }
 
   /**

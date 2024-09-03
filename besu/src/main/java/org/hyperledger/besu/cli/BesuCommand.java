@@ -1651,15 +1651,17 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
   }
 
   private GenesisConfigFile readGenesisConfigFile() {
-    return genesisFile != null
-        ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
-        : GenesisConfigFile.fromResource(
-            Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
+    final GenesisConfigFile effectiveGenesisFile =
+        genesisFile != null
+            ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
+            : GenesisConfigFile.fromResource(
+                Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
+    return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
   private GenesisConfigOptions readGenesisConfigOptions() {
     try {
-      return genesisConfigFileSupplier.get().getConfigOptions(genesisConfigOverrides);
+      return genesisConfigFileSupplier.get().getConfigOptions();
     } catch (final Exception e) {
       throw new ParameterException(
           this.commandLine, "Unable to load genesis file. " + e.getCause());
