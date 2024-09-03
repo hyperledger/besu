@@ -30,11 +30,11 @@ import java.util.function.Supplier;
 
 import com.google.common.base.Suppliers;
 
-public class SetCodeTransactionDecoder {
+public class CodeDelegationTransactionDecoder {
   private static final Supplier<SignatureAlgorithm> SIGNATURE_ALGORITHM =
       Suppliers.memoize(SignatureAlgorithmFactory::getInstance);
 
-  private SetCodeTransactionDecoder() {
+  private CodeDelegationTransactionDecoder() {
     // private constructor
   }
 
@@ -64,7 +64,7 @@ public class SetCodeTransactionDecoder {
                       return accessListEntry;
                     }))
             .setCodeTransactionPayloads(
-                input.readList(SetCodeTransactionDecoder::decodeInnerPayload));
+                input.readList(CodeDelegationTransactionDecoder::decodeInnerPayload));
 
     final byte recId = (byte) input.readUnsignedByteScalar();
     final BigInteger r = input.readUInt256Scalar().toUnsignedBigInteger();

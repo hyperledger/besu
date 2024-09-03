@@ -25,9 +25,9 @@ import java.util.List;
 
 import org.apache.tuweni.bytes.Bytes;
 
-public class SetCodeTransactionEncoder {
+public class CodeDelegationEncoder {
 
-  private SetCodeTransactionEncoder() {
+  private CodeDelegationEncoder() {
     // private constructor
   }
 

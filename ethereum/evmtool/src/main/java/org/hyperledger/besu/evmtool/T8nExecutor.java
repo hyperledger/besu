@@ -310,8 +310,8 @@ public class T8nExecutor {
         } else {
           out.printf("TX json node unparseable: %s%n", txNode);
         }
-      } catch (IllegalArgumentException iae) {
-        rejections.add(new RejectedTransaction(i, iae.getMessage()));
+      } catch (IllegalArgumentException | ArithmeticException e) {
+        rejections.add(new RejectedTransaction(i, e.getMessage()));
       }
       i++;
     }
