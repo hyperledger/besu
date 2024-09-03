@@ -20,6 +20,7 @@ import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.Blob;
 import org.hyperledger.besu.datatypes.BlobsWithCommitments;
+import org.hyperledger.besu.datatypes.CodeDelegation;
 import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.datatypes.KZGCommitment;
 import org.hyperledger.besu.datatypes.TransactionType;
@@ -129,10 +130,33 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getPayload().size(), maxInitcodeSize));
     }
 
-    if (transactionType == TransactionType.DELEGATE_CODE && isDelegateCodeEmpty(transaction)) {
-      return ValidationResult.invalid(
-          TransactionInvalidReason.EMPTY_CODE_DELEGATION,
-          "transaction code delegation transactions must have a non-empty code delegation list");
+    if (transactionType == TransactionType.DELEGATE_CODE) {
+      if (isDelegateCodeEmpty(transaction)) {
+        return ValidationResult.invalid(
+            TransactionInvalidReason.EMPTY_CODE_DELEGATION,
+            "transaction code delegation transactions must have a non-empty code delegation list");
+      }
+
+      final BigInteger halfCurveOrder = SignatureAlgorithmFactory.getInstance().getHalfCurveOrder();
+      final Optional<ValidationResult<TransactionInvalidReason>> validationResult =
+          transaction
+              .getCodeDelegationList()
+              .map(
+                  codeDelegations -> {
+                    for (CodeDelegation codeDelegation : codeDelegations) {
+                      if (codeDelegation.signature().getS().compareTo(halfCurveOrder) > 0) {
+                        return ValidationResult.invalid(
+                            TransactionInvalidReason.INVALID_SIGNATURE,
+                            "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
+                      }
+                    }
+
+                    return ValidationResult.valid();
+                  });
+
+      if (validationResult.isPresent() && !validationResult.get().isValid()) {
+        return validationResult.get();
+      }
     }
 
     return validateCostAndFee(transaction, baseFee, blobFee, transactionValidationParams);
