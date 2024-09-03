@@ -5,6 +5,18 @@
 ### Upcoming Breaking Changes
 
 ### Breaking Changes
+
+### Additions and Improvements
+- Include current chain head block when computing `eth_maxPriorityFeePerGas` [#7485](https://github.com/hyperledger/besu/pull/7485)
+
+### Bug fixes
+- The genesis config override `contractSizeLimit` was not wired into code size limits [#7557](https://github.com/hyperledger/besu/issues/7557)
+
+## 24.9.0
+
+### Upcoming Breaking Changes
+
+### Breaking Changes
 - Receipt compaction is enabled by default. It will no longer be possible to downgrade Besu to versions prior to 24.5.1.
 
 ### Additions and Improvements
@@ -13,6 +25,7 @@
 - Add bootnode to holesky config [#7500](https://github.com/hyperledger/besu/pull/7500)
 - Implement engine_getClientVersionV1 [#7512](https://github.com/hyperledger/besu/pull/7512)
 - Performance optimzation for ECMUL (1 of 2) [#7509](https://github.com/hyperledger/besu/pull/7509)
+- Performance optimzation for ECMUL (2 of 2) [#7543](https://github.com/hyperledger/besu/pull/7543)
 
 ### Bug fixes
 - Fix tracing in precompiled contracts when halting for out of gas [#7318](https://github.com/hyperledger/besu/issues/7318)

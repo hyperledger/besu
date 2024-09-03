@@ -22,6 +22,7 @@ import org.hyperledger.besu.ethereum.referencetests.EOFTestCaseSpec;
 import org.hyperledger.besu.evm.EVM;
 import org.hyperledger.besu.evm.MainnetEVMs;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
+import org.hyperledger.besu.testfuzz.javafuzz.Fuzzer;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -48,7 +49,6 @@ import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.module.SimpleModule;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import com.gitlab.javafuzz.core.AbstractFuzzTarget;
 import com.google.common.base.Stopwatch;
 import org.apache.tuweni.bytes.Bytes;
 import picocli.CommandLine;
@@ -61,7 +61,7 @@ import picocli.CommandLine.Option;
     description = "Fuzzes EOF container parsing and validation",
     mixinStandardHelpOptions = true,
     versionProvider = VersionProvider.class)
-public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnable {
+public class EofContainerSubCommand implements Runnable {
 
   static final String COMMAND_NAME = "eof-container";
 
@@ -99,6 +99,16 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
       defaultValue = "2000",
       description = "Minimum number of fuzz tests before a time limit fuzz error can occur")
   private long timeThresholdIterations = 2_000;
+
+  @Option(
+      names = {"--guidance-regexp"},
+      description = "Regexp for classes that matter for guidance metric")
+  private String guidanceRegexp;
+
+  @Option(
+      names = {"--new-corpus-dir"},
+      description = "Directory to write hex versions of guidance added contracts")
+  private File newCorpusDir = null;
 
   @CommandLine.ParentCommand private final BesuFuzzCommand parentCommand;
 
@@ -174,7 +184,13 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
     System.out.println("Fuzzing client set: " + clients.keySet());
 
     try {
-      new Fuzzer(this, corpusDir.toString(), this::fuzzStats).start();
+      new Fuzzer(
+              this::parseEOFContainers,
+              corpusDir.toString(),
+              this::fuzzStats,
+              guidanceRegexp,
+              newCorpusDir)
+          .start();
     } catch (NoSuchAlgorithmException
         | ClassNotFoundException
         | InvocationTargetException
@@ -212,8 +228,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
     }
   }
 
-  @Override
-  public void fuzz(final byte[] bytes) {
+  void parseEOFContainers(final byte[] bytes) {
     Bytes eofUnderTest = Bytes.wrap(bytes);
     String eofUnderTestHexString = eofUnderTest.toHexString();
 
@@ -236,7 +251,7 @@ public class EofContainerSubCommand extends AbstractFuzzTarget implements Runnab
                         "%s: slow validation %d µs%n", client.getName(), elapsedMicros);
                     try {
                       Files.writeString(
-                          Path.of("slow-" + client.getName() + "-" + name + ".hex"),
+                          Path.of("slow-" + name + "-" + client.getName() + ".hex"),
                           eofUnderTestHexString);
                     } catch (IOException e) {
                       throw new RuntimeException(e);
