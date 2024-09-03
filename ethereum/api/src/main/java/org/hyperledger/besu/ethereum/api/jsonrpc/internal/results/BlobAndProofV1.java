@@ -17,9 +17,8 @@ package org.hyperledger.besu.ethereum.api.jsonrpc.internal.results;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 
 /**
- * BlobAndProofV1: title: Blob and proof object V1 type: object required: - blob - proof properties:
- * blob: title: Blob $ref: '#/components/schemas/bytes' proof: title: proof $ref:
- * '#/components/schemas/bytes48'
+ * The result of the eth_getBlobAndProofV1 JSON-RPC method contains an array of BlobAndProofV1.
+ * BlobAndProofV1 contains the blob data and the kzg proof for the blob.
  */
 @JsonPropertyOrder({"blob", "proof"})
 public class BlobAndProofV1 {
