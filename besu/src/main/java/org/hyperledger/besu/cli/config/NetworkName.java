@@ -31,6 +31,12 @@ public enum NetworkName {
   /** LUKSO mainnet network name. */
   LUKSO("/lukso.json", BigInteger.valueOf(42)),
 
+  /**
+   * EPHEMERY network name. The networkId is the default networkId that will be used to make update
+   * to the most recent networkId.
+   */
+  EPHEMERY("/ephemery.json", BigInteger.valueOf(39438135)),
+
   /** Dev network name. */
   DEV("/dev.json", BigInteger.valueOf(2018), false),
   /** Future EIPs network name. */
@@ -43,7 +49,7 @@ public enum NetworkName {
   MORDOR("/mordor.json", BigInteger.valueOf(7));
 
   private final String genesisFile;
-  private final BigInteger networkId;
+  private BigInteger networkId;
   private final boolean canSnapSync;
   private final String deprecationDate;
 
@@ -67,6 +73,18 @@ public enum NetworkName {
   public String getGenesisFile() {
     return genesisFile;
   }
+
+  /**
+   * This method is called only by the Ephemery network. It is required to update the networkid.
+   *
+   * @param networkId Sets network id .
+   */
+  public void setNetworkId(final BigInteger networkId) {
+    if (this == EPHEMERY) {
+      this.networkId = networkId;
+    }
+  }
+
 
   /**
    * Gets network id.
