@@ -211,7 +211,7 @@ public class EngineGetBlobsV1Test {
   }
 
   @Test
-  public void shouldRetrunEmptyResponseForEmptyRequest() {
+  public void shouldReturnEmptyResponseForEmptyRequest() {
     final VersionedHash[] versionedHashes = new VersionedHash[0];
 
     final JsonRpcResponse jsonRpcResponse = resp(versionedHashes);
