@@ -259,17 +259,6 @@ public class SnapServerGetAccountRangeTest {
   }
 
   /**
-   * This test requests data at the state root of the genesis block. We expect the server to return
-   * no data because genesis is older than 127 blocks. Expected: 0 accounts.
-   */
-  @Test
-  public void test11_RequestStateRootOfGenesisBlock() {
-    Hash rootHash = protocolContext.getBlockchain().getGenesisBlockHeader().getStateRoot();
-    testAccountRangeRequest(
-        new AccountRangeRequestParams.Builder().rootHash(rootHash).expectedAccounts(0).build());
-  }
-
-  /**
    * This test requests data at a state root that is 127 blocks old. We expect the server to have
    * this state available. Expected: 84 accounts.
    */

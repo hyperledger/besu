@@ -179,7 +179,8 @@ public final class BlockTestUtil {
     final URL genesisURL =
         ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("snap/snapGenesis.json"));
     final URL blocksURL =
-        ensureFileUrl(BlockTestUtil.class.getClassLoader().getResource("snap/chain.rlp"));
+        ensureFileUrl(
+            BlockTestUtil.class.getClassLoader().getResource("snap/testBlockchain.blocks"));
     return new ChainResources(genesisURL, blocksURL);
   }
 
