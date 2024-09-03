@@ -1,5 +1,5 @@
 /*
- * Copyright ConsenSys AG.
+ * Copyright contributors to Hyperledger Besu.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except in compliance with
  * the License. You may obtain a copy of the License at
@@ -135,8 +135,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
             .besuNodeProviderModule(module)
             .build();
 
-    // final TransactionPoolValidatorServiceImpl transactionPoolValidatorServiceImpl =
-    //  new TransactionPoolValidatorServiceImpl();
     final Path dataDir = node.homeDirectory();
     final PermissioningServiceImpl permissioningService = new PermissioningServiceImpl();
 
@@ -152,19 +150,10 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
         .map(GenesisConfigFile::fromConfig)
         .ifPresent(networkConfigBuilder::setGenesisConfigFile);
     final EthNetworkConfig ethNetworkConfig = networkConfigBuilder.build();
-
-    /*
-        final TransactionPoolConfiguration txPoolConfig =
-            ImmutableTransactionPoolConfiguration.builder()
-                .from(node.getTransactionPoolConfiguration())
-                .strictTransactionReplayProtectionEnabled(node.isStrictTxReplayProtectionEnabled())
-                .transactionPoolValidatorService(transactionPoolValidatorServiceImpl)
-                .build();
-    */
     final BesuControllerBuilder builder = component.besuControllerBuilder();
     builder.isRevertReasonEnabled(node.isRevertReasonEnabled());
     builder.networkConfiguration(node.getNetworkingConfiguration());
-    // builder.transactionPoolConfiguration(txPoolConfig);
+
     builder.dataDirectory(dataDir);
     builder.nodeKey(new NodeKey(new KeyPairSecurityModule(KeyPairUtil.loadKeyPair(dataDir))));
     builder.privacyParameters(node.getPrivacyParameters());

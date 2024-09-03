@@ -23,10 +23,10 @@ import java.util.Optional;
 /** The Transaction pool validator service implementation. */
 public class TransactionPoolValidatorServiceImpl implements TransactionPoolValidatorService {
 
+  private Optional<PluginTransactionPoolValidatorFactory> factory = Optional.empty();
+
   /** Default Constructor. */
   public TransactionPoolValidatorServiceImpl() {}
-
-  private Optional<PluginTransactionPoolValidatorFactory> factory = Optional.empty();
 
   @Override
   public PluginTransactionPoolValidator createTransactionValidator() {
