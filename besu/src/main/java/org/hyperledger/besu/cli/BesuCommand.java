@@ -19,6 +19,7 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 import static org.hyperledger.besu.cli.DefaultCommandValues.getDefaultBesuDataPath;
+import static org.hyperledger.besu.cli.config.NetworkName.EPHEMERY;
 import static org.hyperledger.besu.cli.config.NetworkName.MAINNET;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.DEPENDENCY_WARNING_MSG;
 import static org.hyperledger.besu.cli.util.CommandLineUtils.isOptionSet;
@@ -196,6 +197,7 @@ import org.hyperledger.besu.services.TransactionPoolValidatorServiceImpl;
 import org.hyperledger.besu.services.TransactionSelectionServiceImpl;
 import org.hyperledger.besu.services.TransactionSimulationServiceImpl;
 import org.hyperledger.besu.services.kvstore.InMemoryStoragePlugin;
+import org.hyperledger.besu.util.EphemeryGenesisFile;
 import org.hyperledger.besu.util.InvalidConfigurationException;
 import org.hyperledger.besu.util.LogConfigurator;
 import org.hyperledger.besu.util.NetworkUtility;
@@ -339,6 +341,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
 
   private int maxPeers;
   private int maxRemoteInitiatedPeers;
+  private EphemeryGenesisFile ephemeryGenesisFile;
 
   // CLI options defined by user at runtime.
   // Options parsing is done with CLI library Picocli https://picocli.info/
@@ -1656,6 +1659,10 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
             ? GenesisConfigFile.fromSource(genesisConfigSource(genesisFile))
             : GenesisConfigFile.fromResource(
                 Optional.ofNullable(network).orElse(MAINNET).getGenesisFile());
+    if (network.equals(EPHEMERY)) {
+      ephemeryGenesisFile = new EphemeryGenesisFile();
+      ephemeryGenesisFile.updateGenesis();
+    }
     return effectiveGenesisFile.withOverrides(genesisConfigOverrides);
   }
 
