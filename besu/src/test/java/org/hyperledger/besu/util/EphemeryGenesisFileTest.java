@@ -24,7 +24,6 @@ import static org.mockito.Mockito.verify;
 
 import org.hyperledger.besu.config.GenesisConfigFile;
 
-import java.io.IOException;
 import java.math.BigInteger;
 import java.util.Map;
 import java.util.Optional;
@@ -61,9 +60,7 @@ public class EphemeryGenesisFileTest {
           .put("config", (new JsonObject()).put("chainId", GENESIS_CONFIG_TEST_CHAINID));
 
   @BeforeEach
-  void setUp() throws IOException {
-    //    genesisConfigFile = mock(GenesisConfigFile.class);
-    //    genesisConfigOptions = mock(GenesisConfigOptions.class);
+  void setUp() {
     ephemeryGenesisFile = new EphemeryGenesisFile();
   }
 
