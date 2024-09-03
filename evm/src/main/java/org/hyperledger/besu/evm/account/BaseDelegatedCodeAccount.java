@@ -62,7 +62,12 @@ class BaseDelegatedCodeAccount {
       return codeHash;
     }
 
-    codeHash = Hash.hash(getCode());
+    final Bytes code = getCode();
+    if (code != null && !code.isEmpty()) {
+      codeHash = Hash.hash(code);
+    } else {
+      codeHash = Hash.EMPTY;
+    }
 
     return codeHash;
   }

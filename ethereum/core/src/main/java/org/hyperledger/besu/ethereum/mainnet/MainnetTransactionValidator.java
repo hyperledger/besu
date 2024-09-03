@@ -129,14 +129,18 @@ public class MainnetTransactionValidator implements TransactionValidator {
               transaction.getPayload().size(), maxInitcodeSize));
     }
 
-    if (transactionType == TransactionType.DELEGATE_CODE
-        && transaction.getCodeDelegationList().isEmpty()) {
+    if (transactionType == TransactionType.DELEGATE_CODE && isDelegateCodeEmpty(transaction)) {
       return ValidationResult.invalid(
           TransactionInvalidReason.EMPTY_CODE_DELEGATION,
           "transaction code delegation transactions must have a non-empty code delegation list");
     }
 
     return validateCostAndFee(transaction, baseFee, blobFee, transactionValidationParams);
+  }
+
+  private static boolean isDelegateCodeEmpty(final Transaction transaction) {
+    return transaction.getCodeDelegationList().isEmpty()
+        || transaction.getCodeDelegationList().get().isEmpty();
   }
 
   private ValidationResult<TransactionInvalidReason> validateCostAndFee(
