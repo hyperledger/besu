@@ -149,6 +149,13 @@ public class MainnetTransactionValidator implements TransactionValidator {
                             TransactionInvalidReason.INVALID_SIGNATURE,
                             "Invalid signature for code delegation. S value must be less or equal than the half curve order.");
                       }
+
+                      if (codeDelegation.signature().getRecId() != 0
+                          && codeDelegation.signature().getRecId() != 1) {
+                        return ValidationResult.invalid(
+                            TransactionInvalidReason.INVALID_SIGNATURE,
+                            "Invalid signature for code delegation. RecId value must be 0 or 1.");
+                      }
                     }
 
                     return ValidationResult.valid();
