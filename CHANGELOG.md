@@ -4588,6 +4588,7 @@ Specify `*` or `all` for `--host-whitelist` to effectively disable host protecti
     * [Logging](https://github.com/PegaSysEng/pantheon/wiki/Logging)
     * [Proof of Authority](https://github.com/PegaSysEng/pantheon/wiki/Proof-of-Authority)
     * [Passing JVM Options](https://github.com/PegaSysEng/pantheon/wiki/Passing-JVM-Options)
+ - Added `--ephemery` network support for Ephemery Testnet [#7471](https://github.com/hyperledger/besu/pull/7471) thanks to [@gconnect](https://github.com/gconnect)
 
 
  ### Technical Improvements
