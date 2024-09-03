@@ -85,7 +85,6 @@ public enum NetworkName {
     }
   }
 
-
   /**
    * Gets network id.
    *

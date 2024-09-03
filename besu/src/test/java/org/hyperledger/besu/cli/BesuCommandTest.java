@@ -1868,7 +1868,7 @@ public class BesuCommandTest extends CommandTestAbstract {
     parseCommand("--network", "ephemery");
 
     final ArgumentCaptor<EthNetworkConfig> networkArg =
-            ArgumentCaptor.forClass(EthNetworkConfig.class);
+        ArgumentCaptor.forClass(EthNetworkConfig.class);
 
     verify(mockControllerBuilderFactory).fromEthNetworkConfig(networkArg.capture(), any());
     verify(mockControllerBuilder).build();
