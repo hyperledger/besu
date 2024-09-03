@@ -22,6 +22,7 @@ import static org.hyperledger.besu.ethereum.referencetests.ReferenceTestProtocol
 
 import org.hyperledger.besu.config.StubGenesisConfigOptions;
 import org.hyperledger.besu.crypto.KeyPair;
+import org.hyperledger.besu.crypto.SECPSignature;
 import org.hyperledger.besu.crypto.SignatureAlgorithm;
 import org.hyperledger.besu.crypto.SignatureAlgorithmFactory;
 import org.hyperledger.besu.datatypes.AccessListEntry;
@@ -245,15 +246,15 @@ public class T8nExecutor {
                     Bytes.fromHexStringLenient(entryAsJson.get("s").textValue())
                         .toUnsignedBigInteger();
 
+                final SECPSignature authorizationSignature =
+                    new SECPSignature(authorizationR, authorizationS, authorizationV);
+
                 authorizations.add(
-                    org.hyperledger.besu.ethereum.core.CodeDelegation
-                        .createSetCodeAuthorizationEntry(
-                            authorizationChainId,
-                            authorizationAddress,
-                            authorizationNonce,
-                            authorizationV,
-                            authorizationR,
-                            authorizationS));
+                    new org.hyperledger.besu.ethereum.core.CodeDelegation(
+                        authorizationChainId,
+                        authorizationAddress,
+                        authorizationNonce,
+                        authorizationSignature));
               }
               builder.setCodeTransactionPayloads(authorizations);
             }
