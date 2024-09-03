@@ -93,7 +93,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -449,7 +448,6 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
     }
 
     @Provides
-    @Named("besuPluginContext")
     public BesuPluginContextImpl providePluginContext(
         final StorageServiceImpl storageService,
         final SecurityModuleServiceImpl securityModuleService,
@@ -549,17 +547,17 @@ public class ThreadBesuNodeRunner implements BesuNodeRunner {
   static class MockBesuCommandModule {
 
     @Provides
-    BesuCommand provideBesuCommand(final AcceptanceTestBesuComponent component) {
+    BesuCommand provideBesuCommand(final BesuPluginContextImpl pluginContext) {
       final BesuCommand besuCommand =
           new BesuCommand(
-              component,
               RlpBlockImporter::new,
               JsonBlockImporter::new,
               RlpBlockExporter::new,
               new RunnerBuilder(),
               new BesuController.Builder(),
-              Optional.ofNullable(component.getBesuPluginContext()).orElse(null),
-              System.getenv());
+              pluginContext,
+              System.getenv(),
+              LoggerFactory.getLogger(MockBesuCommandModule.class));
       besuCommand.toCommandLine();
       return besuCommand;
     }
