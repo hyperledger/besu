@@ -14,11 +14,11 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.common.storage;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_FREEZER_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.CODE_STORAGE;
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.STORAGE_FREEZER_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.TRIE_BRANCH_STORAGE;
 import static org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat.ArchiveFlatDbStrategy.DELETED_ACCOUNT_VALUE;
 
@@ -201,9 +201,9 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   }
 
   /**
-   * Move old account state from the primary DB segments to "cold" segments that will only be used
-   * for historic state queries. This prevents performance degradation over time for writes to the
-   * primary DB segments.
+   * Move old account state from the primary DB segments to "freezer" segments that will only be
+   * used for historic state queries. This prevents performance degradation over time for writes to
+   * the primary DB segments.
    *
    * @param previousBlockHeader the block header for the previous block, used to get the "nearest
    *     before" state
@@ -238,7 +238,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
                       composedWorldStateStorage.startTransaction();
                   tx.remove(ACCOUNT_INFO_STATE, nearestKey.key().toArrayUnsafe());
                   tx.put(
-                      ACCOUNT_FREEZER_STATE,
+                      ACCOUNT_INFO_STATE_FREEZER,
                       nearestKey.key().toArrayUnsafe(),
                       nearestKey.value().get());
                   tx.commit();
@@ -296,7 +296,7 @@ public abstract class DiffBasedWorldStateKeyValueStorage
                       composedWorldStateStorage.startTransaction();
                   tx.remove(ACCOUNT_STORAGE_STORAGE, nearestKey.key().toArrayUnsafe());
                   tx.put(
-                      STORAGE_FREEZER_STATE,
+                      ACCOUNT_STORAGE_FREEZER,
                       nearestKey.key().toArrayUnsafe(),
                       nearestKey.value().get());
                   tx.commit();

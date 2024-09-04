@@ -90,7 +90,7 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
     }
 
     AtomicInteger frozenAccountStateCount = new AtomicInteger();
-    AtomicInteger frozenStorageStateCount = new AtomicInteger();
+    AtomicInteger frozenAccountStorageCount = new AtomicInteger();
 
     LOG.atDebug()
         .setMessage(
@@ -105,7 +105,8 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
             .dropWhile((e) -> e.getKey() > retainAboveThisBlock);
     // TODO - limit to a configurable number of blocks to move per loop
 
-    final Multimap<Long, Hash> movedToFreezer = ArrayListMultimap.create();
+    final Multimap<Long, Hash> accountStateFreezerActionsComplete = ArrayListMultimap.create();
+    final Multimap<Long, Hash> accountStorageFreezerActionsComplete = ArrayListMultimap.create();
 
     // Determine which world state keys have changed in the last N blocks by looking at the
     // trie logs for the blocks. Then move the old keys to the freezer segment (if and only if they
@@ -130,7 +131,7 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
                                     address.addressHash()));
                           });
                 }
-                movedToFreezer.put(block.getKey(), blockHash);
+                accountStateFreezerActionsComplete.put(block.getKey(), blockHash);
               }
             });
 
@@ -153,7 +154,7 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
                             storageSlotKey.forEach(
                                 (slotKey, slotValue) -> {
                                   // Move any previous state for this account
-                                  frozenStorageStateCount.addAndGet(
+                                  frozenAccountStorageCount.addAndGet(
                                       rootWorldStateStorage.freezePreviousStorageState(
                                           blockchain.getBlockHeader(
                                               blockchain
@@ -165,22 +166,33 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
                                 });
                           });
                 }
-                movedToFreezer.put(block.getKey(), blockHash);
+                accountStorageFreezerActionsComplete.put(block.getKey(), blockHash);
               }
             });
 
-    movedToFreezer.keySet().forEach(blocksToMoveToFreezer::removeAll);
+    // For us to consider all state and storage changes for a block complete, it must have been
+    // recorded in both accountState and accountStorage lists. If only one finished we need to try
+    // freezing state/storage for that block again on the next loop
+    int frozenBlocksCompleted = blocksToMoveToFreezer.size();
+    accountStateFreezerActionsComplete
+        .keySet()
+        .forEach(
+            (b) -> {
+              if (accountStorageFreezerActionsComplete.containsKey(b)) {
+                blocksToMoveToFreezer.removeAll(b);
+              }
+            });
 
-    if (frozenAccountStateCount.get() > 0 || frozenStorageStateCount.get() > 0) {
+    if (frozenAccountStateCount.get() > 0 || frozenAccountStorageCount.get() > 0) {
       LOG.atInfo()
-          .setMessage("froze {} account state entries, {} storage state entries for {} blocks")
+          .setMessage("froze {} account state entries, {} account storage entries for {} blocks")
           .addArgument(frozenAccountStateCount.get())
-          .addArgument(frozenStorageStateCount.get())
-          .addArgument(movedToFreezer::size)
+          .addArgument(frozenAccountStorageCount.get())
+          .addArgument(frozenBlocksCompleted)
           .log();
     }
 
-    return movedToFreezer.size();
+    return frozenBlocksCompleted;
   }
 
   @Override

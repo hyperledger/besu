@@ -14,8 +14,9 @@
  */
 package org.hyperledger.besu.ethereum.trie.diffbased.bonsai.storage.flat;
 
-import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_FREEZER_STATE;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_INFO_STATE_FREEZER;
+import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_FREEZER;
 import static org.hyperledger.besu.ethereum.storage.keyvalue.KeyValueSegmentIdentifier.ACCOUNT_STORAGE_STORAGE;
 
 import org.hyperledger.besu.datatypes.Hash;
@@ -86,7 +87,7 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
       // Check the frozen state as old state is moved out of the primary DB segment
       final Optional<Bytes> frozenAccountFound =
           storage
-              .getNearestBefore(ACCOUNT_FREEZER_STATE, keyNearest)
+              .getNearestBefore(ACCOUNT_INFO_STATE_FREEZER, keyNearest)
               // return empty when we find a "deleted value key"
               .filter(
                   found ->
@@ -167,10 +168,30 @@ public class ArchiveFlatDbStrategy extends FullFlatDbStrategy {
 
     if (storageFound.isPresent()) {
       getStorageValueFlatDatabaseCounter.inc();
+      return storageFound;
     } else {
-      getStorageValueNotFoundInFlatDatabaseCounter.inc();
+      // Check the frozen storage as old state is moved out of the primary DB segment
+      final Optional<Bytes> frozenStorageFound =
+          storage
+              .getNearestBefore(ACCOUNT_STORAGE_FREEZER, keyNearest)
+              // return empty when we find a "deleted value key"
+              .filter(
+                  found ->
+                      !Arrays.areEqual(
+                          DELETED_STORAGE_VALUE, found.value().orElse(DELETED_STORAGE_VALUE)))
+              // don't return accounts that do not have a matching account hash
+              .filter(found -> accountHash.commonPrefixLength(found.key()) >= accountHash.size())
+              .flatMap(SegmentedKeyValueStorage.NearestKeyValue::wrapBytes);
+
+      if (frozenStorageFound.isPresent()) {
+        // TODO - different metric for frozen lookups?
+        getStorageValueFlatDatabaseCounter.inc();
+      } else {
+        getStorageValueNotFoundInFlatDatabaseCounter.inc();
+      }
+
+      return frozenStorageFound;
     }
-    return storageFound;
   }
 
   /*
