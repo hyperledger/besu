@@ -220,10 +220,12 @@ public class LayeredKeyValueStorage extends SegmentedInMemoryKeyValueStorage
         return ourPeek == null ? parentIterator.next() : mapEntryToPair(ourIterator.next());
       }
 
+      // otherwise compare:
       int comparison = ourPeek.getKey().compareTo(Bytes.wrap(parentPeek.getKey()));
       if (comparison < 0) {
         return mapEntryToPair(ourIterator.next());
       } else if (comparison == 0) {
+        // skip dupe key from parent, return ours:
         parentIterator.next();
         return mapEntryToPair(ourIterator.next());
       } else {

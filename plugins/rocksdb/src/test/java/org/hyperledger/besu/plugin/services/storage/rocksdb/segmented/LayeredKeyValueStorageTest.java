@@ -173,4 +173,167 @@ public class LayeredKeyValueStorageTest {
     assertArrayEquals(key2, resultList.get(0).getKey());
     assertArrayEquals(value2, resultList.get(0).getValue());
   }
+
+  /**
+   * Tests that the stream method correctly handles multiple layers where the current layer
+   * overrides the parent layers.
+   */
+  @Test
+  void shouldStreamWithMultipleLayersAndCurrentLayerOverrides() {
+    byte[] key1 = {1};
+    byte[] value1 = {10};
+    byte[] key2 = {2};
+    byte[] value2 = {20};
+    byte[] key3 = {3};
+    byte[] value3 = {30};
+
+    // Parent Layer 0
+    when(parentStorage.stream(segmentId))
+        .thenReturn(Stream.of(Pair.of(key1, null), Pair.of(key2, value2)));
+
+    // Parent Layer 1
+    var parentLayer1 = createSegmentMap();
+    parentLayer1.get(segmentId).put(Bytes.wrap(key1), Optional.of(value1));
+    parentLayer1.get(segmentId).put(Bytes.wrap(key2), Optional.of(value2));
+
+    // Current Layer
+    var currentLayer = createSegmentMap();
+    currentLayer.get(segmentId).put(Bytes.wrap(key1), Optional.empty());
+    currentLayer.get(segmentId).put(Bytes.wrap(key3), Optional.of(value3));
+
+    layeredKeyValueStorage =
+        new LayeredKeyValueStorage(
+            currentLayer, new LayeredKeyValueStorage(parentLayer1, parentStorage));
+
+    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
+
+    List<Pair<byte[], byte[]>> resultList = result.toList();
+    assertEquals(2, resultList.size());
+    assertArrayEquals(key2, resultList.get(0).getKey());
+    assertArrayEquals(value2, resultList.get(0).getValue());
+    assertArrayEquals(key3, resultList.get(1).getKey());
+    assertArrayEquals(value3, resultList.get(1).getValue());
+  }
+
+  /**
+   * Tests that the stream method correctly handles multiple layers where the current layer
+   * overrides the parent layers with specific values.
+   */
+  @Test
+  void shouldStreamWithMultipleLayersAndCurrentLayerOverridesWithValues() {
+    byte[] key1 = {1};
+    byte[] value1 = {10};
+    byte[] key2 = {2};
+    byte[] value2 = {20};
+    byte[] key3 = {3};
+    byte[] value3 = {30};
+
+    // Parent Layer 0
+    when(parentStorage.stream(segmentId))
+        .thenReturn(Stream.of(Pair.of(key1, value1), Pair.of(key2, value2)));
+
+    // Parent Layer 1
+    var parentLayer1 = createSegmentMap();
+    parentLayer1.get(segmentId).put(Bytes.wrap(key1), Optional.empty());
+    parentLayer1.get(segmentId).put(Bytes.wrap(key2), Optional.of(value2));
+
+    // Current Layer
+    var currentLayer = createSegmentMap();
+    currentLayer.get(segmentId).put(Bytes.wrap(key1), Optional.of(value1));
+    currentLayer.get(segmentId).put(Bytes.wrap(key3), Optional.of(value3));
+
+    layeredKeyValueStorage =
+        new LayeredKeyValueStorage(
+            currentLayer, new LayeredKeyValueStorage(parentLayer1, parentStorage));
+
+    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
+
+    List<Pair<byte[], byte[]>> resultList = result.toList();
+    assertEquals(3, resultList.size());
+    assertArrayEquals(key1, resultList.get(0).getKey());
+    assertArrayEquals(value1, resultList.get(0).getValue());
+    assertArrayEquals(key2, resultList.get(1).getKey());
+    assertArrayEquals(value2, resultList.get(1).getValue());
+    assertArrayEquals(key3, resultList.get(2).getKey());
+    assertArrayEquals(value3, resultList.get(2).getValue());
+  }
+
+  /**
+   * Tests that the stream method correctly handles multiple layers where the current layer
+   * overrides the parent layers with empty values.
+   */
+  @Test
+  void shouldStreamWithMultipleLayersAndCurrentLayerOverridesWithEmptyValues() {
+    byte[] key1 = {1};
+    byte[] value1 = {10};
+    byte[] key2 = {2};
+    byte[] value2 = {20};
+    byte[] key3 = {3};
+    byte[] value3 = {30};
+
+    // Parent Layer 0
+    when(parentStorage.stream(segmentId))
+        .thenReturn(Stream.of(Pair.of(key1, null), Pair.of(key2, value2)));
+
+    // Parent Layer 1
+    var parentLayer1 = createSegmentMap();
+    parentLayer1.get(segmentId).put(Bytes.wrap(key1), Optional.empty());
+    parentLayer1.get(segmentId).put(Bytes.wrap(key2), Optional.of(value2));
+
+    // Current Layer
+    var currentLayer = createSegmentMap();
+    currentLayer.get(segmentId).put(Bytes.wrap(key1), Optional.of(value1));
+    currentLayer.get(segmentId).put(Bytes.wrap(key3), Optional.of(value3));
+
+    layeredKeyValueStorage =
+        new LayeredKeyValueStorage(
+            currentLayer, new LayeredKeyValueStorage(parentLayer1, parentStorage));
+
+    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
+
+    List<Pair<byte[], byte[]>> resultList = result.toList();
+    assertEquals(3, resultList.size());
+    assertArrayEquals(key1, resultList.get(0).getKey());
+    assertArrayEquals(value1, resultList.get(0).getValue());
+    assertArrayEquals(key2, resultList.get(1).getKey());
+    assertArrayEquals(value2, resultList.get(1).getValue());
+    assertArrayEquals(key3, resultList.get(2).getKey());
+    assertArrayEquals(value3, resultList.get(2).getValue());
+  }
+
+  /**
+   * Tests that the stream method correctly handles a parent layer and a current layer where the
+   * current layer overrides the parent layer.
+   */
+  @Test
+  void shouldStreamWithParentLayerAndCurrentLayerOverrides() {
+    byte[] key1 = {1};
+    byte[] value1 = {10};
+    byte[] key2 = {2};
+    byte[] value2 = {20};
+    byte[] key3 = {3};
+    byte[] value3 = {30};
+
+    // Parent Layer 0
+    when(parentStorage.stream(segmentId))
+        .thenReturn(Stream.of(Pair.of(key1, null), Pair.of(key2, value2)));
+
+    // Current Layer
+    var currentLayer = createSegmentMap();
+    currentLayer.get(segmentId).put(Bytes.wrap(key1), Optional.of(value1));
+    currentLayer.get(segmentId).put(Bytes.wrap(key3), Optional.of(value3));
+
+    layeredKeyValueStorage = new LayeredKeyValueStorage(currentLayer, parentStorage);
+
+    Stream<Pair<byte[], byte[]>> result = layeredKeyValueStorage.stream(segmentId);
+
+    List<Pair<byte[], byte[]>> resultList = result.toList();
+    assertEquals(3, resultList.size());
+    assertArrayEquals(key1, resultList.get(0).getKey());
+    assertArrayEquals(value1, resultList.get(0).getValue());
+    assertArrayEquals(key2, resultList.get(1).getKey());
+    assertArrayEquals(value2, resultList.get(1).getValue());
+    assertArrayEquals(key3, resultList.get(2).getKey());
+    assertArrayEquals(value3, resultList.get(2).getValue());
+  }
 }
