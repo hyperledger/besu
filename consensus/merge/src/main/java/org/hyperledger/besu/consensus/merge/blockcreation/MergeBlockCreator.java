@@ -61,7 +61,6 @@ class MergeBlockCreator extends AbstractBlockCreator {
         transactionPool,
         protocolContext,
         protocolSchedule,
-        // parentHeader,
         ethScheduler);
   }
 
