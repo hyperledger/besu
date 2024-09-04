@@ -21,7 +21,6 @@ import org.hyperledger.besu.tests.acceptance.dsl.transaction.login.LoginRequestF
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.miner.MinerRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.net.CustomRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.perm.PermissioningJsonRpcRequestFactory;
-import org.hyperledger.besu.tests.acceptance.dsl.transaction.privacy.PrivacyRequestFactory;
 import org.hyperledger.besu.tests.acceptance.dsl.transaction.txpool.TxPoolRequestFactory;
 
 import java.util.Optional;
@@ -94,10 +93,6 @@ public class NodeRequests {
 
   public CustomRequestFactory custom() {
     return custom;
-  }
-
-  public PrivacyRequestFactory privacy() {
-    return null;
   }
 
   public LoginRequestFactory login() {
