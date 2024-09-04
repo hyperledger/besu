@@ -56,15 +56,15 @@ public class DefaultProtocolScheduleTest {
     builder =
         new ProtocolScheduleBuilder(
             config,
-            Optional.of(DEFAULT_CHAIN_ID),
+            DEFAULT_CHAIN_ID,
             ProtocolSpecAdapters.create(FIRST_TIMESTAMP_FORK, modifier),
             privacyParameters,
             isRevertReasonEnabled,
             evmConfiguration,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
   }
 
   @Test

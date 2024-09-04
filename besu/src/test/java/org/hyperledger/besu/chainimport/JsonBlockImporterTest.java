@@ -17,10 +17,9 @@ package org.hyperledger.besu.chainimport;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.Mockito.mock;
 
-import org.hyperledger.besu.components.BesuCommandModule;
 import org.hyperledger.besu.components.BesuComponent;
-import org.hyperledger.besu.components.BesuPluginContextModule;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.JsonUtil;
 import org.hyperledger.besu.controller.BesuController;
@@ -37,17 +36,12 @@ import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitV
 import org.hyperledger.besu.ethereum.core.InMemoryKeyValueStorageProvider;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Transaction;
-import org.hyperledger.besu.ethereum.core.components.EthereumCoreModule;
-import org.hyperledger.besu.ethereum.core.components.MiningParametersModule;
 import org.hyperledger.besu.ethereum.eth.EthProtocolConfiguration;
 import org.hyperledger.besu.ethereum.eth.sync.SyncMode;
 import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
-import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
-import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
-import org.hyperledger.besu.metrics.MetricsSystemModule;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
@@ -58,11 +52,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Stream;
-import javax.inject.Singleton;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.io.Resources;
-import dagger.Component;
 import org.apache.tuweni.bytes.Bytes;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -473,20 +465,7 @@ public abstract class JsonBlockImporterTest {
         .gasLimitCalculator(GasLimitCalculator.constant())
         .evmConfiguration(EvmConfiguration.DEFAULT)
         .networkConfiguration(NetworkingConfiguration.create())
-        .besuComponent(DaggerJsonBlockImporterTest_JsonBlockImportComponent.create())
+        .besuComponent(mock(BesuComponent.class))
         .build();
   }
-
-  @Singleton
-  @Component(
-      modules = {
-        BesuCommandModule.class,
-        MiningParametersModule.class,
-        MetricsSystemModule.class,
-        BonsaiCachedMerkleTrieLoaderModule.class,
-        BesuPluginContextModule.class,
-        BlobCacheModule.class,
-        EthereumCoreModule.class
-      })
-  interface JsonBlockImportComponent extends BesuComponent {}
 }

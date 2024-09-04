@@ -179,10 +179,10 @@ public class WebSocketServiceLoginTest {
                     synchronizer,
                     MainnetProtocolSchedule.fromConfig(
                         genesisConfigOptions,
+                        MiningParameters.MINING_DISABLED,
                         new BadBlockManager(),
                         false,
-                        new NoOpMetricsSystem(),
-                        MiningParameters.MINING_DISABLED),
+                        new NoOpMetricsSystem()),
                     mock(ProtocolContext.class),
                     mock(FilterManager.class),
                     mock(TransactionPool.class),

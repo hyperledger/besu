@@ -436,10 +436,10 @@ public class TestContextBuilder {
             forksSchedule,
             BFT_EXTRA_DATA_ENCODER,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
 
     final BftValidatorOverrides validatorOverrides = convertBftForks(qbftForks);
     final TransactionSimulator transactionSimulator =

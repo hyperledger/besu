@@ -373,15 +373,15 @@ public class TransactionPoolFactoryTest {
     schedule =
         new ProtocolScheduleBuilder(
                 config,
-                Optional.of(DEFAULT_CHAIN_ID),
+                DEFAULT_CHAIN_ID,
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem(),
-                MiningParameters.MINING_DISABLED)
+                new NoOpMetricsSystem())
             .createProtocolSchedule();
 
     protocolContext = mock(ProtocolContext.class);

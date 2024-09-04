@@ -132,12 +132,13 @@ public class CliqueBesuControllerBuilder extends BesuControllerBuilder {
         genesisConfigOptions,
         forksSchedule,
         nodeKey,
+        privacyParameters,
         isRevertReasonEnabled,
         evmConfiguration,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   @Override

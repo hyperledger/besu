@@ -62,15 +62,15 @@ class ProtocolScheduleBuilderTest {
     builder =
         new ProtocolScheduleBuilder(
             configOptions,
-            Optional.of(CHAIN_ID),
+            CHAIN_ID,
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
   }
 
   @Test
@@ -257,15 +257,15 @@ class ProtocolScheduleBuilderTest {
     final ProtocolScheduleBuilder builder =
         new ProtocolScheduleBuilder(
             configOptions,
-            Optional.of(CHAIN_ID),
+            CHAIN_ID,
             ProtocolSpecAdapters.create(blockNumber, modifier),
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
 
     return new MilestoneStreamingProtocolSchedule(
         (DefaultProtocolSchedule) builder.createProtocolSchedule());

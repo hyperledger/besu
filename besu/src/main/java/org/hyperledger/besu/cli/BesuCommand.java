@@ -2176,12 +2176,7 @@ public class BesuCommand implements DefaultCommandValues, Runnable {
     return txPoolConfBuilder.build();
   }
 
-  /**
-   * Adds transaction selection service to mining options and setsup metrics
-   *
-   * @return mining parameters parsed out of config
-   */
-  public MiningParameters getMiningParameters() {
+  private MiningParameters getMiningParameters() {
     miningOptions.setTransactionSelectionService(transactionSelectionServiceImpl);
     final var miningParameters = miningOptions.toDomainObject();
     getGenesisBlockPeriodSeconds(genesisConfigOptionsSupplier.get())

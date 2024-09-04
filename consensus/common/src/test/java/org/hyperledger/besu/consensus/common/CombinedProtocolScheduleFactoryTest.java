@@ -172,15 +172,15 @@ public class CombinedProtocolScheduleFactoryTest {
     final ProtocolScheduleBuilder protocolScheduleBuilder =
         new ProtocolScheduleBuilder(
             genesisConfigOptions,
-            Optional.of(BigInteger.ONE),
+            BigInteger.ONE,
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
 
     return new BftProtocolSchedule(
         (DefaultProtocolSchedule) protocolScheduleBuilder.createProtocolSchedule());

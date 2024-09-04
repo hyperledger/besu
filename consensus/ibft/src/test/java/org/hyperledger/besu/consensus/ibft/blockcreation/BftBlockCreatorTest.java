@@ -120,10 +120,10 @@ public class BftBlockCreatorTest {
             false,
             bftExtraDataEncoder,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED);
+            new NoOpMetricsSystem());
     final ProtocolContext protContext =
         new ProtocolContext(
             blockchain,
@@ -189,12 +189,12 @@ public class BftBlockCreatorTest {
             transactionPool,
             protContext,
             protocolSchedule,
+            parentHeader,
             bftExtraDataEncoder,
             new DeterministicEthScheduler());
 
     final int secondsBetweenBlocks = 1;
-    final Block block =
-        blockCreator.createBlock(parentHeader.getTimestamp() + 1, parentHeader).getBlock();
+    final Block block = blockCreator.createBlock(parentHeader.getTimestamp() + 1).getBlock();
 
     final BlockHeaderValidator rules =
         IbftBlockHeaderValidationRulesetFactory.blockHeaderValidator(

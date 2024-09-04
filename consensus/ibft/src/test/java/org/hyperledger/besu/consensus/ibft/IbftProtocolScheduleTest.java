@@ -43,7 +43,6 @@ import org.hyperledger.besu.ethereum.core.MilestoneStreamingProtocolSchedule;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
 import org.hyperledger.besu.ethereum.core.Util;
-import org.hyperledger.besu.ethereum.core.components.EthereumCoreComponent;
 import org.hyperledger.besu.ethereum.mainnet.HeaderValidationMode;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
@@ -51,11 +50,7 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import java.math.BigInteger;
 import java.util.Collection;
 import java.util.List;
-import javax.inject.Singleton;
 
-import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -108,10 +103,10 @@ public class IbftProtocolScheduleTest {
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
+        MiningParameters.MINING_DISABLED,
         new BadBlockManager(),
         false,
-        new NoOpMetricsSystem(),
-        MiningParameters.MINING_DISABLED);
+        new NoOpMetricsSystem());
   }
 
   private boolean validateHeader(
@@ -133,17 +128,5 @@ public class IbftProtocolScheduleTest {
         null,
         setupContextWithBftExtraDataEncoder(BftContext.class, validators, bftExtraDataCodec),
         new BadBlockManager());
-  }
-
-  @Singleton
-  @Component(modules = {NoMiningParamters.class})
-  interface TestEthCoreComponent extends EthereumCoreComponent {}
-
-  @Module
-  static class NoMiningParamters {
-    @Provides
-    MiningParameters provideMiningParameters() {
-      return MiningParameters.MINING_DISABLED;
-    }
   }
 }

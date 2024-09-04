@@ -206,8 +206,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
   /** whether parallel transaction processing is enabled or not */
   protected boolean isParallelTxProcessingEnabled;
 
-  // private BesuContext pluginContext;
-
   /** Instantiates a new Besu controller builder. */
   protected BesuControllerBuilder() {}
 
@@ -554,9 +552,7 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
     checkNotNull(evmConfiguration, "Missing evm config");
     checkNotNull(networkingConfiguration, "Missing network configuration");
     checkNotNull(dataStorageConfiguration, "Missing data storage configuration");
-    // checkNotNull(besuComponent, "Dagger root component not provided");
-    // Preconditions.checkArgument(besuComponent.isPresent(), "Dagger root component not provided");
-    // checkNotNull(pluginContext, "Missing plugin context");
+
     prepForBuild();
 
     final ProtocolSchedule protocolSchedule = createProtocolSchedule();

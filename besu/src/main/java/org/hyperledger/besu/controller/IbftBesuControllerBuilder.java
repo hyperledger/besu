@@ -290,10 +290,10 @@ public class IbftBesuControllerBuilder extends BftBesuControllerBuilder {
         isRevertReasonEnabled,
         bftExtraDataCodec().get(),
         evmConfiguration,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   @Override

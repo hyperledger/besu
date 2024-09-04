@@ -49,11 +49,11 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
+   * @param miningParameters The mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
-   * @param miningParameters tx selection settings
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -63,10 +63,10 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return new QbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
@@ -75,10 +75,10 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             isRevertReasonEnabled,
             bftExtraDataCodec,
             evmConfiguration,
+            miningParameters,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem,
-            miningParameters);
+            metricsSystem);
   }
 
   /**
@@ -88,11 +88,11 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param qbftForksSchedule the qbft forks schedule
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
+   * @param miningParameters The mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
-   * @param miningParameters tx selection settings
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -100,10 +100,10 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         qbftForksSchedule,
@@ -111,10 +111,10 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         false,
         bftExtraDataCodec,
         evmConfiguration,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   /**
@@ -123,12 +123,12 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param config the config
    * @param qbftForksSchedule the qbft forks schedule
    * @param isRevertReasonEnabled the is revert reason enabled
-   * @param bftExtraDataCodec the bft extra data code
+   * @param bftExtraDataCodec the bft extra data codec
+   * @param miningParameters The mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
-   * @param miningParameters tx selection settings
    * @return the protocol schedule
    */
   public static ProtocolSchedule create(
@@ -136,10 +136,10 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final ForksSchedule<QbftConfigOptions> qbftForksSchedule,
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         qbftForksSchedule,
@@ -147,10 +147,10 @@ public class QbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         isRevertReasonEnabled,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   @Override

@@ -20,17 +20,16 @@ import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.ADMIN;
 import static org.hyperledger.besu.ethereum.api.jsonrpc.RpcApis.IBFT;
 
 import org.hyperledger.besu.crypto.KeyPair;
-import org.hyperledger.besu.datatypes.Address;
 import org.hyperledger.besu.datatypes.Wei;
 import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.api.jsonrpc.JsonRpcConfiguration;
 import org.hyperledger.besu.ethereum.api.jsonrpc.websocket.WebSocketConfiguration;
+import org.hyperledger.besu.ethereum.core.AddressHelpers;
 import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters;
+import org.hyperledger.besu.ethereum.core.ImmutableMiningParameters.MutableInitValues;
 import org.hyperledger.besu.ethereum.core.InMemoryPrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.core.MiningParameters;
 import org.hyperledger.besu.ethereum.core.PrivacyParameters;
-import org.hyperledger.besu.ethereum.core.components.CoinbaseModule;
-import org.hyperledger.besu.ethereum.core.components.EthereumCoreComponent;
 import org.hyperledger.besu.ethereum.permissioning.LocalPermissioningConfiguration;
 import org.hyperledger.besu.ethereum.permissioning.PermissioningConfiguration;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
@@ -53,12 +52,7 @@ import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.function.UnaryOperator;
-import javax.inject.Named;
-import javax.inject.Singleton;
 
-import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
 import io.vertx.core.Vertx;
 
 public class BesuNodeFactory {
@@ -316,6 +310,16 @@ public class BesuNodeFactory {
                 Paths.get(ClassLoader.getSystemResource(privTransactionSigningKey).toURI()))
             .build();
 
+    final MiningParameters miningParameters =
+        ImmutableMiningParameters.builder()
+            .mutableInitValues(
+                MutableInitValues.builder()
+                    .isMiningEnabled(true)
+                    .minTransactionGasPrice(Wei.ZERO)
+                    .coinbase(AddressHelpers.ofValue(1))
+                    .build())
+            .build();
+
     return create(
         new BesuNodeConfigurationBuilder()
             .name(name)
@@ -323,8 +327,7 @@ public class BesuNodeFactory {
             .jsonRpcAuthenticationConfiguration(authFile)
             .enablePrivateTransactions()
             .privacyParameters(privacyParameters)
-            .miningConfiguration(
-                DaggerBesuNodeFactory_BesuNodeCoreComponent.create().getMiningParameters())
+            .miningConfiguration(miningParameters)
             .build());
   }
 
@@ -764,26 +767,5 @@ public class BesuNodeFactory {
 
   public BesuNode runCommand(final String command) throws IOException {
     return create(new BesuNodeConfigurationBuilder().name("run " + command).run(command).build());
-  }
-
-  @Singleton
-  @Component(modules = {ZeroGasMining.class, CoinbaseModule.class})
-  interface BesuNodeCoreComponent extends EthereumCoreComponent {}
-
-  @Module
-  static class ZeroGasMining {
-    @Provides
-    MiningParameters createZeroGasMining(final @Named("emptyCoinbase") Address coinbase) {
-      final MiningParameters miningParameters =
-          ImmutableMiningParameters.builder()
-              .mutableInitValues(
-                  ImmutableMiningParameters.MutableInitValues.builder()
-                      .isMiningEnabled(true)
-                      .minTransactionGasPrice(Wei.ZERO)
-                      .coinbase(coinbase)
-                      .build())
-              .build();
-      return miningParameters;
-    }
   }
 }

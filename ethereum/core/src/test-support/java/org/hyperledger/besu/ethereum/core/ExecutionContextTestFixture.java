@@ -152,15 +152,15 @@ public class ExecutionContextTestFixture {
         protocolSchedule =
             new ProtocolScheduleBuilder(
                     genesisConfigFile.getConfigOptions(),
-                    Optional.of(BigInteger.valueOf(42)),
+                    BigInteger.valueOf(42),
                     ProtocolSpecAdapters.create(0, Function.identity()),
                     new PrivacyParameters(),
                     false,
                     EvmConfiguration.DEFAULT,
+                    MiningParameters.MINING_DISABLED,
                     new BadBlockManager(),
                     false,
-                    new NoOpMetricsSystem(),
-                    MiningParameters.MINING_DISABLED)
+                    new NoOpMetricsSystem())
                 .createProtocolSchedule();
       }
       if (blockchainKeyValueStorage == null) {

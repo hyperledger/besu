@@ -20,7 +20,6 @@ import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.config.GenesisConfigOptions;
 import org.hyperledger.besu.config.JsonGenesisConfigOptions;
 import org.hyperledger.besu.ethereum.chain.BadBlockManager;
-import org.hyperledger.besu.ethereum.core.components.EthereumCoreComponent;
 import org.hyperledger.besu.ethereum.mainnet.MainnetProtocolSchedule;
 import org.hyperledger.besu.ethereum.mainnet.ProtocolSchedule;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -32,9 +31,6 @@ import com.fasterxml.jackson.core.JsonFactory;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import dagger.Component;
-import dagger.Module;
-import dagger.Provides;
 
 public class ProtocolScheduleFixture {
   public static final ProtocolSchedule MAINNET =
@@ -43,10 +39,10 @@ public class ProtocolScheduleFixture {
           PrivacyParameters.DEFAULT,
           false,
           EvmConfiguration.DEFAULT,
+          MiningParameters.newDefault(),
           new BadBlockManager(),
           false,
-          new NoOpMetricsSystem(),
-          MiningParameters.newDefault());
+          new NoOpMetricsSystem());
 
   private static GenesisConfigOptions getMainnetConfigOptions() {
     // this method avoids reading all the alloc accounts when all we want is the "config" section
@@ -64,16 +60,5 @@ public class ProtocolScheduleFixture {
       throw new RuntimeException("Failed open or parse mainnet genesis json", e);
     }
     throw new IllegalArgumentException("mainnet json file had no config section");
-  }
-
-  @Component(modules = {DefaultMiningParams.class})
-  interface TestEthCoreComponent extends EthereumCoreComponent {}
-
-  @Module
-  static class DefaultMiningParams {
-    @Provides
-    protected MiningParameters provideMiningParameters() {
-      return MiningParameters.newDefault();
-    }
   }
 }

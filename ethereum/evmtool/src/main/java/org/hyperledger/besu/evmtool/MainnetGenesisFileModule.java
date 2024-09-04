@@ -81,10 +81,10 @@ class MainnetGenesisFileModule extends GenesisFileModule {
     return MainnetProtocolSchedule.fromConfig(
         configOptions,
         evmConfiguration,
+        MiningParameters.newDefault(),
         new BadBlockManager(),
         false,
-        new NoOpMetricsSystem(),
-        MiningParameters.newDefault());
+        new NoOpMetricsSystem());
   }
 
   public static Map<String, Supplier<ProtocolSchedule>> createSchedules(final BigInteger chainId) {
@@ -186,15 +186,15 @@ class MainnetGenesisFileModule extends GenesisFileModule {
     return () ->
         new ProtocolScheduleBuilder(
                 options,
-                options.getChainId(),
+                options.getChainId().orElse(BigInteger.ONE),
                 ProtocolSpecAdapters.create(0, Function.identity()),
                 PrivacyParameters.DEFAULT,
                 false,
                 EvmConfiguration.DEFAULT,
+                MiningParameters.MINING_DISABLED,
                 new BadBlockManager(),
                 false,
-                new NoOpMetricsSystem(),
-                MiningParameters.newDefault())
+                new NoOpMetricsSystem())
             .createProtocolSchedule();
   }
 }

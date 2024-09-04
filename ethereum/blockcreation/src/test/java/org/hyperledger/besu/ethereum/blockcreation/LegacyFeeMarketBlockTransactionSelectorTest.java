@@ -41,7 +41,6 @@ import org.hyperledger.besu.testutil.TestClock;
 import org.hyperledger.besu.util.number.Fraction;
 
 import java.time.ZoneId;
-import java.util.Optional;
 import java.util.function.Function;
 
 public class LegacyFeeMarketBlockTransactionSelectorTest
@@ -56,15 +55,15 @@ public class LegacyFeeMarketBlockTransactionSelectorTest
   protected ProtocolSchedule createProtocolSchedule() {
     return new ProtocolScheduleBuilder(
             genesisConfigFile.getConfigOptions(),
-            Optional.of(CHAIN_ID),
+            CHAIN_ID,
             ProtocolSpecAdapters.create(0, Function.identity()),
             new PrivacyParameters(),
             false,
             EvmConfiguration.DEFAULT,
+            MiningParameters.MINING_DISABLED,
             new BadBlockManager(),
             false,
-            new NoOpMetricsSystem(),
-            MiningParameters.MINING_DISABLED)
+            new NoOpMetricsSystem())
         .createProtocolSchedule();
   }
 

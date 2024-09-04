@@ -28,7 +28,6 @@ jar {
 
 dependencies {
   api 'org.slf4j:slf4j-api'
-  annotationProcessor 'com.google.dagger:dagger-compiler'
 
   implementation project(':config')
   implementation project(':datatypes')
@@ -49,7 +48,6 @@ dependencies {
   implementation 'io.vertx:vertx-core'
   implementation 'io.vertx:vertx-web'
   implementation 'com.fasterxml.jackson.core:jackson-databind'
-  implementation 'com.google.dagger:dagger'
   implementation 'io.tmio:tuweni-bytes'
   implementation 'io.tmio:tuweni-units'
 

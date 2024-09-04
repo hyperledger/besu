@@ -45,11 +45,11 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param isRevertReasonEnabled the is revert reason enabled
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
-   * @param miningParameters tx selection settings
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -59,10 +59,10 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final boolean isRevertReasonEnabled,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return new IbftProtocolScheduleBuilder()
         .createProtocolSchedule(
             config,
@@ -71,10 +71,10 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
             isRevertReasonEnabled,
             bftExtraDataCodec,
             evmConfiguration,
+            miningParameters,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem,
-            miningParameters);
+            metricsSystem);
   }
 
   /**
@@ -84,11 +84,11 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
    * @param forksSchedule the forks schedule
    * @param bftExtraDataCodec the bft extra data codec
    * @param evmConfiguration the evm configuration
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @param metricsSystem A metricSystem instance to be able to expose metrics in the underlying
    *     calls
-   * @param miningParameters tx selection settings
    * @return the protocol schedule
    */
   public static BftProtocolSchedule create(
@@ -96,10 +96,10 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
       final ForksSchedule<BftConfigOptions> forksSchedule,
       final BftExtraDataCodec bftExtraDataCodec,
       final EvmConfiguration evmConfiguration,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         forksSchedule,
@@ -107,10 +107,10 @@ public class IbftProtocolScheduleBuilder extends BaseBftProtocolScheduleBuilder 
         false,
         bftExtraDataCodec,
         evmConfiguration,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   @Override

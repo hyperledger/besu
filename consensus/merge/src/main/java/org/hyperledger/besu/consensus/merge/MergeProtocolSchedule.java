@@ -48,6 +48,7 @@ public class MergeProtocolSchedule {
    *
    * @param config the config
    * @param isRevertReasonEnabled the is revert reason enabled
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return the protocol schedule
@@ -55,18 +56,18 @@ public class MergeProtocolSchedule {
   public static ProtocolSchedule create(
       final GenesisConfigOptions config,
       final boolean isRevertReasonEnabled,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
     return create(
         config,
         PrivacyParameters.DEFAULT,
         isRevertReasonEnabled,
+        miningParameters,
         badBlockManager,
         isParallelTxProcessingEnabled,
-        metricsSystem,
-        miningParameters);
+        metricsSystem);
   }
 
   /**
@@ -75,6 +76,7 @@ public class MergeProtocolSchedule {
    * @param config the config
    * @param privacyParameters the privacy parameters
    * @param isRevertReasonEnabled the is revert reason enabled
+   * @param miningParameters the mining parameters
    * @param badBlockManager the cache to use to keep invalid blocks
    * @param isParallelTxProcessingEnabled indicates whether parallel transaction is enabled.
    * @return the protocol schedule
@@ -83,10 +85,10 @@ public class MergeProtocolSchedule {
       final GenesisConfigOptions config,
       final PrivacyParameters privacyParameters,
       final boolean isRevertReasonEnabled,
+      final MiningParameters miningParameters,
       final BadBlockManager badBlockManager,
       final boolean isParallelTxProcessingEnabled,
-      final MetricsSystem metricsSystem,
-      final MiningParameters miningParameters) {
+      final MetricsSystem metricsSystem) {
 
     Map<Long, Function<ProtocolSpecBuilder, ProtocolSpecBuilder>> postMergeModifications =
         new HashMap<>();
@@ -99,15 +101,15 @@ public class MergeProtocolSchedule {
 
     return new ProtocolScheduleBuilder(
             config,
-            Optional.of(DEFAULT_CHAIN_ID),
+            DEFAULT_CHAIN_ID,
             new ProtocolSpecAdapters(postMergeModifications),
             privacyParameters,
             isRevertReasonEnabled,
             EvmConfiguration.DEFAULT,
+            miningParameters,
             badBlockManager,
             isParallelTxProcessingEnabled,
-            metricsSystem,
-            miningParameters)
+            metricsSystem)
         .createProtocolSchedule();
   }
 

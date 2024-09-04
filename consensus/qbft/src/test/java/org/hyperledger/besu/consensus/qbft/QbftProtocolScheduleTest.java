@@ -138,10 +138,10 @@ public class QbftProtocolScheduleTest {
         false,
         bftExtraDataCodec,
         EvmConfiguration.DEFAULT,
+        MiningParameters.MINING_DISABLED,
         new BadBlockManager(),
         false,
-        new NoOpMetricsSystem(),
-        MiningParameters.MINING_DISABLED);
+        new NoOpMetricsSystem());
   }
 
   private boolean validateHeader(
