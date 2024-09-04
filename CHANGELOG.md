@@ -7,11 +7,8 @@
 ### Breaking Changes
 
 ### Additions and Improvements
-- Include current chain head block when computing `eth_maxPriorityFeePerGas` [#7485](https://github.com/hyperledger/besu/pull/7485)
-- Remove (old) documentation updates from the changelog [#7562](https://github.com/hyperledger/besu/pull/7562)
 
 ### Bug fixes
-- The genesis config override `contractSizeLimit` was not wired into code size limits [#7557](https://github.com/hyperledger/besu/issues/7557)
 
 ## 24.9.0
 
@@ -27,6 +24,8 @@
 - Implement engine_getClientVersionV1 [#7512](https://github.com/hyperledger/besu/pull/7512)
 - Performance optimzation for ECMUL (1 of 2) [#7509](https://github.com/hyperledger/besu/pull/7509)
 - Performance optimzation for ECMUL (2 of 2) [#7543](https://github.com/hyperledger/besu/pull/7543)
+- Include current chain head block when computing `eth_maxPriorityFeePerGas` [#7485](https://github.com/hyperledger/besu/pull/7485)
+- Remove (old) documentation updates from the changelog [#7562](https://github.com/hyperledger/besu/pull/7562)
 
 ### Bug fixes
 - Fix tracing in precompiled contracts when halting for out of gas [#7318](https://github.com/hyperledger/besu/issues/7318)
@@ -35,6 +34,8 @@
 - Correctly drops messages that exceeds local message size limit [#5455](https://github.com/hyperledger/besu/pull/7507)
 - **DebugMetrics**: Fixed a `ClassCastException` occurring in `DebugMetrics` when handling nested metric structures. Previously, `Double` values within these structures were incorrectly cast to `Map` objects, leading to errors. This update allows for proper handling of both direct values and nested structures at the same level. Issue# [#7383](https://github.com/hyperledger/besu/pull/7383)
 - `evmtool` was not respecting the `--genesis` setting, resulting in unexpected trace results. [#7433](https://github.com/hyperledger/besu/pull/7433)
+- The genesis config override `contractSizeLimit`q was not wired into code size limits [#7557](https://github.com/hyperledger/besu/pull/7557)
+- Fix incorrect key filtering in LayeredKeyValueStorage stream [#7535](https://github.com/hyperledger/besu/pull/7557)
 
 ## 24.8.0
 
