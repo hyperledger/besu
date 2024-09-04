@@ -118,7 +118,8 @@ public interface TransactionsLayer {
     PROMOTED,
     REPLACED,
     RECONCILED,
-    BELOW_BASE_FEE;
+    BELOW_BASE_FEE,
+    BELOW_MIN_SCORE;
 
     private final String label;
 

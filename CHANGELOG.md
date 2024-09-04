@@ -7,6 +7,7 @@
 ### Breaking Changes
 
 ### Additions and Improvements
+- Layered txpool: new options `--tx-pool-min-score` to remove a tx from pool when its score is lower than the specified value [#7576](https://github.com/hyperledger/besu/pull/7576)
 
 ### Bug fixes
 

@@ -19,6 +19,7 @@ import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedRes
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.ALREADY_KNOWN;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.REJECTED_UNDERPRICED_REPLACEMENT;
 import static org.hyperledger.besu.ethereum.eth.transactions.TransactionAddedResult.TRY_NEXT_LAYER;
+import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.BELOW_MIN_SCORE;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CONFIRMED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CROSS_LAYER_REPLACED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.EVICTED;
@@ -466,8 +467,12 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   @Override
   public void penalize(final PendingTransaction penalizedTransaction) {
     if (pendingTransactions.containsKey(penalizedTransaction.getHash())) {
-      internalPenalize(penalizedTransaction);
-      metrics.incrementPenalized(penalizedTransaction, name());
+      if (penalizedTransaction.getScore() > poolConfig.getMinScore()) {
+        internalPenalize(penalizedTransaction);
+        metrics.incrementPenalized(penalizedTransaction, name());
+      } else {
+        remove(penalizedTransaction, BELOW_MIN_SCORE);
+      }
     } else {
       nextLayer.penalize(penalizedTransaction);
     }

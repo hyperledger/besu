@@ -316,7 +316,6 @@ public class LayeredPendingTransactions implements PendingTransactions {
   @Override
   public void selectTransactions(final PendingTransactions.TransactionSelector selector) {
     final List<PendingTransaction> invalidTransactions = new ArrayList<>();
-    final List<PendingTransaction> penalizedTransactions = new ArrayList<>();
     final Set<Address> skipSenders = new HashSet<>();
 
     final Map<Byte, List<SenderPendingTransactions>> candidateTxsByScore;
@@ -351,7 +350,12 @@ public class LayeredPendingTransactions implements PendingTransactions {
             }
 
             if (selectionResult.penalize()) {
-              penalizedTransactions.add(candidatePendingTx);
+              ethScheduler.scheduleTxWorkerTask(
+                  () -> {
+                    synchronized (this) {
+                      prioritizedTransactions.penalize(candidatePendingTx);
+                    }
+                  });
               LOG.atTrace()
                   .setMessage("Transaction {} penalized")
                   .addArgument(candidatePendingTx::toTraceLog)
@@ -376,20 +380,13 @@ public class LayeredPendingTransactions implements PendingTransactions {
     }
 
     ethScheduler.scheduleTxWorkerTask(
-        () -> {
-          invalidTransactions.forEach(
-              invalidTx -> {
-                synchronized (this) {
-                  prioritizedTransactions.remove(invalidTx, INVALIDATED);
-                }
-              });
-          penalizedTransactions.forEach(
-              penalizedTx -> {
-                synchronized (this) {
-                  prioritizedTransactions.internalPenalize(penalizedTx);
-                }
-              });
-        });
+        () ->
+            invalidTransactions.forEach(
+                invalidTx -> {
+                  synchronized (this) {
+                    prioritizedTransactions.remove(invalidTx, INVALIDATED);
+                  }
+                }));
   }
 
   @Override

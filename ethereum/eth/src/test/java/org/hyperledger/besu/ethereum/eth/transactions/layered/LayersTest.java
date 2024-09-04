@@ -68,12 +68,14 @@ public class LayersTest extends BaseTransactionPoolTest {
   private static final int MAX_FUTURE_FOR_SENDER = 10;
   private static final Wei BASE_FEE = Wei.ONE;
   private static final Wei MIN_GAS_PRICE = BASE_FEE;
+  private static final byte MIN_SCORE = 125;
 
   private static final TransactionPoolConfiguration DEFAULT_TX_POOL_CONFIG =
       ImmutableTransactionPoolConfiguration.builder()
           .maxPrioritizedTransactions(MAX_PRIO_TRANSACTIONS)
           .maxPrioritizedTransactionsByType(Map.of(BLOB, 1))
           .maxFutureBySender(MAX_FUTURE_FOR_SENDER)
+          .minScore(MIN_SCORE)
           .pendingTransactionsLayerMaxCapacityBytes(
               new PendingTransaction.Remote(
                           new BaseTransactionPoolTest().createEIP1559Transaction(0, KEYS1, 1))
@@ -86,6 +88,7 @@ public class LayersTest extends BaseTransactionPoolTest {
           .maxPrioritizedTransactions(MAX_PRIO_TRANSACTIONS)
           .maxPrioritizedTransactionsByType(Map.of(BLOB, 1))
           .maxFutureBySender(MAX_FUTURE_FOR_SENDER)
+          .minScore(MIN_SCORE)
           .pendingTransactionsLayerMaxCapacityBytes(
               new PendingTransaction.Remote(
                           new BaseTransactionPoolTest().createEIP4844Transaction(0, KEYS1, 1, 1))
@@ -1332,7 +1335,17 @@ public class LayersTest extends BaseTransactionPoolTest {
                 .penalizeForSender(S2, 1)
                 .addForSender(S2, 2)
                 .expectedReadyForSenders(S1, 0, S1, 1, S2, 1)
-                .expectedSparseForSender(S2, 2)));
+                .expectedSparseForSender(S2, 2)),
+        Arguments.of(
+            new Scenario("remove below min score")
+                .addForSender(S1, 0) // score 127
+                .expectedPrioritizedForSender(S1, 0)
+                .penalizeForSender(S1, 0) // score 126
+                .expectedPrioritizedForSender(S1, 0)
+                .penalizeForSender(S1, 0) // score 125
+                .expectedPrioritizedForSender(S1, 0)
+                .penalizeForSender(S1, 0) // score 124, removed since decreased score < MIN_SCORE
+                .expectedPrioritizedForSenders()));
   }
 
   private static BlockHeader mockBlockHeader() {
