@@ -23,7 +23,6 @@ import static org.hyperledger.besu.ethereum.eth.transactions.layered.Transaction
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CONFIRMED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.CROSS_LAYER_REPLACED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.EVICTED;
-import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.PROMOTED;
 import static org.hyperledger.besu.ethereum.eth.transactions.layered.TransactionsLayer.RemovalReason.REPLACED;
 
 import org.hyperledger.besu.datatypes.Address;
@@ -186,7 +185,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     if (addStatus.isSuccess()) {
       final var addedPendingTransaction =
           addReason.makeCopy() ? pendingTransaction.detachedCopy() : pendingTransaction;
-      processAdded(addedPendingTransaction);
+      processAdded(addedPendingTransaction, addReason);
       addStatus.maybeReplacedTransaction().ifPresent(this::replaced);
 
       nextLayer.notifyAdded(addedPendingTransaction);
@@ -245,7 +244,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
               pendingTransaction.getNonce(),
               remainingPromotionsPerType);
       if (promotedTx != null) {
-        processAdded(promotedTx);
+        processAdded(promotedTx, AddReason.PROMOTED);
         if (!maybeFull()) {
           tryFillGap(ADDED, promotedTx, remainingPromotionsPerType);
         }
@@ -293,7 +292,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
 
         if (remainingPromotionsPerType[txType.ordinal()] > 0) {
           senderTxs.pollFirstEntry();
-          processRemove(senderTxs, candidateTx.getTransaction(), PROMOTED);
+          processRemove(senderTxs, candidateTx.getTransaction(), RemovalReason.PROMOTED);
           metrics.incrementRemoved(candidateTx, "promoted", name());
 
           if (senderTxs.isEmpty()) {
@@ -331,12 +330,12 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     return nextLayer.add(pendingTransaction, nextLayerDistance, addReason);
   }
 
-  private void processAdded(final PendingTransaction addedTx) {
+  private void processAdded(final PendingTransaction addedTx, final AddReason addReason) {
     pendingTransactions.put(addedTx.getHash(), addedTx);
     final var senderTxs = txsBySender.computeIfAbsent(addedTx.getSender(), s -> new TreeMap<>());
     senderTxs.put(addedTx.getNonce(), addedTx);
     increaseCounters(addedTx);
-    metrics.incrementAdded(addedTx, name());
+    metrics.incrementAdded(addedTx, addReason, name());
     internalAdd(senderTxs, addedTx);
   }
 
@@ -468,7 +467,7 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
       nextLayer
           .promote(
               this::promotionFilter, cacheFreeSpace(), freeSlots, getRemainingPromotionsPerType())
-          .forEach(this::processAdded);
+          .forEach(addedTx -> processAdded(addedTx, AddReason.PROMOTED));
     }
   }
 
