@@ -123,14 +123,16 @@ public interface TransactionsLayer {
   /** Describe why we are trying to add a tx to a layer. */
   enum AddReason {
     /** When adding a tx, that is not present in the pool. */
-    NEW(true),
+    NEW(true, true),
     /** When adding a tx as result of an internal move between layers. */
-    MOVE(false);
+    MOVE(false, false);
 
     private final boolean sendNotification;
+    private final boolean makeCopy;
 
-    AddReason(final boolean sendNotification) {
+    AddReason(final boolean sendNotification, final boolean makeCopy) {
       this.sendNotification = sendNotification;
+      this.makeCopy = makeCopy;
     }
 
     /**
@@ -140,6 +142,16 @@ public interface TransactionsLayer {
      */
     public boolean sendNotification() {
       return sendNotification;
+    }
+
+    /**
+     * Should the layer make a copy of the pending tx before adding it, to avoid keeping reference
+     * to potentially large underlying byte buffers?
+     *
+     * @return true is a copy is necessary
+     */
+    public boolean makeCopy() {
+      return makeCopy;
     }
   }
 

@@ -184,18 +184,20 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
     }
 
     if (addStatus.isSuccess()) {
-      processAdded(pendingTransaction.detachedCopy());
+      final var addedPendingTransaction =
+          addReason.makeCopy() ? pendingTransaction.detachedCopy() : pendingTransaction;
+      processAdded(addedPendingTransaction);
       addStatus.maybeReplacedTransaction().ifPresent(this::replaced);
 
-      nextLayer.notifyAdded(pendingTransaction);
+      nextLayer.notifyAdded(addedPendingTransaction);
 
       if (!maybeFull()) {
         // if there is space try to see if the added tx filled some gaps
-        tryFillGap(addStatus, pendingTransaction, getRemainingPromotionsPerType());
+        tryFillGap(addStatus, addedPendingTransaction, getRemainingPromotionsPerType());
       }
 
       if (addReason.sendNotification()) {
-        ethScheduler.scheduleTxWorkerTask(() -> notifyTransactionAdded(pendingTransaction));
+        ethScheduler.scheduleTxWorkerTask(() -> notifyTransactionAdded(addedPendingTransaction));
       }
 
     } else {
