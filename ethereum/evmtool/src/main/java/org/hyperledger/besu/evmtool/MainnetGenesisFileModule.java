@@ -30,6 +30,7 @@ import org.hyperledger.besu.ethereum.mainnet.ProtocolSpecAdapters;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
 import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 
+import java.math.BigInteger;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
