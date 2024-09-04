@@ -110,16 +110,16 @@ public class EngineGetBlobsV1Test {
 
     final BlobsWithCommitments blobsWithCommitments =
         blobTransaction.getBlobsWithCommitments().get();
-    List<VersionedHash> versionedHashesList =
-        blobsWithCommitments.getVersionedHashes().stream().toList();
+    VersionedHash[] versionedHashes =
+        blobsWithCommitments.getVersionedHashes().toArray(new VersionedHash[0]);
 
-    final JsonRpcResponse jsonRpcResponse = resp(versionedHashesList.toArray(new VersionedHash[0]));
+    final JsonRpcResponse jsonRpcResponse = resp(versionedHashes);
 
     final List<BlobAndProofV1> blobAndProofV1s = fromSuccessResp(jsonRpcResponse);
 
-    assertThat(blobAndProofV1s.size()).isEqualTo(versionedHashesList.size());
+    assertThat(blobAndProofV1s.size()).isEqualTo(versionedHashes.length);
     // for loop to check each blob and proof
-    for (int i = 0; i < versionedHashesList.size(); i++) {
+    for (int i = 0; i < versionedHashes.length; i++) {
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getBlob()))
           .isEqualTo(blobsWithCommitments.getBlobQuads().get(i).blob().getData());
       assertThat(Bytes.fromHexString(blobAndProofV1s.get(i).getProof()))
