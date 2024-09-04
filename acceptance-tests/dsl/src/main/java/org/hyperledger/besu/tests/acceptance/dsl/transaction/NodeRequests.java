@@ -37,7 +37,6 @@ public class NodeRequests {
   private final BftRequestFactory bft;
   private final PermissioningJsonRpcRequestFactory perm;
   private final AdminRequestFactory admin;
-  private final PrivacyRequestFactory privacy;
   private final CustomRequestFactory custom;
   private final Optional<WebSocketService> websocketService;
   private final LoginRequestFactory login;
@@ -51,7 +50,6 @@ public class NodeRequests {
       final BftRequestFactory bft,
       final PermissioningJsonRpcRequestFactory perm,
       final AdminRequestFactory admin,
-      final PrivacyRequestFactory privacy,
       final CustomRequestFactory custom,
       final MinerRequestFactory miner,
       final TxPoolRequestFactory txPool,
@@ -63,7 +61,6 @@ public class NodeRequests {
     this.bft = bft;
     this.perm = perm;
     this.admin = admin;
-    this.privacy = privacy;
     this.custom = custom;
     this.miner = miner;
     this.txPool = txPool;
@@ -100,7 +97,7 @@ public class NodeRequests {
   }
 
   public PrivacyRequestFactory privacy() {
-    return privacy;
+    return null;
   }
 
   public LoginRequestFactory login() {
