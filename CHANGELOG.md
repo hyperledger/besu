@@ -9,6 +9,7 @@
 ### Additions and Improvements
 - Include current chain head block when computing `eth_maxPriorityFeePerGas` [#7485](https://github.com/hyperledger/besu/pull/7485)
 - Remove (old) documentation updates from the changelog [#7562](https://github.com/hyperledger/besu/pull/7562)
+- Update Java and Gradle dependecies [#7571](https://github.com/hyperledger/besu/pull/7571)
 
 ### Bug fixes
 - The genesis config override `contractSizeLimit` was not wired into code size limits [#7557](https://github.com/hyperledger/besu/issues/7557)
