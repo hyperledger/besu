@@ -511,31 +511,6 @@ public class BesuNodeFactory {
     return create(builder.build());
   }
 
-  public BesuNode createQbftNodeWithTLS(final String name, final String type) throws IOException {
-    return create(
-        new BesuNodeConfigurationBuilder()
-            .name(name)
-            .miningEnabled()
-            .p2pTLSEnabled(name, type)
-            .jsonRpcConfiguration(node.createJsonRpcWithQbftEnabledConfig(false))
-            .webSocketConfiguration(node.createWebSocketEnabledConfig())
-            .devMode(false)
-            .genesisConfigProvider(GenesisConfigurationFactory::createQbftGenesisConfig)
-            .build());
-  }
-
-  public BesuNode createQbftNodeWithTLSJKS(final String name) throws IOException {
-    return createQbftNodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_JKS);
-  }
-
-  public BesuNode createQbftNodeWithTLSPKCS12(final String name) throws IOException {
-    return createQbftNodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS12);
-  }
-
-  public BesuNode createQbftNodeWithTLSPKCS11(final String name) throws IOException {
-    return createQbftNodeWithTLS(name, KeyStoreWrapper.KEYSTORE_TYPE_PKCS11);
-  }
-
   public BesuNode createQbftNode(
       final String name, final boolean fixedPort, final DataStorageFormat storageFormat)
       throws IOException {

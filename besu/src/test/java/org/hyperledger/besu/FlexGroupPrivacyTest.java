@@ -15,18 +15,18 @@
 package org.hyperledger.besu;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.hyperledger.besu.ethereum.core.PrivacyParameters.DEFAULT_PRIVACY;
+import static org.hyperledger.besu.ethereum.core.PrivacyParameters.FLEXIBLE_PRIVACY;
 
 import org.hyperledger.besu.components.BesuComponent;
 import org.hyperledger.besu.components.BesuPluginContextModule;
 import org.hyperledger.besu.components.MockBesuCommandModule;
 import org.hyperledger.besu.components.NoOpMetricsSystemModule;
-import org.hyperledger.besu.components.PrivacyParametersModule;
 import org.hyperledger.besu.components.PrivacyTestModule;
 import org.hyperledger.besu.config.GenesisConfigFile;
 import org.hyperledger.besu.controller.BesuController;
 import org.hyperledger.besu.cryptoservices.NodeKeyUtils;
 import org.hyperledger.besu.datatypes.Address;
+import org.hyperledger.besu.enclave.EnclaveFactory;
 import org.hyperledger.besu.ethereum.GasLimitCalculator;
 import org.hyperledger.besu.ethereum.core.BlockHeader;
 import org.hyperledger.besu.ethereum.core.BlockHeaderTestFixture;
@@ -39,6 +39,7 @@ import org.hyperledger.besu.ethereum.eth.sync.SynchronizerConfiguration;
 import org.hyperledger.besu.ethereum.eth.transactions.BlobCacheModule;
 import org.hyperledger.besu.ethereum.eth.transactions.TransactionPoolConfiguration;
 import org.hyperledger.besu.ethereum.p2p.config.NetworkingConfiguration;
+import org.hyperledger.besu.ethereum.privacy.storage.PrivacyStorageProvider;
 import org.hyperledger.besu.ethereum.trie.diffbased.bonsai.cache.BonsaiCachedMerkleTrieLoaderModule;
 import org.hyperledger.besu.ethereum.worldstate.DataStorageConfiguration;
 import org.hyperledger.besu.evm.internal.EvmConfiguration;
@@ -47,6 +48,8 @@ import org.hyperledger.besu.metrics.noop.NoOpMetricsSystem;
 import org.hyperledger.besu.testutil.TestClock;
 
 import java.math.BigInteger;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -58,7 +61,7 @@ import io.vertx.core.Vertx;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
 
-class PrivacyTest {
+class FlexGroupPrivacyTest {
 
   private final Vertx vertx = Vertx.vertx();
 
@@ -68,13 +71,16 @@ class PrivacyTest {
   }
 
   @Test
-  void defaultPrivacy() {
+  void flexibleEnabledPrivacy() {
     final BesuController besuController =
-        DaggerPrivacyTest_PrivacyTestComponent.builder().build().getBesuController();
+        DaggerFlexGroupPrivacyTest_FlexGroupPrivacyTestComponent.builder()
+            .build()
+            .getBesuController();
 
-    final PrecompiledContract precompiledContract = getPrecompile(besuController, DEFAULT_PRIVACY);
+    final PrecompiledContract flexiblePrecompiledContract =
+        getPrecompile(besuController, FLEXIBLE_PRIVACY);
 
-    assertThat(precompiledContract.getName()).isEqualTo("Privacy");
+    assertThat(flexiblePrecompiledContract.getName()).isEqualTo("FlexiblePrivacy");
   }
 
   private PrecompiledContract getPrecompile(
@@ -93,8 +99,8 @@ class PrivacyTest {
   @Singleton
   @Component(
       modules = {
-        PrivacyParametersModule.class,
-        PrivacyTest.PrivacyTestBesuControllerModule.class,
+        FlexGroupPrivacyParametersModule.class,
+        FlexGroupPrivacyTest.PrivacyTestBesuControllerModule.class,
         PrivacyTestModule.class,
         MockBesuCommandModule.class,
         BonsaiCachedMerkleTrieLoaderModule.class,
@@ -102,9 +108,28 @@ class PrivacyTest {
         BesuPluginContextModule.class,
         BlobCacheModule.class
       })
-  interface PrivacyTestComponent extends BesuComponent {
-
+  interface FlexGroupPrivacyTestComponent extends BesuComponent {
     BesuController getBesuController();
+  }
+
+  @Module
+  static class FlexGroupPrivacyParametersModule {
+
+    @Provides
+    PrivacyParameters providePrivacyParameters(
+        final PrivacyStorageProvider storageProvider, final Vertx vertx) {
+      try {
+        return new PrivacyParameters.Builder()
+            .setEnabled(true)
+            .setEnclaveUrl(new URI("http://127.0.0.1:8000"))
+            .setStorageProvider(storageProvider)
+            .setEnclaveFactory(new EnclaveFactory(vertx))
+            .setFlexiblePrivacyGroupsEnabled(true)
+            .build();
+      } catch (URISyntaxException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   @Module
@@ -116,7 +141,7 @@ class PrivacyTest {
     BesuController provideBesuController(
         final PrivacyParameters privacyParameters,
         final DataStorageConfiguration dataStorageConfiguration,
-        final PrivacyTestComponent context,
+        final FlexGroupPrivacyTestComponent context,
         @Named("dataDir") final Path dataDir) {
 
       return new BesuController.Builder()
