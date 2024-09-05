@@ -77,7 +77,7 @@ jobs:
           name: test-args-${{ matrix.runner_index }}.txt
           path: '*.txt'
       - name: run acceptance tests
-        run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true
+        run: ./gradlew acceptanceTestNotPrivacy `cat gradleArgs.txt` -Dorg.gradle.parallel=true -Dorg.gradle.caching=true --no-daemon
       - name: Remove downloaded test results
         run: rm -rf tmp/junit-xml-reports-downloaded
       - name: Upload Acceptance Test Results
