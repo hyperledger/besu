@@ -18,6 +18,7 @@ import org.hyperledger.besu.datatypes.Hash;
 import org.hyperledger.besu.ethereum.chain.BlockAddedEvent;
 import org.hyperledger.besu.ethereum.chain.BlockAddedObserver;
 import org.hyperledger.besu.ethereum.chain.Blockchain;
+import org.hyperledger.besu.ethereum.core.Block;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.storage.DiffBasedWorldStateKeyValueStorage;
 import org.hyperledger.besu.ethereum.trie.diffbased.common.trielog.TrieLogManager;
 import org.hyperledger.besu.plugin.services.trielogs.TrieLog;
@@ -48,7 +49,8 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
   private final DiffBasedWorldStateKeyValueStorage rootWorldStateStorage;
   private final Blockchain blockchain;
   private final Consumer<Runnable> executeAsync;
-  private final long numberOfBlocksToKeepInWarmStorage;
+  private static final int PRELOAD_LIMIT = 1000;
+  private static final int DISTANCE_FROM_HEAD_BEFORE_FREEZING_OLD_STATE = 10;
   private final TrieLogManager trieLogManager;
 
   private final Multimap<Long, Hash> blocksToMoveToFreezer =
@@ -58,24 +60,56 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
       final DiffBasedWorldStateKeyValueStorage rootWorldStateStorage,
       final Blockchain blockchain,
       final Consumer<Runnable> executeAsync,
-      final long numberOfBlocksToKeepInWarmStorage,
       final TrieLogManager trieLogManager) {
     this.rootWorldStateStorage = rootWorldStateStorage;
     this.blockchain = blockchain;
     this.executeAsync = executeAsync;
-    this.numberOfBlocksToKeepInWarmStorage = numberOfBlocksToKeepInWarmStorage;
     this.trieLogManager = trieLogManager;
   }
 
-  public int initialize() {
-    // TODO Probably need to freeze old blocks that haven't been frozen already?
-    return 0;
+  public void initialize() {
+    // On startup there will be recent blocks whose state and storage hasn't been archived yet.
+    // Pre-load them ready for freezing state once enough new blocks have been added to the chain.
+    Optional<Long> frozenBlocksHead = Optional.empty();
+
+    Optional<Long> latestFrozenBlock = rootWorldStateStorage.getLatestArchiveFrozenBlock();
+
+    if (latestFrozenBlock.isPresent()) {
+      frozenBlocksHead = latestFrozenBlock;
+    } else {
+      // Start from genesis block
+      if (blockchain.getBlockHashByNumber(0).isPresent()) {
+        frozenBlocksHead = Optional.of(0L);
+      }
+    }
+
+    if (frozenBlocksHead.isPresent()) {
+      int preLoadedBlocks = 0;
+      Optional<Block> nextBlock = blockchain.getBlockByNumber(frozenBlocksHead.get());
+      for (int i = 0; i < PRELOAD_LIMIT; i++) {
+        if (nextBlock.isPresent()) {
+          addToFreezerQueue(
+              nextBlock.get().getHeader().getNumber(), nextBlock.get().getHeader().getHash());
+          preLoadedBlocks++;
+          nextBlock = blockchain.getBlockByNumber(nextBlock.get().getHeader().getNumber() + 1);
+        } else {
+          break;
+        }
+      }
+      LOG.atInfo()
+          .setMessage("Preloaded {} blocks to move their state and storage to the archive freezer")
+          .addArgument(preLoadedBlocks)
+          .log();
+    }
+
+    // Start processing any backlog on startup - don't wait for a new block to be imported.
+    moveBlockStateToFreezer();
   }
 
   public synchronized void addToFreezerQueue(final long blockNumber, final Hash blockHash) {
     LOG.atDebug()
         .setMessage(
-            "adding block to archive freezer queue for moving to cold storage, blockNumber {}; blockHash {}")
+            "Adding block to archive freezer queue for moving to cold storage, blockNumber {}; blockHash {}")
         .addArgument(blockNumber)
         .addArgument(blockHash)
         .log();
@@ -84,7 +118,8 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
 
   public synchronized int moveBlockStateToFreezer() {
     final long retainAboveThisBlock =
-        blockchain.getChainHeadBlockNumber() - numberOfBlocksToKeepInWarmStorage;
+        blockchain.getChainHeadBlockNumber() - DISTANCE_FROM_HEAD_BEFORE_FREEZING_OLD_STATE;
+
     if (rootWorldStateStorage.getFlatDbMode().getVersion() == Bytes.EMPTY) {
       throw new IllegalStateException("DB mode version not set");
     }
@@ -92,18 +127,17 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
     AtomicInteger frozenAccountStateCount = new AtomicInteger();
     AtomicInteger frozenAccountStorageCount = new AtomicInteger();
 
-    LOG.atDebug()
+    LOG.atTrace()
         .setMessage(
             "Moving cold state to freezer storage (chainHeadNumber: {} - numberOfBlocksToKeepInWarmStorage: {}) = {}")
         .addArgument(blockchain::getChainHeadBlockNumber)
-        .addArgument(numberOfBlocksToKeepInWarmStorage)
+        .addArgument(DISTANCE_FROM_HEAD_BEFORE_FREEZING_OLD_STATE)
         .addArgument(retainAboveThisBlock)
         .log();
 
     final var accountsToMove =
         blocksToMoveToFreezer.asMap().entrySet().stream()
             .dropWhile((e) -> e.getKey() > retainAboveThisBlock);
-    // TODO - limit to a configurable number of blocks to move per loop
 
     final Multimap<Long, Hash> accountStateFreezerActionsComplete = ArrayListMultimap.create();
     final Multimap<Long, Hash> accountStorageFreezerActionsComplete = ArrayListMultimap.create();
@@ -173,26 +207,28 @@ public class BonsaiArchiveFreezer implements BlockAddedObserver {
     // For us to consider all state and storage changes for a block complete, it must have been
     // recorded in both accountState and accountStorage lists. If only one finished we need to try
     // freezing state/storage for that block again on the next loop
-    int frozenBlocksCompleted = blocksToMoveToFreezer.size();
+    AtomicInteger frozenBlocksCompleted = new AtomicInteger();
     accountStateFreezerActionsComplete
         .keySet()
         .forEach(
             (b) -> {
               if (accountStorageFreezerActionsComplete.containsKey(b)) {
+                frozenBlocksCompleted.getAndIncrement();
+                rootWorldStateStorage.setLatestArchiveFrozenBlock(b);
                 blocksToMoveToFreezer.removeAll(b);
               }
             });
 
     if (frozenAccountStateCount.get() > 0 || frozenAccountStorageCount.get() > 0) {
-      LOG.atInfo()
-          .setMessage("froze {} account state entries, {} account storage entries for {} blocks")
+      LOG.atDebug()
+          .setMessage("Froze {} account state entries, {} account storage entries for {} blocks")
           .addArgument(frozenAccountStateCount.get())
           .addArgument(frozenAccountStorageCount.get())
-          .addArgument(frozenBlocksCompleted)
+          .addArgument(frozenBlocksCompleted.get())
           .log();
     }
 
-    return frozenBlocksCompleted;
+    return frozenBlocksCompleted.get();
   }
 
   @Override

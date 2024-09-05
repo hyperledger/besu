@@ -843,7 +843,6 @@ public abstract class BesuControllerBuilder implements MiningParameterOverrides 
             (BonsaiWorldStateKeyValueStorage) worldStateStorage,
             blockchain,
             scheduler::executeServiceTask,
-            10,
             trieLogManager);
     archiveFreezer.initialize();
 

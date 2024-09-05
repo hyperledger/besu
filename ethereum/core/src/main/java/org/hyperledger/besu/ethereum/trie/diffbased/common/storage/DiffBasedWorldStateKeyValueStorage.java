@@ -66,6 +66,10 @@ public abstract class DiffBasedWorldStateKeyValueStorage
   public static final byte[] WORLD_BLOCK_HASH_KEY =
       "worldBlockHash".getBytes(StandardCharsets.UTF_8);
 
+  // 0x61726368697665426C6F636B7346726F7A656E
+  public static final byte[] ARCHIVE_BLOCKS_FROZEN =
+      "archiveBlocksFrozen".getBytes(StandardCharsets.UTF_8);
+
   private final AtomicBoolean shouldClose = new AtomicBoolean(false);
 
   protected final AtomicBoolean isClosed = new AtomicBoolean(false);
@@ -313,6 +317,22 @@ public abstract class DiffBasedWorldStateKeyValueStorage
     }
 
     return frozenStateCount.get();
+  }
+
+  public Optional<Long> getLatestArchiveFrozenBlock() {
+    return composedWorldStateStorage
+        .get(ACCOUNT_INFO_STATE_FREEZER, ARCHIVE_BLOCKS_FROZEN)
+        .map(Bytes::wrap)
+        .map(Bytes::toLong);
+  }
+
+  public void setLatestArchiveFrozenBlock(final Long blockNumber) {
+    SegmentedKeyValueStorageTransaction tx = composedWorldStateStorage.startTransaction();
+    tx.put(
+        ACCOUNT_INFO_STATE_FREEZER,
+        ARCHIVE_BLOCKS_FROZEN,
+        Bytes.ofUnsignedLong(blockNumber).toArrayUnsafe());
+    tx.commit();
   }
 
   @Override
