@@ -80,6 +80,7 @@ public interface TransactionPoolConfiguration {
   Implementation DEFAULT_TX_POOL_IMPLEMENTATION = Implementation.LAYERED;
   Set<Address> DEFAULT_PRIORITY_SENDERS = Set.of();
   Wei DEFAULT_TX_POOL_MIN_GAS_PRICE = Wei.of(1000);
+  byte DEFAULT_TX_POOL_MIN_SCORE = -128;
 
   TransactionPoolConfiguration DEFAULT = ImmutableTransactionPoolConfiguration.builder().build();
 
@@ -171,6 +172,11 @@ public interface TransactionPoolConfiguration {
   @Value.Default
   default Wei getMinGasPrice() {
     return DEFAULT_TX_POOL_MIN_GAS_PRICE;
+  }
+
+  @Value.Default
+  default byte getMinScore() {
+    return DEFAULT_TX_POOL_MIN_SCORE;
   }
 
   @Value.Default
