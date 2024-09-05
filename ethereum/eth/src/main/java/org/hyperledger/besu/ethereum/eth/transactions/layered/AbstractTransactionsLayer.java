@@ -480,10 +480,9 @@ public abstract class AbstractTransactionsLayer implements TransactionsLayer {
   @Override
   public void penalize(final PendingTransaction penalizedTransaction) {
     if (pendingTransactions.containsKey(penalizedTransaction.getHash())) {
-      if (penalizedTransaction.getScore() > poolConfig.getMinScore()) {
-        internalPenalize(penalizedTransaction);
-        metrics.incrementPenalized(penalizedTransaction, name());
-      } else {
+      internalPenalize(penalizedTransaction);
+      metrics.incrementPenalized(penalizedTransaction, name());
+      if (penalizedTransaction.getScore() < poolConfig.getMinScore()) {
         remove(penalizedTransaction, BELOW_MIN_SCORE);
       }
     } else {
